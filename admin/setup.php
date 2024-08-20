@@ -529,9 +529,6 @@ print '<td class="center">';
 print ajax_constantonoff('EASYCRM_EVENT_CATEGORIES_VISIBLE');
 print '</td></td><td></td></tr>';
 
-
-
-
 print '</table>';
 print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
 print '</form>';
