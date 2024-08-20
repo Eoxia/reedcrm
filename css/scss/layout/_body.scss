@@ -1,0 +1,20 @@
+.quickcreation-frontend .fiche {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+.quickcreation-frontend form {
+    margin: 0;
+}
+
+.project-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.page-content {
+    background: #F7F7F7;
+    padding: 1rem;
+    height: calc( 100% - 160px);
+    overflow: auto;
+}

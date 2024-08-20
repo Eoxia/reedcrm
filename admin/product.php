@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2024 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once __DIR__ . '/../lib/easycrm.lib.php';
 
 // Global variables definitions
-global $conf, $db, $langs, $user;
+global $langs, $user;
 
 // Load translation files required by the page
 saturne_load_langs(['admin']);
@@ -68,11 +68,11 @@ $head = easycrm_admin_prepare_head();
 print dol_get_fiche_head($head, 'product', $title, -1, 'easycrm_color@easycrm');
 
 $constArray['easycrm'] = [
-                'controldocument' => [
-                    'name'        => 'ProductKitConf',
-                    'description' => 'ProductKitConfDesc',
-                    'code'        => 'EASYCRM_PRODUCTKIT_DDESC_ADD_LINE_PROPAL'
-                ]
-            ];
+    'controldocument' => [
+        'name'        => 'ProductKitConf',
+        'description' => 'ProductKitConfDesc',
+        'code'        => 'EASYCRM_PRODUCTKIT_DESC_ADD_LINE_PROPAL'
+    ]
+];
 
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';

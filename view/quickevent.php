@@ -179,7 +179,9 @@ if (empty($reshook)) {
                     $result = $project->fetch(GETPOST('project_id'));
                     if ($result > 0) {
                         $project->fetch_optionals();
-                        $commTaskID = $project->array_options['options_commtask'];
+                        $commTaskID    = $project->array_options['options_commtask'];
+                        $nbActionComms = $project->array_options['options_commrelaunch'];
+                        $project->array_options['options_commrelaunch'] = $nbActionComms + 1;
                         if (empty($commTaskID)) {
                             $defaultref = '';
                             $obj        = empty($conf->global->PROJECT_TASK_ADDON) ? 'mod_task_simple' : $conf->global->PROJECT_TASK_ADDON;

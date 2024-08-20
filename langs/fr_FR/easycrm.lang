@@ -41,6 +41,9 @@ CommercialFollowUp       = SC
 CommercialTask           = Tâche commerciale
 ProjectPhone             = Téléphone projet
 
+# Frontend - Frontend
+QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
+
 
 
 #
@@ -56,6 +59,7 @@ LastCommercialReminderDate              = Date dernière relance commerciale
 ActionCommCreation                      = Événement créé
 ReminderActionCommCreation              = Rappel crée le %s
 ErrorNoProjectAndThirdpartyInformations = Veuillez renseigner un nom de projet et un nom de tiers
+LastEvent                               = Dernier événement
 
 #
 # Config page - Page d'administration
@@ -65,6 +69,14 @@ ErrorNoProjectAndThirdpartyInformations = Veuillez renseigner un nom de projet e
 OpportunityStatusDescription = Selection du statut d'opportunité <br> Valeur par défaut : <b> Prospection </b>
 OpportunityAmountDescription = Selection du montant d'opportunité <br> Valeur par défaut : <b> 3000 € </b>
 ProspectCustomerDescription  = Selection de la nature des tiers <br> Valeur par défaut : <b> Prospect </b>
+
+# PWA - Progressive Web App
+PWACloseProjectOpportunityZero            = Clôturer le projet
+PWACloseProjectOpportunityZeroDescription = Clôturer le projet quand l'opportunité est à 0
+
+# Product Kit - Produit Kit
+ProductKitConf     = Compléter la description d'une ligne de devis avec la composition du kit
+ProductKitConfDesc = Indépendemment du paramètre du module produit sur la complétion de la description. <br> A l'ajout d'un produit/service, ayant un kit, sur une ligne de devis, la description de la ligne sera remplacée par le libellé et la description des produits composants.
 
 # Product Kit Configuration
 ProductKitConf               = Completer la description d'une ligne de devis avec la composition du kit
@@ -126,6 +138,16 @@ DisplayAllAddressDescription = Afficher l'adresse principale sur la carte au lie
 AddressesList                = Liste des adresses
 
 
+
+#
+# Geolocation - Géolocalisation
+#
+
+# Data - Donnée
+GeolocationError = Erreur possible lors la géolocalisation : %s
+
+
+
 #
 # Other - Autre
 #
@@ -168,3 +190,20 @@ ObjectAddContactTrigger                = Contact ajouté
 UpdateObjectContactTrigger             = Mise à jour du rôle "contacts facturation" des factures
 NoContact                              = Aucun contact
 AddContactNotificationTrigger          = Ajout d'une notification contact "action Facture client validée" des tiers
+OpportunityOrigin                      = Origine de l'opportunitée
+SRC_INTE                               = Internet
+SRC_CAMP_MAIL                          = Campagne Publipostage
+SRC_CAMP_EMAIL                         = Campagne d'emailing
+SRC_CAMP_PHO                           = Campagne Téléphonique
+SRC_CAMP_FAX                           = Campagne Fax
+SRC_COMM                               = Contact commercial
+SRC_SHOP                               = Contact en boutique
+SRC_WOM                                = Bouche à oreille
+SRC_PARTNER                            = Partenaire
+SRC_EMPLOYEE                           = Employé
+SRC_SPONSORING                         = Parrainage/Sponsoring
+SRC_CUSTOMER                           = Contact entrant d'un client
+AddAssignOppStatus                     = Ajouter un statut d'opportunité
+SelectOppStatus                        = Sélectionner un statut d'opportunité
+OppStatusAssignedTo                    = Statut d'opportunité assigné à %s projet(s)
+ReloadOppPercent                       = Calculer les probabilités d'opportunité non définies

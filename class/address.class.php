@@ -56,7 +56,7 @@ class Address extends SaturneObject
     /**
      * @var int  Does object support extrafields ? 0=No, 1=Yes
      */
-    public int $isextrafieldmanaged = 0;
+    public $isextrafieldmanaged = 0;
 
     /**
      * @var string String with name of icon for signature. Must be the part after the 'object_' into object_signature.png
@@ -254,12 +254,12 @@ class Address extends SaturneObject
     /**
      * @var int User ID.
      */
-    public int $fk_user_creat;
+    public $fk_user_creat;
 
     /**
      * @var int|null User ID.
      */
-    public ?int $fk_user_modif;
+    public $fk_user_modif;
 
     /**
      * Constructor.
@@ -286,9 +286,10 @@ class Address extends SaturneObject
         $region         = is_array($regionAndState) && !empty($regionAndState['region']) ? $regionAndState['region'] : '';
         $state          = is_array($regionAndState) && !empty($regionAndState['label']) ? $regionAndState['label'] : '';
         $parameters     = (dol_strlen($country) > 0 ? $country . ',+' : '') . (dol_strlen($region) > 0 ? $region . ',+' : '') . (dol_strlen($state) > 0 ? $state . ',+' : '') . (dol_strlen($this->town) > 0 ? $this->town . ',+' : '') . (dol_strlen($this->zip) > 0 ? $this->zip . ',+' : '') . (dol_strlen($this->address) > 0 ? $this->address : '');
+        $parameters     = dol_sanitizeFileName($parameters);
         $parameters     = str_replace(' ', '+', $parameters);
 
-        $context  = stream_context_create(["http" => ["header" => "User-Agent:" . $_SERVER['HTTP_USER_AGENT']]]);
+        $context  = stream_context_create(["http" => ["header" => "Referer:" . $_SERVER['HTTP_REFERER']]]);
         $response = file_get_contents('https://nominatim.openstreetmap.org/search?q='. $parameters .'&format=json&polygon=1&addressdetails=1', false, $context);
         $data     = json_decode($response, false);
 

@@ -78,7 +78,7 @@ class modEasyCRM extends DolibarrModules
 		$this->editor_url = 'https://www.eoxia.com';
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.2.0';
+		$this->version = '1.4.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -129,7 +129,9 @@ class modEasyCRM extends DolibarrModules
                 'invoicecard',
                 'contactcard',
                 'thirdpartycard',
-                'thirdpartylist'
+                'thirdpartylist',
+                'main',
+                'pwaadmin'
             ],
 			// Set this to 1 if features of module are opened to external users
 			'moduleforexternal' => 0,
@@ -155,7 +157,7 @@ class modEasyCRM extends DolibarrModules
 
 		// Prerequisites
 		$this->phpmin = [7, 4]; // Minimum version of PHP required by module
-		$this->need_dolibarr_version = [15, 0]; // Minimum version of Dolibarr required by module
+		$this->need_dolibarr_version = [16, 0]; // Minimum version of Dolibarr required by module
 
 		// Messages at activation
 		$this->warnings_activation = []; // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
@@ -178,6 +180,7 @@ class modEasyCRM extends DolibarrModules
             $i++ => ['EASYCRM_THIRDPARTY_PHONE_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_THIRDPARTY_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_THIRDPARTY_WEB_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['EASYCRM_THIRDPARTY_COMMERCIAL_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_THIRDPARTY_PRIVATE_NOTE_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_THIRDPARTY_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
@@ -195,6 +198,7 @@ class modEasyCRM extends DolibarrModules
             $i++ => ['EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE', 'integer', 3000, '', 0, 'current'],
             $i++ => ['EASYCRM_PROJECT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['EASYCRM_PROJECT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_PROJECT_EXTRAFIELDS_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_PROJECT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
@@ -215,6 +219,9 @@ class modEasyCRM extends DolibarrModules
             $i++ => ['EASYCRM_EVENT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
+            // CONST PWA
+            $i++ => ['EASYCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
+
 			// CONST ADDRESS
 			$i++ => ['EASYCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
             $i++ => ['EASYCRM_ADDRESS_ADDON', 'chaine', 'mod_address_standard', '', 0, 'current'],
@@ -223,14 +230,24 @@ class modEasyCRM extends DolibarrModules
 			$i++ => ['EASYCRM_VERSION','chaine', $this->version, '', 0, 'current'],
 			$i++ => ['EASYCRM_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
             $i++ => ['EASYCRM_SHOW_PATCH_NOTE', 'integer', 1, '', 0, 'current'],
-            $i   => ['EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current'],
+            $i++ => ['EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_WIDTH_MINI', 'integer', 128, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_HEIGHT_MINI', 'integer', 72, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_WIDTH_SMALL', 'integer', 480, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_HEIGHT_SMALL', 'integer', 270, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_WIDTH_MEDIUM', 'integer', 854, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_HEIGHT_MEDIUM', 'integer', 480, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_WIDTH_LARGE', 'integer', 1280, '', 0, 'current'],
+            $i++ => ['EASYCRM_MEDIA_MAX_HEIGHT_LARGE', 'integer', 720, '', 0, 'current'],
+            $i   => ['EASYCRM_DISPLAY_NUMBER_MEDIA_GALLERY', 'integer', 8, '', 0, 'current'],
         ];
 
-		// Some keys to add into the overwriting translation tables
-		/*$this->overwrite_translation = array(
-			'en_US:ParentCompany'=>'Parent company or reseller',
-			'fr_FR:ParentCompany'=>'Maison mère ou revendeur'
-		)*/
+        // Some keys to add into the overwriting translation tables
+        $this->overwrite_translation = [
+            'fr_FR:ActionAC_EMAIL_IN' => 'Email entrant',
+            'fr_FR:ActionAC_EMAIL'    => 'Email sortant',
+            'fr_FR:ActionAC_RDV'      => 'Rendez-vous physique ou visioconférence'
+        ];
 
 		if (!isset($conf->easycrm) || !isset($conf->easycrm->enabled)) {
 			$conf->easycrm = new stdClass();
@@ -242,27 +259,12 @@ class modEasyCRM extends DolibarrModules
 		// $this->tabs[] = array('data'=>'objecttype:+tabname2:SUBSTITUTION_Title2:mylangfile@easycrm:$user->rights->othermodule->read:/easycrm/mynewtab2.php?id=__ID__',  	// To add another new tab identified by code tabname2. Label will be result of calling all substitution functions on 'Title2' key.
 		// $this->tabs[] = array('data'=>'objecttype:-tabname:NU:conditiontoremove');
 
-		$pictopath       = dol_buildpath('/custom/easycrm/img/easycrm_color.png', 1);
-		$pictoEasycrm    = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
-        if (function_exists('saturne_get_objects_metadata')) {
-            $objectsMetadata = saturne_get_objects_metadata();
-        }
-		$this->tabs      = [];
+		$pictopath    = dol_buildpath('/custom/easycrm/img/easycrm_color.png', 1);
+		$pictoEasycrm = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
 
-		if (is_array($objectsMetadata) && !empty($objectsMetadata)) {
-			foreach($objectsMetadata as $objectType => $objectMetadata) {
-				if (preg_match('/_/', $objectType)) {
-					$splittedElementType = preg_split('/_/', $objectType);
-					$moduleName = $splittedElementType[0];
-					$objectName = strtolower($objectType['class_name']);
-					$objectType = $objectName . '@' . $moduleName;
-				} else {
-					$objectType = $objectType;
-				}
-				$this->tabs[] = ['data' => $objectType . ':+address:' . $pictoEasycrm . $langs->trans('Addresses') . ':easycrm@easycrm:$user->rights->easycrm->read:/custom/easycrm/view/address_card.php?from_id=__ID__&from_type=' . $objectType];
-				$this->tabs[] = ['data' => $objectType . ':+map:' . $pictoEasycrm . $langs->trans('Map') . ':easycrm@easycrm:$user->rights->easycrm->read:/custom/easycrm/view/map.php?from_type=' . $objectType . '&from_id=__ID__'];
-			}
-		}
+        $this->tabs   = [];
+        $this->tabs[] = ['data' => 'project' . ':+address:' . $pictoEasycrm . $langs->trans('Addresses') . ':easycrm@easycrm:$user->rights->easycrm->read:/custom/easycrm/view/address_card.php?from_id=__ID__&from_type=project'];
+        $this->tabs[] = ['data' => 'project' . ':+map:' . $pictoEasycrm . $langs->trans('Map') . ':easycrm@easycrm:$user->rights->easycrm->read:/custom/easycrm/view/map.php?from_type=project&from_id=__ID__'];
 
 		// Dictionaries.
 		$this->dictionaries = [
@@ -449,6 +451,24 @@ class modEasyCRM extends DolibarrModules
             'user'     => 0, // 0=Menu for internal users, 1=external users, 2=both
         ];
 
+        $menuEnabled = ($conf->browser->layout != 'classic') ? 1 : 0;
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=easycrm', // '' if this is a top menu. For left menu, use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+            'type'     => 'left', // This is a Top menu entry
+            'titre'    => $langs->transnoentities('QuickCreation'),
+            'prefix'   => '<i class="fas fa-plus-circle pictofixedwidth"></i>',
+            'mainmenu' => 'easycrm',
+            'leftmenu' => 'quickcreationfrontend',
+            'url'      => '/easycrm/view/frontend/quickcreation.php', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+            'langs'    => 'easycrm@easycrm',
+            'position' => 1000 + $r,
+            'enabled'  => $menuEnabled, // Define condition to show or hide menu entry. Use '$conf->easycrm->enabled' if entry must be visible if module is enabled.
+            'perms'    => '$user->rights->easycrm->read', // Use 'perms'=>'$user->rights->easycrm->myobject->read' if you want your menu with a permission rules
+            'target'   => '',
+            'user'     => 0, // 0=Menu for internal users, 1=external users, 2=both
+        ];
+
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=easycrm',
             'type'     => 'left',
@@ -465,26 +485,20 @@ class modEasyCRM extends DolibarrModules
             'user'     => 0,
         ];
 
-		if (is_array($objectsMetadata) && !empty($objectsMetadata)) {
-			foreach($objectsMetadata as $objectType => $objectMetadata) {
-				if (dol_strlen($objectMetadata['leftmenu']) > 0) {
-					$this->menu[$r++] = [
-						'fk_menu'  => 'fk_mainmenu=' . $objectMetadata['mainmenu'] . ',fk_leftmenu=' . $objectMetadata['leftmenu'],
-						'type'     => 'left',
-						'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
-						'leftmenu' => 'map',
-						'url'      => 'easycrm/view/map.php?from_type=' . $objectType,
-						'langs'    => 'easycrm@easycrm',
-						'position' => 1000 + $r,
-						'enabled'  => '$conf->easycrm->enabled',
-						'perms'    => '$user->rights->easycrm->address->read',
-						'target'   => '',
-						'user'     => 0,
-					];
-				}
-			}
-		}
-	}
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=project,fk_leftmenu=projects',
+            'type'     => 'left',
+            'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
+            'leftmenu' => 'map',
+            'url'      => 'easycrm/view/map.php?from_type=project',
+            'langs'    => 'easycrm@easycrm',
+            'position' => 1000 + $r,
+            'enabled'  => '$conf->easycrm->enabled',
+            'perms'    => '$user->rights->easycrm->address->read',
+            'target'   => '',
+            'user'     => 0,
+        ];
+    }
 
     /**
      *  Function called when module is enabled.
@@ -529,11 +543,12 @@ class modEasyCRM extends DolibarrModules
         $objectsMetadata = saturne_get_objects_metadata();
 
         $extrafields->addExtraField('commrelaunch', $langs->transnoentities('CommercialsRelaunching'), 'text', 100, 2000, 'projet', 0, 0, '', '', 0, '', 2);
-        $extrafields->update('commtask', $langs->transnoentities('CommercialTask'), 'sellist', '', 'projet', 0, 0, 100, 'a:1:{s:7:"options";a:1:{s:39:"projet_task:ref:rowid::fk_projet = $ID$";N;}}', 1, '', 4);
-        $extrafields->addExtraField('commtask', $langs->transnoentities('CommercialTask'), 'sellist', 100, '', 'projet', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:39:"projet_task:ref:rowid::fk_projet = $ID$";N;}}', 1, '', 4);
+        $extrafields->update('commtask', $langs->transnoentities('CommercialTask'), 'sellist', '', 'projet', 0, 0, 100, 'a:1:{s:7:"options";a:1:{s:21:"projet_task:ref:rowid";N;}}', 1, '', 4);
+        $extrafields->addExtraField('commtask', $langs->transnoentities('CommercialTask'), 'sellist', 100, '', 'projet', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:21:"projet_task:ref:rowid";N;}}', 1, '', 4);
         $extrafields->addExtraField('projectphone', $langs->transnoentities('ProjectPhone'), 'phone', 100, '', 'projet', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:0:"";N;}}', 1, '', 1);
 		$extrafields->addExtraField('commstatus', $langs->transnoentities('CommercialStatus'), 'sellist', 100, '', 'propal', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:34:"c_commercial_status:label:rowid::1";N;}}', 1, '', 1, 'CommercialStatusHelp');
 		$extrafields->addExtraField('commrefusal', $langs->transnoentities('RefusalReason'), 'sellist', 100, '', 'propal', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:31:"c_refusal_reason:label:rowid::1";N;}}', 1, '', 1, 'RefusalReasonHelp');
+        $extrafields->addExtraField('opporigin', $langs->transnoentities('OpportunityOrigin'), 'sellist', 100, '', 'projet', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:19:"c_input_reason:code";N;}}', 1, '', 1);
 
         // Societe extrafields
         $extrafields->update('notation_societe_contact', 'NotationObjectContact', 'text', '', 'societe', 0, 0, 100, '', '', '', 5, 'NotationObjectContactHelp', '', '', 0, 'easycrm@easycrm', 1, 0, 0, ['csslist' => 'center']);

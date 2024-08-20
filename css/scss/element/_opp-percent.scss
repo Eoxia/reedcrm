@@ -1,0 +1,46 @@
+.opp-percent {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+
+    input[type=range] {
+        width: 100%;
+        background: #f7f7f7;
+        height: 0;
+        margin-bottom: 0;
+    
+        &:focus, &:active {
+            outline: none;
+        }
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+        width: 30px;
+        height: 30px;
+    }
+    input[type=range]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+    }
+
+    input[type=range]::-webkit-slider-runnable-track {
+        height: 15px;
+        background: rgb(255,94,94);
+        background: linear-gradient(90deg, rgba(255,94,94,1) 0%, rgba(255,130,94,1) 40%, rgba(255,177,0,1) 50%, rgba(184,200,110,1) 60%, rgba(52,160,72,1) 100%);
+    }
+    input[type=range]::-moz-range-track {
+        height: 15px;
+        background: rgb(255,94,94);
+        background: linear-gradient(90deg, rgba(255,94,94,1) 0%, rgba(255,130,94,1) 40%, rgba(255,177,0,1) 50%, rgba(184,200,110,1) 60%, rgba(52,160,72,1) 100%);
+    }
+}
+
+.opp-percent-label {
+    .opp_percent-value {
+        display: inline-block;
+        background: rgba(0,0,0,0.1);
+        border-radius: 4px;
+        padding: 0.2em 0.5em;
+        font-weight: 600;
+    }
+}

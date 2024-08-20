@@ -205,6 +205,17 @@ print '<td class="center">';
 print ajax_constantonoff('EASYCRM_THIRDPARTY_WEB_VISIBLE');
 print '</td></td><td></td></tr>';
 
+// Commercial
+print '<tr class="oddeven"><td>';
+print $langs->trans('AllocateCommercial');
+print '</td><td>';
+print $langs->trans('ObjectVisibleDescription', $langs->trans('AllocateCommercial'));
+print '</td>';
+
+print '<td class="center">';
+print ajax_constantonoff('EASYCRM_THIRDPARTY_COMMERCIAL_VISIBLE');
+print '</td></td><td></td></tr>';
+
 // Private note
 print '<tr class="oddeven"><td>';
 print $langs->trans('NotePrivate');
@@ -220,7 +231,7 @@ print '</td></td><td></td></tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('CustomersProspectsCategoriesShort');
 print '</td><td>';
-print $langs->trans('ObjectVisibleDescription', $langs->trans('CustomersProspectsCategoriesShort'));
+print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('CustomersProspectsCategoriesShort'));
 print '</td>';
 
 print '<td class="center">';
@@ -344,6 +355,17 @@ print '</td>';
 
 print '<td class="center">';
 print ajax_constantonoff('EASYCRM_PROJECT_DATE_START_VISIBLE');
+print '</td></td><td></td></tr>';
+
+// Description
+print '<tr class="oddeven"><td>';
+print $langs->trans('Description');
+print '</td><td>';
+print $langs->trans('ObjectVisibleDescription', $langs->trans('Description'));
+print '</td>';
+
+print '<td class="center">';
+print ajax_constantonoff('EASYCRM_PROJECT_DESCRIPTION_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Extrafields

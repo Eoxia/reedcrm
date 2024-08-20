@@ -39,6 +39,7 @@ require_once __DIR__ . '/../../saturne/lib/object.lib.php';
 
 // Load EasyCRM librairies
 require_once __DIR__ . '/../class/address.class.php';
+require_once __DIR__ . '/../class/geolocation.class.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -70,6 +71,7 @@ $objectInfos  = saturne_get_objects_metadata($objectType);
 $className    = $objectInfos['class_name'];
 $objectLinked = new $className($db);
 $object       = new Address($db);
+$geolocation  = new Geolocation($db);
 
 // Initialize view objects
 $form        = new Form($db);
@@ -125,6 +127,12 @@ if (empty($reshook)) {
 				if ($object->status == $object::STATUS_NOT_FOUND) {
 					setEventMessages($langs->trans('CouldntFindDataOnOSM'), [], 'errors');
 				} else if ($object->status == $object::STATUS_ACTIVE) {
+                    $geolocation->latitude     = $object->latitude;
+                    $geolocation->longitude    = $object->longitude;
+                    $geolocation->element_type = $object->element_type;
+                    $geolocation->fk_element   = $fromId;
+                    $geolocation->fk_address   = $result;
+                    $geolocation->create($user);
 					setEventMessages($langs->trans('DataSuccessfullyRetrieved'), []);
 				}
 				setEventMessages($langs->trans('AddressCreated'), []);
@@ -145,7 +153,16 @@ if (empty($reshook)) {
 			$result = $object->delete($user);
 
 			if ($result > 0) {
-				setEventMessages($langs->trans('AddressDeleted'), []);
+                $objectLinked->fetch($fromId);
+                if ($objectLinked->array_options['options_projectaddress'] == $addressID) {
+                    $objectLinked->array_options['options_projectaddress'] = 0;
+                    $objectLinked->updateExtrafield('projectaddress');
+                }
+
+                $geolocations = $geolocation->fetch('', '', ' AND fk_address = ' . $addressID);
+                $geolocation->delete($user, false, false);
+
+                setEventMessages($langs->trans('AddressDeleted'), []);
 			} else {
 				setEventMessages($langs->trans('ErrorDeleteAddress'), [], 'errors');
 			}
@@ -157,8 +174,7 @@ if (empty($reshook)) {
         $favoriteAddressId = GETPOST('favorite_id');
 
         $objectLinked->fetch($fromId);
-
-        if (isset($objectLinked->array_options['options_' . $objectType . 'address']) && dol_strlen($objectLinked->array_options['options_' . $objectType . 'address']) > 0) {
+        if (!empty($objectLinked) && $favoriteAddressId > 0) {
             $objectLinked->array_options['options_' . $objectType . 'address'] = $objectLinked->array_options['options_' . $objectType . 'address'] == $favoriteAddressId ? 0 : $favoriteAddressId;
             $objectLinked->update($user);
         }
@@ -224,7 +240,7 @@ if ($action == 'create' && $fromId > 0) {
 
     print dol_get_fiche_end();
 
-    print $form->buttonsSaveCancel('Create');
+    print $form->buttonsSaveCancel('Create', 'Cancel', [], false, 'wpeo-button');
 } else if ($fromId > 0 || !empty($ref) && empty($action)) {
     $objectLinked->fetch($fromId);
 

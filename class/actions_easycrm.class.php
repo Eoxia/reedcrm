@@ -49,7 +49,7 @@ class ActionsEasycrm
     /**
      * @var string String displayed by executeHook() immediately after return
      */
-    public string $resprints;
+    public $resprints;
 
     /**
      * Constructor
@@ -75,7 +75,7 @@ class ActionsEasycrm
         global $conf, $langs, $user;
 
         // Do something only for the current context
-        if ($parameters['currentcontext'] == 'thirdpartycomm') {
+        if (strpos($parameters['context'], 'thirdpartycomm') !== false) {
             if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
                 require_once __DIR__ . '/../../saturne/lib/object.lib.php';
@@ -129,7 +129,7 @@ class ActionsEasycrm
         global $conf, $db, $langs, $user;
 
         // Do something only for the current context
-        if ($parameters['currentcontext'] == 'thirdpartycomm') {
+        if (strpos($parameters['context'], 'thirdpartycomm') !== false) {
             if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
                 require_once __DIR__ . '/../../saturne/lib/object.lib.php';
@@ -217,9 +217,9 @@ class ActionsEasycrm
         global $langs, $user;
 
         // Do something only for the current context
-        if (in_array($parameters['currentcontext'], ['thirdpartycomm', 'projectcard'])) {
+        if (preg_match('/thirdpartycomm|projectcard/', $parameters['context'])) {
             if (empty(GETPOST('action')) || GETPOST('action') == 'update') {
-                if ($parameters['currentcontext'] == 'thirdpartycomm') {
+                if (strpos($parameters['context'], 'thirdpartycomm') !== false) {
                     $socid = $object->id;
                     $moreparam = '';
                 } else {
@@ -245,7 +245,7 @@ class ActionsEasycrm
      */
     public function doActions(array $parameters, $object, string $action): int
     {
-        if (in_array($parameters['currentcontext'], ['invoicecard', 'invoicereccard', 'thirdpartycomm', 'thirdpartycard'])) {
+        if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
             if ($action == 'set_notation_object_contact') {
                 require_once __DIR__ . '/../lib/easycrm_function.lib.php';
 
@@ -253,6 +253,30 @@ class ActionsEasycrm
 
                 header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
                 exit;
+            }
+        } else if (strpos($parameters['context'], 'projectlist') !== false) {
+            if ($action == 'reload_opp_percent') {
+                require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+
+                $projects = saturne_fetch_all_object_type('Project', '', '', 0, 0, ['customsql' => 't.fk_statut IN (' . Project::STATUS_DRAFT . ',' . Project::STATUS_VALIDATED . ') AND t.fk_opp_status IS NOT NULL AND t.opp_percent IS NULL']);
+
+                if (is_array($projects) && !empty($projects)) {
+                    foreach ($projects as $project) {
+                        if ($project->fk_opp_status > 0) {
+                            $oppPercent = dol_getIdFromCode($this->db, $project->fk_opp_status, 'c_lead_status', 'rowid', 'percent');
+                        } else if (isModEnabled('agenda')) {
+                            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+                            $actionComm = new ActionComm($this->db);
+
+                            $actionComms = $actionComm->getActions($project->socid, $project->id, 'project');
+                            $oppPercent  = (100 - (count($actionComms) * 20)) < 0 ? 0 : count($actionComms) * 20;
+                        } else {
+                            continue;
+                        }
+                        $project->setValueFrom('opp_percent', $oppPercent);
+                    }
+                }
             }
         }
 
@@ -268,32 +292,49 @@ class ActionsEasycrm
      */
     public function printCommonFooter(array $parameters): int
     {
-        global $conf, $db, $langs , $object;
+        global $conf, $db, $langs, $object, $user;
 
         // Do something only for the current context
-        if (in_array($parameters['currentcontext'], ['thirdpartycomm', 'projectcard'])) {
+        if (preg_match('/thirdpartycomm|projectcard/', $parameters['context'])) {
             if (isModEnabled('agenda')) {
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
                 $pictopath = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
                 $picto     = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
 
-                $actiomcomm = new ActionComm($db);
+                $actionComm = new ActionComm($db);
 
                 $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
-                $actiomcomms = $actiomcomm->getActions(GETPOST('socid'), ($parameters['currentcontext'] != 'thirdpartycomm' ? GETPOST('id') : ''), ($parameters['currentcontext'] != 'thirdpartycomm' ? 'project' : ''), $filter, 'a.datec');
-                if (is_array($actiomcomms) && !empty($actiomcomms)) {
-                    $nbActiomcomms  = count($actiomcomms);
-                    $lastActiomcomm = array_shift($actiomcomms);
+                $actionComms = $actionComm->getActions(GETPOST('socid'), ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : GETPOST('id')), ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : 'project'), $filter, 'a.datec');
+                if (is_array($actionComms) && !empty($actionComms)) {
+                    $nbActionComms  = count($actionComms);
+                    $lastActionComm = array_shift($actionComms);
                 } else {
-                    $nbActiomcomms = 0;
+                    $nbActionComms = 0;
                 }
 
+                if ($nbActionComms == 0) {
+                    $badgeClass = 1;
+                } else if ($nbActionComms == 1 || $nbActionComms == 2) {
+                    $badgeClass = 4;
+                } else {
+                    $badgeClass = 8;
+                }
+
+                $url = '?socid=' . $object->socid . '&fromtype=project' . '&project_id=' . $object->id . '&action=create&token=' . newToken();
                 $out = '<tr><td class="titlefield">' . $picto . $langs->trans('CommercialsRelaunching') . '</td>';
-                $out .= '<td>' .'<span class="badge badge-info">' . $nbActiomcomms . '</span>';
-                if ($nbActiomcomms > 0) {
-                    $out .= ' - ' . '<span>' . $langs->trans('LastCommercialReminderDate') . ' : ' . dol_print_date($lastActiomcomm->datec, 'dayhourtext', 'tzuser') . '</span>';
-                    $out .= ' ' . $lastActiomcomm->getNomUrl(1);
+
+                $picto = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
+
+                $out .= '<td>' . dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
+                if ($nbActionComms > 0) {
+                    $out .= ' - ' . '<span>' . $langs->trans('LastCommercialReminderDate') . ' : ' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
+                }
+                if ($user->hasRight('agenda', 'myactions', 'create')) {
+                    $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url);
+                }
+                if (!empty($lastActionComm)) {
+                    $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id);
                 }
                 $out .= '</td></tr>';
 
@@ -306,7 +347,7 @@ class ActionsEasycrm
         }
 
         // Do something only for the current context
-        if ($parameters['currentcontext'] == 'projectcard') {
+        if (strpos($parameters['context'], 'projectcard') !== false) {
             if (empty(GETPOST('action')) || GETPOST('action') == 'update') {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
@@ -319,7 +360,7 @@ class ActionsEasycrm
 
                 if (!empty($project->array_options['options_commtask'])) {
                     $task->fetch($project->array_options['options_commtask']);
-                    $out2 = $task->getNomUrl(1);
+                    $out2 = $task->getNomUrl(1, '', 'task', 1);
                 } ?>
 
                 <script>
@@ -329,7 +370,7 @@ class ActionsEasycrm
             }
         }
 
-        if (in_array($parameters['currentcontext'], ['invoicelist', 'invoicereclist', 'thirdpartylist'])) {
+        if (preg_match('/invoicelist|invoicereclist|thirdpartylist/', $parameters['context'])) {
             $cssPath = dol_buildpath('/saturne/css/saturne.min.css', 1);
             print '<link href="' . $cssPath . '" rel="stylesheet">';
 
@@ -346,7 +387,7 @@ class ActionsEasycrm
             <?php
         }
 
-        if (in_array($parameters['currentcontext'], ['invoicecard', 'invoicereccard', 'thirdpartycomm', 'thirdpartycard'])) {
+        if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
             $cssPath = dol_buildpath('/saturne/css/saturne.min.css', 1);
             print '<link href="' . $cssPath . '" rel="stylesheet">';
 
@@ -368,7 +409,7 @@ class ActionsEasycrm
             <?php
         }
 
-        if ($parameters['currentcontext'] == 'contactcard') {
+        if (strpos($parameters['context'], 'contactcard') !== false) {
             if (in_array(GETPOST('action'), ['create', 'edit'])) {
                 $out = img_picto('', 'fontawesome_fa-id-card-alt_fas', 'class="pictofixedwidth"'); ?>
                 <script>
@@ -377,6 +418,62 @@ class ActionsEasycrm
                 <?php
             }
         }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the addHtmlHeader function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function addHtmlHeader(array $parameters): int
+    {
+        if (strpos($_SERVER['PHP_SELF'], 'easycrm') !== false) {
+            ?>
+            <script>
+                $('link[rel="manifest"]').remove();
+            </script>
+            <?php
+
+            $this->resprints = '<link rel="manifest" href="' . DOL_URL_ROOT . '/custom/easycrm/manifest.json.php' . '" />';
+        }
+
+        return 0; // or return 1 to replace standard code-->
+    }
+
+    /**
+     * Overloading the printFieldListTitle function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadatas (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     * @throws Exception
+     */
+    public function printFieldListTitle(array $parameters): int
+    {
+        global $langs, $user;
+
+        if (strpos($parameters['context'], 'projectlist') !== false) {
+            if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
+                $out = '';
+                if ($user->hasRight('projet', 'creer')) {
+                    $out .= '<a title="' . $langs->transnoentities('ReloadOppPercent') . '" class="reposition" href="' . $_SERVER['PHP_SELF'] . '?action=reload_opp_percent">';
+                    $out .= dolGetBadge(img_picto('', 'refresh'));
+                    $out .= '</a>';
+                }
+                ?>
+                 <script>
+                        var outJS = <?php echo json_encode($out); ?>;
+
+                        var probCell = $('.liste > tbody > tr.liste_titre').find('th.right').has('a[href*="opp_percent"]');
+
+                        probCell.append(outJS);
+                    </script>
+                <?php
+            }
+        }
+
 
         return 0; // or return 1 to replace standard code
     }
@@ -393,50 +490,113 @@ class ActionsEasycrm
         global $conf, $db, $langs, $object, $user;
 
         // Do something only for the current context
-        if ($parameters['currentcontext'] == 'projectlist') {
-            if (isModEnabled('agenda') && isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
-                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+        if (strpos($parameters['context'], 'projectlist') !== false) {
+            if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 
-                $pictopath = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
-                $picto     = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
-
-                $actiomcomm = new ActionComm($db);
-
-                $filter   = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
+                $picto  = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
+                $filter = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
                 if (is_object($parameters['obj']) && !empty($parameters['obj'])) {
                     if (!empty($parameters['obj']->id)) {
-                        $actiomcomms = $actiomcomm->getActions($parameters['obj']->socid, $parameters['obj']->id, 'project', $filter, 'a.datec');
-                        if (is_array($actiomcomms) && !empty($actiomcomms)) {
-                            $nbActiomcomms  = count($actiomcomms);
-                            $lastActiomcomm = array_shift($actiomcomms);
-                        } else {
-                            $nbActiomcomms = 0;
-                        }
+                        $out = '<td class="tdoverflowmax200">';
+                        if (isModEnabled('agenda')) {
+                            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                            $actionComm = new ActionComm($db);
 
-                        $out = $picto . $langs->trans('CommercialsRelaunching');
-                        $out .= ' <span class="badge badge-info">' . $nbActiomcomms . '</span>';
-                        if ($nbActiomcomms > 0) {
-                            $out .= '<br><span>' . dol_print_date($lastActiomcomm->datec, 'dayhourtext', 'tzuser') . '</span>';
-                            $out .= ' ' . $lastActiomcomm->getNomUrl(1);
+                            $actionComms = $actionComm->getActions($parameters['obj']->socid, $parameters['obj']->id, 'project', $filter, 'a.datec');
+                            if (is_array($actionComms) && !empty($actionComms)) {
+                                $nbActionComms  = count($actionComms);
+                                $lastActionComm = array_shift($actionComms);
+                            } else {
+                                $nbActionComms = 0;
+                            }
+
+                            // @todo is a backward, should be removed one day when corrupted tools repair is added in saturne
+                            if ($parameters['obj']->options_commrelaunch != $nbActionComms) {
+                                $project = new Project($db);
+                                $project->fetch($parameters['obj']->id);
+                                $project->array_options['options_commrelaunch'] = $nbActionComms;
+                                $project->updateExtrafield('commrelaunch');
+                            }
+
+                            if ($nbActionComms == 0) {
+                                $badgeClass = 1;
+                            } else if ($nbActionComms == 1 || $nbActionComms == 2) {
+                                $badgeClass = 4;
+                            } else {
+                                $badgeClass = 8;
+                            }
+
+                            $url = '?socid=' . $parameters['obj']->socid . '&fromtype=project' . '&project_id=' . $parameters['obj']->id . '&action=create&token=' . newToken();
+
+                            $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
+                            // -- Old design --
+                            //$out .= '<span class="badge badge-info" title="' . $langs->trans('CommercialsRelaunching') . '">' . $nbActionComms . '</span> &nbsp';
+                            if ($nbActionComms > 0) {
+                                $out .= '<span> ' . dol_print_date($lastActionComm->datec, '%d/%m/%y %H:%M', 'tzuser') . '</span>';
+                            }
+
+                            // Extrafield commRelaunch
+                            if ($user->hasRight('agenda', 'myactions', 'create')) {
+                                $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $parameters['obj']->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url);
+                                // @todo find somewhere to add a user->conf to choose between popup dialog or open in current tab
+                                //$out .= '<a href="' . dol_buildpath('/easycrm/view/quickevent.php', 1) . $url . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
+                            }
+
+                            if (!empty($lastActionComm)) {
+                                $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $parameters['obj']->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id);
+                                //$out .= '&nbsp' . $lastActionComm->getNomUrl(1);
+                            }
                         }
-                        $url = '?socid=' . $parameters['obj']->socid . '&fromtype=project' . '&project_id=' . $parameters['obj']->id . '&action=create&token=' . newToken();
-                        if ($user->hasRight('agenda', 'myactions', 'create')) {
-                            $out .= '<a href="' . dol_buildpath('/easycrm/view/quickevent.php', 1) . $url . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
+                        $out .= '</td>';
+
+                        // Extrafield commTask
+                        $out2 = '<td class="tdoverflowmax200">';
+                        if (!empty($parameters['obj']->options_commtask)) {
+                            $task = new Task($this->db);
+                            $task->fetch($parameters['obj']->options_commtask);
+                            $out2 .= $task->getNomUrl(1, '', 'task', 1);
                         }
+                        $out2 .= '</td>';
+
+                        // projectField opp_percent
+                        $out3 = '<td class="center"><span data-project_id="'. $parameters['obj']->id . '">';
+                        if (isset($parameters['obj']->opp_percent)) {
+                            switch ($parameters['obj']->opp_percent) {
+                                case $parameters['obj']->opp_percent < 20:
+                                    $statusBadge = 8;
+                                    break;
+                                case $parameters['obj']->opp_percent < 60:
+                                    $statusBadge = 1;
+                                    break;
+                                default:
+                                    $statusBadge = 4;
+                                    break;
+                            }
+                            $out3 .= dolGetBadge($parameters['obj']->opp_percent . ' %', '', 'status' . $statusBadge);
+                        }
+                        $out3 .= '</span></td>';
                     } ?>
                     <script>
-                        var outJS = <?php echo json_encode($out); ?>;
+                        var outJS  = <?php echo json_encode($out); ?>;
+                        var outJS2 = <?php echo json_encode($out2); ?>;
+                        var outJS3 = <?php echo json_encode($out3); ?>;
+
                         var commRelauchCell = $('.liste > tbody > tr.oddeven').find('td[data-key="projet.commrelaunch"]').last();
-                        commRelauchCell.addClass('minwidth300');
-                        commRelauchCell.append(outJS);
+                        var commTaskCell    = $('.liste > tbody > tr.oddeven').find('td[data-key="projet.commtask"]').last();
+                        var probCell        = $('.liste > tbody > tr.oddeven').find("td.right:contains('%')").last();
+
+                        commRelauchCell.replaceWith(outJS);
+                        commTaskCell.replaceWith(outJS2);
+                        probCell.replaceWith(outJS3);
+
                     </script>
                     <?php
                 }
             }
         }
 
-        if (in_array($parameters['currentcontext'], ['invoicelist', 'invoicereclist', 'thirdpartylist'])) {
+        if (preg_match('/invoicelist|invoicereclist|thirdpartylist/', $parameters['context'])) {
             if (isModEnabled('facture') && $user->hasRight('facture', 'lire')) {
                 $extrafieldName = 'options_notation_' . $object->element . '_contact';
                 if ($object->element == 'facturerec') {
@@ -470,9 +630,9 @@ class ActionsEasycrm
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function formConfirm(array $parameters, CommonObject $object): int
+    public function formConfirm(array $parameters, $object): int
     {
-        if ($parameters['currentcontext'] == 'propalcard') {
+        if (strpos($parameters['context'], 'propalcard') !== false) {
             if (empty($object->thirdparty->id)) {
                 $object->fetch_thirdparty();
             }
@@ -491,7 +651,7 @@ class ActionsEasycrm
     {
         global $langs;
 
-        if (in_array($parameters['currentcontext'], ['invoicereccard', 'invoicereccontact'])) {
+        if (preg_match('/invoicereccard|invoicereccontact/', $parameters['context'])) {
             $nbContact = 0;
             // Enable caching of thirdrparty count Contacts
             require_once DOL_DOCUMENT_ROOT . '/core/lib/memory.lib.php';
@@ -520,6 +680,167 @@ class ActionsEasycrm
             $parameters['head'][1][2] = 'contact';
 
             $this->results = $parameters;
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+  /**
+	 * Overloading the addMoreMassActions function
+	 *
+	 * @param   array $parameters Hook metadatas (context, etc...)
+	 * @return  int               < 0 on error, 0 on success, 1 to replace standard code
+	 */
+    public function addMoreMassActions($parameters)
+    {
+        global $user, $langs;
+
+        if (strpos($parameters['context'], 'projectlist') !== false && $user->hasRight('projet', 'creer')) {
+            $selected = '';
+            $ret      = '';
+
+            if (GETPOST('massaction') == 'assignOppStatus') {
+                $selected = ' selected="selected" ';
+            }
+            $ret .= '<option value="assignOppStatus"' . $selected . '>' . $langs->trans('AddAssignOppStatus') . '</option>';
+
+            $this->resprints = $ret;
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the doPreMassActions function
+     *
+     * @param   array $parameters Hook metadatas (context, etc...)
+     * @return  int               < 0 on error, 0 on success, 1 to replace standard code
+     */
+    public function doPreMassActions($parameters)
+    {
+        global $user, $langs;
+
+        $massAction = GETPOST('massaction');
+
+        if (strpos($parameters['context'], 'projectlist') !== false && $user->hasRight('projet', 'creer') && $massAction == 'assignOppStatus') {
+            require_once DOL_DOCUMENT_ROOT . '/core/class/html.formprojet.class.php';
+
+            $formproject = new FormProjets($this->db);
+
+            $out  = '<div style="padding: 10px 0 20px 0;">';
+            $out .= '<fieldset>';
+            $out .= '<legend>' . $langs->trans('SelectOppStatus') . '</legend>';
+            $out .= '<table>';
+
+            $out .= '<tr>';
+            $out .= '<td><label>' . $langs->trans('OpportunityStatus') . '</label></td>';
+            $out .= '<td>' . $formproject->selectOpportunityStatus('opp_status', '', 1, 0, 0, 0, '', 0, 1) . '</td>';
+            $out .= '</tr>';
+
+            $out .= '</table>';
+
+            $out .= '<input type="hidden" name="oppStatus" value="projet" />';
+            $out .= '<input type="hidden" name="massaction" value="assignOppStatus" />';
+
+            $out .= '<div style="margin-top: 20px;">';
+            $out .= '<button class="button" type="submit" name="massaction_confirm" value="assignOppStatus">' . $langs->trans('Apply') . '</button>';
+            $out .= '<button class="button" type="submit" name="massaction" value="">' . $langs->trans('Cancel') . '</button>';
+            $out .= '</div>';
+
+            $out .= '</fieldset>';
+            $out .= '</div>';
+
+            $this->resprints = $out;
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the doMassActions function
+     *
+     * @param  array  $parameters Hook metadatas (context, etc...)
+     * @param  Object $object
+     * @return int                < 0 on error, 0 on success, 1 to replace standard code
+     */
+    public function doMassActions($parameters, $object)
+    {
+        global $user, $langs;
+
+        $massActionConfirm = GETPOST('massaction_confirm');
+        $oppStatus         = GETPOST('opp_status');
+
+        // MASS ACTION
+        if (strpos($parameters['context'], 'projectlist') !== false && $user->hasRight('projet', 'creer') && $massActionConfirm == 'assignOppStatus') {
+
+            $toSelect = $parameters['toselect'];
+
+            if (empty($toSelect)) {
+                $this->error = $langs->trans('ErrorSelectAtLeastOne');
+                return 0;
+            }
+
+            if ($toSelect > 0) {
+                $count = 0;
+                $res   = 0;
+
+                foreach ($toSelect as $selectedId) {
+                    $object->fetch($selectedId);
+                    $object->fk_opp_status = $oppStatus;
+
+                    $res = $object->setValueFrom('fk_opp_status', $oppStatus, 'projet');
+
+                    if ($res <= 0) {
+                        $this->errors[] = $object->errorsToString();
+                        return -1;
+                    } else {
+                        $count++;
+                    }
+                }
+
+                if ($res > 0) {
+                    setEventMessages($langs->trans('OppStatusAssignedTo', $count), []);
+                    header('Location:' . $_SERVER['PHP_SELF']);
+                }
+            }
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the saturneAdminPWAAdditionalConfig function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadatas (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function saturneAdminPWAAdditionalConfig(array $parameters): int
+    {
+        global $langs;
+
+        if (strpos($parameters['context'], 'pwaadmin') !== false) {
+            // PWA configuration
+            $out = load_fiche_titre($langs->trans('Config'), '', '');
+
+            $out .= '<table class="noborder centpercent">';
+            $out .= '<tr class="liste_titre">';
+            $out .= '<td>' . $langs->trans('Parameters') . '</td>';
+            $out .= '<td>' . $langs->trans('Description') . '</td>';
+            $out .= '<td class="center">' . $langs->trans('Status') . '</td>';
+            $out .= '</tr>';
+
+            // PWA close project when probability zero
+            $out .= '<tr class="oddeven"><td>';
+            $out .= $langs->trans('PWACloseProjectOpportunityZero');
+            $out .= '</td><td>';
+            $out .= $langs->trans('PWACloseProjectOpportunityZeroDescription');
+            $out .= '</td><td class="center">';
+            $out .= ajax_constantonoff('EASYCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO');
+            $out .= '</td></tr>';
+
+            $out .= '</table>';
+
+            $this->resprints = $out;
         }
 
         return 0; // or return 1 to replace standard code

@@ -22,7 +22,7 @@ if ($action == 'add') {
 			$thirdparty->client       = GETPOST('client');
 			$thirdparty->name         = GETPOST('name');
 			$thirdparty->phone        = GETPOST('phone', 'alpha');
-			$thirdparty->email        = trim(GETPOST('email_thirdparty', 'custom', 0, FILTER_SANITIZE_EMAIL));
+			$thirdparty->email        = !empty(GETPOST('email_thirdparty', 'custom', 0, FILTER_SANITIZE_EMAIL)) ? trim(GETPOST('email_thirdparty', 'custom', 0, FILTER_SANITIZE_EMAIL)) : 'nomail@nomail.com-' .  dol_print_date(dol_now(), 'dayhourlog');
 			$thirdparty->url          = trim(GETPOST('url', 'custom', 0, FILTER_SANITIZE_URL));
 			$thirdparty->note_private = GETPOST('note_private');
             $thirdparty->country_id   = $mysoc->country_id;
@@ -30,6 +30,16 @@ if ($action == 'add') {
 			$thirdpartyID = $thirdparty->create($user);
 			if ($thirdpartyID > 0) {
 				$backtopage = dol_buildpath('/societe/card.php', 1) . '?id=' . $thirdpartyID;
+
+                // Sales representatives association
+                $salesReps = GETPOST('commercial', 'array');
+                if (count($salesReps) > 0) {
+                    $result = $thirdparty->setSalesRep($salesReps, true);
+                    if ($result < 0) {
+                        setEventMessages($thirdparty->error, $thirdparty->errors, 'errors');
+                        $error++;
+                    }
+                }
 
 				// Category association
 				$categories = GETPOST('categories_customer', 'array');
@@ -40,6 +50,7 @@ if ($action == 'add') {
 						$error++;
 					}
 				}
+
 				if (!empty(GETPOST('lastname', 'alpha'))) {
 					$contact->socid     = !empty($thirdpartyID) ? $thirdpartyID : '';
 					$contact->lastname  = GETPOST('lastname', 'alpha');
@@ -61,10 +72,11 @@ if ($action == 'add') {
 		}
 
 		if (!empty(GETPOST('title'))) {
-            $project->socid      = !empty($thirdpartyID) ? $thirdpartyID : '';
-            $project->ref        = GETPOST('ref');
-            $project->title      = GETPOST('title');
-            $project->opp_status = GETPOST('opp_status', 'int');
+            $project->socid       = !empty($thirdpartyID) ? $thirdpartyID : '';
+            $project->ref         = GETPOST('ref');
+            $project->title       = GETPOST('title');
+            $project->description = GETPOST('description', 'restricthtml'); // Do not use 'alpha' here, we want field as it is
+            $project->opp_status  = GETPOST('opp_status', 'int');
 
             $extrafields->fetch_name_optionals_label($project->table_element);
             $extrafields->setOptionalsFromPost([], $project);

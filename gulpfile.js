@@ -7,17 +7,17 @@ const uglify = require('gulp-uglify');
 const concat = require('gulp-concat');
 
 const paths = {
-	//scss_core: ['css/scss/**/*.scss', 'css/'],
+	scss_core: ['css/scss/**/*.scss', 'css/'],
 	js_backend: ['js/easycrm.js', 'js/modules/*.js']
 };
 
 /** Core */
-// gulp.task('scss_core', function() {
-// 	return gulp.src(paths.scss_core[0])
-// 		.pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
-// 		.pipe(rename('./easycrm.min.css'))
-// 		.pipe(gulp.dest(paths.scss_core[1]));
-// });
+ gulp.task('scss_core', function() {
+ 	return gulp.src(paths.scss_core[0])
+ 		.pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
+ 		.pipe(rename('./easycrm.min.css'))
+ 		.pipe(gulp.dest(paths.scss_core[1]));
+ });
 
 gulp.task('js_backend', function() {
 	return gulp.src(paths.js_backend)
@@ -28,6 +28,6 @@ gulp.task('js_backend', function() {
 
 /** Watch */
 gulp.task('default', function() {
-	//gulp.watch(paths.scss_core[0], gulp.series('scss_core'));
+	gulp.watch(paths.scss_core[0], gulp.series('scss_core'));
 	gulp.watch(paths.js_backend[1], gulp.series('js_backend'));
 });

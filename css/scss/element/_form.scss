@@ -1,0 +1,22 @@
+.quickcreation-frontend form {
+    input, select, textarea {
+      background: #fff;
+    }
+
+    select.widthcentpercentminusx, span.widthcentpercentminusx:not(.select2-selection):not(.select2-dropdown), input.widthcentpercentminusx {
+        width: 100% !important;
+        margin-bottom: 2em;
+
+        .select2-container--default, .select2-selection--multiple {
+            --border-color: var(--form-element-border-color);
+            width: 100%;
+            border:var(--border-width) solid var(--border-color);
+            border-radius:var(--border-radius);
+            outline:0;
+
+            input {
+                margin: 0;
+            }
+        }
+    }
+}
