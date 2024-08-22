@@ -34,6 +34,7 @@ if (file_exists('../easycrm.main.inc.php')) {
 require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php';
+require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 // Load Saturne librairies
 require_once __DIR__ . '/../../saturne/lib/object.lib.php';
@@ -68,6 +69,7 @@ $objectLinked = new $className($db);
 $contact      = new Contact($db);
 $geolocation  = new Geolocation($db);
 $project      = new Project($db);
+$category     = new Categorie($db);
 
 // Initialize view objects
 $form        = new Form($db);
@@ -116,6 +118,8 @@ if (empty($reshook)) {
             $_POST['contactid'] = $contactID;
 
             if ($contactID > 0) {
+                $category->fetch(getDolGlobalInt('EASYCRM_ADDRESS_MAIN_CATEGORY'));
+                $category->add_type($contact);
                 $project->add_contact($contactID, 'PROJECTADDRESS');
                 setEventMessages($langs->trans('ObjectCreated', $langs->trans('Address')), []);
 			} else {
@@ -141,16 +145,20 @@ if (empty($reshook)) {
                 $geolocation->latitude  = $address->lat;
                 $geolocation->longitude = $address->lon;
                 if (empty($geolocation->id)) {
+                    $geolocation->status       = Geolocation::STATUS_GEOLOCATED;
                     $geolocation->element_type = 'contact';
+                    $geolocation->gis          = 'osm';
                     $geolocation->fk_element   = $contactID;
                     $geolocation->create($user);
-                } else {
-                    $geolocation->update($user);
                 }
                 setEventMessages($langs->trans('ObjectModified', $langs->trans('Address')), []);
             } else {
+                $geolocation->status = Geolocation::STATUS_NOTFOUND;
                 setEventMessages($langs->trans('ErrorUpdateAddress'), [], 'errors');
             }
+            $geolocation->update($user);
+            $contact->array_options['options_address_status'] = $geolocation->status;
+            $contact->updateExtraField('address_status');
         }
         header('Location: ' . $_SERVER['PHP_SELF'] . '?from_id=' . $fromId . '&from_type=' . $objectType);
         exit;
@@ -232,7 +240,7 @@ if ($action == 'create' && $fromId > 0) {
     print dol_get_fiche_end();
 
     print $form->buttonsSaveCancel('Create', 'Cancel', [], false, 'wpeo-button');
-} else if ($action == 'edit' && $fromId > 0) {
+} else if ($action == 'edit' && $fromId > 0 && $contactID > 0) {
     $objectLinked->fetch($fromId);
     $contact->fetch($contactID);
 

@@ -112,24 +112,33 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
                 set_notation_object_contact($object);
                 break;
             case 'PROJECT_ADD_CONTACT':
-                require_once __DIR__ . '/../../class/geolocation.class.php';
+                $contactType = getDictionaryValue('c_type_contact', 'code', GETPOST('typecontact'));
 
-                $contactID = GETPOST('contactid');
-                $contact   = new Contact($this->db);
-                $contact->fetch($contactID);
+                if ($contactType == 'PROJECTADDRESS' || empty( GETPOST('typecontact'))) {
+                    require_once __DIR__ . '/../../class/geolocation.class.php';
 
-                if (dol_strlen($contact->address) > 0) {
-                    $geolocation   = new Geolocation($this->db);
-                    $addressesList = $geolocation->getDataFromOSM($contact);
+                    $contactID = GETPOST('contactid');
+                    $contact   = new Contact($this->db);
+                    $contact->fetch($contactID);
 
-                    if (!empty($addressesList)) {
-                        $address = $addressesList[0];
+                    if (dol_strlen($contact->address) > 0) {
+                        $geolocation   = new Geolocation($this->db);
+                        $addressesList = $geolocation->getDataFromOSM($contact);
 
-                        $geolocation->element_type = 'contact';
-                        $geolocation->latitude     = $address->lat;
-                        $geolocation->longitude    = $address->lon;
-                        $geolocation->fk_element   = $contactID;
-                        $geolocation->create($user);
+                        if (!empty($addressesList)) {
+                            $address = $addressesList[0];
+
+                            $geolocation->element_type = 'contact';
+                            $geolocation->gis          = 'osm';
+                            $geolocation->latitude     = $address->lat;
+                            $geolocation->longitude    = $address->lon;
+                            $geolocation->fk_element   = $contactID;
+                            $geolocation->status       = Geolocation::STATUS_GEOLOCATED;
+                            $geolocation->create($user);
+
+                        }
+                        $contact->array_options['options_address_status'] = $geolocation->status;
+                        $contact->updateExtraField('address_status');
                     }
                 }
                 break;

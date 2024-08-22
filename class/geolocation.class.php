@@ -98,17 +98,41 @@ class Geolocation extends SaturneObject
      * @var array  Array with all fields and their property. Do not use it as a static var. It may be modified by constructor.
      */
     public $fields = [
-        'rowid'        => ['type' => 'integer',      'label' => 'TechnicalID', 'enabled' => 1, 'position' => 1,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
-        'latitude'     => ['type' => 'double(24,8)', 'label' => 'Latitude',    'enabled' => 1, 'position' => 10, 'notnull' => 1, 'visible' => 0, 'default' => 0],
-        'longitude'    => ['type' => 'double(24,8)', 'label' => 'Longitude',   'enabled' => 1, 'position' => 20, 'notnull' => 1, 'visible' => 0, 'default' => 0],
-        'element_type' => ['type' => 'varchar(255)', 'label' => 'ElementType', 'enabled' => 1, 'position' => 30, 'notnull' => 1, 'visible' => 0],
-        'fk_element'   => ['type' => 'integer',      'label' => 'FkElement',   'enabled' => 1, 'position' => 40, 'notnull' => 1, 'visible' => 0, 'index' => 1],
+        'rowid'         => ['type' => 'integer',      'label' => 'TechnicalID',      'enabled' => 1, 'position' => 1,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
+        'date_creation' => ['type' => 'datetime',     'label' => 'DateCreation',     'enabled' => 1, 'position' => 10, 'notnull' => 1, 'visible' => 0],
+        'tms'           => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 20, 'notnull' => 1, 'visible' => 0],
+        'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 30, 'notnull' => 1, 'visible' => 0, 'index' => 1, 'default' => 1, 'arrayofkeyval' => [1 => 'NotFound', 2 => 'Geolocated']],
+        'gis'           => ['type' => 'varchar(255)', 'label' => 'GIS',              'enabled' => 1, 'position' => 40, 'notnull' => 1, 'visible' => 0, 'default' => 'osm', 'css' => 'minwidth300 maxwidth300'],
+        'latitude'      => ['type' => 'double(24,8)', 'label' => 'Latitude',         'enabled' => 1, 'position' => 50, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'longitude'     => ['type' => 'double(24,8)', 'label' => 'Longitude',        'enabled' => 1, 'position' => 60, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'element_type'  => ['type' => 'varchar(255)', 'label' => 'ElementType',      'enabled' => 1, 'position' => 70, 'notnull' => 1, 'visible' => 0],
+        'fk_element'    => ['type' => 'integer',      'label' => 'FkElement',        'enabled' => 1, 'position' => 80, 'notnull' => 1, 'visible' => 0, 'index' => 1],
     ];
 
     /**
      * @var int ID
      */
     public int $rowid;
+
+    /**
+     * @var int|string Creation date
+     */
+    public $date_creation;
+
+    /**
+     * @var int|string Timestamp
+     */
+    public $tms;
+
+    /**
+     * @var int Status
+     */
+    public $status;
+
+    /**
+     * @var string GIS
+     */
+    public string $gis = 'osm';
 
     /**
      * @var float Latitude
@@ -129,6 +153,9 @@ class Geolocation extends SaturneObject
      * @var int Fk_element
      */
     public $fk_element;
+
+    public const STATUS_NOTFOUND   = 1;
+    public const STATUS_GEOLOCATED = 2;
 
     /**
      * Constructor
