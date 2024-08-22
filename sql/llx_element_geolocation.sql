@@ -15,12 +15,12 @@
 
 CREATE TABLE llx_element_geolocation(
   rowid           integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  latitude        double(24,8) DEFAULT 0 NOT NULL,
-  longitude       double(24,8) DEFAULT 0 NOT NULL,
-  element_type    varchar(255) NOT NULL,
-  fk_element      integer NOT NULL,
   date_creation   datetime NOT NULL,
   tms             timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   status          integer NOT NULL,
-  gis             varchar(255)
+  gis             varchar(255),
+  latitude        double(24,8) DEFAULT 0 NOT NULL,
+  longitude       double(24,8) DEFAULT 0 NOT NULL,
+  element_type    varchar(255) NOT NULL,
+  fk_element      integer NOT NULL
 ) ENGINE=innodb;

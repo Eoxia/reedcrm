@@ -145,19 +145,19 @@ if (empty($reshook)) {
                 $geolocation->latitude  = $address->lat;
                 $geolocation->longitude = $address->lon;
                 if (empty($geolocation->id)) {
+                    $geolocation->status       = Geolocation::STATUS_GEOLOCATED;
                     $geolocation->element_type = 'contact';
                     $geolocation->gis          = 'osm';
                     $geolocation->fk_element   = $contactID;
                     $geolocation->create($user);
                 }
-                $contact->array_options['options_address_status'] = 1;
                 setEventMessages($langs->trans('ObjectModified', $langs->trans('Address')), []);
             } else {
-                $contact->array_options['options_address_status'] = 0;
-                $geolocation->status                              = Geolocation::STATUS_NOTFOUND;
+                $geolocation->status = Geolocation::STATUS_NOTFOUND;
                 setEventMessages($langs->trans('ErrorUpdateAddress'), [], 'errors');
             }
             $geolocation->update($user);
+            $contact->array_options['options_address_status'] = $geolocation->status;
             $contact->updateExtraField('address_status');
         }
         header('Location: ' . $_SERVER['PHP_SELF'] . '?from_id=' . $fromId . '&from_type=' . $objectType);

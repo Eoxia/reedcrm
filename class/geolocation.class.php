@@ -99,40 +99,20 @@ class Geolocation extends SaturneObject
      */
     public $fields = [
         'rowid'         => ['type' => 'integer',      'label' => 'TechnicalID',      'enabled' => 1, 'position' => 1,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
-        'latitude'      => ['type' => 'double(24,8)', 'label' => 'Latitude',         'enabled' => 1, 'position' => 10, 'notnull' => 1, 'visible' => 0, 'default' => 0],
-        'longitude'     => ['type' => 'double(24,8)', 'label' => 'Longitude',        'enabled' => 1, 'position' => 20, 'notnull' => 1, 'visible' => 0, 'default' => 0],
-        'element_type'  => ['type' => 'varchar(255)', 'label' => 'ElementType',      'enabled' => 1, 'position' => 30, 'notnull' => 1, 'visible' => 0],
-        'fk_element'    => ['type' => 'integer',      'label' => 'FkElement',        'enabled' => 1, 'position' => 40, 'notnull' => 1, 'visible' => 0, 'index' => 1],
-        'date_creation' => ['type' => 'datetime',     'label' => 'DateCreation',     'enabled' => 1, 'position' => 50, 'notnull' => 1, 'visible' => 0],
-        'tms'           => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 60, 'notnull' => 1, 'visible' => 0],
-        'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 70, 'notnull' => 1, 'visible' => 0, 'index' => 1, 'default' => 0, 'arrayofkeyval' => [0 => 'NotFound', 1 => 'Geolocated']],
-        'gis'           => ['type' => 'varchar(255)', 'label' => 'GIS',              'enabled' => 1, 'position' => 80, 'notnull' => 1, 'visible' => 0, 'default' => 'osm', 'css' => 'minwidth300 maxwidth300'],
+        'date_creation' => ['type' => 'datetime',     'label' => 'DateCreation',     'enabled' => 1, 'position' => 10, 'notnull' => 1, 'visible' => 0],
+        'tms'           => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 20, 'notnull' => 1, 'visible' => 0],
+        'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 30, 'notnull' => 1, 'visible' => 0, 'index' => 1, 'default' => 1, 'arrayofkeyval' => [1 => 'NotFound', 2 => 'Geolocated']],
+        'gis'           => ['type' => 'varchar(255)', 'label' => 'GIS',              'enabled' => 1, 'position' => 40, 'notnull' => 1, 'visible' => 0, 'default' => 'osm', 'css' => 'minwidth300 maxwidth300'],
+        'latitude'      => ['type' => 'double(24,8)', 'label' => 'Latitude',         'enabled' => 1, 'position' => 50, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'longitude'     => ['type' => 'double(24,8)', 'label' => 'Longitude',        'enabled' => 1, 'position' => 60, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'element_type'  => ['type' => 'varchar(255)', 'label' => 'ElementType',      'enabled' => 1, 'position' => 70, 'notnull' => 1, 'visible' => 0],
+        'fk_element'    => ['type' => 'integer',      'label' => 'FkElement',        'enabled' => 1, 'position' => 80, 'notnull' => 1, 'visible' => 0, 'index' => 1],
     ];
 
     /**
      * @var int ID
      */
     public int $rowid;
-
-    /**
-     * @var float Latitude
-     */
-    public float $latitude = 0;
-
-    /**
-     * @var float Longitude
-     */
-    public float $longitude = 0;
-
-    /**
-     * @var string Element type
-     */
-    public string $element_type;
-
-    /**
-     * @var int Fk_element
-     */
-    public $fk_element;
 
     /**
      * @var int|string Creation date
@@ -154,8 +134,28 @@ class Geolocation extends SaturneObject
      */
     public string $gis = 'osm';
 
-    public const STATUS_NOTFOUND   = 0;
-    public const STATUS_GEOLOCATED = 1;
+    /**
+     * @var float Latitude
+     */
+    public float $latitude = 0;
+
+    /**
+     * @var float Longitude
+     */
+    public float $longitude = 0;
+
+    /**
+     * @var string Element type
+     */
+    public string $element_type;
+
+    /**
+     * @var int Fk_element
+     */
+    public $fk_element;
+
+    public const STATUS_NOTFOUND   = 1;
+    public const STATUS_GEOLOCATED = 2;
 
     /**
      * Constructor

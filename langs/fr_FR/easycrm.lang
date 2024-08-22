@@ -136,8 +136,7 @@ AddressesList                = Liste des adresses
 ProjectAddress               = Adresse du projet
 AddressStatus                = Statut adresse
 Geolocated                   = Géolocalisé
-NotGeolocated                = Non géolocalisé
-NotAnAddress                 = Pas une addresse
+NotFound                     = Non géolocalisé
 
 #
 # Geolocation - Géolocalisation

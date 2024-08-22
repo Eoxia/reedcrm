@@ -14,7 +14,7 @@
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
 -- 1.5.0
-ALTER TABLE `llx_element_geolocation` ADD `gis` varchar(255) DEFAULT 'osm' AFTER `fk_element`;
-ALTER TABLE `llx_element_geolocation` ADD `status` integer NOT NULL AFTER `fk_element`;
-ALTER TABLE `llx_element_geolocation` ADD `tms` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `fk_element`;
-ALTER TABLE `llx_element_geolocation` ADD `date_creation` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `fk_element`;
+ALTER TABLE `llx_element_geolocation` ADD `gis` varchar(255) DEFAULT 'osm' AFTER `rowid`;
+ALTER TABLE `llx_element_geolocation` ADD `status` integer NOT NULL AFTER `rowid`;
+ALTER TABLE `llx_element_geolocation` ADD `tms` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `rowid`;
+ALTER TABLE `llx_element_geolocation` ADD `date_creation` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `rowid`;

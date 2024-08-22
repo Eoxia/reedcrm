@@ -128,7 +128,6 @@ class modEasyCRM extends DolibarrModules
                 'invoicelist',
                 'invoicecard',
                 'contactcard',
-                'contactlist',
                 'thirdpartycard',
                 'thirdpartylist',
                 'main',
@@ -564,8 +563,8 @@ class modEasyCRM extends DolibarrModules
         $extrafields->addExtraField('notation_facturerec_contact', 'NotationObjectContact', 'text', 100, '', 'facture_rec', 0, 0, '', '', '', '', 5, 'NotationObjectContactHelp', '', 0, 'easycrm@easycrm', 1, 0, 0, ['csslist' => 'center']);
 
         // Contact extrafields
-        $extrafields->update('address_status', $langs->transnoentities('AddressStatus'), 'int', '', 'contact', 0, 0, 100, '', 0, '', 5);
-        $extrafields->addExtraField('address_status', $langs->transnoentities('AddressStatus'), 'int', 100, '', 'contact', 0, 0, '', '', 0, '', 5);
+        $extrafields->update('address_status', 'AddressStatus', 'select', '', 'contact', 0, 0, 100, 'a:1:{s:7:"options";a:2:{i:1;s:8:"NotFound";i:2;s:10:"Geolocated";}}', 0, '', 5, '', '', '', '', 'easycrm@easycrm');
+        $extrafields->addExtraField('address_status', 'AddressStatus', 'select', 100, '', 'contact', 0, 0, '', 'a:1:{s:7:"options";a:2:{i:1;s:8:"NotFound";i:2;s:10:"Geolocated";}}', 0, '', 5, '', '', '', 'easycrm@easycrm');
 
         if (is_array($objectsMetadata) && !empty($objectsMetadata)) {
             foreach ($objectsMetadata as $objectType => $objectMetadata) {
@@ -619,9 +618,9 @@ class modEasyCRM extends DolibarrModules
                     $geolocation->fk_element   = $contactID;
                     $geolocation->gis          = 'osm';
                     if ($address->latitude <= 0 && $address->longitude <= 0) {
-                        $geolocation->status = 0;
+                        $geolocation->status = Geolocation::STATUS_NOTFOUND;
                     } else {
-                        $geolocation->status = 1;
+                        $geolocation->status = Geolocation::STATUS_GEOLOCATED;
                     }
 
                     $contact->array_options['options_address_status'] = $geolocation->status;
