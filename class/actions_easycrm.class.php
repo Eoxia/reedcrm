@@ -432,6 +432,19 @@ class ActionsEasycrm
                     jQuery('#roles').before(<?php echo json_encode($out); ?>);
                 </script>
                 <?php
+            } elseif (isModEnabled('societe') && $user->hasRight('societe', 'lire') && isModEnabled('saturne')) {
+                require_once __DIR__ . '/geolocation.class.php';
+
+                $geolocation = new Geolocation($db);
+
+                $status = is_null($object->array_options['options_address_status']) ? 'NotAnAddress' : $geolocation->fields['status']['arrayofkeyval'][$object->array_options['options_address_status']];
+
+                $out = '<td>' . $langs->trans($status) . '</td>';
+                ?>
+                <script>
+                    jQuery('.valuefield.contact_extras_address_status').replaceWith(<?php echo json_encode($out); ?>)
+                </script>
+                <?php
             }
         }
 
@@ -630,6 +643,23 @@ class ActionsEasycrm
                     var outJS         = <?php echo json_encode($out); ?>;
                     var cell          = $('.liste > tbody > tr.oddeven').find('td[data-key="' + objectElement + '"]').last();
                     cell.html(outJS);
+                </script>
+                <?php
+            }
+        }
+
+        if (strpos($parameters['context'], 'contactlist') !== false) {
+            if (isModEnabled('societe') && $user->hasRight('societe', 'lire') && isModEnabled('saturne')) {
+                require_once __DIR__ . '/geolocation.class.php';
+
+                $geolocation = new Geolocation($db);
+
+                $status = is_null($parameters['obj']->options_address_status) ? 'NotAnAddress' : $geolocation->fields['status']['arrayofkeyval'][$parameters['obj']->options_address_status];
+
+                $out = '<td class="center">' . $langs->trans($status) . '</td>';
+                ?>
+                <script>
+                    jQuery('[data-key="socpeople.address_status"]').replaceWith(<?php echo json_encode($out); ?>)
                 </script>
                 <?php
             }

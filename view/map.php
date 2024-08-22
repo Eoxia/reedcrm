@@ -69,6 +69,7 @@ $className    = $objectInfos['class_name'];
 $objectLinked = new $className($db);
 $geolocation  = new Geolocation($db);
 $project      = new Project($db);
+$contact      = new Contact($db);
 
 // Initialize view objects
 $form        = new Form($db);
@@ -214,13 +215,23 @@ if ($filterId > 0) {
 
 if (is_array($contacts) && !empty($contacts)) {
     foreach($contacts as $contactSingle) {
+        $geolocation = new Geolocation($db);
+
         if (is_object($contactSingle)) {
             $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle->id);
+            $contactName    = $contactSingle->lastname;
+            $contactAddress = $contactSingle->address;
         } else if (is_array($contactSingle) && $contactSingle['code'] == 'PROJECTADDRESS') {
             $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle['id']);
+            $contact->fetch($contactSingle['id']);
+            $contactName    = $contact->lastname;
+            $contactAddress = $contact->address;
         }
         if ($geolocation->latitude > 0 && $geolocation->longitude > 0) {
-            $geolocations[] = clone $geolocation;
+            // We fill temporarily geolocation with contact data to use them in the description afterward
+            $geolocation->address_name = $contactName;
+            $geolocation->tmp_address  = $contactAddress;
+            $geolocations[]            = $geolocation;
         }
     }
 }
@@ -228,23 +239,29 @@ if (is_array($contacts) && !empty($contacts)) {
 if (is_array($geolocations) && !empty($geolocations)) {
     foreach($geolocations as $geolocation) {
         $geolocation->convertCoordinates();
-        $objectLinked->fetch($filterId);
+        $result = $objectLinked->fetch($fromId);
+        if ($result <= 0) {
+            $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => ' ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
+            $objectLinked = array_shift($projects);
+        }
 
-        if ((!empty($filterId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status))) {
+        if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status))) {
             continue;
         }
 
-        $objectLinkedInfo  = $objectLinked->getNomUrl(1, '', 0, '', ' - ', 1) . '</br>';
-        $objectLinkedInfo .= $langs->transnoentities('ProjectLabel') . ' : ' . $objectLinked->title . '</br>';
-        $objectLinkedInfo .= $langs->transnoentities('Description') . ' : ' . $objectLinked->description . '</br>';
+        $objectLinkedInfo  = '<b>' . $langs->transnoentities('Name') . '</b> : ' . $geolocation->address_name . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Address') . '</b> : ' . $geolocation->tmp_address . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Project') . '</b> : ' .  $objectLinked->getNomUrl(1, '', 0, '', ' - ', 1) . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('ProjectLabel') . '</b> : ' . $objectLinked->title . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Description') . '</b> : ' . $objectLinked->description . '<br>';
         $code = dol_getIdFromCode($db, $objectLinked->opp_status, 'c_lead_status', 'rowid', 'code');
         if ($code) {
-            $objectLinkedInfo .= $langs->transnoentities('OpportunityStatus')  . ' : ' . $langs->trans('OppStatus' . $code) . '</br>';
+            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityStatus')  . '</b> : ' . $langs->trans('OppStatus' . $code) . '<br>';
         }
         if (strcmp($objectLinked->opp_amount, '')) {
-            $objectLinkedInfo .= $langs->transnoentities('OpportunityAmount') . ' : ' . price($objectLinked->opp_amount, 0, $langs, 1, 0, -1, $conf->currency) . '</br>';
+            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityAmount') . '</b> : ' . price($objectLinked->opp_amount, 0, $langs, 1, 0, -1, $conf->currency) . '<br>';
             if (strcmp($objectLinked->opp_percent, '')) {
-                $objectLinkedInfo .= $langs->transnoentities('OpportunityWeightedAmountShort')  . ' : ' . price($objectLinked->opp_amount * $objectLinked->opp_percent / 100, 0, $langs, 1, 0, -1, $conf->currency);
+                $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityWeightedAmountShort')  . '</b> : ' . price($objectLinked->opp_amount * $objectLinked->opp_percent / 100, 0, $langs, 1, 0, -1, $conf->currency);
             }
         }
 
