@@ -156,9 +156,11 @@ if (empty($reshook)) {
                 $geolocation->status = Geolocation::STATUS_NOTFOUND;
                 setEventMessages($langs->trans('ErrorUpdateAddress'), [], 'errors');
             }
-            $geolocation->update($user);
-            $contact->array_options['options_address_status'] = $geolocation->status;
-            $contact->updateExtraField('address_status');
+            if ($geolocation->id > 0) {
+                $geolocation->update($user);
+                $contact->array_options['options_address_status'] = $geolocation->status;
+                $contact->updateExtraField('address_status');
+            }
         }
         header('Location: ' . $_SERVER['PHP_SELF'] . '?from_id=' . $fromId . '&from_type=' . $objectType);
         exit;
