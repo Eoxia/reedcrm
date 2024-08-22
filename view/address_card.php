@@ -144,8 +144,8 @@ if (empty($reshook)) {
 
                 $geolocation->latitude  = $address->lat;
                 $geolocation->longitude = $address->lon;
+                $geolocation->status    = Geolocation::STATUS_GEOLOCATED;
                 if (empty($geolocation->id)) {
-                    $geolocation->status       = Geolocation::STATUS_GEOLOCATED;
                     $geolocation->element_type = 'contact';
                     $geolocation->gis          = 'osm';
                     $geolocation->fk_element   = $contactID;
