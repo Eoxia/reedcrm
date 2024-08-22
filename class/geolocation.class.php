@@ -147,7 +147,7 @@ class Geolocation extends SaturneObject
     /**
      * @var string Element type
      */
-    public string $element_type;
+    public string $element_type = 'contact';
 
     /**
      * @var int Fk_element

@@ -136,6 +136,9 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
                             $geolocation->status       = Geolocation::STATUS_GEOLOCATED;
                             $geolocation->create($user);
 
+                        } else {
+                            $geolocation->status = Geolocation::STATUS_NOTFOUND;
+                            $geolocation->create($user);
                         }
                         $contact->array_options['options_address_status'] = $geolocation->status;
                         $contact->updateExtraField('address_status');
