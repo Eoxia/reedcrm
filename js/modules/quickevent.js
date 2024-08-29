@@ -23,12 +23,12 @@
  */
 
 /**
- * Init quickcreation JS
+ * Init quickevent JS
  *
  * @memberof EasyCRM_QuickEvent
  *
- * @since   1.3.0
- * @version 1.3.0
+ * @since   1.5.0
+ * @version 1.5.0
  *
  * @type {Object}
  */
@@ -39,8 +39,8 @@ window.easycrm.quickevent = {};
  *
  * @memberof EasyCRM_QuickEvent
  *
- * @since   1.3.0
- * @version 1.3.0
+ * @since   1.5.0
+ * @version 1.5.0
  *
  * @returns {void}
  */
@@ -53,8 +53,8 @@ window.easycrm.quickevent.init = function() {
  *
  * @memberof EasyCRM_QuickEvent
  *
- * @since   1.3.0
- * @version 1.3.0
+ * @since   1.5.0
+ * @version 1.5.0
  *
  * @returns {void}
  */
@@ -67,8 +67,8 @@ window.easycrm.quickevent.event = function() {
  *
  * @memberof EasyCRM_QuickEvent
  *
- * @since   1.3.0
- * @version 1.3.0
+ * @since   1.5.0
+ * @version 1.5.0
  *
  * @returns {void}
  */
