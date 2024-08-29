@@ -83,6 +83,7 @@ if ($action == 'set_config') {
     $timespent                = GETPOST('timespent');
     $typeEvent                = GETPOST('actioncode');
     $statusEvent              = (GETPOST('status') == 'NA' ? -1 : GETPOST('status'));
+    $quickEventLabelLength    = GETPOST('quick_event_label_length');
 
     if (!empty($projectOpportunityStatus)) {
         dolibarr_set_const($db, 'EASYCRM_PROJECT_OPPORTUNITY_STATUS_VALUE', $projectOpportunityStatus, 'integer', 0, '', $conf->entity);
@@ -101,6 +102,9 @@ if ($action == 'set_config') {
     }
     if (!empty($typeEvent)) {
         dolibarr_set_const($db, 'EASYCRM_EVENT_TYPE_CODE_VALUE', $typeEvent, 'chaine', 0, '', $conf->entity);
+    }
+    if (!empty($quickEventLabelLength)) {
+        dolibarr_set_const($db, 'EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE', $quickEventLabelLength, 'integer', 0, '', $conf->entity);
     }
     dolibarr_set_const($db, 'EASYCRM_EVENT_STATUS_VALUE', $statusEvent, 'integer', 0, '', $conf->entity);
 
@@ -460,6 +464,18 @@ print '</td>';
 print '<td class="center">';
 //print ajax_constantonoff('EASYCRM_EVENT_LABEL_VISIBLE');
 print '</td></td><td></td></tr>';
+
+// LabelLength
+print '<tr class="oddeven"><td>';
+print $langs->trans('LabelLength');
+print '</td><td>';
+print $langs->trans('ProjectLabelMaxLength');
+
+print '<td class="center"></td>';
+
+print '<td><input type="number" name="quick_event_label_length" class="minwidth200" value="' . (getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') ?? 128 ) . '" min="1" max="128"></td>';
+
+print '</tr>';
 
 // Date start
 print '<tr class="oddeven"><td>';
