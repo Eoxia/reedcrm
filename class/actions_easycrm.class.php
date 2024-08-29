@@ -296,16 +296,17 @@ class ActionsEasycrm
 
         // Do something only for the current context
         if (preg_match('/thirdpartycomm|projectcard/', $parameters['context'])) {
+            $pictoPath = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
+            $pictoMod  = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
+
             if (isModEnabled('agenda')) {
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
-                $pictopath = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
-                $picto     = img_picto('', $pictopath, '', 1, 0, 0, '', 'pictoModule');
-
                 $actionComm = new ActionComm($db);
+                $socid      = (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
 
-                $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
-                $actionComms = $actionComm->getActions(GETPOST('socid'), ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : GETPOST('id')), ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : 'project'), $filter, 'a.datec');
+                $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . getDolGlobalInt('EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') . ')';
+                $actionComms = $actionComm->getActions($socid, ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : GETPOST('id')), ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : 'project'), $filter, 'a.datec');
                 if (is_array($actionComms) && !empty($actionComms)) {
                     $nbActionComms  = count($actionComms);
                     $lastActionComm = array_shift($actionComms);
@@ -321,8 +322,8 @@ class ActionsEasycrm
                     $badgeClass = 8;
                 }
 
-                $url = '?socid=' . $object->socid . '&fromtype=project' . '&project_id=' . $object->id . '&action=create&token=' . newToken();
-                $out = '<tr><td class="titlefield">' . $picto . $langs->trans('CommercialsRelaunching') . '</td>';
+                $url = '?socid=' . $socid . (strpos($_SERVER['PHP_SELF'], 'projet') ? '&fromtype=project' . '&project_id=' . $object->id : '') . '&action=create&token=' . newToken();
+                $out = '<tr><td class="titlefield">' . $pictoMod . $langs->trans('CommercialsRelaunching') . '</td>';
 
                 $picto = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
 
@@ -343,6 +344,22 @@ class ActionsEasycrm
                     jQuery('.tableforfield').last().append(<?php echo json_encode($out); ?>)
                 </script>
                 <?php
+            }
+
+            if (!empty($object->array_options['options_projectaddress'])) {
+                $contact = new Contact($db);
+                $result  = $contact->fetch($object->array_options['options_projectaddress']);
+                if ($result > 0) {
+                    $pictoContact = img_picto('', 'contact', 'class="pictofixedwidth"') . $contact->lastname;
+                    $outAddress = '<td>';
+                    $outAddress .= dolButtonToOpenUrlInDialogPopup('address' . $result, $langs->transnoentities('FavoriteAddress'), $pictoContact, '/contact/card.php?id='. $contact->id);
+                    $outAddress .= '</td></tr>';
+                    ?>
+                    <script>
+                        jQuery('.valuefield.project_extras_projectaddress').replaceWith(<?php echo json_encode($outAddress); ?>)
+                    </script>
+                    <?php
+                }
             }
         }
 

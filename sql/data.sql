@@ -54,3 +54,6 @@ DELETE FROM llx_c_actioncomm WHERE code = 'AC_PHYSICAL_SALES_RELAUCH';
 INSERT INTO llx_overwrite_trans (entity, lang, transkey, transvalue) VALUES (0, 'fr_FR', 'ActionAC_EMAIL_IN', 'Email entrant');
 INSERT INTO llx_overwrite_trans (entity, lang, transkey, transvalue) VALUES (0, 'fr_FR', 'ActionAC_EMAIL', 'Email sortant');
 INSERT INTO llx_overwrite_trans (entity, lang, transkey, transvalue) VALUES (0, 'fr_FR', 'ActionAC_RDV', 'Rendez-vous physique ou visioconférence');
+
+-- 1.5.0
+INSERT INTO llx_c_type_contact (element, source, code, libelle, active, module, position) VALUES('project', 'external', 'PROJECTADDRESS', 'ProjectAddress', 1, 'easycrm', 1);

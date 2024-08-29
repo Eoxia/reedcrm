@@ -77,8 +77,8 @@ global $conf, $moduleNameLowerCase, $langs;
 // Initialize technical objects
 $manifest = new stdClass();
 
-$manifest->short_name = 'EasyCRM';
-$manifest->name       = 'EasyCRM';
+$manifest->short_name = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-EasyCRM';
+$manifest->name       = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-EasyCRM';
 $manifest->icons      = [];
 
 $img               = new stdClass();

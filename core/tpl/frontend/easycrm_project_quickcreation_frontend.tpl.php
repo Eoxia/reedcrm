@@ -38,7 +38,9 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
 <!-- File start-->
 <div class="project-container">
     <div class="page-header">
-        <div class="page-title"><?php echo $langs->trans('Lead'); ?></div>
+        <div class="page-title"><?php echo $langs->trans('Lead'); ?></div> <?php
+        $backToMap = img_picto('map', 'fontawesome_map-marked-alt_fas_#ffffff') . ' ' . img_picto('back', 'fontawesome_arrow-right_fas_#ffffff');
+        print '<a class="wpeo-button" href="' . dol_buildpath('custom/easycrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
     </div>
 
     <div class="page-content">

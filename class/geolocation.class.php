@@ -51,6 +51,11 @@ class Geolocation extends SaturneObject
     public $ismultientitymanaged = 0;
 
     /**
+     * @var int  Does object support extrafields ? 0=No, 1=Yes
+     */
+    public $isextrafieldmanaged = 0;
+
+    /**
      * 'type' field format:
      *      'integer', 'integer:ObjectClass:PathToClass[:AddCreateButtonOrNot[:Filter[:Sortfield]]]',
      *      'select' (list of values are in 'options'),
@@ -93,17 +98,41 @@ class Geolocation extends SaturneObject
      * @var array  Array with all fields and their property. Do not use it as a static var. It may be modified by constructor.
      */
     public $fields = [
-        'rowid'        => ['type' => 'integer',      'label' => 'TechnicalID', 'enabled' => 1, 'position' => 1,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
-        'latitude'     => ['type' => 'double(24,8)', 'label' => 'Latitude',    'enabled' => 1, 'position' => 10, 'notnull' => 1, 'visible' => 0, 'default' => 0],
-        'longitude'    => ['type' => 'double(24,8)', 'label' => 'Longitude',   'enabled' => 1, 'position' => 20, 'notnull' => 1, 'visible' => 0, 'default' => 0],
-        'element_type' => ['type' => 'varchar(255)', 'label' => 'ElementType', 'enabled' => 1, 'position' => 30, 'notnull' => 1, 'visible' => 0],
-        'fk_element'   => ['type' => 'integer',      'label' => 'FkElement',   'enabled' => 1, 'position' => 40, 'notnull' => 1, 'visible' => 0, 'index' => 1],
+        'rowid'         => ['type' => 'integer',      'label' => 'TechnicalID',      'enabled' => 1, 'position' => 1,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1, 'comment' => 'Id'],
+        'date_creation' => ['type' => 'datetime',     'label' => 'DateCreation',     'enabled' => 1, 'position' => 10, 'notnull' => 1, 'visible' => 0],
+        'tms'           => ['type' => 'timestamp',    'label' => 'DateModification', 'enabled' => 1, 'position' => 20, 'notnull' => 1, 'visible' => 0],
+        'status'        => ['type' => 'smallint',     'label' => 'Status',           'enabled' => 1, 'position' => 30, 'notnull' => 1, 'visible' => 0, 'index' => 1, 'default' => 1, 'arrayofkeyval' => [1 => 'NotFound', 2 => 'Geolocated']],
+        'gis'           => ['type' => 'varchar(255)', 'label' => 'GIS',              'enabled' => 1, 'position' => 40, 'notnull' => 1, 'visible' => 0, 'default' => 'osm', 'css' => 'minwidth300 maxwidth300'],
+        'latitude'      => ['type' => 'double(24,8)', 'label' => 'Latitude',         'enabled' => 1, 'position' => 50, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'longitude'     => ['type' => 'double(24,8)', 'label' => 'Longitude',        'enabled' => 1, 'position' => 60, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'element_type'  => ['type' => 'varchar(255)', 'label' => 'ElementType',      'enabled' => 1, 'position' => 70, 'notnull' => 1, 'visible' => 0],
+        'fk_element'    => ['type' => 'integer',      'label' => 'FkElement',        'enabled' => 1, 'position' => 80, 'notnull' => 1, 'visible' => 0, 'index' => 1],
     ];
 
     /**
      * @var int ID
      */
     public int $rowid;
+
+    /**
+     * @var int|string Creation date
+     */
+    public $date_creation;
+
+    /**
+     * @var int|string Timestamp
+     */
+    public $tms;
+
+    /**
+     * @var int Status
+     */
+    public $status;
+
+    /**
+     * @var string GIS
+     */
+    public string $gis = 'osm';
 
     /**
      * @var float Latitude
@@ -118,12 +147,15 @@ class Geolocation extends SaturneObject
     /**
      * @var string Element type
      */
-    public string $element_type;
+    public string $element_type = 'contact';
 
     /**
      * @var int Fk_element
      */
     public $fk_element;
+
+    public const STATUS_NOTFOUND   = 1;
+    public const STATUS_GEOLOCATED = 2;
 
     /**
      * Constructor
@@ -186,5 +218,46 @@ class Geolocation extends SaturneObject
         }
 
         return $error > 0 ? -1 : 0;
+    }
+
+    /**
+     * Get data from OpenStreetMap API with an address
+     *
+     * @param  Object $contact Object contact/address to get the geolocation from
+     * @return array           Empty array if KO, filled if OK
+     */
+    public function getDataFromOSM($contact): array
+    {
+        global $langs, $user;
+
+        $parameters = (dol_strlen($contact->address) > 0 ? $contact->address : '');
+        $parameters = dol_sanitizeFileName($parameters);
+        $parameters = str_replace(' ', '+', $parameters);
+
+        $context  = stream_context_create(["http" => ["header" => "Referer:" . $_SERVER['HTTP_REFERER']]]);
+        $response = file_get_contents('https://nominatim.openstreetmap.org/search?q='. $parameters .'&format=json&polygon=1&addressdetails=1', false, $context);
+        $data     = json_decode($response, false);
+
+        if (is_array($data) && !empty($data)) {
+            $address = $data[0];
+            if (!empty($address->address->postcode)) {
+                $contact->zip = strval($address->address->postcode);
+            }
+            if (!empty($address->address->city)) {
+                $contact->town = $address->address->city;
+            }
+            if (!empty($address->address->country_code)) {
+                $countryID = getCountry(dol_strtoupper($address->address->country_code),3);
+                if ($countryID > 0) {
+                    $contact->country_id = $countryID;
+                }
+            }
+            $contact->update($contact->id, $user);
+
+            return $data;
+        } else {
+            $this->errors[] = $langs->trans('CouldntFindDataOnOSM');
+            return [];
+        }
     }
 }

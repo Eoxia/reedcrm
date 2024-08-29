@@ -1,0 +1,61 @@
+// ol is from ol library open layers
+
+.ol-popup {
+  position: absolute;
+  background-color: white;
+  -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #cccccc;
+  bottom: 12px;
+  left: -50px;
+  min-width: 280px;
+
+  &:after, &:before {
+    top: 100%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+    left: 48px;
+  }
+
+  &:after {
+    border-top-color: white;
+    border-width: 10px;
+    margin-left: -10px;
+  }
+
+  &:before {
+    border-top-color: #cccccc;
+    border-width: 11px;
+    margin-left: -11px;
+  }
+}
+
+.ol-popup-closer {
+  text-decoration: none;
+  position: absolute;
+  top: 2px;
+  right: 8px;
+
+  &:after {
+    content: "✖";
+  }
+}
+
+.geolocate-button {
+  position: absolute;
+  bottom: 180px;
+  right: 20px;
+  padding: 8px 10px;
+  border: solid #007BFF;
+  color: white;
+  border-radius: 100px;
+  cursor: pointer;
+  z-index: 1000;
+  background: #D3D3D3;
+}

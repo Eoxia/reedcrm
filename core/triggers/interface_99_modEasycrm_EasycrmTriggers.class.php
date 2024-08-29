@@ -49,7 +49,7 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'EasyCRM triggers';
-        $this->version     = '1.4.0';
+        $this->version     = '1.5.0';
         $this->picto       = 'easycrm@easycrm';
     }
 
@@ -111,6 +111,40 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
                 $object->fetch($object->id);
                 set_notation_object_contact($object);
                 break;
+            case 'PROJECT_ADD_CONTACT':
+                $contactType = getDictionaryValue('c_type_contact', 'code', GETPOST('typecontact'));
+
+                if ($contactType == 'PROJECTADDRESS' || empty( GETPOST('typecontact'))) {
+                    require_once __DIR__ . '/../../class/geolocation.class.php';
+
+                    $contactID = GETPOST('contactid');
+                    $contact   = new Contact($this->db);
+                    $contact->fetch($contactID);
+
+                    if (dol_strlen($contact->address) > 0) {
+                        $geolocation   = new Geolocation($this->db);
+                        $addressesList = $geolocation->getDataFromOSM($contact);
+
+                        if (!empty($addressesList)) {
+                            $address = $addressesList[0];
+
+                            $geolocation->element_type = 'contact';
+                            $geolocation->gis          = 'osm';
+                            $geolocation->latitude     = $address->lat;
+                            $geolocation->longitude    = $address->lon;
+                            $geolocation->fk_element   = $contactID;
+                            $geolocation->status       = Geolocation::STATUS_GEOLOCATED;
+                            $geolocation->create($user);
+
+                        } else {
+                            $geolocation->status = Geolocation::STATUS_NOTFOUND;
+                            $geolocation->create($user);
+                        }
+                        $contact->array_options['options_address_status'] = $geolocation->status;
+                        $contact->updateExtraField('address_status');
+                    }
+                }
+                break;
             case 'FACTURE_ADD_CONTACT' :
                 $actioncomm->elementtype = $object->element;
                 $actioncomm->code        = 'AC_' . strtoupper($object->element) . '_ADD_CONTACT';
@@ -149,6 +183,13 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
                             return -1;
                         }
                     }
+                }
+                break;
+            case 'PROPAL_CLOSE_SIGNED':
+            case 'PROPAL_CLOSE_REFUSED':
+                $actioncomm->fetch($_SESSION['LAST_ACTION_CREATED']);
+                if ($actioncomm->id > 0 && $actioncomm->elementtype == 'propal' && !empty(GETPOST('note_private'))) {
+                    $actioncomm->setValueFrom('note', GETPOST('note_private', 'alpha'), '', null, '', 'id');
                 }
                 break;
         }

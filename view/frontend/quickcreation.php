@@ -41,7 +41,7 @@ if (isModEnabled('categorie')) {
 }
 
 // load EasyCRM libraries
-require_once __DIR__ . '/../../class/geolocation.php';
+require_once __DIR__ . '/../../class/geolocation.class.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;

@@ -3,6 +3,9 @@
     padding: 2rem 1rem 0rem 1rem;
     border-bottom: 2px solid #D8D8D8;
     height: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     .page-title {
         font-weight: 700;

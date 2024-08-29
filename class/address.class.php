@@ -286,9 +286,10 @@ class Address extends SaturneObject
         $region         = is_array($regionAndState) && !empty($regionAndState['region']) ? $regionAndState['region'] : '';
         $state          = is_array($regionAndState) && !empty($regionAndState['label']) ? $regionAndState['label'] : '';
         $parameters     = (dol_strlen($country) > 0 ? $country . ',+' : '') . (dol_strlen($region) > 0 ? $region . ',+' : '') . (dol_strlen($state) > 0 ? $state . ',+' : '') . (dol_strlen($this->town) > 0 ? $this->town . ',+' : '') . (dol_strlen($this->zip) > 0 ? $this->zip . ',+' : '') . (dol_strlen($this->address) > 0 ? $this->address : '');
+        $parameters     = dol_sanitizeFileName($parameters);
         $parameters     = str_replace(' ', '+', $parameters);
 
-        $context  = stream_context_create(["http" => ["header" => "User-Agent:" . $_SERVER['HTTP_USER_AGENT']]]);
+        $context  = stream_context_create(["http" => ["header" => "Referer:" . $_SERVER['HTTP_REFERER']]]);
         $response = file_get_contents('https://nominatim.openstreetmap.org/search?q='. $parameters .'&format=json&polygon=1&addressdetails=1', false, $context);
         $data     = json_decode($response, false);
 
@@ -425,72 +426,5 @@ class Address extends SaturneObject
 
         return dolGetStatus($this->labelStatus[$status], $this->labelStatusShort[$status], '', $statusType, $mode);
     }
-
-    /**
-     * Fetch addresses in database with parent ID
-     *
-     * @param  int           $element_id   ID of object linked
-     * @param  string        $element_type Type of object
-     * @param  string        $morefilter   Filter
-     * @return array|integer
-     * @throws Exception
-     */
-    public function fetchAddresses(int $element_id, string $element_type, string $morefilter = '1 = 1')
-    {
-        $filter = ['customsql' => 'element_id=' . $element_id . ' AND ' . $morefilter . ' AND element_type="' . $element_type . '"' . ' AND status >= 0'];
-        return parent::fetchAll('', '', 0, 0, $filter);
-    }
-
-    /**
-     * Convert longitude and latitude format WGS 84 (EPSG:4326) to Web Mercator (EPSG:3857)
-     *
-     * @return object
-     */
-    public function convertCoordinates()
-    {
-        $convertFactor   = 6378137.0;
-        $longitude       = $this->longitude / 180 * pi();
-        $latitude        = $this->latitude / 180 * pi();
-        $this->longitude = $convertFactor * $longitude;
-        $this->latitude  = $convertFactor * log(tan(pi() / 4 + $latitude / 2));
-
-        return $this;
-    }
-
-    /**
-     * Inject map features
-     *
-     * @param  array $features   array of features: id, description, color, longitude, latitude
-     * @param  int   $chunkSize size of chunk
-     * @param  int   $deep
-     * @return int
-     */
-    public function injectMapFeatures(array $features, int $chunkSize, int $deep = 0): int
-    {
-        $error = 0;
-
-        if (!empty($features)) {
-            $bulkFeatures = array_chunk($features, $chunkSize);
-            foreach ($bulkFeatures as $bulk) {
-                $encodedBulk = json_encode($bulk);
-                if (!empty($encodedBulk)) {
-                    print "geojsonMarkers.features = $.merge(geojsonMarkers.features, $encodedBulk);\n";
-                } else {
-                    if ($chunkSize > 1) {
-                        $result = $this->injectMapFeatures($bulk, floor($chunkSize / 2), $deep + 1);
-                        $result < 0 ? $error++ : '';
-                    } else {
-                        ob_start();
-                        print_r($bulk);
-                        $content = ob_get_contents();
-                        ob_clean();
-                        print "console.error('Map: Error encode json map feature, data:', '" . dol_escape_js($content, 1) . "');\n";
-                        $error++;
-                    }
-                }
-            }
-        }
-
-        return $error > 0 ? -1 : 0;
-    }
 }
+

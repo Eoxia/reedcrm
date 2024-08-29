@@ -43,7 +43,7 @@ if (isModEnabled('categorie')) {
 require_once __DIR__ . '/../../saturne/lib/object.lib.php';
 
 // Load EasyCRM librairies
-require_once __DIR__ . '/../class/geolocation.php';
+require_once __DIR__ . '/../class/geolocation.class.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -61,13 +61,15 @@ $filterRegion  = GETPOST('filter_region');
 $filterState   = GETPOST('filter_state');
 $filterTown    = trim(GETPOST('filter_town', 'alpha'));
 $filterCat     = GETPOST("search_category_" . $objectType ."_list", 'array');
+$source        = GETPOSTISSET('source') ? GETPOST('source') : '';
 
 // Initialize technical object
-$objectInfos    = saturne_get_objects_metadata($objectType);
-$className      = $objectInfos['class_name'];
-$objectLinked   = new $className($db);
-//$object         = new Address($db);
-$geolocation = new Geolocation($db);
+$objectInfos  = saturne_get_objects_metadata($objectType);
+$className    = $objectInfos['class_name'];
+$objectLinked = new $className($db);
+$geolocation  = new Geolocation($db);
+$project      = new Project($db);
+$contact      = new Contact($db);
 
 // Initialize view objects
 $form        = new Form($db);
@@ -117,6 +119,11 @@ if (empty($resHook)) {
 $title   = $langs->trans('Map');
 $helpUrl = 'FR:Module_EasyCRM';
 
+if ($source == 'pwa') {
+    $conf->dol_hide_topmenu  = 1;
+    $conf->dol_hide_leftmenu = 1;
+}
+
 saturne_header(0, '', $title, $helpUrl);
 
 /**
@@ -126,11 +133,11 @@ saturne_header(0, '', $title, $helpUrl);
 // Filter on address
 $filterId      = $fromId > 0 ? $fromId : $filterId;
 $IdFilter      = ($filterId > 0 ? 'element_id = "' . $filterId . '" AND ' : '');
-$typeFilter    = (dol_strlen($filterType) > 0 ? 'type = "' . $filterType . '" AND ' : '');
 $townFilter    = (dol_strlen($filterTown) > 0 ? 'town = "' . $filterTown . '" AND ' : '');
 $countryFilter = ($filterCountry > 0 ? 'fk_country = ' . $filterCountry . ' AND ' : '');
 $regionFilter  = ($filterRegion > 0 ? 'fk_region = ' . $filterRegion . ' AND ' : '');
 $stateFilter   = ($filterState > 0 ? 'fk_department = ' . $filterState . ' AND ' : '');
+// @TODO zip filter
 
 $allCat = '';
 foreach($filterCat as $catId) {
@@ -139,7 +146,7 @@ foreach($filterCat as $catId) {
 $allCat        = rtrim($allCat, ',');
 $catFilter     = (dol_strlen($allCat) > 0 ? 'cp.fk_categorie IN (' . $allCat . ') AND ' : '');
 
-$filter        = ['customsql' => $IdFilter . $typeFilter . $townFilter . $countryFilter . $regionFilter . $stateFilter . $catFilter . 'element_type = "'. $objectType .'" AND status >= 0'];
+$filter        = ['customsql' => $IdFilter . $townFilter . $countryFilter . $regionFilter . $stateFilter . $catFilter . 'element_type = "'. $objectType .'" AND status >= 0'];
 
 $icon          = dol_buildpath('/easycrm/img/dot.png', 1);
 $objectList    = [];
@@ -196,61 +203,102 @@ $allObjects    = saturne_fetch_all_object_type($objectInfos['class_name']);
 //		}
 //	}
 //} else {
-    $geolocations = $geolocation->fetchAll('', '', 0, 0, ['customsql' => 't.element_type = ' . "'" . GETPOST('from_type') . "'"]);
-    if (is_array($geolocations) && !empty($geolocations)) {
-        foreach($geolocations as $geolocation) {
-            $geolocation->convertCoordinates();
-            $objectLinked->fetch($geolocation->fk_element);
+$filterSQL  = 't.element_type = ' . "'" . GETPOST('from_type') . "'";
+$filterSQL .= ($filterId > 0 ? ' AND t.fk_element = ' . $filterId : '');
 
-            $objectLinkedInfo  = $objectLinked->getNomUrl(1, '', 0, '', ' - ', 1) . '</br>';
-            $objectLinkedInfo .= $langs->transnoentities('ProjectLabel') . ' : ' . $objectLinked->title . '</br>';
-            $objectLinkedInfo .= $langs->transnoentities('Description') . ' : ' . $objectLinked->description . '</br>';
-            $code = dol_getIdFromCode($db, $objectLinked->opp_status, 'c_lead_status', 'rowid', 'code');
-            if ($code) {
-                $objectLinkedInfo .= $langs->transnoentities('OpportunityStatus')  . ' : ' . $langs->trans('OppStatus' . $code) . '</br>';
-            }
-            if (strcmp($objectLinked->opp_amount, '')) {
-                $objectLinkedInfo .= $langs->transnoentities('OpportunityAmount') . ' : ' . price($objectLinked->opp_amount, 0, $langs, 1, 0, -1, $conf->currency) . '</br>';
-                if (strcmp($objectLinked->opp_percent, '')) {
-                    $objectLinkedInfo .= $langs->transnoentities('OpportunityWeightedAmountShort')  . ' : ' . price($objectLinked->opp_amount * $objectLinked->opp_percent / 100, 0, $langs, 1, 0, -1, $conf->currency);
-                }
-            }
+if ($filterId > 0) {
+    $project->fetch($filterId);
+    $contacts = $project->liste_contact();
+} else {
+    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"'], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid');
+}
 
-            $num++;
-            $objectList[$num]['color']  = '#' . randomColor();
-            switch ($objectLinked->opp_percent) {
-                case $objectLinked->opp_percent >= 40 && $objectLinked->opp_percent < 60:
-                    $objectList[$num]['scale'] = 1.5;
-                    break;
-                case $objectLinked->opp_percent >= 60 && $objectLinked->opp_percent < 100:
-                    $objectList[$num]['scale'] = 1.75;
-                    break;
-                case $objectLinked->opp_percent == 100:
-                    $objectList[$num]['scale'] = 2;
-                    break;
-                default:
-                    $objectList[$num]['scale'] = 1;
-                    break;
-            }
+if (is_array($contacts) && !empty($contacts)) {
+    foreach($contacts as $contactSingle) {
+        $geolocation = new Geolocation($db);
 
-            // Add geoJSON point
-            $features[] = [
-                'type'     => 'Feature',
-                'geometry' => [
-                    'type'        => 'Point',
-                    'coordinates' => [$geolocation->longitude, $geolocation->latitude]
-                ],
-                'properties' => [
-                    'desc'    => $objectLinkedInfo,
-                    'address' => $num
-                ]
-            ];
+        if (is_object($contactSingle)) {
+            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle->id);
+            $contactName    = $contactSingle->lastname;
+            $contactAddress = $contactSingle->address;
+        } else if (is_array($contactSingle) && $contactSingle['code'] == 'PROJECTADDRESS') {
+            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle['id']);
+            $contact->fetch($contactSingle['id']);
+            $contactName    = $contact->lastname;
+            $contactAddress = $contact->address;
+        }
+        if ($geolocation->latitude > 0 && $geolocation->longitude > 0) {
+            // We fill temporarily geolocation with contact data to use them in the description afterward
+            $geolocation->address_name = $contactName;
+            $geolocation->tmp_address  = $contactAddress;
+            $geolocations[]            = $geolocation;
         }
     }
-//}
+}
 
-if ($fromId > 0) {
-    $objectLinked->fetch($fromId);
+if (is_array($geolocations) && !empty($geolocations)) {
+    foreach($geolocations as $geolocation) {
+        $geolocation->convertCoordinates();
+        $result = $objectLinked->fetch($fromId);
+        if ($result <= 0) {
+            $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => ' ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
+            $objectLinked = array_shift($projects);
+        }
+
+        if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status))) {
+            continue;
+        }
+
+        $objectLinkedInfo  = '<b>' . $langs->transnoentities('Name') . '</b> : ' . $geolocation->address_name . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Address') . '</b> : ' . $geolocation->tmp_address . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Project') . '</b> : ' .  $objectLinked->getNomUrl(1, '', 0, '', ' - ', 1) . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('ProjectLabel') . '</b> : ' . $objectLinked->title . '<br>';
+        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Description') . '</b> : ' . $objectLinked->description . '<br>';
+        $code = dol_getIdFromCode($db, $objectLinked->opp_status, 'c_lead_status', 'rowid', 'code');
+        if ($code) {
+            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityStatus')  . '</b> : ' . $langs->trans('OppStatus' . $code) . '<br>';
+        }
+        if (strcmp($objectLinked->opp_amount, '')) {
+            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityAmount') . '</b> : ' . price($objectLinked->opp_amount, 0, $langs, 1, 0, -1, $conf->currency) . '<br>';
+            if (strcmp($objectLinked->opp_percent, '')) {
+                $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityWeightedAmountShort')  . '</b> : ' . price($objectLinked->opp_amount * $objectLinked->opp_percent / 100, 0, $langs, 1, 0, -1, $conf->currency);
+            }
+        }
+
+        $num++;
+        $objectList[$num]['color']  = '#' . randomColor();
+        switch ($objectLinked->opp_percent) {
+            case $objectLinked->opp_percent >= 40 && $objectLinked->opp_percent < 60:
+                $objectList[$num]['scale'] = 1.5;
+                break;
+            case $objectLinked->opp_percent >= 60 && $objectLinked->opp_percent < 100:
+                $objectList[$num]['scale'] = 1.75;
+                break;
+            case $objectLinked->opp_percent == 100:
+                $objectList[$num]['scale'] = 2;
+                break;
+            default:
+                $objectList[$num]['scale'] = 1;
+                break;
+        }
+
+        // Add geoJSON point
+        $features[] = [
+            'type'     => 'Feature',
+            'geometry' => [
+                'type'        => 'Point',
+                'coordinates' => [$geolocation->longitude, $geolocation->latitude]
+            ],
+            'properties' => [
+                'desc'    => $objectLinkedInfo,
+                'address' => $num
+            ]
+        ];
+    }
+}
+
+if ($filterId > 0) {
+    $objectLinked->fetch($filterId);
 
     saturne_get_fiche_head($objectLinked, 'map', $title);
 
@@ -258,105 +306,68 @@ if ($fromId > 0) {
     saturne_banner_tab($objectLinked, 'ref', $morehtml, 1, 'ref', 'ref', '', !empty($objectLinked->photo));
 }
 
-print_barre_liste($title, '', $_SERVER["PHP_SELF"], '', '', '', '', '', $num, 'fa-map-marked-alt');
+$backToMap = img_picto('project', 'fontawesome_project-diagram_fas_#ffffff') . ' ' . img_picto('create', 'fontawesome_plus_fas_#ffffff');
+$iconBTM   = '<a class="wpeo-button" href="' . dol_buildpath('custom/easycrm/view/frontend/quickcreation.php?source=pwa', 1) . '">' . $backToMap . '</a>';
+print_barre_liste($title, '', $_SERVER["PHP_SELF"], '', '', '', '', '', $num, 'fa-map-marked-alt', 0, ($source == 'pwa' ? $iconBTM : ''));
 
-print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?from_type=' . $objectType . '" name="formfilter">';
-print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
-print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
+if ($source != 'pwa') {
+    print '<form method="post" action="' . $_SERVER["PHP_SELF"] . '?from_type=' . $objectType . '" name="formfilter">';
+    print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+    print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
 
-// Filter box
-print '<div class="liste_titre liste_titre_bydiv centpercent">';
+    // Filter box
+    print '<div class="liste_titre liste_titre_bydiv centpercent">';
 
-$selectArray = [];
-foreach ($allObjects as $singleObject) {
-    $selectArray[$singleObject->id] = $singleObject->ref;
-}
-// Object
-print '<div class="divsearchfield">' . img_picto('', $objectInfos['picto']) . ' ' . $langs->trans($objectInfos['langs']). ': ';
-print $form->selectarray('filter_id', $selectArray, $filterId, 1, 0, 0, '', 0, 0, $fromId > 0) . '</div>';
-
-// Type
-print '<div class="divsearchfield">' . $langs->trans('Type'). ': ';
-print saturne_select_dictionary('filter_type', 'c_address_type', 'ref', 'label', $filterType, 1) . '</div>';
-
-// Country
-print '<div class="divsearchfield">' . $langs->trans('Country'). ': ';
-print $form->select_country($filterCountry, 'filter_country', '', 0, 'maxwidth100') . '</div>';
-
-// Region
-print '<div class="divsearchfield">' . $langs->trans('Region'). ': ';
-print $formCompany->select_region($filterRegion, 'filter_region') . '</div>';
-
-// Department
-print '<div class="divsearchfield">' . $langs->trans('State'). ': ';
-print $formCompany->select_state($filterState, 0, 'filter_state', 'maxwidth100') . '</div>';
-
-// City
-print '<div class="divsearchfield">' . $langs->trans('Town'). ': ';
-print '<input class="flat searchstring maxwidth200" type="text" name="filter_town" value="' . dol_escape_htmltag($filterTown) . '"></div>';
-
-//Categories project
-if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
-    if (in_array($objectType, Categorie::$MAP_ID_TO_CODE)) {
-        print '<div class="divsearchfield">';
-        print $langs->trans(ucfirst($objectInfos['langfile']) . 'CategoriesShort') . '</br>' . $formCategory->getFilterBox($objectType, $filterCat) . '</div>';
+    $selectArray = [];
+    foreach ($allObjects as $singleObject) {
+        $selectArray[$singleObject->id] = $singleObject->ref;
     }
+    // Object
+    print '<div class="divsearchfield">' . img_picto('', $objectInfos['picto']) . ' ' . $langs->trans($objectInfos['langs']). ': ';
+    print $form->selectarray('filter_id', $selectArray, $filterId, 1, 0, 0, '', 0, 0, $fromId > 0) . '</div>';
+
+    // Type
+    print '<div class="divsearchfield">' . $langs->trans('Type'). ': ';
+    print saturne_select_dictionary('filter_type', 'c_address_type', 'ref', 'label', $filterType, 1) . '</div>';
+
+    // Country
+    print '<div class="divsearchfield">' . $langs->trans('Country'). ': ';
+    print $form->select_country($filterCountry, 'filter_country', '', 0, 'maxwidth100') . '</div>';
+
+    // Region
+    print '<div class="divsearchfield">' . $langs->trans('Region'). ': ';
+    print $formCompany->select_region($filterRegion, 'filter_region') . '</div>';
+
+    // Department
+    print '<div class="divsearchfield">' . $langs->trans('State'). ': ';
+    print $formCompany->select_state($filterState, 0, 'filter_state', 'maxwidth100') . '</div>';
+
+    // City
+    print '<div class="divsearchfield">' . $langs->trans('Town'). ': ';
+    print '<input class="flat searchstring maxwidth200" type="text" name="filter_town" value="' . dol_escape_htmltag($filterTown) . '"></div>';
+
+    //Categories project
+    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
+        if (in_array($objectType, Categorie::$MAP_ID_TO_CODE)) {
+            print '<div class="divsearchfield">';
+            print $langs->trans(ucfirst($objectInfos['langfile']) . 'CategoriesShort') . '</br>' . $formCategory->getFilterBox($objectType, $filterCat) . '</div>';
+        }
+    }
+
+    // Morefilter buttons
+    print '<div class="divsearchfield">';
+    print $form->showFilterButtons() . '</div></div>';
+
+    print '</form>';
 }
 
-// Morefilter buttons
-print '<div class="divsearchfield">';
-print $form->showFilterButtons() . '</div></div>';
-
-print '</form>';
+$picto = img_picto($langs->trans('MyPosition'), 'fontawesome_search-location_fas_#007BFF');
+print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>';
 
 ?>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
 	<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList"></script>
 	<script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/build/ol.js"></script>
-	<style>
-		.ol-popup {
-			position: absolute;
-			background-color: white;
-			-webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-			filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-			padding: 15px;
-			border-radius: 10px;
-			border: 1px solid #cccccc;
-			bottom: 12px;
-			left: -50px;
-			min-width: 280px;
-		}
-		.ol-popup:after, .ol-popup:before {
-			top: 100%;
-			border: solid transparent;
-			content: " ";
-			height: 0;
-			width: 0;
-			position: absolute;
-			pointer-events: none;
-		}
-		.ol-popup:after {
-			border-top-color: white;
-			border-width: 10px;
-			left: 48px;
-			margin-left: -10px;
-		}
-		.ol-popup:before {
-			border-top-color: #cccccc;
-			border-width: 11px;
-			left: 48px;
-			margin-left: -11px;
-		}
-		.ol-popup-closer {
-			text-decoration: none;
-			position: absolute;
-			top: 2px;
-			right: 8px;
-		}
-		.ol-popup-closer:after {
-			content: "✖";
-		}
-	</style>
 
 	<div id="display_map" class="display_map"></div>
 	<div id="popup" class="ol-popup">
@@ -522,22 +533,107 @@ print '</form>';
 			return extent;
 		}
 
-		/**
-		 * Add a click handler to the map to render the popup.
-		 */
-		map.on('singleclick', function(evt) {
-			var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-				return feature;
-			});
+        /**
+         * Initialize geolocation control.
+         */
+        var geolocation = new ol.Geolocation({
+            trackingOptions: {
+                enableHighAccuracy: true
+            },
+            projection: mapView.getProjection()
+        });
 
-			if (feature) {
-				var coordinates = feature.getGeometry().getCoordinates();
-				popupContent.innerHTML = feature.get('desc');
-				popupOverlay.setPosition(coordinates);
-			} else {
-				popupCloser.click();
-			}
-		});
+        // Enable geolocation tracking
+        geolocation.setTracking(true);
+
+        /**
+         * Handle geolocation error.
+         */
+        geolocation.on('error', function(error) {
+            console.error('Geolocation error: ' + error.message);
+        });
+
+        /**
+         * Geolocation marker style.
+         */
+        var positionFeature = new ol.Feature();
+        var radiusFeature = new ol.Feature();
+
+        // Set custom properties
+        positionFeature.setProperties({
+            customText: '<?php print $langs->trans('MyPosition') ?>'
+        });
+
+        var geolocationSource = new ol.source.Vector({
+            features: [positionFeature, radiusFeature]
+        });
+
+        var geolocationLayer = new ol.layer.Vector({
+            source: geolocationSource
+        });
+
+        map.addLayer(geolocationLayer);
+
+        geolocation.on('change:position', function() {
+            var coordinates = geolocation.getPosition();
+            positionFeature.setGeometry(coordinates ? new ol.geom.Point(coordinates) : null);
+
+            // Create a 1km radius circle around the user's location
+            var radius = 1000; // 1 km radius
+            var circle = new ol.geom.Circle(coordinates, radius);
+            radiusFeature.setGeometry(circle);
+        });
+
+        // Style for the circle
+        radiusFeature.setStyle(new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: 'rgba(0, 0, 255, 0.5)',
+                width: 2
+            }),
+        }));
+
+        // Style for the position circle
+        positionFeature.setStyle(new ol.style.Style({
+            image: new ol.style.Circle({
+                radius: 6,
+                fill: new ol.style.Fill({
+                    color: '#3399CC'
+                }),
+                stroke: new ol.style.Stroke({
+                    color: '#fff',
+                    width: 2
+                })
+            })
+        }));
+
+        /**
+         * Add a click handler to the map to render the popup.
+         */
+        map.on('singleclick', function(evt) {
+            var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+                return feature;
+            });
+
+            if (feature) {
+                var coordinates = feature.getGeometry().getCoordinates();
+                var customText = feature.get('customText') || feature.get('desc');
+                popupContent.innerHTML = customText;
+                popupOverlay.setPosition(coordinates);
+            } else {
+                popupCloser.click();
+            }
+        });
+
+        // Center and zoom the map on geolocation when the button is clicked
+        document.getElementById('geolocate-button').addEventListener('click', function() {
+            var coordinates = geolocation.getPosition();
+            if (coordinates) {
+                mapView.setCenter(coordinates);
+                mapView.setZoom(14); // Adjust the zoom level as needed
+            } else {
+                console.error('Geolocation position is not available.');
+            }
+        });
 	</script>
 <?php
 

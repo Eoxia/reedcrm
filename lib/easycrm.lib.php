@@ -48,11 +48,6 @@ function easycrm_admin_prepare_head(): array
     $head[$h][2] = 'pwa';
     $h++;
 
-    $head[$h][0] = dol_buildpath('/easycrm/admin/address.php', 1);
-    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-map-marker-alt pictofixedwidth"></i>' . $langs->trans('Addresses') : '<i class="fas fa-map-marker-alt"></i>';
-    $head[$h][2] = 'address';
-    $h++;
-
     $head[$h][0] = dol_buildpath('/easycrm/admin/product.php', 1);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-cube pictofixedwidth"></i>' . $langs->trans('Product') : '<i class="fas fa-cube"></i>';
     $head[$h][2] = 'product';

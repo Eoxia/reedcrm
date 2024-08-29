@@ -25,97 +25,74 @@
  * The following vars must be defined:
  * Global     : $conf, $db, $langs, $user,
  * Parameters : $objectType, $fromId, $backtopage,
- * Objects    : $objectLinked, $address
- * Variable   : $addressType, $addresses, $moduleNameLowerCase, $permissiontoadd
+ * Objects    : $contact, $objectLinked
+ * Variable   : $addresses, $moduleNameLowerCase, $permissiontoadd
  */
 
 print '<table class="border centpercent tableforfield">';
 
 print '<tr class="liste_titre">';
-print '<td>' . $langs->trans('Ref') . '</td>';
-print '<td class="center">' . $langs->trans('Name') . '</td>';
-print '<td class="center">' . $langs->trans('Type') . '</td>';
-print '<td class="center">' . $langs->trans('Country') . '</td>';
-print '<td class="center">' . $langs->trans('Region') . '</td>';
-print '<td class="center">' . $langs->trans('State') . '</td>';
-print '<td class="center">' . $langs->trans('Town') . '</td>';
-print '<td class="center">' . $langs->trans('Zip') . '</td>';
-print '<td class="center">' . $langs->trans('Address') . '</td>';
-print '<td class="center">' . $langs->trans('SignatureActions') . '</td>';
+print '<td>' . $langs->trans('Name') . '</td>';
+print '<td>' . $langs->trans('Address') . '</td>';
+print '<td class="right">' . $langs->trans('SignatureActions') . '</td>';
 print '</tr>';
 
 if (is_array($addresses) && !empty($addresses)) {
-	foreach ($addresses as $element) {
+	foreach ($addresses as $address) {
+        $contact->fetch($address['id']);
+
         //Object favorite
         $favorite = 0;
         if (isset($objectLinked->array_options['options_' . $objectType . 'address']) && dol_strlen($objectLinked->array_options['options_' . $objectType . 'address']) > 0) {
-            $favorite = $objectLinked->array_options['options_' . $objectType . 'address'] == $element->id;
+            $favorite = $objectLinked->array_options['options_' . $objectType . 'address'] == $address['id'];
         }
 
-		// Object ref
-		print '<tr class="oddeven">';
-		print '<td>';
-        print $element->getNomUrl(1, 'nolink') . ' ' . ($permissiontoadd ? '<span style="cursor:pointer;" name="favorite_address" id="address"' . $element->id . ' value="' . $element->id . '" class="' . ($favorite ? 'fas' : 'far') . ' fa-star"></span>' : '');
-		print '</td>';
-
 		// Address name
-		print '<td class="center">';
-		print $element->name;
+		print '<td>';
+		print $contact->getNomUrl(1) . ' ' . ($permissiontoadd ? '<span style="cursor:pointer;" name="favorite_address" id="address"' . $address['id'] . ' value="' . $address['id'] . '" class="' . ($favorite ? 'fas' : 'far') . ' fa-star"></span>' : '');
 		print '</td>';
 
-		// Address type
-		print '<td class="center">';
-		print $langs->transnoentities($element->type);
-		print '</td>';
+        // Address location
+		print '<td class="minwidth300">';
+        $geolocations    = $geolocation->fetchAll('DESC', 'rowid', 1, 0, ['customsql' => 'fk_element = ' . $address['id']]);
+        $lastGeolocation = array_shift($geolocations);
 
-		// Country
-		$addressCountry = getCountry($element->fk_country, 'all');
-		print '<td class="center">';
-		print $addressCountry['label'] ?: $langs->trans('N/A');
-		print '</td>';
-
-		// Region
-		$addressRegionAndState = getState($element->fk_department, 'all', 0, 1);
-		print '<td class="center">';
-		print (is_array($addressRegionAndState) && !empty($addressRegionAndState) ? $addressRegionAndState['region'] : $langs->trans('N/A'));
-		print '</td>';
-
-		// Department
-		print '<td class="center">';
-		print (is_array($addressRegionAndState) && !empty($addressRegionAndState) ? $addressRegionAndState['label'] : $langs->trans('N/A'));
-		print '</td>';
-
-		print '<td class="center">';
-		print $element->town;
-		print '</td>';
-
-		print '<td class="center">';
-		print dol_strlen($element->zip) > 0 ? $element->zip : $langs->trans('N/A');
-		print '</td>';
-
-		print '<td class="center">';
-		print dol_strlen($element->address) > 0 ? $element->address : $langs->trans('N/A');
+        if ($lastGeolocation->longitude > 0 && $lastGeolocation->latitude > 0) {
+            print img_picto($langs->trans('DataSuccessfullyRetrieved'), 'fontawesome_map-marker-alt_fas_#28a745') . ' ';
+        } else {
+            print img_picto($langs->trans('CouldntFindDataOnOSM'), 'fontawesome_exclamation-triangle_fas_#8c4446') . ' ';
+        }
+		print dol_strlen($contact->address) > 0 ? $contact->address : $langs->trans('N/A');
 		print '</td>';
 
 		// Actions
-		print '<td class="center">';
+		print '<td class="right">';
+        if ($permissiontoadd) {
+            print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?from_id=' . $fromId . '&action=edit&from_type=' . $objectType . '"  style="display: inline">';
+            print '<input type="hidden" name="token" value="' . newToken() . '">';
+            print '<input type="hidden" name="contact_id" value="' . $address['id'] . '">';
+            if (!empty($backtopage)) {
+                print '<input type="hidden" name="backtopage" value="' . $backtopage . '">';
+            }
+            print '<button type="submit" class="wpeo-button button-grey"><i class="fas fa-pen"></i></button> ';
+            print '</form>';
+        }
 		if ($permissiontodelete) {
-			print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?from_id=' . $fromId . '&module_name=' . $moduleName . '&from_type=' . $objectLinked->element . '">';
+			print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?from_id=' . $fromId . '&module_name=' . $moduleName . '&from_type=' . $objectLinked->element . '"  style="display: inline">';
 			print '<input type="hidden" name="token" value="' . newToken() . '">';
 			print '<input type="hidden" name="action" value="delete_address">';
-			print '<input type="hidden" name="addressID" value="' . $element->id . '">';
+			print '<input type="hidden" name="contact_id" value="' . $address['id'] . '">';
 			print '<input type="hidden" name="backtopage" value="' . $backtopage . '">';
-			print '<button type="submit" class="wpeo-button button-grey" value="' . $element->id . '">';
+			print '<button type="submit" class="wpeo-button button-grey" value="' . $address['id'] . '">';
 			print '<i class="fas fa-trash"></i>';
 			print '</button>';
 			print '</form>';
 		}
-		print '</td>';
+        print '</td>';
 		print '</tr>';
-		$alreadyAddedAddress[$element->element_type][$element->element_id] = $element->element_id;
 	}
 } else {
-	print '<tr><td colspan="10">';
+	print '<tr><td colspan="4">';
 	print '<div class="opacitymedium">' . $langs->trans('NoAddresses') . '</div><br>';
 	print '</td></tr>';
 }
@@ -129,8 +106,8 @@ if ($permissiontoadd) {
 
 	print '<tr class="oddeven">';
 	print '<td>' . $langs->trans('AddAnAddress') . '</td>';
-	print '<td colspan="8"></td>';
-	print '<td class="center">';
+	print '<td></td>';
+	print '<td class="right">';
 	print '<button type="submit" class="wpeo-button button-blue"><i class="fas fa-plus"></i></button>';
 	print '</td></tr>';
 	print '</table>';

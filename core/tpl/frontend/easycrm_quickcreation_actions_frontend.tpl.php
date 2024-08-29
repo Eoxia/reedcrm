@@ -151,7 +151,7 @@ if ($action == 'add') {
     }
 
     if (!$error) {
-        setEventMessage($langs->transnoentities('QuickCreationFrontendSuccess', $project->ref));
+        setEventMessage($langs->transnoentities('QuickCreationFrontendSuccess') . ' : <a href="' . DOL_URL_ROOT . '/projet/card.php?id=' . $projectID . '">'  . $project->ref . '</a>');
         header('Location: ' . $_SERVER["PHP_SELF"]);
         exit;
     } else {

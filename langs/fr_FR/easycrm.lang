@@ -42,7 +42,7 @@ CommercialTask           = Tâche commerciale
 ProjectPhone             = Téléphone projet
 
 # Frontend - Frontend
-QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès : %s
+QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
 
 
 
@@ -111,9 +111,8 @@ AllContactHaveNotification           = Tous les tiers ont des notifications cont
 # Data - Donnée
 Addresses                    = Adresses
 AddAnAddress                 = Ajouter une adresse
-AddressCreated               = Adresse créée
-AddressDeleted               = Adresse supprimée
 ErrorCreateAddress           = Une erreur est survenue lors de la création de l'adresse
+ErrorUpdateAddress           = Une erreur est survenue lors de la mise à jour de l'adresse
 ErrorDeleteAddress           = Une erreur est survenue lors de la suppression de l'adresse
 CouldntFindDataOnOSM         = L'adresse n'a pas été trouvée sur OpenStreetMap
 DataSuccessfullyRetrieved    = Les données de l'adresse ont été récupérées avec succès
@@ -121,6 +120,7 @@ NoAddresses                  = Aucune adresse
 Map                          = Carte
 FavoriteAddress              = Adresse favorite
 NewAddress                   = Nouvelle adresse
+EditAddress                  = Modifier l'adresse
 AddressType                  = Type d'adresse
 Workplace                    = Lieu de travail
 PrincipalResidence           = Résidence principale
@@ -133,8 +133,10 @@ Headquarters                 = Siège social
 DisplayAllAddress            = Afficher une seule adresse par objet
 DisplayAllAddressDescription = Afficher l'adresse principale sur la carte au lieu de toutes les adresses liées à l'objet
 AddressesList                = Liste des adresses
-
-
+ProjectAddress               = Adresse du projet
+AddressStatus                = Statut adresse
+Geolocated                   = Géolocalisé
+NotFound                     = Non géolocalisé
 
 #
 # Geolocation - Géolocalisation
@@ -142,7 +144,7 @@ AddressesList                = Liste des adresses
 
 # Data - Donnée
 GeolocationError = Erreur possible lors la géolocalisation : %s
-
+MyPosition       = Ma position
 
 
 #
@@ -204,3 +206,6 @@ AddAssignOppStatus                     = Ajouter un statut d'opportunité
 SelectOppStatus                        = Sélectionner un statut d'opportunité
 OppStatusAssignedTo                    = Statut d'opportunité assigné à %s projet(s)
 ReloadOppPercent                       = Calculer les probabilités d'opportunité non définies
+LabelLength                            = Taille libellé
+LabelLengthDescription                 = Taille maximum du champ libellé
+WarningTaskLabelCustom                 = Attention, vous vous rapprochez du nombre de caractères maximum autorisé (%d)

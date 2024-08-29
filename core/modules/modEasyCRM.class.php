@@ -78,7 +78,7 @@ class modEasyCRM extends DolibarrModules
 		$this->editor_url = 'https://www.eoxia.com';
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.4.0';
+		$this->version = '1.5.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -212,6 +212,7 @@ class modEasyCRM extends DolibarrModules
             $i++ => ['EASYCRM_EVENT_TYPE_CODE_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_TYPE_CODE_VALUE', 'chaine', 'AC_TEL', '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE', 'integer', 128, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_DATE_END_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_STATUS_VISIBLE', 'integer', 1, '', 0, 'current'],
@@ -223,7 +224,7 @@ class modEasyCRM extends DolibarrModules
             $i++ => ['EASYCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
 
 			// CONST ADDRESS
-			$i++ => ['EASYCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
+			//$i++ => ['EASYCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
             $i++ => ['EASYCRM_ADDRESS_ADDON', 'chaine', 'mod_address_standard', '', 0, 'current'],
 
             // CONST MODULE
@@ -562,6 +563,10 @@ class modEasyCRM extends DolibarrModules
         $extrafields->update('notation_facturerec_contact', 'NotationObjectContact', 'text', '', 'facture_rec', 0, 0, 100, '', '', '', 5, 'NotationObjectContactHelp', '', '', 0, 'easycrm@easycrm', 1, 0, 0, ['csslist' => 'center']);
         $extrafields->addExtraField('notation_facturerec_contact', 'NotationObjectContact', 'text', 100, '', 'facture_rec', 0, 0, '', '', '', '', 5, 'NotationObjectContactHelp', '', 0, 'easycrm@easycrm', 1, 0, 0, ['csslist' => 'center']);
 
+        // Contact extrafields
+        $extrafields->update('address_status', 'AddressStatus', 'select', '', 'contact', 0, 0, 100, 'a:1:{s:7:"options";a:2:{i:1;s:8:"NotFound";i:2;s:10:"Geolocated";}}', 0, '', 5, '', '', '', '', 'easycrm@easycrm');
+        $extrafields->addExtraField('address_status', 'AddressStatus', 'select', 100, '', 'contact', 0, 0, '', 'a:1:{s:7:"options";a:2:{i:1;s:8:"NotFound";i:2;s:10:"Geolocated";}}', 0, '', 5, '', '', '', 'easycrm@easycrm');
+
         if (is_array($objectsMetadata) && !empty($objectsMetadata)) {
             foreach ($objectsMetadata as $objectType => $objectMetadata) {
                 $extrafieldParam     = 'easycrm_address:name:rowid::element_id=$ID$ AND element_type="' . $objectType . '" AND status>0';
@@ -580,6 +585,53 @@ class modEasyCRM extends DolibarrModules
             $categoryID      = $category->create($user);
 
             dolibarr_set_const($this->db, 'EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+        }
+        if (empty(getDolGlobalInt('EASYCRM_ADDRESS_BACKWARD_COMPATIBILITY'))) {
+            require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+            require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+            require_once __DIR__ . '/../../class/geolocation.class.php';
+            require_once __DIR__ . '/../../class/address.class.php';
+
+            $contact     = new Contact($this->db);
+            $address     = new Address($this->db);
+            $geolocation = new Geolocation($this->db);
+            $category    = new Categorie($this->db);
+
+            $addresses  = $address->fetchAll('', '', 0, 0, ['customsql' => ' status > 0 AND latitude > 0 AND longitude > 0']);
+            $addressCat = saturne_create_category($langs->trans('ProjectAddress'), '4', 0, '', '', $langs->trans('ProjectAddress'));
+            $category->fetch($addressCat);
+
+            if (is_array($addresses) && !empty($addresses)) {
+                foreach ($addresses as $address) {
+                    $contact->lastname   = $address->name;
+                    $contact->address    = $address->address;
+                    $contact->fk_project = $address->element_id;
+                    $contact->fk_pays    = $address->fk_country;
+                    $contact->zip        = $address->zip;
+                    $contact->town       = $address->town;
+
+                    $contactID = $contact->create($user);
+                    $category->add_type($contact);
+
+                    $geolocation->element_type = 'contact';
+                    $geolocation->latitude     = $address->latitude;
+                    $geolocation->longitude    = $address->longitude;
+                    $geolocation->fk_element   = $contactID;
+                    $geolocation->gis          = 'osm';
+                    if ($address->latitude <= 0 && $address->longitude <= 0) {
+                        $geolocation->status = Geolocation::STATUS_NOTFOUND;
+                    } else {
+                        $geolocation->status = Geolocation::STATUS_GEOLOCATED;
+                    }
+
+                    $contact->array_options['options_address_status'] = $geolocation->status;
+                    $contact->updateExtraField('address_status');
+                    $geolocation->create($user);
+                }
+            }
+
+            dolibarr_set_const($this->db, 'EASYCRM_ADDRESS_MAIN_CATEGORY', $addressCat, 'integer', 0, '', $conf->entity);
+            dolibarr_set_const($this->db, 'EASYCRM_ADDRESS_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
         }
 
 		// Permissions
