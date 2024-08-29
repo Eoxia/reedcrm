@@ -185,6 +185,13 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
                     }
                 }
                 break;
+            case 'PROPAL_CLOSE_SIGNED':
+            case 'PROPAL_CLOSE_REFUSED':
+                $actioncomm->fetch($_SESSION['LAST_ACTION_CREATED']);
+                if ($actioncomm->id > 0 && $actioncomm->elementtype == 'propal' && !empty(GETPOST('note_private'))) {
+                    $actioncomm->setValueFrom('note', GETPOST('note_private', 'alpha'), '', null, '', 'id');
+                }
+                break;
         }
         return 0;
     }
