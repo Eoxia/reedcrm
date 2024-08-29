@@ -315,18 +315,6 @@ if ($conf->global->EASYCRM_EVENT_LABEL_VISIBLE > 0) {
     print '<tr><td><label for="label">' . $langs->trans('Label') . '</label></td>';
     print '<td><input type="text" id="label" name="label" class="maxwidth500 widthcentpercentminusx" maxlength="' .getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" value="' . dol_escape_htmltag((GETPOSTISSET('label') ? GETPOST('label') : '')) . '"></td>';
     print '</tr>';
-    print '
-        <script type="text/javascript">
-            $("#label").on("keyup", function() {
-                if ($("#label").val().length >= ' . max(getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') * 0.7, 0) . ') {
-                    $(".quickevent-label-warning-notice").removeClass("hidden");
-                } else {
-                    $(".quickevent-label-warning-notice").addClass("hidden");
-                }
-            });
-        </script>
-    ';
-
 }
 
 // Date start

@@ -469,11 +469,11 @@ print '</td></td><td></td></tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('LabelLength');
 print '</td><td>';
-print $langs->trans('ProjectLabelMaxLength');
+print $langs->trans('LabelLengthDescription');
 
 print '<td class="center"></td>';
 
-print '<td><input type="number" name="quick_event_label_length" class="minwidth200" value="' . (getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') ?? 128 ) . '" min="1" max="128"></td>';
+print '<td><input type="number" name="quick_event_label_length" class="minwidth200" value="' . getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" min="1" max="128"></td>';
 
 print '</tr>';
 
