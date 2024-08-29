@@ -108,25 +108,8 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         <input type="hidden" id="geolocation-error" name="geolocation-error" value="">
 
         <!-- Audio -->
-        <div class="wpeo-button button-square-50 button-grey" id="start-recording"><?php echo img_picto('', 'fontawesome_fa-circle_fas_red'); ?></div>
-        <div id="recording-indicator" class="blinking">Enregistrement en cours...</div>
-
-        <style>
-            #recording-indicator {
-                display: none;
-                color: red;
-                font-size: 18px;
-                font-weight: bold;
-            }
-            .blinking {
-                animation: blink 1s infinite;
-            }
-            @keyframes blink {
-                0% { opacity: 1; }
-                50% { opacity: 0; }
-                100% { opacity: 1; }
-            }
-        </style>
+        <div class="wpeo-button button-square-50 button-grey" id="start-recording"><?php echo img_picto('', 'fontawesome_fa-circle_fas_#e05353'); ?></div>
+        <div id="recording-indicator" class="blinking"><?php echo  $langs->trans('RecordingInProgress'); ?></div>
     </div>
 
     <div class="page-footer">

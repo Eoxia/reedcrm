@@ -47,16 +47,12 @@ if ($action == 'add_img') {
 }
 
 if ($action == 'add_audio') {
-    $uploadDir = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
+    $uploadDir  = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
     $uploadFile = $uploadDir . basename($_FILES['audio']['name']);
     if (!dol_is_dir($uploadDir)) {
         dol_mkdir($uploadDir);
     }
-    if (move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile)) {
-        echo "Le fichier est valide, et a été téléchargé avec succès.\n";
-    } else {
-        echo "Erreur lors du téléchargement du fichier !\n";
-    }
+    move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
 }
 
 if ($action == 'add') {
@@ -110,16 +106,16 @@ if ($action == 'add') {
 //            }
 //        }
 
-        $pathToProjectImg = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
-        $pathToTmpImg     = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
-        $imgList          = dol_dir_list($pathToTmpImg, 'files');
+        $pathToProjectDir = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
+        $pathToTmpImg  = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
+        $imgList       = dol_dir_list($pathToTmpImg, 'files');
         if (!empty($imgList)) {
             foreach ($imgList as $img) {
-                if (!dol_is_dir($pathToProjectImg)) {
-                    dol_mkdir($pathToProjectImg);
+                if (!dol_is_dir($pathToProjectDir)) {
+                    dol_mkdir($pathToProjectDir);
                 }
 
-                $fullPath = $pathToProjectImg . '/' . $img['name'];
+                $fullPath = $pathToProjectDir . '/' . $img['name'];
                 dol_copy($img['fullname'], $fullPath);
 
                 vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
@@ -130,16 +126,15 @@ if ($action == 'add') {
             }
         }
 
-        $pathToProjectAudio = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
-        $pathToTmpAudio     = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
-        $audioList          = dol_dir_list($pathToTmpAudio, 'files');
+        $pathToTmpAudio = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
+        $audioList      = dol_dir_list($pathToTmpAudio, 'files');
         if (!empty($audioList)) {
             foreach ($audioList as $audio) {
-                if (!dol_is_dir($pathToProjectAudio)) {
-                    dol_mkdir($pathToProjectAudio);
+                if (!dol_is_dir($pathToProjectDir)) {
+                    dol_mkdir($pathToProjectDir);
                 }
 
-                $fullPath = $pathToProjectAudio . '/' . $audio['name'];
+                $fullPath = $pathToProjectDir . '/' . $audio['name'];
                 dol_copy($audio['fullname'], $fullPath);
                 unlink($audio['fullname']);
             }
