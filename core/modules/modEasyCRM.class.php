@@ -212,6 +212,7 @@ class modEasyCRM extends DolibarrModules
             $i++ => ['EASYCRM_EVENT_TYPE_CODE_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_TYPE_CODE_VALUE', 'chaine', 'AC_TEL', '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE', 'integer', 128, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_DATE_END_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['EASYCRM_EVENT_STATUS_VISIBLE', 'integer', 1, '', 0, 'current'],

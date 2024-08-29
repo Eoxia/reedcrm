@@ -151,10 +151,6 @@ MyPosition       = Ma position
 # Other - Autre
 #
 
-ProjectLabelMaxLength                  = Taille maximum du champ label
-LabelLength                            = Taille libellé
-WarningTaskLabelCustom                 = Attention vous vous raprochez du nombre de caractères maximum autorisé (%s)
-
 # Data - Donnée
 LastProjects                           = Les %s derniers projets
 Sent                                   = Envoyé
@@ -210,3 +206,6 @@ AddAssignOppStatus                     = Ajouter un statut d'opportunité
 SelectOppStatus                        = Sélectionner un statut d'opportunité
 OppStatusAssignedTo                    = Statut d'opportunité assigné à %s projet(s)
 ReloadOppPercent                       = Calculer les probabilités d'opportunité non définies
+ProjectLabelMaxLength                  = Taille maximum du champ label
+LabelLength                            = Taille libellé
+WarningTaskLabelCustom                 = Attention vous vous raprochez du nombre de caractères maximum autorisé (%s)

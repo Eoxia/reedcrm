@@ -296,7 +296,7 @@ print dol_get_fiche_head();
 print '<div class="notice">';
 print '<div class="wpeo-notice notice-warning quickevent-label-warning-notice hidden">';
 print '<div class="notice-content">';
-print '<div class="notice-title">' . $langs->trans('WarningTaskLabelCustom', getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') ?? 128) . '</div>';
+print '<div class="notice-title">' . $langs->trans('WarningTaskLabelCustom', getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE')) . '</div>';
 print '</div>';
 print '<div class="notice-close"><i class="fas fa-times"></i></div>';
 print '</div></div>';
@@ -313,12 +313,12 @@ if ($conf->global->EASYCRM_EVENT_TYPE_CODE_VISIBLE > 0) {
 // Label
 if ($conf->global->EASYCRM_EVENT_LABEL_VISIBLE > 0) {
     print '<tr><td><label for="label">' . $langs->trans('Label') . '</label></td>';
-    print '<td><input type="text" id="label" name="label" class="maxwidth500 widthcentpercentminusx" maxlength="' . (getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') ?? 128) . '" value="' . dol_escape_htmltag((GETPOSTISSET('label') ? GETPOST('label') : '')) . '"></td>';
+    print '<td><input type="text" id="label" name="label" class="maxwidth500 widthcentpercentminusx" maxlength="' .getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" value="' . dol_escape_htmltag((GETPOSTISSET('label') ? GETPOST('label') : '')) . '"></td>';
     print '</tr>';
     print '
         <script type="text/javascript">
             $("#label").on("keyup", function() {
-                if ($("#label").val().length >= ' . max((getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') ?? 128) * 0.7, 0) . ') {
+                if ($("#label").val().length >= ' . max(getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') * 0.7, 0) . ') {
                     $(".quickevent-label-warning-notice").removeClass("hidden");
                 } else {
                     $(".quickevent-label-warning-notice").addClass("hidden");
