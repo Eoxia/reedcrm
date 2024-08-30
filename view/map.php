@@ -245,7 +245,7 @@ if (is_array($geolocations) && !empty($geolocations)) {
             $objectLinked = array_shift($projects);
         }
 
-        if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status))) {
+        if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status)) || empty($objectLinked)) {
             continue;
         }
 
