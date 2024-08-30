@@ -245,7 +245,7 @@ if (is_array($geolocations) && !empty($geolocations)) {
             $objectLinked = array_shift($projects);
         }
 
-        if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status))) {
+        if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status) && empty($objectLinked->fk_opp_status)) || empty($objectLinked)) {
             continue;
         }
 
@@ -254,7 +254,7 @@ if (is_array($geolocations) && !empty($geolocations)) {
         $objectLinkedInfo .= '<b>' . $langs->transnoentities('Project') . '</b> : ' .  $objectLinked->getNomUrl(1, '', 0, '', ' - ', 1) . '<br>';
         $objectLinkedInfo .= '<b>' . $langs->transnoentities('ProjectLabel') . '</b> : ' . $objectLinked->title . '<br>';
         $objectLinkedInfo .= '<b>' . $langs->transnoentities('Description') . '</b> : ' . $objectLinked->description . '<br>';
-        $code = dol_getIdFromCode($db, $objectLinked->opp_status, 'c_lead_status', 'rowid', 'code');
+        $code = dol_getIdFromCode($db, $objectLinked->opp_status > 0 ? $objectLinked->opp_status : $objectLinked->fk_opp_status , 'c_lead_status', 'rowid', 'code');
         if ($code) {
             $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityStatus')  . '</b> : ' . $langs->trans('OppStatus' . $code) . '<br>';
         }
