@@ -699,6 +699,24 @@ class ActionsEasycrm
             $this->results = $parameters;
         }
 
+        if (preg_match('/main/', $parameters['context'])) {
+            if (!empty($parameters['head'])) {
+                foreach ($parameters['head'] as $headKey => $headTab) {
+                    if (is_array($headTab) && count($headTab) > 0) {
+                        if (isset($headTab[2]) && $headTab[2] === 'address' && is_string($headTab[1]) && str_contains($headTab[1], $langs->transnoentities('Addresses')) && !str_contains($headTab[1], 'badge')) {
+                            $listContact = $parameters['object']->liste_contact();
+                            $contactCount = 0;
+                            if ($listContact != -1) {
+                                $filteredContact = array_filter($listContact, function ($var) {return $var['code'] == 'PROJECTADDRESS';});
+                                $contactCount    = count($filteredContact);
+                            }
+                            $parameters['head'][$headKey][1] .= '<span class="badge marginleftonlyshort">' . $contactCount . '</span>';
+                        }
+                    }
+                }
+            }
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
