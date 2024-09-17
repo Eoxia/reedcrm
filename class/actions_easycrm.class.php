@@ -703,7 +703,7 @@ class ActionsEasycrm
             if (!empty($parameters['head'])) {
                 foreach ($parameters['head'] as $headKey => $headTab) {
                     if (is_array($headTab) && count($headTab) > 0) {
-                        if (isset($headTab[2]) && $headTab[2] === 'address' && is_string($headTab[1]) && str_contains($headTab[1], $langs->transnoentities('Addresses')) && !str_contains($headTab[1], 'badge')) {
+                        if (isset($headTab[2]) && $headTab[2] === 'address' && is_string($headTab[1]) && strpos($headTab[1], $langs->transnoentities('Addresses')) !== false && str_contains($headTab[1], 'badge') === false) {
                             $listContact = $parameters['object']->liste_contact();
                             $contactCount = 0;
                             if ($listContact != -1) {
