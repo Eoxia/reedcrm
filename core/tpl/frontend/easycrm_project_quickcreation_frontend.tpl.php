@@ -44,6 +44,8 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
     </div>
 
     <div class="page-content">
+        <?php print saturne_show_notice('', '', 'error', false, true, '', ['id' => 'notice-infos']); ?>
+
         <!-- Project label -->
         <label for="title">
             <?php echo $langs->trans('ProjectLabel'); ?>
@@ -106,6 +108,10 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         <input type="hidden" id="latitude"  name="latitude" value="">
         <input type="hidden" id="longitude" name="longitude" value="">
         <input type="hidden" id="geolocation-error" name="geolocation-error" value="">
+
+        <!-- Audio -->
+        <div class="wpeo-button button-square-50 button-grey" id="start-recording"><?php echo img_picto('', 'fontawesome_fa-circle_fas_#e05353'); ?></div>
+        <div id="recording-indicator" class="blinking"><?php echo  $langs->trans('RecordingInProgress'); ?></div>
     </div>
 
     <div class="page-footer">

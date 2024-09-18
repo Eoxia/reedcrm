@@ -46,6 +46,15 @@ if ($action == 'add_img') {
     file_put_contents($uploadDir . dol_print_date(dol_now(), 'dayhourlog') . '_img.jpg', $decodedImage);
 }
 
+if ($action == 'add_audio') {
+    $uploadDir  = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
+    $uploadFile = $uploadDir . basename($_FILES['audio']['name']);
+    if (!dol_is_dir($uploadDir)) {
+        dol_mkdir($uploadDir);
+    }
+    move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
+}
+
 if ($action == 'add') {
     $numberingModules = [
         'project'      => $conf->global->PROJECT_ADDON,
@@ -97,16 +106,16 @@ if ($action == 'add') {
 //            }
 //        }
 
-        $pathToProjectImg = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
-        $pathToTmpImg     = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
-        $imgList          = dol_dir_list($pathToTmpImg, 'files');
+        $pathToProjectDir = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
+        $pathToTmpImg  = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
+        $imgList       = dol_dir_list($pathToTmpImg, 'files');
         if (!empty($imgList)) {
             foreach ($imgList as $img) {
-                if (!dol_is_dir($pathToProjectImg)) {
-                    dol_mkdir($pathToProjectImg);
+                if (!dol_is_dir($pathToProjectDir)) {
+                    dol_mkdir($pathToProjectDir);
                 }
 
-                $fullPath = $pathToProjectImg . '/' . $img['name'];
+                $fullPath = $pathToProjectDir . '/' . $img['name'];
                 dol_copy($img['fullname'], $fullPath);
 
                 vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
@@ -114,6 +123,20 @@ if ($action == 'add') {
                 vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
                 vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_LARGE, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_LARGE, '_large');
                 unlink($img['fullname']);
+            }
+        }
+
+        $pathToTmpAudio = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
+        $audioList      = dol_dir_list($pathToTmpAudio, 'files');
+        if (!empty($audioList)) {
+            foreach ($audioList as $audio) {
+                if (!dol_is_dir($pathToProjectDir)) {
+                    dol_mkdir($pathToProjectDir);
+                }
+
+                $fullPath = $pathToProjectDir . '/' . $audio['name'];
+                dol_copy($audio['fullname'], $fullPath);
+                unlink($audio['fullname']);
             }
         }
 
