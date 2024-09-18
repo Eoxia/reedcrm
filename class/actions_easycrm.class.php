@@ -835,7 +835,7 @@ class ActionsEasycrm
     {
         global $langs;
 
-        if (strpos($parameters['context'], 'pwaadmin') !== false) {
+        if (GETPOST('module_name') == 'EasyCRM' && strpos($parameters['context'], 'pwaadmin') !== false) {
             // PWA configuration
             $out = load_fiche_titre($langs->trans('Config'), '', '');
 
