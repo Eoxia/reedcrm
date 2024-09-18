@@ -44,6 +44,8 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
     </div>
 
     <div class="page-content">
+        <?php print saturne_show_notice('', '', 'error', false, true, '', ['id' => 'notice-infos']); ?>
+
         <!-- Project label -->
         <label for="title">
             <?php echo $langs->trans('ProjectLabel'); ?>
