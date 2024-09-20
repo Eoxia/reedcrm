@@ -699,7 +699,7 @@ class ActionsEasycrm
             $this->results = $parameters;
         }
 
-        if (preg_match('/main/', $parameters['context'])) {
+        if (strpos($parameters['context'], 'main') !== false) {
             if (!empty($parameters['head'])) {
                 foreach ($parameters['head'] as $headKey => $headTab) {
                     if (is_array($headTab) && count($headTab) > 0) {
