@@ -1,0 +1,9 @@
+[main]
+host = https://app.transifex.com
+
+[o:eoxia-1:p:easycrm:r:871c5bdb6ca4bee159d37e281462519b]
+file_filter   = langs/<lang>/easycrm.lang
+source_file   = langs/en_US/easycrm.lang
+source_lang   = en_US
+type          = MOZILLAPROPERTIES
+resource_name = langs/en_US/easycrm.lang (develop)
