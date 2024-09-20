@@ -266,7 +266,7 @@ if (is_array($geolocations) && !empty($geolocations)) {
         }
 
         $num++;
-        $objectList[$num]['color']  = '#' . randomColor();
+        $objectList[$num]['color']  = '#F00';
         switch ($objectLinked->opp_percent) {
             case $objectLinked->opp_percent >= 40 && $objectLinked->opp_percent < 60:
                 $objectList[$num]['scale'] = 1.5;
