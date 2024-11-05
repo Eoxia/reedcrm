@@ -16,6 +16,8 @@
  * Library javascript to enable Browser notifications
  */
 
+"use strict";
+
 /**
  * \file    js/quickevent.js
  * \ingroup easycrm
@@ -78,4 +80,53 @@ window.easycrm.quickevent.labelKeyUp = function() {
   } else {
     $(".quickevent-label-warning-notice").addClass("hidden");
   }
-}
+};
+
+/**
+ * QuickEvent checkIframeCreation
+ * Check if the iframe is created
+ * If the iframe is created, check if the iframe change
+ *
+ * @memberof EasyCRM_QuickEvent
+ *
+ * @since   1.5.0
+ * @version 1.5.0
+ *
+ * @returns {void}
+ */
+window.easycrm.quickevent.checkIframeCreation = function() {
+  const interval = setInterval(function() {
+    if ($('.iframedialog').length) {
+      window.easycrm.quickevent.checkIframeChange();
+      clearInterval(interval);
+    }
+  }, 100);
+};
+
+/**
+ * QuickEvent checkIframeChange
+ * Check if the iframe change
+ * If the iframe change, reload the page
+ *
+ * @memberof EasyCRM_QuickEvent
+ *
+ * @since   1.5.0
+ * @version 1.5.0
+ *
+ * @returns {void}
+ */
+window.easycrm.quickevent.checkIframeChange = function() {
+  const iframe = $('.iframedialog')[0];
+  let url = iframe.contentWindow.location.href;
+
+  const interval = setInterval(function() {
+    if (url !== iframe.contentWindow.location.href) {
+      if (url === 'about:blank') {
+        url = iframe.contentWindow.location.href;
+      } else {
+        location.reload();
+        clearInterval(interval);
+      }
+    }
+  }, 100);
+};

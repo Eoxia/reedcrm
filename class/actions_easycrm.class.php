@@ -332,7 +332,7 @@ class ActionsEasycrm
                     $out .= ' - ' . '<span>' . $langs->trans('LastCommercialReminderDate') . ' : ' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
                 }
                 if ($user->hasRight('agenda', 'myactions', 'create')) {
-                    $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url);
+                    $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.easycrm.quickevent.checkIframeCreation();");
                 }
                 if (!empty($lastActionComm)) {
                     $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id);
@@ -455,6 +455,17 @@ class ActionsEasycrm
             <?php
 
             $this->resprints = '<link rel="manifest" href="' . DOL_URL_ROOT . '/custom/easycrm/manifest.json.php' . '" />';
+        }
+
+        if (preg_match('/thirdpartycomm/', $parameters['context'])) {
+            $resourcesRequired = [
+                'js'  => '/custom/easycrm/js/easycrm.min.js'
+            ];
+
+            $out  = '<!-- Includes JS added by module easycrm -->';
+            $out .= '<script src="' . dol_buildpath($resourcesRequired['js'], 1) . '"></script>';
+
+            $this->resprints = $out;
         }
 
         return 0; // or return 1 to replace standard code-->
