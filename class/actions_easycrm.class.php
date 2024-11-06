@@ -332,10 +332,10 @@ class ActionsEasycrm
                     $out .= ' - ' . '<span>' . $langs->trans('LastCommercialReminderDate') . ' : ' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
                 }
                 if ($user->hasRight('agenda', 'myactions', 'create')) {
-                    $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.easycrm.quickevent.checkIframeCreation();");
+                    $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                 }
                 if (!empty($lastActionComm)) {
-                    $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id);
+                    $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                 }
                 $out .= '</td></tr>';
 
@@ -352,7 +352,7 @@ class ActionsEasycrm
                 if ($result > 0) {
                     $pictoContact = img_picto('', 'contact', 'class="pictofixedwidth"') . $contact->lastname;
                     $outAddress = '<td>';
-                    $outAddress .= dolButtonToOpenUrlInDialogPopup('address' . $result, $langs->transnoentities('FavoriteAddress'), $pictoContact, '/contact/card.php?id='. $contact->id);
+                    $outAddress .= dolButtonToOpenUrlInDialogPopup('address' . $result, $langs->transnoentities('FavoriteAddress'), $pictoContact, '/contact/card.php?id='. $contact->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                     $outAddress .= '</td></tr>';
                     ?>
                     <script>
@@ -457,17 +457,6 @@ class ActionsEasycrm
             $this->resprints = '<link rel="manifest" href="' . DOL_URL_ROOT . '/custom/easycrm/manifest.json.php' . '" />';
         }
 
-        if (preg_match('/thirdpartycomm/', $parameters['context'])) {
-            $resourcesRequired = [
-                'js'  => '/custom/easycrm/js/easycrm.min.js'
-            ];
-
-            $out  = '<!-- Includes JS added by module easycrm -->';
-            $out .= '<script src="' . dol_buildpath($resourcesRequired['js'], 1) . '"></script>';
-
-            $this->resprints = $out;
-        }
-
         return 0; // or return 1 to replace standard code-->
     }
 
@@ -566,13 +555,13 @@ class ActionsEasycrm
 
                             // Extrafield commRelaunch
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $parameters['obj']->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url);
+                                $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $parameters['obj']->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                                 // @todo find somewhere to add a user->conf to choose between popup dialog or open in current tab
                                 //$out .= '<a href="' . dol_buildpath('/easycrm/view/quickevent.php', 1) . $url . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
                             }
 
                             if (!empty($lastActionComm)) {
-                                $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $parameters['obj']->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id);
+                                $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $parameters['obj']->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                                 //$out .= '&nbsp' . $lastActionComm->getNomUrl(1);
                             }
                         }
