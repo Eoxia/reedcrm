@@ -16,6 +16,8 @@
  * Library javascript to enable Browser notifications
  */
 
+"use strict";
+
 /**
  * \file    js/quickevent.js
  * \ingroup easycrm
@@ -78,4 +80,4 @@ window.easycrm.quickevent.labelKeyUp = function() {
   } else {
     $(".quickevent-label-warning-notice").addClass("hidden");
   }
-}
+};
