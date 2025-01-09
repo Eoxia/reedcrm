@@ -49,10 +49,22 @@ class EasycrmDashboard
 	 */
 	public function load_dashboard(): array
 	{
-		$statusCommRepartition    = self::getDataFromExtrafieldsAndDictionary('PropalStatusCommRepartition', 'c_commercial_status');
-		$refusalReasonRepartition = self::getDataFromExtrafieldsAndDictionary('PropalRefusalReasonRepartition', 'c_refusal_reason', 'commrefusal');
+        global $user, $langs;
 
-		$array['propal']['graphs'] = [$statusCommRepartition, $refusalReasonRepartition];
+        $confName        = 'EASYCRM_DASHBOARD_CONFIG';
+        $dashboardConfig = json_decode($user->conf->$confName);
+        $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
+
+        if (empty($dashboardConfig->graphs->PropalStatusCommRepartition->hide)) {
+            $array['propal']['graphs'][] = self::getDataFromExtrafieldsAndDictionary('PropalStatusCommRepartition', 'c_commercial_status');
+        } else {
+            $array['propal']['disabledGraphs']['PropalStatusCommRepartition'] = $langs->transnoentities('PropalStatusCommRepartition');
+        }
+        if (empty($dashboardConfig->graphs->PropalRefusalReasonRepartition->hide)) {
+            $array['propal']['graphs'][] = self::getDataFromExtrafieldsAndDictionary('PropalRefusalReasonRepartition', 'c_refusal_reason', 'commrefusal');
+        } else {
+            $array['propal']['disabledGraphs']['PropalRefusalReasonRepartition'] = $langs->transnoentities('PropalRefusalReasonRepartition');
+        }
 
 		return $array;
 	}
@@ -77,6 +89,7 @@ class EasycrmDashboard
 
 		// Graph Title parameters.
 		$array['title'] = $langs->transnoentities($title);
+        $array['name']  = $title;
 		$array['picto'] = $class;
 
 		// Graph parameters.
