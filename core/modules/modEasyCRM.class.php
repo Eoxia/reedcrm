@@ -569,10 +569,18 @@ class modEasyCRM extends DolibarrModules
 
         if (is_array($objectsMetadata) && !empty($objectsMetadata)) {
             foreach ($objectsMetadata as $objectType => $objectMetadata) {
-                $extrafieldParam     = 'easycrm_address:name:rowid::element_id=$ID$ AND element_type="' . $objectType . '" AND status>0';
-                $extrafieldParamSize = dol_strlen($extrafieldParam);
-                $extrafields->update($objectType . 'address', 'FavoriteAddress', 'sellist', 255, $objectMetadata['table_element'], 0, 0, 101, 'a:1:{s:7:"options";a:1:{s:' . $extrafieldParamSize . ':"' . $extrafieldParam .'";N;}}', 1, '$user->rights->easycrm->address->write', 1, '', '', '', '', 'easycrm@easycrm', '1', 0, 0, ['css => minwidth100 maxwidth300 widthcentpercentminusx']);
-                $extrafields->addExtraField($objectType . 'address', 'FavoriteAddress', 'sellist', 101, 255, $objectMetadata['table_element'], 0, 0, '', 'a:1:{s:7:"options";a:1:{s:' . $extrafieldParamSize . ':"' . $extrafieldParam .'";N;}}', 1, '$user->rights->easycrm->address->write', 1, '', '', '', 'easycrm@easycrm', '1', 0, 0, ['css => minwidth100 maxwidth300 widthcentpercentminusx']);
+                if ($objectType != 'project') {
+                    // Backward compatibility
+                    if ($objectType == 'entrepot') {
+                        $objectType = 'warehouse';
+                    }
+                    $extrafields->delete($objectType . 'address', $objectMetadata['table_element']);
+                } else {
+                    $extrafieldParam     = 'easycrm_address:name:rowid::((element_id:=:$ID$) AND (element_type:=:' . $objectType . ') AND (status:>:0))';
+                    $extrafieldParamSize = dol_strlen($extrafieldParam);
+                    $extrafields->update($objectType . 'address', 'FavoriteAddress', 'sellist', 255, $objectMetadata['table_element'], 0, 0, 101, 'a:1:{s:7:"options";a:1:{s:' . $extrafieldParamSize . ':"' . $extrafieldParam .'";N;}}', 1, '$user->rights->easycrm->address->write', 1, '', '', '', '', 'easycrm@easycrm', '1', 0, 0, ['css => minwidth100 maxwidth300 widthcentpercentminusx']);
+                    $extrafields->addExtraField($objectType . 'address', 'FavoriteAddress', 'sellist', 101, 255, $objectMetadata['table_element'], 0, 0, '', 'a:1:{s:7:"options";a:1:{s:' . $extrafieldParamSize . ':"' . $extrafieldParam .'";N;}}', 1, '$user->rights->easycrm->address->write', 1, '', '', '', 'easycrm@easycrm', '1', 0, 0, ['css => minwidth100 maxwidth300 widthcentpercentminusx']);
+                }
             }
         }
         if (empty($conf->global->EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG)) {
