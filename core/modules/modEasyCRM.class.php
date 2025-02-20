@@ -547,9 +547,13 @@ class modEasyCRM extends DolibarrModules
         $extrafields->update('commtask', $langs->transnoentities('CommercialTask'), 'sellist', '', 'projet', 0, 0, 100, 'a:1:{s:7:"options";a:1:{s:21:"projet_task:ref:rowid";N;}}', 1, '', 4);
         $extrafields->addExtraField('commtask', $langs->transnoentities('CommercialTask'), 'sellist', 100, '', 'projet', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:21:"projet_task:ref:rowid";N;}}', 1, '', 4);
         $extrafields->addExtraField('projectphone', $langs->transnoentities('ProjectPhone'), 'phone', 100, '', 'projet', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:0:"";N;}}', 1, '', 1);
-		$extrafields->addExtraField('commstatus', $langs->transnoentities('CommercialStatus'), 'sellist', 100, '', 'propal', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:34:"c_commercial_status:label:rowid::1";N;}}', 1, '', 1, 'CommercialStatusHelp');
-		$extrafields->addExtraField('commrefusal', $langs->transnoentities('RefusalReason'), 'sellist', 100, '', 'propal', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:31:"c_refusal_reason:label:rowid::1";N;}}', 1, '', 1, 'RefusalReasonHelp');
         $extrafields->addExtraField('opporigin', $langs->transnoentities('OpportunityOrigin'), 'sellist', 100, '', 'projet', 0, 0, '', 'a:1:{s:7:"options";a:1:{s:19:"c_input_reason:code";N;}}', 1, '', 1);
+
+        // Propal extrafields
+        $extrafields->addExtraField('commstatus', $langs->transnoentities('CommercialStatus'), 'sellist', 100, '', 'propal', 0, 0, '', ['options' => ['c_commercial_status:label:rowid' => null]], 1, '', 1, 'CommercialStatusHelp');
+        $extrafields->update('commstatus', $langs->transnoentities('CommercialStatus'), 'sellist', '', 'propal', 0, 0, 100, ['options' => ['c_commercial_status:label:rowid' => null]], 1, '', 1, 'CommercialStatusHelp');
+        $extrafields->addExtraField('commrefusal', $langs->transnoentities('RefusalReason'), 'sellist', 100, '', 'propal', 0, 0, '', ['options' => ['c_refusal_reason:label:rowid' => null]], 1, '', 1, 'RefusalReasonHelp');
+        $extrafields->update('commrefusal', $langs->transnoentities('RefusalReason'), 'sellist', '', 'propal', 0, 0, 100, ['options' => ['c_refusal_reason:label:rowid' => null]], 1, '', 1, 'RefusalReasonHelp');
 
         // Societe extrafields
         $extrafields->update('notation_societe_contact', 'NotationObjectContact', 'text', '', 'societe', 0, 0, 100, '', '', '', 5, 'NotationObjectContactHelp', '', '', 0, 'easycrm@easycrm', 1, 0, 0, ['csslist' => 'center']);
