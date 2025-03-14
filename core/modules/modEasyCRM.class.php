@@ -571,6 +571,20 @@ class modEasyCRM extends DolibarrModules
         $extrafields->update('address_status', 'AddressStatus', 'select', '', 'contact', 0, 0, 100, 'a:1:{s:7:"options";a:2:{i:1;s:8:"NotFound";i:2;s:10:"Geolocated";}}', 0, '', 5, '', '', '', '', 'easycrm@easycrm');
         $extrafields->addExtraField('address_status', 'AddressStatus', 'select', 100, '', 'contact', 0, 0, '', 'a:1:{s:7:"options";a:2:{i:1;s:8:"NotFound";i:2;s:10:"Geolocated";}}', 0, '', 5, '', '', '', 'easycrm@easycrm');
 
+        //Extra Fields on Products/Services
+        $result1=$extrafields->addExtraField('easycrm_prod_serv', "ProdServTagsCategories", 'varchar', 200, 255, 'product', 0, 0,  '', '', 0, '', 2, '',  '(($form = new Form($db)) ? $form->showCategories($obj->rowid, \'product\', 1, 0) : \'\')', '0',  'easycrm@easycrm',  'isModEnabled("easycrm")', 0, 0);
+        //Extra Fields on Customers/Prospects
+        $result2=$extrafields->addExtraField('easycrm_cust_prosp', "CustProspTagsCategories", 'varchar', 200, 255, 'thirdparty', 0, 0,  '', '', 0, '', 2, '',  '(($form = new Form($db)) ? $form->showCategories($obj->rowid, \'customer\', 1, 0) : \'\')', '0',  'easycrm@easycrm',  'isModEnabled("easycrm")', 0, 0);
+        //Extra Fields on Vendors
+        $result3=$extrafields->addExtraField('easycrm_vendor', "VendorsTagsCategories", 'varchar', 200, 255, 'thirdparty', 0, 0,  '', '', 0, '', 2, '',  '(($form = new Form($db)) ? $form->showCategories($obj->rowid, \'supplier\', 1, 0) : \'\')', '0',  'easycrm@easycrm',  'isModEnabled("easycrm")', 0, 0);
+        //Extra Fields on Contacts
+        $result4=$extrafields->addExtraField('easycrm_contact', "ContactsTagsCategories", 'varchar', 200, 255, 'socpeople', 0, 0,  '', '', 0, '', 2, '',  '(($form = new Form($db)) ? $form->showCategories($obj->rowid, \'contact\', 1, 0) : \'\')', '0',  'easycrm@easycrm',  'isModEnabled("easycrm")', 0, 0);
+        //Extra Fields on Projects/LEads
+        $result5=$extrafields->addExtraField('easycrm_proj_leads', "ProjectsTagsCategories", 'varchar', 200, 255, 'projet', 0, 0,  '', '', 0, '', 2, '',  '(($form = new Form($db)) ? $form->showCategories($object->id, \'project\', 1, 0) : \'\')', '0',  'easycrm@easycrm',  'isModEnabled("easycrm")', 0, 0);
+        //Extra Fields on Events
+        $result6=$extrafields->addExtraField('easycrm_events', "EventsTagsCategories", 'varchar', 200, 255, 'actioncomm', 0, 0,  '', '', 0, '', 2, '',  '(($form = new Form($db)) ? $form->showCategories($obj->id, \'actioncomm\', 1, 0) : \'\')', '0',  'easycrm@easycrm',  'isModEnabled("easycrm")', 0, 0);
+
+
         if (is_array($objectsMetadata) && !empty($objectsMetadata)) {
             foreach ($objectsMetadata as $objectType => $objectMetadata) {
                 if ($objectType != 'project') {

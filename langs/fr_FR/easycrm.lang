@@ -151,6 +151,17 @@ MyPosition       = Ma position
 # Other - Autre
 #
 
+#
+# Extra Fields String
+#
+
+ProdServTagsCategories = Étiquettes/Catégories des produits-services
+CustProspTagsCategories = Étiquettes/Catégories des clients-prospects
+VendorsTagsCategories = Étiquettes/Catégories des fournisseurs
+ContactsTagsCategories = Étiquettes/Catégories des contacts
+ProjectsTagsCategories = Étiquettes/Catégories des projets-pistes
+EventsTagsCategories = Étiquettes/Catégories des événements
+
 # Data - Donnée
 LastProjects                           = Les %s derniers projets
 Sent                                   = Envoyé
