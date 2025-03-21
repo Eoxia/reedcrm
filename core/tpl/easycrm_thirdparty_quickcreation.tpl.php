@@ -44,7 +44,7 @@ if ($permissiontoaddthirdparty) {
     // Commercial
     if (getDolGlobalInt('EASYCRM_THIRDPARTY_COMMERCIAL_VISIBLE') > 0) {
         print '<tr><td>' . $langs->trans('AllocateCommercial') . '</td><td>';
-        $userList = $form->select_dolusers('', '', 0, null, 0, '', '', 0, 0, 0, ' AND u.statut = 1 AND u.employee = 1', 0, '', '', 0, 1);
+        $userList = $form->select_dolusers('', '', 0, null, 0, '', '', 0, 0, 0, '((u.statut:=:1) AND (u.employee:=:1))', 0, '', '', 0, 1);
         print img_picto('', 'user', 'class="pictofixedwidth"') . $form->multiselectarray('commercial', $userList, GETPOST('commercial', 'array'), '', '', 'quatrevingtpercent widthcentpercentminusx');
         print '</td></tr>';
     }

@@ -39,6 +39,7 @@ if (isModEnabled('project')) {
 }
 if (isModEnabled('societe')) {
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 }
 if (isModEnabled('fckeditor')) {
     require_once DOL_DOCUMENT_ROOT.'/core/class/doleditor.class.php';
