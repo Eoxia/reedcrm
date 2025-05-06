@@ -21,7 +21,6 @@
 ModuleEasyCRMName      = EasyCRM
 ModuleEasyCRMDesc      = Simplification de la CRM
 EasyCRMDescription     = Simplification de la CRM
-EasyCRMDescriptionLong = Simplification de la CRM
 
 #
 # Quick Creation - Ajout rapide
