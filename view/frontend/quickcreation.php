@@ -57,9 +57,12 @@ $subaction   = GETPOST('subaction', 'alpha');
 
 // Initialize technical objects
 $geolocation = new Geolocation($db);
+$extraFields = new ExtraFields($db);
 if (isModEnabled('project')) {
     $project = new Project($db);
     $task    = new Task($db);
+
+    $extraFields->fetch_name_optionals_label($project->table_element);
 }
 
 // Initialize view objects

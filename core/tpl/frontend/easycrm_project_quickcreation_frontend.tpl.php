@@ -24,7 +24,7 @@
 /**
  * The following vars must be defined :
  * Global   : $conf, $langs
- * Objects  : $form, $project
+ * Objects  : $extraFields, $form, $project
  * Variable : $permissionToAddProject
  */
 
@@ -58,6 +58,40 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
                 <?php echo $langs->trans('Description'); ?>
                 <textarea name="description" id="description" rows="6"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
             </label>
+        <?php endif; ?>
+
+        <!-- ExtraFields -->
+        <?php if (getDolGlobalInt('EASYCRM_PROJECT_EXTRAFIELDS_VISIBLE')) :
+            $extraFields->attributes['projet']['picto']['projectphone']      = 'phone';
+            $extraFields->attributes['projet']['picto']['easycrm_lastname']  = 'fa-user-tie';
+            $extraFields->attributes['projet']['picto']['easycrm_firstname'] = 'fa-user';
+            $extraFields->attributes['projet']['picto']['easycrm_email']     = 'fa-at';
+
+            $positions = $extraFields->attributes['projet']['pos'];
+            asort($positions);
+            $sortedType = [];
+            foreach ($positions as $key => $pos) {
+                $sortedType[$key] = $extraFields->attributes['projet']['type'][$key];
+            }
+            $extraFields->attributes['projet']['type'] = $sortedType; ?>
+
+            <?php foreach ($extraFields->attributes['projet']['type'] as $key => $value) {
+                if (strpos($key, 'easycrm') === false && $key != 'projectphone') {
+                    continue;
+                }
+
+                $inputType = 'text';
+                if ($value == 'mail') {
+                    $inputType = 'email';
+                }
+                if ($value == 'phone') {
+                    $inputType = 'tel';
+                }
+
+                print '<label for="' . $key . '" class="extrafields-content">';
+                print img_picto('', $extraFields->attributes['projet']['picto'][$key], 'class="pictofixedwidth"') . '<input type="' . $inputType . '" id="' . $key . '" name="options_' . $key . '" placeholder="' . $langs->trans($extraFields->attributes['projet']['label'][$key]) . '" value="' . dol_escape_htmltag((GETPOSTISSET($key) ? GETPOST($key) : '')) . '">';
+                print '</label>';
+            } ?>
         <?php endif; ?>
 
         <!-- Opportunity option -->
