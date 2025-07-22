@@ -113,6 +113,38 @@ if ($action == 'set_config') {
     exit;
 }
 
+if ($action == 'add_api_quick_affected_user') {
+    $config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
+    $config = json_decode($config, true);
+    if (!is_array($config)) {
+        $config = [];
+    }
+
+    $selectedUser = GETPOSTINT('selecteduser');
+    $affectedUser = GETPOSTINT('affacteduser');
+
+    $config[$selectedUser] = $affectedUser;
+    dolibarr_set_const($db, 'EASYCRM_API_QUICK_CREATIONS', json_encode($config), 'chaine', 0, '', $conf->entity);
+    setEventMessage('SavedConfig');
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+if ($action == 'delete_api_quick_affected_user') {
+    $userId = GETPOSTINT('user_id');
+    if ($userId) {
+        $config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
+        $config = json_decode($config, true);
+        if (is_array($config) && isset($config[$userId])) {
+            unset($config[$userId]);
+            dolibarr_set_const($db, 'EASYCRM_API_QUICK_CREATIONS', json_encode($config), 'chaine', 0, '', $conf->entity);
+            setEventMessage('DeletedConfig');
+        }
+    }
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
 
 /*
  * View
@@ -547,6 +579,60 @@ print '</td></td><td></td></tr>';
 
 print '</table>';
 print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print '</form>';
+
+// Quick creations API
+print load_fiche_titre($langs->trans('Configs', $langs->trans('ApiQuickCreations')), '', '');
+
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="quickcreation_api">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('ApiUser') . '</td>';
+print '<td>' . $langs->trans('ProjectAffectedUser') . '</td>';
+print '<td>' . $langs->trans('Action') . '</td>';
+print '</tr>';
+
+$tmpUser = new User($db);
+
+$config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
+$config = json_decode($config, true);
+if (!is_array($config)) {
+    $config = [];
+}
+
+foreach ($config as $userId => $affactedUserId) {
+    if (empty($userId) || empty($affactedUserId)) {
+        continue;
+    }
+    print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="quickcreation_api_delete">';
+    print '<input type="hidden" name="token" value="' . newToken() . '">';
+    print '<input type="hidden" name="user_id" value="' . $userId . '">';
+    print '<tr class="oddeven">';
+    $tmpUser->fetch($userId);
+    print '<td>' . $tmpUser->getNomUrl(1) . '</td>';
+    $tmpUser->fetch($affactedUserId);
+    print '<td>' . $tmpUser->getNomUrl(1) . '</td>';
+    print '<td><button type="submit" name="action" value="delete_api_quick_affected_user" class="wpeo-button button-red"><i class="fas fa-trash-alt"></i></button></td>';
+    print '</tr>';
+    print '</form>';
+}
+
+$tmpUser->fetchAll('', '', 0, 0, '(api_key:is:NULL)');
+$noApiKeyUsers = array_map(function ($user) {
+    return $user->id;
+}, $tmpUser->users) + array_keys($config);
+
+// QuickEventLabelLength
+print '<tr class="oddeven">';
+print '<td>' . $form->select_dolusers('', 'selecteduser', 0, $noApiKeyUsers) . '</td>';
+print '<td>' . $form->select_dolusers('', 'affacteduser') . '</td>';
+print '<td><button type="submit" name="action" value="add_api_quick_affected_user" class="wpeo-button button-blue"><i class="fas fa-plus"></i></button></td>';
+print '</tr>';
+
+
+
+print '</table>';
 print '</form>';
 
 $db->close();
