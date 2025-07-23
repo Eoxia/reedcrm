@@ -112,6 +112,9 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
                 set_notation_object_contact($object);
                 break;
             case 'PROJECT_ADD_CONTACT':
+
+                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+
                 $contactType = getDictionaryValue('c_type_contact', 'code', GETPOST('typecontact'));
 
                 if ($contactType == 'PROJECTADDRESS' || empty( GETPOST('typecontact'))) {

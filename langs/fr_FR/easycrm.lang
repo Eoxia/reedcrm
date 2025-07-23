@@ -77,7 +77,10 @@ PWACloseProjectOpportunityZeroDescription = Clôturer le projet quand l'opportun
 ProductKitConf     = Compléter la description d'une ligne de devis avec la composition du kit
 ProductKitConfDesc = Indépendemment du paramètre du module produit sur la complétion de la description. <br> A l'ajout d'un produit/service, ayant un kit, sur une ligne de devis, la description de la ligne sera remplacée par le libellé et la description des produits composants.
 
-
+# ApiQuickCreation
+ApiQuickCreations   = ajouts rapides via l'api
+ApiUser             = Utilisateur API
+ProjectAffectedUser = Utilisateur affecté au projet
 
 #
 # Tools - Outils
