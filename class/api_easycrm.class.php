@@ -27,6 +27,7 @@ require_once __DIR__ . '/../core/modules/modEasyCRM.class.php';
 
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
 require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/object.lib.php';
@@ -126,9 +127,15 @@ class EasyCRM extends DolibarrApi
 			if (!is_array($config)) {
 				$config = [];
 			}
-			$affectedUserId = !empty($config[DolibarrApiAccess::$user->id]) ? $config[DolibarrApiAccess::$user->id] : DolibarrApiAccess::$user->id;
+			$affectedUserId = !empty($config[DolibarrApiAccess::$user->id]) ? $config[DolibarrApiAccess::$user->id]['user_id'] : DolibarrApiAccess::$user->id;
 
 			$project->add_contact($affectedUserId, 'PROJECTLEADER', 'internal');
+
+			if (!empty($config[DolibarrApiAccess::$user->id]['tag'])) {
+				$category = new Categorie($this->db);
+				$category->fetch($config[DolibarrApiAccess::$user->id]['tag']);
+				$category->add_type($project, Categorie::TYPE_PROJECT);
+			}
 
 			$task = new Task($this->db);
 
