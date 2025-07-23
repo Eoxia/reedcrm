@@ -627,7 +627,8 @@ foreach ($config as $userId => $tmpConf) {
     $tmpUser->fetch($affactedUserId);
     print '<td>' . $tmpUser->getNomUrl(1) . '</td>';
     $tmpCategorie->fetch($affectedTag);
-    print '<td>' . $tmpCategorie->getNomUrl(1) . '</td>';
+    $url = DOL_URL_ROOT.'/categories/viewcat.php?id='.$tmpCategorie->id.'&type='.$tmpCategorie->type.'&backtopage='.urlencode($_SERVER['PHP_SELF']);
+    print '<td><a href="' . $url . '" class="wpeo-link">' . img_object('', $tmpCategorie->picto) . ' ' . $tmpCategorie->label . '</a></td>';
     print '<td><button type="submit" name="action" value="delete_api_quick_affected_user" class="wpeo-button button-red"><i class="fas fa-trash-alt"></i></button></td>';
     print '</tr>';
     print '</form>';
