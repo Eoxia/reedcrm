@@ -81,6 +81,7 @@ ProductKitConfDesc = Indépendemment du paramètre du module produit sur la comp
 ApiQuickCreations   = ajouts rapides via l'api
 ApiUser             = Utilisateur API
 ProjectAffectedUser = Utilisateur affecté au projet
+ProjectAffectedTag  = Tag affecté au projet
 
 #
 # Tools - Outils

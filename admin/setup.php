@@ -42,6 +42,7 @@ if (isModEnabled('societe')) {
 if (isModEnabled('agenda')) {
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
 }
+require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 require_once __DIR__ . '/../lib/easycrm.lib.php';
 
@@ -122,8 +123,15 @@ if ($action == 'add_api_quick_affected_user') {
 
     $selectedUser = GETPOSTINT('selecteduser');
     $affectedUser = GETPOSTINT('affacteduser');
+    $affectedTag  = GETPOST('affectedtag');
 
-    $config[$selectedUser] = $affectedUser;
+    if (empty($selectedUser) || empty($affectedUser) || (empty($affectedTag) || $affectedTag == -1)) {
+        setEventMessage('ErrorFieldsRequired', 'errors');
+        header('Location: ' . $_SERVER['PHP_SELF']);
+        exit;
+    }
+
+    $config[$selectedUser] = ['user_id' => $affectedUser, 'tag' => $affectedTag];
     dolibarr_set_const($db, 'EASYCRM_API_QUICK_CREATIONS', json_encode($config), 'chaine', 0, '', $conf->entity);
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
@@ -590,10 +598,12 @@ print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
 print '<td>' . $langs->trans('ApiUser') . '</td>';
 print '<td>' . $langs->trans('ProjectAffectedUser') . '</td>';
+print '<td>' . $langs->trans('ProjectAffectedTag') . '</td>';
 print '<td>' . $langs->trans('Action') . '</td>';
 print '</tr>';
 
-$tmpUser = new User($db);
+$tmpUser      = new User($db);
+$tmpCategorie = new Categorie($db);
 
 $config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
 $config = json_decode($config, true);
@@ -601,10 +611,13 @@ if (!is_array($config)) {
     $config = [];
 }
 
-foreach ($config as $userId => $affactedUserId) {
-    if (empty($userId) || empty($affactedUserId)) {
+foreach ($config as $userId => $tmpConf) {
+    $affactedUserId = isset($tmpConf['user_id']) ? $tmpConf['user_id'] : '';
+    $affectedTag    = isset($tmpConf['tag']) ? $tmpConf['tag'] : '';
+    if (empty($userId) || empty($affactedUserId) || empty($affectedTag)) {
         continue;
     }
+
     print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="quickcreation_api_delete">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
     print '<input type="hidden" name="user_id" value="' . $userId . '">';
@@ -613,6 +626,9 @@ foreach ($config as $userId => $affactedUserId) {
     print '<td>' . $tmpUser->getNomUrl(1) . '</td>';
     $tmpUser->fetch($affactedUserId);
     print '<td>' . $tmpUser->getNomUrl(1) . '</td>';
+    $tmpCategorie->fetch($affectedTag);
+    $url = DOL_URL_ROOT.'/categories/viewcat.php?id='.$tmpCategorie->id.'&type='.$tmpCategorie->type.'&backtopage='.urlencode($_SERVER['PHP_SELF']);
+    print '<td><a href="' . $url . '" class="wpeo-link">' . img_object('', $tmpCategorie->picto) . ' ' . $tmpCategorie->label . '</a></td>';
     print '<td><button type="submit" name="action" value="delete_api_quick_affected_user" class="wpeo-button button-red"><i class="fas fa-trash-alt"></i></button></td>';
     print '</tr>';
     print '</form>';
@@ -627,6 +643,7 @@ $noApiKeyUsers = array_map(function ($user) {
 print '<tr class="oddeven">';
 print '<td>' . $form->select_dolusers('', 'selecteduser', 0, $noApiKeyUsers) . '</td>';
 print '<td>' . $form->select_dolusers('', 'affacteduser') . '</td>';
+print '<td>' . $form->select_all_categories('project', '', 'affectedtag') . '</td>';
 print '<td><button type="submit" name="action" value="add_api_quick_affected_user" class="wpeo-button button-blue"><i class="fas fa-plus"></i></button></td>';
 print '</tr>';
 
