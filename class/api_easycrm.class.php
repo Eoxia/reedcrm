@@ -107,7 +107,7 @@ class EasyCRM extends DolibarrApi
 		$project->opp_status = 1;
 
 		$project->date_c            = dol_now();
-		$project->date_start        = dol_now();
+		$project->date_start        = $request_data['date_start'] ?? dol_now();
 		$project->status            = Project::STATUS_VALIDATED;
 		$project->usage_opportunity = 1;
 		$project->usage_task        = 1;
