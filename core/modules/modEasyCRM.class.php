@@ -488,6 +488,22 @@ class modEasyCRM extends DolibarrModules
         ];
 
         $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=easycrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('PWA'),
+            'prefix'   => '<i class="fa fa-ticket-alt pictofixedwidth"></i>',
+            'mainmenu' => 'easycrm',
+            'leftmenu' => 'quickcreationfrontendpwa',
+            'url'      => '/custom/easycrm/view/frontend/quickcreation.php?source=pwa',
+            'langs'    => 'easycrm@easycrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'easycrm\')',
+            'perms'    => '$user->hasRight(\'easycrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0
+        ];
+
+        $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=project,fk_leftmenu=projects',
             'type'     => 'left',
             'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
