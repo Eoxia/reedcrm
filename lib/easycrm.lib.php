@@ -48,6 +48,11 @@ function easycrm_admin_prepare_head(): array
     $head[$h][2] = 'pwa';
     $h++;
 
+    $head[$h][0] = dol_buildpath('/easycrm/admin/call_notifications.php', 1) . '?module_name=EasyCRM';
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fab fa-bell pictofixedwidth"></i>' . $langs->trans('CallNotifications') : '<i class="fab fa-bell"></i>';
+    $head[$h][2] = 'notifications';
+    $h++;
+
     $head[$h][0] = dol_buildpath('/easycrm/admin/product.php', 1);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-cube pictofixedwidth"></i>' . $langs->trans('Product') : '<i class="fas fa-cube"></i>';
     $head[$h][2] = 'product';

@@ -136,3 +136,127 @@ function easycrm_fetch_dictionary(string $tableName, string $moreWhere = '')
         return -1;
     }
 }
+
+
+function _normalize_phone(string $s): string {
+    // Garde chiffres et + uniquement
+    $s = preg_replace('~[^0-9+]~', '', $s ?? '');
+    // Optionnel : transformer +33X... en 0X... (à activer si tu veux un match strict FR)
+    // if (strpos($s, '+33') === 0) $s = '0'.substr($s, 3);
+    return $s;
+}
+
+function _phone_tail(string $s, int $len = 9): string {
+    $s = _normalize_phone($s);
+    $s = ltrim($s, '+');               // retire + pour éviter faux négatifs
+    return substr($s, -$len);          // fins de numéro robustes
+}
+
+
+function get_and_show_contact(string $caller, string $callee): array
+{
+    global $db, $user, $langs;
+    require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+    require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+
+    $contact = new Contact($db);
+    $userCalled = new User($db);
+    $result = ['user' => null, 'contact' => null, 'call_event_id' => null];
+
+    $callerTail = _phone_tail($caller);
+    $calleeTail = _phone_tail($callee);
+
+    log_to_file("Searching for user with phone ending: " . $calleeTail);
+    log_to_file("Searching for contact with phone ending: " . $callerTail);
+
+    // Recherche de l'utilisateur appelé
+    $userMatches = saturne_fetch_all_object_type('User', '', '', 0, 0, ['customsql' => 'office_phone LIKE "%'.$calleeTail.'" OR personal_mobile LIKE "%'.$calleeTail.'" OR user_mobile LIKE "%'.$calleeTail.'"'] );
+
+    // Recherche du contact appelant
+    $contactMatches = saturne_fetch_all_object_type('Contact', '', '', 0, 0, ['customsql' => 'phone LIKE "%'.$callerTail.'" OR phone_mobile LIKE "%'.$callerTail.'"' ] );
+
+    if (is_array($userMatches) && !empty($userMatches)) {
+        $userMatch = array_shift($userMatches);
+        $userCalled->fetch($userMatch->id);
+        $result['user'] = $userCalled;
+        log_to_file("Found user: " . $userCalled->login . " (ID: " . $userCalled->id . ")");
+    }
+
+    if (is_array($contactMatches) && !empty($contactMatches)) {
+        $contactMatch = array_shift($contactMatches);
+        $contact->fetch($contactMatch->id);
+        $result['contact'] = $contact;
+        log_to_file("Found contact: " . $contact->getFullName($langs) . " (ID: " . $contact->id . ")");
+    }
+
+    // Si on a trouvé un utilisateur et un contact, on stocke l'événement
+    if ($result['user'] && $result['contact']) {
+        $call_event_id = store_call_event($result['user']->id, $result['contact']->id, $caller, $callee);
+        $result['call_event_id'] = $call_event_id;
+        log_to_file("Stored call event with ID: " . $call_event_id);
+    }
+
+    return $result;
+}
+
+/**
+ * Stocker l'événement d'appel en base de données
+ */
+function store_call_event($user_id, $contact_id, $caller, $callee) {
+    global $db;
+
+    $sql = "INSERT INTO " . MAIN_DB_PREFIX . "easycrm_call_events ";
+    $sql .= "(fk_user, fk_contact, caller, callee, call_date, status) ";
+    $sql .= "VALUES (" . (int)$user_id . ", " . (int)$contact_id . ", ";
+    $sql .= "'" . $db->escape($caller) . "', '" . $db->escape($callee) . "', ";
+    $sql .= "'" . $db->idate(dol_now()) . "', 'new')";
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        return $db->last_insert_id(MAIN_DB_PREFIX . "easycrm_call_events");
+    } else {
+        log_to_file('Error storing call event: ' . $db->error());
+        return false;
+    }
+}
+
+/**
+ * Récupérer les événements d'appel non traités pour un utilisateur
+ */
+function get_pending_call_events($user_id) {
+    global $db;
+
+    $sql = "SELECT ce.rowid, ce.fk_contact, ce.caller, ce.callee, ce.call_date, ";
+    $sql .= "c.lastname, c.firstname, c.phone, c.phone_mobile, c.email ";
+    $sql .= "FROM " . MAIN_DB_PREFIX . "easycrm_call_events ce ";
+    $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON ce.fk_contact = c.rowid ";
+    $sql .= "WHERE ce.fk_user = " . (int)$user_id . " ";
+    $sql .= "AND ce.status = 'new' ";
+    $sql .= "ORDER BY ce.call_date DESC";
+
+    $resql = $db->query($sql);
+    $events = [];
+
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $events[] = $obj;
+        }
+        $db->free($resql);
+    }
+
+    return $events;
+}
+
+/**
+ * Marquer un événement d'appel comme traité
+ */
+function mark_call_event_processed($event_id) {
+    global $db;
+
+    $sql = "UPDATE " . MAIN_DB_PREFIX . "easycrm_call_events ";
+    $sql .= "SET status = 'processed' ";
+    $sql .= "WHERE rowid = " . (int)$event_id;
+
+    return $db->query($sql);
+}
