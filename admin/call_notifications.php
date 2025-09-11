@@ -35,6 +35,7 @@ global $db, $langs, $user, $conf;
 // Libraries
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once __DIR__ . '/../lib/easycrm_function.lib.php';
+require_once __DIR__ . '/../lib/easycrm.lib.php';
 
 // Translations
 $langs->loadLangs(array("admin", "easycrm@easycrm"));
@@ -86,7 +87,7 @@ print load_fiche_titre($title, $linkback, 'easycrm_color@easycrm');
 
 // Configuration header
 $head = easycrm_admin_prepare_head();
-print dol_get_fiche_head($head, 'product', $title, -1, 'easycrm_color@easycrm');
+print dol_get_fiche_head($head, 'notifications', $title, -1, 'easycrm_color@easycrm');
 
 // Subheader
 $linkback = '<a href="' . ($backtopage ?: DOL_URL_ROOT . '/admin/modules.php?restore_lastsearch_values=1') . '">' . $langs->trans("BackToModuleList") . '</a>';
