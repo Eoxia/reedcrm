@@ -294,6 +294,13 @@ class ActionsEasycrm
     {
         global $conf, $db, $langs, $object, $user;
 
+        if (empty($conf->global->EASYCRM_CALL_NOTIFICATIONS_DISABLED) && !empty($user->id)) {
+            $url = dol_buildpath('/custom/easycrm/js/call_notifications.js.php', 1);
+            if (!empty($url)) { ?>
+                <script type="text/javascript" src="<?= dol_escape_htmltag($url) ?>"></script>
+            <?php }
+        }
+
         // Do something only for the current context
         if (preg_match('/thirdpartycomm|projectcard/', $parameters['context'])) {
             $pictoPath = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
