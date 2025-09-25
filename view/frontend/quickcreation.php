@@ -101,13 +101,15 @@ if (empty($resHook)) {
 
 $title    = $langs->trans('QuickCreation');
 $help_url = 'FR:Module_EasyCRM';
-$moreJS   = ['/custom/saturne/js/includes/signature-pad.min.js'];
-$moreCSS  = ['/easycrm/css/pico.min.css'];
+$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/saturne/js/includes/signature-pad.min.js', '/custom/easycrm/js/easycrm.min.js'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 
-saturne_header(0, '', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'quickcreation-frontend');
+llxHeader('', $title, $help_url, '', 0, 0, $moreJS, [], '', 'quickcreation-frontend');
+
+//Media gallery
+require_once __DIR__ . '/../../../saturne/core/tpl/medias/medias_gallery_modal.tpl.php';
 
 if (empty($permissionToAddProject)) {
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);

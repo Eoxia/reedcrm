@@ -38,6 +38,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
 <!-- File start-->
 <div class="project-container">
     <div class="page-header">
+        <!-- @todo Logo here -->
         <div class="page-title"><?php echo $langs->trans('Lead'); ?></div> <?php
         $backToMap = img_picto('map', 'fontawesome_map-marked-alt_fas_#ffffff') . ' ' . img_picto('back', 'fontawesome_arrow-right_fas_#ffffff');
         print '<a class="wpeo-button" href="' . dol_buildpath('custom/easycrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
@@ -47,9 +48,9 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         <?php print saturne_show_notice('', '', 'error', 'notice-infos', false, true, '', ['Error' => $langs->transnoentities('Error')]); ?>
 
         <!-- Project label -->
-        <label for="title">
+        <label for="title"> <!-- @todo class css pour le design des input et textarea -->
             <?php echo $langs->trans('ProjectLabel'); ?>
-            <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
+                <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
         </label>
 
         <!-- Description -->
@@ -59,6 +60,10 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
                 <textarea name="description" id="description" rows="6"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
             </label>
         <?php endif; ?>
+
+        <!-- Audio -->
+        <div class="wpeo-button button-square-50 button-grey" id="start-recording"><?php echo img_picto('', 'fontawesome_fa-circle_fas_#e05353'); ?></div>
+        <div id="recording-indicator" class="blinking"><?php echo  $langs->trans('RecordingInProgress'); ?></div>
 
         <!-- ExtraFields -->
         <?php if (getDolGlobalInt('EASYCRM_PROJECT_EXTRAFIELDS_VISIBLE')) :
@@ -117,15 +122,6 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
             <?php endif;
         endif; ?>
 
-        <!-- Categories -->
-<!--        --><?php //if (isModEnabled('categorie') && $conf->global->EASYCRM_PROJECT_CATEGORIES_VISIBLE > 0) : ?>
-<!--            <label for="categories-project">-->
-<!--                --><?php //echo $langs->trans('Categories'); ?>
-<!--                --><?php //$cateArbo = $form->select_all_categories(Categorie::TYPE_PROJECT, '', 'parent', 64, 0, 1); ?>
-<!--                --><?php //print img_picto('', 'category', 'class="pictofixedwidth"') . $form->multiselectarray('categories_project', $cateArbo, GETPOST('categories_project', 'array'), '', 0, 'quatrevingtpercent widthcentpercentminusx'); ?>
-<!--            </label>-->
-<!--        --><?php //endif; ?>
-
         <!-- Images -->
         <input hidden multiple id="upload-image" type="file" name="userfile[]" capture="environment" accept="image/*">
         <label class="linked-medias project" for="upload-image">
@@ -142,10 +138,6 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         <input type="hidden" id="latitude"  name="latitude" value="">
         <input type="hidden" id="longitude" name="longitude" value="">
         <input type="hidden" id="geolocation-error" name="geolocation-error" value="">
-
-        <!-- Audio -->
-        <div class="wpeo-button button-square-50 button-grey" id="start-recording"><?php echo img_picto('', 'fontawesome_fa-circle_fas_#e05353'); ?></div>
-        <div id="recording-indicator" class="blinking"><?php echo  $langs->trans('RecordingInProgress'); ?></div>
     </div>
 
     <div class="page-footer">
