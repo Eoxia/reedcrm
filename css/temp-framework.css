@@ -1,0 +1,310 @@
+/*--------------------------------------------------------------
+	Module : Modal
+	Version : 1.0.0
+
+	.wpeo-modal -> classe de base du mobule
+	.modalactive -> lance l'apparition de la modal
+	.no-modal-close -> désactive l'icone fermeture
+--------------------------------------------------------------*/
+.wpeo-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background: rgba(39, 42, 53, 0.9);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease-out;
+}
+.wpeo-modal textarea {
+    resize: none;
+}
+.wpeo-modal.modal-active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1002;
+}
+.wpeo-modal.modal-active .modal-container {
+    transform: translate(-50%, -50%);
+    border-radius: 10px;
+}
+.wpeo-modal.modal-active textarea {
+    resize: both;
+}
+.wpeo-modal.modal-active .modal-active {
+    z-index: 1003;
+}
+.wpeo-modal.modal-active .modal-active .modal-active {
+    z-index: 1004;
+}
+.wpeo-modal.modal-force-display .modal-close {
+    display: none;
+}
+
+.wpeo-modal .modal-container {
+    position: absolute;
+    transition: all 0.2s ease-out;
+    width: 100%;
+    max-width: 860px;
+    height: 100%;
+    max-height: 560px;
+    background: #fff;
+    padding: 1em 0;
+    margin: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+}
+@media (max-width: 700px) {
+    .wpeo-modal .modal-container {
+        padding: 1em;
+    }
+}
+.wpeo-modal .modal-container .modal-header {
+    height: 10%;
+    display: flex;
+    padding: 0 2em;
+}
+.wpeo-modal .modal-container .modal-content {
+    height: 78%;
+    padding: 0 2em;
+}
+.wpeo-modal .modal-container .modal-footer {
+    height: 12%;
+    padding: 0 2em;
+}
+.wpeo-modal .modal-container .modal-header .modal-title, .wpeo-modal .modal-container .modal-header .modal-close {
+    margin: auto 0;
+}
+.wpeo-modal .modal-container .modal-header .modal-title {
+    text-transform: uppercase;
+    font-size: 18px;
+    white-space: normal;
+}
+@media (max-width: 1000px) {
+    .wpeo-modal .modal-container .modal-header .modal-title {
+        font-size: 16px;
+    }
+}
+@media (max-width: 700px) {
+    .wpeo-modal .modal-container .modal-header .modal-title {
+        font-size: 14px;
+    }
+}
+.wpeo-modal .modal-container .modal-header .modal-close {
+    margin-left: auto;
+    color: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    transition: all 0.2s ease-out;
+}
+.wpeo-modal .modal-container .modal-header .modal-close:hover {
+    cursor: pointer;
+    color: #0d8aff;
+}
+.wpeo-modal .modal-container .modal-content {
+    overflow-y: auto;
+    font-size: 14px;
+}
+@media (max-width: 700px) {
+    .wpeo-modal .modal-container .modal-content {
+        font-size: 12px;
+    }
+}
+.wpeo-modal .modal-container .modal-footer {
+    text-align: right;
+    padding-top: 1em;
+}
+.wpeo-modal .modal-container .modal-footer.left {
+    text-align: left;
+}
+.wpeo-modal .modal-container .modal-footer.center {
+    text-align: center;
+}
+
+/*--------------------------------------------------------------
+	Module : OPP Percent
+	Version : 1.0.0
+
+	.opp-percent -> classe de base du mobule
+	.opp-percent-label -> Le label
+	    .opp_percent-value -> La valeur
+--------------------------------------------------------------*/
+
+.opp-percent {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+
+
+}
+.opp-percent input[type=range] {
+    width: 100%;
+    background: #f7f7f7;
+    height: 0;
+    margin-bottom: 0;
+
+    &:focus, &:active {
+        outline: none;
+    }
+}
+.opp-percent input[type=range]::-webkit-slider-thumb {
+    width: 30px;
+    height: 30px;
+}
+.opp-percent input[type=range]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+}
+.opp-percent input[type=range]::-webkit-slider-runnable-track {
+    height: 15px;
+    background: rgb(255,94,94);
+    background: linear-gradient(90deg, rgba(255,94,94,1) 0%, rgba(255,130,94,1) 40%, rgba(255,177,0,1) 50%, rgba(184,200,110,1) 60%, rgba(52,160,72,1) 100%);
+}
+.opp-percent input[type=range]::-moz-range-track {
+    height: 15px;
+    background: rgb(255,94,94);
+    background: linear-gradient(90deg, rgba(255,94,94,1) 0%, rgba(255,130,94,1) 40%, rgba(255,177,0,1) 50%, rgba(184,200,110,1) 60%, rgba(52,160,72,1) 100%);
+}
+.opp-percent .opp-percent-label {
+    .opp_percent-value {
+        display: inline-block;
+        background: rgba(0,0,0,0.1);
+        border-radius: 4px;
+        padding: 0.2em 0.5em;
+        font-weight: 600;
+    }
+}
+
+/*--------------------------------------------------------------
+	Module : Linked Medias List
+	Version : 1.0.0
+
+	.linked-medias-list -> classe de base du mobule
+--------------------------------------------------------------*/
+
+.linked-medias-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+}
+
+
+/*--------------------------------------------------------------
+	Module : Grid
+	Version : 1.0.0
+
+	.wpeo-grid -> classe de base du mobule
+	.grid-x -> Définit le nombre d'élément par ligne
+		.grid-x -> Sur un élément, multiplie sa taille par le nombre X
+	.grid-padding-x -> ajoute du padding
+--------------------------------------------------------------*/
+.wpeo-grid {
+    display: flex;
+    flex-flow: row wrap;
+    flex: 0 1 auto;
+    margin-left: -0.5em;
+    margin-right: -0.5em;
+    width: 100%;
+}
+.wpeo-grid * {
+    box-sizing: border-box;
+}
+.wpeo-grid > * {
+    padding: 0.5em !important;
+}
+.wpeo-grid.grid-1 > * {
+    width: 100%;
+}
+.wpeo-grid.grid-1 > .grid-1 {
+    width: 100%;
+}
+.wpeo-grid.grid-2 > * {
+    width: 50%;
+}
+.wpeo-grid.grid-2 > .grid-1 {
+    width: 50%;
+}
+.wpeo-grid.grid-2 > .grid-2 {
+    width: 100%;
+}
+.wpeo-grid.grid-3 > * {
+    width: 33.3333333333%;
+}
+.wpeo-grid.grid-3 > .grid-1 {
+    width: 33.3333333333%;
+}
+.wpeo-grid.grid-3 > .grid-2 {
+    width: 66.6666666667%;
+}
+.wpeo-grid.grid-3 > .grid-3 {
+    width: 100%;
+}
+.wpeo-grid.grid-4 > * {
+    width: 25%;
+}
+.wpeo-grid.grid-4 > .grid-1 {
+    width: 25%;
+}
+.wpeo-grid.grid-4 > .grid-2 {
+    width: 50%;
+}
+.wpeo-grid.grid-4 > .grid-3 {
+    width: 75%;
+}
+.wpeo-grid.grid-4 > .grid-4 {
+    width: 100%;
+}
+.wpeo-grid.grid-5 > * {
+    width: 20%;
+}
+.wpeo-grid.grid-5 > .grid-1 {
+    width: 20%;
+}
+.wpeo-grid.grid-5 > .grid-2 {
+    width: 40%;
+}
+.wpeo-grid.grid-5 > .grid-3 {
+    width: 60%;
+}
+.wpeo-grid.grid-5 > .grid-4 {
+    width: 80%;
+}
+.wpeo-grid.grid-5 > .grid-5 {
+    width: 100%;
+}
+.wpeo-grid.grid-6 > * {
+    width: 16.6666666667%;
+}
+.wpeo-grid.grid-6 > .grid-1 {
+    width: 16.6666666667%;
+}
+.wpeo-grid.grid-6 > .grid-2 {
+    width: 33.3333333333%;
+}
+.wpeo-grid.grid-6 > .grid-3 {
+    width: 50%;
+}
+.wpeo-grid.grid-6 > .grid-4 {
+    width: 66.6666666667%;
+}
+.wpeo-grid.grid-6 > .grid-5 {
+    width: 83.3333333333%;
+}
+.wpeo-grid.grid-6 > .grid-6 {
+    width: 100%;
+}
+@media (max-width: 1000px) {
+    .wpeo-grid:not(.grid-no-responsive).grid-1 > * {
+        width: 100%;
+    }
+    .wpeo-grid:not(.grid-no-responsive).grid-2 > *, .wpeo-grid:not(.grid-no-responsive).grid-3 > *, .wpeo-grid:not(.grid-no-responsive).grid-4 > *, .wpeo-grid:not(.grid-no-responsive).grid-5 > *, .wpeo-grid:not(.grid-no-responsive).grid-6 > * {
+        width: 50%;
+    }
+}
+@media (max-width: 700px) {
+    .wpeo-grid:not(.grid-no-responsive).grid-1 > *, .wpeo-grid:not(.grid-no-responsive).grid-2 > *, .wpeo-grid:not(.grid-no-responsive).grid-3 > *, .wpeo-grid:not(.grid-no-responsive).grid-4 > *, .wpeo-grid:not(.grid-no-responsive).grid-5 > *, .wpeo-grid:not(.grid-no-responsive).grid-6 > * {
+        width: 100%;
+    }
+}

@@ -1,0 +1,158 @@
+/*--------------------------------------------------------------
+	Dolibarr main CSS
+
+    1/ Variables
+    2/ Page layout
+	3/ Top Header
+	4/ Form
+	5/ Buttons
+--------------------------------------------------------------*/
+
+:root {
+    --fiche-margin-left: 42px;
+    --fiche-margin-right: 38px;
+
+    @media only screen and (max-width: 1024px) {
+        --fiche-margin-left: 20px;
+        --fiche-margin-right: 6px;
+    }
+    @media only screen and (max-width: 741px) {
+        --fiche-margin-left: 9px;
+        --fiche-margin-right: 10px;
+    }
+}
+
+/*--------------------------------------------------------------
+	Element : Page layout
+	Version : 1.0.0
+--------------------------------------------------------------*/
+
+.template-pwa #id-container {
+    display: block;
+}
+.template-pwa #id-bot {
+
+}
+
+/*--------------------------------------------------------------
+	Element : Top header
+	Version : 1.0.0
+--------------------------------------------------------------*/
+
+.template-pwa #id-top {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 1em;
+    box-sizing: border-box;
+    color: var(--colortextbackhmenu);
+}
+.template-pwa #id-top .col:nth-of-type(1) {
+    width: 25%;
+}
+.template-pwa #id-top .col:nth-of-type(2) {
+    width: 50%;
+    padding: 0.2em;
+    text-align: center;
+}
+.template-pwa #id-top .col:nth-of-type(3) {
+    display: flex;
+    justify-content: flex-end;
+    width: 25%;
+}
+.template-pwa #id-top .nav-element {
+    min-width: 60px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.fiche .template-pwa #id-top {
+    margin-left: calc(var(--fiche-margin-left) * -1);
+    width: calc(100% + var(--fiche-margin-left) + var(--fiche-margin-right));
+}
+.fiche .template-pwa #id-top .title {
+    font-weight: 600;
+}
+.fiche .template-pwa #id-top .subtitle {
+    font-size: 0.80em;
+    line-height: 1em;
+}
+
+@media only screen and (max-width: 741px) {
+    .template-pwa #id-top .col [class^="fa"] {
+        font-size: 25px;
+    }
+}
+
+/*--------------------------------------------------------------
+	Element : Form
+	Version : 1.0.0
+--------------------------------------------------------------*/
+
+.template-pwa label {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    background: var(--inputbackgroundcolor);
+    border: solid 1px var(--inputbordercolor);
+    border-radius: 3px;
+    transition: 0.2s border-color ease-out;
+}
+.template-pwa label:has(textarea) {
+    align-items: flex-start;
+}
+.template-pwa label:focus-within {
+    border-color: #000;
+}
+.template-pwa label > *:not(input, textarea) {
+    padding: 0.7em 0.5em;
+}
+.template-pwa label input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.template-pwa label textarea {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    padding: 0.7em 0.5em;
+    background: transparent;
+    outline: none;
+    font-size: 1em;
+}
+.template-pwa label > * + input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.template-pwa label > * + textarea {
+    padding-left: 0;
+}
+.template-pwa label input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):has(+ *),
+.template-pwa label textarea:has(+ *) {
+    padding-right: 0;
+}
+
+.template-pwa label input:focus:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])::placeholder,
+.template-pwa label textarea:focus::placeholder {
+    opacity: 0;
+}
+    /** Fix border bottom of dolibarr inputs on focus */
+.template-pwa input:focus:not(.button):not(.buttonwebsite):not(.buttonreset):not(.select2-search__field):not(#top-bookmark-search-input):not(.search_component_input):not(.input-nobottom) {
+    border-bottom: 0 !important;
+}
+
+/*--------------------------------------------------------------
+	Element : Buttons
+	Version : 1.0.0
+--------------------------------------------------------------*/
+
+#mainbody button.button:not(.buttongen):not(.bordertransp) {
+    background: var(--butactionbg);
+    color: var(--textbutaction);
+    border-radius: 4px;
+    border-collapse: collapse;
+    border: none;
+    font-size: unset;
+    line-height: 1.3em;
+}
+.button:not(.bordertransp):not(.buttonpayment).button-square,
+.buttonDelete:not(.bordertransp):not(.buttonpayment).button-square {
+    max-width: 60px;
+    min-width: 50px;
+    aspect-ratio: 1/1;
+}
