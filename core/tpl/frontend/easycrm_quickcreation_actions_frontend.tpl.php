@@ -178,3 +178,101 @@ if ($subaction == 'unlinkFile') {
         }
     }
 }
+
+/* ADDED_FAR_AI */
+if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_API_SERVICE') == 'chatgpt') {
+
+    require_once DOL_DOCUMENT_ROOT.'/core/lib/geturl.lib.php';
+    require_once DOL_DOCUMENT_ROOT.'/ai/class/ai.class.php';
+    saturne_load_langs(['medias']);
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    $result = array();
+
+    // GET AUTH INFO & ENDPOINT
+    $activeAI = mb_strtoupper(getDolGlobalString('AI_API_SERVICE'));
+    $aiToken = getDolGlobalString('AI_API_'.$activeAI.'_KEY');
+    $aiEndpoint = getDolGlobalString('AI_API_'.$activeAI.'_URL');
+
+    if (empty($activeAI) || empty($aiToken) || empty($aiEndpoint)) {
+        $result['success'] = false;
+        $result['error'] = 'AiConfigError - Token or Endpoint is empty';
+    } else {
+
+        // HEADERS
+        $headers = array(
+            'Content-Type: application/json',
+            'Authorization: Bearer '.getDolGlobalString('AI_API_CHATGPT_KEY')
+        );
+
+        // ENDPOINT
+        $fullEndpoint = $aiEndpoint;
+        if (!preg_match('#/$#', $fullEndpoint)) {
+            $fullEndpoint .= '/';
+        }
+        $fullEndpoint .= 'chat/completions';
+
+        // FILE
+        $filePath = $data['filepath'];
+        $fileName = $data['filename'];
+        $fullPath = $filePath . '/' . $fileName;
+        $type = pathinfo($fullPath, PATHINFO_EXTENSION);
+        $data = file_get_contents($fullPath);
+        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+
+        //
+        $instruction = 'Sur cette image, peux tu retrouver les informations suivantes: nom, prénom, téléphone, email ? Si oui, retourne moi ces données sous la forme d\'un json, sinon, décris moi les images en texte';
+
+        $ins = "Sur cette image, si tu peux trouver des informations de contact, retourne moi **uniquement** ce tableau JSON et ne remplis que la partie contact_details:\n";
+        $ins .= "{\"type\":\"contact\",\"contact_details\":[{\"nom\":\"\",\"prenom\":\"\",\"email\":\"\",\"telephone\":\"\"}]}\n";
+        $ins .= "Sinon, fais une analyse synthétique de l'image et retourne moi **uniquement** ce tableau JSON et ne remplis que la partie content:\n";
+        $ins .= "{\"type\":\"read\",\"content\":\"\"}\n";
+        $ins .= "** IMPORTANT: ** Retourne moi seulement le JSON";
+
+        // PAYLOAD
+        $payload = array(
+            'model' => 'gpt-5',
+            'messages' => array(
+                0 => array('role' => 'user', 'content' => array(
+                    0 => array('type' => 'text', 'text' => $ins),
+                    1 => array('type' => 'image_url', 'image_url' => array(
+                        'url' => $base64
+                    )),
+                ))
+            ),
+        );
+
+        // RES
+        $res = getURLContent($fullEndpoint, 'POST', json_encode($payload), 1, $headers);
+        $aiResponse = json_decode($res['content']);
+
+        if (is_null($aiResponse)) {
+            $result['success'] = false;
+            $result['error'] = 'AiResponseError - Ai response return NULL';
+        } else {
+
+            $aiResponseMessage = $aiResponse->choices[0]->message->content;
+            $aiResponseDecoded = json_decode($aiResponseMessage);
+
+            $result['success'] = true;
+            $result['type'] = $aiResponseDecoded->type;
+            $result['text'] = "**".$langs->trans('AIAnalyseImage', $fileName)."**\n";
+
+            if ($result['type'] == 'contact') {
+                $result['contact'] = $aiResponseDecoded->contact_details[0];
+                $result['text'] .= $langs->trans('Contact').": ".$aiResponseDecoded->contact_details[0]->nom.' '.$aiResponseDecoded->contact_details[0]->prenom."\n";
+                if (!empty($aiResponseDecoded->contact_details[0]->email)) {
+                    $result['text'] .= $langs->trans('Email').":".$aiResponseDecoded->contact_details[0]->email."\n";
+                }
+                if (!empty($aiResponseDecoded->contact_details[0]->telephone)) {
+                    $result['text'] .= $langs->trans('Phone').":".$aiResponseDecoded->contact_details[0]->telephone."\n";
+                }
+            } else if ($result['type'] == 'read') {
+                $result['text'] .= $aiResponseDecoded->content;
+            }
+        }
+
+    }
+    echo json_encode($result);
+    exit();
+}
