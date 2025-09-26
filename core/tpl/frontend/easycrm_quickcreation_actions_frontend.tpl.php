@@ -281,16 +281,16 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
 
             $result['success'] = true;
             $result['type'] = $aiResponseDecoded->type;
-            $result['text'] = "**".$langs->trans('AIAnalyseImage', $fileName)."**\n";
+            $result['text'] = "**".$langs->transnoentities('AIAnalyseImage', $fileName)."**\n";
 
             if ($result['type'] == 'contact') {
                 $result['contact'] = $aiResponseDecoded->contact_details[0];
-                $result['text'] .= $langs->trans('Contact').": ".$aiResponseDecoded->contact_details[0]->nom.' '.$aiResponseDecoded->contact_details[0]->prenom."\n";
+                $result['text'] .= $langs->transnoentities('Contact').": ".$aiResponseDecoded->contact_details[0]->nom.' '.$aiResponseDecoded->contact_details[0]->prenom."\n";
                 if (!empty($aiResponseDecoded->contact_details[0]->email)) {
-                    $result['text'] .= $langs->trans('Email').":".$aiResponseDecoded->contact_details[0]->email."\n";
+                    $result['text'] .= $langs->transnoentities('Email').":".$aiResponseDecoded->contact_details[0]->email."\n";
                 }
                 if (!empty($aiResponseDecoded->contact_details[0]->telephone)) {
-                    $result['text'] .= $langs->trans('Phone').":".$aiResponseDecoded->contact_details[0]->telephone."\n";
+                    $result['text'] .= $langs->transnoentities('Phone').":".$aiResponseDecoded->contact_details[0]->telephone."\n";
                 }
             } else if ($result['type'] == 'read') {
                 $result['text'] .= $aiResponseDecoded->content;
