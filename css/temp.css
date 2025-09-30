@@ -9,8 +9,10 @@
 --------------------------------------------------------------*/
 
 :root {
-    --fiche-margin-left: 42px;
-    --fiche-margin-right: 38px;
+    /*--fiche-margin-left: 42px;*/
+    /*--fiche-margin-right: 38px;*/
+    --fiche-padding-left: 1em;
+    --fiche-padding-right: 1em;
 
     @media only screen and (max-width: 1024px) {
         --fiche-margin-left: 20px;
@@ -29,6 +31,7 @@
 
 .template-pwa #id-container {
     display: block;
+    padding-top: 0.5em;
 }
 .template-pwa #id-bot {
 
@@ -67,14 +70,20 @@
     align-items: center;
     justify-content: center;
 }
-.fiche .template-pwa #id-top {
-    margin-left: calc(var(--fiche-margin-left) * -1);
-    width: calc(100% + var(--fiche-margin-left) + var(--fiche-margin-right));
+.template-pwa .fiche {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: var(--fiche-padding-left);
+    padding-right: var(--fiche-padding-right);
 }
-.fiche .template-pwa #id-top .title {
+.template-pwa .fiche #id-top {
+    margin-left: calc(var(--fiche-padding-left) * -1);
+    width: calc(100% + var(--fiche-padding-left) + var(--fiche-padding-right));
+}
+.template-pwa .fiche #id-top .title {
     font-weight: 600;
 }
-.fiche .template-pwa #id-top .subtitle {
+.template-pwa .fiche #id-top .subtitle {
     font-size: 0.80em;
     line-height: 1em;
 }
@@ -151,8 +160,16 @@
     line-height: 1.3em;
 }
 .button:not(.bordertransp):not(.buttonpayment).button-square,
-.buttonDelete:not(.bordertransp):not(.buttonpayment).button-square {
+.buttonDelete:not(.bordertransp):not(.buttonpayment).button-square,
+.butAction.button-square {
     max-width: 60px;
     min-width: 50px;
     aspect-ratio: 1/1;
+}
+.button:not(.bordertransp):not(.buttonpayment) .button-icon,
+.buttonDelete:not(.bordertransp):not(.buttonpayment) .button-icon,
+.butAction .button-icon {
+    position: absolute;
+    opacity: 0.5;
+    transform: translateY(-5px);
 }
