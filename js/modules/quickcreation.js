@@ -241,7 +241,7 @@ window.easycrm.quickcreation.createImg = function() {
     }),
     success: function(resp) {
       $('.wpeo-modal').removeClass('modal-active');
-      $('.project-container .linked-medias-list').replaceWith($(resp).find('.project-container .linked-medias-list'));
+      $('#id-container .linked-medias-list').replaceWith($(resp).find('#id-container .linked-medias-list'));
     },
     error: function () {}
   });
@@ -267,30 +267,30 @@ window.easycrm.quickcreation.getCurrentPosition = function() {
         // Access the latitude and longitude from the position object
         window.easycrm.quickcreation.latitude  = position.coords.latitude;
         window.easycrm.quickcreation.longitude = position.coords.longitude;
-        $('.project-container #latitude').val(window.easycrm.quickcreation.latitude);
-        $('.project-container #longitude').val(window.easycrm.quickcreation.longitude);
+        $('#id-container #latitude').val(window.easycrm.quickcreation.latitude);
+        $('#id-container #longitude').val(window.easycrm.quickcreation.longitude);
       },
       // Error callback function
       function (error) {
         // Handle errors
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            $('.project-container #geolocation-error').val('User denied the request for geolocation.');
+            $('#id-container #geolocation-error').val('User denied the request for geolocation.');
             break;
           case error.POSITION_UNAVAILABLE:
-            $('.project-container #geolocation-error').val('Location information is unavailable.');
+            $('#id-container #geolocation-error').val('Location information is unavailable.');
             break;
           case error.TIMEOUT:
-            $('.project-container #geolocation-error').val('The request to get user location timed out.');
+            $('#id-container #geolocation-error').val('The request to get user location timed out.');
             break;
           case error.UNKNOWN_ERROR:
-            $('.project-container #geolocation-error').val('An unknown error occurred.');
+            $('#id-container #geolocation-error').val('An unknown error occurred.');
             break;
         }
       }
     );
   } else {
-    $('.project-container #geolocation-error').val('Geolocation is not supported by this browser.');
+    $('#id-container #geolocation-error').val('Geolocation is not supported by this browser.');
   }
 };
 
