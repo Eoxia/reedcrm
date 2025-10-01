@@ -13,7 +13,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program. If not, see https://www.gnu.org/licenses/.
 
-CREATE TABLE IF NOT EXISTS llx_easycrm_call_events (
+CREATE TABLE IF NOT EXISTS llx_reedcrm_call_events (
     rowid int(11) NOT NULL AUTO_INCREMENT,
     fk_user int(11) NOT NULL,
     fk_contact int(11) NOT NULL,

@@ -1,4 +1,4 @@
--- Copyright (C) 2022-2023 EVARISK <technique@evarisk.com>
+-- Copyright (C) 2022-2025 EVARISK <technique@evarisk.com>
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see https://www.gnu.org/licenses/.
 
-CREATE TABLE llx_easycrm_address(
+CREATE TABLE llx_reedcrm_address(
   rowid         integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
   ref           varchar(128) DEFAULT '(PROV)' NOT NULL,
   ref_ext       varchar(128),
