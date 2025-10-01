@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,21 +16,21 @@
  */
 
 /**
- * \file    core/triggers/interface_99_modEasycrm_EasycrmTriggers.class.php
+ * \file    core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
  * \ingroup tinyurl
- * \brief   EasyCRM trigger
+ * \brief   ReedCRM trigger
  */
 
 // Load Dolibarr libraries
 require_once DOL_DOCUMENT_ROOT . '/core/triggers/dolibarrtriggers.class.php';
 
-// Load EasyCRM libraries
-require_once __DIR__ . '/../../lib/easycrm_function.lib.php';
+// Load ReedCRM libraries
+require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
 
 /**
- * Class of triggers for EasyCRM module
+ * Class of triggers for ReedCRM module
  */
-class InterfaceEasyCRMTriggers extends DolibarrTriggers
+class InterfaceReedCRMTriggers extends DolibarrTriggers
 {
     /**
      * @var DoliDB Database handler
@@ -48,9 +48,9 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
 
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
-        $this->description = 'EasyCRM triggers';
+        $this->description = 'ReedCRM triggers';
         $this->version     = '1.5.0';
-        $this->picto       = 'easycrm@easycrm';
+        $this->picto       = 'reedcrm@reedcrm';
     }
 
     /**
@@ -88,7 +88,7 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
      */
     public function runTrigger($action, $object, User $user, Translate $langs, Conf $conf): int
     {
-        if (!isModEnabled('easycrm')) {
+        if (!isModEnabled('reedcrm')) {
             return 0; // If module is not enabled, we do nothing
         }
 
@@ -165,7 +165,7 @@ class InterfaceEasyCRMTriggers extends DolibarrTriggers
                 $actioncomm->create($user);
                 break;
             case 'LINEPROPAL_INSERT' :
-                if (!empty($object->fk_product) && getDolGlobalInt('EASYCRM_PRODUCTKIT_DESC_ADD_LINE_PROPAL') > 0) {
+                if (!empty($object->fk_product) && getDolGlobalInt('REEDCRM_PRODUCTKIT_DESC_ADD_LINE_PROPAL') > 0) {
                     $product     = new Product($this->db);
                     $product->id = $object->fk_product;
                     $product->get_sousproduits_arbo();

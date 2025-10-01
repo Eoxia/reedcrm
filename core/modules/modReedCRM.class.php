@@ -16,21 +16,21 @@
  */
 
 /**
- * \defgroup easycrm     Module EasyCRM
- * \brief    EasyCRM module descriptor
+ * \defgroup reedcrm     Module ReedCRM
+ * \brief    ReedCRM module descriptor
  *
- * \file    core/modules/modEasyCRM.class.php
- * \ingroup easycrm
- * \brief   Description and activation file for module EasyCRM
+ * \file    core/modules/modReedCRM.class.php
+ * \ingroup reedcrm
+ * \brief   Description and activation file for module ReedCRM
  */
 
 // Load Dolibarr libraries
 require_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 
 /**
- * Description and activation class for module EasyCRM
+ * Description and activation class for module ReedCRM
  */
-class modEasyCRM extends DolibarrModules
+class modReedCRM extends DolibarrModules
 {
     /**
      * Constructor. Define names, constants, directories, boxes, permissions
@@ -45,17 +45,17 @@ class modEasyCRM extends DolibarrModules
 
         if (file_exists(__DIR__ . '/../../../saturne/lib/saturne_functions.lib.php')) {
             require_once __DIR__ . '/../../../saturne/lib/saturne_functions.lib.php';
-            saturne_load_langs(['easycrm@easycrm']);
+            saturne_load_langs(['reedcrm@reedcrm']);
         } else {
             $this->error++;
-            $this->errors[] = $langs->trans('activateModuleDependNotSatisfied', 'EasyCRM', 'Saturne');
+            $this->errors[] = $langs->trans('activateModuleDependNotSatisfied', 'ReedCRM', 'Saturne');
         }
 
         // ID for module (must be unique)
         $this->numero = 436351;
 
         // Key text used to identify module (for permissions, menus, etc...)
-        $this->rights_class = 'easycrm';
+        $this->rights_class = 'reedcrm';
 
         // Family can be 'base' (core modules),'crm','financial','hr','projects','products','ecm','technic' (transverse modules),'interface' (link with external tools),'other', 'etc.'
         // It is used to group modules by family in module setup page
@@ -66,19 +66,19 @@ class modEasyCRM extends DolibarrModules
 
         // Gives the possibility for the module, to provide his own family info and position of this family (Overwrite $this->family and $this->module_position. Avoid this)
         $this->familyinfo = ['Eoxia' => ['position' => '01', 'label' => 'Eoxia']];
-        // Module label (no space allowed), used if translation string 'ModuleEasyCRMName' not found (EasyCRM is name of module)
+        // Module label (no space allowed), used if translation string 'ModuleReedCRMName' not found (ReedCRM is name of module)
         $this->name = preg_replace('/^mod/i', '', get_class($this));
 
         // DESCRIPTION_FLAG
-        // Module description, used if translation string 'ModuleEasyCRMDesc' not found (EasyCRM is name of module)
-        $this->description = $langs->transnoentities('EasyCRMDescription');
+        // Module description, used if translation string 'ModuleReedCRMDesc' not found (ReedCRM is name of module)
+        $this->description = $langs->transnoentities('ReedCRMDescription');
         // Used only if file README.md and README-LL.md not found
-        $this->descriptionlong = $langs->transnoentities('EasyCRMDescription');
+        $this->descriptionlong = $langs->transnoentities('ReedCRMDescription');
 
         // Author
         $this->editor_name = 'Eoxia';
         $this->editor_url = 'https://www.eoxia.com';
-        //$this->editor_squarred_logo = ''; // Must be image filename into the easycrm/img directory followed with @easycrm. Example: 'easycrm.png@easycrm'
+        //$this->editor_squarred_logo = ''; // Must be image filename into the reedcrm/img directory followed with @reedcrm. Example: 'reedcrm.png@reedcrm'
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
         $this->version = '1.5.0';
@@ -86,14 +86,14 @@ class modEasyCRM extends DolibarrModules
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
-        // Key used in llx_const table to save module status enabled/disabled (where EASYCRM is value of property name of module in uppercase)
+        // Key used in llx_const table to save module status enabled/disabled (where REEDCRM is value of property name of module in uppercase)
         $this->const_name = 'MAIN_MODULE_' . strtoupper($this->name);
 
         // Name of image file used for this module
         // If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
         // If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
         // To use a supported fa-xxx css style of font awesome, use this->picto='xxx'
-        $this->picto = 'easycrm_color@easycrm';
+        $this->picto = 'reedcrm_color@reedcrm';
 
         // Define some features supported by module (triggers, login, substitutions, menus, css, etc...)
         $this->module_parts = [
@@ -147,10 +147,10 @@ class modEasyCRM extends DolibarrModules
         ];
 
         // Data directories to create when module is enabled
-        $this->dirs = ['/easycrm/temp'];
+        $this->dirs = ['/reedcrm/temp'];
 
-        // Config pages. Put here list of php page, stored into easycrm/admin directory, to use to set up module
-        $this->config_page_url = ['setup.php@easycrm'];
+        // Config pages. Put here list of php page, stored into reedcrm/admin directory, to use to set up module
+        $this->config_page_url = ['setup.php@reedcrm'];
 
         // Dependencies
         // A condition to hide module
@@ -163,7 +163,7 @@ class modEasyCRM extends DolibarrModules
         $this->conflictwith = [];
 
         // The language file dedicated to your module
-        $this->langfiles = ['easycrm@easycrm'];
+        $this->langfiles = ['reedcrm@reedcrm'];
 
         // Prerequisites
         $this->phpmin                  = [7, 4];  // Minimum version of PHP required by module
@@ -175,7 +175,7 @@ class modEasyCRM extends DolibarrModules
         // Messages at activation
         $this->warnings_activation     = []; // Warning to show when we activate module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
         $this->warnings_activation_ext = []; // Warning to show when we activate an external module. array('always'='text') or array('FR'='textfr','MX'='textmx'...)
-        //$this->automatic_activation  = ['FR'=>'EasyCRMWasAutomaticallyActivatedBecauseOfYourCountryChoice'];
+        //$this->automatic_activation  = ['FR'=>'ReedCRMWasAutomaticallyActivatedBecauseOfYourCountryChoice'];
         //$this->always_enabled        = true; // If true, can't be disabled
 
         // Constants
@@ -184,64 +184,64 @@ class modEasyCRM extends DolibarrModules
         $this->const = [
             // CONST CONFIGURATION
             // CONST THIRDPARTY
-            $i++ => ['EASYCRM_THIRDPARTY_CLIENT_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_CLIENT_VALUE', 'integer', 2, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_NAME_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_PHONE_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_WEB_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_COMMERCIAL_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_PRIVATE_NOTE_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_THIRDPARTY_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_CLIENT_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_CLIENT_VALUE', 'integer', 2, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_NAME_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_PHONE_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_WEB_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_COMMERCIAL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_PRIVATE_NOTE_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
             // CONST CONTACT
-            $i++ => ['EASYCRM_CONTACT_LASTNAME_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_CONTACT_FIRSTNAME_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_CONTACT_JOB_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_CONTACT_PHONEPRO_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_CONTACT_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_CONTACT_LASTNAME_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_CONTACT_FIRSTNAME_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_CONTACT_JOB_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_CONTACT_PHONEPRO_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_CONTACT_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
 
             // CONST PROJECT
-            $i++ => ['EASYCRM_PROJECT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_OPPORTUNITY_STATUS_VALUE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE', 'integer', 3000, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_EXTRAFIELDS_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_PROJECT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_STATUS_VALUE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE', 'integer', 3000, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
             // CONST TASK
-            $i++ => ['EASYCRM_TASK_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_TASK_LABEL_VALUE', 'chaine', $langs->trans('CommercialFollowUp'), '', 0, 'current'],
-            $i++ => ['EASYCRM_TASK_TIMESPENT_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_TASK_TIMESPENT_VALUE', 'integer', 15, '', 0, 'current'],
+            $i++ => ['REEDCRM_TASK_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_TASK_LABEL_VALUE', 'chaine', $langs->trans('CommercialFollowUp'), '', 0, 'current'],
+            $i++ => ['REEDCRM_TASK_TIMESPENT_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_TASK_TIMESPENT_VALUE', 'integer', 15, '', 0, 'current'],
 
             // CONST EVENT
-            $i++ => ['EASYCRM_EVENT_TYPE_CODE_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_TYPE_CODE_VALUE', 'chaine', 'AC_TEL', '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE', 'integer', 128, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_DATE_END_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_STATUS_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_STATUS_VALUE', 'integer', -1, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['EASYCRM_EVENT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_TYPE_CODE_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_TYPE_CODE_VALUE', 'chaine', 'AC_TEL', '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE', 'integer', 128, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_DATE_END_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_STATUS_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_STATUS_VALUE', 'integer', -1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_EVENT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
             // CONST PWA
-            $i++ => ['EASYCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
 
             // CONST ADDRESS
-            //$i++ => ['EASYCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
-            $i++ => ['EASYCRM_ADDRESS_ADDON', 'chaine', 'mod_address_standard', '', 0, 'current'],
+            //$i++ => ['REEDCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_ADDRESS_ADDON', 'chaine', 'mod_address_standard', '', 0, 'current'],
 
             // CONST MODULE
-            $i++ => ['EASYCRM_VERSION','chaine', $this->version, '', 0, 'current'],
-            $i++ => ['EASYCRM_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
-            $i++ => ['EASYCRM_SHOW_PATCH_NOTE', 'integer', 1, '', 0, 'current'],
-            $i   => ['EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current']
+            $i++ => ['REEDCRM_VERSION','chaine', $this->version, '', 0, 'current'],
+            $i++ => ['REEDCRM_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
+            $i++ => ['REEDCRM_SHOW_PATCH_NOTE', 'integer', 1, '', 0, 'current'],
+            $i   => ['REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current']
         ];
 
         // Some keys to add into the overwriting translation tables
@@ -251,24 +251,24 @@ class modEasyCRM extends DolibarrModules
             'fr_FR:ActionAC_RDV'      => 'Rendez-vous physique ou visioconférence'
         ];
 
-        if (!isModEnabled('easycrm')) {
-            $conf->easycrm = new stdClass();
-            $conf->easycrm->enabled = 0;
+        if (!isModEnabled('reedcrm')) {
+            $conf->reedcrm = new stdClass();
+            $conf->reedcrm->enabled = 0;
         }
 
         // Array to add new pages in new tabs
         /* BEGIN MODULEBUILDER TABS */
-        $pictoPath    = dol_buildpath('custom/easycrm/img/easycrm_color.png', 1);
-        $pictoEasycrm = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
+        $pictoPath    = dol_buildpath('custom/reedcrm/img/reedcrm_color.png', 1);
+        $pictoReedcrm = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
         $this->tabs   = [];
-        $this->tabs[] = ['data' => 'project' . ':+address:' . $pictoEasycrm . $langs->transnoentities('Addresses') . ':easycrm@easycrm:$user->hasRight(\'easycrm\', \'address\', \'read\'):/custom/easycrm/view/address_card.php?from_id=__ID__&from_type=project'];
-        $this->tabs[] = ['data' => 'project' . ':+map:' . $pictoEasycrm . $langs->transnoentities('Map') . ':easycrm@easycrm:$user->hasRight(\'project\', \'read\'):/custom/easycrm/view/map.php?from_id=__ID__&from_type=project'];
+        $this->tabs[] = ['data' => 'project' . ':+address:' . $pictoReedcrm . $langs->transnoentities('Addresses') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'address\', \'read\'):/custom/reedcrm/view/address_card.php?from_id=__ID__&from_type=project'];
+        $this->tabs[] = ['data' => 'project' . ':+map:' . $pictoReedcrm . $langs->transnoentities('Map') . ':reedcrm@reedcrm:$user->hasRight(\'project\', \'read\'):/custom/reedcrm/view/map.php?from_id=__ID__&from_type=project'];
         /* END MODULEBUILDER TABS */
 
         // Dictionaries
         /* BEGIN MODULEBUILDER DICTIONARIES */
         $this->dictionaries = [
-            'langs' => 'easycrm@easycrm',
+            'langs' => 'reedcrm@reedcrm',
             // List of tables we want to see into dictionary editor
             'tabname' => [
                 MAIN_DB_PREFIX . 'c_commercial_status',
@@ -319,9 +319,9 @@ class modEasyCRM extends DolibarrModules
             ],
             // Condition to show each dictionary
             'tabcond' => [
-                isModEnabled('easycrm'),
-                isModEnabled('easycrm'),
-                isModEnabled('easycrm')
+                isModEnabled('reedcrm'),
+                isModEnabled('reedcrm'),
+                isModEnabled('reedcrm')
             ]
         ];
 
@@ -338,43 +338,43 @@ class modEasyCRM extends DolibarrModules
             0 => [
                 'label'         => $langs->transnoentities('UpdateNotationObjectContactsJob', $langs->transnoentities('FactureMins')),
                 'jobtype'       => 'method',
-                'class'         => '/easycrm/class/easycrmcron.class.php',
-                'objectname'    => 'EasycrmCron',
+                'class'         => '/reedcrm/class/reedcrmcron.class.php',
+                'objectname'    => 'ReedcrmCron',
                 'method'        => 'updateNotationObjectContacts',
                 'parameters'    => 'Facture, AND t.fk_statut = 1',
                 'comment'       => $langs->transnoentities('UpdateNotationObjectContactsJobComment', $langs->transnoentities('FactureMins')),
                 'frequency'     => 1,
                 'unitfrequency' => 86400,
                 'status'        => 1,
-                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'easycrm\') && isModEnabled(\'invoice\')',
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
                 'priority'      => 50
             ],
             1 => [
                 'label'         => $langs->transnoentities('UpdateNotationObjectContactsJob', $langs->transnoentities('FactureRecMins')),
                 'jobtype'       => 'method',
-                'class'         => '/easycrm/class/easycrmcron.class.php',
-                'objectname'    => 'EasycrmCron',
+                'class'         => '/reedcrm/class/reedcrmcron.class.php',
+                'objectname'    => 'ReedcrmCron',
                 'method'        => 'updateNotationObjectContacts',
                 'parameters'    => 'FactureRec',
                 'comment'       => $langs->transnoentities('UpdateNotationObjectContactsJobComment', $langs->transnoentities('FactureRecMins')),
                 'frequency'     => 1,
                 'unitfrequency' => 86400,
                 'status'        => 1,
-                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'easycrm\') && isModEnabled(\'societe\')',
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',
                 'priority'      => 50
             ],
             2 => [
                 'label'         => $langs->transnoentities('UpdateNotationObjectContactsJob', $langs->transnoentities('ThirdPartyMins')),
                 'jobtype'       => 'method',
-                'class'         => '/easycrm/class/easycrmcron.class.php',
-                'objectname'    => 'EasycrmCron',
+                'class'         => '/reedcrm/class/reedcrmcron.class.php',
+                'objectname'    => 'ReedcrmCron',
                 'method'        => 'updateNotationObjectContacts',
                 'parameters'    => 'Societe',
                 'comment'       => $langs->transnoentities('UpdateNotationObjectContactsJobComment', $langs->transnoentities('ThirdPartyMins')),
                 'frequency'     => 1,
                 'unitfrequency' => 86400,
                 'status'        => 1,
-                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'easycrm\') && isModEnabled(\'societe\')',
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',
                 'priority'      => 50
             ]
         ];
@@ -385,7 +385,7 @@ class modEasyCRM extends DolibarrModules
         $r = 0;
         /* BEGIN MODULEBUILDER PERMISSIONS */
 
-        /* EASYCRM PERMISSIONS */
+        /* REEDCRM PERMISSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
         $this->rights[$r][1] = $langs->transnoentities('ReadModule', $this->name);
         $this->rights[$r][4] = 'read';
@@ -422,33 +422,33 @@ class modEasyCRM extends DolibarrModules
 
         // Add here entries to declare new menus
         $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=easycrm',
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'top',
-            'titre'    => 'EasyCRM',
+            'titre'    => 'ReedCRM',
             'prefix'   => '<i class="fas fa-home pictofixedwidth"></i>',
-            'mainmenu' => 'easycrm',
+            'mainmenu' => 'reedcrm',
             'leftmenu' => '',
-            'url'      => '/easycrm/easycrmindex.php',
-            'langs'    => 'easycrm@easycrm',
+            'url'      => '/reedcrm/reedcrmindex.php',
+            'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'easycrm\')',
-            'perms'    => '$user->hasRight(\'easycrm\', \'read\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
 
         $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=easycrm',
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
             'titre'    => $langs->transnoentities('QuickCreation'),
             'prefix'   => '<i class="fas fa-plus-circle pictofixedwidth"></i>',
-            'mainmenu' => 'easycrm',
+            'mainmenu' => 'reedcrm',
             'leftmenu' => 'quickcreation',
-            'url'      => '/easycrm/view/quickcreation.php',
-            'langs'    => 'easycrm@easycrm',
+            'url'      => '/reedcrm/view/quickcreation.php',
+            'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'easycrm\')',
-            'perms'    => '$user->hasRight(\'easycrm\', \'read\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -456,49 +456,49 @@ class modEasyCRM extends DolibarrModules
         $menuEnabled = ($conf->browser->layout != 'classic') ? 1 : 0;
 
         $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=easycrm',
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
             'titre'    => $langs->transnoentities('QuickCreation'),
             'prefix'   => '<i class="fas fa-plus-circle pictofixedwidth"></i>',
-            'mainmenu' => 'easycrm',
+            'mainmenu' => 'reedcrm',
             'leftmenu' => 'quickcreationfrontend',
-            'url'      => '/easycrm/view/frontend/quickcreation.php',
-            'langs'    => 'easycrm@easycrm',
+            'url'      => '/reedcrm/view/frontend/quickcreation.php',
+            'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'easycrm\') && ' . $menuEnabled,
-            'perms'    => '$user->hasRight(\'easycrm\', \'read\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\') && ' . $menuEnabled,
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
 
         $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=easycrm',
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
             'titre'    => $langs->trans('Tools'),
             'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
-            'mainmenu' => 'easycrm',
-            'leftmenu' => 'easycrmtools',
-            'url'      => '/easycrm/view/easycrmtools.php',
-            'langs'    => 'easycrm@easycrm',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmtools',
+            'url'      => '/reedcrm/view/reedcrmtools.php',
+            'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'easycrm\')',
-            'perms'    => '$user->hasRight(\'easycrm\', \'adminpage\', \'read\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
 
         $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=easycrm',
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
             'titre'    => $langs->transnoentities('PWA'),
             'prefix'   => '<i class="fa fa-ticket-alt pictofixedwidth"></i>',
-            'mainmenu' => 'easycrm',
+            'mainmenu' => 'reedcrm',
             'leftmenu' => 'quickcreationfrontendpwa',
-            'url'      => '/custom/easycrm/view/frontend/quickcreation.php?source=pwa',
-            'langs'    => 'easycrm@easycrm',
+            'url'      => '/custom/reedcrm/view/frontend/quickcreation.php?source=pwa',
+            'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'easycrm\')',
-            'perms'    => '$user->hasRight(\'easycrm\', \'read\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0
         ];
@@ -508,11 +508,11 @@ class modEasyCRM extends DolibarrModules
             'type'     => 'left',
             'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
             'leftmenu' => 'map',
-            'url'      => 'easycrm/view/map.php?from_type=project',
-            'langs'    => 'easycrm@easycrm',
+            'url'      => 'reedcrm/view/map.php?from_type=project',
+            'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'easycrm\')',
-            'perms'    => '$user->hasRight(\'easycrm\', \'address\', \'read\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'address\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -535,39 +535,39 @@ class modEasyCRM extends DolibarrModules
         $sqlFolder = scandir(__DIR__ . '/../../sql');
         foreach ($sqlFolder as $subFolder) {
             if (!preg_match('/\./', $subFolder)) {
-                $this->_load_tables('/easycrm/sql/' . $subFolder . '/');
+                $this->_load_tables('/reedcrm/sql/' . $subFolder . '/');
             }
         }
 
         // Create tables of module at module activation
-        $result = $this->_load_tables('/easycrm/sql/');
+        $result = $this->_load_tables('/reedcrm/sql/');
         if ($result < 0) {
             return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
         }
 
-        dolibarr_set_const($this->db, 'EASYCRM_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
-        dolibarr_set_const($this->db, 'EASYCRM_DB_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($this->db, 'REEDCRM_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($this->db, 'REEDCRM_DB_VERSION', $this->version, 'chaine', 0, '', $conf->entity);
 
-        $commonExtraFieldsValue = ['entity' => 0, 'langfile' => 'easycrm@easycrm'];
+        $commonExtraFieldsValue = ['entity' => 0, 'langfile' => 'reedcrm@reedcrm'];
 
         $extraFieldsArrays = [
-            'commrelaunch'      => ['Label' => 'CommercialsRelaunching', 'type' => 'text',   'length' => 2000, 'elementtype' => ['projet'], 'position' => $this->numero . 10, 'list' => 2, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')'],
-            'commtask'          => ['Label' => 'CommercialTask',         'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 20, 'list' => 4, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['projet_task:ref:rowid' => null]],
-            'easycrm_lastname'  => ['Label' => 'LastName',               'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 30, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'easycrm_firstname' => ['Label' => 'FirstName',              'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 40, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'projectphone'      => ['Label' => 'ProjectPhone',           'type' => 'phone',                    'elementtype' => ['projet'], 'position' => $this->numero . 50, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'easycrm_email'     => ['Label' => 'Email',                  'type' => 'mail',                     'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'opporigin'         => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:label:rowid' => null]],
-            'projectaddress'    => ['Label' => 'FavoriteAddress',        'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 80, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['easycrm_address:name:rowid::((element_type:=:\'project\') AND (status:=:1))' => null], 'perms' => '$user->hasRight(\'easycrm\', \'address\', \'write\')', 'moreparams' => ['css' => 'minwidth100 maxwidth300 widthcentpercentminusx']],
+            'commrelaunch'      => ['Label' => 'CommercialsRelaunching', 'type' => 'text',   'length' => 2000, 'elementtype' => ['projet'], 'position' => $this->numero . 10, 'list' => 2, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')'],
+            'commtask'          => ['Label' => 'CommercialTask',         'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 20, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['projet_task:ref:rowid' => null]],
+            'reedcrm_lastname'  => ['Label' => 'LastName',               'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 30, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_firstname' => ['Label' => 'FirstName',              'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 40, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'projectphone'      => ['Label' => 'ProjectPhone',           'type' => 'phone',                    'elementtype' => ['projet'], 'position' => $this->numero . 50, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_email'     => ['Label' => 'Email',                  'type' => 'mail',                     'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'opporigin'         => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:label:rowid' => null]],
+            'projectaddress'    => ['Label' => 'FavoriteAddress',        'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 80, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['reedcrm_address:name:rowid::((element_type:=:\'project\') AND (status:=:1))' => null], 'perms' => '$user->hasRight(\'reedcrm\', \'address\', \'write\')', 'moreparams' => ['css' => 'minwidth100 maxwidth300 widthcentpercentminusx']],
 
-            'commstatus'  => ['Label' => 'CommercialStatus', 'type' => 'sellist', 'elementtype' => ['propal'], 'position' => $this->numero . 10, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_commercial_status:label:rowid' => null], 'help' => 'CommercialStatusHelp'],
-            'commrefusal' => ['Label' => 'RefusalReason',    'type' => 'sellist', 'elementtype' => ['propal'], 'position' => $this->numero . 20, 'list' => 1, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:label:rowid' => null],    'help' => 'RefusalReasonHelp'],
+            'commstatus'  => ['Label' => 'CommercialStatus', 'type' => 'sellist', 'elementtype' => ['propal'], 'position' => $this->numero . 10, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_commercial_status:label:rowid' => null], 'help' => 'CommercialStatusHelp'],
+            'commrefusal' => ['Label' => 'RefusalReason',    'type' => 'sellist', 'elementtype' => ['propal'], 'position' => $this->numero . 20, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:label:rowid' => null],    'help' => 'RefusalReasonHelp'],
 
-            'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
-            'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
-            'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
+            'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
+            'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
+            'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
 
-            'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'easycrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']]
+            'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']]
         ];
 
         saturne_manage_extrafields($extraFieldsArrays, $commonExtraFieldsValue);
@@ -589,7 +589,7 @@ class modEasyCRM extends DolibarrModules
             }
         }
 
-        if (getDolGlobalInt('EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') == 0) {
+        if (getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') == 0) {
             require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
             $category = new Categorie($this->db);
@@ -598,10 +598,10 @@ class modEasyCRM extends DolibarrModules
             $category->type  = 'actioncomm';
             $categoryID      = $category->create($user);
 
-            dolibarr_set_const($this->db, 'EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
         }
 
-        if (getDolGlobalInt('EASYCRM_ADDRESS_BACKWARD_COMPATIBILITY') == 0) {
+        if (getDolGlobalInt('REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY') == 0) {
             require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
             require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
             require_once __DIR__ . '/../../class/geolocation.class.php';
@@ -643,8 +643,8 @@ class modEasyCRM extends DolibarrModules
                     $contact->updateExtraField('address_status');
                     $geolocation->create($user);
                 }
-                dolibarr_set_const($this->db, 'EASYCRM_ADDRESS_MAIN_CATEGORY', $categoryId, 'integer', 0, '', $conf->entity);
-                dolibarr_set_const($this->db, 'EASYCRM_ADDRESS_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
+                dolibarr_set_const($this->db, 'REEDCRM_ADDRESS_MAIN_CATEGORY', $categoryId, 'integer', 0, '', $conf->entity);
+                dolibarr_set_const($this->db, 'REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
             }
         }
 

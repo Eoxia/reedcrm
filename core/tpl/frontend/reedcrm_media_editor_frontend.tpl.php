@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 /**
- * \file    core/tpl/frontend/easycrm_media_editor_frontend.tpl.php
- * \ingroup easycrm
+ * \file    core/tpl/frontend/reedcrm_media_editor_frontend.tpl.php
+ * \ingroup reedcrm
  * \brief   Template page for media editor frontend modal
  */
 

@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,8 @@
  */
 
 /**
- *  \file    core/modules/easycrm/address/mod_address_standard.php
- *  \ingroup easycrm
+ *  \file    core/modules/reedcrm/address/mod_address_standard.php
+ *  \ingroup reedcrm
  *  \brief   File of class to manage address numbering rules standard.
  */
 

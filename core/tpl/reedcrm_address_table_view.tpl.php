@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 /**
- * \file    core/tpl/easycrm_address_table_view.tpl.php
- * \ingroup easycrm
+ * \file    core/tpl/reedcrm_address_table_view.tpl.php
+ * \ingroup reedcrm
  * \brief   Template page for address table.
  */
 

@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 /**
- * \file    core/tpl/actions/easycrm_project_quickcreation_frontend.tpl.php
- * \ingroup easycrm
+ * \file    core/tpl/actions/reedcrm_project_quickcreation_frontend.tpl.php
+ * \ingroup reedcrm
  * \brief   Template page for quick creation project frontend
  */
 
@@ -33,7 +33,7 @@ if (!$permissionToAddProject) {
     exit;
 }
 
-require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
+require_once __DIR__ . '/reedcrm_media_editor_frontend.tpl.php'; ?>
 
 <!-- File start-->
 <div id="id-top" class="page-header side-nav-vert">
@@ -46,7 +46,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
     </div>
     <div class="col">
         <?php $backToMap = img_picto('map', 'fontawesome_map-marked-alt_fas_#ffffff');
-        print '<a class="nav-element" href="' . dol_buildpath('custom/easycrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
+        print '<a class="wpeo-button nav-element" href="' . dol_buildpath('custom/reedcrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
     </div>
 </div>
 
@@ -63,7 +63,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         </div>
         <div class="grid-2">
             <!-- Description -->
-            <?php if ($conf->global->EASYCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
+            <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
                 <label for="description">
                     <?php echo img_picto('', 'fontawesome_comment_fas_#263C5C'); ?>
                     <textarea name="description" id="description" rows="6" placeholder="<?php echo $langs->trans('Description'); ?>"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
@@ -81,11 +81,11 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         </div>
 
         <!-- ExtraFields -->
-        <?php if (getDolGlobalInt('EASYCRM_PROJECT_EXTRAFIELDS_VISIBLE')) :
+        <?php if (getDolGlobalInt('REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE')) :
             $extraFields->attributes['projet']['picto']['projectphone']      = 'phone';
-            $extraFields->attributes['projet']['picto']['easycrm_lastname']  = 'fa-user-tie';
-            $extraFields->attributes['projet']['picto']['easycrm_firstname'] = 'fa-user';
-            $extraFields->attributes['projet']['picto']['easycrm_email']     = 'fa-at';
+            $extraFields->attributes['projet']['picto']['reedcrm_lastname']  = 'fa-user-tie';
+            $extraFields->attributes['projet']['picto']['reedcrm_firstname'] = 'fa-user';
+            $extraFields->attributes['projet']['picto']['reedcrm_email']     = 'fa-at';
 
             $positions = $extraFields->attributes['projet']['pos'];
             asort($positions);
@@ -96,7 +96,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
             $extraFields->attributes['projet']['type'] = $sortedType; ?>
 
             <?php foreach ($extraFields->attributes['projet']['type'] as $key => $value) {
-            if (strpos($key, 'easycrm') === false && $key != 'projectphone') {
+            if (strpos($key, 'reedcrm') === false && $key != 'projectphone') {
                 continue;
             }
 
@@ -134,7 +134,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
                 </div>
             </div>
             <!-- Opportunity amount -->
-            <?php if ($conf->global->EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+            <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
                 <div class="grid-2">
                     <label for="opp_amount">
                         <?php echo img_picto('', 'fontawesome_euro-sign_fas_#000000'); ?>
@@ -156,7 +156,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
                             <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
                         </div>
                     </label>
-                    <?php print saturne_show_medias_linked('easycrm', $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos', 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, 'project/tmp/0/project_photos', $project, '', 0); ?>
+                    <?php print saturne_show_medias_linked('reedcrm', $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos', 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, 'project/tmp/0/project_photos', $project, '', 0); ?>
                 </div>
             </div>
         </div>

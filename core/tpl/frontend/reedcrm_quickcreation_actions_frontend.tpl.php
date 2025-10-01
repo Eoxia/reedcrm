@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
  */
 
 /**
- * \file    core/tpl/frontend/easycrm_quickcreation_actions_frontend.tpl.php
- * \ingroup easycrm
+ * \file    core/tpl/frontend/reedcrm_quickcreation_actions_frontend.tpl.php
+ * \ingroup reedcrm
  * \brief   Template page for quick creation action frontend
  */
 
@@ -39,7 +39,7 @@ if ($action == 'add_img') {
 
     $encodedImage = explode(',', $data['img'])[1];
     $decodedImage = base64_decode($encodedImage);
-    $uploadDir    = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
+    $uploadDir    = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
     if (!dol_is_dir($uploadDir)) {
         dol_mkdir($uploadDir);
     }
@@ -47,7 +47,7 @@ if ($action == 'add_img') {
 }
 
 if ($action == 'add_audio') {
-    $uploadDir  = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
+    $uploadDir  = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
     $uploadFile = $uploadDir . basename($_FILES['audio']['name']);
     if (!dol_is_dir($uploadDir)) {
         dol_mkdir($uploadDir);
@@ -90,7 +90,7 @@ if ($action == 'add') {
     $project->opp_amount        = price2num(GETPOST('opp_amount', 'int'));
     $project->date_c            = dol_now();
     $project->date_start        = dol_now();
-    $project->status            = getDolGlobalInt('EASYCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO') > 0 && $project->opp_percent == 0 ? Project::STATUS_CLOSED : Project::STATUS_VALIDATED;
+    $project->status            = getDolGlobalInt('REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO') > 0 && $project->opp_percent == 0 ? Project::STATUS_CLOSED : Project::STATUS_VALIDATED;
     $project->usage_opportunity = 1;
     $project->usage_task        = 1;
 
@@ -109,7 +109,7 @@ if ($action == 'add') {
 //        }
 
         $pathToProjectDir = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
-        $pathToTmpImg  = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
+        $pathToTmpImg  = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
         $imgList       = dol_dir_list($pathToTmpImg, 'files');
         if (!empty($imgList)) {
             foreach ($imgList as $img) {
@@ -120,15 +120,15 @@ if ($action == 'add') {
                 $fullPath = $pathToProjectDir . '/' . $img['name'];
                 dol_copy($img['fullname'], $fullPath);
 
-                vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
-                vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_SMALL, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_SMALL);
-                vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
-                vignette($fullPath, $conf->global->EASYCRM_MEDIA_MAX_WIDTH_LARGE, $conf->global->EASYCRM_MEDIA_MAX_HEIGHT_LARGE, '_large');
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL);
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE, '_large');
                 unlink($img['fullname']);
             }
         }
 
-        $pathToTmpAudio = $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
+        $pathToTmpAudio = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
         $audioList      = dol_dir_list($pathToTmpAudio, 'files');
         if (!empty($audioList)) {
             foreach ($audioList as $audio) {
@@ -157,7 +157,7 @@ if ($action == 'add') {
 
         $task->fk_project = $projectID;
         $task->ref        = $refTaskMod->getNextValue(null, $task);
-        $task->label      = (!empty($conf->global->EASYCRM_TASK_LABEL_VALUE) ? $conf->global->EASYCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
+        $task->label      = (!empty($conf->global->REEDCRM_TASK_LABEL_VALUE) ? $conf->global->REEDCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
         $task->date_c     = dol_now();
 
         $taskID = $task->create($user);

@@ -133,7 +133,7 @@ if ($action == 'add') {
 
 				$task->fk_project = $projectID;
 				$task->ref        = $defaultref;
-				$task->label      = (!empty($conf->global->EASYCRM_TASK_LABEL_VALUE) ? $conf->global->EASYCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
+				$task->label      = (!empty($conf->global->REEDCRM_TASK_LABEL_VALUE) ? $conf->global->REEDCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
 				$task->date_c     = dol_now();
 
 				$taskID = $task->create($user);
