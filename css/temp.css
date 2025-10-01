@@ -14,14 +14,14 @@
     --fiche-padding-left: 1em;
     --fiche-padding-right: 1em;
 
-    @media only screen and (max-width: 1024px) {
-        --fiche-margin-left: 20px;
-        --fiche-margin-right: 6px;
-    }
-    @media only screen and (max-width: 741px) {
-        --fiche-margin-left: 9px;
-        --fiche-margin-right: 10px;
-    }
+    /*@media only screen and (max-width: 1024px) {*/
+    /*    --fiche-margin-left: 20px;*/
+    /*    --fiche-margin-right: 6px;*/
+    /*}*/
+    /*@media only screen and (max-width: 741px) {*/
+    /*    --fiche-margin-left: 9px;*/
+    /*    --fiche-margin-right: 10px;*/
+    /*}*/
 }
 
 /*--------------------------------------------------------------
@@ -172,4 +172,31 @@
     position: absolute;
     opacity: 0.5;
     transform: translateY(-5px);
+}
+
+@media only screen and (max-width: 599px) {
+    #mainbody button.button:not(.buttongen):not(.bordertransp),
+    .butAction {
+      font-size: 1.1em;
+        padding: 12px 20px;
+    }
+}
+
+/*--------------------------------------------------------------
+	ReedCRM main CSS
+--------------------------------------------------------------*/
+#recording-indicator {
+    display: none;
+    color: rgba(0,0,0,0.4);
+    font-weight: bold;
+}
+
+.blinking {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
 }

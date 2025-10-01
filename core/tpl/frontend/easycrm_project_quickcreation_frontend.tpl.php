@@ -72,7 +72,9 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         </div>
         <div>
             <!-- Audio -->
-            <div class="wpeo-button button-square-50 button-grey" id="start-recording"><?php echo img_picto('', 'fontawesome_fa-circle_fas_#e05353'); ?></div>
+            <button id="start-recording" class="butAction button-square">
+                <?php echo img_picto('', 'fontawesome_microphone_fas_#ffffff'); ?>
+            </button>
         </div>
         <div>
             <div id="recording-indicator" class="blinking"><?php echo  $langs->trans('RecordingInProgress'); ?></div>

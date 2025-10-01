@@ -307,6 +307,9 @@
 .wpeo-grid.grid-6 > .grid-6 {
     width: 100%;
 }
+.wpeo-grid .butAction {
+    margin: 0;
+}
 @media (max-width: 1000px) {
     .wpeo-grid:not(.grid-no-responsive).grid-1 > * {
         width: 100%;
