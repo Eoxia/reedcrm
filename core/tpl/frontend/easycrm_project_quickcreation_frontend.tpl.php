@@ -41,7 +41,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         <!-- @todo Logo here -->
     </div>
     <div class="col">
-        <div class="subtitle">Custom subtitle</div>
+<!--        <div class="subtitle">Custom subtitle</div>-->
         <div class="title"><?php echo $langs->trans('Lead'); ?></div>
     </div>
     <div class="col">
