@@ -168,20 +168,28 @@
     max-width: 60px;
     min-width: 50px;
     aspect-ratio: 1/1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .button:not(.bordertransp):not(.buttonpayment) .button-icon,
 .buttonDelete:not(.bordertransp):not(.buttonpayment) .button-icon,
 .butAction .button-icon {
     position: absolute;
     opacity: 0.5;
-    transform: translateY(-5px);
+    transform: translateY(-8px) translateX(8px);
+}
+#mainbody.template-pwa button.button:not(.buttongen):not(.bordertransp),
+.template-pwa .butAction {
+    box-sizing: border-box;
+    padding: 0.6em 0.7em;
 }
 
 @media only screen and (max-width: 599px) {
     #mainbody.template-pwa button.button:not(.buttongen):not(.bordertransp),
     .template-pwa .butAction {
         font-size: 1.1em;
-        padding: 12px 20px !important;
+        padding: 0.8em 0.9em !important;
     }
 }
 

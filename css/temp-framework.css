@@ -202,6 +202,10 @@
     flex-wrap: wrap;
     gap: 0.5em;
 }
+.linked-medias-list label {
+    border: 0;
+    display: block;
+}
 
 
 /*--------------------------------------------------------------
@@ -440,4 +444,444 @@
 }
 .wpeo-notice.notice-success .notice-title, .wpeo-notice.notice-success .notice-subtitle, .wpeo-notice.notice-success a {
     color: #47e58e;
+}
+
+/*--------------------------------------------------------------
+	Module : Card Confirmation
+	Version : 1.0.0
+
+	.card__confirmation -> classe de base du mobule
+--------------------------------------------------------------*/
+
+.card__confirmation {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 999;
+    display: flex;
+}
+.card__confirmation .confirmation-container {
+    display: block;
+    width: 100%;
+    max-width: 460px;
+    background: #fff;
+    margin: auto;
+    box-shadow: 0 0 40px 0 rgba(0, 0, 0, 0.1);
+    padding: 1.5em 1.5em;
+    text-align: center;
+    border-radius: 10px;
+}
+.card__confirmation .confirmation-container .confirmation-icon {
+    font-size: 70px;
+}
+.card__confirmation .confirmation-container .confirmation-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 1em 0;
+}
+.card__confirmation .confirmation-container .confirmation-close-button {
+    display: flex;
+    justify-content: end;
+    width: 100%;
+    color: rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease-out;
+}
+.card__confirmation .confirmation-container .confirmation-close-button:hover {
+    cursor: pointer;
+    color: #0d8aff;
+}
+
+/*--------------------------------------------------------------
+	Module : Button
+	Version : 1.2.0
+
+ * Les boutons se forment grâce à leurs classes CSS
+ * .button -> classe de base pour un bouton
+ * 		.primary
+ * 		.light
+ * 		.dark
+ * 		.red
+ * 		.yellow
+ * 		.blue
+ * 		.green
+ * 		.transparent
+ * .bordered -> Change l'affichage du bouton. Fonctionne avec les même couleurs
+ * .strong -> texte en gras
+ * .uppercase -> texte en majuscule
+ * .float-right -> float right
+ * .float-left -> float left
+ * .square-30 -> bouton carré 30px
+ * .square-40 -> bouton carré 40px
+ * .square-50 -> bouton carré 50px
+ * .square-60 -> bouton carré 60px
+ * .margin -> margin haut et bas sur le bouton
+ * .radius-1 -> Arrondis les bords
+ * .radius-3 -> Arrondis les bords
+ * .radius-3 -> Arrondis les bords
+ * .rounded -> bouton en forme de rond
+ * .disable -> désactive les actions sur le bouton
+ * .size-small -> petite taille
+ * .size-large -> grande taille
+--------------------------------------------------------------*/
+.wpeo-button {
+    display: inline-block;
+    border: 0;
+    box-shadow: none;
+    background: none;
+    text-decoration: none;
+    padding: 6px 14px;
+    line-height: 1.4;
+    vertical-align: middle;
+    height: auto;
+    border-radius: 0;
+    transition: all 0.2s ease-out;
+    position: relative;
+    border-width: 3px;
+    border-style: solid;
+    font-size: 16px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    background: #0d8aff;
+    border-color: #0d8aff;
+    color: #fff;
+}
+.wpeo-button:focus, .wpeo-button:visited {
+    color: #fff;
+}
+.wpeo-button:hover {
+    color: #fff;
+    box-shadow: inset 0 -2.6em rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+    text-decoration: none;
+}
+.wpeo-button:focus, .wpeo-button:active {
+    outline: none;
+}
+
+/** Colors */
+.wpeo-button {
+    /* par défaut */
+    background: #0d8aff;
+    border-color: #0d8aff;
+    color: #fff;
+}
+.wpeo-button.button-main {
+    background: #0d8aff;
+    border-color: #0d8aff;
+    color: #fff;
+}
+.wpeo-button.button-secondary {
+    background: #263C5C;
+    border-color: #263C5C;
+    color: #fff;
+}
+.wpeo-button.button-light {
+    background: #fff;
+    border-color: #fff;
+    color: #333333;
+}
+.wpeo-button.button-light:hover {
+    box-shadow: inset 0 -2.6em rgba(0, 0, 0, 0.1);
+    color: #333333;
+}
+.wpeo-button.button-dark {
+    background: #2b2b2b;
+    border-color: #2b2b2b;
+}
+.wpeo-button.button-grey {
+    background: #ececec;
+    border-color: #ececec;
+    color: #333333;
+}
+.wpeo-button.button-grey:hover {
+    box-shadow: inset 0 -2.6em rgba(0, 0, 0, 0.1);
+    color: #333333;
+}
+.wpeo-button.button-red {
+    background: #e05353;
+    border-color: #e05353;
+}
+.wpeo-button.button-yellow {
+    background: #e9ad4f;
+    border-color: #e9ad4f;
+}
+.wpeo-button.button-blue {
+    background: #0d8aff;
+    border-color: #0d8aff;
+}
+.wpeo-button.button-green {
+    background: #47e58e;
+    border-color: #47e58e;
+}
+.wpeo-button.button-orange {
+    background: #ff6900;
+    border-color: #ff6900;
+}
+.wpeo-button.button-transparent {
+    background: transparent;
+    border-color: transparent;
+    color: rgba(51, 51, 51, 0.4);
+}
+.wpeo-button.button-transparent:hover {
+    color: #333333;
+    box-shadow: inset 0 -2.6em rgba(255, 255, 255, 0);
+}
+
+.wpeo-button.button-bordered {
+    background: none;
+    /* Par defaut */
+    border-color: #0d8aff;
+    color: #0d8aff;
+}
+.wpeo-button.button-bordered.button-main {
+    border-color: #0d8aff;
+    color: #0d8aff;
+}
+.wpeo-button.button-bordered.button-main:hover {
+    box-shadow: inset 0 -2.6em #0d8aff;
+    color: #fff;
+}
+.wpeo-button.button-bordered.button-light {
+    border-color: #fff;
+    color: #fff;
+}
+.wpeo-button.button-bordered.button-light:hover {
+    box-shadow: inset 0 -2.6em #fff;
+    color: #333333;
+}
+.wpeo-button.button-bordered.button-dark {
+    border-color: #2b2b2b;
+    color: #2b2b2b;
+}
+.wpeo-button.button-bordered.button-dark:hover {
+    box-shadow: inset 0 -2.6em #2b2b2b;
+}
+.wpeo-button.button-bordered.button-grey {
+    border-color: #ececec;
+    color: #a0a0a0;
+}
+.wpeo-button.button-bordered.button-grey:hover {
+    box-shadow: inset 0 -2.6em #ececec;
+    color: #333333;
+}
+.wpeo-button.button-bordered.button-red {
+    border-color: #e05353;
+    color: #e05353;
+}
+.wpeo-button.button-bordered.button-red:hover {
+    box-shadow: inset 0 -2.6em #e05353;
+}
+.wpeo-button.button-bordered.button-yellow {
+    border-color: #e9ad4f;
+    color: #e9ad4f;
+}
+.wpeo-button.button-bordered.button-yellow:hover {
+    box-shadow: inset 0 -2.6em #e9ad4f;
+}
+.wpeo-button.button-bordered.button-blue {
+    border-color: #0d8aff;
+    color: #0d8aff;
+}
+.wpeo-button.button-bordered.button-blue:hover {
+    box-shadow: inset 0 -2.6em #0d8aff;
+}
+.wpeo-button.button-bordered.button-green {
+    border-color: #47e58e;
+    color: #47e58e;
+}
+.wpeo-button.button-bordered.button-green:hover {
+    box-shadow: inset 0 -2.6em #47e58e;
+}
+.wpeo-button.button-bordered:hover {
+    box-shadow: inset 0 -2.6em #0d8aff;
+    color: #fff;
+}
+
+.wpeo-button .button-add {
+    position: absolute;
+    top: 0.4em;
+    right: 0.2em;
+    opacity: 0.6;
+    font-size: 14px;
+    transition: all 0.2s ease-out;
+}
+.wpeo-button:hover .button-add {
+    opacity: 0.8;
+}
+
+.wpeo-button.button-square-40 .button-add {
+    top: 0.1em;
+    right: 0;
+}
+
+.wpeo-button .button-icon, .wpeo-button span {
+    position: relative;
+}
+.wpeo-button .button-icon ~ span {
+    margin-left: 10px;
+}
+.wpeo-button span ~ .button-icon {
+    margin-left: 10px;
+}
+
+.wpeo-button.button-strong span {
+    font-weight: 800;
+}
+
+.wpeo-button.button-uppercase span {
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.wpeo-button[class*=button-square-] {
+    text-align: center;
+    overflow: hidden;
+    padding: 0;
+}
+
+.wpeo-button.button-square-30 {
+    width: 30px;
+    height: 30px;
+    line-height: 24px;
+}
+.wpeo-button.button-square-30 .button-icon {
+    font-size: 12px;
+    line-height: 24px;
+}
+
+.wpeo-button.button-square-40 {
+    width: 40px;
+    height: 40px;
+    line-height: 34px;
+}
+.wpeo-button.button-square-40 .button-icon {
+    line-height: 34px;
+}
+
+.wpeo-button.button-square-50 {
+    width: 50px;
+    height: 50px;
+    line-height: 44px;
+}
+.wpeo-button.button-square-50 .button-icon {
+    line-height: 44px;
+}
+
+.wpeo-button.button-square-60 {
+    width: 60px;
+    height: 60px;
+    line-height: 54px;
+}
+.wpeo-button.button-square-60 .button-icon {
+    line-height: 54px;
+}
+
+.wpeo-button.button-float-left {
+    float: left;
+}
+.wpeo-button.button-float-right {
+    float: right;
+}
+
+.wpeo-button.button-margin {
+    margin: 1em 0;
+}
+
+.wpeo-button.button-radius-1 {
+    border-radius: 2px;
+}
+.wpeo-button.button-radius-2 {
+    border-radius: 4px;
+}
+.wpeo-button.button-radius-3 {
+    border-radius: 6px;
+}
+.wpeo-button.button-rounded {
+    border-radius: 50%;
+}
+
+.wpeo-button.button-disable {
+    background: #ececec !important;
+    border-color: #ececec !important;
+    color: rgba(0, 0, 0, 0.4) !important;
+    pointer-events: none;
+}
+.wpeo-button.button-disable:hover {
+    box-shadow: none !important;
+}
+.wpeo-button.button-disable.button-event {
+    pointer-events: all;
+}
+
+.wpeo-button.button-size-small {
+    font-size: 14px;
+}
+.wpeo-button.button-size-small.button-uppercase span {
+    font-size: 12px;
+}
+
+.wpeo-button.button-size-large {
+    font-size: 18px;
+}
+.wpeo-button.button-size-large.button-uppercase span {
+    font-size: 16px;
+}
+
+/*--------------------------------------------------------------
+	Module : Media Gallery
+	Version : 1.0.0
+
+ * .media-container -> classe de base pour un bouton
+--------------------------------------------------------------*/
+
+.media-container {
+    position: relative;
+}
+.media-container .media-gallery-unlink, .media-container .media-gallery-favorite, .media-container .media-gallery-ai {
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+    border: 0;
+    font-size: 14px;
+    background: #cbcbcb !important;
+    color: rgba(0, 0, 0, 0.4) !important;
+    text-align: center;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    border-radius: 50%;
+    z-index: 10;
+}
+.media-container .media-gallery-unlink .button-icon, .media-container .media-gallery-favorite .button-icon, .media-container .media-gallery-ai .button-icon {
+    line-height: 30px !important;
+}
+.media-container .media-gallery-favorite {
+    top: auto;
+    bottom: -10px;
+}
+.media-container .media-gallery-favorite.favorite {
+    background: #ffa500 !important;
+    color: #fff !important;
+}
+.media-container .photo {
+    aspect-ratio: 1/1;
+    object-fit: cover;
+}
+.media-container .media-gallery-ai {
+    top: auto;
+    bottom: -10px;
+    left: -10px;
+    background: #0d8aff !important;
+}
+.media-container .media-gallery-ai:hover {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+.media-container .media-gallery-ai.colorsuccess {
+    background: #9ACD32 !important;
+}
+.media-container .media-gallery-ai.colorerror {
+    background: #DC143C !important;
 }
