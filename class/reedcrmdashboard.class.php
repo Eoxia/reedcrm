@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2021-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2021-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +16,15 @@
  */
 
 /**
- * \file    class/easycrmdashboard.class.php
- * \ingroup easycrm
- * \brief   Class file for manage EasycrmDashboard.
+ * \file    class/reedcrmdashboard.class.php
+ * \ingroup reedcrm
+ * \brief   Class file for manage ReedcrmDashboard.
  */
 
 /**
- * Class for EasycrmDashboard.
+ * Class for ReedcrmDashboard.
  */
-class EasycrmDashboard
+class ReedcrmDashboard
 {
 	/**
 	 * @var DoliDB Database handler.
@@ -51,7 +51,7 @@ class EasycrmDashboard
 	{
         global $user, $langs;
 
-        $confName        = 'EASYCRM_DASHBOARD_CONFIG';
+        $confName        = 'REEDCRM_DASHBOARD_CONFIG';
         $dashboardConfig = json_decode($user->conf->$confName);
         $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
 

@@ -16,14 +16,14 @@
  */
 
 /**
- * \file    class/api_easycrm.class.php
- * \ingroup easycrm
- * \brief   File for API management of EasyCRM.
+ * \file    class/api_reedcrm.class.php
+ * \ingroup reedcrm
+ * \brief   File for API management of ReedCRM.
  */
 
 use Luracast\Restler\RestException;
 
-require_once __DIR__ . '/../core/modules/modEasyCRM.class.php';
+require_once __DIR__ . '/../core/modules/modReedCRM.class.php';
 
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
@@ -38,7 +38,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/object.lib.php';
  * @access protected
  * @class  DolibarrApiAccess {@requires user,external}
  */
-class EasyCRM extends DolibarrApi
+class ReedCRM extends DolibarrApi
 {
 	/**
 	 * @var DoliDB Database handler.
@@ -46,7 +46,7 @@ class EasyCRM extends DolibarrApi
 	public $db;
 
 	/**
-	 * @var modEasyCRM $mod {@type modEasyCRM}
+	 * @var modReedCRM $mod {@type modReedCRM}
 	 */
 	public $mod;
 
@@ -57,7 +57,7 @@ class EasyCRM extends DolibarrApi
 	{
 		global $db;
 		$this->db  = $db;
-		$this->mod = new modEasyCRM($this->db);
+		$this->mod = new modReedCRM($this->db);
 	}
 
 	/**
@@ -71,11 +71,11 @@ class EasyCRM extends DolibarrApi
 	 */
 	public function test() {
 		// This is a test method to check if the API is working.
-		return array('status' => 'success', 'message' => 'EasyCRM API is working');
+		return array('status' => 'success', 'message' => 'ReedCRM API is working');
 	}
 
 	/**
-	 * Create project with EasyCRM form.
+	 * Create project with ReedCRM form.
 	 *
 	 * @url POST /createProject
 	 *
@@ -113,16 +113,16 @@ class EasyCRM extends DolibarrApi
 		$project->usage_task        = 1;
 
 		$project->array_options = [
-			'options_easycrm_lastname' => $request_data['lastname'] ?? '',
-			'options_easycrm_firstname' => $request_data['firstname'] ?? '',
-			'options_easycrm_email' => $request_data['email'] ?? '',
+			'options_reedcrm_lastname' => $request_data['lastname'] ?? '',
+			'options_reedcrm_firstname' => $request_data['firstname'] ?? '',
+			'options_reedcrm_email' => $request_data['email'] ?? '',
 			'options_projectphone' => $request_data['phone'] ?? '',
 		];
 
 		$projectID = $project->create(DolibarrApiAccess::$user);
 		if ($projectID > 0) {
 
-			$config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
+			$config = getDolGlobalString('REEDCRM_API_QUICK_CREATIONS');
 			$config = json_decode($config, true);
 			if (!is_array($config)) {
 				$config = [];

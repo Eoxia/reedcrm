@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +16,15 @@
  */
 
 /**
- * \file    class/easycrmcron.class.php
- * \ingroup easycrm
- * \brief   Class file for manage EasycrmCron
+ * \file    class/reedcrmcron.class.php
+ * \ingroup reedcrm
+ * \brief   Class file for manage ReedcrmCron
  */
 
 /**
- * Class for EasycrmCron
+ * Class for ReedcrmCron
  */
-class EasycrmCron
+class ReedcrmCron
 {
     /**
      * @var DoliDB Database handler
@@ -65,8 +65,8 @@ class EasycrmCron
         // Load Saturne libraries
         require_once __DIR__ . '/../../saturne/lib/object.lib.php';
 
-        // Load EasyCRM libraries
-        require_once __DIR__ . '/../lib/easycrm_function.lib.php';
+        // Load ReedCRM libraries
+        require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
         $objects = saturne_fetch_all_object_type($className, '', '', 0, 0, ['customsql' => 't.entity = ' . $conf->entity . ' ' . $filter]);
 

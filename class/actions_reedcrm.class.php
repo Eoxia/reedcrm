@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,15 +16,15 @@
  */
 
 /**
- * \file    class/actions_easycrm.class.php
- * \ingroup easycrm
- * \brief   EasyCRM hook overload.
+ * \file    class/actions_reedcrm.class.php
+ * \ingroup reedcrm
+ * \brief   ReedCRM hook overload.
  */
 
 /**
- * Class ActionsEasycrm
+ * Class ActionsReedcrm
  */
-class ActionsEasycrm
+class ActionsReedcrm
 {
     /**
      * @var DoliDB Database handler.
@@ -227,7 +227,7 @@ class ActionsEasycrm
                     $moreparam = '&project_id=' . $object->id;
                 }
                 $url = '?socid=' . $socid . '&fromtype=' . $object->element . $moreparam . '&action=create&token=' . newToken();
-                print dolGetButtonAction('', $langs->trans('QuickEventCreation'), 'default', dol_buildpath('/easycrm/view/quickevent.php', 1) . $url, '', $user->rights->agenda->myactions->create);
+                print dolGetButtonAction('', $langs->trans('QuickEventCreation'), 'default', dol_buildpath('/reedcrm/view/quickevent.php', 1) . $url, '', $user->rights->agenda->myactions->create);
             }
         }
 
@@ -247,7 +247,7 @@ class ActionsEasycrm
     {
         if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
             if ($action == 'set_notation_object_contact') {
-                require_once __DIR__ . '/../lib/easycrm_function.lib.php';
+                require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
                 set_notation_object_contact($object);
 
@@ -294,8 +294,8 @@ class ActionsEasycrm
     {
         global $conf, $db, $langs, $object, $user;
 
-        if (empty($conf->global->EASYCRM_CALL_NOTIFICATIONS_DISABLED) && !empty($user->id)) {
-            $url = dol_buildpath('/custom/easycrm/js/call_notifications.js.php', 1);
+        if (empty($conf->global->REEDCRM_CALL_NOTIFICATIONS_DISABLED) && !empty($user->id)) {
+            $url = dol_buildpath('/custom/reedcrm/js/call_notifications.js.php', 1);
             if (!empty($url)) { ?>
                 <script type="text/javascript" src="<?= dol_escape_htmltag($url) ?>"></script>
             <?php }
@@ -303,7 +303,7 @@ class ActionsEasycrm
 
         // Do something only for the current context
         if (preg_match('/thirdpartycomm|projectcard/', $parameters['context'])) {
-            $pictoPath = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
+            $pictoPath = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
             $pictoMod  = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
 
             if (isModEnabled('agenda')) {
@@ -312,7 +312,7 @@ class ActionsEasycrm
                 $actionComm = new ActionComm($db);
                 $socid      = (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
 
-                $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . getDolGlobalInt('EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') . ')';
+                $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') . ')';
                 $actionComms = $actionComm->getActions($socid, ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : GETPOST('id')), ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : 'project'), $filter, 'a.datec');
                 if (is_array($actionComms) && !empty($actionComms)) {
                     $nbActionComms  = count($actionComms);
@@ -339,7 +339,7 @@ class ActionsEasycrm
                     $out .= ' - ' . '<span>' . $langs->trans('LastCommercialReminderDate') . ' : ' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
                 }
                 if ($user->hasRight('agenda', 'myactions', 'create')) {
-                    $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
+                    $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/reedcrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                 }
                 if (!empty($lastActionComm)) {
                     $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
@@ -399,7 +399,7 @@ class ActionsEasycrm
             print '<link href="' . $cssPath . '" rel="stylesheet">';
 
             $jQueryElement = 'notation_' . $object->element . '_contact';
-            $pictoPath     = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
+            $pictoPath     = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
             $picto         = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule'); ?>
 
             <script>
@@ -416,7 +416,7 @@ class ActionsEasycrm
             print '<link href="' . $cssPath . '" rel="stylesheet">';
 
             $jQueryElement = '.' . $object->element . '_extras_notation_' . $object->element . '_contact';
-            $pictoPath     = dol_buildpath('/easycrm/img/easycrm_color.png', 1);
+            $pictoPath     = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
             $picto         = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
 
             $out  = $picto;
@@ -454,14 +454,14 @@ class ActionsEasycrm
      */
     public function addHtmlHeader(array $parameters): int
     {
-        if (strpos($_SERVER['PHP_SELF'], 'easycrm') !== false) {
+        if (strpos($_SERVER['PHP_SELF'], 'reedcrm') !== false) {
             ?>
             <script>
                 $('link[rel="manifest"]').remove();
             </script>
             <?php
 
-            $this->resprints = '<link rel="manifest" href="' . DOL_URL_ROOT . '/custom/easycrm/manifest.json.php' . '" />';
+            $this->resprints = '<link rel="manifest" href="' . DOL_URL_ROOT . '/custom/reedcrm/manifest.json.php' . '" />';
         }
 
         return 0; // or return 1 to replace standard code-->
@@ -519,7 +519,7 @@ class ActionsEasycrm
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 
                 $picto  = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
-                $filter = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
+                $filter = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
                 if (is_object($parameters['obj']) && !empty($parameters['obj'])) {
                     if (!empty($parameters['obj']->id)) {
                         $out = '<td class="tdoverflowmax200">';
@@ -562,9 +562,9 @@ class ActionsEasycrm
 
                             // Extrafield commRelaunch
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $parameters['obj']->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/easycrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
+                                $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $parameters['obj']->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/reedcrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                                 // @todo find somewhere to add a user->conf to choose between popup dialog or open in current tab
-                                //$out .= '<a href="' . dol_buildpath('/easycrm/view/quickevent.php', 1) . $url . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
+                                //$out .= '<a href="' . dol_buildpath('/reedcrm/view/quickevent.php', 1) . $url . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
                             }
 
                             if (!empty($lastActionComm)) {
@@ -696,7 +696,7 @@ class ActionsEasycrm
 
                 dol_setcache($cacheKey, $nbContact, 120); // If setting cache fails, this is not a problem, so we do not test result
             }
-            $parameters['head'][1][0] = DOL_URL_ROOT . '/custom/easycrm/view/contact.php?id=' . $parameters['object']->id;
+            $parameters['head'][1][0] = DOL_URL_ROOT . '/custom/reedcrm/view/contact.php?id=' . $parameters['object']->id;
             $parameters['head'][1][1] = $langs->trans('ContactsAddresses');
             if ($nbContact > 0) {
                 $parameters['head'][1][1] .= '<span class="badge marginleftonlyshort">' . $nbContact . '</span>';
@@ -860,7 +860,7 @@ class ActionsEasycrm
     {
         global $langs;
 
-        if (GETPOST('module_name') == 'EasyCRM' && strpos($parameters['context'], 'pwaadmin') !== false) {
+        if (GETPOST('module_name') == 'ReedCRM' && strpos($parameters['context'], 'pwaadmin') !== false) {
             // PWA configuration
             $out = load_fiche_titre($langs->trans('Config'), '', '');
 
@@ -877,7 +877,7 @@ class ActionsEasycrm
             $out .= '</td><td>';
             $out .= $langs->trans('PWACloseProjectOpportunityZeroDescription');
             $out .= '</td><td class="center">';
-            $out .= ajax_constantonoff('EASYCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO');
+            $out .= ajax_constantonoff('REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO');
             $out .= '</td></tr>';
 
             $out .= '</table>';

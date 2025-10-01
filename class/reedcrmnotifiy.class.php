@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,28 +16,28 @@
  */
 
 /**
- * \file    class/easycrmnotify.class.php
- * \ingroup easycrm
- * \brief   This file is a CRUD class file for EasycrmNotify (Create/Read/Update/Delete)
+ * \file    class/reedcrmnotify.class.php
+ * \ingroup reedcrm
+ * \brief   This file is a CRUD class file for ReedcrmNotify (Create/Read/Update/Delete)
  */
 
 // Load Saturne libraries.
 require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
 
 /**
- * Class for EasycrmNotify
+ * Class for ReedcrmNotify
  */
-class EasycrmNotify extends SaturneObject
+class ReedcrmNotify extends SaturneObject
 {
     /**
      * @var string Module name
      */
-    public $module = 'easycrm';
+    public $module = 'reedcrm';
 
     /**
      * @var string Element type of object
      */
-    public $element = 'easycrm_notify';
+    public $element = 'reedcrm_notify';
 
     /**
      * @var string Name of table without prefix where object is stored. This is also the key used for extrafields management
