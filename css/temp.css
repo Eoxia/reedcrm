@@ -175,10 +175,13 @@
 }
 
 @media only screen and (max-width: 599px) {
-    #mainbody button.button:not(.buttongen):not(.bordertransp),
-    .butAction {
-      font-size: 1.1em;
-        padding: 12px 20px;
+    .template-pwa #mainbody button.button:not(.buttongen):not(.bordertransp),
+    .template-pwa .butAction {
+        font-size: 1.1em;
+        padding: 12px 20px !important;
+    }
+    .template-pwa #mainbody button.button:not(.buttongen):not(.bordertransp):active,
+    .template-pwa .butAction:active {
     }
 }
 
