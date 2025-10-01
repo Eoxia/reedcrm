@@ -32,6 +32,9 @@
 .template-pwa #id-container {
     display: block;
     padding-top: 0.5em;
+    max-width: 1280px;
+    width: 100%;
+    margin: auto;
 }
 .template-pwa #id-bot {
 

@@ -72,7 +72,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         </div>
         <div>
             <!-- Audio -->
-            <button id="start-recording" class="butAction button-square">
+            <button type="button" id="start-recording" class="butAction button-square">
                 <?php echo img_picto('', 'fontawesome_microphone_fas_#ffffff'); ?>
             </button>
         </div>
@@ -149,7 +149,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
             <input hidden multiple id="upload-image" type="file" name="userfile[]" capture="environment" accept="image/*">
             <div class="linked-medias project" for="upload-image">
                 <div class="linked-medias-list">
-                    <button class="butAction button-square">
+                    <button type="button" class="butAction button-square">
                         <input type="hidden" class="modal-options" data-photo-class="project"/>
                         <?php echo img_picto('', 'fontawesome_camera_fas_#ffffff'); ?>
                         <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
@@ -167,7 +167,7 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
     </div>
 </div>
 
-<div id="id-bot" class="page-footer">
+<div id="id-bot" class="page-footer center">
     <button type="submit" class="button button-add">
         <?php echo $langs->trans('Save'); ?>
     </button>
