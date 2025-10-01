@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,18 +16,18 @@
  */
 
 /**
- *	\file       easycrmindex.php
- *	\ingroup    easycrm
- *	\brief      Home page of easycrm top menu
+ * \file    reedcrmindex.php
+ * \ingroup reedcrm
+ * \brief   Home page of reedcrm top menu
  */
 
-// Load EasyCRM environment
-if (file_exists('easycrm.main.inc.php')) {
-    require_once __DIR__ . '/easycrm.main.inc.php';
-} elseif (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/reedcrm.main.inc.php';
+} elseif (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 require_once __DIR__ . '/../saturne/core/tpl/index/index_view.tpl.php';

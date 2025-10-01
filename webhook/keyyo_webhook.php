@@ -10,7 +10,7 @@ if (file_exists(__DIR__ . '/../saturne/saturne.main.inc.php')) {
 }
 global $db;
 
-require_once __DIR__ . '/../lib/easycrm_function.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 date_default_timezone_set('Europe/Paris');
 
@@ -19,7 +19,7 @@ function log_to_file($msg) {
     file_put_contents(__DIR__.'/keyyo_webhook.log', $line, FILE_APPEND);
 }
 
-$expected = $conf->global->EASY_CRM_KEYYO_EXPECTED_TOKEN ?? '';
+$expected = $conf->global->REEDCRM_KEYYO_EXPECTED_TOKEN ?? '';
 $got = $_GET['token'] ?? '';
 if ($expected && $got !== $expected) {
     log_to_file('Forbidden: bad token: '.$got);
@@ -78,5 +78,5 @@ http_response_code(200);
 header('Content-Type: text/plain; charset=utf-8');
 echo 'OK';
 
-require_once __DIR__ . '/../lib/easycrm_function.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 

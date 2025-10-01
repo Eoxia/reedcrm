@@ -18,9 +18,9 @@
 #
 
 # Data - Donnée
-ModuleEasyCRMName      = EasyCRM
-ModuleEasyCRMDesc      = Simplification de la CRM
-EasyCRMDescription     = Simplification de la CRM
+ModuleReedCRMName      = ReedCRM
+ModuleReedCRMDesc      = Simplification de la CRM
+ReedCRMDescription     = Simplification de la CRM
 
 #
 # Quick Creation - Ajout rapide
@@ -213,7 +213,7 @@ LabelLength                            = Taille libellé
 LabelLengthDescription                 = Taille maximum du champ libellé
 WarningTaskLabelCustom                 = Attention, vous vous rapprochez du nombre de caractères maximum autorisé (%d)
 
-# Traductions pour EasyCRM - Notifications d'appel
+# Traductions pour ReedCRM - Notifications d'appel
 IncomingCall                                                         = Appel entrant
 ViewContact                                                          = Voir le contact
 CallNotifications                                                    = Notifications d'appel

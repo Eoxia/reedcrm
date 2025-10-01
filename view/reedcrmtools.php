@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,18 +16,18 @@
  */
 
 /**
- * \file    view/easycrmtools.php
- * \ingroup easycrm
- * \brief   Tools page of EasyCRM top menu
+ * \file    view/reedcrmtools.php
+ * \ingroup reedcrm
+ * \brief   Tools page of ReedCRM top menu
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 // Load Dolibarr libraries
@@ -37,9 +37,9 @@ require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 
-// Load EasyCRM libraries
-require_once __DIR__ . '/../lib/easycrm_function.lib.php';
-require_once __DIR__ . '/../class/easycrmnotifiy.class.php';
+// Load ReedCRM libraries
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
+require_once __DIR__ . '/../class/reedcrmnotifiy.class.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -54,11 +54,11 @@ $action = (GETPOSTISSET('action') ? GETPOST('action', 'aZ09') : 'view');
 $facture       = new Facture($db);
 $thirdparty    = new Societe($db);
 $actioncomm    = new ActionComm($db);
-$easycrmNotify = new EasycrmNotify($db);
+$reedcrmNotify = new ReedcrmNotify($db);
 $contact       = new Contact($db);
 
 // Security check - Protection if external user
-$permissionToRead = $user->rights->easycrm->adminpage->read;
+$permissionToRead = $user->rights->reedcrm->adminpage->read;
 saturne_check_access($permissionToRead);
 
 /*
@@ -73,7 +73,7 @@ if ($action == 'update_object_contact') {
         $objectContactUpdated              = 0;
         $alreadyCheckObjectContact         = [];
         $societyObjectContactNotDefinedIDs = [];
-        $typeContactsID                    = easycrm_fetch_dictionary('c_type_contact', " AND element = 'facture' AND source = 'external' AND code = 'BILLING'");
+        $typeContactsID                    = reedcrm_fetch_dictionary('c_type_contact', " AND element = 'facture' AND source = 'external' AND code = 'BILLING'");
         if (is_array($typeContactsID) && !empty($typeContactsID)) {
             $typeContactID = key($typeContactsID);
         }
@@ -97,9 +97,9 @@ if ($action == 'update_object_contact') {
             }
         }
         $societyObjectContactNotDefinedIDs = json_encode($societyObjectContactNotDefinedIDs);
-        dolibarr_set_const($db, 'EASYCRM_OBJECT_CONTACT_UPDATED', $objectContactUpdated, 'integer', 0, '', $conf->entity);
-        dolibarr_set_const($db, 'EASYCRM_ALREADY_CHECK_OBJECT_CONTACT', count($alreadyCheckObjectContact), 'chaine', 0, '', $conf->entity);
-        dolibarr_set_const($db, 'EASYCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED', $societyObjectContactNotDefinedIDs, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_OBJECT_CONTACT_UPDATED', $objectContactUpdated, 'integer', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_ALREADY_CHECK_OBJECT_CONTACT', count($alreadyCheckObjectContact), 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED', $societyObjectContactNotDefinedIDs, 'chaine', 0, '', $conf->entity);
         if ($checkObjectContact == 0) {
             setEventMessage($langs->trans('AllObjectHaveContact', $langs->trans('FactureMins')));
         }
@@ -118,7 +118,7 @@ if ($action == 'add_contact_notification') {
         $checkContactNotification                = 0;
         $contactNotificationAdded                = 0;
         $societyContactNotificationNotDefinedIDs = [];
-        $actionTriggersID                        = easycrm_fetch_dictionary('c_action_trigger', " AND elementtype = 'facture' AND code = 'BILL_VALIDATE'");
+        $actionTriggersID                        = reedcrm_fetch_dictionary('c_action_trigger', " AND elementtype = 'facture' AND code = 'BILL_VALIDATE'");
         if (is_array($actionTriggersID) && !empty($actionTriggersID)) {
             $actionTriggerID = key($actionTriggersID);
         }
@@ -126,11 +126,11 @@ if ($action == 'add_contact_notification') {
             $notationObjectContacts = get_notation_object_contacts($thirdparty, 'facture_external_BILLINGS');
             if (!empty($notationObjectContacts)) {
                 foreach ($notationObjectContacts as $key => $notationObjectContact) {
-                    $easycrmNotify->datec      = $db->idate(dol_now());
-                    $easycrmNotify->fk_action  = $actionTriggerID;
-                    $easycrmNotify->fk_soc     = $thirdparty->id;
-                    $easycrmNotify->fk_contact = $key;
-                    $easycrmNotify->create($user, true);
+                    $reedcrmNotify->datec      = $db->idate(dol_now());
+                    $reedcrmNotify->fk_action  = $actionTriggerID;
+                    $reedcrmNotify->fk_soc     = $thirdparty->id;
+                    $reedcrmNotify->fk_contact = $key;
+                    $reedcrmNotify->create($user, true);
                     $contact->fetch($key);
                     setEventMessage($langs->trans('ContactNotificationAdded') . ' ' . $thirdparty->getNomUrl(1) . ' - ' . $contact->getNomUrl(1));
                     $contactNotificationAdded++;
@@ -141,10 +141,10 @@ if ($action == 'add_contact_notification') {
                 $societyContactNotificationNotDefinedIDs[] = $thirdparty->id;
             }
         }
-        dolibarr_set_const($db, 'EASYCRM_CONTACT_NOTIFICATION_ADDED', $contactNotificationAdded, 'integer', 0, '', $conf->entity);
-        dolibarr_set_const($db, 'EASYCRM_ALREADY_CHECK_CONTACT_NOTIFICATION', count($societyContactNotificationNotDefinedIDs), 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_CONTACT_NOTIFICATION_ADDED', $contactNotificationAdded, 'integer', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_ALREADY_CHECK_CONTACT_NOTIFICATION', count($societyContactNotificationNotDefinedIDs), 'chaine', 0, '', $conf->entity);
         $societyContactNotificationNotDefinedIDs = json_encode($societyContactNotificationNotDefinedIDs);
-        dolibarr_set_const($db, 'EASYCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED', $societyContactNotificationNotDefinedIDs, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED', $societyContactNotificationNotDefinedIDs, 'chaine', 0, '', $conf->entity);
         if ($checkContactNotification == 0) {
             setEventMessage($langs->trans('AllContactHaveNotification'));
         }
@@ -161,7 +161,7 @@ if ($action == 'add_contact_notification') {
  */
 
 $title   = $langs->trans('Tools');
-$helpUrl = 'FR:Module_EasyCRM';
+$helpUrl = 'FR:Module_ReedCRM';
 
 saturne_header(0,'', $title, $helpUrl);
 
@@ -183,7 +183,7 @@ print '</tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('UpdateObjectContact', $langs->trans('FactureMin'));
 print '</td><td>';
-print $langs->trans('UpdateObjectContactDescription', $conf->global->EASYCRM_OBJECT_CONTACT_UPDATED, $langs->trans('FactureMins'));
+print $langs->trans('UpdateObjectContactDescription', $conf->global->REEDCRM_OBJECT_CONTACT_UPDATED, $langs->trans('FactureMins'));
 $actionComms = $actioncomm->getActions(0, 0,'', " AND code = 'AC_USER_UPDATE_OBJECT_CONTACT'", 'id','DESC', 1);
 if (is_array($actionComms) && !empty($actionComms)) {
     print ' : ' . dol_print_date($actionComms[0]->datec, 'dayhour', 'tzuser');
@@ -203,9 +203,9 @@ print '</form>'; ?>
 
 <div class="wpeo-notice notice-info">
     <div class="notice-content">
-        <div class="notice-title"><strong><?php echo $langs->trans('SocietyObjectContactNotDefinedTitle', $conf->global->EASYCRM_ALREADY_CHECK_OBJECT_CONTACT); ?></strong></div>
+        <div class="notice-title"><strong><?php echo $langs->trans('SocietyObjectContactNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_OBJECT_CONTACT); ?></strong></div>
         <div class="notice-subtitle">
-            <?php $societyObjectContactNotDefinedIDs = $conf->global->EASYCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED;
+            <?php $societyObjectContactNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED;
             $societyObjectContactNotDefinedIDs = json_decode($societyObjectContactNotDefinedIDs);
             if (is_array($societyObjectContactNotDefinedIDs) && !empty($societyObjectContactNotDefinedIDs)) {
                 foreach ($societyObjectContactNotDefinedIDs as $societyObjectContactNotDefinedID) {
@@ -233,7 +233,7 @@ print '</tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('AddContactNotification', $langs->trans('FactureMin'));
 print '</td><td>';
-print $langs->trans('AddContactNotificationDescription', $conf->global->EASYCRM_CONTACT_NOTIFICATION_ADDED);
+print $langs->trans('AddContactNotificationDescription', $conf->global->REEDCRM_CONTACT_NOTIFICATION_ADDED);
 $actionComms = $actioncomm->getActions(0, 0,'', " AND code = 'AC_USER_ADD_CONTACT_NOTIFICATION'", 'id','DESC', 1);
 if (is_array($actionComms) && !empty($actionComms)) {
     print ' : ' . dol_print_date($actionComms[0]->datec, 'dayhour', 'tzuser');
@@ -249,9 +249,9 @@ print '</form>'; ?>
 
 <div class="wpeo-notice notice-info">
     <div class="notice-content">
-        <div class="notice-title"><strong><?php echo $langs->trans('SocietyContactNotificationNotDefinedTitle', $conf->global->EASYCRM_ALREADY_CHECK_CONTACT_NOTIFICATION); ?></strong></div>
+        <div class="notice-title"><strong><?php echo $langs->trans('SocietyContactNotificationNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_CONTACT_NOTIFICATION); ?></strong></div>
         <div class="notice-subtitle">
-            <?php $societyContactNotificationNotDefinedIDs = $conf->global->EASYCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED;
+            <?php $societyContactNotificationNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED;
             $societyContactNotificationNotDefinedIDs = json_decode($societyContactNotificationNotDefinedIDs);
             if (is_array($societyContactNotificationNotDefinedIDs) && !empty($societyContactNotificationNotDefinedIDs)) {
                 foreach ($societyContactNotificationNotDefinedIDs as $societyContactNotificationNotDefinedID) {

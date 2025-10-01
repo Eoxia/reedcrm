@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
  */
 
 /**
-* \file    lib/easycrm_function.lib.php
-* \ingroup easycrm
-* \brief   Library files with common functions for EasyCRM
+* \file    lib/reedcrm_function.lib.php
+* \ingroup reedcrm
+* \brief   Library files with common functions for ReedCRM
 */
 
 /**
@@ -105,7 +105,7 @@ function compareByPercentage(array $first, array $second): int
  * @param  string    $moreWhere More SQl filter
  * @return int|array            0 < if KO, array of records if OK
  */
-function easycrm_fetch_dictionary(string $tableName, string $moreWhere = '')
+function reedcrm_fetch_dictionary(string $tableName, string $moreWhere = '')
 {
     global $db;
 
@@ -206,7 +206,7 @@ function get_and_show_contact(string $caller, string $callee): array
 function store_call_event($user_id, $contact_id, $caller, $callee) {
     global $db;
 
-    $sql = "INSERT INTO " . MAIN_DB_PREFIX . "easycrm_call_events ";
+    $sql = "INSERT INTO " . MAIN_DB_PREFIX . "reedcrm_call_events ";
     $sql .= "(fk_user, fk_contact, caller, callee, call_date, status) ";
     $sql .= "VALUES (" . (int)$user_id . ", " . (int)$contact_id . ", ";
     $sql .= "'" . $db->escape($caller) . "', '" . $db->escape($callee) . "', ";
@@ -214,7 +214,7 @@ function store_call_event($user_id, $contact_id, $caller, $callee) {
 
     $resql = $db->query($sql);
     if ($resql) {
-        return $db->last_insert_id(MAIN_DB_PREFIX . "easycrm_call_events");
+        return $db->last_insert_id(MAIN_DB_PREFIX . "reedcrm_call_events");
     } else {
         log_to_file('Error storing call event: ' . $db->error());
         return false;
@@ -229,7 +229,7 @@ function get_pending_call_events($user_id) {
 
     $sql = "SELECT ce.rowid, ce.fk_contact, ce.caller, ce.callee, ce.call_date, ";
     $sql .= "c.lastname, c.firstname, c.phone, c.phone_mobile, c.email ";
-    $sql .= "FROM " . MAIN_DB_PREFIX . "easycrm_call_events ce ";
+    $sql .= "FROM " . MAIN_DB_PREFIX . "reedcrm_call_events ce ";
     $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON ce.fk_contact = c.rowid ";
     $sql .= "WHERE ce.fk_user = " . (int)$user_id . " ";
     $sql .= "AND ce.status = 'new' ";
@@ -254,7 +254,7 @@ function get_pending_call_events($user_id) {
 function mark_call_event_processed($event_id) {
     global $db;
 
-    $sql = "UPDATE " . MAIN_DB_PREFIX . "easycrm_call_events ";
+    $sql = "UPDATE " . MAIN_DB_PREFIX . "reedcrm_call_events ";
     $sql .= "SET status = 'processed' ";
     $sql .= "WHERE rowid = " . (int)$event_id;
 

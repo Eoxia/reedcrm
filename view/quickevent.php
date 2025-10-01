@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,17 @@
 
 /**
  *  \file       view/quickevent.php
- *  \ingroup    easycrm
+ *  \ingroup    reedcrm
  *  \brief      Page to quick event
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 // Libraries
@@ -113,7 +113,7 @@ if (isModEnabled('agenda')) {
 $hookmanager->initHooks(['quickeventcreation']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissiontoread     = $user->rights->easycrm->read;
+$permissiontoread     = $user->rights->reedcrm->read;
 $permissiontoaddevent = $user->rights->agenda->myactions->create;
 saturne_check_access($permissiontoread);
 
@@ -194,7 +194,7 @@ if (empty($reshook)) {
 
                             $task->fk_project = $project->id;
                             $task->ref        = $defaultref;
-                            $task->label      = (!empty($conf->global->EASYCRM_TASK_LABEL_VALUE) ? $conf->global->EASYCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
+                            $task->label      = (!empty($conf->global->REEDCRM_TASK_LABEL_VALUE) ? $conf->global->REEDCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
                             $task->date_c     = dol_now();
 
                             $commTaskID = $task->create($user);
@@ -272,7 +272,7 @@ if (empty($reshook)) {
  */
 
 $title    = $langs->trans('QuickEvent');
-$help_url = 'FR:Module_EasyCRM';
+$help_url = 'FR:Module_ReedCRM';
 
 saturne_header(0, '', $title, $help_url);
 
@@ -296,7 +296,7 @@ print dol_get_fiche_head();
 print '<div class="notice">';
 print '<div class="wpeo-notice notice-warning quickevent-label-warning-notice hidden">';
 print '<div class="notice-content">';
-print '<div class="notice-title">' . $langs->trans('WarningTaskLabelCustom', getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE')) . '</div>';
+print '<div class="notice-title">' . $langs->trans('WarningTaskLabelCustom', getDolGlobalInt('REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE')) . '</div>';
 print '</div>';
 print '<div class="notice-close"><i class="fas fa-times"></i></div>';
 print '</div></div>';
@@ -304,21 +304,21 @@ print '</div></div>';
 print '<table class="border centpercent tableforfieldcreate">';
 
 // Type of event
-if ($conf->global->EASYCRM_EVENT_TYPE_CODE_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_TYPE_CODE_VISIBLE > 0) {
     print '<tr><td class="titlefieldcreate fieldrequired"><label for="actioncode">' . $langs->trans('Type') . '</label></td>';
-    print '<td>' . $formactions->select_type_actions(GETPOSTISSET('actioncode') ? GETPOST('actioncode', 'aZ09') : $conf->global->EASYCRM_EVENT_TYPE_CODE_VALUE, 'actioncode', 'systemauto', 0, -1, 0, 1) . '</td>';
+    print '<td>' . $formactions->select_type_actions(GETPOSTISSET('actioncode') ? GETPOST('actioncode', 'aZ09') : $conf->global->REEDCRM_EVENT_TYPE_CODE_VALUE, 'actioncode', 'systemauto', 0, -1, 0, 1) . '</td>';
     print '</tr>';
 }
 
 // Label
-if ($conf->global->EASYCRM_EVENT_LABEL_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_LABEL_VISIBLE > 0) {
     print '<tr><td><label for="label">' . $langs->trans('Label') . '</label></td>';
-    print '<td><input type="text" id="label" name="label" class="maxwidth500 widthcentpercentminusx" maxlength="' .getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" value="' . dol_escape_htmltag((GETPOSTISSET('label') ? GETPOST('label') : '')) . '"></td>';
+    print '<td><input type="text" id="label" name="label" class="maxwidth500 widthcentpercentminusx" maxlength="' .getDolGlobalInt('REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" value="' . dol_escape_htmltag((GETPOSTISSET('label') ? GETPOST('label') : '')) . '"></td>';
     print '</tr>';
 }
 
 // Date start
-if ($conf->global->EASYCRM_EVENT_DATE_START_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_DATE_START_VISIBLE > 0) {
     print '<tr><td class="titlefieldcreate fieldrequired">' . $langs->trans('DateStart') . '</td>';
     $dateStart = dol_mktime(GETPOST('datestarthour', 'int'), GETPOST('datestartmin', 'int'), GETPOST('datestartsec', 'int'), GETPOST('datestartmonth', 'int'), GETPOST('datestartday', 'int'), GETPOST('datestartyear', 'int'), 'tzuser');
     print '<td>' . $form->selectDate((!empty($dateStart) ? $dateStart : dol_now()), 'datestart', 1, 1, 1, 'action', 1, 2, 0, 'fulldaystart', '', '', '', 1, '', '', 'tzuserrel') . '</td>';
@@ -326,7 +326,7 @@ if ($conf->global->EASYCRM_EVENT_DATE_START_VISIBLE > 0) {
 }
 
 // Date end
-if ($conf->global->EASYCRM_EVENT_DATE_END_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_DATE_END_VISIBLE > 0) {
     print '<tr><td class="titlefieldcreate">' . $langs->trans('DateEnd') . '</td>';
     $dateEnd = dol_mktime(GETPOST('dateendhour', 'int'), GETPOST('dateendmin', 'int'), GETPOST('dateendsec', 'int'), GETPOST('dateendmonth', 'int'), GETPOST('dateendday', 'int'), GETPOST('dateendyear', 'int'), 'tzuser');
     print '<td>' . $form->selectDate($dateEnd, 'dateend', 1, 1, 1, 'action', 1, 0, 0, 'fulldaystart', '', '', '', 1, '', '', 'tzuserrel') . '</td>';
@@ -334,7 +334,7 @@ if ($conf->global->EASYCRM_EVENT_DATE_END_VISIBLE > 0) {
 }
 
 // Status
-if ($conf->global->EASYCRM_EVENT_STATUS_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_STATUS_VISIBLE > 0) {
     print '<tr><td class="titlefieldcreate"><label for="status">' . $langs->trans('Status') . '</label></td>';
     $listofstatus = [
         'NA' => $langs->trans('ActionNotApplicable'),
@@ -342,7 +342,7 @@ if ($conf->global->EASYCRM_EVENT_STATUS_VISIBLE > 0) {
         50   => $langs->trans('ActionRunningShort'),
         100  => $langs->trans('ActionDoneShort')
     ];
-    print '<td>' . $form->selectarray('status', $listofstatus, (GETPOSTISSET('status') ? GETPOST('status') : $conf->global->EASYCRM_EVENT_STATUS_VALUE), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx') . '</td>';
+    print '<td>' . $form->selectarray('status', $listofstatus, (GETPOSTISSET('status') ? GETPOST('status') : $conf->global->REEDCRM_EVENT_STATUS_VALUE), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx') . '</td>';
     print '</tr>';
 }
 
@@ -363,7 +363,7 @@ if (isModEnabled('project') && $fromtype == 'project') {
 
     if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) {
         // Opportunity status
-        if ($conf->global->EASYCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE > 0) {
+        if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE > 0) {
             print '<tr><td>' . $langs->trans('OpportunityStatus') . '</td>';
             print '<td>' . $formproject->selectOpportunityStatus('opp_status', $project->opp_status, 0, 0, 0, '', 0, 1) . '</td>';
             print '</tr>';
@@ -371,15 +371,15 @@ if (isModEnabled('project') && $fromtype == 'project') {
     }
 
     // TimeSpent
-    if ($conf->global->EASYCRM_TASK_TIMESPENT_VISIBLE > 0) {
+    if ($conf->global->REEDCRM_TASK_TIMESPENT_VISIBLE > 0) {
         print '<tr><td class="titlefieldcreate"><label for="timespent">' . $langs->trans('TimeSpent') . '</label></td>';
-        print '<td><input type="number" id="timespent" name="timespent" class="maxwidth100 widthcentpercentminusx" value="' . (GETPOSTISSET('timespent') ? GETPOST('timespent') : $conf->global->EASYCRM_TASK_TIMESPENT_VALUE) . '"></td>';
+        print '<td><input type="number" id="timespent" name="timespent" class="maxwidth100 widthcentpercentminusx" value="' . (GETPOSTISSET('timespent') ? GETPOST('timespent') : $conf->global->REEDCRM_TASK_TIMESPENT_VALUE) . '"></td>';
         print '</tr>';
     }
 }
 
 // Description
-if ($conf->global->EASYCRM_EVENT_DESCRIPTION_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_DESCRIPTION_VISIBLE > 0) {
     print '<tr><td class="titlefieldcreate"><label for="description">' . $langs->trans('Description') . '</label></td><td>';
     require_once DOL_DOCUMENT_ROOT.'/core/class/doleditor.class.php';
     $doleditor = new DolEditor('note', (GETPOSTISSET('note') ? GETPOST('note', 'restricthtml') : ''), '', 120, 'dolibarr_notes', 'In', true, true, isModEnabled('fckeditor'), ROWS_4, '90%');
@@ -388,10 +388,10 @@ if ($conf->global->EASYCRM_EVENT_DESCRIPTION_VISIBLE > 0) {
 }
 
 // Categories
-if (isModEnabled('categorie') && $conf->global->EASYCRM_EVENT_CATEGORIES_VISIBLE > 0) {
+if (isModEnabled('categorie') && $conf->global->REEDCRM_EVENT_CATEGORIES_VISIBLE > 0) {
     print '<tr><td>' . $langs->trans('Categories') . '</td><td>';
     $cate_arbo = $form->select_all_categories(Categorie::TYPE_ACTIONCOMM, '', 'parent', 64, 0, 1);
-    $category->fetch($conf->global->EASYCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG);
+    $category->fetch($conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG);
     $categoriesArray = [$category->id, $category->label];
     print img_picto('', 'category', 'class="pictofixedwidth"') . $form->multiselectarray('categories', $cate_arbo, GETPOSTISSET('categories') ? GETPOST('categories', 'array') : $categoriesArray, '', 0, 'quatrevingtpercent widthcentpercentminusx');
     print '</td></tr>';

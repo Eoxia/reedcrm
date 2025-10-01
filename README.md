@@ -1,4 +1,4 @@
-# EasyCRM sur [DOLIBARR ERP CRM](https://dolibarr.org)
+# ReedCRM sur [DOLIBARR ERP CRM](https://dolibarr.org)
 
 ## Informations
 
@@ -19,9 +19,9 @@
 ## Liens
 
 - Support & Assistance : [Forum dolibarr.fr](https://dolibarr.fr) / Par mail à technique@eoxia.com
-- Demo : [Demo EasyCRM](https://demodoli.digirisk.com) - ID: demo - Password: demo
-- Documentation : [Wiki EasyCRM](https://wiki.dolibarr.org/index.php/Module_EasyCRM)
-- Projet GitHub : [Projet EasyCRM](https://github.com/Eoxia/easycrm/projects?query=is%3Aopen)
+- Demo : [Demo ReedCRM](https://demodoli.digirisk.com) - ID: demo - Password: demo
+- Documentation : [Wiki ReedCRM](https://wiki.dolibarr.org/index.php/Module_ReedCRM)
+- Projet GitHub : [Projet ReedCRM](https://github.com/Eoxia/reedcrm/projects?query=is%3Aopen)
 - Saturne Framework : [Télécharger Saturne](https://dolistore.com/fr/modules/1906-Saturne.html)
 - D'autres modules développés par Eoxia disponibles sur [DoliStore.com](https://dolistore.com)
 
@@ -39,7 +39,7 @@
 ### Méthode 1 :
 
 - Depuis le menu "Déployer/Installer un module externe" de Dolibarr :
-- Glisser l'archive ZIP 'module_easycrm-X.Y.Z' et cliquer sur "ENVOYER FICHIER"
+- Glisser l'archive ZIP 'module_reedcrm-X.Y.Z' et cliquer sur "ENVOYER FICHIER"
 - Glisser l'archive ZIP 'module_saturne-X.Y.Z' et cliquer sur "ENVOYER FICHIER"
 - Activer le module dans la liste des Modules/Applications installés
 
@@ -47,7 +47,7 @@
 
 - Dans le dossier "dolibarr/htdocs/custom" copier la ligne suivante :
 ``` 
-git clone https://github.com/Eoxia/easycrm.git
+git clone https://github.com/Eoxia/reedcrm.git
 git clone https://github.com/Evarisk/saturne.git
 ```
 - Activer le module dans la liste des Modules/Applications installés

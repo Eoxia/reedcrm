@@ -1,4 +1,4 @@
-# Copyright (C) 2023 EVARISK <technique@evarisk.com>
+# Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #
-# EasyCRM
+# ReedCRM
 #
 
-ModuleEasyCRMName      = EasyCRM
-ModuleEasyCRMDesc      = Simplification of CRM
-EasyCRMDescription     = Simplification of CRM
-EasyCRMDescriptionLong = Simplification of CRM
+ModuleReedCRMName      = ReedCRM
+ModuleReedCRMDesc      = Simplification of CRM
+ReedCRMDescription     = Simplification of CRM
+ReedCRMDescriptionLong = Simplification of CRM

@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,12 @@
  */
 
 /**
- * \file    easycrm.main.inc.php
- * \ingroup easycrm
+ * \file    reedcrm.main.inc.php
+ * \ingroup reedcrm
  * \brief   File that defines environment for Saturne common functions
  */
 
-$moduleName          = 'EasyCRM';
+$moduleName          = 'ReedCRM';
 $moduleNameLowerCase = strtolower($moduleName);
 $moduleNameUpperCase = strtoupper($moduleName);
 
