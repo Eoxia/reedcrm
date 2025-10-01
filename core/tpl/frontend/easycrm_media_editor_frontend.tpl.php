@@ -50,19 +50,19 @@ if (!$permissionToAddProject) {
             </div>
             <!-- Modal-Footer-->
             <div class="modal-footer">
-                <div class="image-rotate-left wpeo-button button-grey button-square-50">
+                <div class="image-rotate-left butAction button-square">
                     <span><i class="fas fa-undo-alt"></i></span>
                 </div>
-                <div class="image-rotate-right wpeo-button button-grey button-square-50">
+                <div class="image-rotate-right butAction button-square">
                     <span><i class="fas fa-redo-alt"></i></span>
                 </div>
-<!--                <div class="image-undo wpeo-button button-grey button-square-50">-->
+<!--                <div class="image-undo butAction button-square">-->
 <!--                    <span><i class="fas fa-undo-alt"></i></span>-->
 <!--                </div>-->
-                <div class="image-erase wpeo-button button-grey button-square-50">
+                <div class="image-erase butAction button-square">
                     <span><i class="fas fa-eraser"></i></span>
                 </div>
-                <div class="image-validate wpeo-button button-primary button-square-50" value="0">
+                <div class="image-validate butAction button-square" value="0">
                     <span><i class="fas fa-check"></i></span>
                 </div>
             </div>

@@ -147,13 +147,15 @@ require_once __DIR__ . '/easycrm_media_editor_frontend.tpl.php'; ?>
         <!-- Images -->
         <div class="grid-2">
             <input hidden multiple id="upload-image" type="file" name="userfile[]" capture="environment" accept="image/*">
-            <div class="linked-medias project" for="upload-image">
+            <div class="linked-medias project">
                 <div class="linked-medias-list">
-                    <button type="button" class="butAction button-square">
-                        <input type="hidden" class="modal-options" data-photo-class="project"/>
-                        <?php echo img_picto('', 'fontawesome_camera_fas_#ffffff'); ?>
-                        <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
-                    </button>
+                    <label for="upload-image">
+                        <div class="butAction button-square">
+                            <input type="hidden" class="modal-options" data-photo-class="project"/>
+                            <?php echo img_picto('', 'fontawesome_camera_fas_#ffffff'); ?>
+                            <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
+                        </div>
+                    </label>
                     <?php print saturne_show_medias_linked('easycrm', $conf->easycrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos', 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, 'project/tmp/0/project_photos', $project, '', 0); ?>
                 </div>
             </div>
