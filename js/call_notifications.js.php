@@ -17,7 +17,7 @@
 
 /**
  * \file    js/call_notifications.js.php
- * \ingroup easycrm
+ * \ingroup reedcrm
  * \brief   JavaScript file for call notifications management
  */
 
@@ -33,17 +33,17 @@ header('Content-Type: application/javascript');
 
 ?>
 
-/* JavaScript for EasyCRM Call Notifications */
+/* JavaScript for ReedCRM Call Notifications */
 
 jQuery(document).ready(function() {
-    console.log('EasyCRM Call Notifications initialized');
+    console.log('ReedCRM Call Notifications initialized');
 
     // Configuration
-    var call_check_frequency = <?php echo max(2, getDolGlobalInt('EASYCRM_CALL_CHECK_FREQUENCY', 5)); ?>; // secondes
+    var call_check_frequency = <?php echo max(2, getDolGlobalInt('REEDCRM_CALL_CHECK_FREQUENCY', 5)); ?>; // secondes
     var call_check_interval = null;
 
     // Démarrer la vérification des appels
-    if (typeof easycrmCallsEnabled === 'undefined' || easycrmCallsEnabled) {
+    if (typeof reedcrmCallsEnabled === 'undefined' || reedcrmCallsEnabled) {
         setTimeout(function() {
             console.log('Starting call events check with frequency: ' + call_check_frequency + 's');
             check_call_events();
@@ -56,7 +56,7 @@ jQuery(document).ready(function() {
      */
     function check_call_events() {
         jQuery.ajax({
-            url: '<?php echo dol_buildpath('/custom/easycrm/ajax/check_call_events.php', 1); ?>',
+            url: '<?php echo dol_buildpath('/custom/reedcrm/ajax/check_call_events.php', 1); ?>',
             type: 'GET',
             dataType: 'json',
             success: function(data) {
@@ -105,7 +105,7 @@ jQuery(document).ready(function() {
         });
 
         // Optionnel: ouvrir automatiquement la fiche (configurable)
-        var auto_open = <?php echo getDolGlobalInt('EASYCRM_AUTO_OPEN_CONTACT', 0) ? 'true' : 'false'; ?>;
+        var auto_open = <?php echo getDolGlobalInt('REEDCRM_AUTO_OPEN_CONTACT', 0) ? 'true' : 'false'; ?>;
         if (auto_open) {
             setTimeout(function() {
                 open_contact_card(event.id_contact, event.url);
@@ -120,7 +120,7 @@ jQuery(document).ready(function() {
 function open_contact_card(contact_id, url) {
     console.log('Opening contact card for ID:', contact_id);
 
-    var open_in_new_tab = <?php echo getDolGlobalInt('EASYCRM_OPEN_IN_NEW_TAB', 1) ? 'true' : 'false'; ?>;
+    var open_in_new_tab = <?php echo getDolGlobalInt('REEDCRM_OPEN_IN_NEW_TAB', 1) ? 'true' : 'false'; ?>;
 
     if (open_in_new_tab) {
         window.open(url, '_blank');
@@ -133,7 +133,7 @@ function open_contact_card(contact_id, url) {
  * Désactiver les notifications d'appel pour cette session
  */
 function disable_call_notifications() {
-    easycrmCallsEnabled = false;
+    reedcrmCallsEnabled = false;
     if (call_check_interval) {
         clearInterval(call_check_interval);
     }
@@ -141,4 +141,4 @@ function disable_call_notifications() {
 }
 
 // Variable globale pour contrôler les notifications
-var easycrmCallsEnabled = true;
+var reedcrmCallsEnabled = true;

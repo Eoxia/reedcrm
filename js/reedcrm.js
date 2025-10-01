@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2022-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,104 +17,104 @@
  */
 
 /**
- * \file    js/easycrm.js
- * \ingroup easycrm
- * \brief   JavaScript file for module EasyCRM.
+ * \file    js/reedcrm.js
+ * \ingroup reedcrm
+ * \brief   JavaScript file for module ReedCRM.
  */
 
 'use strict';
 
-if (!window.easycrm) {
+if (!window.reedcrm) {
   /**
-   * Init EasyCRM JS.
+   * Init ReedCRM JS.
    *
-   * @memberof EasyCRM_Init
+   * @memberof ReedCRM_Init
    *
    * @since   1.1.0
    * @version 1.1.0
    *
    * @type {Object}
    */
-  window.easycrm = {};
+  window.reedcrm = {};
 
   /**
-   * Init scriptsLoaded EasyCRM.
+   * Init scriptsLoaded ReedCRM.
    *
-   * @memberof EasyCRM_Init
+   * @memberof ReedCRM_Init
    *
    * @since   1.1.0
    * @version 1.1.0
    *
    * @type {Boolean}
    */
-  window.easycrm.scriptsLoaded = false;
+  window.reedcrm.scriptsLoaded = false;
 }
 
-if (!window.easycrm.scriptsLoaded) {
+if (!window.reedcrm.scriptsLoaded) {
   /**
-   * EasyCRM init.
+   * ReedCRM init.
    *
-   * @memberof EasyCRM_Init
+   * @memberof ReedCRM_Init
    *
    * @since   1.1.0
    * @version 1.1.0
    *
    * @returns {void}
    */
-  window.easycrm.init = function() {
-    window.easycrm.load_list_script();
+  window.reedcrm.init = function() {
+    window.reedcrm.load_list_script();
   };
 
   /**
    * Load all modules' init.
    *
-   * @memberof EasyCRM_Init
+   * @memberof ReedCRM_Init
    *
    * @since   1.1.0
    * @version 1.1.0
    *
    * @returns {void}
    */
-  window.easycrm.load_list_script = function() {
-    if (!window.easycrm.scriptsLoaded) {
+  window.reedcrm.load_list_script = function() {
+    if (!window.reedcrm.scriptsLoaded) {
       let key = undefined, slug = undefined;
-      for (key in window.easycrm) {
-        if (window.easycrm[key].init) {
-          window.easycrm[key].init();
+      for (key in window.reedcrm) {
+        if (window.reedcrm[key].init) {
+          window.reedcrm[key].init();
         }
-        for (slug in window.easycrm[key]) {
-          if (window.easycrm[key] && window.easycrm[key][slug] && window.easycrm[key][slug].init) {
-            window.easycrm[key][slug].init();
+        for (slug in window.reedcrm[key]) {
+          if (window.reedcrm[key] && window.reedcrm[key][slug] && window.reedcrm[key][slug].init) {
+            window.reedcrm[key][slug].init();
           }
         }
       }
-      window.easycrm.scriptsLoaded = true;
+      window.reedcrm.scriptsLoaded = true;
     }
   };
 
   /**
    * Refresh and reload all modules' init.
    *
-   * @memberof EasyCRM_Init
+   * @memberof ReedCRM_Init
    *
    * @since   1.1.0
    * @version 1.1.0
    *
    * @returns {void}
    */
-  window.easycrm.refresh = function() {
+  window.reedcrm.refresh = function() {
     let key = undefined;
     let slug = undefined;
-    for (key in window.easycrm) {
-      if (window.easycrm[key].refresh) {
-        window.easycrm[key].refresh();
+    for (key in window.reedcrm) {
+      if (window.reedcrm[key].refresh) {
+        window.reedcrm[key].refresh();
       }
-      for (slug in window.easycrm[key]) {
-        if (window.easycrm[key] && window.easycrm[key][slug] && window.easycrm[key][slug].refresh) {
-          window.easycrm[key][slug].refresh();
+      for (slug in window.reedcrm[key]) {
+        if (window.reedcrm[key] && window.reedcrm[key][slug] && window.reedcrm[key][slug].refresh) {
+          window.reedcrm[key][slug].refresh();
         }
       }
     }
   };
-  $(document).ready(window.easycrm.init);
+  $(document).ready(window.reedcrm.init);
 }
