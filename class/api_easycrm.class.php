@@ -131,25 +131,25 @@ class EasyCRM extends DolibarrApi
 
 			$project->add_contact($affectedUserId, 'PROJECTLEADER', 'internal');
 
-			if (!empty($config[DolibarrApiAccess::$user->id]['tag'])) {
-				$category = new Categorie($this->db);
-				$category->fetch($config[DolibarrApiAccess::$user->id]['tag']);
-				$category->add_type($project, Categorie::TYPE_PROJECT);
-			}
-
-			$task = new Task($this->db);
-
-			$task->fk_project = $projectID;
-			$task->ref        = $refTaskMod->getNextValue(null, $task);
-			$task->label      = (!empty($conf->global->EASYCRM_TASK_LABEL_VALUE) ? $conf->global->EASYCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
-			$task->date_c     = dol_now();
-
-			$taskID = $task->create(DolibarrApiAccess::$user);
-			if ($taskID > 0) {
-				$task->add_contact($affectedUserId, 'TASKEXECUTIVE', 'internal');
-				$project->array_options['commtask'] = $taskID;
-				$project->updateExtraField('commtask');
-			}
+//			if (!empty($config[DolibarrApiAccess::$user->id]['tag'])) {
+//				$category = new Categorie($this->db);
+//				$category->fetch($config[DolibarrApiAccess::$user->id]['tag']);
+//				$category->add_type($project, Categorie::TYPE_PROJECT);
+//			}
+//
+//			$task = new Task($this->db);
+//
+//			$task->fk_project = $projectID;
+//			$task->ref        = $refTaskMod->getNextValue(null, $task);
+//			$task->label      = (!empty($conf->global->EASYCRM_TASK_LABEL_VALUE) ? $conf->global->EASYCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
+//			$task->date_c     = dol_now();
+//
+//			$taskID = $task->create(DolibarrApiAccess::$user);
+//			if ($taskID > 0) {
+//				$task->add_contact($affectedUserId, 'TASKEXECUTIVE', 'internal');
+//				$project->array_options['commtask'] = $taskID;
+//				$project->updateExtraField('commtask');
+//			}
 
 			return array(
 				'project_id' => $projectID,
