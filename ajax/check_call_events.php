@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 /**
  * \file    ajax/check_call_events.php
- * \ingroup easycrm
+ * \ingroup reedcrm
  * \brief   AJAX endpoint to check for new call events
  */
 
@@ -43,10 +43,10 @@ if (file_exists(__DIR__ . '/../saturne/saturne.main.inc.php')) {
     die('Include of saturne main fails');
 }
 
-require_once __DIR__ . '/../lib/easycrm_function.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 // Load translation files required by the page
-$langs->loadLangs(array("easycrm@easycrm"));
+$langs->loadLangs(array("reedcrm@reedcrm"));
 
 /*
  * View
@@ -61,10 +61,10 @@ $eventfound = array();
 if ($user->id > 0) {
     // Get pending call events for current user
     $events = get_pending_call_events($user->id);
-    
+
     foreach ($events as $event) {
         $contact_url = dol_buildpath('/contact/card.php?id=' . $event->fk_contact, 1);
-        
+
         $eventfound[] = array(
             'type' => 'call',
             'id' => $event->rowid,
@@ -79,11 +79,11 @@ if ($user->id > 0) {
             'url' => $contact_url,
             'icon' => 'phone'
         );
-        
+
         // Mark event as processed
         mark_call_event_processed($event->rowid);
     }
 }
 
 // Output JSON response
-print json_encode($eventfound); 
+print json_encode($eventfound);

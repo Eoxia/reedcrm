@@ -8,20 +8,20 @@ const concat = require('gulp-concat');
 
 const paths = {
 	scss_core: ['css/scss/**/*.scss', 'css/'],
-	js_backend: ['js/easycrm.js', 'js/modules/*.js']
+	js_backend: ['js/reedcrm.js', 'js/modules/*.js']
 };
 
 /** Core */
  gulp.task('scss_core', function() {
  	return gulp.src(paths.scss_core[0])
  		.pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
- 		.pipe(rename('./easycrm.min.css'))
+ 		.pipe(rename('./reedcrm.min.css'))
  		.pipe(gulp.dest(paths.scss_core[1]));
  });
 
 gulp.task('js_backend', function() {
 	return gulp.src(paths.js_backend)
-		.pipe(concat('easycrm.min.js'))
+		.pipe(concat('reedcrm.min.js'))
 		.pipe(uglify())
 		.pipe(gulp.dest('./js/'))
 });

@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 /**
  * \file    class/geolocation.class.php
- * \ingroup easycrm
+ * \ingroup reedcrm
  * \brief   This file is a CRUD class file for Geolocation (Create/Read/Update/Delete)
  */
 
@@ -32,7 +32,7 @@ class Geolocation extends SaturneObject
     /**
      * @var string Module name
      */
-    public $module = 'easycrm';
+    public $module = 'reedcrm';
 
     /**
      * @var string Element type of object

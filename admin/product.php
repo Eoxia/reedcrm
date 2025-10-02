@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2024 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2024-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,23 @@
 
 /**
  * \file    admin/product.php
- * \ingroup easycrm
- * \brief   EasyCRM product config page.
+ * \ingroup reedcrm
+ * \brief   ReedCRM product config page.
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 
-require_once __DIR__ . '/../lib/easycrm.lib.php';
+require_once __DIR__ . '/../lib/reedcrm.lib.php';
 
 // Global variables definitions
 global $langs, $user;
@@ -46,7 +46,7 @@ $action     = GETPOST('action', 'alpha');
 $backtopage = GETPOST('backtopage', 'alpha');
 
 // Security check - Protection if external user
-$permissiontoread = $user->hasRight('easycrm','adminpage','read');
+$permissiontoread = $user->hasRight('reedcrm','adminpage','read');
 
 saturne_check_access($permissiontoread);
 
@@ -54,24 +54,24 @@ saturne_check_access($permissiontoread);
  * View
  */
 
-$title    = $langs->trans('ModuleSetup', 'EasyCRM');
-$help_url = 'FR:Module_EasyCRM';
+$title    = $langs->trans('ModuleSetup', 'ReedCRM');
+$help_url = 'FR:Module_ReedCRM';
 
 saturne_header(0,'', $title, $help_url);
 
 // Subheader
 $linkback = '<a href="' . ($backtopage ?: DOL_URL_ROOT . '/admin/modules.php?restore_lastsearch_values=1') . '">' . $langs->trans('BackToModuleList') . '</a>';
-print load_fiche_titre($title, $linkback, 'easycrm_color@easycrm');
+print load_fiche_titre($title, $linkback, 'reedcrm_color@reedcrm');
 
 // Configuration header
-$head = easycrm_admin_prepare_head();
-print dol_get_fiche_head($head, 'product', $title, -1, 'easycrm_color@easycrm');
+$head = reedcrm_admin_prepare_head();
+print dol_get_fiche_head($head, 'product', $title, -1, 'reedcrm_color@reedcrm');
 
-$constArray['easycrm'] = [
+$constArray['reedcrm'] = [
     'controldocument' => [
         'name'        => 'ProductKitConf',
         'description' => 'ProductKitConfDesc',
-        'code'        => 'EASYCRM_PRODUCTKIT_DESC_ADD_LINE_PROPAL'
+        'code'        => 'REEDCRM_PRODUCTKIT_DESC_ADD_LINE_PROPAL'
     ]
 ];
 

@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,17 @@
 
 /**
  * \file    admin/setup.php
- * \ingroup easycrm
- * \brief   EasyCRM setup page.
+ * \ingroup reedcrm
+ * \brief   ReedCRM setup page.
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 // Libraries
@@ -44,7 +44,7 @@ if (isModEnabled('agenda')) {
 }
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
-require_once __DIR__ . '/../lib/easycrm.lib.php';
+require_once __DIR__ . '/../lib/reedcrm.lib.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -69,7 +69,7 @@ if (isModEnabled('agenda')) {
 }
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->easycrm->adminpage->read;
+$permissiontoread = $user->rights->reedcrm->adminpage->read;
 saturne_check_access($permissiontoread);
 
 /*
@@ -87,27 +87,27 @@ if ($action == 'set_config') {
     $quickEventLabelLength    = GETPOST('quick_event_label_length');
 
     if (!empty($projectOpportunityStatus)) {
-        dolibarr_set_const($db, 'EASYCRM_PROJECT_OPPORTUNITY_STATUS_VALUE', $projectOpportunityStatus, 'integer', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_PROJECT_OPPORTUNITY_STATUS_VALUE', $projectOpportunityStatus, 'integer', 0, '', $conf->entity);
     }
     if ($projectOpportunityAmount >= 0) {
-        dolibarr_set_const($db, 'EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE', $projectOpportunityAmount, 'integer', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE', $projectOpportunityAmount, 'integer', 0, '', $conf->entity);
     }
     if (!empty($client)) {
-        dolibarr_set_const($db, 'EASYCRM_THIRDPARTY_CLIENT_VALUE', $client, 'integer', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_THIRDPARTY_CLIENT_VALUE', $client, 'integer', 0, '', $conf->entity);
     }
     if (!empty($taskLabel)) {
-        dolibarr_set_const($db, 'EASYCRM_TASK_LABEL_VALUE', $taskLabel, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_TASK_LABEL_VALUE', $taskLabel, 'chaine', 0, '', $conf->entity);
     }
     if ($timespent >= 0) {
-        dolibarr_set_const($db, 'EASYCRM_TASK_TIMESPENT_VALUE', $timespent, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_TASK_TIMESPENT_VALUE', $timespent, 'chaine', 0, '', $conf->entity);
     }
     if (!empty($typeEvent)) {
-        dolibarr_set_const($db, 'EASYCRM_EVENT_TYPE_CODE_VALUE', $typeEvent, 'chaine', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_EVENT_TYPE_CODE_VALUE', $typeEvent, 'chaine', 0, '', $conf->entity);
     }
     if (!empty($quickEventLabelLength)) {
-        dolibarr_set_const($db, 'EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE', $quickEventLabelLength, 'integer', 0, '', $conf->entity);
+        dolibarr_set_const($db, 'REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE', $quickEventLabelLength, 'integer', 0, '', $conf->entity);
     }
-    dolibarr_set_const($db, 'EASYCRM_EVENT_STATUS_VALUE', $statusEvent, 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_EVENT_STATUS_VALUE', $statusEvent, 'integer', 0, '', $conf->entity);
 
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
@@ -115,7 +115,7 @@ if ($action == 'set_config') {
 }
 
 if ($action == 'add_api_quick_affected_user') {
-    $config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
+    $config = getDolGlobalString('REEDCRM_API_QUICK_CREATIONS');
     $config = json_decode($config, true);
     if (!is_array($config)) {
         $config = [];
@@ -132,7 +132,7 @@ if ($action == 'add_api_quick_affected_user') {
     }
 
     $config[$selectedUser] = ['user_id' => $affectedUser, 'tag' => $affectedTag];
-    dolibarr_set_const($db, 'EASYCRM_API_QUICK_CREATIONS', json_encode($config), 'chaine', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_API_QUICK_CREATIONS', json_encode($config), 'chaine', 0, '', $conf->entity);
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
@@ -141,11 +141,11 @@ if ($action == 'add_api_quick_affected_user') {
 if ($action == 'delete_api_quick_affected_user') {
     $userId = GETPOSTINT('user_id');
     if ($userId) {
-        $config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
+        $config = getDolGlobalString('REEDCRM_API_QUICK_CREATIONS');
         $config = json_decode($config, true);
         if (is_array($config) && isset($config[$userId])) {
             unset($config[$userId]);
-            dolibarr_set_const($db, 'EASYCRM_API_QUICK_CREATIONS', json_encode($config), 'chaine', 0, '', $conf->entity);
+            dolibarr_set_const($db, 'REEDCRM_API_QUICK_CREATIONS', json_encode($config), 'chaine', 0, '', $conf->entity);
             setEventMessage('DeletedConfig');
         }
     }
@@ -158,18 +158,18 @@ if ($action == 'delete_api_quick_affected_user') {
  * View
  */
 
-$title    = $langs->trans('ModuleSetup', 'EasyCRM');
-$help_url = 'FR:Module_EasyCRM';
+$title    = $langs->trans('ModuleSetup', 'ReedCRM');
+$help_url = 'FR:Module_ReedCRM';
 
 saturne_header(0,'', $title, $help_url);
 
 // Subheader
 $linkback = '<a href="' . ($backtopage ?: DOL_URL_ROOT . '/admin/modules.php?restore_lastsearch_values=1') . '">' . $langs->trans('BackToModuleList') . '</a>';
-print load_fiche_titre($title, $linkback, 'easycrm_color@easycrm');
+print load_fiche_titre($title, $linkback, 'reedcrm_color@reedcrm');
 
 // Configuration header
-$head = easycrm_admin_prepare_head();
-print dol_get_fiche_head($head, 'settings', $title, -1, 'easycrm_color@easycrm');
+$head = reedcrm_admin_prepare_head();
+print dol_get_fiche_head($head, 'settings', $title, -1, 'reedcrm_color@reedcrm');
 
 print load_fiche_titre($langs->trans('Configs', $langs->trans('QuickCreations')), '', '');
 
@@ -195,11 +195,11 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('ProspectCustomer'
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_THIRDPARTY_CLIENT_VISIBLE');
+//print ajax_constantonoff('REEDCRM_THIRDPARTY_CLIENT_VISIBLE');
 print '</td>';
 
-if ($conf->global->EASYCRM_THIRDPARTY_CLIENT_VISIBLE > 0 && isModEnabled('societe')) {
-    print '<td>' . $formcompany->selectProspectCustomerType($conf->global->EASYCRM_THIRDPARTY_CLIENT_VALUE, 'client', 'customerprospect', 'form', 'minwidth200') . '</td>';
+if ($conf->global->REEDCRM_THIRDPARTY_CLIENT_VISIBLE > 0 && isModEnabled('societe')) {
+    print '<td>' . $formcompany->selectProspectCustomerType($conf->global->REEDCRM_THIRDPARTY_CLIENT_VALUE, 'client', 'customerprospect', 'form', 'minwidth200') . '</td>';
 } else {
     print '<td></td>';
 }
@@ -213,7 +213,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('ThirdPartyName'))
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_THIRDPARTY_NAME_VISIBLE');
+//print ajax_constantonoff('REEDCRM_THIRDPARTY_NAME_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Phone
@@ -224,7 +224,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Phone')
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_THIRDPARTY_PHONE_VISIBLE');
+print ajax_constantonoff('REEDCRM_THIRDPARTY_PHONE_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Email
@@ -235,7 +235,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('Email'));
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_THIRDPARTY_EMAIL_VISIBLE');
+print ajax_constantonoff('REEDCRM_THIRDPARTY_EMAIL_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Web
@@ -246,7 +246,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('Web'));
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_THIRDPARTY_WEB_VISIBLE');
+print ajax_constantonoff('REEDCRM_THIRDPARTY_WEB_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Commercial
@@ -257,7 +257,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('AllocateCommercia
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_THIRDPARTY_COMMERCIAL_VISIBLE');
+print ajax_constantonoff('REEDCRM_THIRDPARTY_COMMERCIAL_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Private note
@@ -268,7 +268,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('NotePri
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_THIRDPARTY_PRIVATE_NOTE_VISIBLE');
+print ajax_constantonoff('REEDCRM_THIRDPARTY_PRIVATE_NOTE_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // CustomersProspectsCategoriesShort
@@ -279,7 +279,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Custome
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_THIRDPARTY_CATEGORIES_VISIBLE');
+print ajax_constantonoff('REEDCRM_THIRDPARTY_CATEGORIES_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // CONTACT
@@ -293,7 +293,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('Lastname'));
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_CONTACT_LASTNAME_VISIBLE');
+//print ajax_constantonoff('REEDCRM_CONTACT_LASTNAME_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Firstname
@@ -304,7 +304,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Firstna
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_CONTACT_FIRSTNAME_VISIBLE');
+print ajax_constantonoff('REEDCRM_CONTACT_FIRSTNAME_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Job
@@ -315,7 +315,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('PostOrFunction'))
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_CONTACT_JOB_VISIBLE');
+print ajax_constantonoff('REEDCRM_CONTACT_JOB_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Phone pro
@@ -326,7 +326,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('PhonePr
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_CONTACT_PHONEPRO_VISIBLE');
+print ajax_constantonoff('REEDCRM_CONTACT_PHONEPRO_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Email
@@ -337,7 +337,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('Email'));
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_CONTACT_EMAIL_VISIBLE');
+print ajax_constantonoff('REEDCRM_CONTACT_EMAIL_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // PROJECT
@@ -351,7 +351,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Project
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_PROJECT_LABEL_VISIBLE');
+//print ajax_constantonoff('REEDCRM_PROJECT_LABEL_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // OpportunityStatus
@@ -362,12 +362,12 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Opportu
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE');
+print ajax_constantonoff('REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE');
 print '</td>';
 
-if ($conf->global->EASYCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE > 0 && isModEnabled('project')) {
+if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE > 0 && isModEnabled('project')) {
     print '<td>';
-    print $formproject->selectOpportunityStatus('project_opportunity_status', $conf->global->EASYCRM_PROJECT_OPPORTUNITY_STATUS_VALUE, 1, 0, 0, 0, 'minwidth200', 0, 1);
+    print $formproject->selectOpportunityStatus('project_opportunity_status', $conf->global->REEDCRM_PROJECT_OPPORTUNITY_STATUS_VALUE, 1, 0, 0, 0, 'minwidth200', 0, 1);
     print '</td>';
 }
 print '</td></tr>';
@@ -380,11 +380,11 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Opportu
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE');
+print ajax_constantonoff('REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE');
 print '</td>';
 
-if ($conf->global->EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) {
-    print '<td><input type="number" name="project_opportunity_amount" class="minwidth200" value="' . $conf->global->EASYCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE . '"></td>';
+if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) {
+    print '<td><input type="number" name="project_opportunity_amount" class="minwidth200" value="' . $conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE . '"></td>';
 } else {
     print '<td></td>';
 }
@@ -398,7 +398,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('DateSta
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_PROJECT_DATE_START_VISIBLE');
+print ajax_constantonoff('REEDCRM_PROJECT_DATE_START_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Description
@@ -409,7 +409,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('Description'));
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_PROJECT_DESCRIPTION_VISIBLE');
+print ajax_constantonoff('REEDCRM_PROJECT_DESCRIPTION_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Extrafields
@@ -420,7 +420,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Extrafi
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_PROJECT_CATEGORIES_VISIBLE');
+print ajax_constantonoff('REEDCRM_PROJECT_CATEGORIES_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Categories
@@ -431,7 +431,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Categor
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_PROJECT_CATEGORIES_VISIBLE');
+print ajax_constantonoff('REEDCRM_PROJECT_CATEGORIES_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // TASK
@@ -445,11 +445,11 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Label')
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_TASK_LABEL_VISIBLE');
+//print ajax_constantonoff('REEDCRM_TASK_LABEL_VISIBLE');
 print '</td>';
 
-if ($conf->global->EASYCRM_TASK_LABEL_VISIBLE > 0 && isModEnabled('project')) {
-    print '<td><input type="text" id="task_label" name="task_label" value="' . $conf->global->EASYCRM_TASK_LABEL_VALUE . '"></td>';
+if ($conf->global->REEDCRM_TASK_LABEL_VISIBLE > 0 && isModEnabled('project')) {
+    print '<td><input type="text" id="task_label" name="task_label" value="' . $conf->global->REEDCRM_TASK_LABEL_VALUE . '"></td>';
 } else {
     print '<td></td>';
 }
@@ -463,11 +463,11 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('TimeSpe
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_TASK_TIMESPENT_VISIBLE');
+print ajax_constantonoff('REEDCRM_TASK_TIMESPENT_VISIBLE');
 print '</td>';
 
-if ($conf->global->EASYCRM_TASK_TIMESPENT_VISIBLE > 0) {
-    print '<td><input type="number" id="timespent" name="timespent" value="' . $conf->global->EASYCRM_TASK_TIMESPENT_VALUE . '"></td>';
+if ($conf->global->REEDCRM_TASK_TIMESPENT_VISIBLE > 0) {
+    print '<td><input type="number" id="timespent" name="timespent" value="' . $conf->global->REEDCRM_TASK_TIMESPENT_VALUE . '"></td>';
 } else {
     print '<td></td>';
 }
@@ -484,12 +484,12 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('Type'));
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_EVENT_TYPE_CODE_VISIBLE');
+//print ajax_constantonoff('REEDCRM_EVENT_TYPE_CODE_VISIBLE');
 print '</td>';
 
-if ($conf->global->EASYCRM_EVENT_TYPE_CODE_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_TYPE_CODE_VISIBLE > 0) {
     print '<td>';
-    print $formactions->select_type_actions($conf->global->EASYCRM_EVENT_TYPE_CODE_VALUE, 'actioncode', 'systemauto', 0, -1, 0, 1);
+    print $formactions->select_type_actions($conf->global->REEDCRM_EVENT_TYPE_CODE_VALUE, 'actioncode', 'systemauto', 0, -1, 0, 1);
     print '</td>';
 }
 print '</td></tr>';
@@ -502,7 +502,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Label')
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_EVENT_LABEL_VISIBLE');
+//print ajax_constantonoff('REEDCRM_EVENT_LABEL_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // LabelLength
@@ -513,7 +513,7 @@ print $langs->trans('LabelLengthDescription');
 
 print '<td class="center"></td>';
 
-print '<td><input type="number" name="quick_event_label_length" class="minwidth200" value="' . getDolGlobalInt('EASYCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" min="1" max="128"></td>';
+print '<td><input type="number" name="quick_event_label_length" class="minwidth200" value="' . getDolGlobalInt('REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" min="1" max="128"></td>';
 
 print '</tr>';
 
@@ -525,7 +525,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('DateSta
 print '</td>';
 
 print '<td class="center">';
-//print ajax_constantonoff('EASYCRM_EVENT_DATE_START_VISIBLE');
+//print ajax_constantonoff('REEDCRM_EVENT_DATE_START_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Date end
@@ -536,7 +536,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('DateEnd'));
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_EVENT_DATE_END_VISIBLE');
+print ajax_constantonoff('REEDCRM_EVENT_DATE_END_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Status
@@ -547,17 +547,17 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Status'
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_EVENT_STATUS_VISIBLE');
+print ajax_constantonoff('REEDCRM_EVENT_STATUS_VISIBLE');
 print '</td>';
 
-if ($conf->global->EASYCRM_EVENT_STATUS_VISIBLE > 0) {
+if ($conf->global->REEDCRM_EVENT_STATUS_VISIBLE > 0) {
     $listofstatus = [
         'NA' => $langs->trans('ActionNotApplicable'),
         0    => $langs->trans('ActionsToDoShort'),
         50   => $langs->trans('ActionRunningShort'),
         100  => $langs->trans('ActionDoneShort')
     ];
-    print '<td>' . $form->selectarray('status', $listofstatus, (GETPOSTISSET('status') ? GETPOST('status') : $conf->global->EASYCRM_EVENT_STATUS_VALUE), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx') . '</td>';
+    print '<td>' . $form->selectarray('status', $listofstatus, (GETPOSTISSET('status') ? GETPOST('status') : $conf->global->REEDCRM_EVENT_STATUS_VALUE), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx') . '</td>';
 } else {
     print '<td></td>';
 }
@@ -571,7 +571,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->trans('Description'));
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_EVENT_DESCRIPTION_VISIBLE');
+print ajax_constantonoff('REEDCRM_EVENT_DESCRIPTION_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Categories
@@ -582,7 +582,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Categor
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('EASYCRM_EVENT_CATEGORIES_VISIBLE');
+print ajax_constantonoff('REEDCRM_EVENT_CATEGORIES_VISIBLE');
 print '</td></td><td></td></tr>';
 
 print '</table>';
@@ -605,7 +605,7 @@ print '</tr>';
 $tmpUser      = new User($db);
 $tmpCategorie = new Categorie($db);
 
-$config = getDolGlobalString('EASYCRM_API_QUICK_CREATIONS');
+$config = getDolGlobalString('REEDCRM_API_QUICK_CREATIONS');
 $config = json_decode($config, true);
 if (!is_array($config)) {
     $config = [];

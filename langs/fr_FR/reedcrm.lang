@@ -1,0 +1,240 @@
+# Copyright (C) 2023 EVARISK <technique@evarisk.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Générique
+#
+
+# Data - Donnée
+ModuleReedCRMName      = ReedCRM
+ModuleReedCRMDesc      = Simplification de la CRM
+ReedCRMDescription     = Simplification de la CRM
+
+#
+# Quick Creation - Ajout rapide
+#
+
+# Data - Donnée
+QuickCreation            = Ajout rapide
+QuickCreations           = ajouts rapides
+QuickThirdPartyCreation  = Ajout rapide de tiers
+QuickThirdPartyCreations = ajouts rapides de tiers
+QuickProjectCreation     = Ajout rapide d'opportunité ou de projet
+QuickProjectCreations    = ajouts rapides d'opportunité ou de projet
+QuickContactCreation     = Ajout rapide de contact/adresse
+QuickContactCreations    = ajouts rapides de contact/adresse
+QuickTaskCreations       = ajouts rapides de tâche
+CommercialFollowUp       = SC
+CommercialTask           = Tâche commerciale
+ProjectPhone             = Téléphone projet
+
+# Frontend - Frontend
+QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
+
+
+
+#
+# Quick Event - Ajout rapide d'événement
+#
+
+# Data - Donnée
+QuickEventCreation                      = Ajout rapide d'événement
+QuickEventCreations                     = ajouts rapides d'événements
+CommercialRelaunching                   = Relance commerciale
+CommercialsRelaunching                  = Relances commerciales
+LastCommercialReminderDate              = Date dernière relance commerciale
+ActionCommCreation                      = Événement créé
+ReminderActionCommCreation              = Rappel crée le %s
+ErrorNoProjectAndThirdpartyInformations = Veuillez renseigner un nom de projet et un nom de tiers
+LastEvent                               = Dernier événement
+
+#
+# Config page - Page d'administration
+#
+
+# Data - Donnée
+OpportunityStatusDescription = Selection du statut d'opportunité <br> Valeur par défaut : <b> Prospection </b>
+OpportunityAmountDescription = Selection du montant d'opportunité <br> Valeur par défaut : <b> 3000 € </b>
+ProspectCustomerDescription  = Selection de la nature des tiers <br> Valeur par défaut : <b> Prospect </b>
+
+# PWA - Progressive Web App
+PWACloseProjectOpportunityZero            = Clôturer le projet
+PWACloseProjectOpportunityZeroDescription = Clôturer le projet quand l'opportunité est à 0
+
+# Product Kit - Produit Kit
+ProductKitConf     = Compléter la description d'une ligne de devis avec la composition du kit
+ProductKitConfDesc = Indépendemment du paramètre du module produit sur la complétion de la description. <br> A l'ajout d'un produit/service, ayant un kit, sur une ligne de devis, la description de la ligne sera remplacée par le libellé et la description des produits composants.
+
+# ApiQuickCreation
+ApiQuickCreations   = ajouts rapides via l'api
+ApiUser             = Utilisateur API
+ProjectAffectedUser = Utilisateur affecté au projet
+ProjectAffectedTag  = Tag affecté au projet
+
+#
+# Tools - Outils
+#
+
+# Data - Donnée
+UpdateObjectContactManagement             = Gestion des mises à jour de contact facturation
+UpdateObjectContact                       = Contact facturation pour %s
+UpdateObjectContactDescription            = Mise à jour du rôle "contacts facturation" pour %d %s impayées <br> Vous trouverez ci-après la liste des tiers sans rôle "contact facturation" contrôlé le
+SocietyObjectContactNotDefinedTitle       = Liste des %d tiers sans rôle "contact facturation"
+AddContactNotificationManagement          = Gestion des ajouts de notification contact
+AddContactNotification                    = Notification contact pour %s
+AddContactNotificationDescription         = Ajout d'une notification contact "action Facture client validée" pour les tiers <br> Vous trouverez ci-après la liste des tiers sans notification contact "action Facture client validée" contrôlé le
+SocietyContactNotificationNotDefinedTitle = Liste des %d tiers sans notification contact "action Facture client validée"
+
+# SetEventMessage - Notice info
+ObjectContactUpdated                 = Contact ajouté sur %s %s
+SocietyObjectContactNotDefined       = Aucun contact défini sur le tiers :
+AllObjectHaveContact                 = Les %s ont des contacts facturation
+ContactNotificationAdded             = Notification ajouté sur :
+SocietyContactNotificationNotDefined = Aucune notification contact défini sur le tiers :
+AllContactHaveNotification           = Tous les tiers ont des notifications contacts
+
+
+
+#
+# Address - Adresse
+#
+
+# Data - Donnée
+Addresses                    = Adresses
+AddAnAddress                 = Ajouter une adresse
+ErrorCreateAddress           = Une erreur est survenue lors de la création de l'adresse
+ErrorUpdateAddress           = Une erreur est survenue lors de la mise à jour de l'adresse
+ErrorDeleteAddress           = Une erreur est survenue lors de la suppression de l'adresse
+CouldntFindDataOnOSM         = L'adresse n'a pas été trouvée sur OpenStreetMap
+DataSuccessfullyRetrieved    = Les données de l'adresse ont été récupérées avec succès
+NoAddresses                  = Aucune adresse
+Map                          = Carte
+FavoriteAddress              = Adresse favorite
+NewAddress                   = Nouvelle adresse
+EditAddress                  = Modifier l'adresse
+AddressType                  = Type d'adresse
+Workplace                    = Lieu de travail
+PrincipalResidence           = Résidence principale
+SecondaryResidence           = Résidence secondaire
+Office                       = Bureau
+BranchOffice                 = Succursale
+WorkSite                     = Chantier
+Factory                      = Usine
+Headquarters                 = Siège social
+DisplayAllAddress            = Afficher une seule adresse par objet
+DisplayAllAddressDescription = Afficher l'adresse principale sur la carte au lieu de toutes les adresses liées à l'objet
+AddressesList                = Liste des adresses
+ProjectAddress               = Adresse du projet
+AddressStatus                = Statut adresse
+Geolocated                   = Géolocalisé
+NotFound                     = Non géolocalisé
+
+#
+# Geolocation - Géolocalisation
+#
+
+# Data - Donnée
+GeolocationError = Erreur possible lors la géolocalisation : %s
+MyPosition       = Ma position
+
+
+#
+# Other - Autre
+#
+
+# Data - Donnée
+LastProjects                           = Les %s derniers projets
+Sent                                   = Envoyé
+Reminder1                              = Relance 1
+Reminder2                              = Relance 2
+Reminder3                              = Relance 3
+Abandoned                              = Abandonné
+Unreachable                            = Injoignable
+ToCallBack                             = A rappeler
+TooHard                                = Trop compliqué
+TooCheap                               = Pas assez cher
+TooExpensive                           = Trop cher
+ToSignElsewhere                        = A signer ailleurs
+NotAProjectAnymore                     = Ce n'est plus un projet
+GoesBackOnExcel                        = Repart sur Excel
+DontWantToSay                          = Ne veulent pas le dire
+CommercialStatus                       = Statut commercial
+CommercialStatusHelp                   = Statut commercial de la proposition commerciale
+RefusalReason                          = Raison refus
+RefusalReasonHelp                      = Raison du refus de la proposition commerciale
+PropalStatusCommRepartition            = Répartition du statut des propositions commerciale ouvertes
+PropalRefusalReasonRepartition         = Répartition des raisons de refus des propositions commerciale
+NotationObjectContact                  = Contact facturation
+NotationObjectContactHelp              = Taux de remplissage des informations du contact client facturation <ul><li>Nom / Libellé - 5 <li>Prénom - 5 </li><li>Tél pro - 5 </li><li>Tél portable - 5 </li><li>EMail - 40 </li><li>Contact / adresse par défaut - 40 </li></ul>
+SetNotationObjectContact               = Mise à jour de la notation contact client facturation
+UpdateNotationObjectContactsJob        = Maj des notations contact client facturation sur les %s
+UpdateNotationObjectContactsJobComment = Mise à jour de l'attribut suplémentaire des notations contact client facturation sur les factures récurrentes pour indiquer le taux de remplissage des informations du contact client facturation
+NotationObjectContactsUpdated          = Mise à jour des notations contact client facturation sur %d %s
+NoObject                               = Aucune %s
+FactureMin                             = facture
+FactureMins                            = factures
+FactureRecMin                          = facture récurrente
+FactureRecMins                         = factures récurrentes
+ThirdPartyMins                         = tiers
+ObjectAddContactTrigger                = Contact ajouté
+UpdateObjectContactTrigger             = Mise à jour du rôle "contacts facturation" des factures
+NoContact                              = Aucun contact
+AddContactNotificationTrigger          = Ajout d'une notification contact "action Facture client validée" des tiers
+OpportunityOrigin                      = Origine de l'opportunitée
+SRC_INTE                               = Internet
+SRC_CAMP_MAIL                          = Campagne Publipostage
+SRC_CAMP_EMAIL                         = Campagne d'emailing
+SRC_CAMP_PHO                           = Campagne Téléphonique
+SRC_CAMP_FAX                           = Campagne Fax
+SRC_COMM                               = Contact commercial
+SRC_SHOP                               = Contact en boutique
+SRC_WOM                                = Bouche à oreille
+SRC_PARTNER                            = Partenaire
+SRC_EMPLOYEE                           = Employé
+SRC_SPONSORING                         = Parrainage/Sponsoring
+SRC_CUSTOMER                           = Contact entrant d'un client
+AddAssignOppStatus                     = Ajouter un statut d'opportunité
+SelectOppStatus                        = Sélectionner un statut d'opportunité
+OppStatusAssignedTo                    = Statut d'opportunité assigné à %s projet(s)
+ReloadOppPercent                       = Calculer les probabilités d'opportunité non définies
+LabelLength                            = Taille libellé
+LabelLengthDescription                 = Taille maximum du champ libellé
+WarningTaskLabelCustom                 = Attention, vous vous rapprochez du nombre de caractères maximum autorisé (%d)
+
+# Traductions pour ReedCRM - Notifications d'appel
+IncomingCall                                                         = Appel entrant
+ViewContact                                                          = Voir le contact
+CallNotifications                                                    = Notifications d'appel
+CallHistory                                                          = Historique des appels
+NewCall                                                              = Nouvel appel
+ProcessedCall                                                        = Appel traité
+CallEvent                                                            = Événement d'appel
+Caller                                                               = Appelant
+Callee                                                               = Appelé
+CallDate                                                             = Date d'appel
+CallStatus                                                           = Statut de l'appel
+AutoOpenContact                                                      = Ouverture automatique du contact
+CallNotificationsDisabled                                            = Notifications d'appel désactivées
+CallCheckFrequency                                                   = Fréquence de vérification des appels (en secondes)
+OpenInNewTab                                                         = Ouvrir dans un nouvel onglet
+KeyyoWebhookToken                                                    = Token de sécurité Keyyo
+WebhookConfiguration                                                 = Configuration du Webhook
+WebhookURL                                                           = URL du Webhook
+Method                                                               = Méthode
+Disable call notifications globally for all users                    = Désactiver les notifications d'appel globalement pour tous les utilisateurs
+How often to check for new calls (in seconds, min: 2, max: 60)       = Fréquence de vérification des nouveaux appels (en secondes, min: 2, max: 60)
+Automatically open contact card when receiving a call notification   = Ouvrir automatiquement la fiche contact lors de la réception d'une notification d'appel
+Open contact card in a new tab instead of current window             = Ouvrir la fiche contact dans un nouvel onglet au lieu de la fenêtre actuelle
+Security token for Keyyo webhook (leave empty to disable token check)= Token de sécurité pour le webhook Keyyo (laisser vide pour désactiver la vérification du token)

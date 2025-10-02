@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2021-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,63 +17,63 @@
  */
 
 /**
- * \file    js/easycrm.js
- * \ingroup easycrm
- * \brief   JavaScript address file for module EasyCRM.
+ * \file    js/reedcrm.js
+ * \ingroup reedcrm
+ * \brief   JavaScript address file for module ReedCRM.
  */
 
 /**
  * Init address JS.
  *
- * @memberof EasyCRM_Task
+ * @memberof ReedCRM_Task
  *
  * @since   1.1.0
  * @version 1.1.0
  *
  * @type {Object}
  */
-window.easycrm.address = {};
+window.reedcrm.address = {};
 
 /**
  * Task init.
  *
- * @memberof EasyCRM_Task
+ * @memberof ReedCRM_Task
  *
  * @since   1.1.0
  * @version 1.1.0
  *
  * @returns {void}
  */
-window.easycrm.address.init = function() {
-  window.easycrm.address.event();
+window.reedcrm.address.init = function() {
+  window.reedcrm.address.event();
 };
 
 /**
  * Task event.
  *
- * @memberof EasyCRM_Task
+ * @memberof ReedCRM_Task
  *
  * @since   1.1.0
  * @version 1.1.0
  *
  * @returns {void}
  */
-window.easycrm.address.event = function() {
-  $(document).on('click', '[name="favorite_address"]', window.easycrm.address.toggleAddressFavorite);
+window.reedcrm.address.event = function() {
+  $(document).on('click', '[name="favorite_address"]', window.reedcrm.address.toggleAddressFavorite);
 };
 
 
 /**
  * Toggle favorite address.
  *
- * @memberof EasyCRM_Address
+ * @memberof ReedCRM_Address
  *
  * @since   1.1.0
  * @version 1.1.0
  *
  * @return {void}
  */
-window.easycrm.address.toggleAddressFavorite = function() {
+window.reedcrm.address.toggleAddressFavorite = function() {
   let contactID = $(this).attr('value');
   let addressContainer = $(this);
   let token = window.saturne.toolbox.getToken();

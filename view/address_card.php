@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,17 @@
 
 /**
  *  \file       view/address.php
- *  \ingroup    easycrm
+ *  \ingroup    reedcrm
  *  \brief      Tab of address on generic element
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-	require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-	require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+	require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+	require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-	die('Include of easycrm main fails');
+	die('Include of reedcrm main fails');
 }
 
 // Load Dolibarr libraries
@@ -39,7 +39,7 @@ require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 // Load Saturne librairies
 require_once __DIR__ . '/../../saturne/lib/object.lib.php';
 
-// Load EasyCRM librairies
+// Load ReedCRM librairies
 require_once __DIR__ . '/../class/geolocation.class.php';
 
 // Global variables definitions
@@ -75,15 +75,15 @@ $category     = new Categorie($db);
 $form        = new Form($db);
 $formcompany = new FormCompany($db);
 
-$hookmanager->initHooks([$objectType . 'address', $objectType . 'address', 'easycrmglobal', 'globalcard']); // Note that conf->hooks_modules contains array
+$hookmanager->initHooks([$objectType . 'address', $objectType . 'address', 'reedcrmglobal', 'globalcard']); // Note that conf->hooks_modules contains array
 
 $project->fetch($fromId ?? 0, $fromId > 0 ? '' : $ref);
 $fromId = ($fromId > 0 ? $fromId : $project->id);
 
 // Security check - Protection if external user
-$permissiontoread   = $user->rights->easycrm->address->read;
-$permissiontoadd    = $user->rights->easycrm->address->write;
-$permissiontodelete = $user->rights->easycrm->address->delete;
+$permissiontoread   = $user->rights->reedcrm->address->read;
+$permissiontoadd    = $user->rights->reedcrm->address->write;
+$permissiontodelete = $user->rights->reedcrm->address->delete;
 saturne_check_access($permissiontoread);
 
 /*
@@ -118,7 +118,7 @@ if (empty($reshook)) {
             $_POST['contactid'] = $contactID;
 
             if ($contactID > 0) {
-                $category->fetch(getDolGlobalInt('EASYCRM_ADDRESS_MAIN_CATEGORY'));
+                $category->fetch(getDolGlobalInt('REEDCRM_ADDRESS_MAIN_CATEGORY'));
                 $category->add_type($contact);
                 $project->add_contact($contactID, 'PROJECTADDRESS');
                 setEventMessages($langs->trans('ObjectCreated', $langs->trans('Address')), []);
@@ -204,7 +204,7 @@ if (empty($reshook)) {
 */
 
 $title   = $langs->trans('Address') . ' - ' . $langs->trans(ucfirst($objectType));
-$helpUrl = 'FR:Module_EasyCRM';
+$helpUrl = 'FR:Module_ReedCRM';
 
 saturne_header(0,'', $title, $helpUrl);
 
@@ -293,7 +293,7 @@ if ($action == 'create' && $fromId > 0) {
     print '<div class="addresses-container">';
 
     $parameters = ['contact' => $contact];
-    $reshook    = $hookmanager->executeHooks('easycrmAddressType', $parameters, $objectLinked); // Note that $action and $objectLinked may have been modified by some hooks
+    $reshook    = $hookmanager->executeHooks('reedcrmAddressType', $parameters, $objectLinked); // Note that $action and $objectLinked may have been modified by some hooks
     if ($reshook > 0) {
         $addresses = $hookmanager->resArray;
     } else {
@@ -309,7 +309,7 @@ if ($action == 'create' && $fromId > 0) {
 
     print load_fiche_titre($langs->trans('AddressesList'), '', $contact->picto);
 
-    require __DIR__ . '/../core/tpl/easycrm_address_table_view.tpl.php';
+    require __DIR__ . '/../core/tpl/reedcrm_address_table_view.tpl.php';
 
 	print '</div>';
 
