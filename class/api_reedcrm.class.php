@@ -162,6 +162,26 @@ class ReedCRM extends DolibarrApi
 
 	}
 
+	/**
+	 * Test user rights for project creation.
+	 *
+	 * @url POST /testRights
+	 *
+	 * @return array with project ID and status
+	 *
+	 * @throws RestException 403 Not allowed if user does not have write rights on projects
+	 * @throws RestException 500 Internal Server Error if an unexpected error occurs
+	 */
+	public function testRights($request_data = null) {
+		if (!DolibarrApiAccess::$user->hasRight('projet', 'write')) {
+			throw new RestException(403);
+		}
+
+		return array(
+			'status' => 'success',
+		);
+	}
+
 	// END ALL UNIQUE OBJECT API ROUTE
 
 }
