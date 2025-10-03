@@ -46,7 +46,7 @@ require_once __DIR__ . '/reedcrm_media_editor_frontend.tpl.php'; ?>
     </div>
     <div class="col">
         <?php $backToMap = img_picto('map', 'fontawesome_map-marked-alt_fas_#ffffff');
-        print '<a class="wpeo-button nav-element" href="' . dol_buildpath('custom/reedcrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
+        print '<a class="nav-element" href="' . dol_buildpath('custom/reedcrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
     </div>
 </div>
 
