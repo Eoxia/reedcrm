@@ -47,7 +47,7 @@ require_once __DIR__ . '/../../class/geolocation.class.php';
 global $conf, $db, $hookmanager, $langs, $user;
 
 // Load translation files required by the page
-saturne_load_langs(['projects']);
+saturne_load_langs(['projects', 'users']);
 
 // Get parameters
 $action      = GETPOST('action', 'aZ09');
