@@ -107,6 +107,8 @@ $moreCSS  = ['/custom/reedcrm/css/temp.css', 'custom/reedcrm/css/temp-framework.
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 
+$conf->global->MAIN_FAVICON_URL = DOL_URL_ROOT . '/custom/reedcrm/img/reedcrm_color_512.png';
+
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa quickcreation-frontend');
 
 if (empty($permissionToAddProject)) {
