@@ -109,9 +109,6 @@ $conf->dol_hide_leftmenu = 1;
 
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa quickcreation-frontend');
 
-//Media gallery
-require_once __DIR__ . '/../../../saturne/core/tpl/medias/medias_gallery_modal.tpl.php';
-
 if (empty($permissionToAddProject)) {
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);
     exit;

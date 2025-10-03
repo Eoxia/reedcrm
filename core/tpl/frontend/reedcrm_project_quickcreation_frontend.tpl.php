@@ -33,7 +33,7 @@ if (!$permissionToAddProject) {
     exit;
 }
 
-require_once __DIR__ . '/reedcrm_media_editor_frontend.tpl.php'; ?>
+require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.tpl.php'; ?>
 
 <!-- File start-->
 <div id="id-top" class="page-header side-nav-vert">
@@ -46,7 +46,7 @@ require_once __DIR__ . '/reedcrm_media_editor_frontend.tpl.php'; ?>
     </div>
     <div class="col">
         <?php $backToMap = img_picto('map', 'fontawesome_map-marked-alt_fas_#ffffff');
-        print '<a class="wpeo-button nav-element" href="' . dol_buildpath('custom/reedcrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
+        print '<a class="nav-element" href="' . dol_buildpath('custom/reedcrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
     </div>
 </div>
 
@@ -151,7 +151,6 @@ require_once __DIR__ . '/reedcrm_media_editor_frontend.tpl.php'; ?>
                 <div class="linked-medias-list">
                     <label for="upload-image">
                         <div class="butAction button-square">
-                            <input type="hidden" class="modal-options" data-photo-class="project"/>
                             <?php echo img_picto('', 'fontawesome_camera_fas_#ffffff'); ?>
                             <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
                         </div>
