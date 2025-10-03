@@ -81,11 +81,11 @@ $manifest->short_name = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-ReedCRM'
 $manifest->name       = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-ReedCRM';
 $manifest->icons      = [];
 
-$img               = new stdClass();
-$img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color.svg', 1);
-$img->type         = 'image/svg+xml';
-$img->sizes        = '150x150';
-$manifest->icons[] = $img;
+//$img               = new stdClass();
+//$img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color2.svg', 1);
+//$img->type         = 'image/svg+xml';
+//$img->sizes        = '512x512';
+//$manifest->icons[] = $img;
 
 $img               = new stdClass();
 $img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color_192.png', 1);
