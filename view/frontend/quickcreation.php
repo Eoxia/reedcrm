@@ -101,7 +101,7 @@ if (empty($resHook)) {
 
 $title    = $langs->trans('QuickCreation');
 $help_url = 'FR:Module_ReedCRM';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/saturne/js/includes/signature-pad.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
+$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/saturne/js/includes/signature-pad.min.js', '/custom/saturne/js/includes/hammer.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
 $moreCSS  = ['/custom/reedcrm/css/temp.css', 'custom/reedcrm/css/temp-framework.css'];
 
 $conf->dol_hide_topmenu  = 1;
