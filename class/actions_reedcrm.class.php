@@ -452,16 +452,12 @@ class ActionsReedcrm
      * @param  array $parameters Hook metadata (context, etc...)
      * @return int               0 < on error, 0 on success, 1 to replace standard code
      */
-    public function addHtmlHeader(array $parameters): int
+    public function hookSetManifest(array $parameters): int
     {
         if (strpos($_SERVER['PHP_SELF'], 'reedcrm') !== false) {
-            ?>
-            <script>
-                $('link[rel="manifest"]').remove();
-            </script>
-            <?php
+            $this->resprints = DOL_URL_ROOT . '/custom/reedcrm/manifest.json.php';
 
-            $this->resprints = '<link rel="manifest" href="' . DOL_URL_ROOT . '/custom/reedcrm/manifest.json.php' . '" />';
+            return 1;
         }
 
         return 0; // or return 1 to replace standard code-->
