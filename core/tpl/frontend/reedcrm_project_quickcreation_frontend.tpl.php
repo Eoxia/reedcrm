@@ -146,7 +146,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 
         <!-- Images -->
         <div class="grid-2">
-            <input hidden multiple id="upload-image" type="file" name="userfile[]" capture="environment" accept="image/*">
+            <input hidden id="upload-image" type="file" name="userfile[]" capture="environment" accept="image/*">
             <div class="linked-medias project">
                 <div class="linked-medias-list">
                     <label for="upload-image">
