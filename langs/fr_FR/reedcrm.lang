@@ -238,3 +238,6 @@ How often to check for new calls (in seconds, min: 2, max: 60)       = Fréquenc
 Automatically open contact card when receiving a call notification   = Ouvrir automatiquement la fiche contact lors de la réception d'une notification d'appel
 Open contact card in a new tab instead of current window             = Ouvrir la fiche contact dans un nouvel onglet au lieu de la fenêtre actuelle
 Security token for Keyyo webhook (leave empty to disable token check)= Token de sécurité pour le webhook Keyyo (laisser vide pour désactiver la vérification du token)
+ProjectOpportunitiesList = Les 5 dernières opportunités de projet
+OppPercent = Pourcentage d'opportunité
+ButtonActions = Actions

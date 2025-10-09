@@ -66,6 +66,13 @@ class ReedcrmDashboard
             $array['propal']['disabledGraphs']['PropalRefusalReasonRepartition'] = $langs->transnoentities('PropalRefusalReasonRepartition');
         }
 
+        $array['project'] = ['lists' => [], 'disabledGraphs' => []];
+        if (empty($dashboardConfig->graphs->ProjectOpportunitiesList->hide)) {
+            $array['project']['lists'][] = self::getProjectOpportunitiesList();
+        } else {
+            $array['project']['disabledGraphs']['ProjectOpportunitiesList'] = $langs->transnoentities('ProjectOpportunitiesList');
+        }
+
 		return $array;
 	}
 
@@ -144,4 +151,52 @@ class ReedcrmDashboard
 		$colorArray = ['#f44336', '#e81e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722', '#795548', '#9e9e9e', '#607d8b'];
 		return $colorArray[$key % count($colorArray)];
 	}
+
+    /**
+     * Get controls list by next control
+     *
+     * @return array    $array Graph datas (label/color/type/title/data etc..)
+     * @throws Exception
+     */
+    public function getProjectOpportunitiesList(): array
+    {
+        global $langs;
+
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+
+        // Graph Title parameters
+        $array['title'] = $langs->transnoentities('ProjectOpportunitiesList');
+        $array['name']  = 'ProjectOpportunitiesList';
+        $array['picto'] = '';
+
+        // Graph parameters
+        $array['type']   = 'list';
+        $array['labels'] = ['Ref', 'Label', 'OpportunityAmount', 'OppPercent', 'Relance', 'LastName', 'FirstName', 'Phone', 'Email', 'ButtonActions'];
+
+        $arrayProjectOpportunitiesList = [];
+        $projects                      = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', 5, 0, [], 'AND', true);
+        if (!is_array($projects) || empty($projects)) {
+            $array['data'] = $arrayProjectOpportunitiesList;
+            return $array;
+        }
+
+        foreach ($projects as $project) {
+            $arrayProjectOpportunitiesList[$project->id]['Ref']['value']               = $project->getNomUrl(1);
+            $arrayProjectOpportunitiesList[$project->id]['Ref']['morecss']             = 'left';
+            $arrayProjectOpportunitiesList[$project->id]['Label']['value']             = $project->title;
+            $arrayProjectOpportunitiesList[$project->id]['OpportunityAmount']['value'] = $project->opp_amount ? price($project->opp_amount, 0, '', 11, -1, -1, 'auto') : '-';
+            $arrayProjectOpportunitiesList[$project->id]['OppPercent']['value']        = $project->opp_percent ? $project->opp_percent . ' %' : '-';
+            $arrayProjectOpportunitiesList[$project->id]['Relance']['value']           = '';
+            $arrayProjectOpportunitiesList[$project->id]['LastName']['value']          = $project->array_options['options_reedcrm_lastname'] ?? '-';
+            $arrayProjectOpportunitiesList[$project->id]['FirstName']['value']         = $project->array_options['options_reedcrm_firstname'] ?? '-';
+            $arrayProjectOpportunitiesList[$project->id]['Phone']['value']             = $project->array_options['options_projectphone'] ?? '-';
+            $arrayProjectOpportunitiesList[$project->id]['Email']['value']             = $project->array_options['options_reedcrm_email'] ?? '-';
+            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '';
+        }
+
+        $array['data'] = $arrayProjectOpportunitiesList;
+
+        return $array;
+    }
+
 }
