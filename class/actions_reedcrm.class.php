@@ -558,9 +558,8 @@ class ActionsReedcrm
 
                             // Extrafield commRelaunch
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $parameters['obj']->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/reedcrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
-                                // @todo find somewhere to add a user->conf to choose between popup dialog or open in current tab
-                                //$out .= '<a href="' . dol_buildpath('/reedcrm/view/quickevent.php', 1) . $url . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
+                                $cardProUrl = dol_buildpath('/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project', 1);
+                                $out .= '<a href="' . $cardProUrl . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
                             }
 
                             if (!empty($lastActionComm)) {

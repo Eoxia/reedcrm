@@ -263,7 +263,8 @@ class modReedCRM extends DolibarrModules
         $this->tabs   = [];
         $this->tabs[] = ['data' => 'project' . ':+address:' . $pictoReedcrm . $langs->transnoentities('Addresses') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'address\', \'read\'):/custom/reedcrm/view/address_card.php?from_id=__ID__&from_type=project'];
         $this->tabs[] = ['data' => 'project' . ':+map:' . $pictoReedcrm . $langs->transnoentities('Map') . ':reedcrm@reedcrm:$user->hasRight(\'project\', \'read\'):/custom/reedcrm/view/map.php?from_id=__ID__&from_type=project'];
-        $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__'];
+        $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
+        $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=thirdparty'];
         /* END MODULEBUILDER TABS */
 
         // Dictionaries
@@ -409,6 +410,23 @@ class modReedCRM extends DolibarrModules
         $this->rights[$r][5] = 'delete';
         $r++;
 
+        /* EVENT PRO PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects',$langs->transnoentities('EventPro'));
+        $this->rights[$r][4] = 'eventpro';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('EventPro'));
+        $this->rights[$r][4] = 'eventpro';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('EventPro'));
+        $this->rights[$r][4] = 'eventpro';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
         /* ADMINPAGE PANEL ACCESS PERMISSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
         $this->rights[$r][1] = $langs->transnoentities('ReadAdminPage', $this->name);
@@ -514,6 +532,21 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'address\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=project',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('MinimizeMenu'),
+            'prefix'   => '<i class="fas fa-chevron-circle-left pictofixedwidth saturne-toggle-menu"></i>',
+            'leftmenu' => 'minimizemenu',
+            'url'      => '',
+            'langs'    => 'projet@projet',
+            'position' => 2000 + $r,
+            'enabled'  => '$conf->projet->enabled',
+            'perms'    => '$user->rights->projet->lire',
             'target'   => '',
             'user'     => 0,
         ];
