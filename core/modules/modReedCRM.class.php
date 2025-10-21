@@ -264,7 +264,7 @@ class modReedCRM extends DolibarrModules
         $this->tabs[] = ['data' => 'project' . ':+address:' . $pictoReedcrm . $langs->transnoentities('Addresses') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'address\', \'read\'):/custom/reedcrm/view/address_card.php?from_id=__ID__&from_type=project'];
         $this->tabs[] = ['data' => 'project' . ':+map:' . $pictoReedcrm . $langs->transnoentities('Map') . ':reedcrm@reedcrm:$user->hasRight(\'project\', \'read\'):/custom/reedcrm/view/map.php?from_id=__ID__&from_type=project'];
         $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
-        $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=thirdparty'];
+        $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=societe'];
         /* END MODULEBUILDER TABS */
 
         // Dictionaries
