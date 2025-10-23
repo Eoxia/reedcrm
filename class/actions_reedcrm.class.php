@@ -292,7 +292,7 @@ class ActionsReedcrm
      */
     public function printCommonFooter(array $parameters): int
     {
-        global $conf, $db, $langs, $object, $user;
+        global $conf, $db, $form, $langs, $object, $user;
 
         if (empty($conf->global->REEDCRM_CALL_NOTIFICATIONS_DISABLED) && !empty($user->id)) {
             $url = dol_buildpath('/custom/reedcrm/js/call_notifications.js.php', 1);
@@ -342,7 +342,7 @@ class ActionsReedcrm
                     $out .= dolButtonToOpenUrlInDialogPopup('quickEventCreation' . $object->id, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', '/custom/reedcrm/view/quickevent.php' . $url, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                 }
                 if (!empty($lastActionComm)) {
-                    $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
+                    $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, $form->textwithpicto(img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, $lastActionComm->note_private), '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                 }
                 $out .= '</td></tr>';
 
