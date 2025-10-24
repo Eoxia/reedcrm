@@ -202,14 +202,9 @@ if (empty($action)) {
     saturne_banner_tab($object);
 
     print '<div class="fichecenter">';
-    print '<div class="underbanner clearboth"></div>';
 
     print '<div class="fichehalfleft">';
-    print '<div>';
-
     require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
-
-    print '</div>';
     print '</div>';
 
     if (isset($object->thirdparty)) {
