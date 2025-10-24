@@ -41,7 +41,7 @@
                 <label for="project_id">
                     <?php
                     echo img_picto('', 'project');
-                    echo $formProject->select_projects($object->socid, $object->id, 'project_id');
+                    echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id');
                     ?>
                 </label>
             </div>
