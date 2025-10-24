@@ -205,7 +205,7 @@ if (empty($action)) {
     print '<div class="underbanner clearboth"></div>';
 
     print '<div class="fichehalfleft">';
-    print '<div class="div-table-responsive-no-min">';
+    print '<div>';
 
     require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
 
