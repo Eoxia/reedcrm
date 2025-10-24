@@ -21,7 +21,7 @@
                 <label for="contactid">
                     <?php
                         echo img_picto('', 'contact');
-                        echo $form->selectcontacts($object->thirdparty->id, '', 'contactid', 0, '', '', 0, 'minwidth200 maxwidth300');
+                        echo $form->selectcontacts($object->thirdparty->id, '', 'contactid', 1, '', '', 0, 'minwidth200 maxwidth300');
                     ?>
                 </label>
                 <label for="contactid">
