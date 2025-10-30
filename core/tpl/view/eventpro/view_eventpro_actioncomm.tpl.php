@@ -9,40 +9,38 @@
     <input type="hidden" name="from_type" value="<?php echo $fromType; ?>">
     <input type="hidden" name="tab" value="<?php echo $currentTab; ?>">
 
-    <div id="id-container" class="page-content">
-        <div class="wpeo-grid">
-            <div class="grid-3">
+    <div id="id-container" class="template-pwa">
+        <div class="wpeo-grid grid-3">
+            <div>
                 <label for="socid">
-                    <?php
-                        echo img_picto('', 'company');
-                        echo $form->select_company($object->thirdparty->id, 'socid', '', 1, 0, 0, [], 0, 'maxwidth300');
-                    ?>
-                </label>
-                <label for="contactid">
-                    <?php
-                        echo img_picto('', 'contact');
-                        echo $form->selectcontacts($object->thirdparty->id, '', 'contactid', 1, '', '', 0, 'minwidth200 maxwidth300');
-                    ?>
-                </label>
-                <label for="contactid">
-                    <?php
-                        echo img_picto('', 'setting');
-                        echo $formActions->select_type_actions(GETPOSTISSET('actioncode') ? GETPOST('actioncode', 'aZ09') : getDolGlobalString('REEDCRM_EVENT_TYPE_CODE_VALUE'), 'actioncode', 'systemauto', 0, -1, 0, 1);
-                    ?>
+                    <?php echo img_picto('', 'company'); ?>
+                    <div class="select2-container"><?php echo $form->select_company($object->thirdparty->id, 'socid', '', 1, 0, 0, [], 0, ''); ?></div>
                 </label>
             </div>
-            <div class="grid-3">
-                <label>
-                    <?php
-                    echo img_picto('', 'agenda');
-                    echo $form->selectDate(dol_now('tzuser'), 'event_', 1, 1)
-                    ?>
+            <div>
+                <label for="contactid">
+                    <?php echo img_picto('', 'contact'); ?>
+                    <div class="select2-container"><?php echo $form->selectcontacts($object->thirdparty->id, '', 'contactid', 1, '', '', 0, ''); ?></div>
                 </label>
+            </div>
+            <div>
+                <label for="actioncode">
+                    <?php //echo img_picto('', 'setting'); ?>
+                    <?php echo $formActions->select_type_actions(GETPOSTISSET('actioncode') ? GETPOST('actioncode', 'aZ09') : getDolGlobalString('REEDCRM_EVENT_TYPE_CODE_VALUE'), 'actioncode', 'systemauto', 0, -1, 0, 1); ?>
+                </label>
+            </div>
+        </div>
+        <div class="wpeo-grid grid-2">
+            <div>
+                <label>
+                    <?php //echo img_picto('', 'agenda'); ?>
+                    <div class="select2-container"><?php echo $form->selectDate(dol_now('tzuser'), 'event_', 1, 1); ?></div>
+                </label>
+            </div>
+            <div>
                 <label for="project_id">
-                    <?php
-                    echo img_picto('', 'project');
-                    echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id');
-                    ?>
+                    <?php echo img_picto('', 'project'); ?>
+                    <div class="select2-container"><?php echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id'); ?></div>
                 </label>
             </div>
         </div>
