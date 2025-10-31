@@ -117,35 +117,66 @@
 .template-pwa label:focus-within {
     border-color: #000;
 }
-.template-pwa label > *:not(input, textarea) {
+.template-pwa label > *:not(input, textarea, select) {
     padding: 0.7em 0.5em;
 }
 .template-pwa label input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-.template-pwa label textarea {
+.template-pwa label textarea,
+.template-pwa label select {
     width: 100%;
     margin: 0;
-    border: 0;
+    border: 0 !important;
     padding: 0.7em 0.5em;
     background: transparent;
     outline: none;
     font-size: 1em;
 }
 .template-pwa label > * + input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
-.template-pwa label > * + textarea {
+.template-pwa label > * + textarea,
+.template-pwa label > * + select {
     padding-left: 0;
 }
 .template-pwa label input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):has(+ *),
-.template-pwa label textarea:has(+ *) {
+.template-pwa label textarea:has(+ *),
+.template-pwa label select:has(+ *) {
     padding-right: 0;
 }
 
 .template-pwa label input:focus:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"])::placeholder,
-.template-pwa label textarea:focus::placeholder {
+.template-pwa label textarea:focus::placeholder,
+.template-pwa label select:focus::placeholder {
     opacity: 0;
 }
-    /** Fix border bottom of dolibarr inputs on focus */
+ /** Fix border bottom of dolibarr inputs on focus */
 .template-pwa input:focus:not(.button):not(.buttonwebsite):not(.buttonreset):not(.select2-search__field):not(#top-bookmark-search-input):not(.search_component_input):not(.input-nobottom) {
     border-bottom: 0 !important;
+}
+/** Specific case for select2 */
+.template-pwa label .select2,
+.template-pwa label .select2-container {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+}
+.template-pwa label .select2 .select2-selection {
+    border-bottom: 0 !important;
+    height: auto !important;
+    padding: 0.7em 0.5em !important;
+}
+.template-pwa label .select2 .select2-selection__rendered {
+    line-height: 1.1;
+}
+.template-pwa label > *:has(+ .select2) {
+    padding-right: 0;
+}
+.template-pwa label > .select2 + * {
+    padding-left: 0;
+}
+.template-pwa label .select2.select2-container--focus .select2-selection {
+    border-bottom: 0 !important;
+}
+.template-pwa label .select2 .select2-selection__arrow {
+    height: 100% !important;
 }
 
 /*--------------------------------------------------------------
