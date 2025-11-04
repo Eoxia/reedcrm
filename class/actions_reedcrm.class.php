@@ -392,6 +392,34 @@ class ActionsReedcrm
                 </script>
                 <?php
             }
+
+
+            // Add "New Third Party" button to Create dropdown
+            if (!empty($object->id)) {
+
+                $langs->load('companies');
+                $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $object->id;
+                $newThirdPartyLabel = dol_escape_js($langs->trans('CreateThirdparty'));
+                $userCanCreate = $user->hasRight('societe', 'creer');
+                ?>
+                <script type="text/javascript">
+                jQuery(document).ready(function() {
+                    <?php if ($userCanCreate): ?>
+                    var createDropdown = jQuery('.dropdown-holder')
+                    if (createDropdown.length > 0) {
+                        var dropdownContent = createDropdown.find('.dropdown-content');
+                        if (dropdownContent.length > 0) {
+                            var newThirdPartyLink = '<a class="butAction" href="<?php echo dol_escape_js($newThirdPartyUrl); ?>">' +
+                                '<span class="textbutton"><?php echo $newThirdPartyLabel; ?></span>' +
+                                '</a>';
+                            dropdownContent.append(newThirdPartyLink);
+                        }
+                    }
+                    <?php endif; ?>
+                });
+                </script>
+                <?php
+            }
         }
 
         if (preg_match('/invoicelist|invoicereclist|thirdpartylist/', $parameters['context'])) {

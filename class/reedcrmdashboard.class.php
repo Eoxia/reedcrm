@@ -181,6 +181,8 @@ class ReedcrmDashboard
         }
 
         foreach ($projects as $project) {
+            $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id;
+
             $arrayProjectOpportunitiesList[$project->id]['Ref']['value']               = $project->getNomUrl(1);
             $arrayProjectOpportunitiesList[$project->id]['Ref']['morecss']             = 'left';
             $arrayProjectOpportunitiesList[$project->id]['Label']['value']             = $project->title;
@@ -191,7 +193,7 @@ class ReedcrmDashboard
             $arrayProjectOpportunitiesList[$project->id]['FirstName']['value']         = $project->array_options['options_reedcrm_firstname'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Phone']['value']             = $project->array_options['options_projectphone'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Email']['value']             = $project->array_options['options_reedcrm_email'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '';
+            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '<a class="wpeo-button" href="'. $newThirdPartyUrl .'"><i class="fas fa-plus"></i> '. $langs->trans('NewThirdparty') .'</a>';
         }
 
         $array['data'] = $arrayProjectOpportunitiesList;
