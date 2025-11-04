@@ -201,45 +201,87 @@ function get_and_show_contact(string $caller, string $callee): array
 }
 
 /**
- * Stocker l'événement d'appel en base de données
+ * Stocker l'événement d'appel en base de données via ActionComm
  */
 function store_call_event($user_id, $contact_id, $caller, $callee) {
-    global $db;
+    global $db, $user, $langs, $conf;
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 
-    $sql = "INSERT INTO " . MAIN_DB_PREFIX . "reedcrm_call_events ";
-    $sql .= "(fk_user, fk_contact, caller, callee, call_date, status) ";
-    $sql .= "VALUES (" . (int)$user_id . ", " . (int)$contact_id . ", ";
-    $sql .= "'" . $db->escape($caller) . "', '" . $db->escape($callee) . "', ";
-    $sql .= "'" . $db->idate(dol_now()) . "', 'new')";
+    $contact = new Contact($db);
+    $contact->fetch($contact_id);
 
-    $resql = $db->query($sql);
-    if ($resql) {
-        return $db->last_insert_id(MAIN_DB_PREFIX . "reedcrm_call_events");
+    $actioncomm = new ActionComm($db);
+    $actioncomm->type_code = 'AC_TEL';
+    $actioncomm->label = $langs->trans("IncomingCall") . ' - ' . $contact->getFullName($langs);
+    $actioncomm->datep = dol_now();
+    $actioncomm->datef = dol_now();
+    $actioncomm->percentage = 0;
+    $actioncomm->userownerid = $user_id;
+    $actioncomm->fk_user_action = $user_id;
+    $actioncomm->contact_id = $contact_id;
+
+    $call_data = [
+        'caller' => $caller,
+        'callee' => $callee,
+        'call_date' => dol_print_date(dol_now(), 'dayhour')
+    ];
+    $actioncomm->note_private = "Appel téléphonique entrant\n";
+    $actioncomm->note_private .= "De: " . $caller . "\n";
+    $actioncomm->note_private .= "Vers: " . $callee . "\n";
+    $actioncomm->note_private .= "Date: " . $call_data['call_date'];
+
+    $actioncomm->extraparams = json_encode($call_data);
+
+    $savedUser = null;
+    if (empty($user) || $user->id <= 0) {
+        $savedUser = $user;
+        $user = new User($db);
+        $user->fetch($user_id);
+    }
+
+    $result = $actioncomm->create($user);
+
+    if ($savedUser !== null) {
+        $user = $savedUser;
+    }
+
+    if ($result > 0) {
+        log_to_file("Created ActionComm ID: " . $actioncomm->id);
+        return $actioncomm->id;
     } else {
-        log_to_file('Error storing call event: ' . $db->error());
+        log_to_file('Error creating ActionComm: ' . $actioncomm->error);
         return false;
     }
 }
 
 /**
- * Récupérer les événements d'appel non traités pour un utilisateur
+ * Récupérer les événements d'appel non traités pour un utilisateur depuis ActionComm
  */
 function get_pending_call_events($user_id) {
     global $db;
 
-    $sql = "SELECT ce.rowid, ce.fk_contact, ce.caller, ce.callee, ce.call_date, ";
+    $sql = "SELECT a.id as rowid, a.fk_contact, a.datep as call_date, a.label, a.extraparams, a.fk_soc,";
     $sql .= "c.lastname, c.firstname, c.phone, c.phone_mobile, c.email ";
-    $sql .= "FROM " . MAIN_DB_PREFIX . "reedcrm_call_events ce ";
-    $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON ce.fk_contact = c.rowid ";
-    $sql .= "WHERE ce.fk_user = " . (int)$user_id . " ";
-    $sql .= "AND ce.status = 'new' ";
-    $sql .= "ORDER BY ce.call_date DESC";
+    $sql .= "FROM " . MAIN_DB_PREFIX . "actioncomm a ";
+    $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid ";
+    $sql .= "WHERE a.fk_user_action = " . (int)$user_id . " ";
+    $sql .= "AND a.code = 'AC_TEL' ";
+    $sql .= "AND a.percent = 0 ";
+    $sql .= "ORDER BY a.datep DESC";
 
     $resql = $db->query($sql);
     $events = [];
 
     if ($resql) {
         while ($obj = $db->fetch_object($resql)) {
+            if (!empty($obj->extraparams)) {
+                $extraparams = json_decode($obj->extraparams, true);
+                if (is_array($extraparams)) {
+                    $obj->caller = $extraparams['caller'] ?? '';
+                    $obj->callee = $extraparams['callee'] ?? '';
+                }
+            }
             $events[] = $obj;
         }
         $db->free($resql);
@@ -249,14 +291,104 @@ function get_pending_call_events($user_id) {
 }
 
 /**
- * Marquer un événement d'appel comme traité
+ * Marquer un événement d'appel comme traité dans ActionComm
  */
 function mark_call_event_processed($event_id) {
+    global $db, $user;
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+    $actioncomm = new ActionComm($db);
+    $result = $actioncomm->fetch($event_id);
+
+    if ($result > 0) {
+        $actioncomm->percentage = 100;
+
+        return $actioncomm->update($user, 1);
+    }
+
+    return false;
+}
+
+/**
+ * Compter le nombre d'appels pour un tiers (via ses contacts)
+ */
+function count_thirdparty_calls($socid) {
     global $db;
 
-    $sql = "UPDATE " . MAIN_DB_PREFIX . "reedcrm_call_events ";
-    $sql .= "SET status = 'processed' ";
-    $sql .= "WHERE rowid = " . (int)$event_id;
+    $sql = "SELECT COUNT(DISTINCT a.id) as nb";
+    $sql .= " FROM " . MAIN_DB_PREFIX . "actioncomm a";
+    $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid";
+    $sql .= " WHERE c.fk_soc = " . (int)$socid;
+    $sql .= " AND a.code = 'AC_TEL'";
 
-    return $db->query($sql);
+    $resql = $db->query($sql);
+    if ($resql) {
+        $obj = $db->fetch_object($resql);
+        return $obj->nb;
+    }
+
+    return 0;
+}
+
+/**
+ * Récupérer tous les appels pour un tiers (via ses contacts)
+ */
+function get_thirdparty_calls($socid, $sortfield = 'a.datep', $sortorder = 'DESC', $limit = 0, $offset = 0, $filters = array()) {
+    global $db;
+
+    $sql = "SELECT a.id, a.datep, a.datef, a.label, a.percent, a.fk_contact, a.fk_user_action, a.extraparams, a.note_private,";
+    $sql .= " c.lastname, c.firstname, c.phone, c.phone_mobile, c.email,";
+    $sql .= " u.lastname as user_lastname, u.firstname as user_firstname, u.login";
+    $sql .= " FROM " . MAIN_DB_PREFIX . "actioncomm a";
+    $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid";
+    $sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "user u ON a.fk_user_action = u.rowid";
+    $sql .= " WHERE c.fk_soc = " . (int)$socid;
+    $sql .= " AND a.code = 'AC_TEL'";
+
+    // Filters
+    if (!empty($filters['status'])) {
+        if ($filters['status'] == 'new') {
+            $sql .= " AND a.percent = 0";
+        } elseif ($filters['status'] == 'processed') {
+            $sql .= " AND a.percent = 100";
+        }
+    }
+
+    if (!empty($filters['contact_id'])) {
+        $sql .= " AND a.fk_contact = " . (int)$filters['contact_id'];
+    }
+
+    if (!empty($filters['user_id'])) {
+        $sql .= " AND a.fk_user_action = " . (int)$filters['user_id'];
+    }
+
+    // Sorting
+    if ($sortfield && $sortorder) {
+        $sql .= " ORDER BY " . $sortfield . " " . $sortorder;
+    }
+
+    // Limit
+    if ($limit > 0) {
+        $sql .= $db->plimit($limit, $offset);
+    }
+
+    $resql = $db->query($sql);
+    $calls = [];
+
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            // Récupérer les infos caller/callee depuis extraparams
+            if (!empty($obj->extraparams)) {
+                $extraparams = json_decode($obj->extraparams, true);
+                if (is_array($extraparams)) {
+                    $obj->caller = $extraparams['caller'] ?? '';
+                    $obj->callee = $extraparams['callee'] ?? '';
+                }
+            }
+            $calls[] = $obj;
+        }
+        $db->free($resql);
+    }
+
+    return $calls;
 }

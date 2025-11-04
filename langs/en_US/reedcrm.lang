@@ -21,3 +21,32 @@ ModuleReedCRMName      = ReedCRM
 ModuleReedCRMDesc      = Simplification of CRM
 ReedCRMDescription     = Simplification of CRM
 ReedCRMDescriptionLong = Simplification of CRM
+
+# Keyyo Calls
+IncomingCall = Incoming Call
+ViewContact = View Contact
+CallNotifications = Call Notifications
+CallHistory = Call History
+NewCall = New Call
+ProcessedCall = Processed Call
+CallEvent = Call Event
+Caller = Caller
+Callee = Callee
+CallDate = Call Date
+CallStatus = Call Status
+AutoOpenContact = Auto-open Contact
+CallNotificationsDisabled = Call Notifications Disabled
+CallCheckFrequency = Call Check Frequency (in seconds)
+OpenInNewTab = Open in New Tab
+KeyyoWebhookToken = Keyyo Webhook Token
+WebhookConfiguration = Webhook Configuration
+WebhookURL = Webhook URL
+Method = Method
+Disable call notifications globally for all users = Disable call notifications globally for all users
+How often to check for new calls (in seconds, min: 2, max: 60) = How often to check for new calls (in seconds, min: 2, max: 60)
+Automatically open contact card when receiving a call notification = Automatically open contact card when receiving a call notification
+Open contact card in a new tab instead of current window = Open contact card in a new tab instead of current window
+Security token for Keyyo webhook (leave empty to disable token check) = Security token for Keyyo webhook (leave empty to disable token check)
+
+# Keyyo Tab for Thirdparty
+KeyyoCalls = Keyyo Calls
