@@ -63,7 +63,8 @@ if ($user->id > 0) {
     $events = get_pending_call_events($user->id);
 
     foreach ($events as $event) {
-        $contact_url = dol_buildpath('/contact/card.php?id=' . $event->fk_contact, 1);
+
+        $contact_url = dol_buildpath('/reedcrm/view/procard.php?from_id=' . $event->fk_soc . '&from_type=societe', 1);
 
         $eventfound[] = array(
             'type' => 'call',

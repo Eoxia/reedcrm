@@ -220,6 +220,7 @@ function store_call_event($user_id, $contact_id, $caller, $callee) {
     $actioncomm->userownerid = $user_id;
     $actioncomm->fk_user_action = $user_id;
     $actioncomm->contact_id = $contact_id;
+    $actioncomm->socid = $contact->fk_soc;
 
     $call_data = [
         'caller' => $caller,
@@ -261,7 +262,7 @@ function store_call_event($user_id, $contact_id, $caller, $callee) {
 function get_pending_call_events($user_id) {
     global $db;
 
-    $sql = "SELECT a.id as rowid, a.fk_contact, a.datep as call_date, a.label, a.extraparams, a.fk_soc,";
+    $sql = "SELECT a.id as rowid, a.fk_contact, a.datep as call_date, a.label, a.extraparams, a.fk_soc, ";
     $sql .= "c.lastname, c.firstname, c.phone, c.phone_mobile, c.email ";
     $sql .= "FROM " . MAIN_DB_PREFIX . "actioncomm a ";
     $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid ";
