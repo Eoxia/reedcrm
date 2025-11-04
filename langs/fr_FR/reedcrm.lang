@@ -275,3 +275,6 @@ CustomerNote = Note client
 SendEmail = Envoyer un email
 EventCreated = Événement créé avec succès
 EmailFormReady = Formulaire d'email prêt
+
+# Onglet Keyyo pour tiers
+KeyyoCalls = Appels Keyyo
