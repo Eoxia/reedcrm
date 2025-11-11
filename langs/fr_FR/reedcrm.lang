@@ -280,5 +280,26 @@ SendEmail = Envoyer un email
 EventCreated = Événement créé avec succès
 EmailFormReady = Formulaire d'email prêt
 
+# Import tiers
+ImportThirdpartiesFromCSV = Importer des tiers depuis un CSV
+ImportThirdpartiesDescription = Sélectionnez un fichier CSV pour créer automatiquement des tiers.
+CSVExpectedColumns = Le fichier doit contenir les colonnes : Prenom, Nom, Email, Tel, Note.
+UploadImport = Importer
+ConfirmImportThirdpartiesTitle = Import de tiers
+ConfirmImportThirdpartiesQuestion = Saisissez le nom de la catégorie à attribuer aux tiers importés.
+CategoryName = Nom de la catégorie
+NoFileUploaded = Aucun fichier sélectionné.
+ImportFileUploadError = Erreur lors du téléchargement du fichier.
+ImportFileInvalidColumns = Les colonnes du fichier ne correspondent pas au format attendu (Prenom, Nom, Email, Tel, Note).
+ImportFileNotFound = Fichier d'import introuvable.
+ImportFileNotReadable = Impossible de lire le fichier d'import.
+ImportParametersMissing = Paramètres d'import manquants.
+CategoryCreationError = Erreur lors de la création de la catégorie.
+ThirdpartiesImported = %s tiers importés sur %s lignes.
+ThirdpartiesImportErrors = %s lignes n'ont pas pu être importées.
+UnnamedThirdparty = Tiers sans nom
+ThirdpartyImport = Import de tiers
+NbLines = Nombre de lignes
+
 # Onglet Keyyo pour tiers
 KeyyoCalls = Appels Keyyo
