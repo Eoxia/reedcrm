@@ -73,6 +73,12 @@ class ReedcrmDashboard
             $array['project']['disabledGraphs']['ProjectOpportunitiesList'] = $langs->transnoentities('ProjectOpportunitiesList');
         }
 
+        if (empty($dashboardConfig->graphs->ProductLastSellList->hide)) {
+            $array['product']['lists'][] = self::getProductLastSellList();
+        } else {
+            $array['product']['disabledGraphs']['ProductLastSellList'] = $langs->transnoentities('ProjectOpportunitiesList');
+        }
+
 		return $array;
 	}
 
@@ -199,4 +205,62 @@ class ReedcrmDashboard
         return $array;
     }
 
+    /**
+     * Get controls list by next control
+     *
+     * @return array    $array Graph datas (label/color/type/title/data etc..)
+     * @throws Exception
+     */
+    public function getProductLastSellList(): array
+    {
+        global $langs;
+
+        require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+
+        // Graph Title parameters
+        $array['title'] = $langs->transnoentities('ProductLastSellList');
+        $array['name']  = 'ProductLastSellList';
+        $array['picto'] = '';
+
+        // Graph parameters
+        $array['type']   = 'list';
+        $array['labels'] = ['Ref', 'Label', 'LastSell'];
+
+        $arrayProductLastSellList = [];
+
+        $select  = ' ,SUM(ps.reel) AS stock_reel,';
+        $select .= ' MAX(GREATEST(IFNULL(c.date_commande, ""), IFNULL(f.datef, ""))) AS last_sell';
+
+        $moreSelect = ['last_sell'];
+
+        $join  = ' LEFT JOIN ' . $this->db->prefix() . 'product_stock AS ps ON ps.fk_product = t.rowid';
+        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'commandedet AS cd ON cd.fk_product = t.rowid';
+        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'commande AS c ON c.rowid = cd.fk_commande AND c.fk_statut > 0';
+        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'facturedet AS fd ON fd.fk_product = t.rowid';
+        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'facture AS f ON f.rowid = fd.fk_facture AND f.fk_statut > 0';
+
+        $filter = ['customsql' => 'ps.reel > 0'];
+
+        $months   = getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6);
+        $groupBy  = ' GROUP BY t.rowid';
+        $groupBy .= ' HAVING last_sell < DATE_SUB(CURDATE(), INTERVAL ' . (int) $months . ' MONTH)';
+        $groupBy .= ' OR last_sell IS NULL';
+
+        $products = saturne_fetch_all_object_type('Product', 'ASC', 'last_sell', 0, 0, $filter, 'AND', false, true, false, $join, [], $select, $moreSelect, $groupBy);
+        if (!is_array($products) || empty($products)) {
+            $array['data'] = $arrayProductLastSellList;
+            return $array;
+        }
+
+        foreach ($products as $product) {
+            $arrayProductLastSellList[$product->id]['Ref']['value']      = $product->getNomUrl(1);
+            $arrayProductLastSellList[$product->id]['Ref']['morecss']    = 'left';
+            $arrayProductLastSellList[$product->id]['Label']['value']    = $product->label;
+            $arrayProductLastSellList[$product->id]['LastSell']['value'] = $product->last_sell ? dol_print_date($product->last_sell, 'day') : '-';
+        }
+
+        $array['data'] = $arrayProductLastSellList;
+
+        return $array;
+    }
 }

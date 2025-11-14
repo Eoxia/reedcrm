@@ -74,8 +74,11 @@ PWACloseProjectOpportunityZero            = Clôturer le projet
 PWACloseProjectOpportunityZeroDescription = Clôturer le projet quand l'opportunité est à 0
 
 # Product Kit - Produit Kit
-ProductKitConf     = Compléter la description d'une ligne de devis avec la composition du kit
-ProductKitConfDesc = Indépendemment du paramètre du module produit sur la complétion de la description. <br> A l'ajout d'un produit/service, ayant un kit, sur une ligne de devis, la description de la ligne sera remplacée par le libellé et la description des produits composants.
+ProductKitConf                   = Compléter la description d'une ligne de devis avec la composition du kit
+ProductKitConfDesc               = Indépendemment du paramètre du module produit sur la complétion de la description. <br> A l'ajout d'un produit/service, ayant un kit, sur une ligne de devis, la description de la ligne sera remplacée par le libellé et la description des produits composants.
+ProductInactiveMonths            = Nombre de mois d'inactivité pour qu'un produit soit considéré comme inactif
+ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni d'achat) pour qu'un produit soit considéré comme inactif dans les listes de sélection. <br> Valeur par défaut : <b> 6 </b>
+
 
 # ApiQuickCreation
 ApiQuickCreations   = ajouts rapides via l'api
@@ -212,6 +215,7 @@ ReloadOppPercent                       = Calculer les probabilités d'opportunit
 LabelLength                            = Taille libellé
 LabelLengthDescription                 = Taille maximum du champ libellé
 WarningTaskLabelCustom                 = Attention, vous vous rapprochez du nombre de caractères maximum autorisé (%d)
+ProductLastSellList                    = Dernières ventes du produit (Commande et Facture)
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall                                                         = Appel entrant

@@ -36,7 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
 
 // Global variables definitions
-global $langs, $user;
+global $conf, $db, $langs, $user;
 
 // Load translation files required by the page
 saturne_load_langs(['admin']);
@@ -49,6 +49,23 @@ $backtopage = GETPOST('backtopage', 'alpha');
 $permissiontoread = $user->hasRight('reedcrm','adminpage','read');
 
 saturne_check_access($permissiontoread);
+
+/*
+ * Actions
+ */
+
+if ($action == 'set_config') {
+    $productInactiveMonths = GETPOSTINT('product_inactive_months');
+
+    if (!empty($productInactiveMonths)) {
+        dolibarr_set_const($db, 'REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', $productInactiveMonths, 'integer', 0, '', $conf->entity);
+    }
+
+    setEventMessage('SavedConfig');
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
 
 /*
  * View
@@ -76,3 +93,26 @@ $constArray['reedcrm'] = [
 ];
 
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="set_config">';
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('Name') . '</td>';
+print '<td>' . $langs->trans('Description') . '</td>';
+print '<td>' . $langs->trans('Value') . '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('ProductInactiveMonths');
+print '</td><td>';
+print $langs->transnoentities('ProductInactiveMonthsDescription');
+print '</td>';
+print '<td><input type="number" id="product_inactive_months" name="product_inactive_months" value="' . getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6) . '"></td>';
+print '</tr>';
+
+print '</table>';
+print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print '</form>';
