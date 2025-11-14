@@ -228,25 +228,40 @@ class ReedcrmDashboard
 
         $arrayProductLastSellList = [];
 
-        $select  = ' ,SUM(ps.reel) AS stock_reel,';
-        $select .= ' MAX(GREATEST(IFNULL(c.date_commande, ""), IFNULL(f.datef, ""))) AS last_sell';
+        $select  = ', SUM(ps.reel) AS stock_reel,';
+        $select .= ' MAX(GREATEST(IFNULL(cmd.last_cmd, ""), IFNULL(fac.last_fac, ""))) AS last_sell';
 
         $moreSelect = ['last_sell'];
 
-        $join  = ' LEFT JOIN ' . $this->db->prefix() . 'product_stock AS ps ON ps.fk_product = t.rowid';
-        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'commandedet AS cd ON cd.fk_product = t.rowid';
-        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'commande AS c ON c.rowid = cd.fk_commande AND c.fk_statut > 0';
-        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'facturedet AS fd ON fd.fk_product = t.rowid';
-        $join .= ' LEFT JOIN ' . $this->db->prefix() . 'facture AS f ON f.rowid = fd.fk_facture AND f.fk_statut > 0';
+        $join  = ' LEFT JOIN ' . $this->db->prefix() . 'product_stock AS ps
+                    ON ps.fk_product = t.rowid';
 
-        $filter = ['customsql' => 'ps.reel > 0'];
+        $join .= ' LEFT JOIN (
+                        SELECT cd.fk_product, MAX(c.date_commande) AS last_cmd
+                        FROM ' . $this->db->prefix() . 'commandedet cd
+                        INNER JOIN ' . $this->db->prefix() . 'commande c
+                            ON c.rowid = cd.fk_commande
+                            AND c.fk_statut > 0
+                        GROUP BY cd.fk_product
+                    ) AS cmd ON cmd.fk_product = t.rowid';
 
-        $months   = getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6);
+        $join .= ' LEFT JOIN (
+                        SELECT fd.fk_product, MAX(f.datef) AS last_fac
+                        FROM ' . $this->db->prefix() . 'facturedet fd
+                        INNER JOIN ' . $this->db->prefix() . 'facture f
+                            ON f.rowid = fd.fk_facture
+                            AND f.fk_statut > 0
+                        GROUP BY fd.fk_product
+                    ) AS fac ON fac.fk_product = t.rowid';
+
+        $months = getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6);
+
         $groupBy  = ' GROUP BY t.rowid';
-        $groupBy .= ' HAVING last_sell < DATE_SUB(CURDATE(), INTERVAL ' . (int) $months . ' MONTH)';
-        $groupBy .= ' OR last_sell IS NULL';
+        $groupBy .= ' HAVING stock_reel > 0';
+        $groupBy .= ' AND (last_sell < DATE_SUB(CURDATE(), INTERVAL ' . (int) $months . ' MONTH)
+                        OR last_sell IS NULL)';
 
-        $products = saturne_fetch_all_object_type('Product', 'ASC', 'last_sell', 0, 0, $filter, 'AND', false, true, false, $join, [], $select, $moreSelect, $groupBy);
+        $products = saturne_fetch_all_object_type('Product', 'ASC', 'last_sell', 0, 0, [], 'AND', false, true, false, $join, [], $select, $moreSelect, $groupBy);
         if (!is_array($products) || empty($products)) {
             $array['data'] = $arrayProductLastSellList;
             return $array;
