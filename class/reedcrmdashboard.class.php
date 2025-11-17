@@ -254,6 +254,8 @@ class ReedcrmDashboard
                         GROUP BY fd.fk_product
                     ) AS fac ON fac.fk_product = t.rowid';
 
+        $filter = ['customsql' => 't.tosell = 1'];
+
         $months = getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6);
 
         $groupBy  = ' GROUP BY t.rowid';
@@ -261,7 +263,7 @@ class ReedcrmDashboard
         $groupBy .= ' AND (last_sell < DATE_SUB(CURDATE(), INTERVAL ' . (int) $months . ' MONTH)
                         OR last_sell IS NULL)';
 
-        $products = saturne_fetch_all_object_type('Product', 'ASC', 'last_sell', 0, 0, [], 'AND', false, true, false, $join, [], $select, $moreSelect, $groupBy);
+        $products = saturne_fetch_all_object_type('Product', 'ASC', 'last_sell', 0, 0, $filter, 'AND', false, true, false, $join, [], $select, $moreSelect, $groupBy);
         if (!is_array($products) || empty($products)) {
             $array['data'] = $arrayProductLastSellList;
             return $array;
