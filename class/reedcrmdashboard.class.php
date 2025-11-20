@@ -213,7 +213,7 @@ class ReedcrmDashboard
      */
     public function getProductLastSellList(): array
     {
-        global $langs;
+        global $conf, $langs;
 
         require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 
@@ -229,7 +229,7 @@ class ReedcrmDashboard
         $arrayProductLastSellList = [];
 
         $select  = ', SUM(ps.reel) AS stock_reel,';
-        $select .= ' MAX(GREATEST(IFNULL(cmd.last_cmd, ""), IFNULL(fac.last_fac, ""))) AS last_sell';
+        $select .= ' MAX(GREATEST(IFNULL(cmd.last_cmd, "1970-01-01"), IFNULL(fac.last_fac, "1970-01-01"))) AS last_sell';
 
         $moreSelect = ['last_sell', 'stock_reel'];
 
@@ -254,7 +254,7 @@ class ReedcrmDashboard
                         GROUP BY fd.fk_product
                     ) AS fac ON fac.fk_product = t.rowid';
 
-        $filter = ['customsql' => 't.tosell = 1'];
+        $filter = ['customsql' => 't.entity = ' . $conf->entity  . ' AND t.tosell = 1'];
 
         $months = getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6);
 
@@ -273,7 +273,7 @@ class ReedcrmDashboard
             $arrayProductLastSellList[$product->id]['Ref']['value']       = $product->getNomUrl(1);
             $arrayProductLastSellList[$product->id]['Ref']['morecss']     = 'left';
             $arrayProductLastSellList[$product->id]['Label']['value']     = $product->label;
-            $arrayProductLastSellList[$product->id]['LastSell']['value']  = $product->last_sell ? dol_print_date($product->last_sell, 'day') : '-';
+            $arrayProductLastSellList[$product->id]['LastSell']['value']  = $product->last_sell != '1970-01-01' ? dol_print_date($product->last_sell, 'day') : '-';
             $arrayProductLastSellList[$product->id]['StockReel']['value'] = $product->stock_reel;
         }
 
