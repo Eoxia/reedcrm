@@ -224,14 +224,14 @@ class ReedcrmDashboard
 
         // Graph parameters
         $array['type']   = 'list';
-        $array['labels'] = ['Ref', 'Label', 'LastSell'];
+        $array['labels'] = ['Ref', 'Label', 'LastSell', 'StockReel'];
 
         $arrayProductLastSellList = [];
 
         $select  = ', SUM(ps.reel) AS stock_reel,';
         $select .= ' MAX(GREATEST(IFNULL(cmd.last_cmd, ""), IFNULL(fac.last_fac, ""))) AS last_sell';
 
-        $moreSelect = ['last_sell'];
+        $moreSelect = ['last_sell', 'stock_reel'];
 
         $join  = ' LEFT JOIN ' . $this->db->prefix() . 'product_stock AS ps
                     ON ps.fk_product = t.rowid';
@@ -270,10 +270,11 @@ class ReedcrmDashboard
         }
 
         foreach ($products as $product) {
-            $arrayProductLastSellList[$product->id]['Ref']['value']      = $product->getNomUrl(1);
-            $arrayProductLastSellList[$product->id]['Ref']['morecss']    = 'left';
-            $arrayProductLastSellList[$product->id]['Label']['value']    = $product->label;
-            $arrayProductLastSellList[$product->id]['LastSell']['value'] = $product->last_sell ? dol_print_date($product->last_sell, 'day') : '-';
+            $arrayProductLastSellList[$product->id]['Ref']['value']       = $product->getNomUrl(1);
+            $arrayProductLastSellList[$product->id]['Ref']['morecss']     = 'left';
+            $arrayProductLastSellList[$product->id]['Label']['value']     = $product->label;
+            $arrayProductLastSellList[$product->id]['LastSell']['value']  = $product->last_sell ? dol_print_date($product->last_sell, 'day') : '-';
+            $arrayProductLastSellList[$product->id]['StockReel']['value'] = $product->stock_reel;
         }
 
         $array['data'] = $arrayProductLastSellList;
