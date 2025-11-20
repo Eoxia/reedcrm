@@ -234,7 +234,10 @@ class ReedcrmDashboard
         $moreSelect = ['last_sell', 'stock_reel'];
 
         $join  = ' LEFT JOIN ' . $this->db->prefix() . 'product_stock AS ps
-                    ON ps.fk_product = t.rowid AND ps.entity = ' . $conf->entity;
+                    ON ps.fk_product = t.rowid';
+
+        $join  .= ' LEFT JOIN ' . $this->db->prefix() . 'entrepot AS e
+                    ON ps.fk_entrepot = e.rowid AND e.entity = ' . $conf->entity;
 
         $join .= ' LEFT JOIN (
                         SELECT cd.fk_product, MAX(c.date_commande) AS last_cmd
