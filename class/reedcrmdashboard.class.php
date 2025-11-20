@@ -259,7 +259,7 @@ class ReedcrmDashboard
                         GROUP BY fd.fk_product
                     ) AS fac ON fac.fk_product = t.rowid';
 
-        $filter = ['customsql' => 't.entity = ' . $conf->entity  . ' AND t.tosell = 1'];
+        $filter = ['customsql' => 't.tosell = 1'];
 
         $months = getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6);
 
