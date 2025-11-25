@@ -16,66 +16,68 @@
  * Library javascript to enable Browser notifications
  */
 
+"use strict";
+
 /**
  * \file    js/quickevent.js
- * \ingroup easycrm
- * \brief   JavaScript quickevent file for module EasyCRM
+ * \ingroup reedcrm
+ * \brief   JavaScript quickevent file for module ReedCRM
  */
 
 /**
  * Init quickevent JS
  *
- * @memberof EasyCRM_QuickEvent
+ * @memberof ReedCRM_QuickEvent
  *
  * @since   1.5.0
  * @version 1.5.0
  *
  * @type {Object}
  */
-window.easycrm.quickevent = {};
+window.reedcrm.quickevent = {};
 
 /**
  * QuickEvent init
  *
- * @memberof EasyCRM_QuickEvent
+ * @memberof ReedCRM_QuickEvent
  *
  * @since   1.5.0
  * @version 1.5.0
  *
  * @returns {void}
  */
-window.easycrm.quickevent.init = function() {
-  window.easycrm.quickevent.event();
+window.reedcrm.quickevent.init = function() {
+  window.reedcrm.quickevent.event();
 };
 
 /**
  * QuickEvent event
  *
- * @memberof EasyCRM_QuickEvent
+ * @memberof ReedCRM_QuickEvent
  *
  * @since   1.5.0
  * @version 1.5.0
  *
  * @returns {void}
  */
-window.easycrm.quickevent.event = function() {
-  $(document).on('keyup', '#label', window.easycrm.quickevent.labelKeyUp);
+window.reedcrm.quickevent.event = function() {
+  $(document).on('keyup', '#label', window.reedcrm.quickevent.labelKeyUp);
 };
 
 /**
  * QuickEvent labelkeyup
  *
- * @memberof EasyCRM_QuickEvent
+ * @memberof ReedCRM_QuickEvent
  *
  * @since   1.5.0
  * @version 1.5.0
  *
  * @returns {void}
  */
-window.easycrm.quickevent.labelKeyUp = function() {
+window.reedcrm.quickevent.labelKeyUp = function() {
   if ($("#label").val().length >= (parseInt($("#label").attr("maxlength")) * 0.7)) {
     $(".quickevent-label-warning-notice").removeClass("hidden");
   } else {
     $(".quickevent-label-warning-notice").addClass("hidden");
   }
-}
+};

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2021-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,212 +18,83 @@
 
 /**
  * \file    js/quickcreation.js
- * \ingroup easycrm
- * \brief   JavaScript quickcreation file for module EasyCRM
+ * \ingroup reedcrm
+ * \brief   JavaScript quickcreation file for module ReedCRM
  */
+
+'use strict';
 
 /**
  * Init quickcreation JS
- *
- * @memberof EasyCRM_QuickCreation
  *
  * @since   1.3.0
  * @version 1.3.0
  *
  * @type {Object}
  */
-window.easycrm.quickcreation = {};
-
-/**
- * Init rotation value of img on canvas
- *
- * @memberof EasyCRM_QuickCreation
- *
- * @since   1.3.0
- * @version 1.3.0
- */
-window.easycrm.quickcreation.rotation = 0;
-
-/**
- * Init img in canvas
- *
- * @memberof EasyCRM_QuickCreation
- *
- * @since   1.3.0
- * @version 1.3.0
- */
-window.easycrm.quickcreation.img;
+window.reedcrm.quickcreation = {};
 
 /**
  * Init latitude GPS
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
- * @version 1.3.0
+ * @version 22.0.0
  */
-window.easycrm.quickcreation.latitude;
+window.reedcrm.quickcreation.latitude = null;
 
 /**
  * Init longitude GPS
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
- * @version 1.3.0
+ * @version 22.0.0
  */
-window.easycrm.quickcreation.longitude;
+window.reedcrm.quickcreation.longitude = null;
 
 /**
  * QuickCreation init
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
- * @version 1.3.0
+ * @version 22.0.0
  *
  * @returns {void}
  */
-window.easycrm.quickcreation.init = function() {
-  window.easycrm.quickcreation.event();
+window.reedcrm.quickcreation.init = function() {
+  window.reedcrm.quickcreation.event();
 };
 
 /**
  * QuickCreation event
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
- * @version 1.3.0
+ * @version 22.0.0
  *
  * @returns {void}
  */
-window.easycrm.quickcreation.event = function() {
-  $(document).on('change', '#upload-image', window.easycrm.quickcreation.uploadImage);
-  $(document).on('click', '.image-rotate-left', function() { window.easycrm.quickcreation.rotateImage(-90); });
-  $(document).on('click', '.image-rotate-right', function() { window.easycrm.quickcreation.rotateImage(90); });
-  $(document).on('click', '.image-undo', window.easycrm.quickcreation.undoLastDraw);
-  $(document).on('click', '.image-erase', window.easycrm.quickcreation.clearCanvas);
-  $(document).on('click', '.image-validate', window.easycrm.quickcreation.createImg);
-  window.easycrm.quickcreation.getCurrentPosition();
-  $(document).on('submit', '.quickcreation-form', window.easycrm.quickcreation.vibratePhone);
-  $(document).on('input', '#opp_percent', window.easycrm.quickcreation.showOppPercentValue);
-};
+window.reedcrm.quickcreation.event = function() {
+  // Upload image and display on canvas with signature pad
+  // Image manipulation (uploadImage, drawOnImage, rotation, undo, erase) features from saturne/js/modules/media.js
+  $(document).on('change', '#upload-image', window.saturne.media.uploadImage);
+  $(document).on('click', '.image-validate', window.reedcrm.quickcreation.createImg);
 
-window.easycrm.quickcreation.uploadImage = function() {
-  if (this.files && this.files[0]) {
-    var reader = new FileReader();
+  // Get current GPS position of navigator user
+  window.reedcrm.quickcreation.getCurrentPosition();
 
-    reader.onload = function(event) {
-      $(document).find('.modal-upload-image').addClass('modal-active');
-      window.easycrm.quickcreation.drawImageOnCanvas(event);
-    };
+  // Vibrate phone on submit form
+  $(document).on('submit', '.quickcreation-form', window.reedcrm.quickcreation.vibratePhone);
 
-    reader.readAsDataURL(this.files[0]);
-  }
-};
-
-/**
- * Rotate image action
- *
- * @memberof EasyCRM_QuickCreation
- *
- * @since   1.3.0
- * @version 1.3.0
- *
- * @returns {void}
- */
-window.easycrm.quickcreation.rotateImage = function(degrees) {
-  window.easycrm.quickcreation.rotation += degrees;
-  $('#canvas').css('transform', 'rotate(' + window.easycrm.quickcreation.rotation + 'deg)');
-};
-
-/**
- * Undo last drawing action
- *
- * @memberof EasyCRM_QuickCreation
- *
- * @since   1.3.0
- * @version 1.3.0
- *
- * @return {void}
- */
-window.easycrm.quickcreation.undoLastDraw = function() {
-  let canvas = $(this).closest('.modal-upload-image').find('canvas');
-  var data   = canvas[0].signaturePad.toData();
-  if (data) {
-    data.pop(); // remove the last dot or line
-    canvas[0].signaturePad.fromData(data);
-    // Redraw the image on the canvas
-    window.easycrm.quickcreation.drawImageOnCanvas(window.easycrm.quickcreation.img);
-  }
-};
-
-/**
- * Clear canvas action
- *
- * @memberof EasyCRM_QuickCreation
- *
- * @since   1.3.0
- * @version 1.3.0
- *
- * @return {void}
- */
-window.easycrm.quickcreation.clearCanvas = function() {
-  let canvas = $(this).closest('.modal-upload-image').find('canvas');
-  canvas[0].signaturePad.clear();
-  window.easycrm.quickcreation.drawImageOnCanvas(window.easycrm.quickcreation.img);
-};
-
-/**
- * Draw img on canvas action
- *
- * @memberof EasyCRM_QuickCreation
- *
- * @since   1.3.0
- * @version 1.3.0
- *
- * @return {void}
- */
-window.easycrm.quickcreation.drawImageOnCanvas = function(event) {
-  window.easycrm.quickcreation.canvas = document.querySelector('#modal-upload-image0 canvas');
-
-  window.easycrm.quickcreation.canvas.signaturePad = new SignaturePad(window.easycrm.quickcreation.canvas, {
-    penColor: 'rgb(255, 0, 0)'
-  });
-
-  window.easycrm.quickcreation.canvas.signaturePad.clear();
-
-  // Draw the image on the canvas
-  var img = new Image();
-  img.src = event.target.result;
-  window.easycrm.quickcreation.img = event;
-
-  img.onload = function() {
-    // let ratio = Math.max(window.devicePixelRatio || 1, 1);
-    // window.easycrm.quickcreation.canvas.width  = window.easycrm.quickcreation.canvas.offsetWidth * ratio;
-    // window.easycrm.quickcreation.canvas.height = window.easycrm.quickcreation.canvas.offsetHeight * ratio;
-    //let context = window.easycrm.quickcreation.canvas.getContext('2d').scale(ratio, ratio);
-    let context = window.easycrm.quickcreation.canvas.getContext('2d');
-    window.easycrm.quickcreation.canvas.width  = 300;
-    window.easycrm.quickcreation.canvas.height = 400;
-    context.drawImage(img, 0, 0, window.easycrm.quickcreation.canvas.width, window.easycrm.quickcreation.canvas.height);
-  };
-
-  window.easycrm.quickcreation.rotation = 0; // Reset rotation when a new image is selected
+  // Show opp percent value on range input
+  $(document).on('input', '#opp_percent', window.reedcrm.quickcreation.showOppPercentValue);
 };
 
 /**
  * create img action
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
  * @version 1.3.0
  *
  * @return {void}
  */
-window.easycrm.quickcreation.createImg = function() {
+window.reedcrm.quickcreation.createImg = function() {
   let canvas = $(this).closest('.wpeo-modal').find('canvas')[0];
   let img    = canvas.toDataURL('image/jpeg');
 
@@ -241,7 +112,7 @@ window.easycrm.quickcreation.createImg = function() {
     }),
     success: function(resp) {
       $('.wpeo-modal').removeClass('modal-active');
-      $('.project-container .linked-medias-list').replaceWith($(resp).find('.project-container .linked-medias-list'));
+      $('#id-container .linked-medias-list').replaceWith($(resp).find('#id-container .linked-medias-list'));
     },
     error: function () {}
   });
@@ -250,14 +121,12 @@ window.easycrm.quickcreation.createImg = function() {
 /**
  * Get current GPS position of navigator user
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
  * @version 1.3.0
  *
  * @return {void}
  */
-window.easycrm.quickcreation.getCurrentPosition = function() {
+window.reedcrm.quickcreation.getCurrentPosition = function() {
   // Check if geolocation is supported by the browser
   if (navigator.geolocation) {
     // Get the current position
@@ -265,46 +134,44 @@ window.easycrm.quickcreation.getCurrentPosition = function() {
       // Success callback function
       function (position) {
         // Access the latitude and longitude from the position object
-        window.easycrm.quickcreation.latitude  = position.coords.latitude;
-        window.easycrm.quickcreation.longitude = position.coords.longitude;
-        $('.project-container #latitude').val(window.easycrm.quickcreation.latitude);
-        $('.project-container #longitude').val(window.easycrm.quickcreation.longitude);
+        window.reedcrm.quickcreation.latitude  = position.coords.latitude;
+        window.reedcrm.quickcreation.longitude = position.coords.longitude;
+        $('#id-container #latitude').val(window.reedcrm.quickcreation.latitude);
+        $('#id-container #longitude').val(window.reedcrm.quickcreation.longitude);
       },
       // Error callback function
       function (error) {
         // Handle errors
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            $('.project-container #geolocation-error').val('User denied the request for geolocation.');
+            $('#id-container #geolocation-error').val('User denied the request for geolocation.');
             break;
           case error.POSITION_UNAVAILABLE:
-            $('.project-container #geolocation-error').val('Location information is unavailable.');
+            $('#id-container #geolocation-error').val('Location information is unavailable.');
             break;
           case error.TIMEOUT:
-            $('.project-container #geolocation-error').val('The request to get user location timed out.');
+            $('#id-container #geolocation-error').val('The request to get user location timed out.');
             break;
           case error.UNKNOWN_ERROR:
-            $('.project-container #geolocation-error').val('An unknown error occurred.');
+            $('#id-container #geolocation-error').val('An unknown error occurred.');
             break;
         }
       }
     );
   } else {
-    $('.project-container #geolocation-error').val('Geolocation is not supported by this browser.');
+    $('#id-container #geolocation-error').val('Geolocation is not supported by this browser.');
   }
 };
 
 /**
  * Do vibrate phone after submit quick creation
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
  * @version 1.3.0
  *
  * @return {void}
  */
-window.easycrm.quickcreation.vibratePhone = function() {
+window.reedcrm.quickcreation.vibratePhone = function() {
   if ('vibrate' in navigator) {
     // Trigger a vibration in the form of a pattern
     // Vibrate for 1 second, pause for 0.5 seconds,
@@ -318,13 +185,11 @@ window.easycrm.quickcreation.vibratePhone = function() {
 /**
  * Show opp percent value on range input
  *
- * @memberof EasyCRM_QuickCreation
- *
  * @since   1.3.0
  * @version 1.3.0
  *
  * @return {void}
  */
-window.easycrm.quickcreation.showOppPercentValue = function() {
+window.reedcrm.quickcreation.showOppPercentValue = function() {
   $('.opp_percent-value').text($('#opp_percent').val() + ' %');
 };

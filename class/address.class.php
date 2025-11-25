@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2021-2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2021-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 /**
  * \file        class/address.class.php
- * \ingroup     easycrm
+ * \ingroup     reedcrm
  * \brief       This file is a CRUD class file for Address (Create/Read/Update/Delete)
  */
 
@@ -35,7 +35,7 @@ class Address extends SaturneObject
     /**
      * @var string Module name.
      */
-    public $module = 'easycrm';
+    public $module = 'reedcrm';
 
     /**
      * @var string Element type of object.
@@ -45,7 +45,7 @@ class Address extends SaturneObject
     /**
      * @var string Name of table without prefix where object is stored. This is also the key used for extrafields management.
      */
-    public $table_element = 'easycrm_address';
+    public $table_element = 'reedcrm_address';
 
     /**
      * @var int  Does this object support multicompany module ?

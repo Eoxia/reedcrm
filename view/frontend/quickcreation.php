@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,17 @@
 
 /**
  * \file    view/frontend/quickcreation.php
- * \ingroup easycrm
+ * \ingroup reedcrm
  * \brief   Page to quick creation on frontend view
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 // Load Dolibarr libraries
@@ -40,14 +40,14 @@ if (isModEnabled('categorie')) {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 }
 
-// load EasyCRM libraries
+// load ReedCRM libraries
 require_once __DIR__ . '/../../class/geolocation.class.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
 
 // Load translation files required by the page
-saturne_load_langs(['projects']);
+saturne_load_langs(['projects', 'users']);
 
 // Get parameters
 $action      = GETPOST('action', 'aZ09');
@@ -57,9 +57,12 @@ $subaction   = GETPOST('subaction', 'alpha');
 
 // Initialize technical objects
 $geolocation = new Geolocation($db);
+$extraFields = new ExtraFields($db);
 if (isModEnabled('project')) {
     $project = new Project($db);
     $task    = new Task($db);
+
+    $extraFields->fetch_name_optionals_label($project->table_element);
 }
 
 // Initialize view objects
@@ -68,10 +71,10 @@ if (isModEnabled('project')) {
     $formProject = new FormProjets($db);
 }
 
-$hookmanager->initHooks(['easycrm_quickcreation_frontend']); // Note that conf->hooks_modules contains array
+$hookmanager->initHooks(['reedcrm_quickcreation_frontend']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissionToRead       = $user->rights->easycrm->read;
+$permissionToRead       = $user->rights->reedcrm->read;
 $permissionToAddProject = $user->rights->projet->creer;
 saturne_check_access($permissionToRead);
 
@@ -89,7 +92,7 @@ if (empty($resHook)) {
     $error = 0;
 
     // Actions add_img, add
-    require_once __DIR__ . '/../../core/tpl/frontend/easycrm_quickcreation_actions_frontend.tpl.php';
+    require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_quickcreation_actions_frontend.tpl.php';
 }
 
 /*
@@ -97,14 +100,16 @@ if (empty($resHook)) {
  */
 
 $title    = $langs->trans('QuickCreation');
-$help_url = 'FR:Module_EasyCRM';
-$moreJS   = ['/custom/saturne/js/includes/signature-pad.min.js'];
-$moreCSS  = ['/easycrm/css/pico.min.css'];
+$help_url = 'FR:Module_ReedCRM';
+$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/saturne/js/includes/signature-pad.min.js', '/custom/saturne/js/includes/hammer.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
+$moreCSS  = ['/custom/reedcrm/css/temp.css', 'custom/reedcrm/css/temp-framework.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 
-saturne_header(0, '', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'quickcreation-frontend');
+$conf->global->MAIN_FAVICON_URL = DOL_URL_ROOT . '/custom/reedcrm/img/reedcrm_color_512.png';
+
+llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa quickcreation-frontend');
 
 if (empty($permissionToAddProject)) {
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);
@@ -118,7 +123,7 @@ if ($backtopage) {
     print '<input type="hidden" name="backtopage" value="' . $backtopage . '">';
 }
 
-require_once __DIR__ . '/../../core/tpl/frontend/easycrm_project_quickcreation_frontend.tpl.php';
+require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_project_quickcreation_frontend.tpl.php';
 
 print '</form>';
 

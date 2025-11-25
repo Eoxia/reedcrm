@@ -56,4 +56,4 @@ INSERT INTO llx_overwrite_trans (entity, lang, transkey, transvalue) VALUES (0, 
 INSERT INTO llx_overwrite_trans (entity, lang, transkey, transvalue) VALUES (0, 'fr_FR', 'ActionAC_RDV', 'Rendez-vous physique ou visioconférence');
 
 -- 1.5.0
-INSERT INTO llx_c_type_contact (element, source, code, libelle, active, module, position) VALUES('project', 'external', 'PROJECTADDRESS', 'ProjectAddress', 1, 'easycrm', 1);
+INSERT INTO llx_c_type_contact (element, source, code, libelle, active, module, position) VALUES('project', 'external', 'PROJECTADDRESS', 'ProjectAddress', 1, 'reedcrm', 1);

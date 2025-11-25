@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 /**
  * \file    manifest.json.php
- * \ingroup easycrm
+ * \ingroup reedcrm
  * \brief   File for The Web App
  */
 
@@ -77,46 +77,46 @@ global $conf, $moduleNameLowerCase, $langs;
 // Initialize technical objects
 $manifest = new stdClass();
 
-$manifest->short_name = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-EasyCRM';
-$manifest->name       = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-EasyCRM';
+$manifest->short_name = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-ReedCRM';
+$manifest->name       = getDolGlobalString('MAIN_INFO_SOCIETE_NOM') . '-ReedCRM';
 $manifest->icons      = [];
 
-$img               = new stdClass();
-$img->src          = dol_buildpath('/custom/easycrm/img/easycrm_color.svg', 1);
-$img->type         = 'image/svg+xml';
-$img->sizes        = '150x150';
-$manifest->icons[] = $img;
+//$img               = new stdClass();
+//$img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color2.svg', 1);
+//$img->type         = 'image/svg+xml';
+//$img->sizes        = '512x512';
+//$manifest->icons[] = $img;
 
 $img               = new stdClass();
-$img->src          = dol_buildpath('/custom/easycrm/img/easycrm_color_192.png', 1);
+$img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color_192.png', 1);
 $img->type         = 'image/png';
 $img->sizes        = '192x192';
 $manifest->icons[] = $img;
 
 $img               = new stdClass();
-$img->src          = dol_buildpath('/custom/easycrm/img/easycrm_color_512.png', 1);
+$img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color_512.png', 1);
 $img->type         = 'image/png';
 $img->sizes        = '512x512';
 $manifest->icons[] = $img;
 
-$manifest->id               = dol_buildpath('/custom/easycrm/view/frontend/quickcreation.php?source=pwa', 1);
-$manifest->start_url        = dol_buildpath('/custom/easycrm/view/frontend/quickcreation.php?source=pwa', 1);
+$manifest->id               = dol_buildpath('/custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 1);
+$manifest->start_url        = dol_buildpath('/custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 1);
 $manifest->background_color = '#ffffff';
 $manifest->display          = 'standalone';
 $manifest->display_override = ['window-controls-overlay'];
-$manifest->scope            = dol_buildpath('/custom/easycrm/view/frontend/', 1);
+$manifest->scope            = dol_buildpath('/custom/reedcrm/view/frontend/', 1);
 $manifest->theme_color      = '#ffffff';
-$manifest->description      = 'EasyCRMDescription';
+$manifest->description      = 'ReedCRMDescription';
 
 $img                     = new stdClass();
-$img->src                = dol_buildpath('/custom/easycrm/img/easycrm_color_512.png', 1);
+$img->src                = dol_buildpath('/custom/reedcrm/img/reedcrm_color_512.png', 1);
 $img->type               = 'image/png';
 $img->sizes              = '512x512';
 $img->form_factor        = 'narrow';
 $manifest->screenshots[] = $img;
 
 $img                     = new stdClass();
-$img->src                = dol_buildpath('/custom/easycrm/img/easycrm_color_512.png', 1);
+$img->src                = dol_buildpath('/custom/reedcrm/img/reedcrm_color_512.png', 1);
 $img->type               = 'image/png';
 $img->sizes              = '512x512';
 $img->form_factor        = 'wide';

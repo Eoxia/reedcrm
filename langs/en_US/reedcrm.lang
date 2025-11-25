@@ -1,0 +1,52 @@
+# Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# ReedCRM
+#
+
+ModuleReedCRMName      = ReedCRM
+ModuleReedCRMDesc      = Simplification of CRM
+ReedCRMDescription     = Simplification of CRM
+ReedCRMDescriptionLong = Simplification of CRM
+
+# Keyyo Calls
+IncomingCall = Incoming Call
+ViewContact = View Contact
+CallNotifications = Call Notifications
+CallHistory = Call History
+NewCall = New Call
+ProcessedCall = Processed Call
+CallEvent = Call Event
+Caller = Caller
+Callee = Callee
+CallDate = Call Date
+CallStatus = Call Status
+AutoOpenContact = Auto-open Contact
+CallNotificationsDisabled = Call Notifications Disabled
+CallCheckFrequency = Call Check Frequency (in seconds)
+OpenInNewTab = Open in New Tab
+KeyyoWebhookToken = Keyyo Webhook Token
+WebhookConfiguration = Webhook Configuration
+WebhookURL = Webhook URL
+Method = Method
+Disable call notifications globally for all users = Disable call notifications globally for all users
+How often to check for new calls (in seconds, min: 2, max: 60) = How often to check for new calls (in seconds, min: 2, max: 60)
+Automatically open contact card when receiving a call notification = Automatically open contact card when receiving a call notification
+Open contact card in a new tab instead of current window = Open contact card in a new tab instead of current window
+Security token for Keyyo webhook (leave empty to disable token check) = Security token for Keyyo webhook (leave empty to disable token check)
+
+# Keyyo Tab for Thirdparty
+KeyyoCalls = Keyyo Calls

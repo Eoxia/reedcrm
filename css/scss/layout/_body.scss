@@ -17,4 +17,15 @@
     padding: 1rem;
     height: calc( 100% - 160px);
     overflow: auto;
+
+  .extrafields-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+:root {
+  --spacing: 0.1rem;
+  --form-element-spacing-vertical: 0.1rem;
 }

@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,13 +21,13 @@
  * \brief   Page to show map of object
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 // Load Dolibarr libraries
@@ -42,7 +42,7 @@ if (isModEnabled('categorie')) {
 // Load Saturne librairies
 require_once __DIR__ . '/../../saturne/lib/object.lib.php';
 
-// Load EasyCRM librairies
+// Load ReedCRM librairies
 require_once __DIR__ . '/../class/geolocation.class.php';
 
 // Global variables definitions
@@ -80,12 +80,12 @@ if (isModEnabled('categorie')) {
     $formCategory = null;
 }
 
-$hookmanager->initHooks(['easycrmmap', $objectType . 'map']);
+$hookmanager->initHooks(['reedcrmmap', $objectType . 'map']);
 
 // Security check - Protection if external user
-$permissiontoread   = $user->rights->easycrm->address->read;
-$permissiontoadd    = $user->rights->easycrm->address->write;
-$permissiontodelete = $user->rights->easycrm->address->delete;
+$permissiontoread   = $user->rights->reedcrm->address->read;
+$permissiontoadd    = $user->rights->reedcrm->address->write;
+$permissiontodelete = $user->rights->reedcrm->address->delete;
 saturne_check_access($permissiontoread);
 
 /*
@@ -117,7 +117,7 @@ if (empty($resHook)) {
  */
 
 $title   = $langs->trans('Map');
-$helpUrl = 'FR:Module_EasyCRM';
+$helpUrl = 'FR:Module_ReedCRM';
 
 if ($source == 'pwa') {
     $conf->dol_hide_topmenu  = 1;
@@ -148,13 +148,13 @@ $catFilter     = (dol_strlen($allCat) > 0 ? 'cp.fk_categorie IN (' . $allCat . '
 
 $filter        = ['customsql' => $IdFilter . $townFilter . $countryFilter . $regionFilter . $stateFilter . $catFilter . 'element_type = "'. $objectType .'" AND status >= 0'];
 
-$icon          = dol_buildpath('/easycrm/img/dot.png', 1);
+$icon          = dol_buildpath('/reedcrm/img/dot.png', 1);
 $objectList    = [];
 $features      = [];
 $num           = 0;
 $allObjects    = saturne_fetch_all_object_type($objectInfos['class_name']);
 
-//if ($conf->global->EASYCRM_DISPLAY_MAIN_ADDRESS) {
+//if ($conf->global->REEDCRM_DISPLAY_MAIN_ADDRESS) {
 //	if (is_array($allObjects) && !empty($allObjects)) {
 //		foreach ($allObjects as $objectLinked) {
 //			$objectLinked->fetch_optionals();
@@ -266,7 +266,7 @@ if (is_array($geolocations) && !empty($geolocations)) {
         }
 
         $num++;
-        $objectList[$num]['color']  = '#' . randomColor();
+        $objectList[$num]['color']  = '#F00';
         switch ($objectLinked->opp_percent) {
             case $objectLinked->opp_percent >= 40 && $objectLinked->opp_percent < 60:
                 $objectList[$num]['scale'] = 1.5;
@@ -307,7 +307,7 @@ if ($filterId > 0) {
 }
 
 $backToMap = img_picto('project', 'fontawesome_project-diagram_fas_#ffffff') . ' ' . img_picto('create', 'fontawesome_plus_fas_#ffffff');
-$iconBTM   = '<a class="wpeo-button" href="' . dol_buildpath('custom/easycrm/view/frontend/quickcreation.php?source=pwa', 1) . '">' . $backToMap . '</a>';
+$iconBTM   = '<a class="wpeo-button" href="' . dol_buildpath('custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 1) . '">' . $backToMap . '</a>';
 print_barre_liste($title, '', $_SERVER["PHP_SELF"], '', '', '', '', '', $num, 'fa-map-marked-alt', 0, ($source == 'pwa' ? $iconBTM : ''));
 
 if ($source != 'pwa') {

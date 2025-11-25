@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2023 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2023-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,17 +17,17 @@
 
 /**
  *  \file       view/quickcreation.php
- *  \ingroup    easycrm
+ *  \ingroup    reedcrm
  *  \brief      Page to quick creation project/task
  */
 
-// Load EasyCRM environment
-if (file_exists('../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../easycrm.main.inc.php';
-} elseif (file_exists('../../easycrm.main.inc.php')) {
-    require_once __DIR__ . '/../../easycrm.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of easycrm main fails');
+    die('Include of reedcrm main fails');
 }
 
 // Libraries
@@ -39,6 +39,7 @@ if (isModEnabled('project')) {
 }
 if (isModEnabled('societe')) {
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 }
 if (isModEnabled('fckeditor')) {
     require_once DOL_DOCUMENT_ROOT.'/core/class/doleditor.class.php';
@@ -82,12 +83,12 @@ if (isModEnabled('societe')) {
     $formcompany = new FormCompany($db);
 }
 
-$hookmanager->initHooks(['easycrm_quickcreation']); // Note that conf->hooks_modules contains array
+$hookmanager->initHooks(['reedcrm_quickcreation']); // Note that conf->hooks_modules contains array
 
 $date_start = dol_mktime(0, 0, 0, GETPOST('projectstartmonth', 'int'), GETPOST('projectstartday', 'int'), GETPOST('projectstartyear', 'int'));
 
 // Security check - Protection if external user
-$permissiontoread          = $user->rights->easycrm->read;
+$permissiontoread          = $user->rights->reedcrm->read;
 $permissiontoaddproject    = $user->rights->projet->creer;
 $permissiontoaddthirdparty = $user->rights->societe->creer;
 $permissiontoaddcontact    = $user->rights->societe->contact->creer;
@@ -107,10 +108,10 @@ if (empty($reshook)) {
     $error = 0;
 
     if ($cancel) {
-        header('Location: ' . dol_buildpath('/easycrm/easycrmindex.php', 1));
+        header('Location: ' . dol_buildpath('/reedcrm/reedcrmindex.php', 1));
         exit;
     }
-	require_once __DIR__ . '/../core/tpl/easycrm_quickcreation_actions.tpl.php';
+	require_once __DIR__ . '/../core/tpl/reedcrm_quickcreation_actions.tpl.php';
 }
 
 /*
@@ -119,7 +120,7 @@ if (empty($reshook)) {
 
 
 $title    = $langs->trans('QuickCreation');
-$help_url = 'FR:Module_EasyCRM';
+$help_url = 'FR:Module_ReedCRM';
 
 saturne_header(0, '', $title, $help_url);
 
@@ -136,11 +137,11 @@ if ($backtopage) {
 }
 
 
-require_once __DIR__ . '/../core/tpl/easycrm_thirdparty_quickcreation.tpl.php';
+require_once __DIR__ . '/../core/tpl/reedcrm_thirdparty_quickcreation.tpl.php';
 
-require_once __DIR__ . '/../core/tpl/easycrm_contact_quickcreation.tpl.php';
+require_once __DIR__ . '/../core/tpl/reedcrm_contact_quickcreation.tpl.php';
 
-require_once __DIR__ . '/../core/tpl/easycrm_project_quickcreation.tpl.php';
+require_once __DIR__ . '/../core/tpl/reedcrm_project_quickcreation.tpl.php';
 
 print $form->buttonsSaveCancel('Create');
 
