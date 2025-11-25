@@ -147,7 +147,7 @@ class modReedCRM extends DolibarrModules
         ];
 
         // Data directories to create when module is enabled
-        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/thirdparty'];
+        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/project'];
 
         // Config pages. Put here list of php page, stored into reedcrm/admin directory, to use to set up module
         $this->config_page_url = ['setup.php@reedcrm'];
@@ -510,7 +510,7 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
-            'titre'    => $langs->trans('ThirdpartyImport'),
+            'titre'    => $langs->trans('ProjectImport'),
             'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'reedcrmtools',

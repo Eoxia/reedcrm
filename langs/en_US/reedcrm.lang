@@ -48,13 +48,13 @@ Automatically open contact card when receiving a call notification = Automatical
 Open contact card in a new tab instead of current window = Open contact card in a new tab instead of current window
 Security token for Keyyo webhook (leave empty to disable token check) = Security token for Keyyo webhook (leave empty to disable token check)
 
-# Thirdparties import
-ImportThirdpartiesFromCSV = Import third parties from CSV
-ImportThirdpartiesDescription = Select a CSV file to automatically create third parties.
+# Projects import
+ImportProjectsFromCSV = Import projects from CSV
+ImportProjectsDescription = Select a CSV file to automatically create projects.
 CSVExpectedColumns = File must contain columns: Prenom, Nom, Email, Tel, Note.
 UploadImport = Import
-ConfirmImportThirdpartiesTitle = Import third parties
-ConfirmImportThirdpartiesQuestion = Enter the category name to assign to the imported third parties.
+ConfirmImportProjectsTitle = Import projects
+ConfirmImportProjectsQuestion = Enter the category name to assign to the imported projects.
 CategoryName = Category name
 NoFileUploaded = No file selected.
 ImportFileUploadError = Error while uploading file.
@@ -63,9 +63,9 @@ ImportFileNotFound = Import file not found.
 ImportFileNotReadable = Unable to read import file.
 ImportParametersMissing = Missing import parameters.
 CategoryCreationError = Unable to create category.
-ThirdpartiesImported = %s third parties imported out of %s rows.
-ThirdpartiesImportErrors = %s rows could not be imported.
-UnnamedThirdparty = Third party without name
+ProjectsImported = %s projects imported out of %s rows.
+ProjectsImportErrors = %s rows could not be imported.
+NbLines = Number of lines
 
 # Keyyo Tab for Thirdparty
 KeyyoCalls = Keyyo Calls
