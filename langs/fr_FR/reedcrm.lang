@@ -279,6 +279,8 @@ CustomerNote = Note client
 SendEmail = Envoyer un email
 EventCreated = Événement créé avec succès
 EmailFormReady = Formulaire d'email prêt
+NewThirdparty = Nouveau tiers
+CreateThirdparty = Créer tiers
 
 # Import tiers
 ImportThirdpartiesFromCSV = Importer des tiers depuis un CSV
