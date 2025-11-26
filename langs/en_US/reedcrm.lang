@@ -48,5 +48,24 @@ Automatically open contact card when receiving a call notification = Automatical
 Open contact card in a new tab instead of current window = Open contact card in a new tab instead of current window
 Security token for Keyyo webhook (leave empty to disable token check) = Security token for Keyyo webhook (leave empty to disable token check)
 
+# Projects import
+ImportProjectsFromCSV = Import projects from CSV
+ImportProjectsDescription = Select a CSV file to automatically create projects.
+CSVExpectedColumns = File must contain columns: Prenom, Nom, Email, Tel, Note.
+UploadImport = Import
+ConfirmImportProjectsTitle = Import projects
+ConfirmImportProjectsQuestion = Enter the category name to assign to the imported projects.
+CategoryName = Category name
+NoFileUploaded = No file selected.
+ImportFileUploadError = Error while uploading file.
+ImportFileInvalidColumns = File columns do not match expected format (Prenom, Nom, Email, Tel, Note).
+ImportFileNotFound = Import file not found.
+ImportFileNotReadable = Unable to read import file.
+ImportParametersMissing = Missing import parameters.
+CategoryCreationError = Unable to create category.
+ProjectsImported = %s projects imported out of %s rows.
+ProjectsImportErrors = %s rows could not be imported.
+NbLines = Number of lines
+
 # Keyyo Tab for Thirdparty
 KeyyoCalls = Keyyo Calls

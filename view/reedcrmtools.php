@@ -201,21 +201,21 @@ print '</td></tr>';
 print '</table>';
 print '</form>'; ?>
 
-<div class="wpeo-notice notice-info">
-    <div class="notice-content">
-        <div class="notice-title"><strong><?php echo $langs->trans('SocietyObjectContactNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_OBJECT_CONTACT); ?></strong></div>
-        <div class="notice-subtitle">
-            <?php $societyObjectContactNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED;
-            $societyObjectContactNotDefinedIDs = json_decode($societyObjectContactNotDefinedIDs);
-            if (is_array($societyObjectContactNotDefinedIDs) && !empty($societyObjectContactNotDefinedIDs)) {
-                foreach ($societyObjectContactNotDefinedIDs as $societyObjectContactNotDefinedID) {
-                    $thirdparty->fetch($societyObjectContactNotDefinedID);
-                    print $langs->trans('SocietyObjectContactNotDefined') . ' ' . $thirdparty->getNomUrl(1) . '<br>';
-                }
-            } ?>
+    <div class="wpeo-notice notice-info">
+        <div class="notice-content">
+            <div class="notice-title"><strong><?php echo $langs->trans('SocietyObjectContactNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_OBJECT_CONTACT); ?></strong></div>
+            <div class="notice-subtitle">
+                <?php $societyObjectContactNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED;
+                $societyObjectContactNotDefinedIDs = json_decode($societyObjectContactNotDefinedIDs);
+                if (is_array($societyObjectContactNotDefinedIDs) && !empty($societyObjectContactNotDefinedIDs)) {
+                    foreach ($societyObjectContactNotDefinedIDs as $societyObjectContactNotDefinedID) {
+                        $thirdparty->fetch($societyObjectContactNotDefinedID);
+                        print $langs->trans('SocietyObjectContactNotDefined') . ' ' . $thirdparty->getNomUrl(1) . '<br>';
+                    }
+                } ?>
+            </div>
         </div>
     </div>
-</div>
 
 <?php print load_fiche_titre($langs->trans('AddContactNotificationManagement'), '', '');
 
@@ -247,21 +247,21 @@ print '</td></tr>';
 print '</table>';
 print '</form>'; ?>
 
-<div class="wpeo-notice notice-info">
-    <div class="notice-content">
-        <div class="notice-title"><strong><?php echo $langs->trans('SocietyContactNotificationNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_CONTACT_NOTIFICATION); ?></strong></div>
-        <div class="notice-subtitle">
-            <?php $societyContactNotificationNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED;
-            $societyContactNotificationNotDefinedIDs = json_decode($societyContactNotificationNotDefinedIDs);
-            if (is_array($societyContactNotificationNotDefinedIDs) && !empty($societyContactNotificationNotDefinedIDs)) {
-                foreach ($societyContactNotificationNotDefinedIDs as $societyContactNotificationNotDefinedID) {
-                    $thirdparty->fetch($societyContactNotificationNotDefinedID);
-                    print $langs->trans('SocietyContactNotificationNotDefined') . ' ' . $thirdparty->getNomUrl(1) . '<br>';
-                }
-            } ?>
+    <div class="wpeo-notice notice-info">
+        <div class="notice-content">
+            <div class="notice-title"><strong><?php echo $langs->trans('SocietyContactNotificationNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_CONTACT_NOTIFICATION); ?></strong></div>
+            <div class="notice-subtitle">
+                <?php $societyContactNotificationNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED;
+                $societyContactNotificationNotDefinedIDs = json_decode($societyContactNotificationNotDefinedIDs);
+                if (is_array($societyContactNotificationNotDefinedIDs) && !empty($societyContactNotificationNotDefinedIDs)) {
+                    foreach ($societyContactNotificationNotDefinedIDs as $societyContactNotificationNotDefinedID) {
+                        $thirdparty->fetch($societyContactNotificationNotDefinedID);
+                        print $langs->trans('SocietyContactNotificationNotDefined') . ' ' . $thirdparty->getNomUrl(1) . '<br>';
+                    }
+                } ?>
+            </div>
         </div>
     </div>
-</div>
 
 <?php // End of page
 llxFooter();

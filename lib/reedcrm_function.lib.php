@@ -393,3 +393,67 @@ function get_thirdparty_calls($socid, $sortfield = 'a.datep', $sortorder = 'DESC
 
     return $calls;
 }
+
+/**
+ * Archive an imported CSV file in the history directory structure
+ *
+ * @param string $sourceFile Full path to the source CSV file
+ * @param string $tagLabel Category label (for reference, not used in folder name anymore)
+ * @param string $historyBaseDir Base directory for import history (e.g., DOL_DATA_ROOT/reedcrm/{entity}/import/project)
+ * @param int $categoryId Category ID (used as folder name)
+ * @return void
+ */
+function reedcrm_archive_import_file(string $sourceFile, string $tagLabel, string $historyBaseDir, int $categoryId): void
+{
+    if (empty($sourceFile) || !is_readable($sourceFile)) {
+        return;
+    }
+
+    // Use category ID as folder name
+    $tagDir = (string) max(0, $categoryId);
+    $finalDir = $historyBaseDir . '/' . $tagDir;
+    dol_mkdir($finalDir);
+
+    $finalName = dol_sanitizeFileName(basename($sourceFile));
+    if (empty($finalName)) {
+        $finalName = 'import_' . dol_print_date(dol_now(), '%Y%m%d%H%M%S') . '.csv';
+    }
+
+    $destFile = $finalDir . '/' . $finalName;
+    dol_move($sourceFile, $destFile, 1);
+    @touch($destFile, dol_now());
+}
+
+/**
+ * Count meaningful CSV lines (excluding header) for history display
+ *
+ * @param string $filePath Full path to CSV file
+ * @return int|null Number of lines or null on error
+ */
+function reedcrm_count_csv_lines(string $filePath): ?int
+{
+    if (!is_readable($filePath)) {
+        return null;
+    }
+
+    $handle = fopen($filePath, 'r');
+    if (!$handle) {
+        return null;
+    }
+
+    $count = 0;
+    $isFirstLine = true;
+    while (($line = fgetcsv($handle)) !== false) {
+        if ($isFirstLine) {
+            $isFirstLine = false;
+            continue;
+        }
+        if (count($line) === 1 && trim($line[0]) === '') {
+            continue;
+        }
+        $count++;
+    }
+    fclose($handle);
+
+    return $count;
+}

@@ -147,7 +147,7 @@ class modReedCRM extends DolibarrModules
         ];
 
         // Data directories to create when module is enabled
-        $this->dirs = ['/reedcrm/temp'];
+        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/project'];
 
         // Config pages. Put here list of php page, stored into reedcrm/admin directory, to use to set up module
         $this->config_page_url = ['setup.php@reedcrm'];
@@ -499,6 +499,22 @@ class modReedCRM extends DolibarrModules
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'reedcrmtools',
             'url'      => '/reedcrm/view/reedcrmtools.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->trans('ProjectImport'),
+            'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmtools',
+            'url'      => '/reedcrm/view/reedcrmimport.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
