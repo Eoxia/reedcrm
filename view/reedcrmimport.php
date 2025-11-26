@@ -180,29 +180,29 @@ if ($action == 'confirm_import_projects') {
                                 continue;
                             }
                             $total++;
-                            $title = trim($row[$map['nom']] . ' ' . $row[$map['prenom']]);
-                            $description = trim($row[$map['note']] ?? '');
-                            $mail = trim($row[$map['email']] ?? '');
-                            $phone = trim($row[$map['tel']] ?? '');
+                            $description = dol_htmlentitiesbr(trim($row[$map['note']] ?? ''));
+                            $mail = dol_htmlentitiesbr(trim($row[$map['email']] ?? ''));
+                            $phone = dol_htmlentitiesbr(trim($row[$map['tel']] ?? ''));
+                            $nom = dol_htmlentitiesbr(trim($row[$map['nom']] ?? ''));
+                            $prenom = dol_htmlentitiesbr(trim($row[$map['prenom']] ?? ''));
                             $socid = !empty($map['socid']) ? (int)trim($row[$map['socid']] ?? 0) : 0;
 
-                            if (empty($title)) {
-                                $errors++;
-                                continue;
-                            }
 
                             $proj = new Project($db);
                             $defaultref = $modProject->getNextValue($thirdparty, $proj);
                             $proj->ref = $defaultref;
-                            $proj->title = dol_htmlentitiesbr($title);
+                            $proj->title = '';
                             $proj->description = dol_htmlentitiesbr($description);
-                            $proj->note_private = 'Email: ' . $mail . "\n" . 'Phone: ' . $phone;
+                            $proj->array_options['reedcrm_lastname'] = $nom;
+                            $proj->array_options['reedcrm_firstname'] = $prenom;
+                            $proj->array_options['reedcrm_email'] = $mail;
+                            $proj->array_options['projectphone'] = $phone;
                             $proj->status = Project::STATUS_DRAFT;
                             $proj->date_start = dol_now();
                             $proj->public = 1;
 
                             $resCreate = $proj->create($user);
-
+                    
                             if ($resCreate > 0) {
                                 $resSetCat = $proj->setCategories(array($categoryId), Categorie::TYPE_PROJECT);
                                 if ($resSetCat <= 0) {
@@ -214,7 +214,7 @@ if ($action == 'confirm_import_projects') {
                                 $errors++;
                             }
                         }
-                        
+
                         fclose($handle);
 
                         reedcrm_archive_import_file($fullPath, $categoryName, $importHistoryDir, $categoryId);
