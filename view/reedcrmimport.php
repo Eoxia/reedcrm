@@ -150,6 +150,7 @@ if ($action == 'confirm_import_projects') {
                 $category->label = $categoryName;
                 $resCat = $category->create($user);
             }
+            list($modProject) = saturne_require_objects_mod(['project' => $conf->global->PROJECT_ADDON]);
 
             if ($resCat > 0) {
                 $categoryId = $category->id;
@@ -189,20 +190,18 @@ if ($action == 'confirm_import_projects') {
                                 $errors++;
                                 continue;
                             }
-                            list($modProject) = saturne_require_objects_mod(['project' => $conf->global->PROJECT_ADDON]);
 
                             $proj = new Project($db);
                             $defaultref = $modProject->getNextValue($thirdparty, $proj);
                             $proj->ref = $defaultref;
-                            $proj->title = $title;
-                            $proj->description = $description;
+                            $proj->title = dol_htmlentitiesbr($title);
+                            $proj->description = dol_htmlentitiesbr($description);
                             $proj->note_private = 'Email: ' . $mail . "\n" . 'Phone: ' . $phone;
                             $proj->status = Project::STATUS_DRAFT;
                             $proj->date_start = dol_now();
                             $proj->public = 1;
 
                             $resCreate = $proj->create($user);
-
 
                             if ($resCreate > 0) {
                                 $resSetCat = $proj->setCategories(array($categoryId), Categorie::TYPE_PROJECT);
@@ -215,6 +214,7 @@ if ($action == 'confirm_import_projects') {
                                 $errors++;
                             }
                         }
+                        
                         fclose($handle);
 
                         reedcrm_archive_import_file($fullPath, $categoryName, $importHistoryDir, $categoryId);
