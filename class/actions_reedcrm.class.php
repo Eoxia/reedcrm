@@ -294,9 +294,30 @@ class ActionsReedcrm
         global $conf, $db, $form, $langs, $object, $user;
 
         if (empty($conf->global->REEDCRM_CALL_NOTIFICATIONS_DISABLED) && !empty($user->id)) {
-            $url = dol_buildpath('/custom/reedcrm/js/call_notifications.js.php', 1);
-            if (!empty($url)) { ?>
-                <script type="text/javascript" src="<?= dol_escape_htmltag($url) ?>"></script>
+            // Inject call notifications config
+            $checkUrl = dol_buildpath('/custom/reedcrm/ajax/check_call_events.php', 1);
+            $frequency = getDolGlobalInt('REEDCRM_CALL_CHECK_FREQUENCY');
+            $autoOpen = getDolGlobalInt('REEDCRM_AUTO_OPEN_CONTACT', 0);
+            $openNewTab = getDolGlobalInt('REEDCRM_OPEN_IN_NEW_TAB', 1);
+
+            $langs->load('reedcrm@reedcrm');
+            ?>
+            <div id="reedcrm-call-config" style="display:none;"
+                 data-check-url="<?= dol_escape_htmltag($checkUrl) ?>"
+                 data-frequency="<?= (int)$frequency ?>"
+                 data-auto-open="<?= (int)$autoOpen ?>"
+                 data-open-new-tab="<?= (int)$openNewTab ?>"
+                 data-trans-incoming-call="<?= dol_escape_htmltag($langs->trans('IncomingCall')) ?>"
+                 data-trans-from="<?= dol_escape_htmltag($langs->trans('From')) ?>"
+                 data-trans-phone="<?= dol_escape_htmltag($langs->trans('Phone')) ?>"
+                 data-trans-email="<?= dol_escape_htmltag($langs->trans('Email')) ?>"
+                 data-trans-view-contact="<?= dol_escape_htmltag($langs->trans('ViewContact')) ?>">
+            </div>
+            <?php
+            // Load call notifications module (dev mode - load directly until gulp build)
+            $callNotifJs = dol_buildpath('/custom/reedcrm/js/modules/call_notifications.js', 1);
+            if (!empty($callNotifJs)) { ?>
+                <script type="text/javascript" src="<?= dol_escape_htmltag($callNotifJs) ?>"></script>
             <?php }
         }
 
