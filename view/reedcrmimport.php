@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -57,21 +58,10 @@ $action = (GETPOSTISSET('action') ? GETPOST('action', 'aZ09') : 'view');
 $form          = new Form($db);
 $facture       = new Facture($db);
 $thirdparty    = new Societe($db);
+$project       = new Project($db);
 $actioncomm    = new ActionComm($db);
 $reedcrmNotify = new ReedcrmNotify($db);
 $contact       = new Contact($db);
-$module = getDolGlobalString('SOCIETE_CODECLIENT_ADDON', 'mod_codeclient_leopard');
-if (substr($module, 0, 15) == 'mod_codeclient_' && substr($module, -3) == 'php') {
-    $module = substr($module, 0, dol_strlen($module) - 4);
-}
-$dirsociete = array_merge(array('/core/modules/societe/'), $conf->modules_parts['societe']);
-foreach ($dirsociete as $dirroot) {
-    $res = dol_include_once($dirroot.$module.'.php');
-    if ($res) {
-        break;
-    }
-}
-$modCodeClient = new $module($db);
 // Security check - Protection if external user
 $permissionToRead = $user->rights->reedcrm->adminpage->read;
 saturne_check_access($permissionToRead);
@@ -88,14 +78,14 @@ if (!empty($conf->reedcrm->multidir_output[$conf->entity])) {
 }
 dol_mkdir($reedcrmEntityDir);
 
-$importHistoryDir = $reedcrmEntityDir . '/import/thirdparty';
+$importHistoryDir = $reedcrmEntityDir . '/import/project';
 dol_mkdir($importHistoryDir);
 
 /*
  * Actions
  */
 
-if ($action == 'import_thirdparties') {
+if ($action == 'import_projects') {
     $uploadedFile = $_FILES['import_file'] ?? null;
     if (!empty($uploadedFile['tmp_name']) && $uploadedFile['error'] === UPLOAD_ERR_OK) {
         $sanitizedName = dol_sanitizeFileName($uploadedFile['name']);
@@ -123,9 +113,9 @@ if ($action == 'import_thirdparties') {
             ];
             $formconfirm = $form->formconfirm(
                 $_SERVER['PHP_SELF'],
-                $langs->trans('ConfirmImportThirdpartiesTitle'),
-                $langs->trans('ConfirmImportThirdpartiesQuestion'),
-                'confirm_import_thirdparties',
+                $langs->trans('ConfirmImportProjectsTitle'),
+                $langs->trans('ConfirmImportProjectsQuestion'),
+                'confirm_import_projects',
                 $formquestion,
                 '',
                 1,
@@ -140,7 +130,7 @@ if ($action == 'import_thirdparties') {
     $action = 'view';
 }
 
-if ($action == 'confirm_import_thirdparties') {
+if ($action == 'confirm_import_projects') {
     $importFile = GETPOST('import_file', 'alpha');
     $categoryName = trim(GETPOST('category_name', 'alphanohtml'));
 
@@ -154,9 +144,9 @@ if ($action == 'confirm_import_thirdparties') {
             $action = 'view';
         } else {
             $category = new Categorie($db);
-            $resCat = $category->fetch(0, $categoryName, 'societe');
+            $resCat = $category->fetch(0, $categoryName, 'project');
             if ($resCat <= 0) {
-                $category->type = Categorie::TYPE_CUSTOMER;
+                $category->type = Categorie::TYPE_PROJECT;
                 $category->label = $categoryName;
                 $resCat = $category->create($user);
             }
@@ -183,34 +173,39 @@ if ($action == 'confirm_import_thirdparties') {
                         $total = 0;
                         $created = 0;
                         $errors = 0;
+
                         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
                             if (count($row) == 1 && trim($row[0]) === '') {
                                 continue;
                             }
                             $total++;
-                            $firstname = trim($row[$map['prenom']] ?? '');
-                            $lastname = trim($row[$map['nom']] ?? '');
-                            $email = trim($row[$map['email']] ?? '');
+                            $title = trim($row[$map['nom']] . ' ' . $row[$map['prenom']]);
+                            $description = trim($row[$map['note']] ?? '');
+                            $mail = trim($row[$map['email']] ?? '');
                             $phone = trim($row[$map['tel']] ?? '');
-                            $note = trim($row[$map['note']] ?? '');
+                            $socid = !empty($map['socid']) ? (int)trim($row[$map['socid']] ?? 0) : 0;
 
-                            if (empty($firstname) && empty($lastname) && empty($email)) {
+                            if (empty($title)) {
                                 $errors++;
                                 continue;
                             }
+                            list($modProject) = saturne_require_objects_mod(['project' => $conf->global->PROJECT_ADDON]);
 
-                            $soc = new Societe($db);
-                            $soc->name = trim(($firstname . ' ' . $lastname)) ?: ($email ?: $langs->trans('UnnamedThirdparty'));
-                            $soc->client = 1;
-                            $soc->email = $email;
-                            $soc->phone = $phone;
-                            $soc->note_private = $note;
-                            $soc->code_client = $modCodeClient->getNextValue($soc, 0);
+                            $proj = new Project($db);
+                            $defaultref = $modProject->getNextValue($thirdparty, $proj);
+                            $proj->ref = $defaultref;
+                            $proj->title = $title;
+                            $proj->description = $description;
+                            $proj->note_private = 'Email: ' . $mail . "\n" . 'Phone: ' . $phone;
+                            $proj->status = Project::STATUS_DRAFT;
+                            $proj->date_start = dol_now();
+                            $proj->public = 1;
 
-                            $resCreate = $soc->create($user);
+                            $resCreate = $proj->create($user);
+
 
                             if ($resCreate > 0) {
-                                $resSetCat = $soc->setCategories(array($categoryId), Categorie::TYPE_CUSTOMER);
+                                $resSetCat = $proj->setCategories(array($categoryId), Categorie::TYPE_PROJECT);
                                 if ($resSetCat <= 0) {
                                     $errors++;
                                     continue;
@@ -225,10 +220,10 @@ if ($action == 'confirm_import_thirdparties') {
                         reedcrm_archive_import_file($fullPath, $categoryName, $importHistoryDir, $categoryId);
 
                         if ($created > 0) {
-                            setEventMessages($langs->trans('ThirdpartiesImported', $created, $total), null, 'mesgs');
+                            setEventMessages($langs->trans('ProjectsImported', $created, $total), null, 'mesgs');
                         }
                         if ($errors > 0) {
-                            setEventMessages($langs->trans('ThirdpartiesImportErrors', $errors), null, 'warnings');
+                            setEventMessages($langs->trans('ProjectsImportErrors', $errors), null, 'warnings');
                         }
                     }
                 } else {
@@ -262,11 +257,11 @@ if (!empty($formconfirm)) {
     print $formconfirm;
 }
 
-print load_fiche_titre($langs->trans('ImportThirdpartiesFromCSV'), '', '');
+print load_fiche_titre($langs->trans('ImportProjectsFromCSV'), '', '');
 
-print '<form name="import-thirdparties" id="import-thirdparties" action="' . $_SERVER['PHP_SELF'] . '" method="POST" enctype="multipart/form-data">';
+print '<form name="import-projects" id="import-projects" action="' . $_SERVER['PHP_SELF'] . '" method="POST" enctype="multipart/form-data">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
-print '<input type="hidden" name="action" value="import_thirdparties">';
+print '<input type="hidden" name="action" value="import_projects">';
 
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
@@ -276,20 +271,20 @@ print '<td class="center">' . $langs->trans('Action') . '</td>';
 print '</tr>';
 
 print '<tr class="oddeven"><td>';
-print $langs->trans('ImportThirdpartiesFromCSV');
+print $langs->trans('ImportProjectsFromCSV');
 print '</td><td>';
-print $langs->trans('ImportThirdpartiesDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '</span>';
+print $langs->trans('ImportProjectsDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '</span>';
 print '</td>';
 print '<td class="center">';
 print '<input type="file" name="import_file" accept=".csv" required class="flat">';
-print ' <input type="submit" class="button" name="import_thirdparties" value="' . $langs->trans('UploadImport') . '">';
+print ' <input type="submit" class="button" name="import_projects" value="' . $langs->trans('UploadImport') . '">';
 print '</td></tr>';
 
 print '</table>';
 print '</form>';
 
 print '<br>';
-print load_fiche_titre($langs->trans('ImportThirdpartiesFromCSV') . ' - ' . $langs->trans('History'), '', '');
+print load_fiche_titre($langs->trans('ImportProjectsFromCSV') . ' - ' . $langs->trans('History'), '', '');
 
 $historyFiles = [];
 if (is_dir($importHistoryDir)) {
@@ -314,14 +309,14 @@ print '<td>' . $langs->trans('Tag') . '</td>';
         $parts = preg_split('#[\\/]+#', $relative, 2);
         $folderName = $parts[0] ?: '';
         $catId = 0;
-        
+
         // Folder name is now directly the category ID
         if (is_numeric($folderName) && (int) $folderName > 0) {
             $catId = (int) $folderName;
         }
-        
+
         $fileName = $fileInfo['name'];
-        $downloadPath = 'import/thirdparty/' . $folderName . '/' . $fileName;
+        $downloadPath = 'import/project/' . $folderName . '/' . $fileName;
         $downloadUrl = DOL_URL_ROOT . '/document.php?modulepart=reedcrm&attachment=1&file=' . urlencode($downloadPath);
 
         $tagDisplay = '-';
@@ -336,7 +331,7 @@ print '<td>' . $langs->trans('Tag') . '</td>';
             }
             if (!empty($categoryCache[$catId])) {
                 $label = $categoryCache[$catId]->label;
-                $listUrl = DOL_URL_ROOT . '/societe/list.php?search_category_customer_list[]=' . $catId;
+                $listUrl = DOL_URL_ROOT . '/projet/list.php?search_category_project_list[]=' . $catId;
                 $tagDisplay = '<a class="badge badge-status4" href="' . $listUrl . '">' . dol_escape_htmltag($label) . '</a>';
             }
         }

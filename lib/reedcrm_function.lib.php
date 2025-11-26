@@ -398,8 +398,8 @@ function get_thirdparty_calls($socid, $sortfield = 'a.datep', $sortorder = 'DESC
  * Archive an imported CSV file in the history directory structure
  *
  * @param string $sourceFile Full path to the source CSV file
- * @param string $tagLabel Category label (for reference)
- * @param string $historyBaseDir Base directory for import history (e.g., DOL_DATA_ROOT/reedcrm/{entity}/import/thirdparty)
+ * @param string $tagLabel Category label (for reference, not used in folder name anymore)
+ * @param string $historyBaseDir Base directory for import history (e.g., DOL_DATA_ROOT/reedcrm/{entity}/import/project)
  * @param int $categoryId Category ID (used as folder name)
  * @return void
  */

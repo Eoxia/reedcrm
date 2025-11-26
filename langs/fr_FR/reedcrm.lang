@@ -282,13 +282,13 @@ EmailFormReady = Formulaire d'email prêt
 NewThirdparty = Nouveau tiers
 CreateThirdparty = Créer tiers
 
-# Import tiers
-ImportThirdpartiesFromCSV = Importer des tiers depuis un CSV
-ImportThirdpartiesDescription = Sélectionnez un fichier CSV pour créer automatiquement des tiers.
+# Import projets
+ImportProjectsFromCSV = Importer des projets depuis un CSV
+ImportProjectsDescription = Sélectionnez un fichier CSV pour créer automatiquement des projets.
 CSVExpectedColumns = Le fichier doit contenir les colonnes : Prenom, Nom, Email, Tel, Note.
 UploadImport = Importer
-ConfirmImportThirdpartiesTitle = Import de tiers
-ConfirmImportThirdpartiesQuestion = Saisissez le nom de la catégorie à attribuer aux tiers importés.
+ConfirmImportProjectsTitle = Import de projets
+ConfirmImportProjectsQuestion = Saisissez le nom de la catégorie à attribuer aux projets importés.
 CategoryName = Nom de la catégorie
 NoFileUploaded = Aucun fichier sélectionné.
 ImportFileUploadError = Erreur lors du téléchargement du fichier.
@@ -297,11 +297,10 @@ ImportFileNotFound = Fichier d'import introuvable.
 ImportFileNotReadable = Impossible de lire le fichier d'import.
 ImportParametersMissing = Paramètres d'import manquants.
 CategoryCreationError = Erreur lors de la création de la catégorie.
-ThirdpartiesImported = %s tiers importés sur %s lignes.
-ThirdpartiesImportErrors = %s lignes n'ont pas pu être importées.
-UnnamedThirdparty = Tiers sans nom
-ThirdpartyImport = Import de tiers
+ProjectsImported = %s projets importés sur %s lignes.
+ProjectsImportErrors = %s lignes n'ont pas pu être importées.
 NbLines = Nombre de lignes
+ProjectImport = Import de projet
 
 # Onglet Keyyo pour tiers
 KeyyoCalls = Appels Keyyo
