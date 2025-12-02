@@ -1,0 +1,284 @@
+.reedcrm-stats-container {
+    width: 100%;
+    padding: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.reedcrm-stats-header {
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.reedcrm-stats-header h1 {
+    margin: 0 0 5px 0;
+    font-size: 28px;
+    font-weight: 500;
+    color: #212529;
+}
+
+.reedcrm-stats-header p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* Section filtre minimaliste */
+.reedcrm-stats-filters-wrapper {
+    margin-bottom: 30px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reedcrm-stats-filters-header {
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.reedcrm-stats-filters-header:hover {
+    background: #f8f9fa;
+}
+
+.reedcrm-stats-filters-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reedcrm-stats-filters-header i {
+    transition: transform 0.3s ease;
+    font-size: 11px;
+    color: #6c757d;
+}
+
+.reedcrm-stats-filters-header.collapsed i {
+    transform: rotate(-90deg);
+}
+
+/* Contenu des filtres */
+.reedcrm-stats-filters {
+    padding: 16px;
+    border-top: 1px solid #f0f0f0;
+    display: block !important;
+}
+
+.reedcrm-stats-filters.collapsed {
+    display: none !important;
+}
+
+.reedcrm-stats-filters-content {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.reedcrm-stats-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+    flex: 1;
+}
+
+.reedcrm-stats-filter-group label {
+    font-weight: 500;
+    color: #6c757d;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Sélecteurs de date - style minimaliste */
+.reedcrm-stats-filter-group .date-selector-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+}
+
+/* Force tous les selects et inputs sur une seule ligne */
+.reedcrm-stats-filter-group .date-selector-wrapper select,
+.reedcrm-stats-filter-group .date-selector-wrapper input {
+    padding: 7px 10px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    background: white !important;
+    margin: 0 !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    height: 34px !important;
+    box-sizing: border-box !important;
+    color: #495057 !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper select[name$="day"] {
+    width: 65px !important;
+    min-width: 65px !important;
+    max-width: 65px !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper select[name$="month"] {
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper select[name$="year"] {
+    width: 85px !important;
+    min-width: 85px !important;
+    max-width: 85px !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper input[type="text"] {
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper select:focus,
+.reedcrm-stats-filter-group .date-selector-wrapper input:focus {
+    outline: none !important;
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15) !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper button,
+.reedcrm-stats-filter-group .date-selector-wrapper .dpInvisibleButtons {
+    background: #f5f5f5 !important;
+    border: 1px solid #ddd !important;
+    color: #495057 !important;
+    padding: 7px 9px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    vertical-align: middle !important;
+    transition: all 0.2s ease !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper button:hover,
+.reedcrm-stats-filter-group .date-selector-wrapper .dpInvisibleButtons:hover {
+    background: #e9ecef !important;
+    border-color: #bbb !important;
+}
+
+.reedcrm-stats-filter-group .date-selector-wrapper button img,
+.reedcrm-stats-filter-group .date-selector-wrapper .dpInvisibleButtons img {
+    filter: brightness(0) invert(0.5) !important;
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* Force les divs internes à être inline */
+.reedcrm-stats-filter-group .date-selector-wrapper .nowraponall,
+.reedcrm-stats-filter-group .date-selector-wrapper .inline-block,
+.reedcrm-stats-filter-group .date-selector-wrapper .divfordateinput {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-wrap: nowrap !important;
+    vertical-align: middle !important;
+    margin: 0 !important;
+}
+
+/* Bouton de filtre */
+.reedcrm-stats-filter-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    height: 34px;
+    white-space: nowrap;
+    width: auto;
+    min-width: 90px;
+    transition: background-color 0.2s ease;
+}
+
+.reedcrm-stats-filter-btn:hover {
+    background: #0056b3;
+}
+
+/* Graphique */
+.reedcrm-stats-graph-container {
+    background: #fff;
+    padding: 40px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reedcrm-stats-graph-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #212529;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.reedcrm-stats-no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+    font-size: 15px;
+}
+
+.reedcrm-stats-funnel-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Styles for funnel graph */
+.reedcrm-funnel-container {
+    width: 100%;
+    padding: 20px;
+}
+
+.reedcrm-funnel-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.reedcrm-funnel-text {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (max-width: 768px) {
+    .reedcrm-stats-filters-content {
+        flex-direction: column;
+    }
+    
+    .reedcrm-stats-filter-group {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .reedcrm-stats-filter-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
