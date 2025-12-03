@@ -187,8 +187,6 @@ class ReedcrmDashboard
         }
 
         foreach ($projects as $project) {
-            $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id;
-
             $arrayProjectOpportunitiesList[$project->id]['Ref']['value']               = $project->getNomUrl(1);
             $arrayProjectOpportunitiesList[$project->id]['Ref']['morecss']             = 'left';
             $arrayProjectOpportunitiesList[$project->id]['Label']['value']             = $project->title;
@@ -199,7 +197,7 @@ class ReedcrmDashboard
             $arrayProjectOpportunitiesList[$project->id]['FirstName']['value']         = $project->array_options['options_reedcrm_firstname'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Phone']['value']             = $project->array_options['options_projectphone'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Email']['value']             = $project->array_options['options_reedcrm_email'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '<a class="wpeo-button" href="'. $newThirdPartyUrl .'"><i class="fas fa-plus"></i> '. $langs->trans('NewThirdparty') .'</a>';
+            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '';
         }
 
         $array['data'] = $arrayProjectOpportunitiesList;
@@ -287,5 +285,292 @@ class ReedcrmDashboard
         $array['data'] = $arrayProductLastSellList;
 
         return $array;
+    }
+
+/**
+     * Get sales funnel data (pyramide inversée)
+     *
+     * @param array $moreParams Optional parameters including date_start and date_end for filtering
+     * @return array    $array Graph datas (label/color/type/title/data etc..)
+     * @throws Exception
+     */
+    public function getSalesFunnel($dateStartTimestamp = null, $dateEndTimestamp = null): array
+    {
+        global $langs;
+
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+
+        // Graph Title parameters
+        $array['title'] = $langs->transnoentities('SalesFunnel');
+        $array['name']  = 'SalesFunnel';
+        $array['picto'] = 'project';
+
+        // Graph parameters - Type 'funnel_custom' pour un rendu HTML personnalisé
+        $array['width']      = '100%';
+        $array['height']     = 400;
+        $array['type']       = 'funnel_custom';
+        $array['dataset']    = 1;
+
+        $arrayProjectOpportunitiesList = [];
+        $dateFilter = [];
+
+		// Get date filters from request parameters or use provided defaults
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+        
+        // If timestamps are not provided, try to get them from GET parameters
+        if ($dateStartTimestamp === null) {
+            $dateStartTimestamp = 0;
+            $dateStartDay = GETPOST('salesfunnel_date_startday', 'int');
+            $dateStartMonth = GETPOST('salesfunnel_date_startmonth', 'int');
+            $dateStartYear = GETPOST('salesfunnel_date_startyear', 'int');
+            if ($dateStartDay > 0 && $dateStartMonth > 0 && $dateStartYear > 0) {
+                $dateStartTimestamp = dol_mktime(0, 0, 0, $dateStartMonth, $dateStartDay, $dateStartYear);
+            }
+        }
+        
+        if ($dateEndTimestamp === null) {
+            $dateEndTimestamp = 0;
+            $dateEndDay = GETPOST('salesfunnel_date_endday', 'int');
+            $dateEndMonth = GETPOST('salesfunnel_date_endmonth', 'int');
+            $dateEndYear = GETPOST('salesfunnel_date_endyear', 'int');
+            if ($dateEndDay > 0 && $dateEndMonth > 0 && $dateEndYear > 0) {
+                $dateEndTimestamp = dol_mktime(23, 59, 59, $dateEndMonth, $dateEndDay, $dateEndYear);
+            }
+        }
+
+        if ($dateStartTimestamp > 0 || $dateEndTimestamp > 0) {
+            global $db; // au cas où
+
+            $customSql = '';
+
+            if ($dateStartTimestamp > 0) {
+                // t.datec est un champ DATETIME → on formate le timestamp en datetime SQL
+                $customSql .= " AND t.datec >= '" . $db->idate($dateStartTimestamp) . "'";
+            }
+
+            if ($dateEndTimestamp > 0) {
+                $customSql .= " AND t.datec <= '" . $db->idate($dateEndTimestamp) . "'";
+            }
+
+            if (!empty($customSql)) {
+                $dateFilter['customsql'] = ltrim($customSql, ' AND ');
+            }
+        }
+
+//        $dateFilter = [];
+        $array['morehtmlright'] = $this->buildSalesFunnelFilters($dateStartTimestamp, $dateEndTimestamp);
+
+        $projects = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', 0, 0, $dateFilter, 'AND', true);
+        if (!is_array($projects)) {
+            $projects = [];
+        }
+
+        $rawProjectOpportunity = 0;
+        $ponderatedProjectOpportunity = 0;
+        $signedProjectOpportunity = 0;
+
+        if (is_array($projects) && !empty($projects)) {
+            foreach ($projects as $project) {
+                // Récupérer fk_opp_status (peut être 0, null ou une valeur > 0)
+                // Utiliser isset() et !== null pour différencier 0 de null
+                $oppStatus = isset($project->fk_opp_status) ? $project->fk_opp_status : (isset($project->opp_status) ? $project->opp_status : null);
+
+                // Si fk_opp_status est null ou non défini, c'est une opportunité brute
+                if ($oppStatus === null || $oppStatus === '') {
+                    $rawProjectOpportunity ++;
+                } else {
+                    // fk_opp_status < 6 = opportunités pondérées
+                    if ($oppStatus < 6) {
+                        $ponderatedProjectOpportunity++;
+                    }
+                    // fk_opp_status == 6 = projets signés
+                    elseif ($oppStatus == 6) {
+                        $signedProjectOpportunity ++;
+                    }
+                    // fk_opp_status == 0 peut aussi être considéré comme brut
+                    elseif ($oppStatus == 0) {
+                        $rawProjectOpportunity ++;
+                    }
+                }
+            }
+        }
+
+        $funnelData = [
+            ['label' => 'Opportunités de projet brut', 'value' => $rawProjectOpportunity, 'color' => '#2196F3'],
+            ['label' => 'Opportunités de projet pondérés', 'value' => $ponderatedProjectOpportunity, 'color' => '#4CAF50'],
+            ['label' => 'Projets signés', 'value' => $signedProjectOpportunity, 'color' => '#FF9800'],
+        ];
+
+        $labels = [];
+        $data = [];
+        $colors = [];
+        $maxValue = 0;
+
+        foreach ($funnelData as $index => $stage) {
+            $labels[$index] = [
+                'label' => $langs->transnoentities($stage['label']),
+                'color' => $stage['color']
+            ];
+            $data[$index] = $stage['value'];
+            $colors[$index] = $stage['color'];
+            if ($stage['value'] > $maxValue) {
+                $maxValue = $stage['value'];
+            }
+        }
+
+        $array['labels'] = $labels;
+        $array['data'] = $data;
+        $array['colors'] = $colors;
+        $array['maxValue'] = $maxValue;
+
+        $array['custom_html'] = $this->generateFunnelHTML($funnelData, $langs);
+
+        return $array;
+    }
+
+    /**
+     * Generate HTML for funnel chart (pyramide inversée)
+     *
+     * @param array $funnelData Data array with label, value, color
+     * @param Translate $langs Translation object
+     * @return string HTML code
+     */
+    private function generateFunnelHTML(array $funnelData, Translate $langs): string
+    {
+        $maxValue = 0;
+        foreach ($funnelData as $stage) {
+            if ($stage['value'] > $maxValue) {
+                $maxValue = $stage['value'];
+            }
+        }
+
+        if ($maxValue <= 0) {
+            $maxValue = 1;
+        }
+
+        $countStages = count($funnelData);
+        $heightPerStage = 60;
+        $svgHeight = $countStages * $heightPerStage;
+        $svgWidth = 500;
+
+        $html = '<div class="reedcrm-funnel-container">';
+        $html .= '<svg viewBox="0 0 ' . $svgWidth . ' ' . $svgHeight . '" preserveAspectRatio="xMidYMin meet" class="reedcrm-funnel-svg">';
+
+        $html .= '<defs>';
+        for ($i = 0; $i < $countStages; $i++) {
+            $stage = $funnelData[$i];
+            $fill = $stage['color'];
+            // Darken color by 15% directly
+            $color = ltrim($fill, '#');
+            $rgb = [
+                hexdec(substr($color, 0, 2)),
+                hexdec(substr($color, 2, 2)),
+                hexdec(substr($color, 4, 2))
+            ];
+            for ($j = 0; $j < 3; $j++) {
+                $rgb[$j] = max(0, min(255, round($rgb[$j] * 0.85)));
+            }
+            $fillDarker = '#' . str_pad(dechex($rgb[0]), 2, '0', STR_PAD_LEFT)
+                         . str_pad(dechex($rgb[1]), 2, '0', STR_PAD_LEFT)
+                         . str_pad(dechex($rgb[2]), 2, '0', STR_PAD_LEFT);
+            $html .= '<linearGradient id="gradient-' . $i . '" x1="0%" y1="0%" x2="100%" y2="100%">';
+            $html .= '<stop offset="0%" stop-color="' . $fill . '" />';
+            $html .= '<stop offset="100%" stop-color="' . $fillDarker . '" />';
+            $html .= '</linearGradient>';
+        }
+        $html .= '</defs>';
+
+        for ($i = 0; $i < $countStages; $i++) {
+            $stage = $funnelData[$i];
+            $topValue = $stage['value'];
+            $bottomValue = ($i < $countStages - 1) ? $funnelData[$i + 1]['value'] : $stage['value'] * 0.4;
+
+            // S'assurer qu'il y a une largeur minimale même pour les valeurs à 0
+            $minWidth = 50; // Largeur minimale en pixels
+            $topWidth = max($minWidth, ($topValue / $maxValue) * ($svgWidth - 100));
+            $bottomWidth = max($minWidth * 0.7, ($bottomValue / $maxValue) * ($svgWidth - 100));
+
+            // S'assurer que le bas est toujours plus étroit que le haut
+            $bottomWidth = min($bottomWidth, $topWidth * 0.9);
+
+            $topLeft = ($svgWidth - $topWidth) / 2;
+            $topRight = $topLeft + $topWidth;
+
+            $bottomLeft = ($svgWidth - $bottomWidth) / 2;
+            $bottomRight = $bottomLeft + $bottomWidth;
+
+            $yTop = $i * $heightPerStage;
+            $yBottom = $yTop + $heightPerStage;
+
+            $points = [
+                $topLeft . ',' . $yTop,
+                $topRight . ',' . $yTop,
+                $bottomRight . ',' . $yBottom,
+                $bottomLeft . ',' . $yBottom
+            ];
+
+            // Polygone du segment
+            $html .= '<polygon points="' . implode(' ', $points) . '" fill="url(#gradient-' . $i . ')" stroke="#fff" stroke-width="2"></polygon>';
+
+            // Label et valeurs centrés
+            $labelX = $svgWidth / 2;
+            $labelY = $yTop + ($heightPerStage / 2);
+
+            $labelText = $langs->transnoentities($stage['label']);
+            $valueText = number_format($stage['value'], 0, ',', ' ');
+
+            $conversionRate = ($i > 0 && $funnelData[$i - 1]['value'] > 0)
+                ? round(($stage['value'] / $funnelData[$i - 1]['value']) * 100, 1) . '%'
+                : '';
+
+            // Utiliser une couleur de texte qui contraste bien avec le fond coloré
+            $textColor = '#FFFFFF';
+            $html .= '<text x="' . $labelX . '" y="' . ($labelY - 8) . '" fill="' . $textColor . '" font-size="14" font-weight="600" text-anchor="middle" class="reedcrm-funnel-text" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">' . dol_escape_htmltag($labelText) . '</text>';
+            $html .= '<text x="' . $labelX . '" y="' . ($labelY + 10) . '" fill="' . $textColor . '" font-size="13" text-anchor="middle" class="reedcrm-funnel-text" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">' . $valueText . '</text>';
+            if ($conversionRate) {
+                $html .= '<text x="' . $labelX . '" y="' . ($labelY + 24) . '" fill="' . $textColor . '" font-size="11" text-anchor="middle" class="reedcrm-funnel-text" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">' . $langs->transnoentities('ConversionRate') . ': ' . $conversionRate . '</text>';
+            }
+        }
+
+        $html .= '</svg>';
+
+        $html .= '</div>';
+
+        return $html;
+    }
+
+
+    /**
+     * Render inline date selectors for the funnel graph
+     *
+     * @param int $dateStartTimestamp
+     * @param int $dateEndTimestamp
+     * @return string
+     */
+    private function buildSalesFunnelFilters(int $dateStartTimestamp, int $dateEndTimestamp): string
+    {
+        global $form, $langs;
+
+        if (!is_object($form)) {
+            $form = new Form($this->db);
+        }
+
+        $html = '<div class="funnel-date-filter flex-row align-center gap-small">';
+        $html .= '<div class="flex flex-row align-center marginrightonly">';
+        $html .= '<label class="marginrightonlysmall">'.$langs->transnoentities('DateStart').'</label>';
+        $html .= $form->selectDate($dateStartTimestamp ?: '', 'salesfunnel_date_start', 1, 1, '', 'form', 1, 0, 0, '', '', '', 1);
+        $html .= '</div>';
+
+        $html .= '<div class="flex flex-row align-center marginrightonly">';
+        $html .= '<label class="marginrightonlysmall">'.$langs->transnoentities('DateEnd').'</label>';
+        $html .= $form->selectDate($dateEndTimestamp ?: '', 'salesfunnel_date_end', 1, 1, '', 'form', 1, 0, 0, '', '', '', 1);
+        $html .= '</div>';
+
+        $html .= '<button class="button_search" type="button" id="apply-salesfunnel-filter-btn">';
+        $html .= img_picto($langs->transnoentities('Filter'), 'fontawesome_redo_fas_grey_1em');
+        $html .= '</button>';
+        $html .= '</div>';
+
+        return $html;
     }
 }
