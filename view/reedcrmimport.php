@@ -192,7 +192,7 @@ if ($action == 'confirm_import_projects') {
                             $defaultref = $modProject->getNextValue($thirdparty, $proj);
                             $proj->ref = $defaultref;
                             $proj->title = '';
-                            $proj->description = dol_htmlentitiesbr($description);
+                            $proj->description = $description;
                             $proj->array_options['reedcrm_lastname'] = $nom;
                             $proj->array_options['reedcrm_firstname'] = $prenom;
                             $proj->array_options['reedcrm_email'] = $mail;
