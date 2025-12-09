@@ -195,6 +195,10 @@ function get_and_show_contact(string $caller, string $callee): array
         $call_event_id = store_call_event($result['user']->id, $result['contact']->id, $caller, $callee);
         $result['call_event_id'] = $call_event_id;
         log_to_file("Stored call event with ID: " . $call_event_id);
+    } else if (empty($result['contact'])) {
+        $call_event_id = store_call_event($result['user']->id, 0, $caller, $callee);
+        $result['call_event_id'] = $call_event_id;
+        log_to_file("No contact found. Stored call event with ID: " . $call_event_id . " for contact ID 0.");
     }
 
     return $result;
@@ -209,18 +213,26 @@ function store_call_event($user_id, $contact_id, $caller, $callee) {
     require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 
     $contact = new Contact($db);
-    $contact->fetch($contact_id);
+    $contact_socid = 0;
+
+    if ($contact_id > 0) {
+        $contact->fetch($contact_id);
+        $contact_name = $contact->getFullName($langs);
+        $contact_socid = $contact->fk_soc;
+    } else {
+        $contact_name = $langs->trans("UnknownContact");
+    }
 
     $actioncomm = new ActionComm($db);
     $actioncomm->type_code = 'AC_TEL';
-    $actioncomm->label = $langs->trans("IncomingCall") . ' - ' . $contact->getFullName($langs);
+    $actioncomm->label = $langs->trans("IncomingCall") . ' - ' . $contact_name;
     $actioncomm->datep = dol_now();
     $actioncomm->datef = dol_now();
     $actioncomm->percentage = 0;
     $actioncomm->userownerid = $user_id;
     $actioncomm->fk_user_action = $user_id;
     $actioncomm->contact_id = $contact_id;
-    $actioncomm->socid = $contact->fk_soc;
+    $actioncomm->socid = $contact_socid;
 
     $call_data = [
         'caller' => $caller,
@@ -265,7 +277,6 @@ function get_pending_call_events($user_id) {
     $sql = "SELECT a.id as rowid, a.fk_contact, a.datep as call_date, a.label, a.extraparams, a.fk_soc, ";
     $sql .= "c.lastname, c.firstname, c.phone, c.phone_mobile, c.email ";
     $sql .= "FROM " . MAIN_DB_PREFIX . "actioncomm a ";
-    $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid ";
     $sql .= "WHERE a.fk_user_action = " . (int)$user_id . " ";
     $sql .= "AND a.code = 'AC_TEL' ";
     $sql .= "AND a.percent = 0 ";

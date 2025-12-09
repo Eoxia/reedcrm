@@ -64,19 +64,28 @@ if ($user->id > 0) {
 
     foreach ($events as $event) {
 
-        $contact_url = dol_buildpath('/reedcrm/view/procard.php?from_id=' . $event->fk_soc . '&from_type=societe', 1);
+        // Si aucun contact associé (fk_contact = 0), on redirige vers la création de tiers
+        if (empty($event->fk_contact) || $event->fk_contact == 0) {
+            $contact_url = dol_buildpath('/societe/card.php?action=create', 1);
+            $contact_name = $langs->trans("UnknownContact");
+            $contact_label = $langs->trans("IncomingCall") . ': ' . $contact_name;
+        } else {
+            $contact_url = dol_buildpath('/reedcrm/view/procard.php?from_id=' . $event->fk_soc . '&from_type=societe', 1);
+            $contact_name = trim(($event->firstname ?? '') . ' ' . ($event->lastname ?? ''));
+            $contact_label = $langs->trans("IncomingCall") . ': ' . $contact_name;
+        }
 
         $eventfound[] = array(
             'type' => 'call',
             'id' => $event->rowid,
-            'id_contact' => $event->fk_contact,
-            'label' => $langs->trans("IncomingCall") . ': ' . $event->firstname . ' ' . $event->lastname,
-            'caller' => $event->caller,
-            'callee' => $event->callee,
+            'id_contact' => $event->fk_contact ?? 0,
+            'label' => $contact_label,
+            'caller' => $event->caller ?? '',
+            'callee' => $event->callee ?? '',
             'call_date' => dol_print_date($event->call_date, 'dayhour'),
-            'contact_name' => $event->firstname . ' ' . $event->lastname,
-            'contact_phone' => $event->phone ?: $event->phone_mobile,
-            'contact_email' => $event->email,
+            'contact_name' => $contact_name,
+            'contact_phone' => $event->phone ?: ($event->phone_mobile ?? ''),
+            'contact_email' => $event->email ?? '',
             'url' => $contact_url,
             'icon' => 'phone'
         );
