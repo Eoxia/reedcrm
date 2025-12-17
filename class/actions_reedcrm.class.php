@@ -606,8 +606,10 @@ class ActionsReedcrm
 
                             // Extrafield commRelaunch
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrl = dol_buildpath('/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project', 1);
-                                $out .= '<a href="' . $cardProUrl . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
+                                $popupName = 'eventproCard' . $parameters['obj']->id;
+                                $jsonClose = '(function(){var sx=window.scrollX||window.pageXOffset,sy=window.scrollY||window.pageYOffset;sessionStorage.setItem(\'sx\',sx);sessionStorage.setItem(\'sy\',sy);location.reload();})();';
+                                $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project&project_id=' . $parameters['obj']->id . '&popup_name=' . $popupName;
+                                $out .= dolButtonToOpenUrlInDialogPopup($popupName, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', $cardProUrl, '', 'classlink button bordertransp', "", $jsonClose);
                             }
 
                             if (!empty($lastActionComm)) {
