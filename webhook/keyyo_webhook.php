@@ -8,15 +8,22 @@ if (file_exists(__DIR__ . '/../saturne/saturne.main.inc.php')) {
 } else {
     die('Include of saturne main fails');
 }
-global $db;
+global $conf, $db;
 
 require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 date_default_timezone_set('Europe/Paris');
 
 function log_to_file($msg) {
+    global $conf;
+
+    if (!empty($conf->reedcrm->multidir_output[$conf->entity])) {
+        $reedcrmEntityDir = $conf->reedcrm->multidir_output[$conf->entity];
+    } else {
+        $reedcrmEntityDir = DOL_DATA_ROOT . '/reedcrm/' . $conf->entity;
+    }
     $line = '['.date('Y-m-d H:i:s').'] '.$msg.PHP_EOL;
-    file_put_contents(__DIR__.'/keyyo_webhook.log', $line, FILE_APPEND);
+    file_put_contents($reedcrmEntityDir .'/keyyo_webhook.log', $line, FILE_APPEND);
 }
 
 $expected = $conf->global->REEDCRM_KEYYO_EXPECTED_TOKEN ?? '';
