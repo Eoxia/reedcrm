@@ -69,3 +69,21 @@ NbLines = Number of lines
 
 # Keyyo Tab for Thirdparty
 KeyyoCalls = Keyyo Calls
+
+# Dashboard
+ProjectOpportunitiesList = Last 5 project opportunities
+OppPercent = Opportunity percentage
+ButtonActions = Actions
+
+# Sales Funnel
+SalesFunnel = Sales Funnel
+LeadsGenerated = Leads Generated
+Qualified = Qualified
+Presentation = Presentation
+ProposalSent = Proposal Sent
+Negotiation = Negotiation
+ClosedWon = Closed Won
+ConversionRate = Conversion Rate
+
+# Statistics
+Statistics = Statistics

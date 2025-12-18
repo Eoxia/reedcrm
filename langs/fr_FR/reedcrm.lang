@@ -246,6 +246,19 @@ ProjectOpportunitiesList = Les 5 dernières opportunités de projet
 OppPercent = Pourcentage d'opportunité
 ButtonActions = Actions
 ContentToBeAdded = Contenu à ajouter
+
+# Sales Funnel - Entonnoir de vente
+SalesFunnel = Entonnoir de vente
+
+# Statistics - Statistiques
+Statistics = Statistiques
+LeadsGenerated = Leads générés
+Qualified = Qualifiés
+Presentation = Présentation
+ProposalSent = Proposition envoyée
+Negotiation = Négociation
+ClosedWon = Gagné
+ConversionRate = Taux de conversion
 CommercialProposalsInProgress = Propositions commerciales en cours
 NoCommercialProposalsInProgress = Aucune proposition commerciale en cours
 AddEvent = Ajouter un événement

@@ -81,7 +81,7 @@ class modReedCRM extends DolibarrModules
         //$this->editor_squarred_logo = ''; // Must be image filename into the reedcrm/img directory followed with @reedcrm. Example: 'reedcrm.png@reedcrm'
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '21.0.0';
+        $this->version = '22.0.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -122,6 +122,7 @@ class modReedCRM extends DolibarrModules
             // Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all')
             /* BEGIN MODULEBUILDER HOOKSCONTEXTS */
             'hooks' => [
+                'agenda',
                 'thirdpartycomm',
                 'projectcard',
                 'projectlist',
@@ -147,7 +148,7 @@ class modReedCRM extends DolibarrModules
         ];
 
         // Data directories to create when module is enabled
-        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/project'];
+        $this->dirs = ['/reedcrm/temp'];
 
         // Config pages. Put here list of php page, stored into reedcrm/admin directory, to use to set up module
         $this->config_page_url = ['setup.php@reedcrm'];
@@ -168,7 +169,7 @@ class modReedCRM extends DolibarrModules
         // Prerequisites
         $this->phpmin                  = [7, 4];  // Minimum version of PHP required by module
         // $this->phpmax               = [8, 0];  // Maximum version of PHP required by module
-        $this->need_dolibarr_version   = [21, 0]; // Minimum version of Dolibarr required by module
+        $this->need_dolibarr_version   = [20, 0]; // Minimum version of Dolibarr required by module
         // $this->max_dolibarr_version = [21, 0]; // Maximum version of Dolibarr required by module
         $this->need_javascript_ajax    = 0;
 
@@ -486,6 +487,22 @@ class modReedCRM extends DolibarrModules
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\') && ' . $menuEnabled,
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('Statistics'),
+            'prefix'   => '<i class="fas fa-chart-bar pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'statistics',
+            'url'      => '/reedcrm/view/stats/stats.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0,
