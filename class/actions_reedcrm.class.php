@@ -609,10 +609,13 @@ class ActionsReedcrm
                                 $popupName = 'eventproCard' . $parameters['obj']->id;
                                 $jsonClose = '(function(){var sx=window.scrollX||window.pageXOffset,sy=window.scrollY||window.pageYOffset;sessionStorage.setItem(\'sx\',sx);sessionStorage.setItem(\'sy\',sy);location.reload();})();';
                                 $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project&project_id=' . $parameters['obj']->id . '&popup_name=' . $popupName;
-                                $out .= dolButtonToOpenUrlInDialogPopup($popupName, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', $cardProUrl, '', 'classlink button bordertransp', "", $jsonClose);
+//                                $out .= dolButtonToOpenUrlInDialogPopup($popupName, $langs->transnoentities('QuickEventCreation'), '<span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span>', $cardProUrl, '', 'classlink button bordertransp', "", $jsonClose);
+                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="add_relaunch_modal">';
+                                $out .= '<span class="fa fa-plus-circle valignmiddle paddingleft modal-open" title="' . $langs->trans('QuickEventCreation') . '"></span>';
                             }
 
                             if (!empty($lastActionComm)) {
+
                                 $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $parameters['obj']->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
                                 //$out .= '&nbsp' . $lastActionComm->getNomUrl(1);
                             }
