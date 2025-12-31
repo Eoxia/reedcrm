@@ -423,28 +423,67 @@ class ActionsReedcrm
                 $userCanCreate = $user->hasRight('societe', 'creer');
                 ?>
                 <script type="text/javascript">
-                jQuery(document).ready(function() {
-                    <?php if ($userCanCreate): ?>
-                    var createDropdown = jQuery('.dropdown-holder')
-                    if (createDropdown.length > 0) {
-                        var dropdownContent = createDropdown.find('.dropdown-content');
-                        if (dropdownContent.length > 0) {
-                            var newThirdPartyLink = '<a class="butAction" href="<?php echo dol_escape_js($newThirdPartyUrl); ?>">' +
-                                '<span class="textbutton"><?php echo $newThirdPartyLabel; ?></span>' +
-                                '</a>';
-                            dropdownContent.append(newThirdPartyLink);
+                    jQuery(document).ready(function() {
+                        <?php if ($userCanCreate): ?>
+                        var createDropdown = jQuery('.dropdown-holder')
+                        if (createDropdown.length > 0) {
+                            var dropdownContent = createDropdown.find('.dropdown-content');
+                            if (dropdownContent.length > 0) {
+                                var newThirdPartyLink = '<a class="butAction" href="<?php echo dol_escape_js($newThirdPartyUrl); ?>">' +
+                                    '<span class="textbutton"><?php echo $newThirdPartyLabel; ?></span>' +
+                                    '</a>';
+                                dropdownContent.append(newThirdPartyLink);
+                            }
                         }
-                    }
-                    <?php endif; ?>
-                });
+                        <?php endif; ?>
+                    });
                 </script>
                 <?php
             }
         }
 
-        if (preg_match('/invoicelist|invoicereclist|thirdpartylist/', $parameters['context'])) {
+        if (preg_match('/invoicelist|invoicereclist|thirdpartylist|projectlist/', $parameters['context'])) {
             $cssPath = dol_buildpath('/saturne/css/saturne.min.css', 1);
             print '<link href="' . $cssPath . '" rel="stylesheet">';
+            // Load reedcrm modal CSS and JS for projectlist
+            if (strpos($parameters['context'], 'projectlist') !== false) {
+                global $langs;
+                // Load main reedcrm CSS
+                $reedcrmMainCssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
+                print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
+                $reedcrmCssPath = dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1);
+                print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
+                $jsPath = dol_buildpath('/saturne/js/saturne.min.js', 1);
+                print '<script src="' . $jsPath . '"></script>';
+
+                // Single modal for all projects
+                $modalId = 'eventproCardModal';
+                $langs->load('reedcrm@reedcrm');
+                ?>
+                <div class="wpeo-modal modal-eventpro" id="<?php echo $modalId; ?>">
+                    <div class="modal-container wpeo-modal-event">
+                        <!-- Modal-Header -->
+                        <div class="modal-header">
+                            <h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?></h2>
+                            <div class="modal-close"><i class="fas fa-times"></i></div>
+                        </div>
+                        <!-- Modal-Content -->
+                        <div class="modal-content">
+                            <div id="eventproCardModal-loader" class="wpeo-loader"></div>
+                            <iframe id="eventproCardModal-iframe" src=""></iframe>
+                        </div>
+                    </div>
+                </div>
+                <script type="text/javascript" src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>"></script>
+                <script>
+                    jQuery(document).ready(function() {
+                        if (typeof window.reedcrm !== 'undefined' && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
+                            window.reedcrm.eventpro.init();
+                        }
+                    });
+                </script>
+                <?php
+            }
 
             $jQueryElement = 'notation_' . $object->element . '_contact';
             $pictoPath     = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
@@ -531,13 +570,13 @@ class ActionsReedcrm
                     $out .= '</a>';
                 }
                 ?>
-                 <script>
-                        var outJS = <?php echo json_encode($out); ?>;
+                <script>
+                    var outJS = <?php echo json_encode($out); ?>;
 
-                        var probCell = $('.liste > tbody > tr.liste_titre').find('th.right').has('a[href*="opp_percent"]');
+                    var probCell = $('.liste > tbody > tr.liste_titre').find('th.right').has('a[href*="opp_percent"]');
 
-                        probCell.append(outJS);
-                    </script>
+                    probCell.append(outJS);
+                </script>
                 <?php
             }
         }
@@ -572,9 +611,28 @@ class ActionsReedcrm
                             $actionComm = new ActionComm($db);
 
                             $actionComms = $actionComm->getActions($parameters['obj']->socid, $parameters['obj']->id, 'project', $filter, 'a.datec');
+
+                            $countsByType = [
+                                'call' => 0,
+                                'email' => 0,
+                                'rdv' => 0,
+                                'other' => 0
+                            ];
+
                             if (is_array($actionComms) && !empty($actionComms)) {
-                                $nbActionComms  = count($actionComms);
-                                $lastActionComm = array_shift($actionComms);
+                                $nbActionComms = count($actionComms);
+
+                                foreach ($actionComms as $ac) {
+                                    if ($ac->type_code == 'AC_TEL') {
+                                        $countsByType['call']++;
+                                    } elseif ($ac->type_code == 'AC_EMAIL') {
+                                        $countsByType['email']++;
+                                    } elseif ($ac->type_code == 'AC_RDV') {
+                                        $countsByType['rdv']++;
+                                    } else {
+                                        $countsByType['other']++;
+                                    }
+                                }
                             } else {
                                 $nbActionComms = 0;
                             }
@@ -587,33 +645,64 @@ class ActionsReedcrm
                                 $project->updateExtrafield('commrelaunch');
                             }
 
-                            if ($nbActionComms == 0) {
-                                $badgeClass = 1;
-                            } else if ($nbActionComms == 1 || $nbActionComms == 2) {
-                                $badgeClass = 4;
-                            } else {
-                                $badgeClass = 8;
-                            }
+                            $modalId = 'eventproCardModal';
+                            $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project&project_id=' . $parameters['obj']->id;
 
-                            $url = '?socid=' . $parameters['obj']->socid . '&fromtype=project' . '&project_id=' . $parameters['obj']->id . '&action=create&token=' . newToken();
+                            $out .= '<div class="reedcrm-relaunch-buttons">';
 
-                            $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
-                            // -- Old design --
-                            //$out .= '<span class="badge badge-info" title="' . $langs->trans('CommercialsRelaunching') . '">' . $nbActionComms . '</span> &nbsp';
-                            if ($nbActionComms > 0) {
-                                $out .= '<span> ' . dol_print_date($lastActionComm->datec, '%d/%m/%y %H:%M', 'tzuser') . '</span>';
-                            }
-
-                            // Extrafield commRelaunch
+                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div>';
+                            $out .= '<i class="fas fa-phone"></i>';
+                            $out .= '<span>' . $countsByType['call'] . '</span>';
+                            $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrl = dol_buildpath('/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project', 1);
-                                $out .= '<a href="' . $cardProUrl . '" target="_blank"><span class="fa fa-plus-circle valignmiddle paddingleft" title="' . $langs->trans('QuickEventCreation') . '"></span></a>';
+                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_TEL';
+                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
+                                $out .= '</span>';
                             }
+                            $out .= '</div>';
 
-                            if (!empty($lastActionComm)) {
-                                $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $parameters['obj']->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
-                                //$out .= '&nbsp' . $lastActionComm->getNomUrl(1);
+                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div>';
+                            $out .= '<i class="fas fa-envelope"></i>';
+                            $out .= '<span>' . $countsByType['email'] . '</span>';
+                            $out .= '</div>';
+                            if ($user->hasRight('agenda', 'myactions', 'create')) {
+                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_EMAIL';
+                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
+                                $out .= '</span>';
                             }
+                            $out .= '</div>';
+
+                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div>';
+                            $out .= '<i class="fas fa-calendar"></i>';
+                            $out .= '<span>' . $countsByType['rdv'] . '</span>';
+                            $out .= '</div>';
+                            if ($user->hasRight('agenda', 'myactions', 'create')) {
+                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_RDV';
+                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
+                                $out .= '</span>';
+                            }
+                            $out .= '</div>';
+
+                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div>';
+                            $out .= '<i class="fas fa-comment-dots"></i>';
+                            $out .= '<span>' . $countsByType['other'] . '</span>';
+                            $out .= '</div>';
+                            if ($user->hasRight('agenda', 'myactions', 'create')) {
+                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_OTH';
+                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
+                                $out .= '</span>';
+                            }
+                            $out .= '</div>';
+
+                            $out .= '</div>';
                         }
                         $out .= '</td>';
 
@@ -643,12 +732,12 @@ class ActionsReedcrm
                             $out3 .= dolGetBadge($parameters['obj']->opp_percent . ' %', '', 'status' . $statusBadge);
                         }
                         $out3 .= '</span></td>';
+
                     } ?>
                     <script>
                         var outJS  = <?php echo json_encode($out); ?>;
                         var outJS2 = <?php echo json_encode($out2); ?>;
                         var outJS3 = <?php echo json_encode($out3); ?>;
-
                         var commRelauchCell = $('.liste > tbody > tr.oddeven').find('td[data-key="projet.commrelaunch"]').last();
                         var commTaskCell    = $('.liste > tbody > tr.oddeven').find('td[data-key="projet.commtask"]').last();
                         var probCell        = $('.liste > tbody > tr.oddeven').find("td.right:contains('%')").last();
@@ -770,12 +859,12 @@ class ActionsReedcrm
         return 0; // or return 1 to replace standard code
     }
 
-  /**
-	 * Overloading the addMoreMassActions function
-	 *
-	 * @param   array $parameters Hook metadatas (context, etc...)
-	 * @return  int               < 0 on error, 0 on success, 1 to replace standard code
-	 */
+    /**
+     * Overloading the addMoreMassActions function
+     *
+     * @param   array $parameters Hook metadatas (context, etc...)
+     * @return  int               < 0 on error, 0 on success, 1 to replace standard code
+     */
     public function addMoreMassActions($parameters)
     {
         global $user, $langs;
