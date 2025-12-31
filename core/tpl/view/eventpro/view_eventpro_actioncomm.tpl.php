@@ -53,14 +53,26 @@
             }
 
             if ($currentTab == 'email') {
-                // Presend form
+                $originalProjectAddonPdf = getDolGlobalString('PROJECT_ADDON_PDF');
+                if ($object->element == 'project' && !empty($originalProjectAddonPdf)) {
+                    $conf->global->PROJECT_ADDON_PDF = '';
+                }
+
                 $modelmail    = 'thirdparty';
                 $defaulttopic = 'InformationMessage';
-                //$diroutput    = $conf->dolisirh->dir_output;
+                if ($object->element == 'project') {
+                    $diroutput = $conf->project->multidir_output[$object->entity] . '/' . dol_sanitizeFileName($object->ref);
+                } else {
+                    $diroutput = '';
+                }
                 $trackid      = $object->element . $object->id;
                 $action       = 'presend';
 
                 require_once DOL_DOCUMENT_ROOT . '/core/tpl/card_presend.tpl.php';
+
+                if ($object->element == 'project' && isset($originalProjectAddonPdf)) {
+                    $conf->global->PROJECT_ADDON_PDF = $originalProjectAddonPdf;
+                }
             }
 
             if ($currentTab == 'ticket' && isModEnabled('ticket')) {

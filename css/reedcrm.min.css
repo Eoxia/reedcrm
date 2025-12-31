@@ -205,3 +205,150 @@
     height: 400px;
   }
 }
+
+#eventproCardModal {
+  z-index: 1003 !important;
+}
+#eventproCardModal .modal-container {
+  position: fixed !important;
+  top: 50px !important;
+  right: -500px !important;
+  left: auto !important;
+  bottom: 0 !important;
+  max-width: 500px !important;
+  width: 500px !important;
+  height: calc(100vh - 100px) !important;
+  max-height: calc(100vh - 100px) !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  transition: right 0.3s ease-out !important;
+}
+#eventproCardModal.modal-active .modal-container {
+  right: 0 !important;
+}
+#eventproCardModal .modal-content {
+  overflow: hidden !important;
+  height: calc(100% - 60px) !important;
+  position: relative !important;
+}
+#eventproCardModal #eventproCardModal-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease-in;
+  display: block;
+}
+#eventproCardModal #eventproCardModal-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  display: none !important;
+  width: 50px;
+  height: 50px;
+}
+#eventproCardModal #eventproCardModal-loader.wpeo-loader {
+  display: block !important;
+}
+
+.reedcrm-relaunch-buttons {
+  display: flex;
+  gap: 3px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.reedcrm-relaunch-button {
+  position: relative;
+  border-radius: 3px;
+  padding: 3px 6px;
+  min-width: 32px;
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.reedcrm-relaunch-button > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+}
+.reedcrm-relaunch-button i {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+}
+.reedcrm-relaunch-button span {
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+.reedcrm-relaunch-button:nth-child(1) {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+}
+.reedcrm-relaunch-button:nth-child(2) {
+  background: linear-gradient(135deg, #50c878 0%, #3ea85e 100%);
+}
+.reedcrm-relaunch-button:nth-child(3) {
+  background: linear-gradient(135deg, #ff8c42 0%, #e6732e 100%);
+}
+.reedcrm-relaunch-button:nth-child(4) {
+  background: linear-gradient(135deg, #9b7fb8 0%, #7d5fa3 100%);
+}
+
+.reedcrm-modal-open {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #1e3a5f;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-size: 6px;
+  color: white;
+}
+
+html.reedcrm-modal-iframe-html {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+body.reedcrm-modal-iframe-body {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+body.reedcrm-modal-iframe-body > *:not(#addeventform):not(.select2-container):not(.select2-dropdown):not(.select2-dropdown-mask) {
+  display: none !important;
+}
+
+.reedcrm-modal-iframe-form {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 10px !important;
+  padding-bottom: 10px !important;
+  box-sizing: border-box !important;
+  min-height: 100% !important;
+}
+
+body.reedcrm-modal-iframe-body .select2-container,
+body.reedcrm-modal-iframe-body .select2-dropdown,
+body.reedcrm-modal-iframe-body .select2-dropdown-mask {
+  display: block !important;
+  visibility: visible !important;
+  z-index: 9999 !important;
+}
