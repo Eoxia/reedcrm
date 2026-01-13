@@ -577,9 +577,188 @@ window.reedcrm.eventpro.initAddContactInIframe = function(iframeDoc, iframeEleme
   });
 };
 
+/**
+ * Initialize tooltips for relaunch buttons
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ */
+window.reedcrm.eventpro.initRelaunchTooltips = function() {
+  var tooltipTimeout;
+  var $currentTooltip = null;
+  var tooltipHovered = false;
+  var loadingTooltip = false;
 
-      // Open modal using Saturne's modal system
-      $('#' + window.reedcrm.eventpro.modalId).addClass('modal-active');
+  $(document).on('mouseenter', '.reedcrm-relaunch-button', function() {
+    var $button = $(this);
+    var type = $button.data('relaunch-type');
+    var projectId = $button.closest('.reedcrm-relaunch-buttons').find('.reedcrm-modal-open').first().data('project-id');
+
+    if (!projectId || !type) {
+      return;
+    }
+
+    // Clear any existing timeout
+    clearTimeout(tooltipTimeout);
+
+    // Remove existing tooltip if any
+    if ($currentTooltip) {
+      $currentTooltip.remove();
+      $currentTooltip = null;
+    }
+    tooltipHovered = false;
+    loadingTooltip = true;
+
+    // Map type to action code
+    var actionTypeMap = {
+      'call': 'AC_TEL',
+      'email': 'AC_EMAIL',
+      'rdv': 'AC_RDV',
+      'other': 'AC_OTH'
+    };
+    var actionType = actionTypeMap[type] || 'AC_OTH';
+
+    // Create tooltip container with loader
+    var tooltipContent = '<div class="reedcrm-relaunch-tooltip">';
+    tooltipContent += '<div class="reedcrm-relaunch-tooltip-header">';
+
+    var typeLabels = {
+      'call': 'Appels',
+      'email': 'Emails',
+      'rdv': 'RDV',
+      'other': 'Autres'
+    };
+
+    tooltipContent += '<strong>' + (typeLabels[type] || type) + '</strong>';
+    tooltipContent += '</div>';
+    tooltipContent += '<div class="reedcrm-relaunch-tooltip-content">';
+    tooltipContent += '<div class="reedcrm-relaunch-tooltip-loading">' + (typeof window.saturne !== 'undefined' && window.saturne.loader ? '' : 'Chargement...') + '</div>';
+    tooltipContent += '</div>';
+    tooltipContent += '</div>';
+
+    // Create tooltip element
+    $currentTooltip = $(tooltipContent);
+    $currentTooltip.css({
+      position: 'absolute',
+      zIndex: 10000,
+      display: 'none'
+    });
+    $('body').append($currentTooltip);
+
+    // Position tooltip below the button, aligned to the left
+    var buttonOffset = $button.offset();
+    var buttonHeight = $button.outerHeight();
+
+    // Show tooltip first to get dimensions
+    $currentTooltip.css({ visibility: 'hidden', display: 'block' });
+    var tooltipWidth = $currentTooltip.outerWidth();
+    var tooltipHeight = $currentTooltip.outerHeight();
+    $currentTooltip.css({ visibility: 'visible', display: 'none' });
+
+    // Position below the button, aligned to left edge
+    var left = buttonOffset.left;
+    var top = buttonOffset.top + buttonHeight + 5; // 5px below the button
+
+    // Adjust if tooltip goes off screen to the right
+    if (left + tooltipWidth > $(window).width()) {
+      left = $(window).width() - tooltipWidth - 10; // 10px margin from right
+    }
+    // Adjust if tooltip goes off screen to the left
+    if (left < 10) {
+      left = 10; // 10px margin from left
+    }
+    // Adjust if tooltip goes off screen to the bottom
+    if (top + tooltipHeight > $(window).height()) {
+      top = buttonOffset.top - tooltipHeight - 5; // 5px above the button
+    }
+    // Adjust if tooltip goes off screen to the top
+    if (top < 10) {
+      top = 10; // 10px margin from top
+    }
+
+    $currentTooltip.css({
+      left: left + 'px',
+      top: top + 'px'
+    });
+
+    // Show tooltip with slight delay
+    tooltipTimeout = setTimeout(function() {
+      $currentTooltip.fadeIn(200);
+        var currentUrl = window.location.href;
+        var urlObj = new URL(currentUrl);
+        var pathname = urlObj.pathname;
+
+        // Extract base path (remove /projet/list.php or similar)
+        var pathParts = pathname.split('/').filter(function(p) { return p && p !== ''; });
+        // Remove the last 2 parts (module/page.php) to get base
+        if (pathParts.length >= 2) {
+          pathParts = pathParts.slice(0, -2);
+        }
+        var basePath = pathParts.length > 0 ? '/' + pathParts.join('/') : '';
+        const ajaxUrl = basePath + '/custom/reedcrm/ajax/get_relaunches_list.php';
+
+      $.ajax({
+        url: ajaxUrl,
+        type: 'GET',
+        data: {
+          project_id: projectId,
+          action_type: actionType,
+          token: $('meta[name=anti-csrf-currenttoken]').attr('content') || ''
+        },
+        dataType: 'json',
+        success: function(response) {
+          loadingTooltip = false;
+          if (response && response.success && response.html) {
+            $currentTooltip.find('.reedcrm-relaunch-tooltip-content').html(response.html);
+          } else {
+            var errorMsg = (response && response.error) ? response.error : 'Erreur lors du chargement';
+            $currentTooltip.find('.reedcrm-relaunch-tooltip-content').html('<div class="reedcrm-relaunch-tooltip-empty">' + errorMsg + '</div>');
+          }
+        },
+        error: function(xhr, status, error) {
+          loadingTooltip = false;
+          var errorMsg = 'Erreur lors du chargement';
+          if (xhr.responseJSON && xhr.responseJSON.error) {
+            errorMsg = xhr.responseJSON.error;
+          } else if (xhr.status === 0) {
+            errorMsg = 'Erreur de connexion';
+          } else if (xhr.status === 404) {
+            errorMsg = 'Fichier non trouvé';
+          } else if (xhr.status === 500) {
+            errorMsg = 'Erreur serveur';
+          }
+          $currentTooltip.find('.reedcrm-relaunch-tooltip-content').html('<div class="reedcrm-relaunch-tooltip-empty">' + errorMsg + '</div>');
+          console.error('AJAX Error:', status, error, xhr);
+        }
+      });
+    }, 300);
+
+    // Keep tooltip visible when hovering over it
+    $currentTooltip.on('mouseenter', function() {
+      tooltipHovered = true;
+      clearTimeout(tooltipTimeout);
+    });
+
+    $currentTooltip.on('mouseleave', function() {
+      tooltipHovered = false;
+      if (!loadingTooltip) {
+        $currentTooltip.fadeOut(150, function() {
+          $(this).remove();
+          $currentTooltip = null;
+        });
+      }
+    });
+  });
+
+  $(document).on('mouseleave', '.reedcrm-relaunch-button', function() {
+    clearTimeout(tooltipTimeout);
+    if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
+      $currentTooltip.fadeOut(150, function() {
+        $(this).remove();
+        $currentTooltip = null;
+      });
     }
   });
 };

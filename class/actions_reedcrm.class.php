@@ -619,18 +619,74 @@ class ActionsReedcrm
                                 'other' => 0
                             ];
 
+                            $relaunchesByType = [
+                                'call' => [],
+                                'email' => [],
+                                'rdv' => [],
+                                'other' => []
+                            ];
+
                             if (is_array($actionComms) && !empty($actionComms)) {
                                 $nbActionComms = count($actionComms);
 
+                                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+                                require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+
                                 foreach ($actionComms as $ac) {
+                                    $contactName = '';
+                                    if (!empty($ac->contact_id)) {
+                                        $contact = new Contact($db);
+                                        if ($contact->fetch($ac->contact_id) > 0) {
+                                            $contactName = $contact->getFullName($langs);
+                                        }
+                                    }
+
+                                    $userName = '';
+                                    if (!empty($ac->userownerid)) {
+                                        $userOwner = new User($db);
+                                        if ($userOwner->fetch($ac->userownerid) > 0) {
+                                            $userName = $userOwner->getFullName($langs);
+                                        }
+                                    }
+
+                                    $status = '';
+                                    if (isset($ac->percentage)) {
+                                        if ($ac->percentage >= 100) {
+                                            $status = $langs->trans('Done');
+                                        } elseif ($ac->percentage > 0) {
+                                            $status = $ac->percentage . '%';
+                                        }
+                                    }
+
+                                    $note = '';
+                                    if (!empty($ac->note_private)) {
+                                        $note = dolGetFirstLineOfText(dol_string_nohtmltag($ac->note_private, 1));
+                                        $note = dol_trunc($note, 100);
+                                    }
+
+                                    $relaunchData = [
+                                        'date' => dol_print_date($ac->datec, 'dayhourtext', 'tzuser'),
+                                        'datep' => dol_print_date($ac->datep, 'dayhour', 'tzuser'),
+                                        'label' => $ac->label,
+                                        'note' => $note,
+                                        'contact' => $contactName,
+                                        'user' => $userName,
+                                        'status' => $status,
+                                        'id' => $ac->id
+                                    ];
+
                                     if ($ac->type_code == 'AC_TEL') {
                                         $countsByType['call']++;
+                                        $relaunchesByType['call'][] = $relaunchData;
                                     } elseif ($ac->type_code == 'AC_EMAIL') {
                                         $countsByType['email']++;
+                                        $relaunchesByType['email'][] = $relaunchData;
                                     } elseif ($ac->type_code == 'AC_RDV') {
                                         $countsByType['rdv']++;
+                                        $relaunchesByType['rdv'][] = $relaunchData;
                                     } else {
                                         $countsByType['other']++;
+                                        $relaunchesByType['other'][] = $relaunchData;
                                     }
                                 }
                             } else {
@@ -650,7 +706,7 @@ class ActionsReedcrm
 
                             $out .= '<div class="reedcrm-relaunch-buttons">';
 
-                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="call" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['call'])) . '">';
                             $out .= '<div>';
                             $out .= '<i class="fas fa-phone"></i>';
                             $out .= '<span>' . $countsByType['call'] . '</span>';
@@ -663,7 +719,7 @@ class ActionsReedcrm
                             }
                             $out .= '</div>';
 
-                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="email" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['email'])) . '">';
                             $out .= '<div>';
                             $out .= '<i class="fas fa-envelope"></i>';
                             $out .= '<span>' . $countsByType['email'] . '</span>';
@@ -676,7 +732,7 @@ class ActionsReedcrm
                             }
                             $out .= '</div>';
 
-                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="rdv" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['rdv'])) . '">';
                             $out .= '<div>';
                             $out .= '<i class="fas fa-calendar"></i>';
                             $out .= '<span>' . $countsByType['rdv'] . '</span>';
@@ -689,7 +745,7 @@ class ActionsReedcrm
                             }
                             $out .= '</div>';
 
-                            $out .= '<div class="reedcrm-relaunch-button">';
+                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="other" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['other'])) . '">';
                             $out .= '<div>';
                             $out .= '<i class="fas fa-comment-dots"></i>';
                             $out .= '<span>' . $countsByType['other'] . '</span>';
