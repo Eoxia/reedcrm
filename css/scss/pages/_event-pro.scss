@@ -1,5 +1,8 @@
 #eventproCardModal {
     z-index: 1003 !important;
+    
+    // Reduce overlay opacity - make it less dark
+    background: rgba(39, 42, 53, 0.3) !important;
 
     .modal-container {
         position: fixed !important;
@@ -54,18 +57,24 @@
     }
 }
 
+// Column width for relances commerciales
+td.tdoverflowmax200 {
+    min-width: 320px !important;
+    width: auto !important;
+}
+
 .reedcrm-relaunch-buttons {
     display: flex;
-    gap: 3px;
+    gap: 8px;
     flex-wrap: nowrap;
     align-items: center;
 }
 
 .reedcrm-relaunch-button {
     position: relative;
-    border-radius: 3px;
-    padding: 3px 6px;
-    min-width: 32px;
+    border-radius: 4px;
+    padding: 6px 10px;
+    min-width: 40px;
     color: white;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 
@@ -73,18 +82,18 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 3px;
+        gap: 4px;
         line-height: 1;
     }
 
     i {
-        font-size: 11px;
+        font-size: 14px;
         display: flex;
         align-items: center;
     }
 
     span {
-        font-size: 11px;
+        font-size: 14px;
         font-weight: bold;
         line-height: 1;
         display: flex;
@@ -112,21 +121,104 @@
     }
 }
 
+.reedcrm-relaunch-tooltip {
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 600px;
+    max-width: 90vw;
+    max-height: 500px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+
+    .reedcrm-relaunch-tooltip-header {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+        background: #f8f9fa;
+        border-radius: 6px 6px 0 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
+        flex-shrink: 0;
+    }
+
+    .reedcrm-relaunch-tooltip-content {
+        padding: 0;
+        max-height: 450px;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        table {
+            margin: 0;
+            width: 100%;
+            table-layout: fixed; // Fixed layout to prevent horizontal scroll
+
+            tr {
+                &:hover {
+                    background: #f8f9fa;
+                }
+            }
+
+            td {
+                padding: 8px 12px;
+                vertical-align: top;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                
+                &.nowrap {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                
+                &.tdoverflowmax200 {
+                    max-width: 200px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+            }
+        }
+    }
+
+    .reedcrm-relaunch-tooltip-loading {
+        padding: 40px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .reedcrm-relaunch-tooltip-empty {
+        padding: 40px;
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+    }
+}
+
 .reedcrm-modal-open {
     position: absolute;
-    top: -4px;
-    right: -4px;
+    top: -6px;
+    right: -6px;
     background: #1e3a5f;
     border-radius: 50%;
-    width: 12px;
-    height: 12px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    font-size: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-size: 10px;
     color: white;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: #2a4f7a;
+        transform: scale(1.1);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    }
 }
 
 html.reedcrm-modal-iframe-html {
@@ -163,5 +255,162 @@ body.reedcrm-modal-iframe-body .select2-dropdown-mask {
     display: block !important;
     visibility: visible !important;
     z-index: 9999 !important;
+}
+
+.reedcrm-contact-field-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    > label {
+        flex: 1;
+        min-width: 0;
+
+        .select2-container {
+            max-width: 100%;
+        }
+    }
+}
+
+.reedcrm-add-contact-btn {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2a4f7a 100%);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(30, 58, 95, 0.2);
+    margin-top: 5px;
+
+    &:hover {
+        background: linear-gradient(135deg, #2a4f7a 0%, #3a6fa0 100%);
+        box-shadow: 0 3px 6px rgba(30, 58, 95, 0.3);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(30, 58, 95, 0.2);
+    }
+
+    i {
+        font-size: 14px;
+        font-weight: 600;
+    }
+}
+
+.reedcrm-add-contact-form {
+    margin-top: 15px;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .wpeo-grid {
+        margin-bottom: 15px;
+        gap: 15px;
+
+        > div {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    label {
+        font-weight: 500;
+        margin-bottom: 6px;
+        display: block;
+        font-size: 13px;
+        color: #495057;
+        border: none !important;
+        padding: 0 !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
+
+    input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        background: #ffffff;
+        box-sizing: border-box;
+
+        &:focus {
+            outline: none;
+            border-color: #1e3a5f;
+            box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.1);
+        }
+
+        &:hover:not(:focus) {
+            border-color: #adb5bd;
+        }
+
+        &::placeholder {
+            color: #adb5bd;
+        }
+    }
+
+    .reedcrm-add-contact-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        justify-content: flex-end;
+        padding-top: 15px;
+        border-top: 1px solid #e9ecef;
+
+        button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+
+            &.reedcrm-add-contact-submit {
+                background: #1e3a5f;
+                color: white;
+
+                &:hover:not(:disabled) {
+                    background: #2a4f7a;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 4px rgba(30, 58, 95, 0.2);
+                }
+
+                &:active:not(:disabled) {
+                    transform: translateY(0);
+                }
+
+                &:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                    transform: none;
+                }
+            }
+
+            &.reedcrm-add-contact-cancel {
+                background: #ffffff;
+                color: #6c757d;
+                border: 1px solid #dee2e6;
+
+                &:hover {
+                    background: #f8f9fa;
+                    border-color: #adb5bd;
+                    color: #495057;
+                }
+            }
+        }
+    }
 }
 

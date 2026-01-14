@@ -43,6 +43,7 @@ $objectMetadata = saturne_get_objects_metadata($fromType);
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
+require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 if (isModEnabled('ticket')) {
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formticket.class.php';
     require_once DOL_DOCUMENT_ROOT . '/core/lib/ticket.lib.php';
@@ -105,6 +106,64 @@ if ($resHook < 0) {
 }
 
 if (empty($resHook)) {
+    // Action to create contact
+    if ($action == 'create_contact') {
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+        
+        $contact = new Contact($db);
+        $contact->socid = GETPOSTINT('socid') ?: (isset($object->thirdparty->id) ? $object->thirdparty->id : 0);
+        $contact->lastname = GETPOST('new_contact_lastname', 'alpha');
+        $contact->firstname = GETPOST('new_contact_firstname', 'alpha');
+        $contact->phone_pro = GETPOST('new_contact_phone_pro', 'alpha');
+        $contact->email = GETPOST('new_contact_email', 'email');
+        $contact->statut = 1; // Active
+        
+        // Return JSON response for AJAX
+        header('Content-Type: application/json');
+        
+        if (empty($contact->lastname)) {
+            echo json_encode([
+                'success' => false,
+                'error' => $langs->trans('ErrorFieldRequired', $langs->transnoentities('Lastname'))
+            ]);
+            exit;
+        }
+        
+        if (empty($contact->socid)) {
+            echo json_encode([
+                'success' => false,
+                'error' => $langs->trans('ErrorFieldRequired', $langs->transnoentities('ThirdParty'))
+            ]);
+            exit;
+        }
+        
+        $result = $contact->create($user);
+        if ($result > 0) {
+            // Fetch the contact to get full data
+            $contact->fetch($result);
+            
+            echo json_encode([
+                'success' => true,
+                'contact_id' => $result,
+                'contact_label' => $contact->getFullName($langs)
+            ]);
+            exit;
+        } else {
+            $errorMsg = $contact->error;
+            if (empty($errorMsg) && !empty($contact->errors)) {
+                $errorMsg = implode(', ', $contact->errors);
+            }
+            if (empty($errorMsg)) {
+                $errorMsg = $langs->trans('Error');
+            }
+            echo json_encode([
+                'success' => false,
+                'error' => $errorMsg
+            ]);
+            exit;
+        }
+    }
+
     // Action to add commercial relaunch event
     if ($action == 'add_event') {
         $actionComm->socid             = GETPOSTINT('socid');
