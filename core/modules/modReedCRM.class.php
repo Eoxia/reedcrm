@@ -230,6 +230,10 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_EVENT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_EVENT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
+            // QUICK CREATION
+            $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_UNIT', 'chaine', 'i', '', 0, 'current'],
+
             // CONST PWA
             $i++ => ['REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
 

@@ -170,7 +170,7 @@ if (empty($resHook)) {
         $actionComm->socpeopleassigned = [GETPOSTINT('contactid') => GETPOSTINT('contactid')];
         $actionComm->type_code         = GETPOST('actioncode', 'aZ09');
 
-        $datep = dol_mktime(GETPOSTINT('event_hour') - 2, GETPOSTINT('event_min'), 0, GETPOSTINT('event_month'), GETPOSTINT('event_day'), GETPOSTINT('event_year'));
+        $datep = dol_mktime(GETPOSTINT('event_hour'), GETPOSTINT('event_min'), 0, GETPOSTINT('event_month'), GETPOSTINT('event_day'), GETPOSTINT('event_year'), 'tzuserrel');
         if ($datep > 0) {
             $actionComm->datep = $datep;
         } else {
@@ -188,6 +188,42 @@ if (empty($resHook)) {
 
         $category->fetch(getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG'));
         $category->add_type($actionComm, 'actioncomm');
+
+        if ($result > 0 && GETPOST('add_reminder')) {
+            $date_reminder = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
+
+            $actionComm->type_code    = 'AC_OTH';
+
+            $actionComm->datep        = $date_reminder;
+
+            $actionComm->label        = GETPOST('reminder_title');
+            $actionComm->note_private = '';
+
+            $result = $actionComm->create($user);
+
+            $actionCommReminder = new ActionCommReminder($db);
+
+
+            $offsetvalue = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_OFFSET');
+            $offsetunit  = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT');
+
+            $dateremind = dol_time_plus_duree($date_reminder, -1 * $offsetvalue, $offsetunit);
+
+            $actionCommReminder->dateremind = $dateremind;
+            $actionCommReminder->typeremind = 'browser';
+
+            $actionCommReminder->offsetvalue = $offsetvalue;
+            $actionCommReminder->offsetunit  = $offsetunit;
+
+            $actionCommReminder->fk_actioncomm = $result;
+
+            $actionCommReminder->fk_user = $user->id;
+
+            $actionCommReminder->status = $actionCommReminder::STATUS_TODO;
+
+            $result = $actionCommReminder->create($user);
+        }
+
 
         if ($result > 0) {
             setEventMessages($langs->trans('EventCreated'), null);

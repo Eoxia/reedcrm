@@ -589,6 +589,53 @@ print '</table>';
 print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
 print '</form>';
 
+// Quick creations
+print load_fiche_titre($langs->trans('Configs', $langs->transnoentities('QuickEventCreation')), '', '');
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="quickcreation_api">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="set_config_quick_creation">';
+print '<table class="noborder centpercent">';
+
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('Name') . '</td>';
+print '<td>' . $langs->trans('Description') . '</td>';
+print '<td>' . $langs->trans('Value') . '</td>';
+print '</tr>';
+
+
+// Remind offset value
+print '<tr class="oddeven"><td>';
+print $langs->trans('Categories');
+print '</td><td>';
+print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Categories'));
+print '</td>';
+
+print '<td class="">';
+print '<input type="number" name="remind_offset" class="minwidth200" value="'.getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_OFFSET').'" min="1">';
+print '</td></td></tr>';
+
+
+$offsetUnits = [
+    'd' => $langs->trans('Jour'),    // Jour
+    'i' => $langs->trans('Minute'), // Minute
+    's' => $langs->trans('Seconde') // Seconde
+];
+// Remind offset unit
+print '<tr class="oddeven"><td>';
+print $langs->trans('Categories');
+print '</td><td>';
+print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Categories'));
+print '</td>';
+
+print '<td class="">';
+print $form->selectarray('remind_unit', $offsetUnits, getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT'));
+print '</td></td></tr>';
+
+
+print '</table>';
+print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print '</form>';
+
 // Quick creations API
 print load_fiche_titre($langs->trans('Configs', $langs->trans('ApiQuickCreations')), '', '');
 
