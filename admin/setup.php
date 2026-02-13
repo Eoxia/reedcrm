@@ -589,7 +589,7 @@ print '</table>';
 print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
 print '</form>';
 
-// Quick creations
+// Quick events
 print load_fiche_titre($langs->trans('Configs', $langs->transnoentities('QuickEventCreation')), '', '');
 print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="quickcreation_api">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
@@ -605,9 +605,9 @@ print '</tr>';
 
 // Remind offset value
 print '<tr class="oddeven"><td>';
-print $langs->trans('Categories');
+print $langs->trans('ReminderValue');
 print '</td><td>';
-print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Categories'));
+print $langs->trans('ReminderValueDescription', $langs->transnoentities('Categories'));
 print '</td>';
 
 print '<td class="">';
@@ -622,9 +622,9 @@ $offsetUnits = [
 ];
 // Remind offset unit
 print '<tr class="oddeven"><td>';
-print $langs->trans('Categories');
+print $langs->trans('ReminderUnit');
 print '</td><td>';
-print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Categories'));
+print $langs->trans('ReminderUnitDescription', $langs->transnoentities('Categories'));
 print '</td>';
 
 print '<td class="">';
