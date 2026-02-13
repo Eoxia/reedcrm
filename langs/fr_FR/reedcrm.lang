@@ -79,6 +79,11 @@ ProductKitConfDesc               = Indépendemment du paramètre du module produ
 ProductInactiveMonths            = Nombre de mois d'inactivité pour qu'un produit soit considéré comme inactif
 ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni d'achat) pour qu'un produit soit considéré comme inactif dans les listes de sélection. <br> Valeur par défaut : <b> 6 </b>
 
+# QuickEvent
+ReminderValue=Délai du rappel
+ReminderValueDescription=Nombre d’unités de temps avant l’événement pour déclencher le rappel
+ReminderUnit=Unité du rappel
+ReminderUnitDescription=nité de temps utilisée pour le rappel
 
 # ApiQuickCreation
 ApiQuickCreations   = ajouts rapides via l'api
