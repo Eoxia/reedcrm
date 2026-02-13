@@ -169,7 +169,8 @@ if (empty($resHook)) {
         $actionComm->socid             = GETPOSTINT('socid');
         $actionComm->socpeopleassigned = [GETPOSTINT('contactid') => GETPOSTINT('contactid')];
         $actionComm->type_code         = GETPOST('actioncode', 'aZ09');
-
+        $actionComm->percentage        = 100;
+        
         $datep = dol_mktime(GETPOSTINT('event_hour'), GETPOSTINT('event_min'), 0, GETPOSTINT('event_month'), GETPOSTINT('event_day'), GETPOSTINT('event_year'), 'tzuserrel');
         if ($datep > 0) {
             $actionComm->datep = $datep;
