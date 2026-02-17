@@ -66,6 +66,7 @@ saturne_load_langs();
 $id         = GETPOSTINT('from_id');
 $action     = GETPOST('action', 'aZ09');
 $currentTab = GETPOSTISSET('tab') ? GETPOST('tab', 'aZ09') : 'note';
+$isModal    = GETPOSTINT('modal');
 
 // Initialize objects
 $object     = $objectMetadata['object'];
@@ -227,10 +228,24 @@ if (empty($resHook)) {
 
 
         if ($result > 0) {
+            if ($isModal) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => $langs->trans('EventCreated')]);
+                exit;
+            }
             setEventMessages($langs->trans('EventCreated'), null);
             header('Location: ' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=note');
             exit;
         } else {
+            if ($isModal) {
+                header('Content-Type: application/json');
+                $errorMsg = $actionComm->error;
+                if (empty($errorMsg) && !empty($actionComm->errors)) {
+                    $errorMsg = implode(', ', $actionComm->errors);
+                }
+                echo json_encode(['success' => false, 'error' => $errorMsg ?: $langs->trans('Error')]);
+                exit;
+            }
             setEventMessages($actionComm->error, $actionComm->errors, 'errors');
         }
     }
@@ -238,20 +253,32 @@ if (empty($resHook)) {
     // Action to create ticket
     if ($action == 'create_ticket' && isModEnabled('ticket')) {
         $error = 0;
-
+        $errorMessages = [];
 
         // Validate required fields
         if (empty(GETPOST('ticket_subject', 'alphanohtml'))) {
-            setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("Subject")), null, 'errors');
+            $errorMessages[] = $langs->trans("ErrorFieldRequired", $langs->transnoentities("Subject"));
             $error++;
         }
         if (empty(GETPOST('ticket_type', 'aZ09'))) {
-            setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("Type")), null, 'errors');
+            $errorMessages[] = $langs->trans("ErrorFieldRequired", $langs->transnoentities("Type"));
             $error++;
         }
         if (empty(GETPOST('ticket_category', 'aZ09'))) {
-            setEventMessages($langs->trans("ErrorFieldRequired", $langs->transnoentities("Category")), null, 'errors');
+            $errorMessages[] = $langs->trans("ErrorFieldRequired", $langs->transnoentities("Category"));
             $error++;
+        }
+
+        if ($error && $isModal) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => implode(', ', $errorMessages)]);
+            exit;
+        }
+
+        if ($error && !$isModal) {
+            foreach ($errorMessages as $msg) {
+                setEventMessages($msg, null, 'errors');
+            }
         }
 
         if (!$error) {
@@ -306,11 +333,25 @@ if (empty($resHook)) {
                     $ticket->add_object_linked('societe', $ticket->fk_soc, $user);
                 }
 
+            if ($isModal) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'message' => $langs->trans('TicketCreated')]);
+                    exit;
+                }
             setEventMessages($langs->trans("TicketCreated"), null, 'mesgs');
                 // Redirect to avoid resubmission - include tab to show ticket tab
                 header("Location: " . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=ticket');
             exit;
         } else {
+                if ($isModal) {
+                    header('Content-Type: application/json');
+                    $errorMsg = $ticket->error;
+                    if (empty($errorMsg) && !empty($ticket->errors)) {
+                        $errorMsg = implode(', ', $ticket->errors);
+                    }
+                    echo json_encode(['success' => false, 'error' => $errorMsg ?: $langs->trans('Error')]);
+                    exit;
+                }
             setEventMessages($ticket->error, $ticket->errors, 'errors');
                 // Stay on ticket tab to show errors
                 $currentTab = 'ticket';
@@ -325,6 +366,15 @@ if (empty($resHook)) {
 /*
 * View
 */
+
+if ($isModal) {
+    // Modal mode: output only the form template without header/banner/footer
+    if (empty($action)) {
+        require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+    }
+    $db->close();
+    exit;
+}
 
 $title   = $langs->transnoentities('ReedCRM');
 $helpUrl = 'FR:Module_ReedCRM';
