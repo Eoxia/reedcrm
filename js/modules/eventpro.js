@@ -22,8 +22,7 @@
  * \brief   JavaScript eventpro modal file for module ReedCRM
  */
 
-// Create namespace if not exists
-if (!window.reedcrm) { 
+if (!window.reedcrm) {
   window.reedcrm = {};
 }
 
@@ -73,7 +72,7 @@ window.reedcrm.eventpro.refreshTriggered = false;
  *
  * @returns {void}
  */
-window.reedcrm.eventpro.init = function() {
+window.reedcrm.eventpro.init = function () {
   window.reedcrm.eventpro.event();
   window.reedcrm.eventpro.modalCloseWatcher();
   window.reedcrm.eventpro.initAddContact();
@@ -81,57 +80,114 @@ window.reedcrm.eventpro.init = function() {
 };
 
 /**
- * Inject CSS into iframe to show only #addeventform
+ * Load content into modal via AJAX
  *
  * @memberof ReedCRM_EventPro
  *
- * @since   1.0.0
- * @version 1.0.0
+ * @since   1.1.0
+ * @version 1.1.0
  *
- * @param {HTMLElement} iframe The iframe element
+ * @param {String} url The URL to load
  * @returns {void}
  */
-window.reedcrm.eventpro.injectIframeCSS = function(iframe) {
-  try {
-    var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    var addeventform = iframeDoc.getElementById('addeventform');
-    if (!addeventform) {
-      console.log('addeventform not found');
-      return;
-    }
+window.reedcrm.eventpro.loadModalContent = function (url) {
+  var $content = $('#' + window.reedcrm.eventpro.modalId + '-content');
+  var $loader = $('#' + window.reedcrm.eventpro.modalId + '-loader');
 
-    // Hide all body children first
-    Array.from(iframeDoc.body.children).forEach(function(child) {
-      child.style.display = 'none';
-    });
-
-    // Move addeventform directly to body
-    iframeDoc.body.appendChild(addeventform);
-
-    // Remove any elements after the form
-    var nextSibling = addeventform.nextSibling;
-    while (nextSibling) {
-      var toRemove = nextSibling;
-      nextSibling = nextSibling.nextSibling;
-      iframeDoc.body.removeChild(toRemove);
-    }
-
-    // Add classes for styling (CSS is loaded via reedcrm.min.css in procard.php)
-    iframeDoc.documentElement.classList.add('reedcrm-modal-iframe-html');
-    iframeDoc.body.classList.add('reedcrm-modal-iframe-body');
-    addeventform.classList.add('reedcrm-modal-iframe-form');
-
-    // Show iframe once classes are added and hide loader
-    $(iframe).css('opacity', '1');
-    if (typeof window.saturne !== 'undefined' && window.saturne.loader) {
-      window.saturne.loader.remove($('#' + window.reedcrm.eventpro.modalId + '-loader'));
-    } else {
-      $('#' + window.reedcrm.eventpro.modalId + '-loader').hide();
-    }
-  } catch (e) {
-    // Cross-origin or other error, ignore
-    console.log('Could not inject CSS into iframe:', e);
+  $loader.show().addClass('wpeo-loader');
+  if (typeof window.saturne !== 'undefined' && window.saturne.loader) {
+    window.saturne.loader.display($loader);
   }
+  $content.hide().empty();
+
+  var separator = url.indexOf('?') !== -1 ? '&' : '?';
+  var ajaxUrl = url + separator + 'modal=1';
+
+  $.ajax({
+    url: ajaxUrl,
+    type: 'GET',
+    success: function (html) {
+      $content.html(html);
+      $content.show();
+
+      if (typeof window.saturne !== 'undefined' && window.saturne.loader) {
+        window.saturne.loader.remove($loader);
+      } else {
+        $loader.hide();
+      }
+
+      window.reedcrm.eventpro.bindModalContentEvents();
+    },
+    error: function () {
+      if (typeof window.saturne !== 'undefined' && window.saturne.loader) {
+        window.saturne.loader.remove($loader);
+      } else {
+        $loader.hide();
+      }
+      $content.html('<div class="error" style="padding: 20px;">Erreur lors du chargement</div>');
+      $content.show();
+    }
+  });
+};
+
+/**
+ * Bind events on AJAX-loaded modal content (form submit, tab clicks)
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.1.0
+ * @version 1.1.0
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventpro.bindModalContentEvents = function () {
+  var $content = $('#' + window.reedcrm.eventpro.modalId + '-content');
+
+  $content.find('form').off('submit.reedcrm').on('submit.reedcrm', function (e) {
+    e.preventDefault();
+    var $form = $(this);
+    var formAction = $form.attr('action');
+    var separator = formAction.indexOf('?') !== -1 ? '&' : '?';
+
+    $.ajax({
+      url: formAction + separator + 'modal=1',
+      type: 'POST',
+      data: $form.serialize(),
+      dataType: 'json',
+      success: function (response) {
+        if (response && response.success) {
+          var projectId = $('#' + window.reedcrm.eventpro.modalId).attr('data-project-id');
+          $('#' + window.reedcrm.eventpro.modalId).removeClass('modal-active');
+          $('#' + window.reedcrm.eventpro.modalId + '-content').empty();
+          window.reedcrm.eventpro.refreshProjectRow(projectId);
+
+          if (response.message && typeof window.saturne !== 'undefined' && window.saturne.notification) {
+            window.saturne.notification.success(response.message);
+          }
+        } else {
+          var errorMsg = (response && response.error) ? response.error : 'Erreur';
+          if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
+            window.saturne.notification.error(errorMsg);
+          } else {
+            alert(errorMsg);
+          }
+        }
+      },
+      error: function () {
+        if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
+          window.saturne.notification.error('Erreur lors de la soumission');
+        } else {
+          alert('Erreur lors de la soumission');
+        }
+      }
+    });
+  });
+
+  $content.find('a[href*="tab="]').on('click', function (e) {
+    e.preventDefault();
+    var url = $(this).attr('href');
+    window.reedcrm.eventpro.loadModalContent(url);
+  });
 };
 
 /**
@@ -145,7 +201,7 @@ window.reedcrm.eventpro.injectIframeCSS = function(iframe) {
  * @param {String|Number} projectId The project ID
  * @returns {void}
  */
-window.reedcrm.eventpro.refreshProjectRow = function(projectId) {
+window.reedcrm.eventpro.refreshProjectRow = function (projectId) {
   if (!projectId) {
     window.location.reload();
     return;
@@ -155,23 +211,20 @@ window.reedcrm.eventpro.refreshProjectRow = function(projectId) {
   var curTr = $('tr[data-rowid="' + projectId + '"]');
 
   if (!curTr.length) {
-    // Not on list page (e.g. card.php, messaging.php), reload the page
     window.location.reload();
     return;
   }
 
-  // Add a loading indicator
   curTr.css('opacity', '0.5');
 
   $.ajax({
     url: baseUrl,
     type: 'GET',
-    success: function(resp) {
+    success: function (resp) {
       var $resp = $(resp);
       var newTr = $resp.find('tr[data-rowid="' + projectId + '"]');
       if (newTr.length && curTr.length) {
-        // Fade out, replace content, fade in
-        curTr.fadeOut(200, function() {
+        curTr.fadeOut(200, function () {
           curTr.html(newTr.html());
           curTr.css('opacity', '1');
           curTr.fadeIn(200);
@@ -180,7 +233,7 @@ window.reedcrm.eventpro.refreshProjectRow = function(projectId) {
         curTr.css('opacity', '1');
       }
     },
-    error: function() {
+    error: function () {
       curTr.css('opacity', '1');
     }
   });
@@ -196,11 +249,10 @@ window.reedcrm.eventpro.refreshProjectRow = function(projectId) {
  *
  * @returns {void}
  */
-window.reedcrm.eventpro.modalCloseWatcher = function() {
+window.reedcrm.eventpro.modalCloseWatcher = function () {
   var previousModalState = false;
-  setInterval(function() {
+  setInterval(function () {
     var isModalActive = $('#' + window.reedcrm.eventpro.modalId).hasClass('modal-active');
-    // If modal was closed, reset refresh flag for next time
     if (previousModalState && !isModalActive) {
       window.reedcrm.eventpro.refreshTriggered = false;
     }
@@ -214,126 +266,39 @@ window.reedcrm.eventpro.modalCloseWatcher = function() {
  * @memberof ReedCRM_EventPro
  *
  * @since   1.0.0
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @returns {void}
  */
-window.reedcrm.eventpro.event = function() {
+window.reedcrm.eventpro.event = function () {
   var modalSelector = '#' + window.reedcrm.eventpro.modalId;
 
-  // Close modal: click on X button
-  $(document).on('click', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function(e) {
+  $(document).on('click', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function (e) {
     e.preventDefault();
     var $modal = $(modalSelector);
     $modal.removeClass('modal-active');
-    $modal.find('iframe').attr('src', '');
+    $modal.find('#' + window.reedcrm.eventpro.modalId + '-content').empty();
   });
 
-  // Close modal: click on overlay (the modal background, not the container)
-  $(document).on('click', modalSelector, function(e) {
+  $(document).on('click', modalSelector, function (e) {
     if ($(e.target).is(modalSelector)) {
       $(this).removeClass('modal-active');
-      $(this).find('iframe').attr('src', '');
+      $(this).find('#' + window.reedcrm.eventpro.modalId + '-content').empty();
     }
   });
 
-  // Intercept clicks on reedcrm modal buttons to open modal and load iframe
-  $(document).on('click', '.reedcrm-modal-open, .reedcrm-card-modal-open', function(e) {
+  $(document).on('click', '.reedcrm-modal-open, .reedcrm-card-modal-open', function (e) {
     var $button = $(this);
     var modalUrl = $button.attr('data-modal-url');
     var projectId = $button.attr('data-project-id');
 
     if (modalUrl) {
       var $modal = $('#' + window.reedcrm.eventpro.modalId);
-      var $iframe = $('#' + window.reedcrm.eventpro.modalId + '-iframe');
-      var $loader = $('#' + window.reedcrm.eventpro.modalId + '-loader');
 
-      // Show loader and open modal IMMEDIATELY for better UX
-      $loader.show().addClass('wpeo-loader');
-      if (typeof window.saturne !== 'undefined' && window.saturne.loader) {
-        window.saturne.loader.display($loader);
-      }
       $modal.addClass('modal-active');
-
-      // Reset iframe opacity immediately
-      $iframe.css('opacity', '0');
-
-      // Store initial URL and project ID on the iframe element
-      $iframe.data('initial-url', modalUrl);
-      $iframe.data('project-id', projectId);
-      $iframe.data('loaded-once', false);
-
-      // Reset form submission flag
-      $iframe.data('form-submitted', false);
-
-      // Inject CSS when iframe loads
-      $iframe.off('load.reedcrm').on('load.reedcrm', function() {
-        window.reedcrm.eventpro.injectIframeCSS(this);
-
-        // Listen for form submissions in the iframe
-        try {
-          var iframeDoc = this.contentDocument || this.contentWindow.document;
-          var forms = iframeDoc.querySelectorAll('form');
-
-          forms.forEach(function(form) {
-            form.addEventListener('submit', function() {
-              $iframe.data('form-submitted', true);
-            }, true);
-          });
-
-          // Listen for tab clicks to show loader
-          var tabLinks = iframeDoc.querySelectorAll('a[href*="tab="]');
-          var iframeElement = this;
-          tabLinks.forEach(function(tabLink) {
-            tabLink.addEventListener('click', function(e) {
-              // Show loader when tab is clicked
-              var $loader = $('#' + window.reedcrm.eventpro.modalId + '-loader');
-              $loader.show().addClass('wpeo-loader');
-              if (typeof window.saturne !== 'undefined' && window.saturne.loader) {
-                window.saturne.loader.display($loader);
-              }
-              // Hide iframe during loading
-              $(iframeElement).css('opacity', '0');
-            });
-          });
-
-          // Initialize add contact functionality in iframe
-          window.reedcrm.eventpro.initAddContactInIframe(iframeDoc, this);
-        } catch (e) {
-          // Cross-origin error, ignore
-        }
-      });
-
-      // Detect when iframe reloads after form submission
-      $iframe.off('load.reedcrm-submit').on('load.reedcrm-submit', function() {
-        try {
-          var wasLoadedBefore = $iframe.data('loaded-once');
-          var formSubmitted = $iframe.data('form-submitted');
-
-          if (wasLoadedBefore && formSubmitted && !window.reedcrm.eventpro.refreshTriggered) {
-            // Form was submitted and iframe reloaded, close modal and refresh
-            window.reedcrm.eventpro.refreshTriggered = true;
-            var projectIdToRefresh = $iframe.data('project-id');
-            setTimeout(function() {
-              $('#' + window.reedcrm.eventpro.modalId).removeClass('modal-active');
-              window.reedcrm.eventpro.refreshProjectRow(projectIdToRefresh);
-              $iframe.data('form-submitted', false); // Reset for next time
-            }, 300);
-          }
-          $iframe.data('loaded-once', true);
-        } catch (e) {
-          // Ignore any errors (including extension errors)
-        }
-      });
-
-      // Store project ID for refresh after modal close
       $modal.attr('data-project-id', projectId);
 
-      // Set iframe src AFTER opening modal and showing loader (loads in background)
-      // Use setTimeout to ensure modal is visible first
-      setTimeout(function() {
-        $iframe.attr('src', modalUrl);
-      }, 50);
+      window.reedcrm.eventpro.loadModalContent(modalUrl);
     }
   });
 };
@@ -346,24 +311,21 @@ window.reedcrm.eventpro.event = function() {
  * @since   1.0.0
  * @version 1.0.0
  */
-window.reedcrm.eventpro.initAddContact = function() {
-  // Handle clicks on the add contact button (both in main page and iframe)
-  $(document).on('click', '.reedcrm-add-contact-btn', function(e) {
+window.reedcrm.eventpro.initAddContact = function () {
+  $(document).on('click', '.reedcrm-add-contact-btn', function (e) {
     e.preventDefault();
     var $form = $(this).closest('.reedcrm-contact-field-wrapper').parent().find('.reedcrm-add-contact-form');
     $form.slideDown();
   });
 
-  // Handle cancel button
-  $(document).on('click', '.reedcrm-add-contact-cancel', function(e) {
+  $(document).on('click', '.reedcrm-add-contact-cancel', function (e) {
     e.preventDefault();
     var $form = $(this).closest('.reedcrm-add-contact-form');
     $form.slideUp();
     $form.find('input').val('');
   });
 
-  // Handle form submission
-  $(document).on('click', '.reedcrm-add-contact-submit', function(e) {
+  $(document).on('click', '.reedcrm-add-contact-submit', function (e) {
     e.preventDefault();
     window.reedcrm.eventpro.submitAddContact($(this));
   });
@@ -375,17 +337,16 @@ window.reedcrm.eventpro.initAddContact = function() {
  * @memberof ReedCRM_EventPro
  *
  * @since   1.0.0
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @param {jQuery} $button The submit button element
  */
-window.reedcrm.eventpro.submitAddContact = function($button) {
+window.reedcrm.eventpro.submitAddContact = function ($button) {
   var $form = $button.closest('.reedcrm-add-contact-form');
   var $mainForm = $form.closest('form');
   var $contactSelect = $mainForm.find('select[name="contactid"]');
   var socid = $mainForm.find('select[name="socid"]').val();
 
-  // Validation
   var lastname = $form.find('#new_contact_lastname').val().trim();
   if (!lastname) {
     if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
@@ -401,7 +362,6 @@ window.reedcrm.eventpro.submitAddContact = function($button) {
     return;
   }
 
-  // Get form data
   var formData = {
     action: 'create_contact',
     token: $mainForm.find('input[name="token"]').val(),
@@ -414,44 +374,40 @@ window.reedcrm.eventpro.submitAddContact = function($button) {
     new_contact_email: $form.find('#new_contact_email').val().trim()
   };
 
-  // Disable button during submission
   $button.prop('disabled', true);
 
-  // Get the current page URL (could be in iframe or main page)
-  var currentUrl = window.location.href;
-  var baseUrl = currentUrl.split('?')[0];
+  var baseUrl = $mainForm.attr('action');
+  if (baseUrl) {
+    baseUrl = baseUrl.split('?')[0];
+  } else {
+    baseUrl = window.location.href.split('?')[0];
+  }
 
-  // Submit via AJAX
   $.ajax({
     url: baseUrl,
     type: 'POST',
     data: formData,
     dataType: 'json',
-    success: function(response) {
+    success: function (response) {
       if (response && response.success) {
-        // Add new option to select2
         var newOption = new Option(response.contact_label, response.contact_id, true, true);
         $contactSelect.append(newOption).trigger('change');
 
-        // Hide form and clear inputs
         $form.slideUp();
         $form.find('input').val('');
 
-        // Show success message
         if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
           window.saturne.notification.success('Contact créé avec succès');
         }
       } else {
-        // Show error message
         var errorMsg = (response && response.error) ? response.error : 'Erreur lors de la création du contact';
         if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
           window.saturne.notification.error(errorMsg);
         }
       }
     },
-    error: function(xhr, status, error) {
+    error: function (xhr, status, error) {
       console.error('AJAX Error:', xhr, status, error);
-      // Try to parse error response
       var errorMsg = 'Erreur lors de la création du contact';
       try {
         if (xhr.responseText) {
@@ -468,137 +424,9 @@ window.reedcrm.eventpro.submitAddContact = function($button) {
         window.saturne.notification.error(errorMsg);
       }
     },
-    complete: function() {
+    complete: function () {
       $button.prop('disabled', false);
     }
-  });
-};
-
-/**
- * Initialize add contact functionality in iframe
- *
- * @memberof ReedCRM_EventPro
- *
- * @since   1.0.0
- * @version 1.0.0
- *
- * @param {Document} iframeDoc The iframe document
- * @param {HTMLElement} iframeElement The iframe element
- */
-window.reedcrm.eventpro.initAddContactInIframe = function(iframeDoc, iframeElement) {
-  var iframeWindow = iframeDoc.defaultView || iframeDoc.parentWindow;
-  var iframe$ = iframeWindow.$ || iframeWindow.jQuery || $;
-
-  // Handle clicks on the add contact button in iframe
-  iframe$(iframeDoc).on('click', '.reedcrm-add-contact-btn', function(e) {
-    e.preventDefault();
-    var $form = iframe$(this).closest('.reedcrm-contact-field-wrapper').parent().find('.reedcrm-add-contact-form');
-    $form.slideDown();
-  });
-
-  // Handle cancel button in iframe
-  iframe$(iframeDoc).on('click', '.reedcrm-add-contact-cancel', function(e) {
-    e.preventDefault();
-    var $form = iframe$(this).closest('.reedcrm-add-contact-form');
-    $form.slideUp();
-    $form.find('input').val('');
-  });
-
-  // Handle form submission in iframe
-  iframe$(iframeDoc).on('click', '.reedcrm-add-contact-submit', function(e) {
-    e.preventDefault();
-    var $button = iframe$(this);
-    var $form = $button.closest('.reedcrm-add-contact-form');
-    var $contactForm = $button.closest('form');
-    var $contactSelect = $contactForm.find('select[name="contactid"]');
-    var socid = $contactForm.find('select[name="socid"]').val();
-
-    // Validation
-    var lastname = $form.find('#new_contact_lastname').val().trim();
-    if (!lastname) {
-      if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
-        window.saturne.notification.error('Le nom est obligatoire');
-      }
-      return;
-    }
-
-    if (!socid) {
-      if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
-        window.saturne.notification.error('Veuillez sélectionner un tiers');
-      }
-      return;
-    }
-
-    // Get form data
-    var formData = {
-      action: 'create_contact',
-      token: $contactForm.find('input[name="token"]').val(),
-      from_id: $contactForm.find('input[name="from_id"]').val(),
-      from_type: $contactForm.find('input[name="from_type"]').val(),
-      socid: socid,
-      new_contact_lastname: lastname,
-      new_contact_firstname: $form.find('#new_contact_firstname').val().trim(),
-      new_contact_phone_pro: $form.find('#new_contact_phone_pro').val().trim(),
-      new_contact_email: $form.find('#new_contact_email').val().trim()
-    };
-
-    // Disable button during submission
-    $button.prop('disabled', true);
-
-    // Get URL from iframe
-    var baseUrl = iframeWindow.location.href.split('?')[0];
-
-    // Submit via AJAX using parent window's jQuery (or iframe's if available)
-    $.ajax({
-      url: baseUrl,
-      type: 'POST',
-      data: formData,
-      dataType: 'json',
-      success: function(response) {
-        if (response && response.success) {
-          // Add new option to select2 in iframe
-          var newOption = new Option(response.contact_label, response.contact_id, true, true);
-          $contactSelect.append(newOption).trigger('change');
-
-          // Hide form and clear inputs
-          $form.slideUp();
-          $form.find('input').val('');
-
-          // Show success message
-          if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
-            window.saturne.notification.success('Contact créé avec succès');
-          }
-        } else {
-          // Show error message
-          var errorMsg = (response && response.error) ? response.error : 'Erreur lors de la création du contact';
-          if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
-            window.saturne.notification.error(errorMsg);
-          }
-        }
-      },
-      error: function(xhr, status, error) {
-        console.error('AJAX Error:', xhr, status, error);
-        // Try to parse error response
-        var errorMsg = 'Erreur lors de la création du contact';
-        try {
-          if (xhr.responseText) {
-            var errorResponse = JSON.parse(xhr.responseText);
-            if (errorResponse.error) {
-              errorMsg = errorResponse.error;
-            }
-          }
-        } catch (e) {
-          console.error('Error parsing response:', e);
-        }
-
-        if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
-          window.saturne.notification.error(errorMsg);
-        }
-      },
-      complete: function() {
-        $button.prop('disabled', false);
-      }
-    });
   });
 };
 
@@ -610,13 +438,13 @@ window.reedcrm.eventpro.initAddContactInIframe = function(iframeDoc, iframeEleme
  * @since   1.0.0
  * @version 1.0.0
  */
-window.reedcrm.eventpro.initRelaunchTooltips = function() {
+window.reedcrm.eventpro.initRelaunchTooltips = function () {
   var tooltipTimeout;
   var $currentTooltip = null;
   var tooltipHovered = false;
   var loadingTooltip = false;
 
-  $(document).on('mouseenter', '.reedcrm-relaunch-button', function() {
+  $(document).on('mouseenter', '.reedcrm-relaunch-button', function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
     var projectId = $button.closest('.reedcrm-relaunch-buttons').find('.reedcrm-modal-open').first().data('project-id');
@@ -625,10 +453,8 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
       return;
     }
 
-    // Clear any existing timeout
     clearTimeout(tooltipTimeout);
 
-    // Remove existing tooltip if any
     if ($currentTooltip) {
       $currentTooltip.remove();
       $currentTooltip = null;
@@ -636,7 +462,6 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
     tooltipHovered = false;
     loadingTooltip = true;
 
-    // Map type to action code
     var actionTypeMap = {
       'call': 'AC_TEL',
       'email': 'AC_EMAIL',
@@ -645,7 +470,6 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
     };
     var actionType = actionTypeMap[type] || 'AC_OTH';
 
-    // Create tooltip container with loader
     var tooltipContent = '<div class="reedcrm-relaunch-tooltip">';
     tooltipContent += '<div class="reedcrm-relaunch-tooltip-header">';
 
@@ -663,7 +487,6 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
     tooltipContent += '</div>';
     tooltipContent += '</div>';
 
-    // Create tooltip element
     $currentTooltip = $(tooltipContent);
     $currentTooltip.css({
       position: 'absolute',
@@ -672,35 +495,28 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
     });
     $('body').append($currentTooltip);
 
-    // Position tooltip below the button, aligned to the left
     var buttonOffset = $button.offset();
     var buttonHeight = $button.outerHeight();
 
-    // Show tooltip first to get dimensions
     $currentTooltip.css({ visibility: 'hidden', display: 'block' });
     var tooltipWidth = $currentTooltip.outerWidth();
     var tooltipHeight = $currentTooltip.outerHeight();
     $currentTooltip.css({ visibility: 'visible', display: 'none' });
 
-    // Position below the button, aligned to left edge
     var left = buttonOffset.left;
-    var top = buttonOffset.top + buttonHeight + 5; // 5px below the button
+    var top = buttonOffset.top + buttonHeight + 5;
 
-    // Adjust if tooltip goes off screen to the right
     if (left + tooltipWidth > $(window).width()) {
-      left = $(window).width() - tooltipWidth - 10; // 10px margin from right
+      left = $(window).width() - tooltipWidth - 10;
     }
-    // Adjust if tooltip goes off screen to the left
     if (left < 10) {
-      left = 10; // 10px margin from left
+      left = 10;
     }
-    // Adjust if tooltip goes off screen to the bottom
     if (top + tooltipHeight > $(window).height()) {
-      top = buttonOffset.top - tooltipHeight - 5; // 5px above the button
+      top = buttonOffset.top - tooltipHeight - 5;
     }
-    // Adjust if tooltip goes off screen to the top
     if (top < 10) {
-      top = 10; // 10px margin from top
+      top = 10;
     }
 
     $currentTooltip.css({
@@ -708,21 +524,18 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
       top: top + 'px'
     });
 
-    // Show tooltip with slight delay
-    tooltipTimeout = setTimeout(function() {
+    tooltipTimeout = setTimeout(function () {
       $currentTooltip.fadeIn(200);
-        var currentUrl = window.location.href;
-        var urlObj = new URL(currentUrl);
-        var pathname = urlObj.pathname;
+      var currentUrl = window.location.href;
+      var urlObj = new URL(currentUrl);
+      var pathname = urlObj.pathname;
 
-        // Extract base path (remove /projet/list.php or similar)
-        var pathParts = pathname.split('/').filter(function(p) { return p && p !== ''; });
-        // Remove the last 2 parts (module/page.php) to get base
-        if (pathParts.length >= 2) {
-          pathParts = pathParts.slice(0, -2);
-        }
-        var basePath = pathParts.length > 0 ? '/' + pathParts.join('/') : '';
-        const ajaxUrl = basePath + '/custom/reedcrm/ajax/get_relaunches_list.php';
+      var pathParts = pathname.split('/').filter(function (p) { return p && p !== ''; });
+      if (pathParts.length >= 2) {
+        pathParts = pathParts.slice(0, -2);
+      }
+      var basePath = pathParts.length > 0 ? '/' + pathParts.join('/') : '';
+      const ajaxUrl = basePath + '/custom/reedcrm/ajax/get_relaunches_list.php';
 
       $.ajax({
         url: ajaxUrl,
@@ -733,7 +546,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
           token: $('meta[name=anti-csrf-currenttoken]').attr('content') || ''
         },
         dataType: 'json',
-        success: function(response) {
+        success: function (response) {
           loadingTooltip = false;
           if (response && response.success && response.html) {
             $currentTooltip.find('.reedcrm-relaunch-tooltip-content').html(response.html);
@@ -742,7 +555,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
             $currentTooltip.find('.reedcrm-relaunch-tooltip-content').html('<div class="reedcrm-relaunch-tooltip-empty">' + errorMsg + '</div>');
           }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
           loadingTooltip = false;
           var errorMsg = 'Erreur lors du chargement';
           if (xhr.responseJSON && xhr.responseJSON.error) {
@@ -760,16 +573,15 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
       });
     }, 300);
 
-    // Keep tooltip visible when hovering over it
-    $currentTooltip.on('mouseenter', function() {
+    $currentTooltip.on('mouseenter', function () {
       tooltipHovered = true;
       clearTimeout(tooltipTimeout);
     });
 
-    $currentTooltip.on('mouseleave', function() {
+    $currentTooltip.on('mouseleave', function () {
       tooltipHovered = false;
       if (!loadingTooltip) {
-        $currentTooltip.fadeOut(150, function() {
+        $currentTooltip.fadeOut(150, function () {
           $(this).remove();
           $currentTooltip = null;
         });
@@ -777,14 +589,13 @@ window.reedcrm.eventpro.initRelaunchTooltips = function() {
     });
   });
 
-  $(document).on('mouseleave', '.reedcrm-relaunch-button', function() {
+  $(document).on('mouseleave', '.reedcrm-relaunch-button', function () {
     clearTimeout(tooltipTimeout);
     if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
-      $currentTooltip.fadeOut(150, function() {
+      $currentTooltip.fadeOut(150, function () {
         $(this).remove();
         $currentTooltip = null;
       });
     }
   });
 };
-

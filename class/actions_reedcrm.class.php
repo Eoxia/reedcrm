@@ -397,7 +397,7 @@ class ActionsReedcrm
                         </div>
                         <div class="modal-content">
                             <div id="eventproCardModal-loader" class="wpeo-loader"></div>
-                            <iframe id="eventproCardModal-iframe" src=""></iframe>
+                            <div id="eventproCardModal-content"></div>
                         </div>
                     </div>
                 </div>
@@ -517,7 +517,7 @@ class ActionsReedcrm
                         <!-- Modal-Content -->
                         <div class="modal-content">
                             <div id="eventproCardModal-loader" class="wpeo-loader"></div>
-                            <iframe id="eventproCardModal-iframe" src=""></iframe>
+                            <div id="eventproCardModal-content"></div>
                         </div>
                     </div>
                 </div>

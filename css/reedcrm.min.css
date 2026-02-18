@@ -233,13 +233,223 @@
   height: calc(100% - 60px) !important;
   position: relative !important;
 }
-#eventproCardModal #eventproCardModal-iframe {
+/* =============================================
+   Modal AJAX content - mobile-like layout
+   ============================================= */
+
+/* Container */
+#eventproCardModal #eventproCardModal-content {
   width: 100%;
   height: 100%;
-  border: 0;
-  opacity: 0;
-  transition: opacity 0.2s ease-in;
-  display: block;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 10px 15px;
+}
+
+/* Force single-column layout (simulates mobile viewport) */
+#eventproCardModal-content .wpeo-grid.grid-2 > *,
+#eventproCardModal-content .wpeo-grid.grid-3 > * {
+  width: 100% !important;
+}
+
+/* Forms: full width, no border */
+#eventproCardModal-content #addeventform,
+#eventproCardModal-content #createticketform {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  border: none !important;
+}
+
+/* Override ALL Dolibarr fixed-width classes inside modal */
+#eventproCardModal-content .maxwidth200,
+#eventproCardModal-content .maxwidth300,
+#eventproCardModal-content .maxwidth400,
+#eventproCardModal-content .maxwidth500,
+#eventproCardModal-content .minwidth200,
+#eventproCardModal-content .minwidth300,
+#eventproCardModal-content .minwidth400,
+#eventproCardModal-content .quatrevingtpercent,
+#eventproCardModal-content .centpercent {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* All inputs, textareas, selects full width */
+#eventproCardModal-content input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]),
+#eventproCardModal-content textarea,
+#eventproCardModal-content select {
+  max-width: 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Select2 full width */
+#eventproCardModal-content .select2-container {
+  max-width: 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+#eventproCardModal-content .select2-container .select2-choice,
+#eventproCardModal-content .select2-container .select2-selection {
+  width: 100% !important;
+}
+
+/* Labels: preserve flex row layout (picto + input side by side) */
+#eventproCardModal-content .template-pwa label {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  width: 100%;
+}
+#eventproCardModal-content .template-pwa label > img,
+#eventproCardModal-content .template-pwa label > span.fas,
+#eventproCardModal-content .template-pwa label > span.far,
+#eventproCardModal-content .template-pwa label > span.fa,
+#eventproCardModal-content .template-pwa label > .pictofixedwidth {
+  flex-shrink: 0 !important;
+  margin-right: 6px !important;
+}
+#eventproCardModal-content .template-pwa label > .select2-container,
+#eventproCardModal-content .template-pwa label > div.select2-container {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+/* ---- Tables (ticket form, email presend) ---- */
+#eventproCardModal-content table {
+  width: 100% !important;
+  table-layout: auto !important;
+}
+#eventproCardModal-content table.border {
+  border-collapse: collapse;
+}
+#eventproCardModal-content table td,
+#eventproCardModal-content table th {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+/* Titlefield column: narrower for modal */
+#eventproCardModal-content table .titlefield,
+#eventproCardModal-content table .tdtop {
+  width: 100px !important;
+  white-space: normal !important;
+  font-size: 0.9em;
+}
+/* Value column: take remaining space */
+#eventproCardModal-content table td:not(.titlefield):not(.tdtop) {
+  width: auto !important;
+}
+/* Nested elements in table cells full width */
+#eventproCardModal-content table td .select2-container,
+#eventproCardModal-content table td select,
+#eventproCardModal-content table td input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]) {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* ---- Email presend form (card_presend.tpl.php) ---- */
+#eventproCardModal-content #formmailbeforetitle,
+#eventproCardModal-content .formmail,
+#eventproCardModal-content #tablelines,
+#eventproCardModal-content #formmailaftertitle {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+#eventproCardModal-content .formmail table {
+  width: 100% !important;
+}
+#eventproCardModal-content div.divmail {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+/* CKEditor / DolEditor responsive */
+#eventproCardModal-content .cke,
+#eventproCardModal-content .cke_inner,
+#eventproCardModal-content .cke_contents,
+#eventproCardModal-content iframe.cke_wysiwyg_frame {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+#eventproCardModal-content .cke_top,
+#eventproCardModal-content .cke_bottom {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+/* ---- Note tab ---- */
+#eventproCardModal-content .wpeo-grid.grid-1 > * {
+  width: 100% !important;
+}
+/* Date selectors in note tab: keep inline but wrap if needed */
+#eventproCardModal-content .template-pwa label > div.select2-container {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+/* Dolibarr date inputs inline group */
+#eventproCardModal-content .nowraponall:not(.divfordateinput),
+#eventproCardModal-content .nowrap {
+  white-space: normal !important;
+}
+/* Date picker inputs smaller */
+#eventproCardModal-content .dpInvisibleButtons {
+  max-width: 100% !important;
+}
+#eventproCardModal-content .divfordateinput {
+  display: inline-block !important;
+  width: auto !important;
+}
+#eventproCardModal-content .divfordateinput input.maxwidthdate {
+  width: auto !important;
+  max-width: 130px !important;
+}
+#eventproCardModal-content span.nowraponall {
+  white-space: nowrap !important;
+  display: inline-block !important;
+}
+#eventproCardModal-content select.flat:not([name*="socid"]):not([name*="contactid"]):not([name*="project"]) {
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+/* ---- Ticket tab ---- */
+#eventproCardModal-content #createticketform table {
+  table-layout: auto !important;
+}
+
+/* ---- Add contact form ---- */
+#eventproCardModal-content .reedcrm-add-contact-form .wpeo-grid.grid-2 > * {
+  width: 100% !important;
+}
+
+/* ---- Tabs ---- */
+#eventproCardModal-content .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 10px;
+}
+#eventproCardModal-content .tabs .inline-block {
+  flex-shrink: 0;
+}
+
+/* ---- Buttons ---- */
+#eventproCardModal-content .butAction,
+#eventproCardModal-content .button {
+  max-width: 100%;
+  box-sizing: border-box;
 }
 #eventproCardModal #eventproCardModal-loader {
   position: absolute;
@@ -395,39 +605,16 @@ td.tdoverflowmax200 {
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
-html.reedcrm-modal-iframe-html {
-  height: 100% !important;
-  overflow: hidden !important;
+/* Select2 dropdowns must appear above the modal overlay (z-index 1003) */
+/* select2 appends dropdowns to <body>, so we need a global rule when modal is active */
+#eventproCardModal.modal-active ~ .select2-drop,
+#eventproCardModal.modal-active ~ .select2-drop-mask,
+body > .select2-drop.select2-drop-active {
+  z-index: 10004 !important;
 }
 
-body.reedcrm-modal-iframe-body {
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  height: 100% !important;
-  box-sizing: border-box !important;
-}
-body.reedcrm-modal-iframe-body > *:not(#addeventform):not(.select2-container):not(.select2-dropdown):not(.select2-dropdown-mask) {
-  display: none !important;
-}
-
-.reedcrm-modal-iframe-form {
-  display: block !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding: 10px !important;
-  padding-bottom: 10px !important;
-  box-sizing: border-box !important;
-  min-height: 100% !important;
-}
-
-body.reedcrm-modal-iframe-body .select2-container,
-body.reedcrm-modal-iframe-body .select2-dropdown,
-body.reedcrm-modal-iframe-body .select2-dropdown-mask {
-  display: block !important;
-  visibility: visible !important;
-  z-index: 9999 !important;
+.ui-datepicker {
+  z-index: 10004 !important;
 }
 
 .reedcrm-contact-field-wrapper {
