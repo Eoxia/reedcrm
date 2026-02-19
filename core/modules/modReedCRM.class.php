@@ -629,7 +629,7 @@ class modReedCRM extends DolibarrModules
             'leftmenu' => 'minimizemenu',
             'url'      => '',
             'langs'    => 'projet@projet',
-            'position' => 2000 + $r,
+            'position' => 1000 + $r,
             'enabled'  => '$conf->projet->enabled',
             'perms'    => '$user->rights->projet->lire',
             'target'   => '',
