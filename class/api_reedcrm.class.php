@@ -89,9 +89,9 @@ class ReedCRM extends DolibarrApi
 
 		global $conf;
 
-		if (!DolibarrApiAccess::$user->hasRight('projet', 'write')) {
-			throw new RestException(403);
-		}
+        if (!DolibarrApiAccess::$user->hasRight('projet', 'all', 'creer') || !DolibarrApiAccess::$user->hasRight('projet', 'creer')) {
+            throw new RestException(403);
+        }
 
 		$numberingModules = [
 			'project'      => $conf->global->PROJECT_ADDON,
@@ -131,13 +131,9 @@ class ReedCRM extends DolibarrApi
 
 			$project->add_contact($affectedUserId, 'PROJECTLEADER', 'internal');
 
-			if (!empty($request_data['categories'])) {
-				$category = new Categorie($this->db);
-				foreach (explode(',', $request_data['categories']) as $cat) {
-					$category->fetch($cat);
-					$category->add_type($project, Categorie::TYPE_PROJECT);
-				}
-			}
+			$category = new Categorie($this->db);
+			$category->fetch($config[DolibarrApiAccess::$user->id]['tag']);
+			$category->add_type($project, Categorie::TYPE_PROJECT);
 //
 //			$task = new Task($this->db);
 //
@@ -172,10 +168,9 @@ class ReedCRM extends DolibarrApi
 	 * @return array with project ID and status
 	 *
 	 * @throws RestException 403 Not allowed if user does not have write rights on projects
-	 * @throws RestException 500 Internal Server Error if an unexpected error occurs
 	 */
-	public function testRights($request_data = null) {
-		if (!DolibarrApiAccess::$user->hasRight('projet', 'write')) {
+	public function testRights() {
+		if (!DolibarrApiAccess::$user->hasRight('projet', 'all', 'creer') || !DolibarrApiAccess::$user->hasRight('projet', 'creer')) {
 			throw new RestException(403);
 		}
 
