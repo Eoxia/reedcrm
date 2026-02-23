@@ -113,10 +113,11 @@ class ReedCRM extends DolibarrApi
 		$project->usage_task        = 1;
 
 		$project->array_options = [
-			'options_reedcrm_lastname' => $request_data['lastname'] ?? '',
-			'options_reedcrm_firstname' => $request_data['firstname'] ?? '',
-			'options_reedcrm_email' => $request_data['email'] ?? '',
-			'options_projectphone' => $request_data['phone'] ?? '',
+			'options_reedcrm_lastname'    => $request_data['lastname'] ?? '',
+			'options_reedcrm_firstname'   => $request_data['firstname'] ?? '',
+			'options_reedcrm_email'       => $request_data['email'] ?? '',
+			'options_projectphone'        => $request_data['phone'] ?? '',
+			'options_reedcrm_gravityform' => $request_data['gravityform_url'] ?? ''
 		];
 
 		$projectID = $project->create(DolibarrApiAccess::$user);
