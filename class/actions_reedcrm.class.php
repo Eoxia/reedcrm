@@ -675,6 +675,15 @@ class ActionsReedcrm
                 </script>
                 <?php
             }
+        } else if (strpos($parameters['context'], 'projectcard') !== false) {
+
+            if (!empty($object->array_options['options_reedcrm_gravityform'])) {
+                ?>
+                <script>
+                    $('.tabsAction').first().prepend('<a class="butAction" href="<?= $object->array_options['options_reedcrm_gravityform']; ?>" title="" aria-label="" target="_blank"><span class="textbutton"><?=  $langs->trans('GravityFormLink') ?></span></a>')
+                </script>
+                <?php
+            }
         }
 
         if (strpos($parameters['context'], 'projectlist') !== false) {
