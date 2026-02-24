@@ -39,6 +39,8 @@ QuickTaskCreations       = ajouts rapides de tâche
 CommercialFollowUp       = SC
 CommercialTask           = Tâche commerciale
 ProjectPhone             = Téléphone projet
+ContactInformations      = Coordonnées
+Vocal                    = Vocal
 
 # Frontend - Frontend
 QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès

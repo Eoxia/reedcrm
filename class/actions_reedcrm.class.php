@@ -522,8 +522,10 @@ class ActionsReedcrm
                     </div>
                 </div>
                 <script type="text/javascript" src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>"></script>
+                <script type="text/javascript"
+                    src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/vocal-player.js', 1); ?>"></script>
                 <script>
-                    jQuery(document).ready(function() {
+                    jQuery(document).ready(function () {
                         if (typeof window.reedcrm !== 'undefined' && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
                             window.reedcrm.eventpro.init();
                         }
@@ -751,58 +753,70 @@ class ActionsReedcrm
                             $modalId = 'eventproCardModal';
                             $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project&project_id=' . $parameters['obj']->id;
 
-                            $out .= '<div class="reedcrm-relaunch-buttons">';
+                            $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
+                            $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
 
-                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="call" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['call'])) . '">';
-                            $out .= '<div>';
-                            $out .= '<i class="fas fa-phone"></i>';
-                            $out .= '<span>' . $countsByType['call'] . '</span>';
+                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-call" data-relaunch-type="call" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['call'])) . '">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
+                            $out .= '<i class="fas fa-headset"></i>';
+                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['call'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_TEL';
-                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
                             $out .= '</div>';
 
-                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="email" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['email'])) . '">';
-                            $out .= '<div>';
+                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-email" data-relaunch-type="email" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['email'])) . '">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
                             $out .= '<i class="fas fa-envelope"></i>';
-                            $out .= '<span>' . $countsByType['email'] . '</span>';
+                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['email'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_EMAIL';
-                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
                             $out .= '</div>';
 
-                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="rdv" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['rdv'])) . '">';
-                            $out .= '<div>';
+                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-rdv" data-relaunch-type="rdv" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['rdv'])) . '">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
                             $out .= '<i class="fas fa-calendar"></i>';
-                            $out .= '<span>' . $countsByType['rdv'] . '</span>';
+                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['rdv'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_RDV';
-                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
                             $out .= '</div>';
 
-                            $out .= '<div class="reedcrm-relaunch-button" data-relaunch-type="other" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['other'])) . '">';
-                            $out .= '<div>';
+                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-other" data-relaunch-type="other" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['other'])) . '">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
                             $out .= '<i class="fas fa-comment-dots"></i>';
-                            $out .= '<span>' . $countsByType['other'] . '</span>';
+                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['other'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_OTH';
-                                $out .= '<span class="fa fa-plus modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
+                            $out .= '</div>';
+
+                            $out .= '</div>';
+
+                            $oppPercent = isset($parameters['obj']->opp_percent) ? (int) $parameters['obj']->opp_percent : 0;
+                            // Adding progress bar right after badges
+                            $out .= '<div class="reedcrm-plist-progress-wrapper">';
+                            $out .= '<div class="reedcrm-plist-progress-bg">';
+                            $out .= '<div class="reedcrm-plist-progress-fill" style="width: ' . $oppPercent . '%;"></div>';
+                            $out .= '</div>';
+                            $out .= '<span class="reedcrm-plist-progress-text"><i class="fas fa-redo"></i> ' . $oppPercent . '%</span>';
                             $out .= '</div>';
 
                             $out .= '</div>';
@@ -817,6 +831,15 @@ class ActionsReedcrm
                             $out2 .= $task->getNomUrl(1, '', 'task', 1);
                         }
                         $out2 .= '</td>';
+
+                        // Workaround: Display project description in the custom extrafield 'description' (or 'descrpitiion' as typoed by user)
+                        $out6 = '<td class="tdoverflowmax500">';
+                        $tmpProject = new Project($this->db);
+                        if ($tmpProject->fetch($parameters['obj']->id) > 0) {
+                            $desc = $tmpProject->description;
+                            $out6 .= !empty($desc) ? (dol_textishtml($desc) ? $desc : dol_nl2br(dol_escape_htmltag($desc))) : '';
+                        }
+                        $out6 .= '</td>';
 
                         // projectField opp_percent
                         $out3 = '<td class="center"><span data-project_id="'. $parameters['obj']->id . '">';
@@ -836,19 +859,113 @@ class ActionsReedcrm
                         }
                         $out3 .= '</span></td>';
 
-                    } ?>
+                        // Extrafield vocal - bouton play violet + badge Agent Digital
+                        require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+                        $projectDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($parameters['obj']->ref);
+                        $audioFiles = dol_dir_list($projectDir, 'files', 0, '\.(mp3|ogg|wav|m4a|aac|webm|opus)$', null, 'date', SORT_DESC);
+                        $out4 = '<td class="center valignmiddle">';
+                        $out4 .= '<div class="reedcrm-vocal-cell">';
+                        if (!empty($audioFiles)) {
+                            $lastAudio = $audioFiles[0];
+                            $fileUrl = DOL_URL_ROOT . '/document.php?modulepart=projet&file=' . urlencode(dol_sanitizeFileName($parameters['obj']->ref) . '/' . $lastAudio['name']);
+                            $out4 .= '<div class="reedcrm-vocal-player reedcrm-vocal-player-purple" data-audio-url="' . dol_escape_htmltag($fileUrl) . '" title="' . dol_escape_htmltag($lastAudio['name']) . '">';
+                            $out4 .= '<i class="fas fa-play"></i>';
+                            $out4 .= '</div>';
+                        } else {
+                            // Display disabled/empty state if no audio file instead of nothing to match table layout
+                            $out4 .= '<div class="reedcrm-vocal-player reedcrm-vocal-player-purple disabled">';
+                            $out4 .= '<i class="fas fa-play"></i>';
+                            $out4 .= '</div>';
+                        }
+                        $out4 .= '</div>';
+                        $out4 .= '</td>';
+
+                        // Coordonnées - infos contact (nom tiers, email, tél, icônes)
+                        $thirdPartyName = !empty($parameters['obj']->name) ? dol_escape_htmltag($parameters['obj']->name) : '';
+                        $thirdPartyEmail = !empty($parameters['obj']->email) ? dol_escape_htmltag($parameters['obj']->email) : '';
+                        $thirdPartyPhone = !empty($parameters['obj']->phone) ? dol_escape_htmltag($parameters['obj']->phone) : '';
+                        $societeUrl = $parameters['obj']->socid ? DOL_URL_ROOT . '/societe/card.php?socid=' . $parameters['obj']->socid : '';
+
+                        // Retrieve the Societe logo using exact native approach as dol_banner_tab
+                        $logoHtml = '';
+                        if (!empty($parameters['obj']->socid)) {
+                            require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+                            $tmpsoc = new Societe($this->db);
+                            if ($tmpsoc->fetch($parameters['obj']->socid) > 0) {
+                                require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+                                if (!in_array('Form', get_declared_classes())) {
+                                    $form = new Form($this->db);
+                                } else {
+                                    $form = new Form($this->db);
+                                }
+                                // Call showphoto exactly as dol_banner_tab does, but adapted width
+                                $logoHtml = $form->showphoto('societe', $tmpsoc, 42, 42, 0, 'reedcrm-coordonnees-avatar-img', 'small', 0, 0);
+                            }
+                        }
+
+                        if (empty($logoHtml)) {
+                            $logoPlaceholderUrl = dol_buildpath('/theme/common/company.png', 1);
+                            $logoHtml = '<img src="' . $logoPlaceholderUrl . '" alt="" class="reedcrm-plist-coordonnees-avatar-img" width="42" height="42">';
+                        }
+
+                        $out5 = '<td class="tdoverflowmax200 valignmiddle">';
+                        $out5 .= '<div class="reedcrm-plist-coordonnees">';
+
+                        // We remove the explicit height/width from the wrapper if showphoto generates a div to avoid layout breaks
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-avatar">';
+                        $out5 .= $logoHtml;
+                        $out5 .= '</div>';
+
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-box">';
+                        if ($thirdPartyName) {
+                            $out5 .= '<div class="reedcrm-plist-coordonnees-name">' . ($societeUrl ? '<a href="' . $societeUrl . '">' . $thirdPartyName . '</a>' : $thirdPartyName) . '</div>';
+                        }
+                        if ($thirdPartyEmail) {
+                            $out5 .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $thirdPartyEmail . '</div>';
+                        }
+                        if ($thirdPartyPhone) {
+                            $out5 .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . $thirdPartyPhone . '</div>';
+                        }
+                        if (!$thirdPartyName && !$thirdPartyEmail && !$thirdPartyPhone) {
+                            $out5 .= '<span class="opacitymedium">-</span>';
+                        }
+                        $out5 .= '</div>';
+
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-actions">';
+                        if ($thirdPartyPhone) {
+                            $out5 .= '<a href="tel:' . preg_replace('/\s+/', '', $parameters['obj']->phone) . '" class="reedcrm-plist-coordonnees-btn"><i class="fas fa-phone-alt"></i></a>';
+                        }
+                        $out5 .= '</div>';
+
+                        $out5 .= '</div>';
+                        $out5 .= '</td>';
+
+                    }
+                    $rowId = (int) $parameters['obj']->id; ?>
                     <script>
-                        var outJS  = <?php echo json_encode($out); ?>;
-                        var outJS2 = <?php echo json_encode($out2); ?>;
-                        var outJS3 = <?php echo json_encode($out3); ?>;
-                        var commRelauchCell = $('.liste > tbody > tr.oddeven').find('td[data-key="projet.commrelaunch"]').last();
-                        var commTaskCell    = $('.liste > tbody > tr.oddeven').find('td[data-key="projet.commtask"]').last();
-                        var probCell        = $('.liste > tbody > tr.oddeven').find("td.right:contains('%')").last();
+                        (function () {
+                            var rowId = <?php echo $rowId; ?>;
+                            var $row = jQuery('tr[data-rowid="' + rowId + '"]');
+                            var outJS = <?php echo json_encode($out); ?>;
+                            var outJS2 = <?php echo json_encode($out2); ?>;
+                            var outJS3 = <?php echo json_encode($out3); ?>;
+                            var outJS4 = <?php echo json_encode($out4); ?>;
+                            var outJS5 = <?php echo json_encode($out5); ?>;
+                            var outJS6 = <?php echo json_encode($out6); ?>;
+                            var commRelauchCell = $row.find('td[data-key="projet.commrelaunch"]');
+                            var commTaskCell = $row.find('td[data-key="projet.commtask"]');
+                            var probCell = $row.find("td.right").filter(function () { return jQuery(this).text().indexOf('%') >= 0; });
+                            var vocalCell = $row.find('td[data-key="projet.vocal"]');
+                            var coordonneesCell = $row.find('td[data-key="projet.contact_informations"]');
+                            var descriptionCell = $row.find('td[data-key="projet.description"], td[data-key="ef.description"], td.projet_extras_description');
 
-                        commRelauchCell.replaceWith(outJS);
-                        commTaskCell.replaceWith(outJS2);
-                        probCell.replaceWith(outJS3);
-
+                            if (commRelauchCell.length) commRelauchCell.replaceWith(outJS);
+                            if (commTaskCell.length) commTaskCell.replaceWith(outJS2);
+                            if (probCell.length) probCell.replaceWith(outJS3);
+                            if (vocalCell.length) vocalCell.replaceWith(outJS4);
+                            if (coordonneesCell.length) coordonneesCell.replaceWith(outJS5);
+                            if (descriptionCell.length) descriptionCell.replaceWith(outJS6);
+                        })();
                     </script>
                     <?php
                 }

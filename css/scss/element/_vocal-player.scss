@@ -1,0 +1,107 @@
+.reedcrm-vocal-player {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    transition: width 0.2s ease, padding 0.2s ease;
+    overflow: hidden;
+    white-space: nowrap;
+
+    &:hover {
+        background: #cfcfcf;
+    }
+
+    i {
+        font-size: 13px;
+        pointer-events: none;
+        flex-shrink: 0;
+    }
+
+    .reedcrm-vocal-time {
+        display: none;
+        font-size: 11px;
+        color: #555;
+        pointer-events: none;
+    }
+
+    &.playing {
+        width: auto;
+        padding: 0 10px;
+        gap: 6px;
+
+        .reedcrm-vocal-time {
+            display: inline;
+        }
+    }
+
+    &.reedcrm-vocal-player-purple {
+        transition: opacity 0.2s ease;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f7f7f7;
+        border: 1px solid #e0e0e0;
+        border-radius: 2px;
+        cursor: pointer;
+        margin: 0 auto;
+
+        &:hover {
+            opacity: 0.8;
+        }
+
+        i {
+            color: #9d7b9d;
+            font-size: 1.3em;
+            margin-left: 3px;
+        }
+
+        &.disabled {
+            opacity: 0.5;
+            cursor: default;
+
+            i {
+                color: #ccc;
+            }
+        }
+
+        .reedcrm-vocal-time {
+            color: rgba(0, 0, 0, 0.7);
+        }
+    }
+}
+
+.reedcrm-vocal-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reedcrm-vocal-agent-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+    border-radius: 6px;
+    color: white;
+    font-size: 10px;
+    line-height: 1.2;
+    min-width: 50px;
+
+    .reedcrm-vocal-agent-label {
+        font-weight: 600;
+    }
+
+    .reedcrm-vocal-agent-type {
+        font-size: 9px;
+        opacity: 0.9;
+    }
+}
