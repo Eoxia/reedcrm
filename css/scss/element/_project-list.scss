@@ -1,0 +1,214 @@
+.reedcrm-plist-relaunch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+
+    .reedcrm-plist-relaunch-buttons {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        // Reset the global styling provided by event-pro.scss to adhere to custom look
+        .reedcrm-relaunch-button {
+            position: relative;
+            background: transparent !important;
+            border: none;
+            padding: 0;
+            box-shadow: none;
+            width: auto;
+            height: auto;
+            min-width: auto;
+
+            &:nth-child(n) {
+                background: transparent !important;
+            }
+
+            .reedcrm-plist-relaunch-btn-content {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 36px;
+                color: white;
+                border-radius: 4px;
+                font-size: 0.9em;
+                cursor: pointer;
+
+                i {
+                    margin-right: 4px;
+                }
+
+                .reedcrm-plist-relaunch-count {
+                    font-weight: 600;
+                }
+            }
+
+            &.reedcrm-plist-relaunch-btn-call .reedcrm-plist-relaunch-btn-content {
+                background-color: #6da3f7;
+            }
+            &.reedcrm-plist-relaunch-btn-email .reedcrm-plist-relaunch-btn-content {
+                background-color: #49b48c;
+            }
+            &.reedcrm-plist-relaunch-btn-rdv .reedcrm-plist-relaunch-btn-content {
+                background-color: #df9857;
+            }
+            &.reedcrm-plist-relaunch-btn-other .reedcrm-plist-relaunch-btn-content {
+                background-color: #a476b1;
+            }
+
+            // The 'plus' quick add button
+            .reedcrm-plist-relaunch-add {
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                width: 14px;
+                height: 14px;
+                background-color: #9283ba;
+                color: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.6em;
+                cursor: pointer;
+                border: 1.5px solid white;
+                line-height: 1;
+
+                &:hover {
+                    background-color: #aa9cd0;
+                    transform: scale(1.1);
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                }
+            }
+        }
+    }
+
+    .reedcrm-plist-progress-wrapper {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 10px;
+
+        .reedcrm-plist-progress-bg {
+            width: 30px;
+            height: 5px;
+            background-color: #ededed;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-right: 6px;
+
+            .reedcrm-plist-progress-fill {
+                height: 100%;
+                background-color: #bfa145;
+                border-radius: 3px;
+            }
+        }
+
+        .reedcrm-plist-progress-text {
+            font-size: 0.75em;
+            color: #444;
+            font-weight: bold;
+
+            i {
+                color: #aaa;
+                margin-right: 3px;
+            }
+        }
+    }
+}
+
+// Contact Coordinates specific logic
+.reedcrm-plist-coordonnees {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 350px;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 4px;
+    border: 1px solid #e4e4e4;
+    border-radius: 4px;
+    background: #fff;
+
+    .reedcrm-plist-coordonnees-avatar {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid #eee;
+        width: 42px;
+        height: 42px;
+
+        img {
+            object-fit: cover;
+        }
+    }
+
+    .reedcrm-plist-coordonnees-box {
+        flex-grow: 1;
+        min-width: 0;
+        line-height: 1.2;
+
+        .reedcrm-plist-coordonnees-name {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #333;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            margin-bottom: 2px;
+
+            a {
+                color: inherit;
+                text-decoration: none;
+                &:hover { text-decoration: underline; }
+            }
+        }
+
+        .reedcrm-plist-coordonnees-email,
+        .reedcrm-plist-coordonnees-phone {
+            color: #888;
+            font-size: 0.75em;
+            text-overflow: ellipsis;
+            overflow: hidden;
+
+            i {
+                color: #bbb;
+                width: 14px;
+                text-align: center;
+                margin-right: 2px;
+            }
+        }
+    }
+
+    .reedcrm-plist-coordonnees-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+        margin-left: 2px;
+        margin-right: 4px;
+
+        .reedcrm-plist-coordonnees-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background-color: #2b3952;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.85em;
+            cursor: pointer;
+
+            &:hover {
+                opacity: 0.9;
+            }
+
+            i {
+                color: white;
+            }
+        }
+    }
+}
