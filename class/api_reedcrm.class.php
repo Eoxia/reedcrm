@@ -89,7 +89,7 @@ class ReedCRM extends DolibarrApi
 
 		global $conf;
 
-        if (!DolibarrApiAccess::$user->hasRight('projet', 'creer')) {
+        if (!DolibarrApiAccess::$user->hasRight('projet', 'all', 'creer') && !DolibarrApiAccess::$user->hasRight('projet', 'creer')) {
             throw new RestException(403);
         }
 
@@ -170,7 +170,7 @@ class ReedCRM extends DolibarrApi
 	 * @throws RestException 403 Not allowed if user does not have write rights on projects
 	 */
 	public function testRights() {
-		if (!DolibarrApiAccess::$user->hasRight('projet', 'creer')) {
+		if (!DolibarrApiAccess::$user->hasRight('projet', 'all', 'creer') && !DolibarrApiAccess::$user->hasRight('projet', 'creer')) {
 			throw new RestException(403);
 		}
 
