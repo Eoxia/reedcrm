@@ -687,11 +687,6 @@
   display: block !important;
 }
 
-td.tdoverflowmax200 {
-  min-width: 320px !important;
-  width: auto !important;
-}
-
 .reedcrm-relaunch-wrapper {
   display: flex;
   align-items: center;

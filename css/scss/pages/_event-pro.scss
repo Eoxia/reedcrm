@@ -1,6 +1,6 @@
 #eventproCardModal {
     z-index: 1003 !important;
-    
+
     // Reduce overlay opacity - make it less dark
     background: rgba(39, 42, 53, 0.3) !important;
 
@@ -259,11 +259,6 @@
 }
 
 // Column width for relances commerciales
-td.tdoverflowmax200 {
-    min-width: 320px !important;
-    width: auto !important;
-}
-
 .reedcrm-relaunch-wrapper {
     display: flex;
     align-items: center;
@@ -511,13 +506,13 @@ td.tdoverflowmax200 {
                 vertical-align: top;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
-                
+
                 &.nowrap {
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
-                
+
                 &.tdoverflowmax200 {
                     max-width: 200px;
                     overflow: hidden;
