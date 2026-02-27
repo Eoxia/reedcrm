@@ -372,7 +372,7 @@
   max-width: 350px;
   white-space: nowrap;
   overflow: hidden;
-  padding: 4px;
+  padding: 2px;
   border: 1px solid #e4e4e4;
   border-radius: 4px;
   background: #fff;
@@ -385,8 +385,8 @@
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid #eee;
-  width: 42px;
-  height: 42px;
+  width: 32px;
+  height: 32px;
 }
 .reedcrm-plist-coordonnees .reedcrm-plist-coordonnees-avatar img {
   object-fit: cover;
@@ -398,7 +398,7 @@
 }
 .reedcrm-plist-coordonnees .reedcrm-plist-coordonnees-box .reedcrm-plist-coordonnees-name {
   font-weight: 600;
-  font-size: 0.9em;
+  font-size: 1em;
   color: #333;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -414,7 +414,7 @@
 .reedcrm-plist-coordonnees .reedcrm-plist-coordonnees-box .reedcrm-plist-coordonnees-email,
 .reedcrm-plist-coordonnees .reedcrm-plist-coordonnees-box .reedcrm-plist-coordonnees-phone {
   color: #888;
-  font-size: 0.75em;
+  font-size: 0.5em;
   text-overflow: ellipsis;
   overflow: hidden;
 }
@@ -442,7 +442,7 @@
   color: white;
   border-radius: 4px;
   text-decoration: none;
-  font-size: 0.85em;
+  font-size: 0.5em;
   cursor: pointer;
 }
 .reedcrm-plist-coordonnees .reedcrm-plist-coordonnees-actions .reedcrm-plist-coordonnees-btn:hover {

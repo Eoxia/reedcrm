@@ -579,6 +579,38 @@ class ActionsReedcrm
             }
         }
 
+        if (strpos($parameters['context'], 'projectlist') !== false) {
+            if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
+                ?>
+                <script>
+                    $('table tr.oddeven td').css('padding', 2);
+
+                    var titles = ["Réf.", "Date fin", "Assigné à", "Statut opportunité", "Relances commerciales", "Montant pondéré opp.", "Montant opportunité", "Vocal"];
+
+                    // Récupère les index correspondants
+                    var indexes = [];
+
+                    titles.forEach(function(title) {
+                        var index = $('th[title="' + title + '"]').index();
+                        if (index !== -1) {
+                            indexes.push(index);
+                        }
+                    });
+
+                    // Applique le traitement sur chaque colonne trouvée
+                    indexes.forEach(function(index) {
+                        var cells = $('table tr').find('td:eq(' + index + ')');
+                        cells.removeClass('tdoverflowmax200');
+                        cells.removeClass('right');
+                        cells.removeClass('tdoverflowmax150');
+                        cells.addClass('tdoverflowmax75');
+                        cells.find('span.fa-project-diagram').remove();
+                    });
+                </script>
+                <?php
+            }
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
@@ -629,7 +661,6 @@ class ActionsReedcrm
                 <?php
             }
         }
-
 
         return 0; // or return 1 to replace standard code
     }
@@ -810,16 +841,16 @@ class ActionsReedcrm
 
                             $out .= '</div>';
 
-                            $oppPercent = isset($parameters['obj']->opp_percent) ? (int) $parameters['obj']->opp_percent : 0;
-                            // Adding progress bar right after badges
-                            $out .= '<div class="reedcrm-plist-progress-wrapper">';
-                            $out .= '<div class="reedcrm-plist-progress-bg">';
-                            $out .= '<div class="reedcrm-plist-progress-fill" style="width: ' . $oppPercent . '%;"></div>';
-                            $out .= '</div>';
-                            $out .= '<span class="reedcrm-plist-progress-text"><i class="fas fa-redo"></i> ' . $oppPercent . '%</span>';
-                            $out .= '</div>';
-
-                            $out .= '</div>';
+//                            $oppPercent = isset($parameters['obj']->opp_percent) ? (int) $parameters['obj']->opp_percent : 0;
+//                            // Adding progress bar right after badges
+//                            $out .= '<div class="reedcrm-plist-progress-wrapper">';
+//                            $out .= '<div class="reedcrm-plist-progress-bg">';
+//                            $out .= '<div class="reedcrm-plist-progress-fill" style="width: ' . $oppPercent . '%;"></div>';
+//                            $out .= '</div>';
+//                            $out .= '<span class="reedcrm-plist-progress-text"><i class="fas fa-redo"></i> ' . $oppPercent . '%</span>';
+//                            $out .= '</div>';
+//
+//                            $out .= '</div>';
                         }
                         $out .= '</td>';
 
@@ -881,13 +912,13 @@ class ActionsReedcrm
                         $out4 .= '</td>';
 
                         // Coordonnées - infos contact (nom tiers, email, tél, icônes)
-                        $thirdPartyName = !empty($parameters['obj']->name) ? dol_escape_htmltag($parameters['obj']->name) : '';
-                        $thirdPartyEmail = !empty($parameters['obj']->email) ? dol_escape_htmltag($parameters['obj']->email) : '';
-                        $thirdPartyPhone = !empty($parameters['obj']->phone) ? dol_escape_htmltag($parameters['obj']->phone) : '';
-                        $societeUrl = $parameters['obj']->socid ? DOL_URL_ROOT . '/societe/card.php?socid=' . $parameters['obj']->socid : '';
+                        $thirdPartyName = !empty($parameters['obj']->options_reedcrm_lastname) ? dol_escape_htmltag($parameters['obj']->options_reedcrm_lastname) : '';
+                        $thirdPartyName2 = !empty($parameters['obj']->options_reedcrm_firstname) ? dol_escape_htmltag($parameters['obj']->options_reedcrm_firstname) : '';
+                        $thirdPartyEmail = !empty($parameters['obj']->options_reedcrm_email) ? dol_escape_htmltag($parameters['obj']->options_reedcrm_email) : '';
+                        $thirdPartyPhone = !empty($parameters['obj']->options_projectphone) ? dol_escape_htmltag($parameters['obj']->options_projectphone) : '';
 
                         // Retrieve the Societe logo using exact native approach as dol_banner_tab
-                        $logoHtml = '';
+                        /*$logoHtml = '';
                         if (!empty($parameters['obj']->socid)) {
                             require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
                             $tmpsoc = new Societe($this->db);
@@ -906,19 +937,19 @@ class ActionsReedcrm
                         if (empty($logoHtml)) {
                             $logoPlaceholderUrl = dol_buildpath('/theme/common/company.png', 1);
                             $logoHtml = '<img src="' . $logoPlaceholderUrl . '" alt="" class="reedcrm-plist-coordonnees-avatar-img" width="42" height="42">';
-                        }
+                        }*/
 
                         $out5 = '<td class="tdoverflowmax200 valignmiddle">';
                         $out5 .= '<div class="reedcrm-plist-coordonnees">';
 
                         // We remove the explicit height/width from the wrapper if showphoto generates a div to avoid layout breaks
-                        $out5 .= '<div class="reedcrm-plist-coordonnees-avatar">';
-                        $out5 .= $logoHtml;
-                        $out5 .= '</div>';
+//                        $out5 .= '<div class="reedcrm-plist-coordonnees-avatar">';
+//                        $out5 .= $logoHtml;
+//                        $out5 .= '</div>';
 
                         $out5 .= '<div class="reedcrm-plist-coordonnees-box">';
                         if ($thirdPartyName) {
-                            $out5 .= '<div class="reedcrm-plist-coordonnees-name">' . ($societeUrl ? '<a href="' . $societeUrl . '">' . $thirdPartyName . '</a>' : $thirdPartyName) . '</div>';
+                            $out5 .= '<div class="reedcrm-plist-coordonnees-name">' . $thirdPartyName . ' ' . $thirdPartyName2 . '</div>';
                         }
                         if ($thirdPartyEmail) {
                             $out5 .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $thirdPartyEmail . '</div>';
