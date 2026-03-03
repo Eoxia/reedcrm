@@ -657,6 +657,23 @@ class ActionsReedcrm
                     var probCell = $('.liste > tbody > tr.liste_titre').find('th.right').has('a[href*="opp_percent"]');
 
                     probCell.append(outJS);
+
+                    $(document).ready(function() {
+                        var societeInput = $('input[name="search_societe"]');
+                        var coordInput = $('.liste_titre_filter [data-key="projet.contact_informations"] input, input[name="search_options_contact_informations"], input[name="search_contact_informations"]');
+                        
+                        if (coordInput.length && societeInput.length) {
+                            coordInput.attr('name', 'search_societe');
+                            coordInput.val(societeInput.val());
+                            
+                            coordInput.on('input', function() {
+                                societeInput.val($(this).val());
+                            });
+                            societeInput.on('input', function() {
+                                coordInput.val($(this).val());
+                            });
+                        }
+                    });
                 </script>
                 <?php
             }
