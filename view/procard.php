@@ -361,6 +361,19 @@ if (empty($resHook)) {
             $currentTab = 'ticket';
         }
     }
+    // Action to send email
+    if (in_array($action, ['presend', 'send', 'relance'])) {
+        // Find correct module element to use for email tracking
+        $trackid      = ($object->element ?? 'project') . $object->id;
+        // Hack to ensure the redirection URL preserves modal context
+        $paramname    = 'from_id=' . $id . '&from_type=' . $fromType . '&tab=email&modal=1&dummy';
+        $autocopy     = 'MAIN_MAIL_AUTOCOPY_PROJECT_TO';
+
+
+        // Include dolibarr core email processing
+        include DOL_DOCUMENT_ROOT . '/core/actions_sendmails.inc.php';
+    }
+
 }
 
 /*
@@ -369,7 +382,7 @@ if (empty($resHook)) {
 
 if ($isModal) {
     // Modal mode: output only the form template without header/banner/footer
-    if (empty($action)) {
+    if (empty($action) || in_array($action, ['presend', 'send', 'relance'])) {
         require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
     }
     $db->close();

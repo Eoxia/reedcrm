@@ -1,5 +1,6 @@
 <?php
-
+    // Output any messages stored in session (errors, successes) because in modal mode we don't load the standard footer
+    dol_htmloutput_events();
 ?>
 
 <form action="<?php echo $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=' . $currentTab; ?>" method="POST" class="border" id="addeventform">
@@ -83,6 +84,14 @@
                 require_once __DIR__ . '/view_eventpro_actioncomm_note.tpl.php';
             }
 
+            if ($currentTab == 'ticket' && isModEnabled('ticket')) {
+                require_once __DIR__ . '/view_eventpro_ticket.tpl.php';
+            }
+        ?>
+    </div>
+</form>
+
+<?php
             if ($currentTab == 'email') {
                 $originalProjectAddonPdf = getDolGlobalString('PROJECT_ADDON_PDF');
                 if ($object->element == 'project' && !empty($originalProjectAddonPdf)) {
@@ -105,10 +114,4 @@
                     $conf->global->PROJECT_ADDON_PDF = $originalProjectAddonPdf;
                 }
             }
-
-            if ($currentTab == 'ticket' && isModEnabled('ticket')) {
-                require_once __DIR__ . '/view_eventpro_ticket.tpl.php';
-            }
-        ?>
-    </div>
-</form>
+?>

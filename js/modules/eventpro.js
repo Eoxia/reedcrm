@@ -100,6 +100,10 @@ window.reedcrm.eventpro.loadModalContent = function (url) {
   }
   $content.hide().empty();
 
+  var hashIndex = url.indexOf('#');
+  if (hashIndex !== -1) {
+    url = url.substring(0, hashIndex);
+  }
   var separator = url.indexOf('?') !== -1 ? '&' : '?';
   var ajaxUrl = url + separator + 'modal=1';
 
@@ -146,13 +150,71 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
   $content.find('form').off('submit.reedcrm').on('submit.reedcrm', function (e) {
     e.preventDefault();
     var $form = $(this);
-    var formAction = $form.attr('action');
+    var formAction = $form.attr('action') || window.location.href;
+    var hashIndex = formAction.indexOf('#');
+    if (hashIndex !== -1) {
+      formAction = formAction.substring(0, hashIndex);
+    }
     var separator = formAction.indexOf('?') !== -1 ? '&' : '?';
+
+    if ($form.attr('name') === 'mailform') {
+      var formData = new FormData(this);
+
+      // formData does not include the name/value of the clicked submit button.
+      // Append the submitter button details to ensure server catches actions like 'modelselected', 'cancel', 'addfile', etc.
+      if (e.originalEvent && e.originalEvent.submitter && e.originalEvent.submitter.name) {
+        formData.append(e.originalEvent.submitter.name, e.originalEvent.submitter.value || '1');
+      }
+      
+      // Ensure from_type, from_id, and tab are present to prevent NoFromType error
+      if (!formData.has('from_type')) {
+        var baseFromType = $('#' + window.reedcrm.eventpro.modalId).find('input[name="from_type"]').first().val() || '';
+        if (baseFromType) formData.append('from_type', baseFromType);
+      }
+      if (!formData.has('from_id')) {
+        var baseFromId = $('#' + window.reedcrm.eventpro.modalId).find('input[name="from_id"]').first().val() || '';
+        if (baseFromId) formData.append('from_id', baseFromId);
+      }
+      if (!formData.has('tab')) {
+        formData.append('tab', 'email');
+      }
+
+      $.ajax({
+        url: formAction + separator + 'modal=1',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'text',
+        success: function (html) {
+           $content.html(html);
+           window.reedcrm.eventpro.bindModalContentEvents();
+
+           var projectId = $('#' + window.reedcrm.eventpro.modalId).attr('data-project-id');
+           if (e.originalEvent && e.originalEvent.submitter && e.originalEvent.submitter.name === 'send') {
+               window.reedcrm.eventpro.refreshProjectRow(projectId);
+           }
+        },
+        error: function () {
+          if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
+            window.saturne.notification.error('Erreur lors de la soumission');
+          } else {
+            alert('Erreur lors de la soumission');
+          }
+        }
+      });
+      return;
+    }
+
+    var serializedData = $form.serialize();
+    if (e.originalEvent && e.originalEvent.submitter && e.originalEvent.submitter.name) {
+      serializedData += (serializedData ? '&' : '') + encodeURIComponent(e.originalEvent.submitter.name) + '=' + encodeURIComponent(e.originalEvent.submitter.value || '1');
+    }
 
     $.ajax({
       url: formAction + separator + 'modal=1',
       type: 'POST',
-      data: $form.serialize(),
+      data: serializedData,
       dataType: 'json',
       success: function (response) {
         if (response && response.success) {
