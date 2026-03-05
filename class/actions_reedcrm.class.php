@@ -948,26 +948,21 @@ class ActionsReedcrm
 //                        $out5 .= '</div>';
 
                         $out5 .= '<div class="reedcrm-plist-coordonnees-box">';
-                        if ($thirdPartyName) {
-                            $out5 .= '<div class="reedcrm-plist-coordonnees-name">' . $thirdPartyName . ' ' . $thirdPartyName2 . '</div>';
-                        }
-                        if ($thirdPartyEmail) {
-                            $out5 .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $thirdPartyEmail . '</div>';
-                        }
-                        if ($thirdPartyPhone) {
-                            $out5 .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . $thirdPartyPhone . '</div>';
-                        }
-                        if (!$thirdPartyName && !$thirdPartyEmail && !$thirdPartyPhone) {
-                            $out5 .= '<span class="opacitymedium">-</span>';
-                        }
+                        
+                        $thirdPartyName = $thirdPartyName ? ($thirdPartyName . ' ' . $thirdPartyName2) : 'N/A';
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-name">' . $thirdPartyName . '</div>';
+                        
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . ($thirdPartyEmail ? $thirdPartyEmail : 'N/A') . '</div>';
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . ($thirdPartyPhone ? $thirdPartyPhone : 'N/A') . '</div>';
                         $out5 .= '</div>';
 
                         $out5 .= '<div class="reedcrm-plist-coordonnees-actions">';
                         if ($thirdPartyPhone) {
                             $out5 .= '<a href="tel:' . preg_replace('/\s+/', '', $parameters['obj']->phone) . '" class="reedcrm-plist-coordonnees-btn"><i class="fas fa-phone-alt"></i></a>';
+                        } else {
+                            $out5 .= '<div class="reedcrm-plist-coordonnees-btn disabled"><i class="fas fa-phone-alt"></i></div>';
                         }
                         $out5 .= '</div>';
-
                         $out5 .= '</div>';
                         $out5 .= '</td>';
 
