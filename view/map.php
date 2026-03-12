@@ -234,15 +234,20 @@ if (is_array($contacts) && !empty($contacts)) {
             $geolocations[]            = $geolocation;
         }
     }
+} else {
+    $geolocation  = new Geolocation($db);
+    $geolocations = $geolocation->fetchAll();
 }
 
 if (is_array($geolocations) && !empty($geolocations)) {
     foreach($geolocations as $geolocation) {
         $geolocation->convertCoordinates();
-        $result = $objectLinked->fetch($fromId);
-        if ($result <= 0) {
-            $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => ' ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
-            $objectLinked = array_shift($projects);
+        if (!empty($fromId)) {
+            $result = $objectLinked->fetch($fromId);
+            if ($result <= 0) {
+                $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => ' ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
+                $objectLinked = array_shift($projects);
+            }
         }
 
         if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status) && empty($objectLinked->fk_opp_status)) || empty($objectLinked)) {
@@ -346,13 +351,13 @@ if ($source != 'pwa') {
     print '<div class="divsearchfield">' . $langs->trans('Town'). ': ';
     print '<input class="flat searchstring maxwidth200" type="text" name="filter_town" value="' . dol_escape_htmltag($filterTown) . '"></div>';
 
-    //Categories project
-    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
-        if (in_array($objectType, Categorie::$MAP_ID_TO_CODE)) {
-            print '<div class="divsearchfield">';
-            print $langs->trans(ucfirst($objectInfos['langfile']) . 'CategoriesShort') . '</br>' . $formCategory->getFilterBox($objectType, $filterCat) . '</div>';
-        }
-    }
+//    //Categories project
+//    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
+//        if (in_array($objectType, Categorie::$MAP_ID_TO_CODE)) {
+//            print '<div class="divsearchfield">';
+//            print $langs->trans(ucfirst($objectInfos['langfile']) . 'CategoriesShort') . '</br>' . $formCategory->getFilterBox($objectType, $filterCat) . '</div>';
+//        }
+//    }
 
     // Morefilter buttons
     print '<div class="divsearchfield">';
