@@ -5,7 +5,7 @@
 <div class="wpeo-grid grid-1">
     <div>
         <label for="title">
-            <input type="text" id="title" name="title"  maxlength="50" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>">
+            <input type="text" id="title" name="title"  maxlength="255" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>">
         </label>
     </div>
     <div>
@@ -22,7 +22,7 @@
 
     <div>
         <label for="title">
-            <input type="text" id="title" name="reminder_title"  maxlength="50" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('reminder_title') ? GETPOST('reminder_title') : '')); ?>">
+            <input type="text" id="title" name="reminder_title"  maxlength="255" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('reminder_title') ? GETPOST('reminder_title') : '')); ?>">
         </label>
     </div>
 
