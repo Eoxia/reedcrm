@@ -74,6 +74,10 @@
                     <div class="select2-container"><?php echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id'); ?></div>
                 </label>
             </div>
+            <div>
+                <label for="new_opportunity_percent"><?php echo $langs->trans('OpportunityStatus'); ?> (%)</label>
+                <input type="number" value="<?= $object->opp_percent ?>" min="0" max="100" id="new_opportunity_percent" name="new_opportunity_percent" class="maxwidth200" />
+            </div>
         </div>
 
         <?php

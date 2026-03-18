@@ -226,6 +226,10 @@ if (empty($resHook)) {
             $result = $actionCommReminder->create($user);
         }
 
+        $newOpportunityPercent = GETPOST('new_opportunity_percent');
+        if ($result > 0 && $object->opp_percent != $newOpportunityPercent) {
+            $result = $object->setValueFrom('opp_percent', $newOpportunityPercent);
+        }
 
         if ($result > 0) {
             if ($isModal) {
