@@ -280,8 +280,13 @@ window.reedcrm.eventpro.event = function () {
     $modal.find('#' + window.reedcrm.eventpro.modalId + '-content').empty();
   });
 
+  var mousedownOnBackdrop = false;
+  $(document).on('mousedown', modalSelector, function (e) {
+    mousedownOnBackdrop = $(e.target).is(modalSelector);
+  });
+
   $(document).on('click', modalSelector, function (e) {
-    if ($(e.target).is(modalSelector)) {
+    if ($(e.target).is(modalSelector) && mousedownOnBackdrop) {
       $(this).removeClass('modal-active');
       $(this).find('#' + window.reedcrm.eventpro.modalId + '-content').empty();
     }
