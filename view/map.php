@@ -451,7 +451,15 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 		 * Open Street Map layer.
 		 */
 		var osmLayer = new ol.layer.Tile({
-			source: new ol.source.OSM()
+			source: new ol.source.OSM({
+				tileLoadFunction: function(tile, src) {
+					fetch(src, { referrerPolicy: 'strict-origin-when-cross-origin' })
+						.then(function(response) { return response.blob(); })
+						.then(function(blob) {
+							tile.getImage().src = URL.createObjectURL(blob);
+						});
+				}
+			})
 		});
 
 		/**
