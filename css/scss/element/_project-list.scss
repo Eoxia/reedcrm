@@ -57,6 +57,10 @@
                 background-color: #a476b1;
             }
 
+            .reedcrm-plist-relaunch-btn-content.count-zero {
+                filter: grayscale(0.3) opacity(0.8);
+            }
+
             // The 'plus' quick add button
             .reedcrm-plist-relaunch-add {
                 position: absolute;
