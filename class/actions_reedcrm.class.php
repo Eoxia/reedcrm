@@ -788,7 +788,7 @@ class ActionsReedcrm
                             $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
 
                             $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-call" data-relaunch-type="call" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['call'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['call'] == 0 ? ' count-zero' : '') . '">';
                             $out .= '<i class="fas fa-headset"></i>';
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['call'] . '</span>';
                             $out .= '</div>';
@@ -801,7 +801,7 @@ class ActionsReedcrm
                             $out .= '</div>';
 
                             $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-email" data-relaunch-type="email" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['email'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['email'] == 0 ? ' count-zero' : '') . '">';
                             $out .= '<i class="fas fa-envelope"></i>';
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['email'] . '</span>';
                             $out .= '</div>';
@@ -814,7 +814,7 @@ class ActionsReedcrm
                             $out .= '</div>';
 
                             $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-rdv" data-relaunch-type="rdv" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['rdv'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['rdv'] == 0 ? ' count-zero' : '') . '">';
                             $out .= '<i class="fas fa-calendar"></i>';
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['rdv'] . '</span>';
                             $out .= '</div>';
@@ -827,7 +827,7 @@ class ActionsReedcrm
                             $out .= '</div>';
 
                             $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-other" data-relaunch-type="other" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['other'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
+                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['other'] == 0 ? ' count-zero' : '') . '">';
                             $out .= '<i class="fas fa-comment-dots"></i>';
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['other'] . '</span>';
                             $out .= '</div>';
