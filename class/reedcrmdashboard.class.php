@@ -55,6 +55,12 @@ class ReedcrmDashboard
         $dashboardConfig = json_decode($user->conf->$confName);
         $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
 
+        if (empty($dashboardConfig->graphs->OpportunitySources->hide)) {
+            $array['propal']['graphs'][] = self::getOpportunitySources('OpportunitySources');
+        } else {
+            $array['propal']['disabledGraphs']['OpportunitySources'] = $langs->transnoentities('OpportunitySources');
+        }
+
         if (empty($dashboardConfig->graphs->PropalStatusCommRepartition->hide)) {
             $array['propal']['graphs'][] = self::getDataFromExtrafieldsAndDictionary('PropalStatusCommRepartition', 'c_commercial_status');
         } else {
@@ -145,6 +151,57 @@ class ReedcrmDashboard
 
 		return $array;
 	}
+
+    public function getOpportunitySources($title)
+    {
+        global $db, $langs;
+
+        // Graph Title parameters.
+		$array['title'] = $langs->transnoentities($title);
+        $array['name']  = $title;
+		$array['picto'] = '';
+
+		// Graph parameters.
+		$array['width']   = '100%';
+		$array['height']  = 400;
+		$array['type']    = 'pie';
+		$array['dataset'] = 1;
+
+        $array['labels'] = [];
+
+        $sql = "SELECT c.rowid, c.label, c.active";
+        $sql .= " FROM ".MAIN_DB_PREFIX."c_input_reason as c";
+        $sql .= " WHERE c.active = 1";
+        $result = $db->query($sql);
+
+        $num = $db->num_rows($result);
+        $i = 0;
+		while ($i < $num) {
+			$objp = $db->fetch_object($result);
+            $array['labels'][$objp->rowid] = ['label' => $objp->label, 'color' => $this::getColorRange($i)];
+            $i++;
+        }
+
+        $array['data'] = [];
+
+        $sql2 = "SELECT e.opporigin";
+        $sql2 .= " FROM ".MAIN_DB_PREFIX."projet_extrafields as e";
+        $sql2 .= " WHERE e.opporigin IS NOT NULL AND e.opporigin != 0";
+        $result = $db->query($sql2);
+
+        $num = $db->num_rows($result);
+        $i = 0;
+		while ($i < $num) {
+			$objp = $db->fetch_object($result);
+            if (empty($array['data'][$objp->opporigin])) {
+                $array['data'][$objp->opporigin] = 0;
+            }
+            $array['data'][$objp->opporigin]++;
+            $i++;
+        }
+
+        return $array;
+    }
 
 	/**
 	 * get color range for key
