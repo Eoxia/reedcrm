@@ -65,7 +65,7 @@
             <div>
                 <label>
                     <?php //echo img_picto('', 'agenda'); ?>
-                    <div class="select2-container"><?php echo $form->selectDate(dol_now('tzuser'), 'event_', 1, 1); ?></div>
+                    <div class="select2-container" style="display: flex; align-items: center;"><?php echo $form->selectDate(dol_now('tzuser'), 'event_', 1, 1); ?></div>
                 </label>
             </div>
             <div>
