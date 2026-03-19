@@ -74,10 +74,13 @@
                     <div class="select2-container"><?php echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id'); ?></div>
                 </label>
             </div>
-            <div>
-                <label for="new_opportunity_percent"><?php echo $langs->trans('OpportunityStatus'); ?> (%)</label>
-                <input type="number" value="<?= $object->opp_percent ?>" min="0" max="100" id="new_opportunity_percent" name="new_opportunity_percent" class="maxwidth200" />
-            </div>
+            <?php if (!empty($object->usage_opportunity)) { ?>
+            <div style="display:flex; align-items:center; gap:8px;">
+		    	<?= $formProject->selectOpportunityStatus('new_opportunity_status', (string) $object->opp_status, 1, 0, 0, 0, 'minwidth150 inline-block valignmiddle', 1, 1); ?>
+	    		<input class="width50 right" type="text" id="new_opportunity_percent" name="new_opportunity_percent" title="<?= dol_escape_htmltag($langs->trans("OpportunityProbability")); ?>" value="<?= $object->opp_percent ?>">
+    			<span id="oldopppercent" class="opacitymedium">%</span>
+			</div>
+            <?php } ?>
         </div>
 
         <?php

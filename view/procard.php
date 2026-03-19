@@ -227,8 +227,11 @@ if (empty($resHook)) {
         }
 
         $newOpportunityPercent = GETPOST('new_opportunity_percent');
-        if ($result > 0 && $object->opp_percent != $newOpportunityPercent) {
-            $result = $object->setValueFrom('opp_percent', $newOpportunityPercent);
+        $newOpportunityStatus  = GETPOST('new_opportunity_status');
+        if ($result > 0 && ($object->opp_percent != $newOpportunityPercent || $object->opp_status != $newOpportunityStatus)) {
+            $object->opp_percent = $newOpportunityPercent;
+            $object->opp_status  = $newOpportunityStatus;
+            $result = $object->update($user);
         }
 
         if ($result > 0) {
