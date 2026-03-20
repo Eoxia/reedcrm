@@ -4,8 +4,10 @@
     gap: 0.5em;
 
     input[type=range] {
+        -webkit-appearance: none;
+        appearance: none;
         width: 100%;
-        background: #f7f7f7;
+        background: transparent;
         height: 0;
         margin-bottom: 0;
     

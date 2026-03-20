@@ -22,52 +22,153 @@
 
     /* Media Block Styles */
     .reedcrm-media-container {
-        display: flex; gap: 15px; align-items: center;
-        &.no-opp { margin-top: 15px; }
-        &.with-opp { height: 40px; margin: 0; }
+        display: flex;
+        gap: 15px;
+        align-items: center;
+
+        &.no-opp {
+            margin-top: 15px;
+        }
+
+        &.with-opp {
+            height: 40px;
+            margin: 0;
+        }
         
         .reedcrm-btn-square-media {
-            height: 40px; margin: 0;
-            display: flex; align-items: center; justify-content: center; position: relative;
+            height: 40px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
         
         .reedcrm-linked-medias-wrapper {
             margin: 0;
-            .linked-medias-list { display: flex; gap: 10px; }
-            label { margin: 0; }
+
+            .linked-medias-list {
+                display: flex;
+                gap: 10px;
+            }
+
+            label {
+                margin: 0;
+            }
         }
         
         .reedcrm-camera-icon-badge {
-            position: absolute; top: 4px; right: 4px; font-size: 0.6em;
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            font-size: 0.6em;
         }
         
-        .recording-indicator { display: none; align-self: center; }
+        .recording-indicator {
+            display: none;
+            align-self: center;
+        }
     }
     
     /* Opportunity Config Styles */
     .reedcrm-opp-wrapper {
-        display: flex; gap: 15px; margin-top: 15px; width: 100%;
+        display: flex;
+        gap: 15px;
+        margin-top: 15px;
+        width: 100%;
+
         .reedcrm-opp-col {
-            flex: 1; display: flex; align-items: center; justify-content: flex-start; height: 100%; margin: 0; padding: 0;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100%;
+            margin: 0;
+            padding: 0;
         }
         .reedcrm-opp-amount-input-group {
-            border: 1px solid #ced4da; border-radius: 4px; display: flex; align-items: center; padding: 0 10px; width: 100%; height: 40px; box-sizing: border-box; background: #fff;
-            span { font-weight: bold; margin-right: 8px; font-size: 1.1em; line-height: 1; }
-            input { border: 0px !important; box-shadow: none !important; outline: none !important; background: transparent !important; width: 100%; height: 100%; padding: 0; margin: 0; flex: 1; }
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            width: 100%;
+            height: 40px;
+            box-sizing: border-box;
+            background: #fff;
+            span {
+                font-weight: bold;
+                margin-right: 8px;
+                font-size: 1.1em;
+                line-height: 1;
+            }
+            input {
+                border: 0px !important;
+                box-shadow: none !important;
+                outline: none !important;
+                background: transparent !important;
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                margin: 0;
+                flex: 1;
+            }
         }
     }
     
     .reedcrm-opp-percent-wrapper {
-        display: flex; align-items: center; width: 100%; margin-top: 15px;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin-top: 15px;
+
         .percent-image {
-            &.left { margin-right: 15px; }
-            &.right { margin-left: 15px; }
+            &.left {
+                margin-right: 15px;
+            }
+
+            &.right {
+                margin-left: 15px;
+            }
         }
+
         .range-container {
-            position: relative; flex-grow: 1; display: flex; align-items: center; height: 40px;
-            input[type="range"] { width: 100%; margin: 0; position: relative; z-index: 1; }
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            height: 40px;
+            overflow: visible !important;
+
+            input[type="range"] {
+                width: 100%;
+                margin: 0;
+                position: relative;
+                z-index: 1;
+            }
+
             .opp_percent-value {
-                position: absolute; left: calc(var(--val, 0) * 1% + (19px - var(--val, 0) * 0.38px)); top: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 2; font-weight: bold; font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 0.8em; color: #1a202c; text-align: center; white-space: nowrap; background: #ffffff; width: 38px; height: 38px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center;
+                position: absolute;
+                left: calc(var(--val, 0) * 1% + (19px - var(--val, 0) * 0.38px));
+                top: 50%;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                z-index: 2;
+                font-weight: bold;
+                font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                font-size: 0.8em;
+                color: #1a202c;
+                text-align: center;
+                white-space: nowrap;
+                background: #ffffff;
+                width: 38px;
+                height: 38px;
+                border-radius: 8px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+                border: 1px solid #e2e8f0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
         }
     }
