@@ -127,6 +127,15 @@ require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_project_quickcreation_f
 
 print '</form>';
 
+$nbLatestOpportunities = getDolGlobalInt('REEDCRM_NB_LATEST_OPPORTUNITIES_FRONTEND', 15);
+if ($nbLatestOpportunities > 0) {
+    if (!function_exists('saturne_fetch_all_object_type')) {
+        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/saturne.lib.php';
+    }
+    $latestProjects = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', $nbLatestOpportunities, 0, [], 'AND', true);
+    require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_opportunities_list_frontend.tpl.php';
+}
+
 // End of page
 llxFooter();
 $db->close();

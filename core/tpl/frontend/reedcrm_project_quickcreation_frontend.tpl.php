@@ -70,15 +70,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 </label>
             <?php endif; ?>
         </div>
-        <div>
-            <!-- Audio -->
-            <button type="button" id="start-recording" class="butAction button-square">
-                <?php echo img_picto('', 'fontawesome_microphone_fas_#ffffff'); ?>
-            </button>
-        </div>
-        <div>
-            <div id="recording-indicator" class="blinking"><?php echo  $langs->trans('RecordingInProgress'); ?></div>
-        </div>
+        <!-- Audio button moved to the bottom -->
 
         <!-- ExtraFields -->
         <?php if (getDolGlobalInt('REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE')) :
@@ -117,49 +109,75 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         } ?>
         <?php endif; ?>
 
-        <!-- Opportunity option -->
-        <?php if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) : ?>
-            <!-- Opportunity percent -->
-            <div class="grid-2">
-                <div for="opp_percent">
-                    <div class="opp-percent-label">
-                        <span class="label"><?php echo $langs->trans('OpportunityProbability'); ?></span>
-                        <span class="opp_percent-value">0 %</span>
-                    </div>
-                    <div class="opp-percent">
-                        <?php echo img_picto('', 'fontawesome_fa-frown-open_fas_#c62828_2em', 'class="percent-image"'); ?>
-                        <input type="range" class="range" name="opp_percent" id="opp_percent" min="0" max="100" step="10" value="0">
-                        <?php echo img_picto('', 'fontawesome_fa-laugh-beam_fas_#388e3c_2em', 'class="percent-image"'); ?>
-                    </div>
-                </div>
+        <!-- Media (Audio & Images) Block definition -->
+        <?php ob_start(); ?>
+        <div class="<?php echo empty($conf->global->PROJECT_USE_OPPORTUNITIES) ? 'grid-2' : ''; ?>" style="display: flex; gap: 15px; align-items: center; <?php echo empty($conf->global->PROJECT_USE_OPPORTUNITIES) ? 'margin-top: 15px;' : 'height: 40px; margin: 0;'; ?>">
+            <!-- Audio -->
+            <div>
+                <button type="button" id="start-recording" class="butAction button-square" style="height: 40px; margin: 0;">
+                    <?php echo img_picto('', 'fontawesome_microphone_fas_#ffffff'); ?>
+                </button>
             </div>
-            <!-- Opportunity amount -->
-            <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
-                <div class="grid-2">
-                    <label for="opp_amount">
-                        <?php echo img_picto('', 'fontawesome_euro-sign_fas_#000000'); ?>
-                        <input type="number" name="opp_amount" id="opp_amount" min="0" placeholder="<?php echo $langs->trans('OpportunityAmount'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>">
-                    </label>
-                </div>
-            <?php endif;
-        endif; ?>
-
-        <!-- Images -->
-        <div class="grid-2">
+            
+            <!-- Images -->
             <input hidden id="upload-image" type="file" name="userfile[]" capture="environment" accept="image/*">
-            <div class="linked-medias project">
-                <div class="linked-medias-list">
-                    <label for="upload-image">
-                        <div class="butAction button-square">
+            <div class="linked-medias project" style="margin: 0;">
+                <div class="linked-medias-list" style="display: flex; gap: 10px;">
+                    <label for="upload-image" style="margin: 0;">
+                        <div class="butAction button-square" style="display: flex; align-items: center; justify-content: center; position: relative; height: 40px; margin: 0;">
                             <input type="hidden" class="modal-options" data-photo-class="project"/>
                             <?php echo img_picto('', 'fontawesome_camera_fas_#ffffff'); ?>
-                            <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
+                            <span style="position: absolute; top: 4px; right: 4px; font-size: 0.6em;">
+                                <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
+                            </span>
                         </div>
                     </label>
                     <?php print saturne_show_medias_linked('reedcrm', $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos', 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, 'project/tmp/0/project_photos', $project, '', 0, 1, 0, 0, '', 1, ['useAi' => 1]); ?>
                 </div>
             </div>
+            
+            <!-- Recording Indicator -->
+            <div id="recording-indicator" class="blinking" style="display: none; align-self: center;"><?php echo $langs->trans('RecordingInProgress'); ?></div>
         </div>
+        <?php $mediaBlockHtml = ob_get_clean(); ?>
+
+        <!-- Opportunity option -->
+        <?php if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) : ?>
+            <div class="grid-2" style="display: flex; gap: 15px; margin-top: 15px; width: 100%;">
+                <!-- Media moved to the left column -->
+                <div style="flex: 1; display: flex; align-items: center; justify-content: flex-start; height: 100%; margin: 0; padding: 0;">
+                    <?php echo $mediaBlockHtml; ?>
+                </div>
+                
+                <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: flex-start; height: 100%; margin: 0; padding: 0;">
+                        <div style="border: 1px solid #ced4da; border-radius: 4px; display: flex; align-items: center; padding: 0 10px; width: 100%; height: 40px; box-sizing: border-box; background: #fff;">
+                            <span style="font-weight: bold; margin-right: 8px; font-size: 1.1em; line-height: 1;">&euro;</span>
+                            <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="<?php echo $langs->trans('OpportunityAmount'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>" style="border: 0px !important; box-shadow: none !important; outline: none !important; background: transparent !important; width: 100%; height: 100%; padding: 0; margin: 0; flex: 1;">
+                        </div>
+                    </div>
+                <?php else : ?>
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: flex-start; height: 100%; margin: 0; padding: 0;"></div>
+                <?php endif; ?>
+            </div>
+
+            <div class="grid-2">
+                <div class="opp-percent" style="display: flex; align-items: center; width: 100%; margin-top: 15px;">
+                    <?php echo img_picto('', 'fontawesome_fa-frown-open_fas_#c62828_2em', 'class="percent-image" style="margin-right: 15px;"'); ?>
+                    
+                    <div style="position: relative; flex-grow: 1; display: flex; align-items: center; height: 40px;" oninput="this.style.setProperty('--val', event.target.value)">
+                        <input type="range" class="range" name="opp_percent" id="opp_percent" min="0" max="100" step="10" value="0" style="width: 100%; margin: 0; position: relative; z-index: 1;">
+                        <span class="opp_percent-value" style="position: absolute; left: calc(var(--val, 0) * 1% + (19px - var(--val, 0) * 0.38px)); top: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 2; font-weight: bold; font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 0.8em; color: #1a202c; text-align: center; white-space: nowrap; background: #ffffff; width: 38px; height: 38px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center;">0 %</span>
+                    </div>
+
+                    <?php echo img_picto('', 'fontawesome_fa-laugh-beam_fas_#388e3c_2em', 'class="percent-image" style="margin-left: 15px;"'); ?>
+                </div>
+            </div>
+        <?php else : ?>
+            <?php echo $mediaBlockHtml; ?>
+        <?php endif; ?>
+
+
 
         <!-- GPS -->
         <input type="hidden" id="latitude"  name="latitude" value="">

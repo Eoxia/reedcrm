@@ -253,6 +253,7 @@ Automatically open contact card when receiving a call notification   = Ouvrir au
 Open contact card in a new tab instead of current window             = Ouvrir la fiche contact dans un nouvel onglet au lieu de la fenêtre actuelle
 Security token for Keyyo webhook (leave empty to disable token check)= Token de sécurité pour le webhook Keyyo (laisser vide pour désactiver la vérification du token)
 ProjectOpportunitiesList = Les 5 dernières opportunités de projet
+LatestCreatedOpportunities = Dernières opportunités créées
 OppPercent = Pourcentage d'opportunité
 ButtonActions = Actions
 ContentToBeAdded = Contenu à ajouter
