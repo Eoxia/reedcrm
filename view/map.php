@@ -60,8 +60,10 @@ $filterCountry = GETPOST('filter_country');
 $filterRegion  = GETPOST('filter_region');
 $filterState   = GETPOST('filter_state');
 $filterTown    = trim(GETPOST('filter_town', 'alpha'));
-$filterCat     = GETPOST("search_category_" . $objectType ."_list", 'array');
-$source        = GETPOSTISSET('source') ? GETPOST('source') : '';
+$filterCat       = GETPOST("search_category_" . $objectType ."_list", 'array');
+$filterDateStart = dol_mktime(0, 0, 0, GETPOST('filter_date_startmonth', 'int'), GETPOST('filter_date_startday', 'int'), GETPOST('filter_date_startyear', 'int'));
+$filterDateEnd   = dol_mktime(23, 59, 59, GETPOST('filter_date_endmonth', 'int'), GETPOST('filter_date_endday', 'int'), GETPOST('filter_date_endyear', 'int'));
+$source          = GETPOSTISSET('source') ? GETPOST('source') : '';
 
 // Initialize technical object
 $objectInfos  = saturne_get_objects_metadata($objectType);
@@ -102,13 +104,15 @@ if (empty($resHook)) {
     // Purge search criteria
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')) // All tests are required to be compatible with all browsers
     {
-        $filterCat     = [];
-        $filterId      = 0;
-        $filterCountry = 0;
-        $filterRegion  = 0;
-        $filterState   = 0;
-        $filterTown    = '';
-        $filterType    = '';
+        $filterCat       = [];
+        $filterId        = 0;
+        $filterCountry   = 0;
+        $filterRegion    = 0;
+        $filterState     = 0;
+        $filterTown      = '';
+        $filterType      = '';
+        $filterDateStart = '';
+        $filterDateEnd   = '';
     }
 }
 
@@ -206,11 +210,21 @@ $allObjects    = saturne_fetch_all_object_type($objectInfos['class_name']);
 $filterSQL  = 't.element_type = ' . "'" . GETPOST('from_type') . "'";
 $filterSQL .= ($filterId > 0 ? ' AND t.fk_element = ' . $filterId : '');
 
+// Build date SQL conditions for project creation date
+$dateStartSQL = (!empty($filterDateStart) ? " AND p.datec >= '" . date('Y-m-d H:i:s', $filterDateStart) . "'" : '');
+$dateEndSQL   = (!empty($filterDateEnd)   ? " AND p.datec <= '" . date('Y-m-d H:i:s', $filterDateEnd)   . "'" : '');
+
 if ($filterId > 0) {
     $project->fetch($filterId);
-    $contacts = $project->liste_contact();
+    // Apply date filter on the single fetched project
+    $projectDateC = (int) $project->date_creation;
+    if ((!empty($filterDateStart) && $projectDateC < $filterDateStart) || (!empty($filterDateEnd) && $projectDateC > $filterDateEnd)) {
+        $contacts = [];
+    } else {
+        $contacts = $project->liste_contact();
+    }
 } else {
-    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"'], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid');
+    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"' . $dateStartSQL . $dateEndSQL], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON ec.element_id = p.rowid');
 }
 
 if (is_array($contacts) && !empty($contacts)) {
@@ -350,6 +364,14 @@ if ($source != 'pwa') {
     // City
     print '<div class="divsearchfield">' . $langs->trans('Town'). ': ';
     print '<input class="flat searchstring maxwidth200" type="text" name="filter_town" value="' . dol_escape_htmltag($filterTown) . '"></div>';
+
+    // Date start
+    print '<div class="divsearchfield">' . $langs->trans('DateStart'). ': ';
+    print $form->selectDate($filterDateStart, 'filter_date_start', 0, 0, 1, 'formfilter', 1, 0) . '</div>';
+
+    // Date end
+    print '<div class="divsearchfield">' . $langs->trans('DateEnd'). ': ';
+    print $form->selectDate($filterDateEnd, 'filter_date_end', 0, 0, 1, 'formfilter', 1, 0) . '</div>';
 
 //    //Categories project
 //    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
