@@ -35,130 +35,114 @@ if (!$permissionToAddProject) {
 
 require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.tpl.php'; ?>
 
-<!-- File start-->
-<div id="id-top" class="page-header side-nav-vert">
-    <div class="col">
-        <!-- @todo Logo here -->
+<div id="id-top" class="page-header-tabs" style="max-width: 600px; margin: 0 auto; margin-bottom: 20px; border-radius: 8px; background-color: #ffffff; padding: 0 15px; height: 60px; border-bottom: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center;">
+    <div class="company-logo-wrapper" style="margin-right: 20px; display: flex; align-items: center;">
+        <?php
+        global $mysoc, $db, $conf;
+        if (empty($mysoc)) {
+            require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
+            $mysoc = new Societe($db);
+            $mysoc->setMysoc($conf);
+        }
+        $logoFile = '';
+        if (!empty($mysoc->logo_squarred)) {
+            $logoFile = 'logos/'.$mysoc->logo_squarred; // viewimage handles thumbs directly if you pass the root file, or we just pass logos/...
+        } elseif (!empty($mysoc->logo)) {
+            $logoFile = 'logos/'.$mysoc->logo;
+        }
+        if (!empty($logoFile)) {
+            $logoUrl = DOL_URL_ROOT.'/viewimage.php?cache=1&modulepart=mycompany&file='.urlencode($logoFile);
+            print '<img class="company-logo" src="'.$logoUrl.'" alt="Logo" style="max-height: 40px; max-width: 120px; object-fit: contain;">';
+        }
+        ?>
     </div>
-    <div class="col">
-<!--        <div class="subtitle">Custom subtitle</div>-->
-        <div class="title"><?php echo $langs->trans('Lead'); ?></div>
-    </div>
-    <div class="col">
-        <?php $backToMap = img_picto('map', 'fontawesome_map-marked-alt_fas_#ffffff');
-        print '<a class="nav-element" href="' . dol_buildpath('custom/reedcrm/view/map.php?from_type=project&source=pwa', 1) . '">' . $backToMap . '</a>'; ?>
+    <div class="tabs-nav" style="display: flex; height: 100%; gap: 15px;">
+        <a href="<?php echo $_SERVER["PHP_SELF"]; ?>" class="tab active" style="display: flex; align-items: center; height: 100%; padding: 0 10px; color: #0f172a; text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 3px solid #0f172a;">
+            <i class="fas fa-share-alt" style="margin-right: 6px; font-size: 14px;"></i> Opportunités
+        </a>
+        <a href="<?php echo dol_buildpath('/ticket/list.php', 1); ?>" target="_blank" class="tab" style="display: flex; align-items: center; height: 100%; padding: 0 10px; color: #64748b; text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 3px solid transparent;">
+            <i class="fas fa-ticket-alt" style="margin-right: 6px; font-size: 14px;"></i> Ticket
+        </a>
     </div>
 </div>
 
 <div id="id-container" class="page-content">
     <?php print saturne_show_notice('', '', 'error', 'notice-infos', false, true, '', ['Error' => $langs->transnoentities('Error')]); ?>
 
-    <div class="wpeo-grid grid-2 grid-no-responsive">
-        <div class="grid-2">
-            <!-- Project label -->
-            <label for="title"> <!-- @todo class css pour le design des input et textarea -->
-                <?php echo img_picto('', 'fontawesome_project-diagram_fas_#6C6AA8'); ?>
-                <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
-            </label>
+    <div class="quickcreation-form-container">
+        <!-- Project label -->
+        <div class="form-group">
+            <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?> (ex: Projet Refonte Web...)" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
         </div>
-        <div class="grid-2">
-            <!-- Description -->
-            <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
-                <label for="description">
-                    <?php echo img_picto('', 'fontawesome_comment_fas_#263C5C'); ?>
-                    <textarea name="description" id="description" rows="6" placeholder="<?php echo $langs->trans('Description'); ?>"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
-                </label>
-            <?php endif; ?>
-        </div>
-        <div>
-            <!-- Audio -->
-            <button type="button" id="start-recording" class="butAction button-square">
-                <?php echo img_picto('', 'fontawesome_microphone_fas_#ffffff'); ?>
-            </button>
-        </div>
-        <div>
-            <div id="recording-indicator" class="blinking"><?php echo  $langs->trans('RecordingInProgress'); ?></div>
-        </div>
+
+        <!-- Description -->
+        <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
+            <div class="form-group">
+                <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
+            </div>
+        <?php endif; ?>
 
         <!-- ExtraFields -->
+        <div class="form-row-grid">
         <?php if (getDolGlobalInt('REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE')) :
-            $extraFields->attributes['projet']['picto']['projectphone']      = 'phone';
-            $extraFields->attributes['projet']['picto']['reedcrm_lastname']  = 'fa-user-tie';
-            $extraFields->attributes['projet']['picto']['reedcrm_firstname'] = 'fa-user';
-            $extraFields->attributes['projet']['picto']['reedcrm_email']     = 'fa-at';
-
             $positions = $extraFields->attributes['projet']['pos'];
             asort($positions);
             $sortedType = [];
             foreach ($positions as $key => $pos) {
                 $sortedType[$key] = $extraFields->attributes['projet']['type'][$key];
             }
-            $extraFields->attributes['projet']['type'] = $sortedType; ?>
+            $extraFields->attributes['projet']['type'] = $sortedType; 
 
-            <?php foreach ($extraFields->attributes['projet']['type'] as $key => $value) {
-            if (strpos($key, 'reedcrm') === false && $key != 'projectphone') {
-                continue;
-            }
+            foreach ($extraFields->attributes['projet']['type'] as $key => $value) {
+                if (strpos($key, 'reedcrm') === false && $key != 'projectphone') {
+                    continue;
+                }
 
-            $inputType = 'text';
-            if ($value == 'mail') {
-                $inputType = 'email';
-            }
-            if ($value == 'phone') {
-                $inputType = 'tel';
-            }
+                $inputType = 'text';
+                if ($value == 'mail') {
+                    $inputType = 'email';
+                }
+                if ($value == 'phone') {
+                    $inputType = 'tel';
+                }
 
-            print '<div>';
-            print '<label for="' . $key . '" class="extrafields-content">';
-//                print 'img_picto('', $extraFields->attributes['projet']['picto'][$key], 'class="pictofixedwidth"')';
-            print '<input type="' . $inputType . '" id="' . $key . '" name="options_' . $key . '" placeholder="' . $langs->trans($extraFields->attributes['projet']['label'][$key]) . '" value="' . dol_escape_htmltag((GETPOSTISSET($key) ? GETPOST($key) : '')) . '">';
-            print '</label>';
-            print '</div>';
-        } ?>
+                print '<div class="form-group">';
+                print '<input type="' . $inputType . '" id="' . $key . '" name="options_' . $key . '" placeholder="' . $langs->trans($extraFields->attributes['projet']['label'][$key]) . '" value="' . dol_escape_htmltag((GETPOSTISSET($key) ? GETPOST($key) : '')) . '">';
+                print '</div>';
+            }
+        endif; ?>
+        </div>
+
+                <!-- Opportunity option -->
+        <?php if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) : ?>
+            <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px; margin-bottom: 15px;">
+                <!-- 70% -->
+                <div class="form-group" style="flex: 7; margin-bottom: 0;">
+                    <div class="opp-percent" style="display: flex; align-items: center;">
+                        <span style="font-size: 22px; margin-right: 8px;">🥵</span>
+                        <div style="position: relative; flex: 1; display: flex; align-items: center; --val: <?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>;">
+                            <input type="range" class="range" name="opp_percent" id="opp_percent" min="0" max="100" step="10" value="<?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>" style="width: 100%; cursor: pointer; margin: 0; background: transparent; outline: none;">
+                            <div class="opp_percent-value"><?php echo empty($project->opp_percent) ? '0%' : $project->opp_percent . '%'; ?></div>
+                        </div>
+                        <span style="font-size: 22px; margin-left: 8px;">🤑</span>
+                    </div>
+                </div>
+
+                <!-- 30% -->
+                <div class="form-group" style="flex: 3; margin-bottom: 0;">
+                    <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+                        <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
+                            <span class="input-icon">€</span>
+                            <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="Montant" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>" style="width: 100%;">
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         <?php endif; ?>
 
-        <!-- Opportunity option -->
-        <?php if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) : ?>
-            <!-- Opportunity percent -->
-            <div class="grid-2">
-                <div for="opp_percent">
-                    <div class="opp-percent-label">
-                        <span class="label"><?php echo $langs->trans('OpportunityProbability'); ?></span>
-                        <span class="opp_percent-value">0 %</span>
-                    </div>
-                    <div class="opp-percent">
-                        <?php echo img_picto('', 'fontawesome_fa-frown-open_fas_#c62828_2em', 'class="percent-image"'); ?>
-                        <input type="range" class="range" name="opp_percent" id="opp_percent" min="0" max="100" step="10" value="0">
-                        <?php echo img_picto('', 'fontawesome_fa-laugh-beam_fas_#388e3c_2em', 'class="percent-image"'); ?>
-                    </div>
-                </div>
-            </div>
-            <!-- Opportunity amount -->
-            <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
-                <div class="grid-2">
-                    <label for="opp_amount">
-                        <?php echo img_picto('', 'fontawesome_euro-sign_fas_#000000'); ?>
-                        <input type="number" name="opp_amount" id="opp_amount" min="0" placeholder="<?php echo $langs->trans('OpportunityAmount'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>">
-                    </label>
-                </div>
-            <?php endif;
-        endif; ?>
-
-        <!-- Images -->
-        <div class="grid-2">
-            <input hidden id="upload-image" type="file" name="userfile[]" capture="environment" accept="image/*">
-            <div class="linked-medias project">
-                <div class="linked-medias-list">
-                    <label for="upload-image">
-                        <div class="butAction button-square">
-                            <input type="hidden" class="modal-options" data-photo-class="project"/>
-                            <?php echo img_picto('', 'fontawesome_camera_fas_#ffffff'); ?>
-                            <?php echo img_picto('', 'fontawesome_plus-circle_fas_#ffffff', 'class="button-icon"'); ?>
-                        </div>
-                    </label>
-                    <?php print saturne_show_medias_linked('reedcrm', $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos', 'small', '', 0, 0, 0, 50, 50, 0, 0, 0, 'project/tmp/0/project_photos', $project, '', 0, 1, 0, 0, '', 1, ['useAi' => 1]); ?>
-                </div>
-            </div>
+        <!-- Media & Submit Block -->
+        <div class="action-buttons-row">
+            <?php include __DIR__ . '/reedcrm_project_quickcreation_media_frontend.tpl.php'; ?>
         </div>
 
         <!-- GPS -->
@@ -169,9 +153,78 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     </div>
 </div>
 
-<div id="id-bot" class="page-footer center">
-    <button type="submit" class="button button-add">
-        <?php echo $langs->trans('Save'); ?>
-    </button>
-</div>
+<!-- intl-tel-input (Local libphonenumber integration) -->
+<link rel="stylesheet" href="<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/css/intlTelInput.css', 1); ?>">
+<style>
+    /* Fix the width issue caused by the library inserting a wrapper */
+    .iti { width: 100%; }
+    
+    /* Material Design Error State for Inputs */
+    input.input-invalid-material {
+        border-color: #e53935 !important;
+        border-bottom: 2px solid #e53935 !important;
+        color: #e53935 !important;
+    }
+</style>
+<script src="<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/js/intlTelInput.min.js', 1); ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Phone Validation ---
+    const phoneInput = document.getElementById('projectphone');
+    if (phoneInput) {
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "fr",
+            utilsScript: "<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/js/utils.js', 1); ?>",
+            formatOnDisplay: true,
+            nationalMode: false,
+            autoPlaceholder: "aggressive",
+            preferredCountries: ["fr", "be", "ch", "lu", "mc"]
+        });
+
+        // Ensure we send a validly formatted E.164 number on submit if present
+        const form = phoneInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (phoneInput.value.trim() && iti.isValidNumber()) {
+                    phoneInput.value = iti.getNumber();
+                }
+            });
+        }
+    }
+
+    // --- Email Validation (Material Design) ---
+    const emailInputs = document.querySelectorAll('input[type="email"]');
+    // La regex la plus proche du standard HTML5 préconisée par Google
+    const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+    emailInputs.forEach(function(emailInput) {
+        // Validation dynamique
+        emailInput.addEventListener('input', function() {
+            const emailValue = this.value.trim();
+            if (emailValue !== '' && !materialEmailRegex.test(emailValue)) {
+                this.classList.add('input-invalid-material');
+                this.setCustomValidity('Format de l\'adresse e-mail invalide.');
+            } else {
+                this.classList.remove('input-invalid-material');
+                this.setCustomValidity('');
+            }
+        });
+        
+        // Bloquer la soumission et afficher la bulle d'erreur native
+        const form = emailInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const emailValue = emailInput.value.trim();
+                if (emailValue !== '' && !materialEmailRegex.test(emailValue)) {
+                    e.preventDefault();
+                    emailInput.classList.add('input-invalid-material');
+                    emailInput.reportValidity();
+                    emailInput.focus();
+                }
+            });
+        }
+    });
+});
+</script>
+
 <?php

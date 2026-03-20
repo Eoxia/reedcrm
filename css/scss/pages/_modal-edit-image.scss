@@ -1,26 +1,149 @@
-.quickcreation-frontend .wpeo-modal {
-    .modal-container {
-        max-height: none;
-        padding-left: 0;
-        padding-right: 0;
+.quickcreation-frontend {
+    /* Modal Overlay & Container */
+    .wpeo-modal.modal-upload-image {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.7); /* dark overlay */
+        z-index: 9999 !important;
+        display: none;
+        align-items: center;
+        justify-content: center;
 
-        .canvas-container {
-            display: flex;
-            margin: auto;
-            width: 100%;
-            height: 100%;
-            justify-content: center;
-
+        /* When Dolibarr activates it */
+        &[style*="display: block"] {
+            display: flex !important;
         }
-        canvas {
-            object-fit: contain;
-            width: 600px;
-            height: 800px;
 
-            @media ( max-width: $media__small ) {
-                width: 300px;
-                height: 400px;
+        .modal-container {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalFadeIn 0.3s ease;
+            padding: 0;
+
+            .modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 15px 20px;
+                border-bottom: 1px solid #e2e8f0;
+                background: #f8fafc;
+
+                h2.modal-title {
+                    margin: 0;
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #1e293b;
+                }
+
+                .modal-close {
+                    cursor: pointer;
+                    color: #64748b;
+                    transition: color 0.2s;
+                    line-height: 1;
+                    
+                    &:hover {
+                        color: #e74c3c;
+                    }
+
+                    i {
+                        font-size: 20px;
+                    }
+                }
+            }
+
+            .modal-content {
+                padding: 20px;
+                overflow-y: auto;
+                flex-grow: 1;
+                display: flex;
+                justify-content: center;
+                background: #e2e8f0;
+
+                .canvas-container {
+                    display: flex;
+                    margin: auto;
+                    justify-content: center;
+                    align-items: center;
+                    background: #fff;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    border-radius: 4px;
+                    padding: 15px;
+
+                    canvas {
+                        object-fit: contain;
+                        max-width: 100%;
+                        max-height: 55vh;
+                        border: 2px dashed #94a3b8 !important;
+                    }
+                }
+            }
+
+            .modal-footer {
+                padding: 15px 20px;
+                border-top: 1px solid #e2e8f0;
+                background: #ffffff;
+                display: flex;
+                justify-content: center;
+
+                .wpeo-grid.grid-6 {
+                    display: flex;
+                    gap: 15px;
+                    justify-content: center;
+
+                    .butAction {
+                        width: 45px;
+                        height: 45px;
+                        border-radius: 50%;
+                        background: #f1f5f9;
+                        color: #475569;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                        border: 1px solid #cbd5e1;
+                        font-size: 16px;
+
+                        &:hover {
+                            background: #3498db;
+                            color: #ffffff;
+                            border-color: #3498db;
+                            transform: translateY(-2px);
+                        }
+
+                        span {
+                            display: flex;
+                        }
+
+                        i {
+                            margin: 0;
+                        }
+                    }
+
+                    .image-validate {
+                        background: #10b981;
+                        color: white;
+                        border-color: #10b981;
+
+                        &:hover {
+                            background: #059669;
+                            border-color: #059669;
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }

@@ -11,3 +11,58 @@
         font-weight: 700;
     }
 }
+
+.page-header-tabs {
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    height: 60px;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    
+    .company-logo-wrapper {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+        
+        .company-logo {
+            max-height: 40px;
+            max-width: 120px;
+            object-fit: contain;
+        }
+    }
+    
+    .tabs-nav {
+        display: flex;
+        height: 100%;
+        gap: 15px;
+        
+        .tab {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            padding: 0 10px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            
+            i {
+                margin-right: 6px;
+                font-size: 14px;
+            }
+            
+            &:hover {
+                color: #334155;
+            }
+            
+            &.active {
+                color: var(--primary, #0f172a);
+                border-bottom-color: var(--primary, #0f172a);
+            }
+        }
+    }
+}

@@ -105,3 +105,22 @@
         opacity: 0.9;
     }
 }
+
+.minimal-audio {
+    &::-webkit-media-controls-timeline,
+    &::-webkit-media-controls-volume-slider-container,
+    &::-webkit-media-controls-volume-slider,
+    &::-webkit-media-controls-mute-button,
+    &::-webkit-media-controls-panel-menu-button { 
+        display: none !important; 
+    }
+    
+    &::-webkit-media-controls-enclosure { 
+        border-radius: 20px; 
+        background-color: #f1f3f4; 
+    }
+    
+    &::-webkit-media-controls-time-remaining-display { 
+        display: flex !important; 
+    }
+}

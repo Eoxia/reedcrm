@@ -179,7 +179,26 @@ window.reedcrm.quickcreation.vibratePhone = function() {
     // Vibrate for 0.5 seconds, pause for 1 second
     navigator.vibrate([1000, 500, 200, 200, 500, 1000]);
   }
-  window.saturne.loader.display($('.page-footer button'));
+  
+  var $btn = $('.btn-submit-purple');
+  if ($btn.length === 0) {
+      $btn = $('.page-footer button');
+  }
+  
+  window.saturne.loader.display($btn);
+  
+  // Disable button after a tiny delay to ensure form still submits
+  setTimeout(function() {
+      $btn.prop('disabled', true);
+  }, 10);
+  
+  // Re-enable after 5 seconds just in case the page didn't reload
+  setTimeout(function() {
+      $btn.prop('disabled', false);
+      if (window.saturne && window.saturne.loader) {
+          window.saturne.loader.remove($btn);
+      }
+  }, 5000);
 };
 
 /**
@@ -191,5 +210,7 @@ window.reedcrm.quickcreation.vibratePhone = function() {
  * @return {void}
  */
 window.reedcrm.quickcreation.showOppPercentValue = function() {
-  $('.opp_percent-value').text($('#opp_percent').val() + ' %');
+  var val = $('#opp_percent').val();
+  $('.opp_percent-value').text(val + '%');
+  $('#opp_percent').parent().get(0).style.setProperty('--val', val);
 };
