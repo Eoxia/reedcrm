@@ -72,15 +72,13 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     <div class="quickcreation-form-container">
         <!-- Project label -->
         <div class="form-group">
-            <label for="title"><?php echo $langs->trans('ProjectLabel'); ?></label>
-            <input type="text" id="title" name="title" placeholder="Ex: Projet Refonte Web..." value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
+            <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?> (ex: Projet Refonte Web...)" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
         </div>
 
         <!-- Description -->
         <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
             <div class="form-group">
-                <label for="description"><?php echo $langs->trans('Description'); ?></label>
-                <textarea name="description" id="description" rows="6" placeholder="Détails du lead..."><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
+                <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
             </div>
         <?php endif; ?>
 
@@ -109,7 +107,6 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 }
 
                 print '<div class="form-group">';
-                print '<label for="' . $key . '">' . $langs->trans($extraFields->attributes['projet']['label'][$key]) . '</label>';
                 print '<input type="' . $inputType . '" id="' . $key . '" name="options_' . $key . '" placeholder="' . $langs->trans($extraFields->attributes['projet']['label'][$key]) . '" value="' . dol_escape_htmltag((GETPOSTISSET($key) ? GETPOST($key) : '')) . '">';
                 print '</div>';
             }
@@ -118,37 +115,34 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 
                 <!-- Opportunity option -->
         <?php if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) : ?>
-            <div class="form-group" style="margin-top: 10px;">
-                <div class="opp-percent" style="display: flex; align-items: center;">
-                    <span style="font-size: 26px; margin-right: 8px;">🥵</span>
-                    <div style="position: relative; flex: 1; display: flex; align-items: center; --val: <?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>;">
-                        <input type="range" class="range" name="opp_percent" id="opp_percent" min="0" max="100" step="10" value="<?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>" style="width: 100%; cursor: pointer; margin: 0; background: transparent; outline: none;">
-                        <div class="opp_percent-value"><?php echo empty($project->opp_percent) ? '0%' : $project->opp_percent . '%'; ?></div>
+            <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px; margin-bottom: 15px;">
+                <!-- 70% -->
+                <div class="form-group" style="flex: 7; margin-bottom: 0;">
+                    <div class="opp-percent" style="display: flex; align-items: center;">
+                        <span style="font-size: 22px; margin-right: 8px;">🥵</span>
+                        <div style="position: relative; flex: 1; display: flex; align-items: center; --val: <?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>;">
+                            <input type="range" class="range" name="opp_percent" id="opp_percent" min="0" max="100" step="10" value="<?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>" style="width: 100%; cursor: pointer; margin: 0; background: transparent; outline: none;">
+                            <div class="opp_percent-value"><?php echo empty($project->opp_percent) ? '0%' : $project->opp_percent . '%'; ?></div>
+                        </div>
+                        <span style="font-size: 22px; margin-left: 8px;">🤑</span>
                     </div>
-                    <span style="font-size: 26px; margin-left: 8px;">🤑</span>
+                </div>
+
+                <!-- 30% -->
+                <div class="form-group" style="flex: 3; margin-bottom: 0;">
+                    <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+                        <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
+                            <span class="input-icon">€</span>
+                            <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="Montant" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>" style="width: 100%;">
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
-
-            <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
-                <div class="form-group">
-                    <div class="input-with-icon">
-                        <span class="input-icon">€</span>
-                        <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="<?php echo $langs->trans('OpportunityAmount'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>">
-                    </div>
-                </div>
-            <?php endif; ?>
         <?php endif; ?>
 
         <!-- Media & Submit Block -->
         <div class="action-buttons-row">
             <?php include __DIR__ . '/reedcrm_project_quickcreation_media_frontend.tpl.php'; ?>
-
-            <!-- Submit Button -->
-            <div class="action-col" style="justify-content: flex-end;">
-                <button type="submit" class="btn-submit-purple action-box" style="width: 100%; font-size: 24px;">
-                    <i class="fas fa-save"></i>
-                </button>
-            </div>
         </div>
 
         <!-- GPS -->
@@ -158,4 +152,79 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 
     </div>
 </div>
+
+<!-- intl-tel-input (Local libphonenumber integration) -->
+<link rel="stylesheet" href="<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/css/intlTelInput.css', 1); ?>">
+<style>
+    /* Fix the width issue caused by the library inserting a wrapper */
+    .iti { width: 100%; }
+    
+    /* Material Design Error State for Inputs */
+    input.input-invalid-material {
+        border-color: #e53935 !important;
+        border-bottom: 2px solid #e53935 !important;
+        color: #e53935 !important;
+    }
+</style>
+<script src="<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/js/intlTelInput.min.js', 1); ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Phone Validation ---
+    const phoneInput = document.getElementById('projectphone');
+    if (phoneInput) {
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "fr",
+            utilsScript: "<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/js/utils.js', 1); ?>",
+            formatOnDisplay: true,
+            nationalMode: false,
+            autoPlaceholder: "aggressive",
+            preferredCountries: ["fr", "be", "ch", "lu", "mc"]
+        });
+
+        // Ensure we send a validly formatted E.164 number on submit if present
+        const form = phoneInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                if (phoneInput.value.trim() && iti.isValidNumber()) {
+                    phoneInput.value = iti.getNumber();
+                }
+            });
+        }
+    }
+
+    // --- Email Validation (Material Design) ---
+    const emailInputs = document.querySelectorAll('input[type="email"]');
+    // La regex la plus proche du standard HTML5 préconisée par Google
+    const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+
+    emailInputs.forEach(function(emailInput) {
+        // Validation dynamique
+        emailInput.addEventListener('input', function() {
+            const emailValue = this.value.trim();
+            if (emailValue !== '' && !materialEmailRegex.test(emailValue)) {
+                this.classList.add('input-invalid-material');
+                this.setCustomValidity('Format de l\'adresse e-mail invalide.');
+            } else {
+                this.classList.remove('input-invalid-material');
+                this.setCustomValidity('');
+            }
+        });
+        
+        // Bloquer la soumission et afficher la bulle d'erreur native
+        const form = emailInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const emailValue = emailInput.value.trim();
+                if (emailValue !== '' && !materialEmailRegex.test(emailValue)) {
+                    e.preventDefault();
+                    emailInput.classList.add('input-invalid-material');
+                    emailInput.reportValidity();
+                    emailInput.focus();
+                }
+            });
+        }
+    });
+});
+</script>
+
 <?php

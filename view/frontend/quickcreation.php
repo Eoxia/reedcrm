@@ -132,7 +132,7 @@ print '</form>';
 $nbLatestOpportunities = getDolGlobalInt('REEDCRM_NB_LATEST_OPPORTUNITIES_FRONTEND', 15);
 if ($nbLatestOpportunities > 0) {
 
-    $latestProjects = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', $nbLatestOpportunities, 0, [], 'AND', true);
+    $latestProjects = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', $nbLatestOpportunities, 0, [], 'AND', true, true, false, '', [], ', t.description, t.note_public, t.note_private', ['description', 'note_public', 'note_private']);
     if (!empty($latestProjects) && is_array($latestProjects)) {
         require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_opportunities_list_frontend.tpl.php';
     }

@@ -39,6 +39,7 @@ QuickTaskCreations       = ajouts rapides de tâche
 CommercialFollowUp       = SC
 CommercialTask           = Tâche commerciale
 ProjectPhone             = Téléphone projet
+ErrorInvalidProjectPhone = Le numéro de téléphone n'est pas valide ou est trop long (max 20 caractères)
 ContactInformations      = Coordonnées
 Vocal                    = Vocal
 
