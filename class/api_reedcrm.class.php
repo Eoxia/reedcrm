@@ -179,6 +179,55 @@ class ReedCRM extends DolibarrApi
 		);
 	}
 
+	/**
+	 * Download the latest audio recording of a project.
+	 *
+	 * @param int $id ID of project
+	 * @return array array with file content
+	 *
+	 * @url GET /project/{id}/audio/download
+	 *
+	 * @throws RestException 403 Not allowed
+	 * @throws RestException 404 Not found
+	 */
+	public function downloadProjectAudio($id) {
+	    global $conf;
+		if (!DolibarrApiAccess::$user->hasRight('projet', 'lire') && !DolibarrApiAccess::$user->hasRight('projet', 'all', 'lire')) {
+			throw new RestException(403);
+		}
+
+		$project = new Project($this->db);
+		$res = $project->fetch($id);
+		if ($res <= 0) {
+			throw new RestException(404, 'Project not found');
+		}
+
+		require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+		$projectDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($project->ref);
+		$audioFiles = dol_dir_list($projectDir, 'files', 0, '\.(mp3|ogg|wav|m4a|aac|webm|opus)$', null, 'date', SORT_DESC);
+		
+		if (empty($audioFiles)) {
+		    throw new RestException(404, 'No audio file found for this project');
+		}
+		
+		$lastAudio = $audioFiles[0];
+		$filePath = $projectDir . '/' . $lastAudio['name'];
+		
+		if (!file_exists($filePath)) {
+		    throw new RestException(404, 'File not found on disk');
+		}
+		
+		$content = file_get_contents($filePath);
+		
+		return [
+		    'filename' => $lastAudio['name'],
+		    'content-type' => dol_mimetype($lastAudio['name']),
+		    'filecontent' => base64_encode($content),
+		    'size' => $lastAudio['size'],
+		    'date' => $lastAudio['date']
+		];
+	}
+
 	// END ALL UNIQUE OBJECT API ROUTE
 
 }
