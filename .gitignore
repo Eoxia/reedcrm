@@ -20,5 +20,5 @@
 /.editorconfig
 /.gitattributes
 node_modules
-package-lock.json
 .DS_Store
+css/reedcrm.min.css.map
