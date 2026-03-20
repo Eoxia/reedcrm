@@ -35,6 +35,7 @@ if (isModEnabled('project')) {
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formprojet.class.php';
     require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
     require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 }
 if (isModEnabled('categorie')) {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -127,13 +128,14 @@ require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_project_quickcreation_f
 
 print '</form>';
 
+// @todo Eoxia: Ajouter la gestion de la variable de configuration REEDCRM_NB_LATEST_OPPORTUNITIES_FRONTEND dans la page de setup du module
 $nbLatestOpportunities = getDolGlobalInt('REEDCRM_NB_LATEST_OPPORTUNITIES_FRONTEND', 15);
 if ($nbLatestOpportunities > 0) {
-    if (!function_exists('saturne_fetch_all_object_type')) {
-        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/saturne.lib.php';
-    }
+
     $latestProjects = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', $nbLatestOpportunities, 0, [], 'AND', true);
-    require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_opportunities_list_frontend.tpl.php';
+    if (!empty($latestProjects) && is_array($latestProjects)) {
+        require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_opportunities_list_frontend.tpl.php';
+    }
 }
 
 // End of page
