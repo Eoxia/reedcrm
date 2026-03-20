@@ -31,14 +31,10 @@
   background: #F7F7F7;
   padding: 1rem;
   height: calc(100% - 160px);
-  width: 98%;
+  width: calc(100% - 2rem);
   margin: 0 auto;
   box-sizing: border-box;
   overflow: auto;
-}
-.page-content .wpeo-grid {
-  width: 100%;
-  margin-left: 0;
 }
 .page-content .extrafields-content {
   display: flex;

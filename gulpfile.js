@@ -14,7 +14,7 @@ const paths = {
 /** Core */
  gulp.task('scss_core', function() {
  	return gulp.src(paths.scss_core[0])
- 		.pipe(sass({outputStyle: 'expanded'}).on('error', sass.logError))
+ 		.pipe(sass({outputStyle: 'compressed'}).on('error', sass.logError))
  		.pipe(rename('./reedcrm.min.css'))
  		.pipe(gulp.dest(paths.scss_core[1]));
  });
