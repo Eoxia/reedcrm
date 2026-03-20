@@ -386,7 +386,8 @@ if ($isModal) {
 $title   = $langs->transnoentities('ReedCRM');
 $helpUrl = 'FR:Module_ReedCRM';
 $moreCSS = [
-    '/custom/reedcrm/css/reedcrm.min.css'
+    '/custom/reedcrm/css/reedcrm.min.css',
+    '/custom/reedcrm/css/temp.css'
 ];
 
 saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm-' . $object->element . 'template-pwa page-list bodyforlist');

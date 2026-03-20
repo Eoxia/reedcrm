@@ -12,6 +12,54 @@
   font-weight: 700;
 }
 
+.page-header-tabs {
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  height: 60px;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.page-header-tabs .company-logo-wrapper {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+.page-header-tabs .company-logo-wrapper .company-logo {
+  max-height: 40px;
+  max-width: 120px;
+  object-fit: contain;
+}
+.page-header-tabs .tabs-nav {
+  display: flex;
+  height: 100%;
+  gap: 15px;
+}
+.page-header-tabs .tabs-nav .tab {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 10px;
+  color: #64748b;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+.page-header-tabs .tabs-nav .tab i {
+  margin-right: 6px;
+  font-size: 14px;
+}
+.page-header-tabs .tabs-nav .tab:hover {
+  color: #334155;
+}
+.page-header-tabs .tabs-nav .tab.active {
+  color: var(--primary, #0f172a);
+  border-bottom-color: var(--primary, #0f172a);
+}
+
 .quickcreation-frontend .fiche {
   margin-left: 0 !important;
   margin-right: 0 !important;
@@ -55,160 +103,186 @@
   margin: 0;
 }
 
-.quickcreation-frontend form input, .quickcreation-frontend form select, .quickcreation-frontend form textarea {
-  background: #fff;
+.quickcreation-frontend {
+  background: #f8fafc; /* Very soft background */
+  min-height: 100vh;
+  padding: 40px 15px;
 }
-.quickcreation-frontend form select.widthcentpercentminusx, .quickcreation-frontend form span.widthcentpercentminusx:not(.select2-selection):not(.select2-dropdown), .quickcreation-frontend form input.widthcentpercentminusx {
-  width: 100% !important;
-  margin-bottom: 2em;
+.quickcreation-frontend .page-content {
+  max-width: 600px !important;
+  margin: 0 auto !important;
 }
-.quickcreation-frontend form select.widthcentpercentminusx .select2-container--default, .quickcreation-frontend form select.widthcentpercentminusx .select2-selection--multiple, .quickcreation-frontend form span.widthcentpercentminusx:not(.select2-selection):not(.select2-dropdown) .select2-container--default, .quickcreation-frontend form span.widthcentpercentminusx:not(.select2-selection):not(.select2-dropdown) .select2-selection--multiple, .quickcreation-frontend form input.widthcentpercentminusx .select2-container--default, .quickcreation-frontend form input.widthcentpercentminusx .select2-selection--multiple {
-  --border-color: var(--form-element-border-color);
-  width: 100%;
-  border: var(--border-width) solid var(--border-color);
-  border-radius: var(--border-radius);
-  outline: 0;
-}
-.quickcreation-frontend form select.widthcentpercentminusx .select2-container--default input, .quickcreation-frontend form select.widthcentpercentminusx .select2-selection--multiple input, .quickcreation-frontend form span.widthcentpercentminusx:not(.select2-selection):not(.select2-dropdown) .select2-container--default input, .quickcreation-frontend form span.widthcentpercentminusx:not(.select2-selection):not(.select2-dropdown) .select2-selection--multiple input, .quickcreation-frontend form input.widthcentpercentminusx .select2-container--default input, .quickcreation-frontend form input.widthcentpercentminusx .select2-selection--multiple input {
-  margin: 0;
-}
-.quickcreation-frontend form {
-  /* Media Block Styles */
-}
-.quickcreation-frontend form .reedcrm-media-container {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-.quickcreation-frontend form .reedcrm-media-container.no-opp {
-  margin-top: 15px;
-}
-.quickcreation-frontend form .reedcrm-media-container.with-opp {
-  height: 40px;
-  margin: 0;
-}
-.quickcreation-frontend form .reedcrm-media-container .reedcrm-btn-square-media {
-  height: 40px;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-.quickcreation-frontend form .reedcrm-media-container .reedcrm-linked-medias-wrapper {
-  margin: 0;
-}
-.quickcreation-frontend form .reedcrm-media-container .reedcrm-linked-medias-wrapper .linked-medias-list {
-  display: flex;
-  gap: 10px;
-}
-.quickcreation-frontend form .reedcrm-media-container .reedcrm-linked-medias-wrapper label {
-  margin: 0;
-}
-.quickcreation-frontend form .reedcrm-media-container .reedcrm-camera-icon-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  font-size: 0.6em;
-}
-.quickcreation-frontend form .reedcrm-media-container .recording-indicator {
-  display: none;
-  align-self: center;
-}
-.quickcreation-frontend form {
-  /* Opportunity Config Styles */
-}
-.quickcreation-frontend form .reedcrm-opp-wrapper {
-  display: flex;
-  gap: 15px;
-  margin-top: 15px;
-  width: 100%;
-}
-.quickcreation-frontend form .reedcrm-opp-wrapper .reedcrm-opp-col {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-.quickcreation-frontend form .reedcrm-opp-wrapper .reedcrm-opp-amount-input-group {
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-  width: 100%;
-  height: 40px;
-  box-sizing: border-box;
-  background: #fff;
-}
-.quickcreation-frontend form .reedcrm-opp-wrapper .reedcrm-opp-amount-input-group span {
-  font-weight: bold;
-  margin-right: 8px;
-  font-size: 1.1em;
-  line-height: 1;
-}
-.quickcreation-frontend form .reedcrm-opp-wrapper .reedcrm-opp-amount-input-group input {
-  border: 0px !important;
-  box-shadow: none !important;
-  outline: none !important;
-  background: transparent !important;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  margin: 0;
-  flex: 1;
-}
-.quickcreation-frontend form .reedcrm-opp-percent-wrapper {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  margin-top: 15px;
-}
-.quickcreation-frontend form .reedcrm-opp-percent-wrapper .percent-image.left {
-  margin-right: 15px;
-}
-.quickcreation-frontend form .reedcrm-opp-percent-wrapper .percent-image.right {
-  margin-left: 15px;
-}
-.quickcreation-frontend form .reedcrm-opp-percent-wrapper .range-container {
-  position: relative;
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  height: 40px;
-  overflow: visible !important;
-}
-.quickcreation-frontend form .reedcrm-opp-percent-wrapper .range-container input[type=range] {
-  width: 100%;
-  margin: 0;
-  position: relative;
-  z-index: 1;
-}
-.quickcreation-frontend form .reedcrm-opp-percent-wrapper .range-container .opp_percent-value {
-  position: absolute;
-  left: calc(var(--val, 0) * 1% + 19px - var(--val, 0) * 0.38px);
-  top: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  z-index: 2;
-  font-weight: bold;
-  font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 0.8em;
-  color: #1a202c;
-  text-align: center;
-  white-space: nowrap;
+.quickcreation-frontend .quickcreation-form-container {
   background: #ffffff;
-  width: 38px;
-  height: 38px;
+  padding: 30px;
   border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
+}
+.quickcreation-frontend #id-bot {
+  margin-top: 25px;
+  text-align: center;
+}
+.quickcreation-frontend #id-bot .button-add {
+  width: 100%;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+.quickcreation-frontend #id-bot .button-add:hover {
+  background-color: #2980b9;
+}
+.quickcreation-frontend form {
+  margin-top: 15px;
+}
+.quickcreation-frontend form .form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+.quickcreation-frontend form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #34495e;
+}
+.quickcreation-frontend form input[type=text],
+.quickcreation-frontend form input[type=tel],
+.quickcreation-frontend form input[type=email],
+.quickcreation-frontend form input[type=number],
+.quickcreation-frontend form textarea,
+.quickcreation-frontend form input[type=file],
+.quickcreation-frontend form select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 13px;
+  font-family: inherit;
+  background-color: white;
+  transition: border-color 0.2s;
+}
+.quickcreation-frontend form input[type=text]:focus,
+.quickcreation-frontend form input[type=tel]:focus,
+.quickcreation-frontend form input[type=email]:focus,
+.quickcreation-frontend form input[type=number]:focus,
+.quickcreation-frontend form textarea:focus,
+.quickcreation-frontend form input[type=file]:focus,
+.quickcreation-frontend form select:focus {
+  border-color: #3498db;
+  outline: none;
+}
+.quickcreation-frontend form textarea {
+  resize: vertical;
+}
+.quickcreation-frontend form .form-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+.quickcreation-frontend form .input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.quickcreation-frontend form .input-with-icon .input-icon {
+  position: absolute;
+  left: 10px;
+  font-weight: bold;
+  color: #333;
+  pointer-events: none;
+}
+.quickcreation-frontend form .input-with-icon input {
+  padding-left: 28px;
+}
+.quickcreation-frontend form {
+  /* ACTION BUTTONS ROW (Media + Submit) */
+}
+.quickcreation-frontend form .action-buttons-row {
+  display: flex;
+  gap: 15px;
+  align-items: stretch;
+  margin-top: 20px;
+}
+.quickcreation-frontend form .action-buttons-row .action-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.quickcreation-frontend form .action-buttons-row .action-col label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+}
+.quickcreation-frontend form .action-buttons-row .action-col .action-box {
+  flex: 1;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 60px;
+  border-radius: 4px;
+}
+.quickcreation-frontend form .action-buttons-row .btn-orange {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.quickcreation-frontend form .action-buttons-row .btn-orange:hover {
+  background-color: #e67e22;
+}
+.quickcreation-frontend form .action-buttons-row .btn-orange img, .quickcreation-frontend form .action-buttons-row .btn-orange svg, .quickcreation-frontend form .action-buttons-row .btn-orange i, .quickcreation-frontend form .action-buttons-row .btn-orange span.fas {
+  color: white;
+  font-size: 20px;
+}
+.quickcreation-frontend form .action-buttons-row .btn-secondary {
+  background-color: #6C6AA8;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.quickcreation-frontend form .action-buttons-row .btn-secondary:hover {
+  background-color: #55538e;
+}
+.quickcreation-frontend form .action-buttons-row .file-paste-zone {
+  border: 2px dashed #bdc3c7;
+  background-color: #f8f9fc;
+  transition: all 0.3s;
+}
+.quickcreation-frontend form .action-buttons-row .file-paste-zone:hover {
+  border-color: #3498db;
+  background-color: #e8f4f8;
+}
+.quickcreation-frontend form .action-buttons-row .btn-submit-purple {
+  background-color: #9b59b6;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+.quickcreation-frontend form .action-buttons-row .btn-submit-purple:hover {
+  background-color: #8e44ad;
+}
+.quickcreation-frontend form .action-buttons-row .linked-medias-wrapper .linked-medias-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .opp-percent {
@@ -221,37 +295,64 @@
   appearance: none;
   width: 100%;
   background: transparent;
-  height: 0;
-  margin-bottom: 0;
-}
-.opp-percent input[type=range]:focus, .opp-percent input[type=range]:active {
+  height: 30px; /* match thumb height */
+  margin: 0;
+  padding: 0;
+  border: none;
   outline: none;
 }
+.opp-percent input[type=range]:focus, .opp-percent input[type=range]:active, .opp-percent input[type=range]:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
 .opp-percent input[type=range]::-webkit-slider-thumb {
-  width: 30px;
+  -webkit-appearance: none;
+  width: 45px;
   height: 30px;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
 }
 .opp-percent input[type=range]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  appearance: none;
+  width: 45px;
+  height: 30px;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
 }
 .opp-percent input[type=range]::-webkit-slider-runnable-track {
   height: 15px;
   background: rgb(255, 94, 94);
   background: linear-gradient(90deg, rgb(255, 94, 94) 0%, rgb(255, 130, 94) 40%, rgb(255, 177, 0) 50%, rgb(184, 200, 110) 60%, rgb(52, 160, 72) 100%);
+  border-radius: 8px;
 }
 .opp-percent input[type=range]::-moz-range-track {
   height: 15px;
   background: rgb(255, 94, 94);
   background: linear-gradient(90deg, rgb(255, 94, 94) 0%, rgb(255, 130, 94) 40%, rgb(255, 177, 0) 50%, rgb(184, 200, 110) 60%, rgb(52, 160, 72) 100%);
+  border-radius: 8px;
 }
 
-.opp-percent-label .opp_percent-value {
-  display: inline-block;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  padding: 0.2em 0.5em;
-  font-weight: 600;
+.opp_percent-value {
+  position: absolute;
+  pointer-events: none;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  left: calc(var(--val, 0) / 100 * (100% - 45px) + 22.5px);
+  background: #ffffff;
+  border: 2px solid #9b59b6;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #9b59b6;
+  box-shadow: 0 4px 10px rgba(155, 89, 182, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  line-height: 1;
 }
 
 .ol-popup {
@@ -624,30 +725,146 @@
   height: 50px;
 }
 
-.quickcreation-frontend .wpeo-modal .modal-container {
-  max-height: none;
-  padding-left: 0;
-  padding-right: 0;
+.quickcreation-frontend {
+  /* Modal Overlay & Container */
 }
-.quickcreation-frontend .wpeo-modal .modal-container .canvas-container {
+.quickcreation-frontend .wpeo-modal.modal-upload-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.7); /* dark overlay */
+  z-index: 9999 !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  /* When Dolibarr activates it */
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image[style*="display: block"] {
+  display: flex !important;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalFadeIn 0.3s ease;
+  padding: 0;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-header h2.modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-header .modal-close {
+  cursor: pointer;
+  color: #64748b;
+  transition: color 0.2s;
+  line-height: 1;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-header .modal-close:hover {
+  color: #e74c3c;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-header .modal-close i {
+  font-size: 20px;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  background: #e2e8f0;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-content .canvas-container {
   display: flex;
   margin: auto;
-  width: 100%;
-  height: 100%;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 15px;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-content .canvas-container canvas {
+  object-fit: contain;
+  max-width: 100%;
+  max-height: 55vh;
+  border: 2px dashed #94a3b8 !important;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: flex;
   justify-content: center;
 }
-.quickcreation-frontend .wpeo-modal .modal-container canvas {
-  object-fit: contain;
-  width: 600px;
-  height: 800px;
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer .wpeo-grid.grid-6 {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
 }
-@media (max-width: 768px) {
-  .quickcreation-frontend .wpeo-modal .modal-container canvas {
-    width: 300px;
-    height: 400px;
-  }
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer .wpeo-grid.grid-6 .butAction {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #cbd5e1;
+  font-size: 16px;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer .wpeo-grid.grid-6 .butAction:hover {
+  background: #3498db;
+  color: #ffffff;
+  border-color: #3498db;
+  transform: translateY(-2px);
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer .wpeo-grid.grid-6 .butAction span {
+  display: flex;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer .wpeo-grid.grid-6 .butAction i {
+  margin: 0;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer .wpeo-grid.grid-6 .image-validate {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+.quickcreation-frontend .wpeo-modal.modal-upload-image .modal-container .modal-footer .wpeo-grid.grid-6 .image-validate:hover {
+  background: #059669;
+  border-color: #059669;
 }
 
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 #eventproCardModal {
   z-index: 1003 !important;
   background: rgba(39, 42, 53, 0.3) !important;
@@ -1255,269 +1472,4 @@ body > .select2-drop.select2-drop-active {
   background: #f8f9fa;
   border-color: #adb5bd;
   color: #495057;
-}
-
-/*--------------------------------------------------------------
-	Dolibarr main CSS
-
-    1/ Variables
-    2/ Page layout
-	3/ Top Header
-	4/ Form
-	5/ Buttons
---------------------------------------------------------------*/
-:root {
-  /*--fiche-margin-left: 42px;*/
-  /*--fiche-margin-right: 38px;*/
-  --fiche-padding-left: 1em;
-  --fiche-padding-right: 1em;
-  /*@media only screen and (max-width: 1024px) {*/
-  /*    --fiche-margin-left: 20px;*/
-  /*    --fiche-margin-right: 6px;*/
-  /*}*/
-  /*@media only screen and (max-width: 741px) {*/
-  /*    --fiche-margin-left: 9px;*/
-  /*    --fiche-margin-right: 10px;*/
-  /*}*/
-}
-
-/*--------------------------------------------------------------
-	Element : Page layout
-	Version : 1.0.0
---------------------------------------------------------------*/
-.template-pwa #id-container {
-  display: block;
-  padding-top: 0.5em;
-  max-width: 1280px;
-  width: 100%;
-  margin: auto;
-}
-
-/*--------------------------------------------------------------
-	Element : Top header
-	Version : 1.0.0
---------------------------------------------------------------*/
-.template-pwa #id-top {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  gap: 1em;
-  box-sizing: border-box;
-  color: var(--colortextbackhmenu);
-}
-
-.template-pwa #id-top .col:nth-of-type(1) {
-  width: 25%;
-}
-
-.template-pwa #id-top .col:nth-of-type(2) {
-  width: 50%;
-  padding: 0.2em;
-  text-align: center;
-}
-
-.template-pwa #id-top .col:nth-of-type(3) {
-  display: flex;
-  justify-content: flex-end;
-  width: 25%;
-}
-
-.template-pwa #id-top .nav-element {
-  min-width: 60px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.template-pwa .fiche {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  padding-left: var(--fiche-padding-left);
-  padding-right: var(--fiche-padding-right);
-}
-
-.template-pwa .fiche #id-top {
-  margin-left: calc(var(--fiche-padding-left) * -1);
-  width: calc(100% + var(--fiche-padding-left) + var(--fiche-padding-right));
-}
-
-.template-pwa .fiche #id-top .title {
-  font-weight: 600;
-}
-
-.template-pwa .fiche #id-top .subtitle {
-  font-size: 0.8em;
-  line-height: 1em;
-}
-
-@media only screen and (max-width: 741px) {
-  .template-pwa #id-top .col [class^=fa] {
-    font-size: 25px;
-  }
-}
-/*--------------------------------------------------------------
-	Element : Form
-	Version : 1.0.0
---------------------------------------------------------------*/
-.template-pwa label {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  background: var(--inputbackgroundcolor);
-  border: solid 1px var(--inputbordercolor);
-  border-radius: 3px;
-  transition: 0.2s border-color ease-out;
-}
-
-.template-pwa label:has(textarea) {
-  align-items: flex-start;
-}
-
-.template-pwa label:focus-within {
-  border-color: #000;
-}
-
-.template-pwa label > *:not(input, textarea, select) {
-  padding: 0.7em 0.5em;
-}
-
-.template-pwa label input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]),
-.template-pwa label textarea,
-.template-pwa label select {
-  width: 100%;
-  margin: 0;
-  border: 0 !important;
-  padding: 0.7em 0.5em;
-  background: transparent;
-  outline: none;
-  font-size: 1em;
-}
-
-.template-pwa label > * + input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]),
-.template-pwa label > * + textarea,
-.template-pwa label > * + select {
-  padding-left: 0;
-}
-
-.template-pwa label input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]):has(+ *),
-.template-pwa label textarea:has(+ *),
-.template-pwa label select:has(+ *) {
-  padding-right: 0;
-}
-
-.template-pwa label input:focus:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button])::placeholder,
-.template-pwa label textarea:focus::placeholder,
-.template-pwa label select:focus::placeholder {
-  opacity: 0;
-}
-
-/** Fix border bottom of dolibarr inputs on focus */
-.template-pwa input:focus:not(.button):not(.buttonwebsite):not(.buttonreset):not(.select2-search__field):not(#top-bookmark-search-input):not(.search_component_input):not(.input-nobottom) {
-  border-bottom: 0 !important;
-}
-
-/** Specific case for select2 */
-.template-pwa label .select2,
-.template-pwa label .select2-container {
-  width: 100% !important;
-  min-width: 0 !important;
-  padding: 0 !important;
-}
-
-.template-pwa label .select2 .select2-selection {
-  border-bottom: 0 !important;
-  height: auto !important;
-  padding: 0.7em 0.5em !important;
-}
-
-.template-pwa label .select2 .select2-selection__rendered {
-  line-height: 1.1;
-}
-
-.template-pwa label > *:has(+ .select2) {
-  padding-right: 0;
-}
-
-.template-pwa label > .select2 + * {
-  padding-left: 0;
-}
-
-.template-pwa label .select2.select2-container--focus .select2-selection {
-  border-bottom: 0 !important;
-}
-
-.template-pwa label .select2 .select2-selection__arrow {
-  height: 100% !important;
-}
-
-/*--------------------------------------------------------------
-	Element : Buttons
-	Version : 1.0.0
---------------------------------------------------------------*/
-#mainbody button.button:not(.buttongen):not(.bordertransp) {
-  background: var(--butactionbg);
-  color: var(--textbutaction);
-  border-radius: 4px;
-  border-collapse: collapse;
-  border: none;
-  font-size: unset;
-  line-height: 1.3em;
-}
-
-.button:not(.bordertransp):not(.buttonpayment).button-square,
-.buttonDelete:not(.bordertransp):not(.buttonpayment).button-square,
-.butAction.button-square {
-  max-width: 60px;
-  min-width: 50px;
-  aspect-ratio: 1/1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.button:not(.bordertransp):not(.buttonpayment) .button-icon,
-.buttonDelete:not(.bordertransp):not(.buttonpayment) .button-icon,
-.butAction .button-icon {
-  position: absolute;
-  opacity: 0.5;
-  transform: translateY(-8px) translateX(8px);
-}
-
-#mainbody.template-pwa button.button:not(.buttongen):not(.bordertransp),
-.template-pwa .butAction {
-  box-sizing: border-box;
-  padding: 0.6em 0.7em;
-}
-
-@media only screen and (max-width: 599px) {
-  #mainbody.template-pwa button.button:not(.buttongen):not(.bordertransp),
-  .template-pwa .butAction {
-    font-size: 1.1em;
-    padding: 0.8em 0.9em !important;
-  }
-}
-/*--------------------------------------------------------------
-	ReedCRM main CSS
---------------------------------------------------------------*/
-#recording-indicator {
-  display: none;
-  color: rgba(0, 0, 0, 0.4);
-  font-weight: bold;
-}
-
-.blinking {
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }

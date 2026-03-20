@@ -1,174 +1,203 @@
-.quickcreation-frontend form {
-    input, select, textarea {
-      background: #fff;
+.quickcreation-frontend {
+    background: #f8fafc; /* Very soft background */
+    min-height: 100vh;
+    padding: 40px 15px;
+
+    .page-content {
+        max-width: 600px !important;
+        margin: 0 auto !important;
     }
 
-    select.widthcentpercentminusx, span.widthcentpercentminusx:not(.select2-selection):not(.select2-dropdown), input.widthcentpercentminusx {
-        width: 100% !important;
-        margin-bottom: 2em;
+    .quickcreation-form-container {
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+    }
 
-        .select2-container--default, .select2-selection--multiple {
-            --border-color: var(--form-element-border-color);
+    #id-bot {
+        margin-top: 25px;
+        text-align: center;
+
+        .button-add {
             width: 100%;
-            border:var(--border-width) solid var(--border-color);
-            border-radius:var(--border-radius);
-            outline:0;
-
-            input {
-                margin: 0;
-            }
-        }
-    }
-
-    /* Media Block Styles */
-    .reedcrm-media-container {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-
-        &.no-opp {
-            margin-top: 15px;
-        }
-
-        &.with-opp {
-            height: 40px;
-            margin: 0;
-        }
-        
-        .reedcrm-btn-square-media {
-            height: 40px;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        
-        .reedcrm-linked-medias-wrapper {
-            margin: 0;
-
-            .linked-medias-list {
-                display: flex;
-                gap: 10px;
-            }
-
-            label {
-                margin: 0;
-            }
-        }
-        
-        .reedcrm-camera-icon-badge {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            font-size: 0.6em;
-        }
-        
-        .recording-indicator {
-            display: none;
-            align-self: center;
-        }
-    }
-    
-    /* Opportunity Config Styles */
-    .reedcrm-opp-wrapper {
-        display: flex;
-        gap: 15px;
-        margin-top: 15px;
-        width: 100%;
-
-        .reedcrm-opp-col {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        .reedcrm-opp-amount-input-group {
-            border: 1px solid #ced4da;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
             border-radius: 4px;
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            width: 100%;
-            height: 40px;
-            box-sizing: border-box;
-            background: #fff;
-            span {
-                font-weight: bold;
-                margin-right: 8px;
-                font-size: 1.1em;
-                line-height: 1;
-            }
-            input {
-                border: 0px !important;
-                box-shadow: none !important;
-                outline: none !important;
-                background: transparent !important;
-                width: 100%;
-                height: 100%;
-                padding: 0;
-                margin: 0;
-                flex: 1;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            
+            &:hover {
+                background-color: #2980b9;
             }
         }
     }
-    
-    .reedcrm-opp-percent-wrapper {
-        display: flex;
-        align-items: center;
-        width: 100%;
+
+    form {
         margin-top: 15px;
 
-        .percent-image {
-            &.left {
-                margin-right: 15px;
-            }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
 
-            &.right {
-                margin-left: 15px;
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #34495e;
+        }
+
+        input[type="text"],
+        input[type="tel"],
+        input[type="email"],
+        input[type="number"],
+        textarea,
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 13px;
+            font-family: inherit;
+            background-color: white;
+            transition: border-color 0.2s;
+            
+            &:focus {
+                border-color: #3498db;
+                outline: none;
             }
         }
 
-        .range-container {
+        textarea {
+            resize: vertical;
+        }
+
+        .form-row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-with-icon {
             position: relative;
-            flex-grow: 1;
             display: flex;
             align-items: center;
-            height: 40px;
-            overflow: visible !important;
 
-            input[type="range"] {
-                width: 100%;
-                margin: 0;
-                position: relative;
-                z-index: 1;
+            .input-icon {
+                position: absolute;
+                left: 10px;
+                font-weight: bold;
+                color: #333;
+                pointer-events: none;
             }
 
-            .opp_percent-value {
-                position: absolute;
-                left: calc(var(--val, 0) * 1% + (19px - var(--val, 0) * 0.38px));
-                top: 50%;
-                transform: translate(-50%, -50%);
-                pointer-events: none;
-                z-index: 2;
-                font-weight: bold;
-                font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                font-size: 0.8em;
-                color: #1a202c;
-                text-align: center;
-                white-space: nowrap;
-                background: #ffffff;
-                width: 38px;
-                height: 38px;
-                border-radius: 8px;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-                border: 1px solid #e2e8f0;
+            input {
+                padding-left: 28px;
+            }
+        }
+
+        /* ACTION BUTTONS ROW (Media + Submit) */
+        .action-buttons-row {
+            display: flex;
+            gap: 15px;
+            align-items: stretch;
+            margin-top: 20px;
+
+            .action-col {
+                flex: 1; 
                 display: flex;
-                align-items: center;
-                justify-content: center;
+                flex-direction: column;
+
+                label {
+                    display: block;
+                    margin-bottom: 5px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #333;
+                    text-align: left;
+                }
+
+                .action-box {
+                    flex: 1;
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 60px; 
+                    border-radius: 4px;
+                }
+            }
+
+            .btn-orange {
+                background-color: #f39c12;
+                color: white;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.2s;
+
+                &:hover {
+                    background-color: #e67e22;
+                }
+
+                img, svg, i, span.fas {
+                    color: white;
+                    font-size: 20px;
+                }
+            }
+
+            .btn-secondary {
+                background-color: #6C6AA8; 
+                color: white;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.2s;
+
+                &:hover {
+                    background-color: #55538e;
+                }
+            }
+
+            .file-paste-zone {
+                border: 2px dashed #bdc3c7;
+                background-color: #f8f9fc;
+                transition: all 0.3s;
+
+                &:hover {
+                    border-color: #3498db;
+                    background-color: #e8f4f8;
+                }
+            }
+
+            .btn-submit-purple {
+                background-color: #9b59b6;
+                color: white;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                transition: background-color 0.3s;
+
+                &:hover {
+                    background-color: #8e44ad;
+                }
+            }
+
+            .linked-medias-wrapper {
+                .linked-medias-list {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
             }
         }
     }
