@@ -233,18 +233,24 @@ if (is_array($contacts) && !empty($contacts)) {
 
         if (is_object($contactSingle)) {
             $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle->id);
-            $contactName    = $contactSingle->lastname;
+            $contactName    = $contactSingle->firstname . ' ' . $contactSingle->lastname;
             $contactAddress = $contactSingle->address;
+            $contactPhone   = !empty($contactSingle->phone_mobile) ? $contactSingle->phone_mobile : $contactSingle->phone_pro;
+            $contactEmail   = $contactSingle->email;
         } else if (is_array($contactSingle) && $contactSingle['code'] == 'PROJECTADDRESS') {
             $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle['id']);
             $contact->fetch($contactSingle['id']);
-            $contactName    = $contact->lastname;
+            $contactName    = $contact->firstname . ' ' . $contact->lastname;
             $contactAddress = $contact->address;
+            $contactPhone   = !empty($contact->phone_mobile) ? $contact->phone_mobile : $contact->phone_pro;
+            $contactEmail   = $contact->email;
         }
         if ($geolocation->latitude > 0 && $geolocation->longitude > 0) {
             // We fill temporarily geolocation with contact data to use them in the description afterward
             $geolocation->address_name = $contactName;
             $geolocation->tmp_address  = $contactAddress;
+            $geolocation->tmp_phone    = $contactPhone ?? '';
+            $geolocation->tmp_email    = $contactEmail ?? '';
             $geolocations[]            = $geolocation;
         }
     }
@@ -256,33 +262,48 @@ if (is_array($contacts) && !empty($contacts)) {
 if (is_array($geolocations) && !empty($geolocations)) {
     foreach($geolocations as $geolocation) {
         $geolocation->convertCoordinates();
+        $result = -1;
         if (!empty($fromId)) {
             $result = $objectLinked->fetch($fromId);
-            if ($result <= 0) {
-                $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => ' ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
-                $objectLinked = array_shift($projects);
-            }
+        }
+        if (empty($fromId) || $result <= 0) {
+            $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => 'ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
+            $objectLinked = array_shift($projects);
         }
 
         if ((!empty($fromId) && $objectLinked->entity != $conf->entity) || ($source == 'pwa' && empty($objectLinked->opp_status) && empty($objectLinked->fk_opp_status)) || empty($objectLinked)) {
             continue;
         }
 
-        $objectLinkedInfo  = '<b>' . $langs->transnoentities('Name') . '</b> : ' . $geolocation->address_name . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Address') . '</b> : ' . $geolocation->tmp_address . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Project') . '</b> : ' .  $objectLinked->getNomUrl(1, '', 0, '', ' - ', 1) . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('ProjectLabel') . '</b> : ' . $objectLinked->title . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Description') . '</b> : ' . $objectLinked->description . '<br>';
-        $code = dol_getIdFromCode($db, $objectLinked->opp_status > 0 ? $objectLinked->opp_status : $objectLinked->fk_opp_status , 'c_lead_status', 'rowid', 'code');
-        if ($code) {
-            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityStatus')  . '</b> : ' . $langs->trans('OppStatus' . $code) . '<br>';
-        }
-        if (strcmp($objectLinked->opp_amount, '')) {
-            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityAmount') . '</b> : ' . price($objectLinked->opp_amount, 0, $langs, 1, 0, -1, $conf->currency) . '<br>';
-            if (strcmp($objectLinked->opp_percent, '')) {
-                $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityWeightedAmountShort')  . '</b> : ' . price($objectLinked->opp_amount * $objectLinked->opp_percent / 100, 0, $langs, 1, 0, -1, $conf->currency);
+        $oppPercent = (float) $objectLinked->opp_percent;
+        $objectLinkedInfo  = '<div style="min-width:230px;font-family:inherit">';
+        $objectLinkedInfo .= '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
+        $objectLinkedInfo .=   '<span style="font-weight:bold">' . $objectLinked->getNomUrl(1) . '</span>';
+        $objectLinkedInfo .=   '<span style="color:#555;white-space:nowrap;margin-left:12px">' . number_format($oppPercent, 2) . ' %</span>';
+        $objectLinkedInfo .= '</div>';
+        $objectLinkedInfo .= '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+        $objectLinkedInfo .=   '<span style="color:#333">' . dol_escape_htmltag($objectLinked->title) . '</span>';
+        $objectLinkedInfo .=   '<a href="' . dol_buildpath('/projet/card.php', 1) . '?id=' . $objectLinked->id . '" target="_blank" style="margin-left:8px">' . img_picto('', 'fontawesome_external-link-alt_fas_#28a745') . '</a>';
+        $objectLinkedInfo .= '</div>';
+        if (!empty($geolocation->address_name) || !empty($geolocation->tmp_phone)) {
+            $contactLine = dol_escape_htmltag(trim($geolocation->address_name));
+            if (!empty($geolocation->tmp_phone)) {
+                $contactLine .= ' - ' . dol_escape_htmltag($geolocation->tmp_phone);
             }
+            $objectLinkedInfo .= '<div style="color:#555;font-size:0.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' . $contactLine . '</div>';
         }
+        if (!empty($geolocation->tmp_email)) {
+            $objectLinkedInfo .= '<div style="color:#555;font-size:0.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' . dol_escape_htmltag($geolocation->tmp_email) . '</div>';
+        }
+        if ($user->hasRight('agenda', 'myactions', 'create')) {
+            $cardProUrl        = dol_buildpath('/custom/reedcrm/view/procard.php', 1) . '?from_id=' . $objectLinked->id . '&from_type=project&modal=1';
+            $objectLinkedInfo .= '<div style="margin-top:6px;border-top:1px solid #eee;padding-top:6px;text-align:right">';
+            $objectLinkedInfo .= '<span class="fa fa-plus-circle reedcrm-card-modal-open" style="cursor:pointer;color:#1e3a5f;font-size:1.1em;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objectLinked->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
+            $objectLinkedInfo .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
+            $objectLinkedInfo .= '</span>';
+            $objectLinkedInfo .= '</div>';
+        }
+        $objectLinkedInfo .= '</div>';
 
         $num++;
         $objectList[$num]['color']  = '#F00';
@@ -670,6 +691,29 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
             }
         });
 	</script>
+<?php if ($user->hasRight('agenda', 'myactions', 'create')): ?>
+	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1); ?>" rel="stylesheet">
+	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1); ?>" rel="stylesheet">
+
+	<div class="wpeo-modal modal-eventpro" id="eventproCardModal">
+		<div class="modal-container wpeo-modal-event">
+			<div class="modal-header">
+				<h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?></h2>
+				<div class="modal-close"><i class="fas fa-times"></i></div>
+			</div>
+			<div class="modal-content">
+				<div id="eventproCardModal-loader" class="wpeo-loader"></div>
+				<div id="eventproCardModal-content"></div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		jQuery(document).ready(function () {
+			window.reedcrm.eventpro.init();
+		});
+	</script>
+<?php endif; ?>
 <?php
 
 llxFooter();
