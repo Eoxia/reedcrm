@@ -281,6 +281,14 @@ if (is_array($geolocations) && !empty($geolocations)) {
         if (!empty($geolocation->tmp_email)) {
             $objectLinkedInfo .= '<div style="color:#555;font-size:0.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' . dol_escape_htmltag($geolocation->tmp_email) . '</div>';
         }
+        if ($user->hasRight('agenda', 'myactions', 'create')) {
+            $cardProUrl        = dol_buildpath('/custom/reedcrm/view/procard.php', 1) . '?from_id=' . $objectLinked->id . '&from_type=project&modal=1';
+            $objectLinkedInfo .= '<div style="margin-top:6px;border-top:1px solid #eee;padding-top:6px;text-align:right">';
+            $objectLinkedInfo .= '<span class="fa fa-plus-circle reedcrm-card-modal-open" style="cursor:pointer;color:#1e3a5f;font-size:1.1em;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objectLinked->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
+            $objectLinkedInfo .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
+            $objectLinkedInfo .= '</span>';
+            $objectLinkedInfo .= '</div>';
+        }
         $objectLinkedInfo .= '</div>';
 
         $num++;
@@ -661,6 +669,29 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
             }
         });
 	</script>
+<?php if ($user->hasRight('agenda', 'myactions', 'create')): ?>
+	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1); ?>" rel="stylesheet">
+	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1); ?>" rel="stylesheet">
+
+	<div class="wpeo-modal modal-eventpro" id="eventproCardModal">
+		<div class="modal-container wpeo-modal-event">
+			<div class="modal-header">
+				<h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?></h2>
+				<div class="modal-close"><i class="fas fa-times"></i></div>
+			</div>
+			<div class="modal-content">
+				<div id="eventproCardModal-loader" class="wpeo-loader"></div>
+				<div id="eventproCardModal-content"></div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		jQuery(document).ready(function () {
+			window.reedcrm.eventpro.init();
+		});
+	</script>
+<?php endif; ?>
 <?php
 
 llxFooter();
