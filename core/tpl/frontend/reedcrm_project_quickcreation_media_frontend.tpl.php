@@ -1,56 +1,72 @@
-<div class="linked-medias project" id="photo-thumbnail-container" style="position: relative; width: 100%; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; padding-right: 130px; box-sizing: border-box; min-height: 48px;">
+<div class="linked-medias project" id="master-media-row-container" style="width: 100%; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; box-sizing: border-box; min-height: 44px;">
     
-    <!-- LEFT CLUSTER ITEMS -->
-    
-    <!-- Mic -->
-    <button type="button" id="start-recording" class="btn-secondary" style="order: 1; border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease;">
-        <i class="fas fa-microphone" style="font-size: 22px; color: #fff;"></i>
-    </button>
-    
-    <!-- Play -->
-    <div style="order: 2; position: relative;">
-        <button type="button" id="play-recording" class="btn-secondary" disabled style="border: none; cursor:not-allowed; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #cbd5e1;">
-            <i class="fas fa-play" style="font-size: 22px; color: #fff;"></i>
-        </button>
-        <button type="button" id="delete-recording" style="display:none; position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 11px; cursor: pointer; justify-content: center; align-items: center; z-index: 10; padding: 0; line-height: 1;">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-    
-    <!-- Camera -->
-    <label for="upload-photo" id="label-upload-photo" class="btn-orange" style="order: 3; cursor:pointer; display:flex; justify-content:center; align-items:center; width: 48px; height: 48px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
-        <i class="fas fa-camera" style="font-size: 22px; color: #fff;"></i>
-        <input type="file" id="upload-photo" name="userfile[]" accept="image/*" capture="environment" multiple style="display: none;">
-    </label>
-    
-    <!-- Gallery (Dotted Border) -->
-    <label for="upload-photo-gallery" id="gallery-add-btn" class="add-thumbnail-btn" style="order: 99; width: 44px; height: 44px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; justify-content: center; align-items: center; color: #94a3b8; cursor: pointer; transition: all 0.2s ease; margin: 0;">
-        <i class="fas fa-image" style="font-size: 22px;"></i>
-        <input type="file" id="upload-photo-gallery" class="file-upload-input" name="userfile[]" accept="image/*" multiple style="display: none;">
-    </label>
-    
-    <div id="recording-indicator" class="blinking recording-indicator" style="order: 100; display:none; font-size:11px; margin-left: 5px; color: #e74c3c; width: 100%;"><?php echo $langs->trans('RecordingInProgress'); ?></div>
+    <!-- LEFT CLUSTER ITEMS (Auto-Flowing) -->
+    <div class="media-cluster-left" style="display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex: 1;">
+        
+        <!-- BLOCK SON -->
+        <div class="media-logical-block block-sound" style="display: flex; gap: 5px; align-items: center;">
+            <!-- Mic -->
+            <button type="button" id="start-recording" class="btn-secondary" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease;">
+                <i class="fas fa-microphone" style="font-size: 20px; color: #fff;"></i>
+            </button>
+            
+            <!-- Play -->
+            <div style="position: relative;">
+                <button type="button" id="play-recording" class="btn-secondary" disabled style="border: none; cursor:not-allowed; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #cbd5e1;">
+                    <i class="fas fa-play" style="font-size: 20px; color: #fff;"></i>
+                </button>
+                <button type="button" id="delete-recording" style="display:none; position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 10px; cursor: pointer; justify-content: center; align-items: center; z-index: 10; padding: 0; line-height: 1;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="recording-indicator" class="blinking recording-indicator" style="display:none; font-size:11px; margin-left: 5px; color: #e74c3c;"><?php echo $langs->trans('RecordingInProgress'); ?></div>
+        </div>
 
-    <!-- RIGHT CLUSTER (Absolute) -->
-    <div style="position: absolute; right: 0; top: 0; display: flex; align-items: center; gap: 15px;">
+        <!-- BLOCK PHOTO -->
+        <div class="media-logical-block block-photo" style="display: flex; gap: 5px; align-items: center;">
+            <!-- Camera -->
+            <label for="upload-photo" id="label-upload-photo" class="btn-orange" style="cursor:pointer; display:flex; justify-content:center; align-items:center; width: 44px; height: 44px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
+                <i class="fas fa-camera" style="font-size: 20px; color: #fff;"></i>
+                <input type="file" id="upload-photo" name="userfile[]" accept="image/*" capture="environment" multiple style="display: none;">
+            </label>
+            
+            <!-- Gallery (Dotted Border) -->
+            <div id="gallery-add-btn" class="add-thumbnail-btn" style="width: 44px; height: 44px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; justify-content: center; align-items: center; color: #94a3b8; margin: 0;">
+                <i class="fas fa-image" style="font-size: 20px;"></i>
+            </div>
+            
+            <!-- Photo Thumbnails Injection Point -->
+            <div id="photo-thumbnail-container" style="display: flex; gap: 5px;"></div>
+        </div>
+        
+    </div>
+
+    <!-- RIGHT CLUSTER (Auto-Flowing) -->
+    <div class="media-cluster-right" style="position: relative; margin-left: auto; display: flex; align-items: center; gap: 5px;">
+        
+        <!-- BLOCK ACTIONS -->
+        <div class="media-logical-block block-actions" style="display: flex; gap: 5px; align-items: center;">
             <!-- Upload File -->
-            <label for="upload-media" style="background-color: #9ca3af; cursor:pointer; display:flex; justify-content:center; align-items:center; width: 48px; height: 48px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
-                <i class="fas fa-upload" style="font-size: 22px; color: #fff;"></i>
+            <label for="upload-media" id="label-upload-media" style="position: relative; background-color: #3b82f6; cursor:pointer; display:flex; justify-content:center; align-items:center; width: 44px; height: 44px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
+                <i class="fas fa-upload" style="font-size: 20px; color: #fff;"></i>
+                <span id="upload-media-counter" style="display:none; position: absolute; top: -6px; right: -6px; background:#94a3b8; color:white; font-size:10px; font-weight:bold; border-radius:12px; min-width: 14px; padding: 2px 4px; box-shadow:0 1px 2px rgba(0,0,0,0.2); border: 2px solid white; z-index: 10; justify-content: center; align-items: center; line-height: 1;">0</span>
                 <input type="file" id="upload-media" class="file-upload-input" name="userfile[]" accept="*/*" multiple style="display: none;">
             </label>
             
             <!-- Submit Button -->
-            <button type="submit" class="btn-submit-purple" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #9b59b6;">
-                <i class="fas fa-save" style="font-size: 22px; color: #fff;"></i>
+            <button type="submit" class="btn-submit-purple" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #9b59b6;">
+                <i class="fas fa-save" style="font-size: 20px; color: #fff;"></i>
             </button>
         </div>
         
+        <!-- File size checker message inside right cluster -->
+        <div id="file-size-preview" style="position: absolute; right: 0; top: 100%; width: 350px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; padding-top: 5px; font-size: 11px; color: #64748b; text-align: right; line-height: 1.2;"></div>
     </div>
     
-    <!-- File size checker message positioned absolutely below right cluster -->
-    <div id="file-size-preview" style="position: absolute; right: 0; top: 100%; margin-top: 5px; font-size: 11px; color: #64748b; text-align: right;"></div>
-    
-    <!-- File size checker -->
+</div>
+
+<!-- File size checker -->
     <script>
     document.addEventListener("DOMContentLoaded", function () {
         const fileInputs = document.querySelectorAll(".file-upload-input");
@@ -67,37 +83,61 @@
             previewDiv.innerHTML = "";
             let hasError = false;
             let errorMessages = [];
-            let previewHtml = "";
+            let previewItems = [];
+            let fileCount = 0;
             
             fileInputs.forEach(function(input) {
                 if (input.files && input.files.length > 0) {
+                    fileCount += input.files.length;
                     for (let i = 0; i < input.files.length; i++) {
                         let file = input.files[i];
                         let sizeMB = (file.size / (1024 * 1024)).toFixed(2);
                         
                         // Check if text is too long (responsive display)
                         let shortName = file.name;
-                        if (shortName.length > 15) {
-                            shortName = shortName.substring(0, 7) + "..." + shortName.substring(shortName.length - 6);
+                        if (shortName.length > 25) {
+                            shortName = shortName.substring(0, 15) + "..." + shortName.substring(shortName.length - 6);
                         }
                         
                         if (file.size > maxSizeBytes) {
                             hasError = true;
                             errorMessages.push("- " + file.name + " (" + sizeMB + " Mo)");
-                            previewHtml += '<div style="color: #ef4444; margin-top: 2px;"><i class="fas fa-exclamation-circle"></i> ' + shortName + ' (' + sizeMB + ' Mo)</div>';
+                            previewItems.push('<span style="color: #ef4444; white-space: nowrap;"><i class="fas fa-exclamation-circle"></i> ' + dol_escape_html(shortName) + ' (' + sizeMB + ' Mo)</span>');
                         } else {
-                            previewHtml += '<div style="color: #22c55e; margin-top: 2px;"><i class="fas fa-check-circle"></i> ' + shortName + ' (' + sizeMB + ' Mo)</div>';
+                            previewItems.push('<span style="color: #22c55e; white-space: nowrap;"><i class="fas fa-check-circle"></i> ' + dol_escape_html(shortName) + ' (' + sizeMB + ' Mo)</span>');
                         }
                     }
                 }
             });
             
-            previewDiv.innerHTML = previewHtml;
+            previewDiv.innerHTML = previewItems.join('<span style="color: #94a3b8;">,</span> ');
+            
+            const counterBadge = document.getElementById('upload-media-counter');
+            if (counterBadge) {
+                if (fileCount > 0) {
+                    counterBadge.innerText = fileCount;
+                    counterBadge.style.display = 'flex';
+                } else {
+                    counterBadge.style.display = 'none';
+                }
+            }
             
             if (hasError) {
                 // do not show alert popup, red text is enough
             }
             return hasError;
+        }
+
+        // Helper purely for safe JS escape
+        function dol_escape_html(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
 
         fileInputs.forEach(function(input) {
@@ -108,6 +148,23 @@
                 }
             });
         });
+        
+        // Add form submission animation
+        const form = document.querySelector('.btn-submit-purple').closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const uploadCount = document.getElementById('upload-media-counter');
+                if (uploadCount && uploadCount.style.display !== 'none') {
+                    const labelBtn = document.getElementById('label-upload-media');
+                    labelBtn.classList.add('playing-pulse-active');
+                    const uploadIcon = labelBtn.querySelector('.fa-upload');
+                    if (uploadIcon) {
+                        uploadIcon.classList.remove('fa-upload');
+                        uploadIcon.classList.add('fa-spinner', 'fa-spin');
+                    }
+                }
+            });
+        }
     });
 </script>
 
@@ -270,23 +327,49 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- PHOTO EDITOR MODAL -->
-<div id="photo-editor-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; padding: 15px;">
-    <div style="width: 100%; max-width: 600px; max-height: 95vh; background: #ffffff; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+<style>
+.photo-editor-modal-content {
+    width: 100%; max-width: 600px; max-height: 95vh; background: #ffffff; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin: 0 auto; box-sizing: border-box;
+}
+.photo-editor-toolbar {
+    margin-top: 15px; display:flex; flex-wrap: wrap; padding-bottom: 5px; justify-content: center; align-items: center; gap: 6px;
+}
+@media (max-width: 600px) {
+    .photo-editor-modal-content {
+        padding: 10px;
+        border-radius: 8px;
+        max-height: 98vh;
+    }
+    .photo-editor-toolbar .doli-tool-btn {
+        width: 35px !important;
+        height: 35px !important;
+    }
+    #pencil-tool-container {
+        height: 35px !important;
+    }
+    .photo-editor-toolbar {
+        gap: 4px;
+        margin-top: 10px;
+    }
+}
+</style>
+<div id="photo-editor-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; padding: 10px; box-sizing: border-box;">
+    <div class="photo-editor-modal-content">
         
         <!-- Header -->
-        <div style="display:flex; justify-content: flex-start; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #3498db; padding-bottom: 5px; width: fit-content;">
+        <div style="display:flex; justify-content: flex-start; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; width: fit-content;">
             <i class="fas fa-crop-alt" style="color: #f39c12; margin-right: 8px; font-size: 1.2em;"></i>
-            <h3 style="margin: 0; font-size: 1.2em; color: #333; font-weight: 600;">Éditer la photo</h3>
+            <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Éditer la photo</h3>
         </div>
 
         <!-- Canvas Area -->
-        <div style="flex:1; display:flex; justify-content:center; align-items:center; overflow:hidden; background:#1e293b; border-radius: 8px; position:relative; min-height: 250px; min-width: 0; min-height: 0; width: 100%; height: 100%;" id="doli-editor-canvas-container">
+        <div style="flex:1; display:flex; justify-content:center; align-items:center; overflow:hidden; background:#1e293b; border-radius: 8px; position:relative; min-height: 150px; width: 100%; height: 100%;" id="doli-editor-canvas-container">
             <canvas id="photo-editor-canvas" style="max-width:100%; max-height:100%; object-fit:contain; touch-action: none; cursor: crosshair;"></canvas>
             <div id="doli-crop-selection" style="display: none; position: absolute; border: 2px dashed #fff; background: rgba(255,255,255,0.2); pointer-events: none;"></div>
         </div>
         
         <!-- Unified Horizontal Toolbar -->
-        <div style="margin-top: 15px; display:flex; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; justify-content: flex-start; align-items: center; gap: 6px;">
+        <div class="photo-editor-toolbar">
             <button type="button" class="doli-tool-btn" data-mode="crop" title="Recadrer" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
                 <i class="fas fa-crop"></i>
             </button>
@@ -674,8 +757,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const initialRect = canvas.getBoundingClientRect();
         const initialScaleY = canvas.height / initialRect.height;
 
-        const input = document.createElement('input');
-        input.type = 'text';
+        const input = document.createElement('textarea');
         input.id = 'doli-floating-text-input';
         input.spellcheck = false; 
         input.autocomplete = 'off';
@@ -695,14 +777,18 @@ document.addEventListener("DOMContentLoaded", function () {
         input.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
         input.style.zIndex = '999999';
         input.style.minWidth = '150px';
-        input.style.height = '40px';
+        input.style.minHeight = '40px';
         input.style.boxSizing = 'border-box';
+        input.style.overflow = 'hidden';
+        input.style.resize = 'none';
         input.placeholder = "Texte...";
         document.body.appendChild(input);
 
         input.addEventListener('input', function() {
             this.style.width = 'auto';
             this.style.width = Math.max(150, this.scrollWidth + 10) + 'px';
+            this.style.height = 'auto';
+            this.style.height = Math.max(40, this.scrollHeight + 10) + 'px';
         });
 
         requestAnimationFrame(function() {
@@ -710,8 +796,8 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         input.addEventListener('blur', () => {
-            const text = input.value.trim();
-            if (text) {
+            const rawText = input.value;
+            if (rawText.trim() !== '') {
                 const fontSize = Math.max(20, Math.floor(24 * initialScaleY));
                 ctx.font = 'bold ' + fontSize + 'px Arial';
                 ctx.fillStyle = colorPicker.value;
@@ -720,19 +806,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 ctx.shadowBlur = 4;
                 ctx.shadowOffsetX = 1;
                 ctx.shadowOffsetY = 1;
-                ctx.fillText(text, canvasX, canvasY);
+
+                const lines = rawText.split('\n');
+                let currentY = canvasY;
+                const lineHeight = fontSize * 1.2;
+                
+                for (let i = 0; i < lines.length; i++) {
+                    ctx.fillText(lines[i], canvasX, currentY);
+                    currentY += lineHeight;
+                }
+                
                 ctx.shadowColor = 'transparent'; // reset
             } else {
                 historyStack.pop(); // Rien d'écrit, on annule l'undo
             }
             if(input.parentNode) input.parentNode.removeChild(input);
-        });
-
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                input.blur();
-            }
         });
     }
 
@@ -761,6 +849,28 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    window.openPhotoEditorWithUrl = function(url) {
+        originalBlobUrl = url;
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = function() {
+            const isFullHD = sizeSelect.value === 'fullhd';
+            const maxDim = isFullHD ? 1920 : 1280;
+            let width = img.width; let height = img.height; let ratio = 1;
+            if (width > maxDim || height > maxDim) {
+                ratio = maxDim / Math.max(width, height);
+            }
+            canvas.width = width * ratio;
+            canvas.height = height * ratio;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            
+            historyStack = [];
+            modal.style.display = 'flex';
+        };
+        img.src = originalBlobUrl;
+    };
+
     function renderThumbnails() {
         const wrappers = thumbnailContainer.querySelectorAll('.doli-thumbnail-wrapper');
         wrappers.forEach(w => w.remove());
@@ -771,12 +881,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 wrap.style.position = 'relative';
                 wrap.style.order = '4'; // Places it exactly between Camera (3) and Gallery (99)
                 wrap.className = 'doli-thumbnail-wrapper';
+                wrap.style.display = 'inline-flex';
+                wrap.style.alignItems = 'center';
+                wrap.style.justifyContent = 'center';
+                wrap.style.width = '44px';
+                wrap.style.height = '44px';
                 
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
-                img.style.width = '48px'; img.style.height = '48px';
+                img.style.width = '44px'; img.style.height = '44px';
                 img.style.objectFit = 'cover'; img.style.borderRadius = '12px';
                 img.style.border = '1px solid #e2e8f0';
+                img.style.margin = '0';
+                img.style.padding = '0';
                 
                 const delBtn = document.createElement('button');
                 delBtn.type = 'button';
@@ -813,14 +930,64 @@ document.addEventListener("DOMContentLoaded", function () {
         canvas.toBlob(function(blob) {
             let filename = "photo_" + new Date().getTime() + ".jpg";
             const newFile = new File([blob], filename, { type: "image/jpeg", lastModified: new Date().getTime() });
-            window.photoFilesArray.push(newFile);
-            updateFileInput();
-            renderThumbnails();
-            modal.style.display = 'none';
-            if (originalBlobUrl) { URL.revokeObjectURL(originalBlobUrl); originalBlobUrl = null; }
+            
+            if (window.editingExistingProjectId) {
+                // Upload directly
+                const formData = new FormData();
+                formData.append('photo', newFile, filename);
+                formData.append('projectid', window.editingExistingProjectId);
+                let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
+                
+                const oldHtml = btnValidate.innerHTML;
+                btnValidate.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 1.2em;"></i>';
+                btnValidate.disabled = true;
+                
+                $.ajax({
+                    url: document.URL.split('?')[0] + '?action=add_photo_existing&token=' + token,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(resp) {
+                        window.location.reload();
+                    },
+                    error: function() {
+                        btnValidate.innerHTML = '<i class="fas fa-times" style="font-size: 1.2em;"></i>';
+                        btnValidate.style.backgroundColor = '#e74c3c';
+                        setTimeout(() => {
+                            btnValidate.innerHTML = oldHtml;
+                            btnValidate.style.backgroundColor = '#2ecc71';
+                            btnValidate.disabled = false;
+                        }, 1500);
+                    }
+                });
+            } else {
+                window.photoFilesArray.push(newFile);
+                updateFileInput();
+                renderThumbnails();
+                modal.style.display = 'none';
+                if (originalBlobUrl) { URL.revokeObjectURL(originalBlobUrl); originalBlobUrl = null; }
+            }
         }, 'image/jpeg', 0.85); 
     });
 
+    // Close on overlay click or Esc
+    function closeModalGracefully() {
+        modal.style.display = 'none';
+        if (originalBlobUrl) { URL.revokeObjectURL(originalBlobUrl); originalBlobUrl = null; }
+    }
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModalGracefully();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display !== 'none') {
+            closeModalGracefully();
+        }
+    });
 
 });
 </script>

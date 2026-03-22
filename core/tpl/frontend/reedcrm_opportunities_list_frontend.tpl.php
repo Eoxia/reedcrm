@@ -28,9 +28,9 @@
  */
 
 $listTitle = $langs->trans('LatestCreatedOpportunities');
+print '<div class="page-content" style="margin-top: 5px; padding-top: 0; max-width: 1000px; margin: 5px auto 0 auto;">';
 
-print '<div class="page-content" style="margin-top: 30px; padding: 0 15px;">';
-print '<div class="title" style="text-transform: uppercase; color: #5a7b97; font-size: 1.1em; font-weight: bold; margin-bottom: 15px;">' . $listTitle . '</div>';
+print '<div class="title" style="color: #5a7b97; font-size: 0.95em; font-weight: bold; margin-bottom: 15px; padding-left: 20px;">' . $listTitle . '</div>';
 
 
 
@@ -67,11 +67,32 @@ foreach ($latestProjects as $project) {
     // Audio payload
     $projectDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($project->ref);
     $audioFiles = dol_dir_list($projectDir, 'files', 0, '\.(mp3|ogg|wav|m4a|aac|webm|opus)$', null, 'date', SORT_DESC);
+    
+    // Photo payload
+    $photoFiles = dol_dir_list($projectDir, 'files', 0, '\.(png|jpg|jpeg|gif|webp)$', null, 'date', SORT_DESC);
+    $photoCount = is_array($photoFiles) ? count($photoFiles) : 0;
+    
+    $photoThumbHtml = '';
+    if ($photoCount > 0) {
+        $firstPhoto = $photoFiles[0];
+        $photoUrl = DOL_URL_ROOT . '/document.php?modulepart=projet&file=' . urlencode(dol_sanitizeFileName($project->ref) . '/' . $firstPhoto['name']);
+        
+        $allPhotoUrls = [];
+        foreach($photoFiles as $pf) {
+            $allPhotoUrls[] = DOL_URL_ROOT . '/document.php?modulepart=projet&file=' . urlencode(dol_sanitizeFileName($project->ref) . '/' . $pf['name']);
+        }
+        $photosJson = htmlspecialchars(json_encode($allPhotoUrls), ENT_QUOTES, 'UTF-8');
+        
+        $photoThumbHtml = '
+        <div class="project-photo-trigger" data-project-id="' . $project->id . '" data-photos="' . $photosJson . '" style="position:relative; width:52px; height:52px; border-radius:8px; cursor:pointer; margin-left: 12px; border: 1px solid #e2e8f0; background: #f1f5f9; background-image: url(\'' . dol_escape_htmltag($photoUrl) . '\'); background-size: cover; background-position: center; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s;">
+            <div style="position:absolute; top:-6px; right:-6px; background:#94a3b8; color:white; font-size:11px; font-weight:bold; border-radius:12px; min-width: 16px; text-align: center; padding: 2px 5px; box-shadow:0 1px 2px rgba(0,0,0,0.2); border: 2px solid white;">' . $photoCount . '</div>
+        </div>';
+    }
     $audioPlayerHtml = '';
     if (!empty($audioFiles)) {
         $lastAudio = $audioFiles[0];
         $fileUrl = DOL_URL_ROOT . '/document.php?modulepart=projet&file=' . urlencode(dol_sanitizeFileName($project->ref) . '/' . $lastAudio['name']);
-        $audioPlayerHtml = '<div style="margin-left: 8px;"><audio class="minimal-audio" controls controlslist="nodownload noplaybackrate" preload="metadata" style="height: 28px; width: 150px; outline: none; border-radius: 20px;"><source src="' . dol_escape_htmltag($fileUrl) . '" type="audio/wav"></audio></div>';
+        $audioPlayerHtml = '<div style="margin-left: 4px;"><audio class="minimal-audio" controls controlslist="nodownload noplaybackrate" preload="metadata" style="height: 28px; width: 155px; outline: none; border-radius: 20px;"><source src="' . dol_escape_htmltag($fileUrl) . '" type="audio/wav"></audio></div>';
     }
 
     // Probability and amount
@@ -80,105 +101,187 @@ foreach ($latestProjects as $project) {
     
     $url       = DOL_URL_ROOT . '/projet/card.php?id=' . $project->id;
     
-    // Ensure some styling for the cards to match image
-    print '<div class="card" style="border: 1px solid #e2e8f0; border-radius: 4px; padding: 15px; margin-bottom: 10px; background-color: #f8fbff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">';
+    // Ensure some styling for the cards to match image, explicitly neutrering Dolibarr's native .card >1024px breakpoints
+    print '<div class="project-history-card" style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 10px; margin: 0 0 10px 0 !important; background-color: #f8fbff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">';
     
-    // --- ROW 1: Meta, Initials, Audio & Amounts ---
-    print '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 10px;">';
+    // --- ROW 1: Meta, Initials & Amounts ---
+    print '<div style="display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 8px;">';
     
         // Top Left
-        print '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">';
+        print '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">';
             print '<div style="color: #004b87; font-weight: 600; font-size: 1.1em;">' . $ref . '</div>';
-            
             print '<span style="color: #cbd5e0; font-size: 0.8em; margin: 0 2px;">&bull;</span>';
             print '<div style="font-size: 0.85em; color: #718096;"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i>' . $creationDate . '</div>';
             
             if (!empty($userInitials)) {
-                print '<span style="color: #cbd5e0; font-size: 0.8em; margin: 0 2px;">&bull;</span>';
-                print '<div title="' . dol_escape_htmltag($author->getFullName($langs)) . '" style="font-size: 0.7em; color: #fff; background: #9b59b6; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; letter-spacing: 0.5px;">' . $userInitials . '</div>';
-            }
-            
-            if (!empty($audioPlayerHtml)) {
-                print '<div style="margin-left: 4px;">' . $audioPlayerHtml . '</div>';
-            } else {
-                print '<div class="inline-audio-recorder" data-project-id="' . $project->id . '" style="display: flex; gap: 4px; padding: 2px 6px; background: #f1f3f4; border-radius: 20px; align-items: center; margin-left: 2px;">';
-                print '<button type="button" class="btn-inline-record" style="width: 24px; height: 24px; border-radius: 6px; border: none; background: #7b68ee; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"><i class="fas fa-microphone" style="font-size: 11px;"></i></button>';
-                print '<div style="position: relative; display: flex;">';
-                print '<button type="button" class="btn-inline-play" disabled style="width: 24px; height: 24px; border-radius: 6px; border: none; background: #cbd5e1; color: white; cursor: not-allowed; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"><i class="fas fa-play" style="font-size: 11px;"></i></button>';
-                print '<button type="button" class="btn-inline-delete" style="display: none; position: absolute; top: -5px; right: -5px; width: 14px; height: 14px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 8px; cursor: pointer; justify-content: center; align-items: center; z-index: 10; padding: 0; line-height: 1;"><i class="fas fa-times"></i></button>';
-                print '</div>';
-                print '<button type="button" class="btn-inline-save" disabled style="width: 24px; height: 24px; border-radius: 6px; border: none; background: #9b59b6; color: white; cursor: not-allowed; opacity: 0.5; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"><i class="fas fa-save" style="font-size: 11px;"></i></button>';
-                print '</div>';
+                print '<span style="color: #cbd5e0; font-size: 0.8em; margin: 0 2px;"></span>';
+                print '<div title="' . dol_escape_htmltag($author->getFullName($langs)) . '" style="font-size: 0.7em; color: #fff; background: #9b59b6; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">' . $userInitials . '</div>';
             }
         print '</div>';
         
         // Top Right
-        print '<div style="display: flex; align-items: center; font-weight: 600; font-size: 0.95em;">';
-            print '<span style="color: #0f172a;">' . $percent . '</span>';
+        $rawAmount = empty($project->opp_amount) ? 0 : (float)$project->opp_amount;
+        print '<div style="display: flex; align-items: center; flex-shrink: 0; font-weight: 600; font-size: 0.95em;">';
+            print '<span class="inline-edit-percent" data-project-id="'.$project->id.'" data-val="'.(int)$project->opp_percent.'" style="color: #0f172a; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="Modifier la probabilité">' . $percent . '</span>';
             print '<span style="color: #cbd5e0; margin: 0 6px;">-</span>';
-            print '<span style="color: #3b82f6;">' . $amount . '</span>';
+            print '<span class="inline-edit-amount" data-project-id="'.$project->id.'" data-val="'.$rawAmount.'" style="color: #3b82f6; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="Modifier le montant">' . $amount . '</span>';
         print '</div>';
         
     print '</div>';
     
-    // --- ROW 2: Title ---
-    if (!empty($title)) {
-        $descParts = [];
-        if (!empty($project->description)) $descParts[] = trim(dol_string_nohtmltag($project->description, 1));
-        if (!empty($project->note_public)) $descParts[] = trim(dol_string_nohtmltag($project->note_public, 1));
-        if (!empty($project->note_private)) $descParts[] = trim(dol_string_nohtmltag($project->note_private, 1));
-
-        $descClean = !empty($descParts) ? implode(" \n---\n ", $descParts) : '(Aucune description / note)';
-        $descAttr = ' data-tooltip="' . dol_escape_htmltag($descClean) . '"';
+    // --- ROW 2: Body (Title, Contact, Audio) AND Media Right ---
+    print '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">';
         
-        print '<div class="fast-css-tooltip" ' . $descAttr . ' style="color: #4a5568; margin-bottom: 8px; font-size: 0.95em; display: flex; align-items: center; position: relative; cursor: pointer;">';
-            print '<i class="fas fa-project-diagram" style="color: #64748b; margin-right: 6px;"></i>';
-            print '<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' . dol_escape_htmltag($title) . '</span>';
-        print '</div>';
-    }
-    
-    // --- ROW 3: Contact details & Action Button ---
-    print '<div style="display: flex; justify-content: space-between; align-items: center;">';
+        // Left Column
+        print '<div style="display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0;">';
+            
+            // Title
+            if (!empty($title)) {
+                $descParts = [];
+                if (!empty($project->description)) $descParts[] = trim(dol_string_nohtmltag($project->description, 1));
+                if (!empty($project->note_public)) $descParts[] = trim(dol_string_nohtmltag($project->note_public, 1));
+                if (!empty($project->note_private)) $descParts[] = trim(dol_string_nohtmltag($project->note_private, 1));
 
-        // Bottom Left: Contact Info
-        print '<div style="color: #718096; font-size: 0.9em; flex: 1;">';
-            $contactName = trim($firstname . ' ' . $lastname);
-            if (!empty($contactName)) {
-                print '<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">';
-                    print '<i class="fas fa-address-book" style="color: #64748b; font-size: 1.1em;"></i>';
-                    print '<span style="font-weight: 500;">' . dol_escape_htmltag($contactName) . '</span>';
-                    
-                    $poste = $project->array_options['options_reedcrm_poste'] ?? '';
-                    if (!empty($poste)) {
-                        print '<span style="color: #cbd5e0; font-size: 0.8em; margin: 0 2px;">&bull;</span>';
-                        print '<span>' . dol_escape_htmltag($poste) . '</span>';
-                    }
-                    
-                    if (!empty($phone)) {
-                        print '<span style="color: #cbd5e0; font-size: 0.8em; margin-left: 8px;"></span>';
-                        print '<span>' . dol_escape_htmltag($phone) . '</span>';
-                    }
-                    if (!empty($email)) {
-                        print '<span style="color: #4a5568; margin-left: 8px;">' . dol_escape_htmltag($email) . '</span>';
-                    }
+                $descClean = !empty($descParts) ? implode(" \n---\n ", $descParts) : '(Aucune description / note)';
+                $descAttr = ' data-tooltip="' . dol_escape_htmltag($descClean) . '"';
+                
+                print '<div class="fast-css-tooltip" ' . $descAttr . ' style="color: #4a5568; font-size: 0.95em; display: inline-flex; align-items: center; position: relative; cursor: pointer; width: fit-content; max-width: 100%;">';
+                    print '<i class="fas fa-project-diagram" style="color: #64748b; margin-right: 6px;"></i>';
+                    print '<span class="inline-edit-title" data-project-id="' . $project->id . '" data-val="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s;" title="Modifier le titre">' . dol_escape_htmltag($title) . '</span>';
                 print '</div>';
             }
-        print '</div>';
+            
+            // Contact
+            print '<div style="color: #718096; font-size: 0.9em;">';
+                $contactName = trim($firstname . ' ' . $lastname);
+                if (!empty($contactName)) {
+                    print '<div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">';
+                        print '<i class="fas fa-address-book" style="color: #64748b; font-size: 1.1em;"></i>';
+                        print '<span style="font-weight: 500;">' . dol_escape_htmltag($contactName) . '</span>';
+                        
+                        // Remaining details optionally visible mapping...
+                    print '</div>';
+                }
+            print '</div>';
+            
+            // Audio System
+            if (!empty($audioPlayerHtml)) {
+                print '<div style="margin-top: 4px;">' . str_replace("width: 155px;", "width: 100%; max-width: 200px;", $audioPlayerHtml) . '</div>';
+            } else {
+                print '<div class="inline-audio-recorder" data-project-id="' . $project->id . '" style="display: flex; gap: 6px; padding: 4px; background: #f1f5f9; border-radius: 12px; align-items: center; width: max-content; margin-top: 4px;">';
+                print '<button type="button" class="btn-inline-record" style="width: 32px; height: 32px; border-radius: 8px; border: none; background: #7b68ee; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fas fa-microphone" style="font-size: 14px;"></i></button>';
+                
+                print '<div style="position: relative; display: flex;">';
+                print '<button type="button" class="btn-inline-play" disabled style="width: 32px; height: 32px; border-radius: 8px; border: none; background: #cbd5e1; color: white; cursor: not-allowed; display: flex; align-items: center; justify-content: center;"><i class="fas fa-play" style="font-size: 14px;"></i></button>';
+                print '<button type="button" class="btn-inline-delete" style="display: none; position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 10px; cursor: pointer; justify-content: center; align-items: center; z-index: 10;"><i class="fas fa-times"></i></button>';
+                print '</div>';
+
+                print '<button type="button" class="btn-inline-save" disabled style="width: 32px; height: 32px; border-radius: 8px; border: none; background: #9b59b6; color: white; cursor: not-allowed; opacity: 0.5; display: flex; align-items: center; justify-content: center;"><i class="fas fa-save" style="font-size: 14px;"></i></button>';
+                print '</div>';
+            }
+            
+        print '</div>'; // End Left Column
         
-        // Bottom Right: Open link button
-        print '<div style="display: flex; align-items: center; margin-left: 10px;">';
-            print '<div style="width: 6px; height: 6px; background-color: #2ecc71; border-radius: 50%; margin-right: 6px;"></div>';
-            print '<a href="' . $url . '" target="_blank" style="color: #6b7280; font-size: 1.3em; line-height: 1; transition: color 0.2s ease;">';
-            print '<i class="fas fa-external-link-square-alt"></i>';
-            print '</a>';
-        print '</div>';
-        
-    print '</div>'; // End ROW 3
+        // Right Column
+        print '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; width: 110px;">';
+            
+            // Top Right: Photo & Link
+            $thumbToPrint = $photoCount > 0 ? $photoThumbHtml : '
+                <div class="project-photo-trigger empty-thumbnail" data-project-id="' . $project->id . '" data-photos="[]" style="position:relative; width:52px; height:52px; border-radius:8px; cursor:pointer; margin-left: 12px; border: 2px dashed #94a3b8; background: transparent; flex-shrink: 0; display: flex; justify-content: center; align-items: center; color: #94a3b8;">
+                    <i class="fas fa-image" style="font-size: 20px;"></i>
+                </div>';
+                
+            print '<div style="display: flex; align-items: flex-start; gap: 6px;">';
+                print $thumbToPrint;
+                
+                print '<div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 2px;">';
+                    print '<div style="width: 5px; height: 5px; background-color: #2ecc71; border-radius: 50%;"></div>';
+                    print '<a href="' . $url . '" target="_blank" style="color: #6b7280; font-size: 1.25em; line-height: 1;"><i class="fas fa-external-link-square-alt"></i></a>';
+                print '</div>';
+            print '</div>';
+            
+            // Bottom Right: Fast Action Buttons
+            print '<div style="display: flex; gap: 6px; justify-content: flex-end; width: 100%; margin-top: 2px; padding-right: 17px;">';
+                print '<button type="button" class="fast-trigger-camera" data-project-id="' . $project->id . '" style="width: 32px; height: 32px; border-radius: 6px; border: none; background: #f39c12; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="fas fa-camera" style="font-size: 14px;"></i></button>';
+
+                print '<label for="inline-upload-' . $project->id . '" style="width: 32px; height: 32px; border-radius: 6px; border: none; background: #3b82f6; color: white; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin: 0;">';
+                    print '<i class="fas fa-upload" style="font-size: 14px;"></i>';
+                    print '<input type="file" id="inline-upload-' . $project->id . '" class="inline-generic-upload" data-project-id="' . $project->id . '" name="userfile[]" multiple style="display: none;">';
+                print '</label>';
+            print '</div>';
+            
+        print '</div>'; // End Right Column
+            
+    print '</div>'; // End Body Row
     print '</div>'; // End Card
 }
-
 print '</div>';
 ?>
+
+<!-- PROJECT GALLERY MODAL -->
+<style>
+.gallery-modal-content {
+    width: 100%; max-width: 800px; max-height: 95vh; background: #ffffff; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.5); margin: 0 auto; box-sizing: border-box;
+}
+.gallery-toolbar {
+    margin-top: 15px; display:flex; flex-wrap: wrap; padding-bottom: 5px; justify-content: center; align-items: center; gap: 10px;
+}
+@media (max-width: 600px) {
+    .gallery-modal-content {
+        padding: 10px;
+        border-radius: 8px;
+        max-height: 98vh;
+    }
+    .gallery-toolbar button {
+        width: 38px !important;
+        height: 38px !important;
+    }
+    #gallery-prev-btn, #gallery-next-btn {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 1.4em !important;
+    }
+}
+</style>
+<div id="project-gallery-modal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; padding: 10px; box-sizing: border-box;">
+    
+    <div class="gallery-modal-content" onclick="event.stopPropagation();">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+            <div style="display:flex; align-items: center;">
+                <i class="fas fa-camera-retro" style="color: #f39c12; margin-right: 8px; font-size: 1.2em;"></i>
+                <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Consulter les photos</h3>
+            </div>
+            <div id="gallery-counter-text" style="color: #64748b; font-weight: bold; font-family: sans-serif; font-size: 0.9em; background: #f1f5f9; padding: 4px 10px; border-radius: 12px;"></div>
+        </div>
+
+        <!-- Image Container -->
+        <div style="flex:1; display:flex; justify-content:center; align-items:center; overflow:hidden; background:#1e293b; border-radius: 8px; position:relative; min-height: 300px; width: 100%; height: 100%;">
+            <button id="gallery-prev-btn" style="position:absolute; left:10px; padding: 0; background:rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color:white; font-size:1.4em; cursor:pointer; opacity:1; transition: all 0.2s; border-radius: 50%; z-index: 10; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">&#10094;</button>
+            
+            <img id="gallery-main-img" src="" style="max-width:100%; max-height:100%; object-fit:contain; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); transition: opacity 0.2s;" />
+            
+            <button id="gallery-next-btn" style="position:absolute; right:10px; padding: 0; background:rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2); color:white; font-size:1.4em; cursor:pointer; opacity:1; transition: all 0.2s; border-radius: 50%; z-index: 10; width: 44px; height: 44px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">&#10095;</button>
+        </div>
+        
+        <!-- Unified Toolbar -->
+        <div class="gallery-toolbar">
+            <button id="gallery-add-photo-btn" title="Ajouter une nouvelle photo" style="flex-shrink: 0; background:#f39c12; color:white; border:none; border-radius:8px; width:44px; height:44px; cursor:pointer; font-size:1.2em; display:flex; justify-content:center; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.2s;">
+                <i class="fas fa-camera"></i>
+            </button>
+            <button id="gallery-edit-photo-btn" title="Annoter cette photo" style="flex-shrink: 0; background:#2ecc71; color:white; border:none; border-radius:8px; width:44px; height:44px; cursor:pointer; font-size:1.2em; display:flex; justify-content:center; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.2s;">
+                <i class="fas fa-pencil-alt"></i>
+            </button>
+            <div style="flex-grow: 1;"></div>
+            <button id="gallery-close-btn" title="Fermer" style="flex-shrink: 0; background:#e74c3c; color:white; border:none; border-radius:8px; width:44px; height:44px; cursor:pointer; font-size:1.2em; display:flex; justify-content:center; align-items:center; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: transform 0.2s;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+    </div>
+</div>
+
 <style>
 .fast-css-tooltip::after {
     content: attr(data-tooltip);
@@ -186,7 +289,7 @@ print '</div>';
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(15, 23, 42, 0.75);
     color: #f8fafc;
     padding: 8px 12px;
     border-radius: 6px;
@@ -339,6 +442,346 @@ document.addEventListener('DOMContentLoaded', function() {
                     btnSave.html('<i class="fas fa-times" style="font-size:11px;"></i>').css('background-color', '#e74c3c');
                 }
             });
+        });
+    });
+
+    // Inline percent editing
+    $('.inline-edit-percent').on('click', function() {
+        if ($(this).find('input').length > 0) return;
+        let span = $(this);
+        let currentVal = span.data('val');
+        let projId = span.data('project-id');
+        let input = $('<input type="number" min="0" max="100" class="percent-input" style="width: 25px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0; font-weight: 600; font-size: 1em; color: #0f172a; outline: none; box-sizing: border-box; background: transparent; margin: 0; display: inline-block; vertical-align: middle; line-height: normal; -moz-appearance: textfield;" value="'+currentVal+'">');
+        
+        if ($('#css-no-spinners').length === 0) {
+            $('head').append('<style id="css-no-spinners">input[type="number"].percent-input::-webkit-outer-spin-button, input[type="number"].percent-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }</style>');
+        }
+        
+        span.html('').append(input).append('<span style="font-weight:normal; margin-left: 2px;">%</span>');
+        input.focus();
+        
+        let submitValue = function() {
+            let newVal = parseInt(input.val());
+            if (isNaN(newVal) || newVal < 0) newVal = 0;
+            if (newVal > 100) newVal = 100;
+            
+            if (newVal === currentVal) {
+                span.html(originalText);
+                return;
+            }
+            
+            span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6; line-height: 22px;"></i>');
+            
+            let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
+            
+            $.ajax({
+                url: document.URL.split('?')[0] + '?action=update_opp_percent&token=' + token,
+                type: 'POST',
+                data: { projectid: projId, percent: newVal },
+                success: function(res) {
+                    if(res && res.success) {
+                        if (res.action_error) {
+                            console.warn("L'ActionComm n'a pas pu être inséré:", res.action_error);
+                        }
+                        span.data('val', newVal);
+                        span.html(newVal + ' %');
+                        span.css({color: '#2ecc71'});
+                        setTimeout(() => span.css({color: '#0f172a'}), 1500);
+                    } else {
+                        console.error("Erreur serveur lors de la mise à jour :", res);
+                        span.html(originalText);
+                        span.css({color: '#e74c3c'});
+                        setTimeout(() => span.css({color: '#0f172a'}), 1500);
+                    }
+                },
+                error: function(err) {
+                    console.error("Erreur AJAX :", err);
+                    span.html(originalText);
+                    span.css({color: '#e74c3c'});
+                    setTimeout(() => span.css({color: '#0f172a'}), 1500);
+                }
+            });
+        };
+        
+        input.on('blur', submitValue);
+        input.on('keypress', function(e) {
+            if (e.which === 13) {
+                input.off('blur', submitValue);
+                submitValue();
+            }
+        });
+    });
+
+    // Inline amount editing
+    $('.inline-edit-amount').on('click', function() {
+        if ($(this).find('input').length > 0) return;
+        let span = $(this);
+        let currentVal = parseFloat(span.data('val'));
+        let projId = span.data('project-id');
+        let originalText = span.text();
+        
+        let inputWidth = originalText.length > 8 ? '80px' : '55px';
+        let input = $('<input type="text" class="amount-input" style="width: '+inputWidth+'; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 2px; font-weight: 600; font-size: 1em; color: #3b82f6; outline: none; box-sizing: border-box; background: transparent; margin: 0; display: inline-block; vertical-align: middle; line-height: normal; -moz-appearance: textfield;" value="'+currentVal+'">');
+        
+        span.html('').append(input).append('<span style="font-weight:normal; margin-left: 4px;">€</span>');
+        input.focus();
+        
+        let submitValueAmount = function() {
+            let userStr = input.val().replace(',', '.');
+            let newVal = parseFloat(userStr);
+            if (isNaN(newVal) || newVal < 0) newVal = 0;
+            
+            if (newVal === currentVal) {
+                span.html(originalText);
+                return;
+            }
+            
+            span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6; line-height: 22px;"></i>');
+            
+            let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
+            
+            $.ajax({
+                url: document.URL.split('?')[0] + '?action=update_opp_amount&token=' + token,
+                type: 'POST',
+                data: { projectid: projId, amount: newVal },
+                success: function(res) {
+                    if(res && res.success) {
+                        if (res.action_error) {
+                            console.warn("L'ActionComm n'a pas pu être inséré:", res.action_error);
+                        }
+                        span.data('val', newVal);
+                        span.html(res.formatted_amount);
+                        span.css({color: '#2ecc71'});
+                        setTimeout(() => span.css({color: '#3b82f6'}), 1500);
+                    } else {
+                        console.error("Erreur serveur :", res);
+                        alert("Erreur lors de la sauvegarde : " + (res.error ? JSON.stringify(res.error) : "Inconnue"));
+                        span.html(originalText);
+                        span.css({color: '#e74c3c'});
+                        setTimeout(() => span.css({color: '#3b82f6'}), 1500);
+                    }
+                },
+                error: function(err) {
+                    console.error("Erreur AJAX :", err);
+                    alert("Erreur réseau");
+                    span.html(originalText);
+                    span.css({color: '#e74c3c'});
+                    setTimeout(() => span.css({color: '#3b82f6'}), 1500);
+                }
+            });
+        };
+        
+        input.on('blur', submitValueAmount);
+        input.on('keypress', function(e) {
+            if (e.which === 13) {
+                input.off('blur', submitValueAmount);
+                submitValueAmount();
+            }
+        });
+    });
+
+    // Inline title editing
+    $('.inline-edit-title').on('click', function() {
+        if ($(this).find('input').length > 0) return;
+        let span = $(this);
+        let currentVal = span.data('val');
+        let projId = span.data('project-id');
+        let originalText = span.text();
+        
+        let minWidth = Math.max(120, originalText.length * 8) + 'px';
+        let input = $('<input type="text" class="title-input" style="width: '+minWidth+'; max-width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 4px; font-weight: inherit; font-size: inherit; color: #0f172a; outline: none; box-sizing: border-box; background: white; margin: 0; display: inline-block; vertical-align: middle; line-height: normal;" value="'+currentVal+'">');
+        
+        span.html('').append(input);
+        input.focus();
+        
+        input.select();
+        
+        let submitValueTitle = function() {
+            let newVal = input.val().trim();
+            if (newVal === '') newVal = "Nouvelle opportunité";
+            
+            if (newVal === currentVal) {
+                span.html(originalText);
+                return;
+            }
+            
+            span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i>');
+            
+            let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
+            
+            $.ajax({
+                url: document.URL.split('?')[0] + '?action=update_opp_title&token=' + token,
+                type: 'POST',
+                data: { projectid: projId, title: newVal },
+                success: function(res) {
+                    if(res && res.success) {
+                        span.data('val', newVal);
+                        span.html(res.escaped_title);
+                        span.css({color: '#2ecc71'});
+                        setTimeout(() => span.css({color: '#4a5568'}), 1500);
+                    } else {
+                        console.error("Erreur serveur :", res);
+                        alert("Erreur lors de la sauvegarde : " + (res.error ? JSON.stringify(res.error) : "Inconnue"));
+                        span.html(originalText);
+                        span.css({color: '#e74c3c'});
+                        setTimeout(() => span.css({color: '#4a5568'}), 1500);
+                    }
+                },
+                error: function(err) {
+                    console.error("Erreur AJAX :", err);
+                    alert("Erreur réseau");
+                    span.html(originalText);
+                    span.css({color: '#e74c3c'});
+                    setTimeout(() => span.css({color: '#4a5568'}), 1500);
+                }
+            });
+        };
+        
+        input.on('blur', submitValueTitle);
+        input.on('keypress', function(e) {
+            // Prevent fast-css-tooltip from reacting strangely
+            e.stopPropagation();
+            if (e.which === 13) {
+                input.off('blur', submitValueTitle);
+                submitValueTitle();
+            }
+        });
+        
+        input.on('click', function(e) { e.stopPropagation(); });
+    });
+
+    // Gallery Logic
+    window.galleryImages = [];
+    window.galleryCurrentIndex = 0;
+    
+    function updateGalleryView() {
+        if (!window.galleryImages || window.galleryImages.length === 0) return;
+        $('#gallery-main-img').attr('src', window.galleryImages[window.galleryCurrentIndex]);
+        $('#gallery-counter-text').text((window.galleryCurrentIndex + 1) + ' / ' + window.galleryImages.length);
+        
+        if (window.galleryImages.length <= 1) {
+            $('#gallery-prev-btn, #gallery-next-btn').hide();
+        } else {
+            $('#gallery-prev-btn, #gallery-next-btn').show();
+        }
+    }
+
+    $('.project-photo-trigger').on('click', function(e) {
+        e.stopPropagation();
+        window.galleryImages = $(this).data('photos');
+        window.editingExistingProjectId = $(this).data('project-id');
+        window.galleryCurrentIndex = 0;
+        
+        if (window.galleryImages && window.galleryImages.length > 0) {
+            updateGalleryView();
+            $('#project-gallery-modal').css('display', 'flex');
+        }
+    });
+
+    $('#gallery-prev-btn').on('click', function(e) {
+        e.stopPropagation();
+        window.galleryCurrentIndex = (window.galleryCurrentIndex - 1 + window.galleryImages.length) % window.galleryImages.length;
+        updateGalleryView();
+    });
+
+    $('#gallery-next-btn').on('click', function(e) {
+        e.stopPropagation();
+        window.galleryCurrentIndex = (window.galleryCurrentIndex + 1) % window.galleryImages.length;
+        updateGalleryView();
+    });
+
+    function closeGalleryModal() {
+        $('#project-gallery-modal').hide();
+    }
+
+    $('#gallery-close-btn').on('click', function(e) {
+        e.stopPropagation();
+        closeGalleryModal();
+        window.editingExistingProjectId = null;
+    });
+
+    $('#gallery-edit-photo-btn').on('click', function(e) {
+        e.stopPropagation();
+        if (!window.galleryImages || window.galleryImages.length === 0) return;
+        const imageUrl = window.galleryImages[window.galleryCurrentIndex];
+        
+        closeGalleryModal();
+        if (typeof window.openPhotoEditorWithUrl === 'function') {
+            window.openPhotoEditorWithUrl(imageUrl);
+        }
+    });
+
+    $('#project-gallery-modal').on('click', function(e) {
+        if (e.target.id === 'project-gallery-modal') {
+            closeGalleryModal();
+            window.editingExistingProjectId = null;
+        }
+    });
+
+    $(document).on('keydown', function(e) {
+        if ($('#project-gallery-modal').is(':visible')) {
+            if (e.key === 'Escape') {
+                closeGalleryModal();
+                window.editingExistingProjectId = null;
+            } else if (e.key === 'ArrowRight') {
+                $('#gallery-next-btn').click();
+            } else if (e.key === 'ArrowLeft') {
+                $('#gallery-prev-btn').click();
+            }
+        }
+    });
+
+    $('#gallery-add-photo-btn').on('click', function(e) {
+        e.stopPropagation();
+        closeGalleryModal();
+        if ($('#upload-photo').length > 0) {
+            $('#upload-photo').click();
+        } else {
+            console.error("Le bouton d'ajout de photo global est introuvable sur cette page.");
+        }
+    });
+
+    // Fast Action Media Interceptors
+    $('.fast-trigger-camera').on('click', function(e) {
+        e.stopPropagation();
+        window.editingExistingProjectId = $(this).data('project-id');
+        if ($('#upload-photo').length > 0) {
+            $('#upload-photo').click();
+        } else {
+            console.error("Le composant caméra global est manquant.");
+        }
+    });
+
+    $('.inline-generic-upload').on('change', function(e) {
+        let projectId = $(this).data('project-id');
+        let files = e.target.files;
+        if (files.length === 0) return;
+        
+        let label = $('label[for="inline-upload-' + projectId + '"]');
+        let originalHtml = label.html();
+        label.html('<i class="fas fa-spinner fa-spin" style="font-size:14px;"></i>');
+        
+        let formData = new FormData();
+        formData.append('projectid', projectId);
+        for (let i = 0; i < files.length; i++) {
+            formData.append('userfile[]', files[i]);
+        }
+        
+        let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
+        
+        $.ajax({
+            url: document.URL.split('?')[0] + '?action=add_file_existing&token=' + token,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                window.location.reload();
+            },
+            error: function() {
+                label.html('<i class="fas fa-times" style="font-size:14px; color:#fff;"></i>').css('background-color', '#e74c3c');
+                setTimeout(() => { label.html(originalHtml).css('background-color', '#3b82f6'); }, 2000);
+            }
         });
     });
 });
