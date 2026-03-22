@@ -61,6 +61,216 @@ if ($action == 'add_audio_existing') {
     exit;
 }
 
+if ($action == 'add_photo_existing') {
+    $projectId = GETPOST('projectid', 'int');
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
+            if (!dol_is_dir($uploadDir)) {
+                dol_mkdir($uploadDir);
+            }
+            if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
+                $filename = 'photo_' . time() . '.jpg';
+                $uploadFile = $uploadDir . '/' . $filename;
+                if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)) {
+                    if (function_exists('vignette')) {
+                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
+                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
+                    }
+                    
+                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                    $actionComm = new ActionComm($db);
+                    $actionComm->label = $proj->ref . "-Ajout-Photo";
+                    $actionComm->note_private = "L'utilisateur " . $user->login . " a ajouté une nouvelle photo depuis le listing.";
+                    $actionComm->fk_project = $proj->id;
+                    $actionComm->elementtype = 'project';
+                    $actionComm->datep = dol_now();
+                    $actionComm->datef = dol_now();
+                    $actionComm->type_id = 0;
+                    $actionComm->percentage = -1;
+                    $actionComm->create($user);
+                }
+            }
+        }
+    }
+    exit;
+}
+
+if ($action == 'add_file_existing') {
+    $projectId = GETPOST('projectid', 'int');
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
+            if (!dol_is_dir($uploadDir)) {
+                dol_mkdir($uploadDir);
+            }
+            if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
+                $nbFiles = count($_FILES['userfile']['name']);
+                for ($i = 0; $i < $nbFiles; $i++) {
+                    if ($_FILES['userfile']['error'][$i] == 0) {
+                        $fileName = dol_sanitizeFileName($_FILES['userfile']['name'][$i]);
+                        $fullPath = $uploadDir . '/' . $fileName;
+                        
+                        if (dol_move_uploaded_file($_FILES['userfile']['tmp_name'][$i], $fullPath, 1, 0, $_FILES['userfile']['error'][$i])) {
+                            if (function_exists('vignette')) {
+                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
+                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
+                            }
+                            
+                            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                            $actionComm = new ActionComm($db);
+                            $actionComm->label = $proj->ref . "-Ajout-Document";
+                            $actionComm->note_private = "L'utilisateur " . $user->login . " a joint le document '" . $fileName . "' depuis le listing.";
+                            $actionComm->fk_project = $proj->id;
+                            $actionComm->elementtype = 'project';
+                            $actionComm->datep = dol_now();
+                            $actionComm->datef = dol_now();
+                            $actionComm->type_id = 0;
+                            $actionComm->percentage = -1;
+                            $actionComm->create($user);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    exit;
+}
+
+if ($action == 'update_opp_percent') {
+    $projectId = GETPOST('projectid', 'int');
+    $newPercent = GETPOST('percent', 'int');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldPercent = $proj->opp_percent;
+            $proj->opp_percent = $newPercent;
+            switch (true) {
+                case $newPercent < 20: $proj->opp_status = 1; break;
+                case $newPercent < 40: $proj->opp_status = 2; break;
+                case $newPercent < 60: $proj->opp_status = 3; break;
+                case $newPercent < 100: $proj->opp_status = 4; break;
+                case $newPercent == 100: $proj->opp_status = 5; break;
+            }
+            // Update the project
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+
+                // Intercept the auto-generated "Projet modifié" Agenda event and overwrite its label
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                
+                $sqlFindEvent = "SELECT id FROM " . MAIN_DB_PREFIX . "actioncomm 
+                                 WHERE fk_project = " . (int)$proj->id . " 
+                                 ORDER BY datec DESC LIMIT 1";
+                $resqlFound = $db->query($sqlFindEvent);
+                if ($resqlFound && $db->num_rows($resqlFound) > 0) {
+                    $objEvent = $db->fetch_object($resqlFound);
+                    $autoEvent = new ActionComm($db);
+                    if ($autoEvent->fetch($objEvent->id) > 0) {
+                        $autoEvent->label = $proj->ref . "-Status-Opp. : " . (int)$oldPercent . "% à " . (int)$newPercent . "%";
+                        $autoEvent->note_private = "L'utilisateur " . $user->login . " a modifié la probabilité de " . (int)$oldPercent . "% à " . (int)$newPercent . "%.";
+                        // Prevent infinite loop by not triggering the action update again
+                        $autoEvent->update($user, 1);
+                    }
+                }
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'update_opp_title') {
+    $projectId = GETPOST('projectid', 'int');
+    $newTitle = trim(GETPOST('title'));
+    $res = array('success' => false);
+
+    if ($projectId > 0 && !empty($newTitle)) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldTitle = $proj->title;
+            $proj->title = $newTitle;
+            
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+                $res['escaped_title'] = dol_escape_htmltag($newTitle);
+                
+                // Intercept the auto-generated "Projet modifié" Agenda event and overwrite its label
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                
+                $sqlFindEvent = "SELECT id FROM " . MAIN_DB_PREFIX . "actioncomm 
+                                 WHERE fk_project = " . (int)$proj->id . " 
+                                 ORDER BY datec DESC LIMIT 1";
+                $resqlFound = $db->query($sqlFindEvent);
+                if ($resqlFound && $db->num_rows($resqlFound) > 0) {
+                    $objEvent = $db->fetch_object($resqlFound);
+                    $autoEvent = new ActionComm($db);
+                    if ($autoEvent->fetch($objEvent->id) > 0) {
+                        $autoEvent->label = $proj->ref . " - " . $oldTitle . " -> " . $newTitle;
+                        $autoEvent->note_private = "L'utilisateur " . $user->login . " a modifié le libellé de l'opportunité : '" . $oldTitle . "' vers '" . $newTitle . "'.";
+                        // Prevent infinite loop by not triggering the action update again
+                        $autoEvent->update($user, 1);
+                    }
+                }
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'update_opp_amount') {
+    $projectId = GETPOST('projectid', 'int');
+    $newAmount = price2num(GETPOST('amount', 'alpha'));
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldAmount = $proj->opp_amount;
+            $proj->opp_amount = $newAmount;
+            
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+                $res['formatted_amount'] = price($newAmount, 1, $langs, 1, -1, -1, $conf->currency);
+
+                // Intercept the auto-generated "Projet modifié" Agenda event and overwrite its label
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                
+                $sqlFindEvent = "SELECT id FROM " . MAIN_DB_PREFIX . "actioncomm 
+                                 WHERE fk_project = " . (int)$proj->id . " 
+                                 ORDER BY datec DESC LIMIT 1";
+                $resqlFound = $db->query($sqlFindEvent);
+                if ($resqlFound && $db->num_rows($resqlFound) > 0) {
+                    $objEvent = $db->fetch_object($resqlFound);
+                    $autoEvent = new ActionComm($db);
+                    if ($autoEvent->fetch($objEvent->id) > 0) {
+                        $autoEvent->label = $proj->ref . "-Montant-Opp. : " . price($oldAmount, 0, $langs, 0, -1, -1, $conf->currency) . " à " . price($newAmount, 0, $langs, 0, -1, -1, $conf->currency);
+                        $autoEvent->note_private = "L'utilisateur " . $user->login . " a modifié le montant de " . price($oldAmount, 0, $langs, 0, -1, -1, $conf->currency) . " à " . price($newAmount, 0, $langs, 0, -1, -1, $conf->currency) . ".";
+                        // Prevent infinite loop by not triggering the action update again
+                        $autoEvent->update($user, 1);
+                    }
+                }
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'add') {
     $numberingModules = [
         'project'      => $conf->global->PROJECT_ADDON,
@@ -133,7 +343,17 @@ if ($action == 'add') {
         }
 
         // Standard File Upload processing
-        if (!empty($_FILES['userfile']['name'][0])) {
+        $hasFilesToUpload = false;
+        if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
+            foreach ($_FILES['userfile']['name'] as $fileName) {
+                if (!empty($fileName)) {
+                    $hasFilesToUpload = true;
+                    break;
+                }
+            }
+        }
+        
+        if ($hasFilesToUpload) {
             $nbFiles = count($_FILES['userfile']['name']);
             for ($i = 0; $i < $nbFiles; $i++) {
                 if ($_FILES['userfile']['error'][$i] == 0) {
