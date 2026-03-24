@@ -1,10 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "update": "npm install",
-    "build": "node node_modules/gulp/bin/gulp.js build",
-    "watch": "node node_modules/gulp/bin/gulp.js watch",
-    "start": "node node_modules/gulp/bin/gulp.js"
+    "build": "MODULE_NAME=reedcrm node ../saturne/node_modules/gulp/bin/gulp.js --gulpfile ../saturne/gulpfile-shared.js build",
+    "watch": "MODULE_NAME=reedcrm node ../saturne/node_modules/gulp/bin/gulp.js --gulpfile ../saturne/gulpfile-shared.js watch",
+    "start": "MODULE_NAME=reedcrm node ../saturne/node_modules/gulp/bin/gulp.js --gulpfile ../saturne/gulpfile-shared.js"
   },
   "author": "Evarisk",
   "contributors": [
@@ -13,15 +12,5 @@
       "email": "technique@evarisk.com"
     }
   ],
-  "license": "GPLv3",
-  "devDependencies": {
-    "gulp":            "4.0.2",
-    "gulp-clean-css":  "4.3.0",
-    "gulp-concat":     "2.6.1",
-    "gulp-rename":     "2.1.0",
-    "gulp-sass":       "6.0.1",
-    "gulp-sourcemaps": "3.0.0",
-    "gulp-uglify":     "3.0.2",
-    "sass":            "1.98.0"
-  }
+  "license": "GPLv3"
 }
