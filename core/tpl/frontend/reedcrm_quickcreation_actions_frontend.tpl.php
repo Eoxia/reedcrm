@@ -34,17 +34,6 @@ if (!$permissionToAddProject) {
     exit;
 }
 
-if ($action == 'add_img') {
-    $data = json_decode(file_get_contents('php://input'), true);
-
-    $encodedImage = explode(',', $data['img'])[1];
-    $decodedImage = base64_decode($encodedImage);
-    $uploadDir    = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
-    if (!dol_is_dir($uploadDir)) {
-        dol_mkdir($uploadDir);
-    }
-    file_put_contents($uploadDir . dol_print_date(dol_now(), 'dayhourlog') . '_img.jpg', $decodedImage);
-}
 
 if ($action == 'add_audio') {
     $uploadDir  = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
@@ -53,6 +42,233 @@ if ($action == 'add_audio') {
         dol_mkdir($uploadDir);
     }
     move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
+}
+
+if ($action == 'add_audio_existing') {
+    $projectId = GETPOST('projectid', 'int');
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
+            if (!dol_is_dir($uploadDir)) {
+                dol_mkdir($uploadDir);
+            }
+            $filename = 'audio_' . time() . '.wav';
+            $uploadFile = $uploadDir . '/' . $filename;
+            move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
+        }
+    }
+    exit;
+}
+
+if ($action == 'add_photo_existing') {
+    $projectId = GETPOST('projectid', 'int');
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
+            if (!dol_is_dir($uploadDir)) {
+                dol_mkdir($uploadDir);
+            }
+            if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
+                $filename = 'photo_' . time() . '.jpg';
+                $uploadFile = $uploadDir . '/' . $filename;
+                if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)) {
+                    if (function_exists('vignette')) {
+                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
+                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
+                    }
+                    
+                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                    $actionComm = new ActionComm($db);
+                    $actionComm->label = $proj->ref . "-Ajout-Photo";
+                    $actionComm->note_private = "L'utilisateur " . $user->login . " a ajouté une nouvelle photo depuis le listing.";
+                    $actionComm->fk_project = $proj->id;
+                    $actionComm->elementtype = 'project';
+                    $actionComm->datep = dol_now();
+                    $actionComm->datef = dol_now();
+                    $actionComm->type_id = 0;
+                    $actionComm->percentage = -1;
+                    $actionComm->create($user);
+                }
+            }
+        }
+    }
+    exit;
+}
+
+if ($action == 'add_file_existing') {
+    $projectId = GETPOST('projectid', 'int');
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
+            if (!dol_is_dir($uploadDir)) {
+                dol_mkdir($uploadDir);
+            }
+            if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
+                $nbFiles = count($_FILES['userfile']['name']);
+                for ($i = 0; $i < $nbFiles; $i++) {
+                    if ($_FILES['userfile']['error'][$i] == 0) {
+                        $fileName = dol_sanitizeFileName($_FILES['userfile']['name'][$i]);
+                        $fullPath = $uploadDir . '/' . $fileName;
+                        
+                        if (dol_move_uploaded_file($_FILES['userfile']['tmp_name'][$i], $fullPath, 1, 0, $_FILES['userfile']['error'][$i])) {
+                            if (function_exists('vignette')) {
+                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
+                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
+                            }
+                            
+                            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                            $actionComm = new ActionComm($db);
+                            $actionComm->label = $proj->ref . "-Ajout-Document";
+                            $actionComm->note_private = "L'utilisateur " . $user->login . " a joint le document '" . $fileName . "' depuis le listing.";
+                            $actionComm->fk_project = $proj->id;
+                            $actionComm->elementtype = 'project';
+                            $actionComm->datep = dol_now();
+                            $actionComm->datef = dol_now();
+                            $actionComm->type_id = 0;
+                            $actionComm->percentage = -1;
+                            $actionComm->create($user);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    exit;
+}
+
+if ($action == 'update_opp_percent') {
+    $projectId = GETPOST('projectid', 'int');
+    $newPercent = GETPOST('percent', 'int');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldPercent = $proj->opp_percent;
+            $proj->opp_percent = $newPercent;
+            switch (true) {
+                case $newPercent < 20: $proj->opp_status = 1; break;
+                case $newPercent < 40: $proj->opp_status = 2; break;
+                case $newPercent < 60: $proj->opp_status = 3; break;
+                case $newPercent < 100: $proj->opp_status = 4; break;
+                case $newPercent == 100: $proj->opp_status = 5; break;
+            }
+            // Update the project
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+
+                // Intercept the auto-generated "Projet modifié" Agenda event and overwrite its label
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                
+                $sqlFindEvent = "SELECT id FROM " . MAIN_DB_PREFIX . "actioncomm 
+                                 WHERE fk_project = " . (int)$proj->id . " 
+                                 ORDER BY datec DESC LIMIT 1";
+                $resqlFound = $db->query($sqlFindEvent);
+                if ($resqlFound && $db->num_rows($resqlFound) > 0) {
+                    $objEvent = $db->fetch_object($resqlFound);
+                    $autoEvent = new ActionComm($db);
+                    if ($autoEvent->fetch($objEvent->id) > 0) {
+                        $autoEvent->label = $proj->ref . "-Status-Opp. : " . (int)$oldPercent . "% à " . (int)$newPercent . "%";
+                        $autoEvent->note_private = "L'utilisateur " . $user->login . " a modifié la probabilité de " . (int)$oldPercent . "% à " . (int)$newPercent . "%.";
+                        // Prevent infinite loop by not triggering the action update again
+                        $autoEvent->update($user, 1);
+                    }
+                }
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'update_opp_title') {
+    $projectId = GETPOST('projectid', 'int');
+    $newTitle = trim(GETPOST('title'));
+    $res = array('success' => false);
+
+    if ($projectId > 0 && !empty($newTitle)) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldTitle = $proj->title;
+            $proj->title = $newTitle;
+            
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+                $res['escaped_title'] = dol_escape_htmltag($newTitle);
+                
+                // Intercept the auto-generated "Projet modifié" Agenda event and overwrite its label
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                
+                $sqlFindEvent = "SELECT id FROM " . MAIN_DB_PREFIX . "actioncomm 
+                                 WHERE fk_project = " . (int)$proj->id . " 
+                                 ORDER BY datec DESC LIMIT 1";
+                $resqlFound = $db->query($sqlFindEvent);
+                if ($resqlFound && $db->num_rows($resqlFound) > 0) {
+                    $objEvent = $db->fetch_object($resqlFound);
+                    $autoEvent = new ActionComm($db);
+                    if ($autoEvent->fetch($objEvent->id) > 0) {
+                        $autoEvent->label = $proj->ref . " - " . $oldTitle . " -> " . $newTitle;
+                        $autoEvent->note_private = "L'utilisateur " . $user->login . " a modifié le libellé de l'opportunité : '" . $oldTitle . "' vers '" . $newTitle . "'.";
+                        // Prevent infinite loop by not triggering the action update again
+                        $autoEvent->update($user, 1);
+                    }
+                }
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'update_opp_amount') {
+    $projectId = GETPOST('projectid', 'int');
+    $newAmount = price2num(GETPOST('amount', 'alpha'));
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldAmount = $proj->opp_amount;
+            $proj->opp_amount = $newAmount;
+            
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+                $res['formatted_amount'] = price($newAmount, 1, $langs, 1, -1, -1, $conf->currency);
+
+                // Intercept the auto-generated "Projet modifié" Agenda event and overwrite its label
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                
+                $sqlFindEvent = "SELECT id FROM " . MAIN_DB_PREFIX . "actioncomm 
+                                 WHERE fk_project = " . (int)$proj->id . " 
+                                 ORDER BY datec DESC LIMIT 1";
+                $resqlFound = $db->query($sqlFindEvent);
+                if ($resqlFound && $db->num_rows($resqlFound) > 0) {
+                    $objEvent = $db->fetch_object($resqlFound);
+                    $autoEvent = new ActionComm($db);
+                    if ($autoEvent->fetch($objEvent->id) > 0) {
+                        $autoEvent->label = $proj->ref . "-Montant-Opp. : " . price($oldAmount, 0, $langs, 0, -1, -1, $conf->currency) . " à " . price($newAmount, 0, $langs, 0, -1, -1, $conf->currency);
+                        $autoEvent->note_private = "L'utilisateur " . $user->login . " a modifié le montant de " . price($oldAmount, 0, $langs, 0, -1, -1, $conf->currency) . " à " . price($newAmount, 0, $langs, 0, -1, -1, $conf->currency) . ".";
+                        // Prevent infinite loop by not triggering the action update again
+                        $autoEvent->update($user, 1);
+                    }
+                }
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
 }
 
 if ($action == 'add') {
@@ -96,7 +312,20 @@ if ($action == 'add') {
 
     $extraFields->setOptionalsFromPost(null, $project);
 
-    $projectID = $project->create($user);
+    $error = 0;
+    $projectPhone = GETPOST('options_projectphone', 'alpha');
+    if (!empty($projectPhone)) {
+        if (!preg_match('/^[+0-9\s.\-()]{2,20}$/', $projectPhone) || strlen($projectPhone) > 20) {
+            setEventMessages($langs->trans('ErrorInvalidProjectPhone'), null, 'errors');
+            $error++;
+        }
+    }
+
+    $projectID = 0;
+    if ($error == 0) {
+        $projectID = $project->create($user);
+    }
+    
     if ($projectID > 0) {
 //        // Category association
 //        $categories = GETPOST('categories_project', 'array');
@@ -109,22 +338,46 @@ if ($action == 'add') {
 //        }
 
         $pathToProjectDir = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
-        $pathToTmpImg  = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_photos/';
-        $imgList       = dol_dir_list($pathToTmpImg, 'files');
-        if (!empty($imgList)) {
-            foreach ($imgList as $img) {
-                if (!dol_is_dir($pathToProjectDir)) {
-                    dol_mkdir($pathToProjectDir);
+        if (!dol_is_dir($pathToProjectDir)) {
+            dol_mkdir($pathToProjectDir);
+        }
+
+        // Standard File Upload processing
+        $hasFilesToUpload = false;
+        if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
+            foreach ($_FILES['userfile']['name'] as $fileName) {
+                if (!empty($fileName)) {
+                    $hasFilesToUpload = true;
+                    break;
                 }
-
-                $fullPath = $pathToProjectDir . '/' . $img['name'];
-                dol_copy($img['fullname'], $fullPath);
-
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL);
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE, '_large');
-                unlink($img['fullname']);
+            }
+        }
+        
+        if ($hasFilesToUpload) {
+            $nbFiles = count($_FILES['userfile']['name']);
+            for ($i = 0; $i < $nbFiles; $i++) {
+                if ($_FILES['userfile']['error'][$i] == 0) {
+                    $fileName = dol_sanitizeFileName($_FILES['userfile']['name'][$i]);
+                    $fullPath = $pathToProjectDir . '/' . $fileName;
+                    
+                    if (dol_move_uploaded_file($_FILES['userfile']['tmp_name'][$i], $fullPath, 1, 0, $_FILES['userfile']['error'][$i])) {
+                        if (function_exists('vignette')) {
+                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
+                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL);
+                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
+                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE, '_large');
+                        }
+                    } else {
+                        setEventMessages($langs->transnoentities('ErrorFileNotUploaded').' (dol_move_uploaded_file failed)', null, 'errors');
+                        $error++;
+                    }
+                } else if ($_FILES['userfile']['error'][$i] == UPLOAD_ERR_INI_SIZE || $_FILES['userfile']['error'][$i] == UPLOAD_ERR_FORM_SIZE) {
+                    setEventMessages('La taille du fichier dépasse la limite autorisée par le serveur (upload_max_filesize).', null, 'errors');
+                    $error++;
+                } else if ($_FILES['userfile']['error'][$i] != UPLOAD_ERR_NO_FILE) {
+                    setEventMessages('Erreur technique lors du téléversement du fichier (Code: '.$_FILES['userfile']['error'][$i].').', null, 'errors');
+                    $error++;
+                }
             }
         }
 
@@ -176,7 +429,7 @@ if ($action == 'add') {
     }
 
     if (!$error) {
-        setEventMessage($langs->transnoentities('QuickCreationFrontendSuccess') . ' : <a href="' . DOL_URL_ROOT . '/projet/card.php?id=' . $projectID . '">'  . $project->ref . '</a>');
+        setEventMessage($langs->transnoentities('QuickCreationFrontendSuccess') . ' : <a href="' . DOL_URL_ROOT . '/projet/card.php?id=' . $projectID . '" target="_blank">'  . $project->ref . '</a>');
         header('Location: ' . $_SERVER["PHP_SELF"]);
         exit;
     } else {

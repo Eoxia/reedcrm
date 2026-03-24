@@ -39,6 +39,9 @@ QuickTaskCreations       = ajouts rapides de tâche
 CommercialFollowUp       = SC
 CommercialTask           = Tâche commerciale
 ProjectPhone             = Téléphone projet
+ErrorInvalidProjectPhone = Le numéro de téléphone n'est pas valide ou est trop long (max 20 caractères)
+ContactInformations      = Coordonnées
+Vocal                    = Vocal
 
 # Frontend - Frontend
 QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
@@ -79,6 +82,11 @@ ProductKitConfDesc               = Indépendemment du paramètre du module produ
 ProductInactiveMonths            = Nombre de mois d'inactivité pour qu'un produit soit considéré comme inactif
 ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni d'achat) pour qu'un produit soit considéré comme inactif dans les listes de sélection. <br> Valeur par défaut : <b> 6 </b>
 
+# QuickEvent
+ReminderValue=Délai du rappel
+ReminderValueDescription=Nombre d’unités de temps avant l’événement pour déclencher le rappel
+ReminderUnit=Unité du rappel
+ReminderUnitDescription=nité de temps utilisée pour le rappel
 
 # ApiQuickCreation
 ApiQuickCreations   = ajouts rapides via l'api
@@ -216,6 +224,9 @@ LabelLength                            = Taille libellé
 LabelLengthDescription                 = Taille maximum du champ libellé
 WarningTaskLabelCustom                 = Attention, vous vous rapprochez du nombre de caractères maximum autorisé (%d)
 ProductLastSellList                    = Dernières ventes du produit (Commande et Facture)
+Opportunities                          = Opportunités
+OpenedPropals                          = PR ouvertes
+RecurringInvoices                      = Factures récurrentes
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall                                                         = Appel entrant
@@ -243,6 +254,7 @@ Automatically open contact card when receiving a call notification   = Ouvrir au
 Open contact card in a new tab instead of current window             = Ouvrir la fiche contact dans un nouvel onglet au lieu de la fenêtre actuelle
 Security token for Keyyo webhook (leave empty to disable token check)= Token de sécurité pour le webhook Keyyo (laisser vide pour désactiver la vérification du token)
 ProjectOpportunitiesList = Les 5 dernières opportunités de projet
+LatestCreatedOpportunities = Dernières opportunités créées
 OppPercent = Pourcentage d'opportunité
 ButtonActions = Actions
 ContentToBeAdded = Contenu à ajouter
@@ -301,6 +313,7 @@ ProjectsImported = %s projets importés sur %s lignes.
 ProjectsImportErrors = %s lignes n'ont pas pu être importées.
 NbLines = Nombre de lignes
 ProjectImport = Import de projet
+ImportedProjectList = Liste des projets importés
 
 # Onglet Keyyo pour tiers
 KeyyoCalls = Appels Keyyo

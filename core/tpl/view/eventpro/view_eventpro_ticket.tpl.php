@@ -2,7 +2,7 @@
 
 ?>
 
-<form action="<?php echo $_SERVER['PHP_SELF']; ?>?from_id=' . $id; ?>&from_type=' . $fromType; ?>&tab=' . $currentTab; ?>" method="POST" class="border" id="createticketform">
+<form action="<?php echo $_SERVER['PHP_SELF']; ?>?from_id=<?php echo $id; ?>&from_type=<?php echo $fromType; ?>&tab=<?php echo $currentTab; ?>" method="POST" class="border" id="createticketform">
     <input type="hidden" name="token" value="<?php echo newToken(); ?>">
     <input type="hidden" name="action" value="create_ticket">
     <input type="hidden" name="from_id" value="<?php echo $id; ?>">
@@ -98,7 +98,7 @@
 
     <?php if ($permissiontoadd) : ?>
         <div class="center" style="margin-top: 10px;">
-            <button type="submit" form="createticketform" class="butAction"><?php echo $langs->trans("CreateTicket"); ?></button>
+            <button type="submit" class="butAction reedcrm-create-ticket-btn"><?php echo $langs->trans("CreateTicket"); ?></button>
         </div>
     <?php endif; ?>
 </form>

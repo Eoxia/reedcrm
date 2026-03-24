@@ -4,43 +4,71 @@
     gap: 0.5em;
 
     input[type=range] {
+        -webkit-appearance: none;
+        appearance: none;
         width: 100%;
-        background: #f7f7f7;
-        height: 0;
-        margin-bottom: 0;
+        background: transparent;
+        height: 30px; /* match thumb height */
+        margin: 0;
+        padding: 0;
+        border: none;
+        outline: none;
     
-        &:focus, &:active {
-            outline: none;
+        &:focus, &:active, &:focus-visible {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
         }
     }
 
     input[type=range]::-webkit-slider-thumb {
-        width: 30px;
+        -webkit-appearance: none;
+        width: 45px;
         height: 30px;
+        background: transparent;
+        opacity: 0;
+        cursor: pointer;
     }
     input[type=range]::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
+        appearance: none;
+        width: 45px;
+        height: 30px;
+        background: transparent;
+        opacity: 0;
+        cursor: pointer;
+        border: none;
     }
 
     input[type=range]::-webkit-slider-runnable-track {
         height: 15px;
         background: rgb(255,94,94);
         background: linear-gradient(90deg, rgba(255,94,94,1) 0%, rgba(255,130,94,1) 40%, rgba(255,177,0,1) 50%, rgba(184,200,110,1) 60%, rgba(52,160,72,1) 100%);
+        border-radius: 8px;
     }
     input[type=range]::-moz-range-track {
         height: 15px;
         background: rgb(255,94,94);
         background: linear-gradient(90deg, rgba(255,94,94,1) 0%, rgba(255,130,94,1) 40%, rgba(255,177,0,1) 50%, rgba(184,200,110,1) 60%, rgba(52,160,72,1) 100%);
+        border-radius: 8px;
     }
 }
 
-.opp-percent-label {
-    .opp_percent-value {
-        display: inline-block;
-        background: rgba(0,0,0,0.1);
-        border-radius: 4px;
-        padding: 0.2em 0.5em;
-        font-weight: 600;
-    }
+.opp_percent-value {
+    position: absolute;
+    pointer-events: none;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    left: calc((var(--val, 0) / 100) * (100% - 45px) + 22.5px);
+    
+    background: #ffffff;
+    border: 2px solid #9b59b6;
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #9b59b6;
+    box-shadow: 0 4px 10px rgba(155, 89, 182, 0.25), 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    line-height: 1;
 }

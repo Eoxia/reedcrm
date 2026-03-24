@@ -66,6 +66,7 @@ saturne_load_langs();
 $id         = GETPOSTINT('from_id');
 $action     = GETPOST('action', 'aZ09');
 $currentTab = GETPOSTISSET('tab') ? GETPOST('tab', 'aZ09') : 'note';
+$isModal    = GETPOSTINT('modal');
 
 // Initialize objects
 $object     = $objectMetadata['object'];
@@ -169,8 +170,9 @@ if (empty($resHook)) {
         $actionComm->socid             = GETPOSTINT('socid');
         $actionComm->socpeopleassigned = [GETPOSTINT('contactid') => GETPOSTINT('contactid')];
         $actionComm->type_code         = GETPOST('actioncode', 'aZ09');
-
-        $datep = dol_mktime(GETPOSTINT('event_hour') - 2, GETPOSTINT('event_min'), 0, GETPOSTINT('event_month'), GETPOSTINT('event_day'), GETPOSTINT('event_year'));
+        $actionComm->percentage        = 100;
+        
+        $datep = dol_mktime(GETPOSTINT('event_hour'), GETPOSTINT('event_min'), 0, GETPOSTINT('event_month'), GETPOSTINT('event_day'), GETPOSTINT('event_year'), 'tzuserrel');
         if ($datep > 0) {
             $actionComm->datep = $datep;
         } else {
@@ -189,18 +191,104 @@ if (empty($resHook)) {
         $category->fetch(getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG'));
         $category->add_type($actionComm, 'actioncomm');
 
+        if ($result > 0 && GETPOST('add_reminder')) {
+            $date_reminder = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
+
+            $actionComm->type_code    = 'AC_OTH';
+
+            $actionComm->datep        = $date_reminder;
+
+            $actionComm->label        = GETPOST('reminder_title');
+            $actionComm->note_private = '';
+
+            $result = $actionComm->create($user);
+
+            $actionCommReminder = new ActionCommReminder($db);
+
+
+            $offsetvalue = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_OFFSET');
+            $offsetunit  = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT');
+
+            $dateremind = dol_time_plus_duree($date_reminder, -1 * $offsetvalue, $offsetunit);
+
+            $actionCommReminder->dateremind = $dateremind;
+            $actionCommReminder->typeremind = 'browser';
+
+            $actionCommReminder->offsetvalue = $offsetvalue;
+            $actionCommReminder->offsetunit  = $offsetunit;
+
+            $actionCommReminder->fk_actioncomm = $result;
+
+            $actionCommReminder->fk_user = $user->id;
+
+            $actionCommReminder->status = $actionCommReminder::STATUS_TODO;
+
+            $result = $actionCommReminder->create($user);
+        }
+
+        $newOpportunityPercent = GETPOST('new_opportunity_percent');
+        $newOpportunityStatus  = GETPOST('new_opportunity_status');
+        if ($result > 0 && ($object->opp_percent != $newOpportunityPercent || $object->opp_status != $newOpportunityStatus)) {
+            $object->opp_percent = $newOpportunityPercent;
+            $object->opp_status  = $newOpportunityStatus;
+            $result = $object->update($user);
+        }
+
         if ($result > 0) {
+            if ($isModal) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => $langs->trans('EventCreated')]);
+                exit;
+            }
             setEventMessages($langs->trans('EventCreated'), null);
             header('Location: ' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=note');
             exit;
         } else {
+            if ($isModal) {
+                header('Content-Type: application/json');
+                $errorMsg = $actionComm->error;
+                if (empty($errorMsg) && !empty($actionComm->errors)) {
+                    $errorMsg = implode(', ', $actionComm->errors);
+                }
+                echo json_encode(['success' => false, 'error' => $errorMsg ?: $langs->trans('Error')]);
+                exit;
+            }
             setEventMessages($actionComm->error, $actionComm->errors, 'errors');
         }
     }
 
     // Action to create ticket
     if ($action == 'create_ticket' && isModEnabled('ticket')) {
+        $error = 0;
+        $errorMessages = [];
 
+        // Validate required fields
+        if (empty(GETPOST('ticket_subject', 'alphanohtml'))) {
+            $errorMessages[] = $langs->trans("ErrorFieldRequired", $langs->transnoentities("Subject"));
+            $error++;
+        }
+        if (empty(GETPOST('ticket_type', 'aZ09'))) {
+            $errorMessages[] = $langs->trans("ErrorFieldRequired", $langs->transnoentities("Type"));
+            $error++;
+        }
+        if (empty(GETPOST('ticket_category', 'aZ09'))) {
+            $errorMessages[] = $langs->trans("ErrorFieldRequired", $langs->transnoentities("Category"));
+            $error++;
+        }
+
+        if ($error && $isModal) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => implode(', ', $errorMessages)]);
+            exit;
+        }
+
+        if ($error && !$isModal) {
+            foreach ($errorMessages as $msg) {
+                setEventMessages($msg, null, 'errors');
+            }
+        }
+
+        if (!$error) {
         $ticket = new Ticket($db);
 
         // Get form data
@@ -208,7 +296,7 @@ if (empty($resHook)) {
         $ticket->subject = GETPOST('ticket_subject', 'alphanohtml');
         $ticket->message = GETPOST('ticket_message', 'restricthtml');
         $ticket->fk_project = GETPOST('project_id');
-        $ticket->fk_soc = GETPOST('ticket_socid', 'int') ?: $societe->id;
+            $ticket->fk_soc = GETPOST('ticket_socid', 'int') ?: (isset($object->thirdparty->id) ? $object->thirdparty->id : 0);
         $ticket->fk_user_assign = GETPOST('ticket_user_assign', 'int');
         $ticket->type_code = GETPOST('ticket_type', 'aZ09');
         $ticket->category_code = GETPOST('ticket_category', 'aZ09');
@@ -236,12 +324,48 @@ if (empty($resHook)) {
         $result = $ticket->create($user);
 
         if ($result > 0) {
+                // Link ticket to project if project is set
+                $projectid = GETPOST('project_id', 'int');
+                if ($projectid > 0) {
+                    $ticket->setProject($projectid);
+                } elseif ($fromType == 'project' && $id > 0) {
+                    // If created from a project, link to that project
+                    $ticket->setProject($id);
+                }
+
+                // Link ticket to thirdparty (already set via fk_soc, but ensure link is created)
+                if ($ticket->fk_soc > 0) {
+                    // The fk_soc is already set, but we can also create an object link if needed
+                    // This is optional as fk_soc already links the ticket to the thirdparty
+                    $ticket->add_object_linked('societe', $ticket->fk_soc, $user);
+                }
+
+            if ($isModal) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'message' => $langs->trans('TicketCreated')]);
+                    exit;
+                }
             setEventMessages($langs->trans("TicketCreated"), null, 'mesgs');
-            // Redirect to avoid resubmission
-            header("Location: " . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType);
+                // Redirect to avoid resubmission - include tab to show ticket tab
+                header("Location: " . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=ticket');
             exit;
         } else {
+                if ($isModal) {
+                    header('Content-Type: application/json');
+                    $errorMsg = $ticket->error;
+                    if (empty($errorMsg) && !empty($ticket->errors)) {
+                        $errorMsg = implode(', ', $ticket->errors);
+                    }
+                    echo json_encode(['success' => false, 'error' => $errorMsg ?: $langs->trans('Error')]);
+                    exit;
+                }
             setEventMessages($ticket->error, $ticket->errors, 'errors');
+                // Stay on ticket tab to show errors
+                $currentTab = 'ticket';
+            }
+        } else {
+            // Stay on ticket tab to show errors
+            $currentTab = 'ticket';
         }
     }
 }
@@ -249,6 +373,15 @@ if (empty($resHook)) {
 /*
 * View
 */
+
+if ($isModal) {
+    // Modal mode: output only the form template without header/banner/footer
+    if (empty($action)) {
+        require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+    }
+    $db->close();
+    exit;
+}
 
 $title   = $langs->transnoentities('ReedCRM');
 $helpUrl = 'FR:Module_ReedCRM';

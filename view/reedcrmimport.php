@@ -202,7 +202,7 @@ if ($action == 'confirm_import_projects') {
                             $proj->public = 1;
 
                             $resCreate = $proj->create($user);
-                    
+
                             if ($resCreate > 0) {
                                 $resSetCat = $proj->setCategories(array($categoryId), Categorie::TYPE_PROJECT);
                                 if ($resSetCat <= 0) {
@@ -284,71 +284,7 @@ print '</table>';
 print '</form>';
 
 print '<br>';
-print load_fiche_titre($langs->trans('ImportProjectsFromCSV') . ' - ' . $langs->trans('History'), '', '');
-
-$historyFiles = [];
-if (is_dir($importHistoryDir)) {
-    $historyFiles = dol_dir_list($importHistoryDir, 'files', 1, '', '', 'date', SORT_DESC);
-}
-
-if (empty($historyFiles)) {
-    print '<div class="opacitymedium">' . $langs->trans('None') . '</div>';
-} else {
-    print '<div class="div-table-responsive-no-min">';
-    print '<table class="noborder centpercent">';
-    print '<tr class="liste_titre">';
-print '<td>' . $langs->trans('Tag') . '</td>';
-    print '<td>' . $langs->trans('File') . '</td>';
-    print '<td class="center">' . $langs->trans('Date') . '</td>';
-    print '<td class="center">' . $langs->trans('NbLines') . '</td>';
-    print '</tr>';
-
-    $categoryCache = [];
-    foreach ($historyFiles as $fileInfo) {
-        $relative = ltrim(str_replace($importHistoryDir, '', $fileInfo['fullname']), '/\\');
-        $parts = preg_split('#[\\/]+#', $relative, 2);
-        $folderName = $parts[0] ?: '';
-        $catId = 0;
-
-        // Folder name is now directly the category ID
-        if (is_numeric($folderName) && (int) $folderName > 0) {
-            $catId = (int) $folderName;
-        }
-
-        $fileName = $fileInfo['name'];
-        $downloadPath = 'import/project/' . $folderName . '/' . $fileName;
-        $downloadUrl = DOL_URL_ROOT . '/document.php?modulepart=reedcrm&attachment=1&file=' . urlencode($downloadPath);
-
-        $tagDisplay = '-';
-        if ($catId > 0) {
-            if (!array_key_exists($catId, $categoryCache)) {
-                $catObj = new Categorie($db);
-                if ($catObj->fetch($catId) > 0) {
-                    $categoryCache[$catId] = $catObj;
-                } else {
-                    $categoryCache[$catId] = null;
-                }
-            }
-            if (!empty($categoryCache[$catId])) {
-                $label = $categoryCache[$catId]->label;
-                $listUrl = DOL_URL_ROOT . '/projet/list.php?search_category_project_list[]=' . $catId;
-                $tagDisplay = '<a class="badge badge-status4" href="' . $listUrl . '">' . dol_escape_htmltag($label) . '</a>';
-            }
-        }
-
-        print '<tr class="oddeven">';
-        print '<td>' . $tagDisplay . '</td>';
-        print '<td><a href="' . $downloadUrl . '">' . dol_escape_htmltag($fileName) . '</a></td>';
-        $lineCount = reedcrm_count_csv_lines($fileInfo['fullname']);
-
-        print '<td class="center">' . dol_print_date($fileInfo['date'] ?: dol_now(), 'dayhour') . '</td>';
-        print '<td class="center">' . ($lineCount !== null ? (int) $lineCount : '-') . '</td>';
-        print '</tr>';
-    }
-
-    print '</table>';
-    print '</div>';
-}
+print '<a href="' . dol_buildpath('/custom/reedcrm/view/reedcrm_imported_projects.php', 1) . '" class="butAction">' . $langs->trans('ViewImportHistory') . '</a>';
 
 llxFooter();
 $db->close();

@@ -60,8 +60,10 @@ $filterCountry = GETPOST('filter_country');
 $filterRegion  = GETPOST('filter_region');
 $filterState   = GETPOST('filter_state');
 $filterTown    = trim(GETPOST('filter_town', 'alpha'));
-$filterCat     = GETPOST("search_category_" . $objectType ."_list", 'array');
-$source        = GETPOSTISSET('source') ? GETPOST('source') : '';
+$filterCat       = GETPOST("search_category_" . $objectType ."_list", 'array');
+$filterDateStart = dol_mktime(0, 0, 0, GETPOST('filter_date_startmonth', 'int'), GETPOST('filter_date_startday', 'int'), GETPOST('filter_date_startyear', 'int'));
+$filterDateEnd   = dol_mktime(23, 59, 59, GETPOST('filter_date_endmonth', 'int'), GETPOST('filter_date_endday', 'int'), GETPOST('filter_date_endyear', 'int'));
+$source          = GETPOSTISSET('source') ? GETPOST('source') : '';
 
 // Initialize technical object
 $objectInfos  = saturne_get_objects_metadata($objectType);
@@ -102,13 +104,15 @@ if (empty($resHook)) {
     // Purge search criteria
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')) // All tests are required to be compatible with all browsers
     {
-        $filterCat     = [];
-        $filterId      = 0;
-        $filterCountry = 0;
-        $filterRegion  = 0;
-        $filterState   = 0;
-        $filterTown    = '';
-        $filterType    = '';
+        $filterCat       = [];
+        $filterId        = 0;
+        $filterCountry   = 0;
+        $filterRegion    = 0;
+        $filterState     = 0;
+        $filterTown      = '';
+        $filterType      = '';
+        $filterDateStart = '';
+        $filterDateEnd   = '';
     }
 }
 
@@ -206,11 +210,21 @@ $allObjects    = saturne_fetch_all_object_type($objectInfos['class_name']);
 $filterSQL  = 't.element_type = ' . "'" . GETPOST('from_type') . "'";
 $filterSQL .= ($filterId > 0 ? ' AND t.fk_element = ' . $filterId : '');
 
+// Build date SQL conditions for project creation date
+$dateStartSQL = (!empty($filterDateStart) ? " AND p.datec >= '" . date('Y-m-d H:i:s', $filterDateStart) . "'" : '');
+$dateEndSQL   = (!empty($filterDateEnd)   ? " AND p.datec <= '" . date('Y-m-d H:i:s', $filterDateEnd)   . "'" : '');
+
 if ($filterId > 0) {
     $project->fetch($filterId);
-    $contacts = $project->liste_contact();
+    // Apply date filter on the single fetched project
+    $projectDateC = (int) $project->date_creation;
+    if ((!empty($filterDateStart) && $projectDateC < $filterDateStart) || (!empty($filterDateEnd) && $projectDateC > $filterDateEnd)) {
+        $contacts = [];
+    } else {
+        $contacts = $project->liste_contact();
+    }
 } else {
-    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"'], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid');
+    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"' . $dateStartSQL . $dateEndSQL], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON ec.element_id = p.rowid');
 }
 
 if (is_array($contacts) && !empty($contacts)) {
@@ -219,29 +233,41 @@ if (is_array($contacts) && !empty($contacts)) {
 
         if (is_object($contactSingle)) {
             $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle->id);
-            $contactName    = $contactSingle->lastname;
+            $contactName    = $contactSingle->firstname . ' ' . $contactSingle->lastname;
             $contactAddress = $contactSingle->address;
+            $contactPhone   = !empty($contactSingle->phone_mobile) ? $contactSingle->phone_mobile : $contactSingle->phone_pro;
+            $contactEmail   = $contactSingle->email;
         } else if (is_array($contactSingle) && $contactSingle['code'] == 'PROJECTADDRESS') {
             $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle['id']);
             $contact->fetch($contactSingle['id']);
-            $contactName    = $contact->lastname;
+            $contactName    = $contact->firstname . ' ' . $contact->lastname;
             $contactAddress = $contact->address;
+            $contactPhone   = !empty($contact->phone_mobile) ? $contact->phone_mobile : $contact->phone_pro;
+            $contactEmail   = $contact->email;
         }
         if ($geolocation->latitude > 0 && $geolocation->longitude > 0) {
             // We fill temporarily geolocation with contact data to use them in the description afterward
             $geolocation->address_name = $contactName;
             $geolocation->tmp_address  = $contactAddress;
+            $geolocation->tmp_phone    = $contactPhone ?? '';
+            $geolocation->tmp_email    = $contactEmail ?? '';
             $geolocations[]            = $geolocation;
         }
     }
+} else {
+    $geolocation  = new Geolocation($db);
+    $geolocations = $geolocation->fetchAll();
 }
 
 if (is_array($geolocations) && !empty($geolocations)) {
     foreach($geolocations as $geolocation) {
         $geolocation->convertCoordinates();
-        $result = $objectLinked->fetch($fromId);
-        if ($result <= 0) {
-            $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => ' ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
+        $result = -1;
+        if (!empty($fromId)) {
+            $result = $objectLinked->fetch($fromId);
+        }
+        if (empty($fromId) || $result <= 0) {
+            $projects     = saturne_fetch_all_object_type('project', 'DESC', 'rowid', 1, 0, ['customsql' => 'ec.fk_socpeople = ' . $geolocation->fk_element], 'AND', false, true, false, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.element_id');
             $objectLinked = array_shift($projects);
         }
 
@@ -249,21 +275,35 @@ if (is_array($geolocations) && !empty($geolocations)) {
             continue;
         }
 
-        $objectLinkedInfo  = '<b>' . $langs->transnoentities('Name') . '</b> : ' . $geolocation->address_name . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Address') . '</b> : ' . $geolocation->tmp_address . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Project') . '</b> : ' .  $objectLinked->getNomUrl(1, '', 0, '', ' - ', 1) . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('ProjectLabel') . '</b> : ' . $objectLinked->title . '<br>';
-        $objectLinkedInfo .= '<b>' . $langs->transnoentities('Description') . '</b> : ' . $objectLinked->description . '<br>';
-        $code = dol_getIdFromCode($db, $objectLinked->opp_status > 0 ? $objectLinked->opp_status : $objectLinked->fk_opp_status , 'c_lead_status', 'rowid', 'code');
-        if ($code) {
-            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityStatus')  . '</b> : ' . $langs->trans('OppStatus' . $code) . '<br>';
-        }
-        if (strcmp($objectLinked->opp_amount, '')) {
-            $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityAmount') . '</b> : ' . price($objectLinked->opp_amount, 0, $langs, 1, 0, -1, $conf->currency) . '<br>';
-            if (strcmp($objectLinked->opp_percent, '')) {
-                $objectLinkedInfo .= '<b>' . $langs->transnoentities('OpportunityWeightedAmountShort')  . '</b> : ' . price($objectLinked->opp_amount * $objectLinked->opp_percent / 100, 0, $langs, 1, 0, -1, $conf->currency);
+        $oppPercent = (float) $objectLinked->opp_percent;
+        $objectLinkedInfo  = '<div style="min-width:230px;font-family:inherit">';
+        $objectLinkedInfo .= '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
+        $objectLinkedInfo .=   '<span style="font-weight:bold">' . $objectLinked->getNomUrl(1) . '</span>';
+        $objectLinkedInfo .=   '<span style="color:#555;white-space:nowrap;margin-left:12px">' . number_format($oppPercent, 2) . ' %</span>';
+        $objectLinkedInfo .= '</div>';
+        $objectLinkedInfo .= '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+        $objectLinkedInfo .=   '<span style="color:#333">' . dol_escape_htmltag($objectLinked->title) . '</span>';
+        $objectLinkedInfo .=   '<a href="' . dol_buildpath('/projet/card.php', 1) . '?id=' . $objectLinked->id . '" target="_blank" style="margin-left:8px">' . img_picto('', 'fontawesome_external-link-alt_fas_#28a745') . '</a>';
+        $objectLinkedInfo .= '</div>';
+        if (!empty($geolocation->address_name) || !empty($geolocation->tmp_phone)) {
+            $contactLine = dol_escape_htmltag(trim($geolocation->address_name));
+            if (!empty($geolocation->tmp_phone)) {
+                $contactLine .= ' - ' . dol_escape_htmltag($geolocation->tmp_phone);
             }
+            $objectLinkedInfo .= '<div style="color:#555;font-size:0.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' . $contactLine . '</div>';
         }
+        if (!empty($geolocation->tmp_email)) {
+            $objectLinkedInfo .= '<div style="color:#555;font-size:0.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' . dol_escape_htmltag($geolocation->tmp_email) . '</div>';
+        }
+        if ($user->hasRight('agenda', 'myactions', 'create')) {
+            $cardProUrl        = dol_buildpath('/custom/reedcrm/view/procard.php', 1) . '?from_id=' . $objectLinked->id . '&from_type=project&modal=1';
+            $objectLinkedInfo .= '<div style="margin-top:6px;border-top:1px solid #eee;padding-top:6px;text-align:right">';
+            $objectLinkedInfo .= '<span class="fa fa-plus-circle reedcrm-card-modal-open" style="cursor:pointer;color:#1e3a5f;font-size:1.1em;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objectLinked->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
+            $objectLinkedInfo .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
+            $objectLinkedInfo .= '</span>';
+            $objectLinkedInfo .= '</div>';
+        }
+        $objectLinkedInfo .= '</div>';
 
         $num++;
         $objectList[$num]['color']  = '#F00';
@@ -346,13 +386,21 @@ if ($source != 'pwa') {
     print '<div class="divsearchfield">' . $langs->trans('Town'). ': ';
     print '<input class="flat searchstring maxwidth200" type="text" name="filter_town" value="' . dol_escape_htmltag($filterTown) . '"></div>';
 
-    //Categories project
-    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
-        if (in_array($objectType, Categorie::$MAP_ID_TO_CODE)) {
-            print '<div class="divsearchfield">';
-            print $langs->trans(ucfirst($objectInfos['langfile']) . 'CategoriesShort') . '</br>' . $formCategory->getFilterBox($objectType, $filterCat) . '</div>';
-        }
-    }
+    // Date start
+    print '<div class="divsearchfield">' . $langs->trans('DateStart'). ': ';
+    print $form->selectDate($filterDateStart, 'filter_date_start', 0, 0, 1, 'formfilter', 1, 0) . '</div>';
+
+    // Date end
+    print '<div class="divsearchfield">' . $langs->trans('DateEnd'). ': ';
+    print $form->selectDate($filterDateEnd, 'filter_date_end', 0, 0, 1, 'formfilter', 1, 0) . '</div>';
+
+//    //Categories project
+//    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
+//        if (in_array($objectType, Categorie::$MAP_ID_TO_CODE)) {
+//            print '<div class="divsearchfield">';
+//            print $langs->trans(ucfirst($objectInfos['langfile']) . 'CategoriesShort') . '</br>' . $formCategory->getFilterBox($objectType, $filterCat) . '</div>';
+//        }
+//    }
 
     // Morefilter buttons
     print '<div class="divsearchfield">';
@@ -446,7 +494,15 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 		 * Open Street Map layer.
 		 */
 		var osmLayer = new ol.layer.Tile({
-			source: new ol.source.OSM()
+			source: new ol.source.OSM({
+				tileLoadFunction: function(tile, src) {
+					fetch(src, { referrerPolicy: 'strict-origin-when-cross-origin' })
+						.then(function(response) { return response.blob(); })
+						.then(function(blob) {
+							tile.getImage().src = URL.createObjectURL(blob);
+						});
+				}
+			})
 		});
 
 		/**
@@ -635,6 +691,29 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
             }
         });
 	</script>
+<?php if ($user->hasRight('agenda', 'myactions', 'create')): ?>
+	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1); ?>" rel="stylesheet">
+	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1); ?>" rel="stylesheet">
+
+	<div class="wpeo-modal modal-eventpro" id="eventproCardModal">
+		<div class="modal-container wpeo-modal-event">
+			<div class="modal-header">
+				<h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?></h2>
+				<div class="modal-close"><i class="fas fa-times"></i></div>
+			</div>
+			<div class="modal-content">
+				<div id="eventproCardModal-loader" class="wpeo-loader"></div>
+				<div id="eventproCardModal-content"></div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		jQuery(document).ready(function () {
+			window.reedcrm.eventpro.init();
+		});
+	</script>
+<?php endif; ?>
 <?php
 
 llxFooter();

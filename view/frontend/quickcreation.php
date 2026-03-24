@@ -35,6 +35,7 @@ if (isModEnabled('project')) {
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formprojet.class.php';
     require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
     require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 }
 if (isModEnabled('categorie')) {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
@@ -102,7 +103,7 @@ if (empty($resHook)) {
 $title    = $langs->trans('QuickCreation');
 $help_url = 'FR:Module_ReedCRM';
 $moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/saturne/js/includes/signature-pad.min.js', '/custom/saturne/js/includes/hammer.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS  = ['/custom/reedcrm/css/temp.css', 'custom/reedcrm/css/temp-framework.css'];
+$moreCSS  = ['/custom/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -126,6 +127,16 @@ if ($backtopage) {
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_project_quickcreation_frontend.tpl.php';
 
 print '</form>';
+
+// @todo Eoxia: Ajouter la gestion de la variable de configuration REEDCRM_NB_LATEST_OPPORTUNITIES_FRONTEND dans la page de setup du module
+$nbLatestOpportunities = getDolGlobalInt('REEDCRM_NB_LATEST_OPPORTUNITIES_FRONTEND', 15);
+if ($nbLatestOpportunities > 0) {
+
+    $latestProjects = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', $nbLatestOpportunities, 0, [], 'AND', true, true, false, '', [], ', t.description, t.note_public, t.note_private', ['description', 'note_public', 'note_private']);
+    if (!empty($latestProjects) && is_array($latestProjects)) {
+        require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_opportunities_list_frontend.tpl.php';
+    }
+}
 
 // End of page
 llxFooter();

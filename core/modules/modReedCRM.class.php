@@ -81,7 +81,7 @@ class modReedCRM extends DolibarrModules
         //$this->editor_squarred_logo = ''; // Must be image filename into the reedcrm/img directory followed with @reedcrm. Example: 'reedcrm.png@reedcrm'
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '22.0.0';
+        $this->version = '22.1.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -229,6 +229,10 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_EVENT_STATUS_VALUE', 'integer', -1, '', 0, 'current'],
             $i++ => ['REEDCRM_EVENT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_EVENT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
+
+            // QUICK CREATION
+            $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_UNIT', 'chaine', 'i', '', 0, 'current'],
 
             // CONST PWA
             $i++ => ['REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
@@ -494,6 +498,54 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
+            'titre'    => $langs->transnoentities('Opportunities'),
+            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'opportunities',
+            'url'      => '/projet/list.php?search_usage_opportunity=1',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('OpenedPropals'),
+            'prefix'   => '<i class="fas fa-file-signature pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'openedpropals',
+            'url'      => '/comm/propal/list.php?search_status=1',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('RecurringInvoices'),
+            'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+             'leftmenu' => 'recurringinvoices',
+            'url'      => '/compta/facture/list.php?search_status=4',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
             'titre'    => $langs->trans('Tools'),
             'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
@@ -511,10 +563,26 @@ class modReedCRM extends DolibarrModules
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
             'titre'    => $langs->trans('ProjectImport'),
-            'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
+            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
-            'leftmenu' => 'reedcrmtools',
+            'leftmenu' => 'projectimport',
             'url'      => '/reedcrm/view/reedcrmimport.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->trans('ImportedProjectList'),
+            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'importedprojects',
+            'url'      => '/reedcrm/view/reedcrm_imported_projects.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -561,7 +629,7 @@ class modReedCRM extends DolibarrModules
             'leftmenu' => 'minimizemenu',
             'url'      => '',
             'langs'    => 'projet@projet',
-            'position' => 2000 + $r,
+            'position' => 1000 + $r,
             'enabled'  => '$conf->projet->enabled',
             'perms'    => '$user->rights->projet->lire',
             'target'   => '',
@@ -605,17 +673,19 @@ class modReedCRM extends DolibarrModules
         $commonExtraFieldsValue = ['entity' => 0, 'langfile' => 'reedcrm@reedcrm'];
 
         $extraFieldsArrays = [
-            'commrelaunch'      => ['Label' => 'CommercialsRelaunching', 'type' => 'text',   'length' => 2000, 'elementtype' => ['projet'], 'position' => $this->numero . 10, 'list' => 2, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')'],
-            'commtask'          => ['Label' => 'CommercialTask',         'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 20, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['projet_task:ref:rowid' => null]],
-            'reedcrm_lastname'  => ['Label' => 'LastName',               'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 30, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'reedcrm_firstname' => ['Label' => 'FirstName',              'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 40, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'projectphone'      => ['Label' => 'ProjectPhone',           'type' => 'phone',                    'elementtype' => ['projet'], 'position' => $this->numero . 50, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'reedcrm_email'     => ['Label' => 'Email',                  'type' => 'mail',                     'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'opporigin'         => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:label:rowid' => null]],
-            'projectaddress'    => ['Label' => 'FavoriteAddress',        'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 80, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['reedcrm_address:name:rowid::((element_type:=:\'project\') AND (status:=:1))' => null], 'perms' => '$user->hasRight(\'reedcrm\', \'address\', \'write\')', 'moreparams' => ['css' => 'minwidth100 maxwidth300 widthcentpercentminusx']],
+            'commrelaunch'         => ['Label' => 'CommercialsRelaunching', 'type' => 'text',   'length' => 2000, 'elementtype' => ['projet'], 'position' => $this->numero . 10, 'list' => 2, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')'],
+            'commtask'             => ['Label' => 'CommercialTask',         'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 20, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['projet_task:ref:rowid' => null]],
+            'reedcrm_lastname'     => ['Label' => 'LastName',               'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 30, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_firstname'    => ['Label' => 'FirstName',              'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 40, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_website'      => ['Label' => 'Website',                'type' => 'url',     'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 45, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'projectphone'         => ['Label' => 'ProjectPhone',           'type' => 'phone',                    'elementtype' => ['projet'], 'position' => $this->numero . 50, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_email'        => ['Label' => 'Email',                  'type' => 'mail',                     'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'opporigin'            => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:label:rowid' => null]],
+            'projectaddress'       => ['Label' => 'FavoriteAddress',        'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 80, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['reedcrm_address:name:rowid::((element_type:=:\'project\') AND (status:=:1))' => null], 'perms' => '$user->hasRight(\'reedcrm\', \'address\', \'write\')', 'moreparams' => ['css' => 'minwidth100 maxwidth300 widthcentpercentminusx']],
+            'vocal'                => ['Label' => 'Vocal',                  'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 7, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'contact_informations' => ['Label' => 'ContactInformations',    'type' => 'text',                     'elementtype' => ['projet'], 'position' => $this->numero . 8, 'list' => 2, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'description'          => ['Label' => 'Description',            'type' => 'text',                     'elementtype' => ['projet'], 'position' => $this->numero . 9, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')'],
 
-            'commstatus'  => ['Label' => 'CommercialStatus', 'type' => 'sellist', 'elementtype' => ['propal'], 'position' => $this->numero . 10, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_commercial_status:label:rowid' => null], 'help' => 'CommercialStatusHelp'],
-            'commrefusal' => ['Label' => 'RefusalReason',    'type' => 'sellist', 'elementtype' => ['propal'], 'position' => $this->numero . 20, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:label:rowid' => null],    'help' => 'RefusalReasonHelp'],
 
             'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],

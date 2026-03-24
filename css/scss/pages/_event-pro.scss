@@ -1,6 +1,6 @@
 #eventproCardModal {
     z-index: 1003 !important;
-    
+
     // Reduce overlay opacity - make it less dark
     background: rgba(39, 42, 53, 0.3) !important;
 
@@ -32,13 +32,214 @@
         position: relative !important;
     }
 
-    #eventproCardModal-iframe {
+    // =============================================
+    // Modal AJAX content - mobile-like layout
+    // =============================================
+    #eventproCardModal-content {
         width: 100%;
         height: 100%;
-        border: 0;
-        opacity: 0;
-        transition: opacity 0.2s ease-in;
-        display: block;
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
+        padding: 10px 15px;
+
+        // Force single-column layout
+        .wpeo-grid.grid-2 > *,
+        .wpeo-grid.grid-3 > * {
+            width: 100% !important;
+        }
+
+        // Forms: full width, no border
+        #addeventform,
+        #createticketform {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+            border: none !important;
+        }
+
+        // Override ALL Dolibarr fixed-width classes
+        .maxwidth200, .maxwidth300, .maxwidth400, .maxwidth500,
+        .minwidth200, .minwidth300, .minwidth400,
+        .quatrevingtpercent, .centpercent {
+            max-width: 100% !important;
+            min-width: 0 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        // All inputs, textareas, selects full width
+        input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]),
+        textarea,
+        select {
+            max-width: 100% !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        // Select2 full width
+        .select2-container {
+            max-width: 100% !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+
+            .select2-choice,
+            .select2-selection {
+                width: 100% !important;
+            }
+        }
+
+        // Labels: preserve flex row (picto + input side by side)
+        .template-pwa label {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            width: 100%;
+
+            > img, > span.fas, > span.far, > span.fa, > .pictofixedwidth {
+                flex-shrink: 0 !important;
+                margin-right: 6px !important;
+            }
+
+            > .select2-container,
+            > div.select2-container {
+                flex: 1 !important;
+                min-width: 0 !important;
+                overflow: hidden !important;
+            }
+        }
+
+        // ---- Tables (ticket, email presend) ----
+        table {
+            width: 100% !important;
+            table-layout: auto !important;
+
+            &.border {
+                border-collapse: collapse;
+            }
+
+            td, th {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                box-sizing: border-box;
+            }
+
+            .titlefield, .tdtop {
+                width: 100px !important;
+                white-space: normal !important;
+                font-size: 0.9em;
+            }
+
+            td:not(.titlefield):not(.tdtop) {
+                width: auto !important;
+            }
+
+            td {
+                .select2-container,
+                select,
+                input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]) {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 0 !important;
+                    box-sizing: border-box !important;
+                }
+            }
+        }
+
+        // ---- Email presend form ----
+        #formmailbeforetitle, .formmail, #tablelines, #formmailaftertitle {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .formmail table {
+            width: 100% !important;
+        }
+
+        div.divmail {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        // CKEditor responsive
+        .cke, .cke_inner, .cke_contents, iframe.cke_wysiwyg_frame {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .cke_top, .cke_bottom {
+            max-width: 100% !important;
+            overflow-x: auto !important;
+        }
+
+        // ---- Note tab ----
+        .wpeo-grid.grid-1 > * {
+            width: 100% !important;
+        }
+
+        .nowraponall:not(.divfordateinput), .nowrap {
+            white-space: normal !important;
+        }
+
+        .dpInvisibleButtons {
+            max-width: 100% !important;
+        }
+
+        // Date area: keep inline layout
+        .divfordateinput {
+            display: inline-block !important;
+            width: auto !important;
+
+            input.maxwidthdate {
+                width: auto !important;
+                max-width: 130px !important;
+            }
+        }
+
+        // Hour:minute selects wrapper
+        span.nowraponall {
+            white-space: nowrap !important;
+            display: inline-block !important;
+        }
+
+        // Date selects: keep auto width
+        select.flat:not([name*="socid"]):not([name*="contactid"]):not([name*="project"]) {
+            width: auto !important;
+            max-width: 100% !important;
+        }
+
+        // ---- Ticket tab ----
+        #createticketform table {
+            table-layout: auto !important;
+        }
+
+        // ---- Add contact form ----
+        .reedcrm-add-contact-form .wpeo-grid.grid-2 > * {
+            width: 100% !important;
+        }
+
+        // ---- Tabs ----
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0;
+            margin-bottom: 10px;
+
+            .inline-block {
+                flex-shrink: 0;
+            }
+        }
+
+        // ---- Buttons ----
+        .butAction, .button {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
     }
 
     #eventproCardModal-loader {
@@ -58,9 +259,11 @@
 }
 
 // Column width for relances commerciales
-td.tdoverflowmax200 {
-    min-width: 320px !important;
-    width: auto !important;
+.reedcrm-relaunch-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .reedcrm-relaunch-buttons {
@@ -68,6 +271,62 @@ td.tdoverflowmax200 {
     gap: 8px;
     flex-wrap: nowrap;
     align-items: center;
+}
+
+.reedcrm-relaunch-buttons-circular .reedcrm-relaunch-button {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    padding: 0;
+}
+
+.reedcrm-relaunch-buttons-circular .reedcrm-relaunch-btn-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.reedcrm-relaunch-buttons-circular .reedcrm-relaunch-count {
+    font-size: 11px;
+    line-height: 1;
+}
+
+.reedcrm-relaunch-progress {
+    position: relative;
+    flex: 1;
+    min-width: 80px;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.reedcrm-relaunch-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.reedcrm-relaunch-progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    font-weight: 600;
+    color: #495057;
+    text-shadow: 0 0 2px white, 0 0 4px white;
+    pointer-events: none;
+}
+
+.reedcrm-relaunch-add {
+    position: absolute;
+    top: -4px;
+    right: -4px;
 }
 
 .reedcrm-relaunch-button {
@@ -100,6 +359,22 @@ td.tdoverflowmax200 {
         align-items: center;
     }
 
+    &.reedcrm-relaunch-btn-call {
+        background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    }
+
+    &.reedcrm-relaunch-btn-email {
+        background: linear-gradient(135deg, #50c878 0%, #3ea85e 100%);
+    }
+
+    &.reedcrm-relaunch-btn-rdv {
+        background: linear-gradient(135deg, #ff8c42 0%, #e6732e 100%);
+    }
+
+    &.reedcrm-relaunch-btn-other {
+        background: linear-gradient(135deg, #9b7fb8 0%, #7d5fa3 100%);
+    }
+
     &:nth-child(1) {
         // Appel sortant (AC_TEL) - Blue
         background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
@@ -118,6 +393,70 @@ td.tdoverflowmax200 {
     &:nth-child(4) {
         // Autre - Purple
         background: linear-gradient(135deg, #9b7fb8 0%, #7d5fa3 100%);
+    }
+}
+
+.reedcrm-coordonnees {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reedcrm-coordonnees-box {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #f8f9fa;
+    font-size: 12px;
+
+    .reedcrm-coordonnees-name {
+        font-weight: 600;
+        margin-bottom: 2px;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .reedcrm-coordonnees-email,
+    .reedcrm-coordonnees-phone {
+        font-size: 11px;
+        color: #6c757d;
+    }
+}
+
+.reedcrm-coordonnees-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.reedcrm-coordonnees-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #1e3a5f;
+    color: white;
+    text-decoration: none;
+    transition: background 0.2s;
+
+    &:hover {
+        background: #2c5282;
+        color: white;
+    }
+
+    i {
+        font-size: 14px;
     }
 }
 
@@ -167,13 +506,13 @@ td.tdoverflowmax200 {
                 vertical-align: top;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
-                
+
                 &.nowrap {
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
-                
+
                 &.tdoverflowmax200 {
                     max-width: 200px;
                     overflow: hidden;
@@ -221,40 +560,16 @@ td.tdoverflowmax200 {
     }
 }
 
-html.reedcrm-modal-iframe-html {
-    height: 100% !important;
-    overflow: hidden !important;
+// Select2 dropdowns must appear above the modal overlay (z-index 1003)
+// select2 appends dropdowns to <body>, so we need a global rule
+body > .select2-drop.select2-drop-active {
+    z-index: 10004 !important;
 }
 
-body.reedcrm-modal-iframe-body {
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    height: 100% !important;
-    box-sizing: border-box !important;
-
-    > *:not(#addeventform):not(.select2-container):not(.select2-dropdown):not(.select2-dropdown-mask) {
-        display: none !important;
-    }
-}
-
-.reedcrm-modal-iframe-form {
-    display: block !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 10px !important;
-    padding-bottom: 10px !important;
-    box-sizing: border-box !important;
-    min-height: 100% !important;
-}
-
-body.reedcrm-modal-iframe-body .select2-container,
-body.reedcrm-modal-iframe-body .select2-dropdown,
-body.reedcrm-modal-iframe-body .select2-dropdown-mask {
-    display: block !important;
-    visibility: visible !important;
-    z-index: 9999 !important;
+// jQuery UI datepicker must appear above the modal overlay (z-index 1003)
+// datepicker is appended to <body> with a low z-index by default
+.ui-datepicker {
+    z-index: 10004 !important;
 }
 
 .reedcrm-contact-field-wrapper {
