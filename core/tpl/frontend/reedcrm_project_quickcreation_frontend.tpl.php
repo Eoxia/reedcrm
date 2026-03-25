@@ -70,7 +70,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     global $user;
     $vcardUrl = '';
     if (getDolUserInt('USER_ENABLE_PUBLIC', 0, $user)) {
-        $vcardUrl = $user->getOnlineVirtualCardUrl('', 'external');
+        $vcardUrl = $user->getOnlineVirtualCardUrl('', 'internal');
     }
     ?>
     <?php
@@ -315,7 +315,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 </div>
 
 <!-- intl-tel-input (Local libphonenumber integration) -->
-<link rel="stylesheet" href="<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/css/intlTelInput.css', 1); ?>">
+<link rel="stylesheet" href="<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/css/intlTelInput.css', 1); ?>">
 <style>
     /* Fix the width issue caused by the library inserting a wrapper */
     .iti { width: 100%; display: block; }
@@ -332,7 +332,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         color: #e53935 !important;
     }
 </style>
-<script src="<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/js/intlTelInput.min.js', 1); ?>"></script>
+<script src="<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js', 1); ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- Phone Validation (Local libphonenumber) ---
@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (phoneInput) {
         const iti = window.intlTelInput(phoneInput, {
             initialCountry: "fr",
-            utilsScript: "<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/js/utils.js', 1); ?>",
+            utilsScript: "<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/utils.js', 1); ?>",
             formatOnDisplay: true,
             nationalMode: true,
             autoPlaceholder: "aggressive",

@@ -863,7 +863,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (phoneInput && !phoneInput.hasAttribute('data-iti-initialized')) {
             window.intlTelInput(phoneInput, {
                 initialCountry: "fr",
-                utilsScript: "<?php echo dol_buildpath('/reedcrm/vendor/intl-tel-input/js/utils.js', 1); ?>",
+                utilsScript: "<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/utils.js', 1); ?>",
                 formatOnDisplay: true,
                 nationalMode: true,
                 autoPlaceholder: "aggressive",
