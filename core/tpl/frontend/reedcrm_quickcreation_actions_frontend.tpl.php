@@ -271,6 +271,76 @@ if ($action == 'update_opp_amount') {
     exit;
 }
 
+if ($action == 'updateoppcontact') {
+    $projectId = GETPOST('projectid', 'int');
+    $firstname = trim(GETPOST('firstname'));
+    $lastname  = trim(GETPOST('lastname'));
+    $phone     = trim(GETPOST('phone'));
+    $email     = trim(GETPOST('email'));
+    
+    $res = array('success' => false);
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $proj->fetch_optionals();
+            
+            // Record old values for the history
+            $oldFirstname = $proj->array_options['options_reedcrm_firstname'] ?? '';
+            $oldLastname  = $proj->array_options['options_reedcrm_lastname'] ?? '';
+            $oldPhone     = $proj->array_options['options_projectphone'] ?? '';
+            $oldEmail     = $proj->array_options['options_reedcrm_email'] ?? '';
+
+            // Assign new values
+            $proj->array_options['options_reedcrm_firstname'] = $firstname;
+            $proj->array_options['options_reedcrm_lastname']  = $lastname;
+            $proj->array_options['options_projectphone']      = $phone;
+            $proj->array_options['options_reedcrm_email']     = $email;
+            
+            // Update in DB
+            $proj->updateExtraField('reedcrm_firstname');
+            $proj->updateExtraField('reedcrm_lastname');
+            $proj->updateExtraField('projectphone');
+            $resUpdateEmail = $proj->updateExtraField('reedcrm_email');
+            
+            file_put_contents(DOL_DOCUMENT_ROOT.'/custom/reedcrm/debug_update.log', "Finished extrafields, last result: $resUpdateEmail\n", FILE_APPEND);
+            
+            $res['success']      = true;
+            $res['firstname']    = dol_escape_htmltag($firstname);
+            $res['lastname']     = dol_escape_htmltag($lastname);
+            $res['contactName']  = dol_escape_htmltag(trim($firstname . ' ' . $lastname));
+            $res['contactPhone'] = dol_escape_htmltag($phone);
+            $res['contactEmail'] = dol_escape_htmltag($email);
+
+            // ActionComm Event (Create new trace)
+            $noteChanges = array();
+            if (trim($oldFirstname) !== $firstname) $noteChanges[] = "- Prénom : " . (empty($oldFirstname) ? '(vide)' : $oldFirstname) . " -> " . (empty($firstname) ? '(vide)' : $firstname);
+            if (trim($oldLastname) !== $lastname)   $noteChanges[] = "- Nom : " . (empty($oldLastname) ? '(vide)' : $oldLastname) . " -> " . (empty($lastname) ? '(vide)' : $lastname);
+            if (trim($oldPhone) !== $phone)         $noteChanges[] = "- Téléphone : " . (empty($oldPhone) ? '(vide)' : $oldPhone) . " -> " . (empty($phone) ? '(vide)' : $phone);
+            if (trim($oldEmail) !== $email)         $noteChanges[] = "- Email : " . (empty($oldEmail) ? '(vide)' : $oldEmail) . " -> " . (empty($email) ? '(vide)' : $email);
+            
+            if (!empty($noteChanges)) {
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code = 'AC_OTH'; 
+                $autoEvent->label = "Modification des contacts de l'opportunité";
+                $autoEvent->datep = dol_now();
+                $autoEvent->datef = dol_now();
+                $autoEvent->percentage = 100;
+                $autoEvent->userownerid = $user->id;
+                $autoEvent->fk_project = $proj->id;
+                $autoEvent->socid = $proj->socid;
+                $autoEvent->note_private = "Mise à jour par ".$user->login." :\n" . implode("\n", $noteChanges);
+                $autoEvent->create($user);
+            }
+        } else {
+            $res['error'] = 'Project not found';
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'add') {
     $numberingModules = [
         'project'      => $conf->global->PROJECT_ADDON,
@@ -430,6 +500,13 @@ if ($action == 'add') {
 
     if (!$error) {
         setEventMessage($langs->transnoentities('QuickCreationFrontendSuccess') . ' : <a href="' . DOL_URL_ROOT . '/projet/card.php?id=' . $projectID . '" target="_blank">'  . $project->ref . '</a>');
+        
+        if (GETPOST('ajax_submission') == '1') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'redirect_url' => $_SERVER["PHP_SELF"]]);
+            exit;
+        }
+        
         header('Location: ' . $_SERVER["PHP_SELF"]);
         exit;
     } else {
