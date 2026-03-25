@@ -1,21 +1,21 @@
-<div class="linked-medias project" id="master-media-row-container" style="width: 100%; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; box-sizing: border-box; min-height: 44px;">
+<div class="linked-medias project" id="master-media-row-container" style="width: 100%; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; box-sizing: border-box; min-height: 48px;">
     
     <!-- LEFT CLUSTER ITEMS (Auto-Flowing) -->
-    <div class="media-cluster-left" style="display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex: 1;">
+    <div class="media-cluster-left" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1;">
         
         <!-- BLOCK SON -->
         <div class="media-logical-block block-sound" style="display: flex; gap: 5px; align-items: center;">
             <!-- Mic -->
-            <button type="button" id="start-recording" class="btn-secondary" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease;">
-                <i class="fas fa-microphone" style="font-size: 20px; color: #fff;"></i>
+            <button type="button" id="start-recording" class="btn-secondary" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease;">
+                <i class="fas fa-microphone" style="font-size: 24px; color: #fff;"></i>
             </button>
             
             <!-- Play -->
             <div style="position: relative;">
-                <button type="button" id="play-recording" class="btn-secondary" disabled style="border: none; cursor:not-allowed; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #cbd5e1;">
-                    <i class="fas fa-play" style="font-size: 20px; color: #fff;"></i>
+                <button type="button" id="play-recording" class="btn-secondary" disabled style="border: none; cursor:not-allowed; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #cbd5e1;">
+                    <i class="fas fa-play" style="font-size: 24px; color: #fff;"></i>
                 </button>
-                <button type="button" id="delete-recording" style="display:none; position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 10px; cursor: pointer; justify-content: center; align-items: center; z-index: 10; padding: 0; line-height: 1;">
+                <button type="button" id="delete-recording" style="display:none; position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 12px; cursor: pointer; justify-content: center; align-items: center; z-index: 10; padding: 0; line-height: 1;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -26,15 +26,10 @@
         <!-- BLOCK PHOTO -->
         <div class="media-logical-block block-photo" style="display: flex; gap: 5px; align-items: center;">
             <!-- Camera -->
-            <label for="upload-photo" id="label-upload-photo" class="btn-orange" style="cursor:pointer; display:flex; justify-content:center; align-items:center; width: 44px; height: 44px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
-                <i class="fas fa-camera" style="font-size: 20px; color: #fff;"></i>
+            <label for="upload-photo" id="label-upload-photo" class="btn-orange" style="cursor:pointer; display:flex; justify-content:center; align-items:center; width: 48px; height: 48px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
+                <i class="fas fa-camera" style="font-size: 24px; color: #fff;"></i>
                 <input type="file" id="upload-photo" name="userfile[]" accept="image/*" capture="environment" multiple style="display: none;">
             </label>
-            
-            <!-- Gallery (Dotted Border) -->
-            <div id="gallery-add-btn" class="add-thumbnail-btn" style="width: 44px; height: 44px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; justify-content: center; align-items: center; color: #94a3b8; margin: 0;">
-                <i class="fas fa-image" style="font-size: 20px;"></i>
-            </div>
             
             <!-- Photo Thumbnails Injection Point -->
             <div id="photo-thumbnail-container" style="display: flex; gap: 5px;"></div>
@@ -43,20 +38,20 @@
     </div>
 
     <!-- RIGHT CLUSTER (Auto-Flowing) -->
-    <div class="media-cluster-right" style="position: relative; margin-left: auto; display: flex; align-items: center; gap: 5px;">
+    <div class="media-cluster-right" style="position: relative; margin-left: auto; display: flex; align-items: center; gap: 8px;">
         
         <!-- BLOCK ACTIONS -->
         <div class="media-logical-block block-actions" style="display: flex; gap: 5px; align-items: center;">
             <!-- Upload File -->
-            <label for="upload-media" id="label-upload-media" style="position: relative; background-color: #3b82f6; cursor:pointer; display:flex; justify-content:center; align-items:center; width: 44px; height: 44px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
-                <i class="fas fa-upload" style="font-size: 20px; color: #fff;"></i>
+            <label for="upload-media" id="label-upload-media" style="position: relative; background-color: #3b82f6; cursor:pointer; display:flex; justify-content:center; align-items:center; width: 48px; height: 48px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
+                <i class="fas fa-upload" style="font-size: 24px; color: #fff;"></i>
                 <span id="upload-media-counter" style="display:none; position: absolute; top: -6px; right: -6px; background:#94a3b8; color:white; font-size:10px; font-weight:bold; border-radius:12px; min-width: 14px; padding: 2px 4px; box-shadow:0 1px 2px rgba(0,0,0,0.2); border: 2px solid white; z-index: 10; justify-content: center; align-items: center; line-height: 1;">0</span>
                 <input type="file" id="upload-media" class="file-upload-input" name="userfile[]" accept="*/*" multiple style="display: none;">
             </label>
             
             <!-- Submit Button -->
-            <button type="submit" class="btn-submit-purple" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #9b59b6;">
-                <i class="fas fa-save" style="font-size: 20px; color: #fff;"></i>
+            <button type="submit" class="btn-submit-purple" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #9b59b6;">
+                <i class="fas fa-save" style="font-size: 24px; color: #fff;"></i>
             </button>
         </div>
         
@@ -488,6 +483,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if(e.touches && e.touches.length > 0) {
             clientX = e.touches[0].clientX;
             clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
         }
         const logicalX = clientX - rect.left;
         const logicalY = clientY - rect.top;
@@ -884,12 +882,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 wrap.style.display = 'inline-flex';
                 wrap.style.alignItems = 'center';
                 wrap.style.justifyContent = 'center';
-                wrap.style.width = '44px';
-                wrap.style.height = '44px';
+                wrap.style.width = '48px';
+                wrap.style.height = '48px';
                 
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
-                img.style.width = '44px'; img.style.height = '44px';
+                img.style.width = '48px'; img.style.height = '48px';
                 img.style.objectFit = 'cover'; img.style.borderRadius = '12px';
                 img.style.border = '1px solid #e2e8f0';
                 img.style.margin = '0';
