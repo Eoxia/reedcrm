@@ -352,9 +352,21 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="photo-editor-modal-content">
         
         <!-- Header -->
-        <div style="display:flex; justify-content: flex-start; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; width: fit-content;">
-            <i class="fas fa-crop-alt" style="color: #f39c12; margin-right: 8px; font-size: 1.2em;"></i>
-            <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Éditer la photo</h3>
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; width: 100%;">
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-crop-alt" style="color: #f39c12; margin-right: 8px; font-size: 1.2em;"></i>
+                <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Éditer la photo</h3>
+            </div>
+            
+            <!-- Settings (Moved to top) -->
+            <div style="position: relative; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 0 5px;" title="Réglages de qualité de l'image">
+                <i class="fas fa-ellipsis-v"></i>
+                <select id="photo-size-select" style="position: absolute; top: 0; right: 0; width: 30px; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                    <option value="hd" selected>HD (720p)</option>
+                    <option value="fullhd">Full HD (1080p)</option>
+                    <option value="full">Originale (FULL)</option>
+                </select>
+            </div>
         </div>
 
         <!-- Canvas Area -->
@@ -365,14 +377,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         <!-- Unified Horizontal Toolbar -->
         <div class="photo-editor-toolbar">
+            
+            <!-- 2. Camera Button (Left, Orange) -->
+            <button type="button" id="btn-cancel-photo" title="Reprendre la photo" style="flex-shrink: 0; background-color:#f39c12; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
+                <i class="fas fa-camera"></i>
+            </button>
+
+            <!-- Tools Center -->
             <button type="button" class="doli-tool-btn" data-mode="crop" title="Recadrer" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
                 <i class="fas fa-crop"></i>
             </button>
             <button type="button" class="doli-tool-btn" data-mode="rotate" title="Pivoter" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-undo"></i>
-            </button>
-            <button type="button" class="doli-tool-btn" id="btn-undo-action" title="Annuler dessin" style="flex-shrink: 0; background-color: #7f8c8d; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-reply"></i>
+                <i class="fas fa-redo"></i>
             </button>
             <div style="flex-shrink: 0; display: flex; background-color: #3498db; border-radius: 4px; overflow: hidden; height: 40px;" id="pencil-tool-container">
                 <button type="button" class="doli-tool-btn active" data-mode="pencil" title="Crayon" style="background-color: transparent; color: white; border: none; width: 40px; height: 100%; cursor: pointer; display:flex; justify-content:center; align-items:center;">
@@ -385,35 +401,28 @@ document.addEventListener('DOMContentLoaded', function() {
             <button type="button" class="doli-tool-btn" data-mode="text" title="Texte" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
                 <i class="fas fa-font"></i>
             </button>
-            <button type="button" class="doli-tool-btn" data-mode="arrow" title="Flèche" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-location-arrow" style="transform: rotate(-45deg);"></i>
+            <button type="button" class="doli-tool-btn" data-mode="arrow" title="Dessiner une flèche" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
+                <i class="fas fa-long-arrow-alt-right" style="transform: rotate(-45deg);"></i>
             </button>
             <button type="button" class="doli-tool-btn" data-mode="rect" title="Cadre" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
                 <i class="far fa-square"></i>
             </button>
-            <button type="button" class="doli-tool-btn" data-mode="blur" title="Flouter" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-tint-slash"></i>
+            <button type="button" class="doli-tool-btn" data-mode="blur" title="Flouter / Masquer" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
+                <i class="fas fa-eye-slash"></i>
             </button>
             <button type="button" class="doli-tool-btn" data-mode="sequence" title="Puce Numérotée" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; font-weight: bold; font-family: sans-serif;">
                 <i class="fas fa-list-ol"></i>
             </button>
             
-            <div style="position: relative; flex-shrink: 0; width: 40px; height: 40px; background-color: #34495e; border-radius: 4px; display: flex; justify-content: center; align-items: center; color: white; margin-left: auto;" title="Réglages de qualité de l'image">
-                <i class="fas fa-cog"></i>
-                <select id="photo-size-select" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                    <option value="hd" selected>HD (720p)</option>
-                    <option value="fullhd">Full HD (1080p)</option>
-                    <option value="full">Originale (FULL)</option>
-                </select>
+            <!-- 3. Right Block (Undo & Save) Wrapping restricted -->
+            <div style="display: flex; gap: 6px; margin-left: auto; flex-shrink: 0; flex-wrap: nowrap;">
+                <button type="button" class="doli-tool-btn" id="btn-undo-action" title="Annuler dessin" style="flex-shrink: 0; background-color: #7f8c8d; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
+                    <i class="fas fa-reply"></i>
+                </button>
+                <button type="button" id="btn-validate-photo" title="Valider" style="flex-shrink: 0; background-color:#2ecc71; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
+                    <i class="fas fa-check" style="font-size: 1.2em;"></i>
+                </button>
             </div>
-
-            <button type="button" id="btn-cancel-photo" title="Annuler (Reprendre)" style="flex-shrink: 0; background-color:#e74c3c; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
-                <i class="fas fa-camera"></i>
-            </button>
-            
-            <button type="button" id="btn-validate-photo" title="Valider" style="flex-shrink: 0; background-color:#2ecc71; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
-                <i class="fas fa-check" style="font-size: 1.2em;"></i>
-            </button>
         </div>
     </div>
 </div>
