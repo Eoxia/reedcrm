@@ -1270,4 +1270,71 @@ class ActionsReedcrm
 
         return 0; // or return 1 to replace standard code
     }
+
+    /**
+     * Overloading the getTooltipContent function : intercepting the tooltip content
+     *
+     * @param  array        $parameters Hook metadatas (context, etc...)
+     * @param  CommonObject $object     Current object
+     * @param  string       $action     Current action
+     * @return int                      0 < on error, 0 on success, 1 to replace standard code
+     * @throws Exception
+     */
+    public function getTooltipContent(array $parameters, CommonObject $object, string $action): int
+    {
+        if (strpos($parameters['context'], 'projectdao') !== false) {
+            if (isset($parameters['tooltipcontentarray'])) {
+                global $langs, $conf;
+                $data = &$parameters['tooltipcontentarray'];
+
+                // Top row: Picto / Status and Opportunity Amount (flex layout)
+                if (isset($data['picto'])) {
+                    $oppAmount = price($object->opp_amount, 1, $langs, 1, -1, -1, $conf->currency);
+                    $oppAmountStr = '<b>' . $langs->trans('OpportunityAmount') . '</b> &nbsp;' . $oppAmount;
+                    $data['picto'] = '<div style="display: flex; justify-content: space-between; align-items: center; gap: 20px;"><div>' . $data['picto'] . '</div><div>' . $oppAmountStr . '</div></div>';
+                }
+
+                // Second row: Ref, Date start, Date end
+                $refLine = '<div style="margin-top: 5px;">';
+                if (isset($data['ref'])) {
+                    $refLine .= '<b>' . $langs->trans('Ref') . '.:</b> ' . $object->ref;
+                }
+                if (!empty($object->date_start)) {
+                    $refLine .= ' - <b>' . $langs->trans('DateStart') . ':</b> ' . dol_print_date($object->date_start, 'day');
+                }
+                if (!empty($object->date_end)) {
+                    $refLine .= ' &nbsp;&nbsp;&nbsp;<b>' . $langs->trans('DateEnd') . ':</b> ' . dol_print_date($object->date_end, 'day');
+                }
+                $refLine .= '</div>';
+                $data['ref'] = $refLine;
+
+                // Remove the standard datestart and dateend, as they are now on the ref line
+                unset($data['datestart']);
+                unset($data['dateend']);
+
+                // Third row: Libellé
+                if (isset($data['label'])) {
+                    $data['label'] = '<div><span style="color: #9b2226; font-weight: bold;">' . $langs->trans('Label') . '</span> &nbsp;&nbsp;' . $object->title . '</div>';
+                }
+
+                // Fourth row (or below): Description
+                unset($data['description']); // ensure no duplication
+                if (!empty($object->description)) {
+                    $langs->load('projects');
+                    $data['custom_desc'] = '<div style="margin-top: 5px;"><b>' . $langs->trans('Description') . ':</b> ' . dol_string_nohtmltag($object->description) . '</div>';
+                }
+
+                // Remove unwanted fields and extra margin wrappings
+                unset($data['visibility']);
+                unset($data['vocal']);
+                unset($data['contact_informations']);
+                unset($data['opp_amount']); // In case opp_amount exists as extrafield
+                unset($data['more_extrafields']); // Remove the "..." added when there are too many extrafields
+                unset($data['opendivextra']); // Remove empty div margins
+                unset($data['closedivextra']);
+            }
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
 }

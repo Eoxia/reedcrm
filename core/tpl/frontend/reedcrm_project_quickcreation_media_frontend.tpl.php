@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; width: 100%;">
             <div style="display: flex; align-items: center;">
                 <i class="fas fa-crop-alt" style="color: #f39c12; margin-right: 8px; font-size: 1.2em;"></i>
-                <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Éditer la photo</h3>
+                <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Éditer la photo <span id="photo-resolution-display" style="color: #e74c3c; font-weight: normal; margin-left: 5px; font-size: 10px;"></span></h3>
             </div>
             
             <!-- Settings (Moved to top) -->
@@ -452,6 +452,22 @@ document.addEventListener("DOMContentLoaded", function () {
     var snapshot = null;
     let sequenceCounter = 1;
     let historyStack = []; // Pour Undo
+
+    // Display current resolution
+    function updatePhotoResolutionDisplay() {
+        const displaySpan = document.getElementById('photo-resolution-display');
+        const selectedOption = sizeSelect.options[sizeSelect.selectedIndex];
+        if (displaySpan && selectedOption) {
+            const match = selectedOption.text.match(/\(([^)]+)\)/);
+            if (match) {
+                displaySpan.textContent = '(' + match[1] + ')';
+            } else {
+                displaySpan.textContent = '(' + selectedOption.text + ')';
+            }
+        }
+    }
+    updatePhotoResolutionDisplay();
+    sizeSelect.addEventListener('change', updatePhotoResolutionDisplay);
 
     // Stylisation des boutons
     const toolBtns = document.querySelectorAll('.doli-tool-btn[data-mode]');
