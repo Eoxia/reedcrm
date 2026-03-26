@@ -125,6 +125,7 @@ class modReedCRM extends DolibarrModules
                 'thirdpartycomm',
                 'projectcard',
                 'projectlist',
+                'projectdao',
                 'propalcard',
                 'invoicereccard',
                 'invoicereccontact',
