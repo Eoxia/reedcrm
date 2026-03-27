@@ -162,47 +162,41 @@ foreach ($latestProjects as $project) {
             }
             
             // Contact
+            $cFirstName = trim($firstname);
+            $cLastName = trim($lastname);
+            $cPhone = trim($phone);
+            $cEmail = trim($email);
+            $cWeb = isset($project->array_options['options_reedcrm_website']) ? trim($project->array_options['options_reedcrm_website']) : '';
+            
+            $hFirstName = $cFirstName ? dol_escape_htmltag($cFirstName) : '<span style="color:#cbd5e0; font-style:italic;">Prénom</span>';
+            $hLastName = $cLastName ? dol_escape_htmltag($cLastName) : '<span style="color:#cbd5e0; font-style:italic;">Nom</span>';
+            $hPhone = $cPhone ? dol_escape_htmltag($cPhone) : '<span style="color:#cbd5e0; font-style:italic;">Téléphone</span>';
+            $hEmail = $cEmail ? dol_escape_htmltag($cEmail) : '<span style="color:#cbd5e0; font-style:italic;">Email</span>';
+            $hWeb = $cWeb ? dol_escape_htmltag($cWeb) : '<span style="color:#cbd5e0; font-style:italic;">Site Web</span>';
+            
+            $linkPhone = $cPhone ? '<a href="tel:'.dol_escape_htmltag($cPhone).'" class="prevent-edit-click" style="color: inherit; text-decoration: none;" title="Appeler"><i class="fas fa-phone copy-action-icon" data-copy="'.dol_escape_htmltag($cPhone).'" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-phone" style="color: #64748b; margin-right: 6px;"></i>';
+            $linkEmail = $cEmail ? '<a href="mailto:'.dol_escape_htmltag($cEmail).'" class="prevent-edit-click" style="color: inherit; text-decoration: none;" title="Envoyer un email"><i class="fas fa-envelope copy-action-icon" data-copy="'.dol_escape_htmltag($cEmail).'" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-envelope" style="color: #64748b; margin-right: 6px;"></i>';
+            $webHref = strpos($cWeb, 'http') === 0 ? $cWeb : 'https://' . $cWeb;
+            $linkWeb = $cWeb ? '<a href="'.dol_escape_htmltag($webHref).'" target="_blank" class="prevent-edit-click" style="color: inherit; text-decoration: none;" title="Ouvrir le site web"><i class="fas fa-globe copy-action-icon" data-copy="'.dol_escape_htmltag($cWeb).'" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-globe" style="color: #64748b; margin-right: 6px;"></i>';
+
             print '<div class="contact-inline-wrapper" style="color: #718096; font-size: 0.9em; margin-bottom: 2px; position: relative;" data-project-id="'.$project->id.'">';
-                $contactName = trim($firstname . ' ' . $lastname);
-                
-                // Display Mode
-                print '<div id="contact-display-'.$project->id.'" class="contact-display-area" style="display: flex; align-items: center; gap: 0px; flex-wrap: wrap; cursor: pointer; padding: 2px 0; border-bottom: 2px dashed transparent; transition: border-color 0.2s;" onmouseover="this.style.borderBottomColor=\'#e2e8f0\'" onmouseout="this.style.borderBottomColor=\'transparent\'" data-project-id="'.$project->id.'" title="Cliquer pour modifier les contacts">';
-                    if (!empty($contactName) || !empty($phone) || !empty($email)) {
-                        if (!empty($contactName)) {
-                            print '<i class="fas fa-address-book" style="color: #64748b; font-size: 1.1em; margin-right: 6px;"></i>';
-                            print '<span style="font-weight: 500;">' . dol_escape_htmltag($contactName) . '</span>';
-                        }
-                        if (!empty($phone)) {
-                            if (!empty($contactName)) print '<span style="color: #cbd5e0; margin: 0 4px;">&bull;</span>';
-                            print '<i class="fas fa-phone copy-action-icon" data-copy="'.dol_escape_htmltag($phone).'" style="color: #64748b; font-size: 1.0em; margin-right: 6px; cursor: copy;" title="Copier le numéro"></i>';
-                            print '<a href="tel:' . dol_escape_htmltag($phone) . '" class="prevent-edit-click" style="color: inherit; text-decoration: none;" title="Appeler le numéro">' . dol_escape_htmltag($phone) . '</a>';
-                        }
-                        if (!empty($email)) {
-                            if (!empty($contactName) || !empty($phone)) print '<span style="color: #cbd5e0; margin: 0 4px;">&bull;</span>';
-                            print '<i class="fas fa-envelope copy-action-icon" data-copy="'.dol_escape_htmltag($email).'" style="color: #64748b; font-size: 1.0em; margin-right: 6px; cursor: copy;" title="Copier l\'email"></i>';
-                            print '<a href="mailto:' . dol_escape_htmltag($email) . '" class="prevent-edit-click" style="color: inherit; text-decoration: none;" title="Envoyer un email">' . dol_escape_htmltag($email) . '</a>';
-                        }
-                    } else {
-                        print '<span style="color: #a0aec0; font-style: italic;">Aucun contact</span>';
-                    }
+                print '<div class="contact-display-area" style="display: flex; align-items: center; gap: 0px; flex-wrap: wrap; padding: 2px 0;">';
+                    print '<i class="fas fa-address-book" style="color: #64748b; font-size: 1.1em; margin-right: 6px;"></i>';
+                    print '<span class="inline-edit-contact" data-field="firstname" data-val="'.dol_escape_htmltag($cFirstName).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 4px;" title="Modifier le prénom">' . $hFirstName . '</span>';
+                    print '<span class="inline-edit-contact" data-field="lastname" data-val="'.dol_escape_htmltag($cLastName).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier le nom">' . $hLastName . '</span>';
+                    print '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+                    
+                    print $linkPhone;
+                    print '<span class="inline-edit-contact" data-field="phone" data-val="'.dol_escape_htmltag($cPhone).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier le téléphone">' . $hPhone . '</span>';
+                    print '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+                    
+                    print $linkEmail;
+                    print '<span class="inline-edit-contact" data-field="email" data-val="'.dol_escape_htmltag($cEmail).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier l\'email">' . $hEmail . '</span>';
+                    print '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+                    
+                    print $linkWeb;
+                    print '<span class="inline-edit-contact" data-field="website" data-val="'.dol_escape_htmltag($cWeb).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s;" title="Modifier le site web">' . $hWeb . '</span>';
                 print '</div>';
-                
-                // Edit Mode
-                print '<div id="contact-edit-'.$project->id.'" style="display: none; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">';
-                    print '<div style="display: flex; gap: 6px; margin-bottom: 6px;">';
-                        print '<input type="text" id="input-firstname-'.$project->id.'" value="'.dol_escape_htmltag($firstname).'" placeholder="Prénom" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; outline: none;">';
-                        print '<input type="text" id="input-lastname-'.$project->id.'" value="'.dol_escape_htmltag($lastname).'" placeholder="Nom" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; outline: none;">';
-                    print '</div>';
-                    print '<div style="display: flex; gap: 6px; margin-bottom: 6px; align-items: stretch;">';
-                        print '<div style="flex:1; min-width:0;" class="iti-container-fluid"><input type="tel" id="input-phone-'.$project->id.'" value="'.dol_escape_htmltag($phone).'" placeholder="Téléphone" style="width:100%; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; outline: none; margin:0; box-sizing:border-box;"></div>';
-                        print '<input type="email" id="input-email-'.$project->id.'" value="'.dol_escape_htmltag($email).'" placeholder="Email" style="flex:1; min-width:0; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 12px; outline: none; box-sizing:border-box; height: auto;">';
-                    print '</div>';
-                    print '<div style="display: flex; justify-content: flex-end; gap: 8px;">';
-                        print '<button class="contact-cancel-btn btn btn-sm" data-project-id="'.$project->id.'" style="background:#f7fafc; border:1px solid #e2e8f0; color:#4a5568; padding: 2px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Annuler</button>';
-                        print '<button class="contact-save-btn btn btn-sm" data-project-id="'.$project->id.'" style="background:#3b82f6; border:1px solid #3b82f6; color:#fff; padding: 2px 8px; border-radius: 4px; font-size: 12px; cursor: pointer;">Enregistrer</button>';
-                    print '</div>';
-                print '</div>';
-                
             print '</div>';
 
             // Thirdparty (Tiers)
@@ -537,7 +531,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
             
             $.ajax({
-                url: document.URL.split('?')[0] + '?action=update_opp_percent&token=' + token,
+                url: document.URL.split('?')[0] + '?action=updateopppercent&token=' + token,
                 type: 'POST',
                 data: { projectid: projId, percent: newVal },
                 success: function(res) {
@@ -603,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
             
             $.ajax({
-                url: document.URL.split('?')[0] + '?action=update_opp_amount&token=' + token,
+                url: document.URL.split('?')[0] + '?action=updateoppamount&token=' + token,
                 type: 'POST',
                 data: { projectid: projId, amount: newVal },
                 success: function(res) {
@@ -672,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let token = document.querySelector('input[name="token"]') ? document.querySelector('input[name="token"]').value : '';
             
             $.ajax({
-                url: document.URL.split('?')[0] + '?action=update_opp_title&token=' + token,
+                url: document.URL.split('?')[0] + '?action=updateopptitle&token=' + token,
                 type: 'POST',
                 data: { projectid: projId, title: newVal },
                 success: function(res) {
@@ -803,6 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+
     // Fast Action Media Interceptors
     $('.fast-trigger-camera').on('click', function(e) {
         e.stopPropagation();
@@ -843,154 +838,6 @@ document.addEventListener('DOMContentLoaded', function() {
             error: function() {
                 label.html('<i class="fas fa-times" style="font-size:14px; color:#fff;"></i>').css('background-color', '#e74c3c');
                 setTimeout(() => { label.html(originalHtml).css('background-color', '#3b82f6'); }, 2000);
-            }
-        });
-    });
-
-    $(document).on('click', '.contact-display-area', function(e) {
-        if ($(e.target).closest('.copy-action-icon, .prevent-edit-click').length) {
-            return; // Laisse passer le clic pour interagir avec le lien mail/tel ou l'icone de copie
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        
-        let projectId = $(this).data('project-id');
-        $('#contact-display-' + projectId).hide();
-        $('#contact-edit-' + projectId).show();
-        
-        // Lazy initialize intlTelInput "au fur et à mesure" feature
-        let phoneInput = document.getElementById('input-phone-' + projectId);
-        if (phoneInput && !phoneInput.hasAttribute('data-iti-initialized')) {
-            window.intlTelInput(phoneInput, {
-                initialCountry: "fr",
-                utilsScript: "<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/utils.js', 1); ?>",
-                formatOnDisplay: true,
-                nationalMode: true,
-                autoPlaceholder: "aggressive",
-                preferredCountries: ["fr", "be", "ch", "lu", "mc"]
-            });
-            phoneInput.setAttribute('data-iti-initialized', 'true');
-            
-            // Re-apply format auto-correction
-            phoneInput.addEventListener('input', function() {
-                let val = phoneInput.value;
-                let correctedVal = val.replace(/^(?:\+33|0033)[\s\-.]*0([1-9])/, '+33 $1');
-                if (correctedVal !== val) { val = correctedVal; phoneInput.value = val; }
-                
-                if (window.intlTelInputUtils) {
-                    let currentPos = phoneInput.selectionStart;
-                    let isAtEnd = (currentPos === phoneInput.value.length);
-                    let formatType = val.startsWith('+') ? window.intlTelInputUtils.numberFormat.INTERNATIONAL : window.intlTelInputUtils.numberFormat.NATIONAL;
-                    let formatted = window.intlTelInputUtils.formatNumber(val, "fr", formatType);
-                    if (formatted && formatted !== val) {
-                        phoneInput.value = formatted;
-                        if (!isAtEnd && phoneInput.setSelectionRange) phoneInput.setSelectionRange(currentPos, currentPos); 
-                    }
-                }
-            });
-        }
-    });
-
-    // Handle copying to clipboard
-    $(document).on('click', '.copy-action-icon', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        let textToCopy = $(this).data('copy');
-        let icon = $(this);
-        let originalClass = icon.attr('class');
-        let originalColor = icon.css('color');
-        
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                icon.attr('class', 'fas fa-check').css('color', '#38a169');
-                setTimeout(() => { icon.attr('class', originalClass).css('color', originalColor); }, 1500);
-            }).catch(err => console.error('Erreur Copie:', err));
-        }
-    });
-
-    $(document).on('click', '.contact-cancel-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        let projectId = $(this).data('project-id');
-        $('#contact-edit-' + projectId).hide();
-        $('#contact-display-' + projectId).show();
-    });
-
-    $(document).on('click', '.contact-save-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        let projectId = $(this).data('project-id');
-        let firstname = $('#input-firstname-' + projectId).val();
-        let lastname = $('#input-lastname-' + projectId).val();
-        let phone = $('#input-phone-' + projectId).val();
-        let email = $('#input-email-' + projectId).val();
-        let token = $('input[name="token"]').val() || '';
-        
-        let btn = $(this);
-        let originalHtml = btn.html();
-        btn.html('<i class="fas fa-spinner fa-spin"></i>');
-        btn.prop('disabled', true);
-        
-        $.ajax({
-            url: document.URL.split('?')[0] + '?action=updateoppcontact',
-            type: 'POST',
-            data: {
-                token: token,
-                projectid: projectId,
-                firstname: firstname,
-                lastname: lastname,
-                phone: phone,
-                email: email
-            },
-            dataType: 'text',
-            success: function(rawRes) {
-                let res;
-                try {
-                    let jsonStr = rawRes.substring(rawRes.indexOf('{'), rawRes.lastIndexOf('}') + 1);
-                    res = JSON.parse(jsonStr);
-                } catch (e) {
-                    alert("Dolibarr returning dirt: " + rawRes);
-                    res = { success: false, error: 'Parse Error' };
-                }
-
-                if (res && res.success) {
-                    let dContainer = $('#contact-display-' + projectId);
-                    dContainer.empty();
-                    
-                    if (res.contactName) {
-                        dContainer.append('<i class="fas fa-address-book" style="color: #64748b; font-size: 1.1em; margin-right: 6px;"></i><span style="font-weight: 500;">' + res.contactName + '</span>');
-                    }
-                    if (res.contactPhone) {
-                        if (res.contactName) dContainer.append('<span style="color: #cbd5e0; margin: 0 4px;">&bull;</span>');
-                        dContainer.append('<i class="fas fa-phone copy-action-icon" data-copy="' + res.contactPhone + '" style="color: #64748b; font-size: 1.0em; margin-right: 6px; cursor: copy;" title="Copier le numéro"></i><a href="tel:' + res.contactPhone + '" class="prevent-edit-click" style="color: inherit; text-decoration: none;" title="Appeler le numéro">' + res.contactPhone + '</a>');
-                    }
-                    if (res.contactEmail) {
-                        if (res.contactName || res.contactPhone) dContainer.append('<span style="color: #cbd5e0; margin: 0 4px;">&bull;</span>');
-                        dContainer.append('<i class="fas fa-envelope copy-action-icon" data-copy="' + res.contactEmail + '" style="color: #64748b; font-size: 1.0em; margin-right: 6px; cursor: copy;" title="Copier l\'email"></i><a href="mailto:' + res.contactEmail + '" class="prevent-edit-click" style="color: inherit; text-decoration: none;" title="Envoyer un email">' + res.contactEmail + '</a>');
-                    }
-                    if (!res.contactName && !res.contactPhone && !res.contactEmail) {
-                        dContainer.append('<span style="color: #a0aec0; font-style: italic;">Aucun contact</span>');
-                    }
-                    
-                    dContainer.append('<i class="fas fa-pencil-alt" style="color: #cbd5e0; margin-left: auto; font-size: 0.85em; padding: 4px;"></i>');
-                    
-                    btn.html(originalHtml).prop('disabled', false);
-                    $('#contact-edit-' + projectId).hide();
-                    dContainer.show();
-                    
-                    dContainer.css('transition', 'background-color 0.5s');
-                    dContainer.css('background-color', '#e6fffa');
-                    setTimeout(() => { dContainer.css('background-color', 'transparent'); }, 1500);
-                } else {
-                    let errMsg = (res && res.error) ? res.error : 'Erreur';
-                    btn.html(errMsg).css('background', '#e53935');
-                    setTimeout(() => { btn.html(originalHtml).prop('disabled', false).css('background', '#3b82f6'); }, 2000);
-                }
-            },
-            error: function(xhr, status, error) {
-                alert("HTTP Error: " + xhr.status + " " + error + "\n" + xhr.responseText);
-                btn.html('Erreur').css('background', '#e53935');
-                setTimeout(() => { btn.html(originalHtml).prop('disabled', false).css('background', '#3b82f6'); }, 2000);
             }
         });
     });

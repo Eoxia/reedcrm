@@ -226,7 +226,10 @@ class ActionsReedcrm
                     $moreparam = '&project_id=' . $object->id;
                 }
                 $url = '?socid=' . $socid . '&fromtype=' . $object->element . $moreparam . '&action=create&token=' . newToken();
+                
+                // Print the standard quick event creation
                 print dolGetButtonAction('', $langs->trans('QuickEventCreation'), 'default', dol_buildpath('/reedcrm/view/quickevent.php', 1) . $url, '', $user->rights->agenda->myactions->create);
+                
             }
         }
 
@@ -451,41 +454,20 @@ class ActionsReedcrm
 
                 if (!empty($project->array_options['options_commtask'])) {
                     $task->fetch($project->array_options['options_commtask']);
-                    $out2 = $task->getNomUrl(1, '', 'task', 1);
-                } ?>
-
-                <script>
-                    jQuery('.project_extras_commtask').html(<?php echo json_encode($out2); ?>)
-                </script>
-                <?php
-            }
-
-
-            // Add "New Third Party" button to Create dropdown
-            if (!empty($object->id)) {
-
-                $langs->load('companies');
-                $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $object->id;
-                $newThirdPartyLabel = dol_escape_js($langs->trans('CreateThirdparty'));
-                $userCanCreate = $user->hasRight('societe', 'creer');
-                ?>
-                <script type="text/javascript">
-                    jQuery(document).ready(function() {
-                        <?php if ($userCanCreate): ?>
-                        var createDropdown = jQuery('.dropdown-holder')
-                        if (createDropdown.length > 0) {
-                            var dropdownContent = createDropdown.find('.dropdown-content');
-                            if (dropdownContent.length > 0) {
-                                var newThirdPartyLink = '<a class="butAction" href="<?php echo dol_escape_js($newThirdPartyUrl); ?>">' +
-                                    '<span class="textbutton"><?php echo $newThirdPartyLabel; ?></span>' +
-                                    '</a>';
-                                dropdownContent.append(newThirdPartyLink);
-                            }
-                        }
-                        <?php endif; ?>
-                    });
-                </script>
-                <?php
+                }
+                if ($object && $object->element == 'project') {
+                    if (empty($object->array_options)) {
+                        $object->fetch_optionals();
+                    }
+                    $opt_lastname  = trim($object->array_options['options_reedcrm_lastname'] ?? '');
+                    $opt_firstname = trim($object->array_options['options_reedcrm_firstname'] ?? '');
+                    $opt_phone     = trim($object->array_options['options_projectphone'] ?? '');
+                    $opt_email     = trim($object->array_options['options_reedcrm_email'] ?? '');
+                    $opt_website   = trim($object->array_options['options_reedcrm_website'] ?? '');
+                    $opt_contactName = trim($opt_firstname . ' ' . $opt_lastname);
+                // Data is now passed to JS via saturneBannerTab 
+                // and DOM mutations are handled purely by module contact_inline.js
+                }
             }
         }
 
@@ -1324,6 +1306,17 @@ class ActionsReedcrm
                     $data['custom_desc'] = '<div style="margin-top: 5px;"><b>' . $langs->trans('Description') . ':</b> ' . dol_string_nohtmltag($object->description) . '</div>';
                 }
 
+                // Add the 5 Relaunch actions directly into the tooltip (the hover)
+                $urlQuickEvent = DOL_URL_ROOT . '/custom/reedcrm/view/quickevent.php?projectid=' . $object->id;
+                $buttons = '<div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">';
+                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE J0') . '">RELANCE J0</a>';
+                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE J7') . '">RELANCE J7</a>';
+                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE J14') . '">RELANCE J14</a>';
+                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE M1') . '">RELANCE M1</a>';
+                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE M6+') . '">RELANCE M6+</a>';
+                $buttons .= '</div>';
+                $data['relaunch_actions'] = $buttons;
+
                 // Remove unwanted fields and extra margin wrappings
                 unset($data['visibility']);
                 unset($data['vocal']);
@@ -1336,5 +1329,89 @@ class ActionsReedcrm
         }
 
         return 0; // or return 1 to replace standard code
+    }
+    public function formDolBanner($parameters, &$object, &$action, $hookmanager)
+    {
+        global $langs, $user;
+
+        if (strpos($parameters['context'], 'projectcard') !== false) {
+            if ($object && $object->element == 'project') {
+                $object->fetch_optionals();
+                
+                $opt_lastname  = trim($object->array_options['options_reedcrm_lastname'] ?? '');
+                $opt_firstname = trim($object->array_options['options_reedcrm_firstname'] ?? '');
+                $opt_phone     = trim($object->array_options['options_projectphone'] ?? '');
+                $opt_email     = trim($object->array_options['options_reedcrm_email'] ?? '');
+                $opt_website   = trim($object->array_options['options_reedcrm_website'] ?? '');
+                
+                $hFirstName = $opt_firstname ? dol_escape_htmltag($opt_firstname) : '<span style="color:#cbd5e0; font-style:italic;">Prénom</span>';
+                $hLastName = $opt_lastname ? dol_escape_htmltag($opt_lastname) : '<span style="color:#cbd5e0; font-style:italic;">Nom</span>';
+                $hPhone = $opt_phone ? dol_escape_htmltag($opt_phone) : '<span style="color:#cbd5e0; font-style:italic;">Téléphone</span>';
+                $hEmail = $opt_email ? dol_escape_htmltag($opt_email) : '<span style="color:#cbd5e0; font-style:italic;">Email</span>';
+                $hWeb = $opt_website ? dol_escape_htmltag($opt_website) : '<span style="color:#cbd5e0; font-style:italic;">Site Web</span>';
+                
+                $linkPhone = $opt_phone ? '<a href="tel:'.dol_escape_htmltag($opt_phone).'" style="color: inherit; text-decoration: none;" title="Appeler"><i class="fas fa-phone" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-phone" style="color: #64748b; margin-right: 6px;"></i>';
+                $linkEmail = $opt_email ? '<a href="mailto:'.dol_escape_htmltag($opt_email).'" style="color: inherit; text-decoration: none;" title="Envoyer un email"><i class="fas fa-envelope" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-envelope" style="color: #64748b; margin-right: 6px;"></i>';
+                $linkWeb = $opt_website ? '<a href="' . (strpos($opt_website, 'http') === 0 ? dol_escape_htmltag($opt_website) : 'https://'.dol_escape_htmltag($opt_website)) . '" target="_blank" style="color: inherit; text-decoration: none;" title="Ouvrir le site web"><i class="fas fa-globe" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-globe" style="color: #64748b; margin-right: 6px;"></i>';
+                
+                $logoPath = dol_buildpath('/reedcrm/img/reedcrm.png', 1);
+                
+                // Append the Contact Editor natively to the refidno block via the hook.
+                $contactHtml = '<div class="contact-inline-wrapper reedcrm-header-contact-master" data-project-id="' . (int)$object->id . '" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">' .
+                    '<img src="' . $logoPath . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />' .
+                    '<i class="fas fa-address-book" style="color: #64748b; margin-right: 6px;"></i>' .
+                    '<span class="inline-edit-contact" data-field="firstname" data-val="'.dol_escape_htmltag($opt_firstname).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 4px;" title="Modifier le prénom">' . $hFirstName . '</span>' .
+                    '<span class="inline-edit-contact" data-field="lastname" data-val="'.dol_escape_htmltag($opt_lastname).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier le nom">' . $hLastName . '</span>' .
+                    '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>' .
+                    $linkPhone .
+                    '<span class="inline-edit-contact" data-field="phone" data-val="'.dol_escape_htmltag($opt_phone).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier le téléphone">' . $hPhone . '</span>' .
+                    '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>' .
+                    $linkEmail .
+                    '<span class="inline-edit-contact" data-field="email" data-val="'.dol_escape_htmltag($opt_email).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier l\'email">' . $hEmail . '</span>' .
+                    '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>' .
+                    $linkWeb .
+                    '<span class="inline-edit-contact" data-field="website" data-val="'.dol_escape_htmltag($opt_website).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s;" title="Modifier le site web">' . $hWeb . '</span>' .
+                '</div>';
+                
+                $rawAmount = empty($object->opp_amount) ? '0' : (float)$object->opp_amount;
+                $percentStr = $object->opp_percent ? (float)$object->opp_percent . ' %' : '0 %';
+                $amountStrRaw = $object->opp_amount ? price($object->opp_amount, 0, $langs, 11, -1, -1, 'auto') : '0 €';
+                $amountStr = str_replace([',00', '.00'], '', $amountStrRaw);
+                
+                $langs->load('companies');
+                $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $object->id;
+                $newThirdPartyLabel = dol_escape_htmltag($langs->trans('CreateThirdparty'));
+                $userCanCreate = $user->hasRight('societe', 'creer') ? 1 : 0;
+                
+                // Mount a data island so `contact_inline.js` can initialize the rest.
+                $jsMountDataHtml = '<div id="reedcrm-inline-data" style="display:none;" ' .
+                    'data-project-id="' . (int)$object->id . '" ' .
+                    'data-amount="' . $rawAmount . '" ' .
+                    'data-percent-val="' . (int)$object->opp_percent . '" ' .
+                    'data-percent-str="' . dol_escape_htmltag($percentStr) . '" ' .
+                    'data-amount-str="' . dol_escape_htmltag($amountStr) . '" ' .
+                    'data-btn-create="' . $userCanCreate . '" ' .
+                    'data-btn-url="' . $newThirdPartyUrl . '" ' .
+                    'data-btn-label="' . $newThirdPartyLabel . '" ' .
+                    'data-logo-path="' . $logoPath . '" ' .
+                    '></div>';
+
+                // Ensure our custom reedcrm assets are injected so the UI logic works
+                $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
+                $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
+                $assetsHtml = '<link href="' . $cssPath . '" rel="stylesheet">';
+                $assetsHtml .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
+                
+                // Add intl-tel-input dependencies and mandatory style fixes
+                $itiCssPath = dol_buildpath('/reedcrm/js/intl-tel-input/css/intlTelInput.css', 1);
+                $itiJsPath  = dol_buildpath('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js', 1);
+                $assetsHtml .= '<link href="' . $itiCssPath . '" rel="stylesheet">';
+                $assetsHtml .= '<style> .iti { width: 100%; display: block; } .iti input[type="tel"] { padding-left: 52px !important; } input.input-invalid-material { border-color: #e53935 !important; border-bottom: 2px solid #e53935 !important; color: #e53935 !important; } </style>';
+                $assetsHtml .= '<script src="' . $itiJsPath . '"></script>';
+
+                $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml;
+            }
+        }
+        return 0;
     }
 }
