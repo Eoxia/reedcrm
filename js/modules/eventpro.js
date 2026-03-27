@@ -603,7 +603,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   $(document).on('mouseleave', '.reedcrm-relaunch-button', function () {
     clearTimeout(tooltipTimeout);
     tooltipTimeout = setTimeout(function () {
-      if ($currentTooltip && !tooltipHovered) {
+      if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
         $currentTooltip.fadeOut(150, function () {
           $(this).remove();
           $currentTooltip = null;
