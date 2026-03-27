@@ -26,3 +26,4 @@ package-lock.json
 css/*.min.css
 css/*.min.css.map
 js/*.min.js
+debug_update.log

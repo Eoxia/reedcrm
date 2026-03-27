@@ -139,7 +139,7 @@ if ($action == 'add_file_existing') {
     exit;
 }
 
-if ($action == 'update_opp_percent') {
+if ($action == 'updateopppercent') {
     $projectId = GETPOST('projectid', 'int');
     $newPercent = GETPOST('percent', 'int');
     $res = array('success' => false);
@@ -187,7 +187,7 @@ if ($action == 'update_opp_percent') {
     exit;
 }
 
-if ($action == 'update_opp_title') {
+if ($action == 'updateopptitle') {
     $projectId = GETPOST('projectid', 'int');
     $newTitle = trim(GETPOST('title'));
     $res = array('success' => false);
@@ -229,7 +229,7 @@ if ($action == 'update_opp_title') {
     exit;
 }
 
-if ($action == 'update_opp_amount') {
+if ($action == 'updateoppamount') {
     $projectId = GETPOST('projectid', 'int');
     $newAmount = price2num(GETPOST('amount', 'alpha'));
     $res = array('success' => false);
@@ -277,6 +277,7 @@ if ($action == 'updateoppcontact') {
     $lastname  = trim(GETPOST('lastname'));
     $phone     = trim(GETPOST('phone'));
     $email     = trim(GETPOST('email'));
+    $website   = trim(GETPOST('website'));
     
     $res = array('success' => false);
     if ($projectId > 0) {
@@ -289,17 +290,20 @@ if ($action == 'updateoppcontact') {
             $oldLastname  = $proj->array_options['options_reedcrm_lastname'] ?? '';
             $oldPhone     = $proj->array_options['options_projectphone'] ?? '';
             $oldEmail     = $proj->array_options['options_reedcrm_email'] ?? '';
+            $oldWebsite   = $proj->array_options['options_reedcrm_website'] ?? '';
 
             // Assign new values
             $proj->array_options['options_reedcrm_firstname'] = $firstname;
             $proj->array_options['options_reedcrm_lastname']  = $lastname;
             $proj->array_options['options_projectphone']      = $phone;
             $proj->array_options['options_reedcrm_email']     = $email;
+            $proj->array_options['options_reedcrm_website']   = $website;
             
             // Update in DB
             $proj->updateExtraField('reedcrm_firstname');
             $proj->updateExtraField('reedcrm_lastname');
             $proj->updateExtraField('projectphone');
+            $proj->updateExtraField('reedcrm_website');
             $resUpdateEmail = $proj->updateExtraField('reedcrm_email');
             
             file_put_contents(DOL_DOCUMENT_ROOT.'/custom/reedcrm/debug_update.log', "Finished extrafields, last result: $resUpdateEmail\n", FILE_APPEND);
@@ -317,6 +321,7 @@ if ($action == 'updateoppcontact') {
             if (trim($oldLastname) !== $lastname)   $noteChanges[] = "- Nom : " . (empty($oldLastname) ? '(vide)' : $oldLastname) . " -> " . (empty($lastname) ? '(vide)' : $lastname);
             if (trim($oldPhone) !== $phone)         $noteChanges[] = "- Téléphone : " . (empty($oldPhone) ? '(vide)' : $oldPhone) . " -> " . (empty($phone) ? '(vide)' : $phone);
             if (trim($oldEmail) !== $email)         $noteChanges[] = "- Email : " . (empty($oldEmail) ? '(vide)' : $oldEmail) . " -> " . (empty($email) ? '(vide)' : $email);
+            if (trim($oldWebsite) !== $website)     $noteChanges[] = "- Site Web : " . (empty($oldWebsite) ? '(vide)' : $oldWebsite) . " -> " . (empty($website) ? '(vide)' : $website);
             
             if (!empty($noteChanges)) {
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
