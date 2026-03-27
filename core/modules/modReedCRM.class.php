@@ -513,6 +513,38 @@ class modReedCRM extends DolibarrModules
         ];
 
         $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=opportunities',
+            'type'     => 'left',
+            'titre'    => $langs->trans('OpportunitiesImport'),
+            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'projectimport',
+            'url'      => '/reedcrm/view/reedcrmimport.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=opportunities',
+            'type'     => 'left',
+            'titre'    => $langs->trans('ImportedOpportunityList'),
+            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'importedprojects',
+            'url'      => '/reedcrm/view/reedcrm_imported_projects.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
             'titre'    => $langs->transnoentities('OpenedPropals'),
@@ -563,40 +595,8 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
-            'titre'    => $langs->trans('ProjectImport'),
-            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
-            'mainmenu' => 'reedcrm',
-            'leftmenu' => 'projectimport',
-            'url'      => '/reedcrm/view/reedcrmimport.php',
-            'langs'    => 'reedcrm@reedcrm',
-            'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
-            'target'   => '',
-            'user'     => 0,
-        ];
-
-        $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=reedcrm',
-            'type'     => 'left',
-            'titre'    => $langs->trans('ImportedProjectList'),
-            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
-            'mainmenu' => 'reedcrm',
-            'leftmenu' => 'importedprojects',
-            'url'      => '/reedcrm/view/reedcrm_imported_projects.php',
-            'langs'    => 'reedcrm@reedcrm',
-            'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
-            'target'   => '',
-            'user'     => 0,
-        ];
-
-        $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=reedcrm',
-            'type'     => 'left',
-            'titre'    => $langs->transnoentities('PWA'),
-            'prefix'   => '<i class="fa fa-ticket-alt pictofixedwidth"></i>',
+            'titre'    => 'PWA',
+            'prefix'   => '<i class="fa fa-mobile pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'quickcreationfrontendpwa',
             'url'      => '/custom/reedcrm/view/frontend/quickcreation.php?source=pwa',
