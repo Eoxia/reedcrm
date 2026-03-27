@@ -332,11 +332,13 @@ class ActionsReedcrm
             if (isModEnabled('agenda')) {
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
-                $actionComm = new ActionComm($db);
-                $socid      = (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
+                $actionComm          = new ActionComm($db);
+                $socid               = (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
+                $isThirdpartyContext = (strpos($parameters['context'], 'thirdpartycomm') !== false);
+                $projectId           = $isThirdpartyContext ? 0 : (int) $object->id;
 
                 $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') . ')';
-                $actionComms = $actionComm->getActions($socid, ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : GETPOST('id')), ((strpos($parameters['context'], 'thirdpartycomm') !== false) ? '' : 'project'), $filter, 'a.datec');
+                $actionComms = $actionComm->getActions($socid, ($isThirdpartyContext ? '' : GETPOST('id')), ($isThirdpartyContext ? '' : 'project'), $filter, 'a.datec');
                 if (is_array($actionComms) && !empty($actionComms)) {
                     $nbActionComms  = count($actionComms);
                     $lastActionComm = array_shift($actionComms);
@@ -355,20 +357,27 @@ class ActionsReedcrm
                 $url = '?socid=' . $socid . (strpos($_SERVER['PHP_SELF'], 'projet') ? '&fromtype=project' . '&project_id=' . $object->id : '') . '&action=create&token=' . newToken();
                 $out = '<tr><td class="titlefield">' . $pictoMod . $langs->trans('CommercialsRelaunching') . '</td>';
 
-                $picto = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
+                $picto     = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
+                $socidAttr = $isThirdpartyContext ? ' data-socid="' . (int) $socid . '"' : '';
 
-                $out .= '<td>' . dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
+                // Badge wrapped in hover-tooltip trigger (same popup mechanic as list)
+                $out .= '<td><div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . '>';
+                $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3">';
+                $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '"></span>';
+                $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
+                $out .= '</div></div>';
+
                 if ($nbActionComms > 0) {
                     $out .= ' - ' . '<span>' . $langs->trans('LastCommercialReminderDate') . ' : ' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
                 }
                 if ($user->hasRight('agenda', 'myactions', 'create')) {
                     $modalId = 'eventproCardModal';
-                    if (strpos($parameters['context'], 'thirdpartycomm') !== false) {
+                    if ($isThirdpartyContext) {
                         $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe';
                     } else {
                         $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id;
                     }
-                    $out .= ' <span class="fa fa-plus-circle valignmiddle paddingleft reedcrm-card-modal-open" style="cursor:pointer;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . (strpos($parameters['context'], 'projectcard') !== false ? $object->id : '') . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
+                    $out .= ' <span class="fa fa-plus-circle valignmiddle paddingleft reedcrm-card-modal-open" style="cursor:pointer;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . ($isThirdpartyContext ? '' : $object->id) . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
                     $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                     $out .= '</span>';
                 }

@@ -312,8 +312,8 @@ CategoryCreationError = Erreur lors de la création de la catégorie.
 ProjectsImported = %s projets importés sur %s lignes.
 ProjectsImportErrors = %s lignes n'ont pas pu être importées.
 NbLines = Nombre de lignes
-ProjectImport = Import de projet
-ImportedProjectList = Liste des projets importés
+OpportunitiesImport = Import d'opportunités
+ImportedOpportunityList = Liste des opportunités importés
 
 # Onglet Keyyo pour tiers
 KeyyoCalls = Appels Keyyo

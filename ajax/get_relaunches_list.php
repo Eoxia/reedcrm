@@ -56,30 +56,34 @@ if (!$user->hasRight('agenda', 'myactions', 'read') && !$user->hasRight('agenda'
     exit;
 }
 
-$projectId = GETPOSTINT('project_id');
+$projectId  = GETPOSTINT('project_id');
 $actionType = GETPOST('action_type', 'aZ09'); // AC_TEL, AC_EMAIL, AC_RDV, or other
-$socid = GETPOSTINT('socid');
+$socid      = GETPOSTINT('socid');
 
-if (empty($projectId) || empty($actionType)) {
+if (empty($actionType) || (empty($projectId) && empty($socid))) {
     top_httphead('application/json');
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Missing parameters']);
     exit;
 }
 
-// Load project
-$project = new Project($db);
-if ($project->fetch($projectId) <= 0) {
-    top_httphead('application/json');
-    http_response_code(404);
-    echo json_encode(['success' => false, 'error' => 'Project not found']);
-    exit;
-}
-
 $filter = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . ((int) $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG) . ')';
 
 $actionComm = new ActionComm($db);
-$actionComms = $actionComm->getActions($socid ?: $project->socid, $projectId, 'project', $filter, 'a.datec');
+if (!empty($projectId)) {
+    // Load project to get its socid as fallback
+    $project = new Project($db);
+    if ($project->fetch($projectId) <= 0) {
+        top_httphead('application/json');
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Project not found']);
+        exit;
+    }
+    $actionComms = $actionComm->getActions($socid ?: $project->socid, $projectId, 'project', $filter, 'a.datec');
+} else {
+    // Thirdparty context: fetch all actions for the societe regardless of project
+    $actionComms = $actionComm->getActions($socid, '', '', $filter, 'a.datec');
+}
 
 if (is_string($actionComms)) {
     top_httphead('application/json');
@@ -91,27 +95,35 @@ if (is_string($actionComms)) {
 ob_start();
 
 if (is_array($actionComms) && !empty($actionComms)) {
+    $limit = GETPOSTINT('limit');
+    if ($limit > 0) {
+        $actionComms = array_slice($actionComms, 0, $limit);
+    }
+
     print '<div class="reedcrm-relaunch-tooltip-content">';
     print '<table class="noborder centpercent">';
 
     foreach ($actionComms as $ac) {
-        $matchesType = false;
-        if ($actionType == 'AC_TEL' && ($ac->type_code == 'AC_TEL' || (isset($ac->code) && $ac->code == 'AC_TEL'))) {
-            $matchesType = true;
-        } elseif ($actionType == 'AC_EMAIL' && ($ac->type_code == 'AC_EMAIL' || (isset($ac->code) && $ac->code == 'AC_EMAIL'))) {
-            $matchesType = true;
-        } elseif ($actionType == 'AC_RDV' && ($ac->type_code == 'AC_RDV' || (isset($ac->code) && $ac->code == 'AC_RDV'))) {
-            $matchesType = true;
-        } elseif ($actionType != 'AC_TEL' && $actionType != 'AC_EMAIL' && $actionType != 'AC_RDV') {
-            // For "other" type, exclude AC_TEL, AC_EMAIL, AC_RDV
-            if ($ac->type_code != 'AC_TEL' && $ac->type_code != 'AC_EMAIL' && $ac->type_code != 'AC_RDV' &&
-                (!isset($ac->code) || ($ac->code != 'AC_TEL' && $ac->code != 'AC_EMAIL' && $ac->code != 'AC_RDV'))) {
+        // When type is 'all', show every action without filtering
+        if ($actionType !== 'all') {
+            $matchesType = false;
+            if ($actionType == 'AC_TEL' && ($ac->type_code == 'AC_TEL' || (isset($ac->code) && $ac->code == 'AC_TEL'))) {
                 $matchesType = true;
+            } elseif ($actionType == 'AC_EMAIL' && ($ac->type_code == 'AC_EMAIL' || (isset($ac->code) && $ac->code == 'AC_EMAIL'))) {
+                $matchesType = true;
+            } elseif ($actionType == 'AC_RDV' && ($ac->type_code == 'AC_RDV' || (isset($ac->code) && $ac->code == 'AC_RDV'))) {
+                $matchesType = true;
+            } elseif ($actionType != 'AC_TEL' && $actionType != 'AC_EMAIL' && $actionType != 'AC_RDV') {
+                // For "other" type, exclude AC_TEL, AC_EMAIL, AC_RDV
+                if ($ac->type_code != 'AC_TEL' && $ac->type_code != 'AC_EMAIL' && $ac->type_code != 'AC_RDV' &&
+                    (!isset($ac->code) || ($ac->code != 'AC_TEL' && $ac->code != 'AC_EMAIL' && $ac->code != 'AC_RDV'))) {
+                    $matchesType = true;
+                }
             }
-        }
 
-        if (!$matchesType) {
-            continue;
+            if (!$matchesType) {
+                continue;
+            }
         }
 
         $contactName = '';
