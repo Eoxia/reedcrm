@@ -12,5 +12,8 @@
       "email": "technique@evarisk.com"
     }
   ],
+  "devDependencies": {
+    "cross-env": "^10.1.0"
+  },
   "license": "GPLv3"
 }
