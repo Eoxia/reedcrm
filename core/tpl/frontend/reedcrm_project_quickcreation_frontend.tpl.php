@@ -264,10 +264,32 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 if ($value == 'phone') {
                     $inputType = 'tel';
                 }
-
-                print '<div class="form-group">';
-                print '<input type="' . $inputType . '" id="' . $key . '" name="options_' . $key . '" placeholder="' . $langs->trans($extraFields->attributes['projet']['label'][$key]) . '" value="' . dol_escape_htmltag((GETPOSTISSET('options_'.$key) ? GETPOST('options_'.$key) : '')) . '">';
-                print '</div>';
+                if ($value == 'url') {
+                    $val = GETPOSTISSET('options_'.$key) ? GETPOST('options_'.$key) : '';
+                    $protocol = 'https://';
+                    if (strpos($val, 'http://') === 0) {
+                        $protocol = 'http://';
+                        $val = substr($val, 7);
+                    } elseif (strpos($val, 'https://') === 0) {
+                        $protocol = 'https://';
+                        $val = substr($val, 8);
+                    }
+                    
+                    print '<div class="form-group">';
+                    print '<div class="website-input-group url-group-'.$key.'" style="display: flex; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; background: #fff; transition: all 0.2s;">';
+                    print '<select class="url-protocol" style="border: none; background: transparent; padding: 0 0 0 10px; color: #0f172a; outline: none; cursor: pointer; font-size: inherit; width: 85px;">';
+                    print '<option value="https://"'.($protocol=='https://'?' selected':'').'>https://</option>';
+                    print '<option value="http://"'.($protocol=='http://'?' selected':'').'>http://</option>';
+                    print '</select>';
+                    print '<input type="text" class="url-domain" placeholder="'.$langs->trans($extraFields->attributes['projet']['label'][$key]).'" value="'.dol_escape_htmltag($val).'" style="border: none; flex: 1; outline: none; background: transparent; padding: 10px 10px 10px 5px; min-width: 0; font-size: inherit;">';
+                    print '<input type="hidden" id="'.$key.'" class="url-hidden" name="options_'.$key.'" value="'.dol_escape_htmltag($protocol.$val).'">';
+                    print '</div>';
+                    print '</div>';
+                } else {
+                    print '<div class="form-group">';
+                    print '<input type="' . $inputType . '" id="' . $key . '" name="options_' . $key . '" placeholder="' . $langs->trans($extraFields->attributes['projet']['label'][$key]) . '" value="' . dol_escape_htmltag((GETPOSTISSET('options_'.$key) ? GETPOST('options_'.$key) : '')) . '">';
+                    print '</div>';
+                }
             }
         endif; ?>
         </div>
@@ -325,11 +347,19 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         padding-left: 52px !important;
     }
     
-    /* Material Design Error State for Inputs */
-    input.input-invalid-material {
-        border-color: #e53935 !important;
-        border-bottom: 2px solid #e53935 !important;
+    /* Material Design Error State for Inputs (and Custom Groups) */
+    input.input-invalid-material, .website-input-group.input-invalid-material {
+        border: 1px solid #e53935 !important;
         color: #e53935 !important;
+        box-shadow: inset 0 0 0 1px #e53935 !important;
+    }
+    .website-input-group.input-invalid-material input, .website-input-group.input-invalid-material select {
+        color: #e53935 !important;
+    }
+    
+    .website-input-group:focus-within {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
     }
 </style>
 <script src="<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js', 1); ?>"></script>
@@ -419,6 +449,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- URL Validation (Website Split Input) ---
+    const websiteGroups = document.querySelectorAll('.website-input-group');
+    const domainRegex = /^([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+
+    websiteGroups.forEach(function(group) {
+        const protocolSelect = group.querySelector('.url-protocol');
+        const domainInput = group.querySelector('.url-domain');
+        const hiddenInput = group.querySelector('.url-hidden');
+
+        function updateHiddenAndValidate() {
+            let domainVal = domainInput.value.trim();
+            
+            // Clean up if user pasted the full URL including protocol into the domain part
+            if (/^https?:\/\//i.test(domainVal)) {
+                if (domainVal.toLowerCase().startsWith('http://')) {
+                    protocolSelect.value = 'http://';
+                    domainVal = domainVal.substring(7);
+                } else if (domainVal.toLowerCase().startsWith('https://')) {
+                    protocolSelect.value = 'https://';
+                    domainVal = domainVal.substring(8);
+                }
+                domainInput.value = domainVal;
+            }
+            
+            // Allow empty string to pass validation natively (it's not required)
+            if (domainVal === '') {
+                hiddenInput.value = '';
+                group.classList.remove('input-invalid-material');
+                domainInput.setCustomValidity('');
+                return false;
+            }
+            
+            hiddenInput.value = protocolSelect.value + domainVal;
+
+            if (!domainRegex.test(domainVal)) {
+                group.classList.add('input-invalid-material');
+                domainInput.setCustomValidity('Format du nom de domaine invalide.');
+                return true; // has format error
+            } else {
+                group.classList.remove('input-invalid-material');
+                domainInput.setCustomValidity('');
+                return false; // no error
+            }
+        }
+
+        protocolSelect.addEventListener('change', updateHiddenAndValidate);
+        domainInput.addEventListener('input', updateHiddenAndValidate);
+    });
+
     // --- AJAX Form Submission (Prevent media loss on validation error) ---
     const mainForm = document.querySelector('.quickcreation-form');
     if (mainForm) {
@@ -427,18 +506,33 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!this.checkValidity()) return;
             
             // Check custom material email regex
-            let hasEmailError = false;
+            let hasFormatError = false;
             const formEmailInputs = this.querySelectorAll('input[type="email"]');
             formEmailInputs.forEach(function(emailInput) {
                 const emailValue = emailInput.value.trim();
                 if (emailValue !== '' && !materialEmailRegex.test(emailValue)) {
-                    hasEmailError = true;
+                    hasFormatError = true;
                     emailInput.classList.add('input-invalid-material');
                     emailInput.reportValidity();
                     emailInput.focus();
                 }
             });
-            if (hasEmailError) {
+            
+            // Check custom material url split regex
+            const formWebsiteGroups = this.querySelectorAll('.website-input-group');
+            formWebsiteGroups.forEach(function(group) {
+                const domainInput = group.querySelector('.url-domain');
+                let domainVal = domainInput.value.trim();
+                
+                if (domainVal !== '' && !domainRegex.test(domainVal)) {
+                    hasFormatError = true;
+                    group.classList.add('input-invalid-material');
+                    domainInput.reportValidity();
+                    domainInput.focus();
+                }
+            });
+            
+            if (hasFormatError) {
                 e.preventDefault();
                 return;
             }
