@@ -1418,6 +1418,52 @@ class ActionsReedcrm
                 $assetsHtml .= '<style> .iti { width: 100%; display: block; } .iti input[type="tel"] { padding-left: 52px !important; } input.input-invalid-material { border-color: #e53935 !important; border-bottom: 2px solid #e53935 !important; color: #e53935 !important; } </style>';
                 $assetsHtml .= '<script src="' . $itiJsPath . '"></script>';
 
+                // Inject ReedCRM favicon next to the "Origine de l'opportunitée" extrafield label
+                $pictoOpporiginHtml = img_picto('', $logoPath, '', 1, 0, 0, '', 'pictoModule');
+                $assetsHtml .= '<script>
+                    (function() {
+                        var iconHtml = ' . json_encode($pictoOpporiginHtml) . ';
+                        var labelText = "' . dol_escape_js($langs->transnoentities('OpportunityOrigin')) . '";
+                        
+                        function addFaviconToLabel() {
+                            var tr = null;
+                            // Find the row containing the extrafield
+                            var input = document.getElementById("options_opporigin");
+                            if (input) {
+                                tr = input.closest("tr");
+                            } else {
+                                var valCell = document.querySelector("td.projet_extras_opporigin, td.project_extras_opporigin");
+                                if (valCell) {
+                                    tr = valCell.closest("tr");
+                                }
+                            }
+                            
+                            if (tr) {
+                                var labelTd = tr.firstElementChild;
+                                if (labelTd && !labelTd.querySelector("img.pictoModule")) {
+                                    var targetContainer = labelTd;
+                                    // Traverse to the deepest element that contains the text but NO tables
+                                    // This preserves Dolibarr native layout tables used for the "Edit Pencil" icon alignment
+                                    var innerNodes = labelTd.querySelectorAll("td, span, div, label");
+                                    for (var i = 0; i < innerNodes.length; i++) {
+                                        var node = innerNodes[i];
+                                        if (node.textContent.trim().indexOf(labelText) !== -1 && !node.querySelector("table")) {
+                                            targetContainer = node;
+                                        }
+                                    }
+                                    targetContainer.insertAdjacentHTML("afterbegin", iconHtml + "&nbsp;");
+                                }
+                            }
+                        }
+                        
+                        if (document.readyState === "loading") {
+                            document.addEventListener("DOMContentLoaded", addFaviconToLabel);
+                        } else {
+                            addFaviconToLabel();
+                        }
+                    })();
+                </script>';
+
                 $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml;
             }
         }

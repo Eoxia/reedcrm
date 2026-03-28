@@ -127,14 +127,36 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     let originalHtml = span.html();
     
     let isPhone = span.data('field') === 'phone';
-    let inputWidth = isTitle ? '250px' : (isPhone ? '180px' : '140px');
+    let isWebsite = span.data('field') === 'website';
+    let inputWidth = isTitle ? '250px' : (isPhone || isWebsite ? '180px' : '140px');
     
     // Pour le téléphone avec le widget intlTelInput, forcer un padding à gauche pour éviter la superposition du drapeau
     let extraPadding = isPhone ? 'padding-left: 52px !important; ' : '';
-    let input = $('<input type="' + (isPhone ? 'tel' : 'text') + '" style="width: ' + inputWidth + '; border: 1px solid #3b82f6; border-radius: 4px; padding: 2px 6px; ' + extraPadding + 'font-weight: inherit; font-size: inherit; color: #0f172a; outline: none; box-sizing: border-box; background: white; margin: 0; display: inline-block; line-height: normal; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);" value="">');
+    let inputType = isPhone ? 'tel' : (isWebsite ? 'url' : 'text');
+    let input = $('<input type="' + inputType + '" style="width: ' + inputWidth + '; border: 1px solid #3b82f6; border-radius: 4px; padding: 2px 6px; ' + extraPadding + 'font-weight: inherit; font-size: inherit; color: #0f172a; outline: none; box-sizing: border-box; background: white; margin: 0; display: inline-block; line-height: normal; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);" value="">');
     input.val(currentVal);
     
+    if (isWebsite && currentVal === '') {
+        input.val('https://');
+    }
+    
     span.html('').append(input);
+    
+    if (isWebsite) {
+        input.on('input', function() {
+            let val = $(this).val().trim();
+            if (val.startsWith('www.')) {
+                val = 'https://' + val;
+                $(this).val(val);
+            }
+            const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+            if (val !== '' && val !== 'https://' && val !== 'http://' && !materialUrlRegex.test(val)) {
+                $(this).css({ 'border-color': '#e53935', 'color': '#e53935', 'box-shadow': '0 0 0 2px rgba(229, 57, 53, 0.2)' });
+            } else {
+                $(this).css({ 'border-color': '#3b82f6', 'color': '#0f172a', 'box-shadow': '0 0 0 2px rgba(59, 130, 246, 0.2)' });
+            }
+        });
+    }
     
     if (isPhone && typeof window.intlTelInput !== 'undefined') {
         let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
@@ -252,6 +274,28 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
             setTimeout(() => window.location.reload(), 300);
         }
     };
+    
+    let field = span.data('field');
+    
+    // Email Validation
+    if (field === 'email' && newVal !== '') {
+        const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+        if (!materialEmailRegex.test(newVal)) {
+            alert('Format de l\'adresse e-mail invalide.');
+            input.focus();
+            return;
+        }
+    }
+    
+    // Website Validation
+    if (field === 'website' && newVal !== '') {
+        const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+        if (!materialUrlRegex.test(newVal)) {
+            alert('Format du site web invalide.');
+            input.focus();
+            return;
+        }
+    }
 
     if (newVal === currentVal) {
         span.html(originalHtml);
@@ -264,7 +308,6 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
     span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i>').css('min-width', originalWidth + 'px');
     
     let contactProjectId = contactWrapper.data('project-id');
-    let field = span.data('field');
     
     let bFirst = contactWrapper.find('.inline-edit-contact[data-field="firstname"]').data('val');
     let bLast = contactWrapper.find('.inline-edit-contact[data-field="lastname"]').data('val');

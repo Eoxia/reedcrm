@@ -409,6 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                     
                     mediaRecorder.onstop = function() {
+                        stream.getTracks().forEach(track => track.stop());
                         audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
                         localAudioUrl = URL.createObjectURL(audioBlob);
                         

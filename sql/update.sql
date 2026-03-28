@@ -18,3 +18,6 @@ ALTER TABLE `llx_element_geolocation` ADD `gis` varchar(255) DEFAULT 'osm' AFTER
 ALTER TABLE `llx_element_geolocation` ADD `status` integer NOT NULL AFTER `rowid`;
 ALTER TABLE `llx_element_geolocation` ADD `tms` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `rowid`;
 ALTER TABLE `llx_element_geolocation` ADD `date_creation` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `rowid`;
+
+-- Fix opporigin extrafield configuration to enable native dictionary translations on existing installations
+UPDATE llx_extrafields SET param = 'c_input_reason:code:rowid' WHERE name = 'opporigin' AND elementtype = 'projet' AND param = 'c_input_reason:label:rowid';
