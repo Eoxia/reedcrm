@@ -104,7 +104,7 @@ window.saturne.contact_inline.mountCardUi = function() {
     let titleWrapper = $('.reedcrm-header-title-wrapper');
     let contactWrapper = $('.contact-inline-wrapper.reedcrm-header-contact-master');
     if (titleWrapper.length > 0 && contactWrapper.length > 0) {
-        let alignWrapper = $('<div class="reedcrm-card-header-blocks" style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; margin-top: 6px; margin-left: 0; padding-left: 0; align-items: center; justify-content: flex-start; clear: both;"></div>');
+        let alignWrapper = $('<div class="reedcrm-card-header-blocks" style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px; margin-left: 0; padding-left: 0; align-items: flex-start; clear: both;"></div>');
         titleWrapper.wrap(alignWrapper);
         contactWrapper.appendTo(titleWrapper.parent());
         

@@ -86,6 +86,59 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
      * @return int                  0 < if KO, 0 if no triggered ran, >0 if OK
      * @throws Exception
      */
+    private function tagStateEvent($elementType, $elementId, $statusTag, User $user, $label) 
+    {
+        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+        $now = dol_now();
+        $sql = "SELECT id FROM " . MAIN_DB_PREFIX . "actioncomm WHERE ";
+        if ($elementType === 'project') {
+            $sql .= "fk_project = " . (int)$elementId;
+        } else {
+            $sql .= "fk_element = " . (int)$elementId . " AND elementtype = '" . $this->db->escape($elementType) . "'";
+        }
+        $sql .= " ORDER BY datep DESC, id DESC LIMIT 1";
+
+        $res = $this->db->query($sql);
+        if ($res && $this->db->num_rows($res) > 0) {
+            $obj = $this->db->fetch_object($res);
+            $actioncomm = new ActionComm($this->db);
+            if ($actioncomm->fetch($obj->id) > 0) {
+                if ($actioncomm->datep >= ($now - 5)) {
+                    $actioncomm->fetch_optionals();
+                    $actioncomm->array_options['options_reedcrm_status_object'] = $statusTag;
+                    $actioncomm->insertExtraFields('ACTIONCOMM_CUSTOM_OPTIONS'); // Ensure it writes
+                    
+                    // Direct SQL fallback just in case insertExtraFields has bugs with actioncomm context
+                    $sqlExtra = "INSERT INTO " . MAIN_DB_PREFIX . "actioncomm_extrafields (fk_object, reedcrm_status_object) VALUES (" . (int)$actioncomm->id . ", '" . $this->db->escape($statusTag) . "') ON DUPLICATE KEY UPDATE reedcrm_status_object = '" . $this->db->escape($statusTag) . "'";
+                    $this->db->query($sqlExtra);
+                    return;
+                }
+            }
+        }
+        
+        // Generate fallback technical actioncomm
+        $actioncomm = new ActionComm($this->db);
+        $actioncomm->type_code = 'AC_OTH_AUTO';
+        $actioncomm->datep = $now;
+        if ($elementType === 'project') {
+            $actioncomm->fk_project = $elementId;
+            $actioncomm->elementtype = 'project';
+            $actioncomm->fk_element = $elementId; // Both for safety
+        } else {
+            $actioncomm->fk_element = $elementId;
+            $actioncomm->elementtype = $elementType;
+        }
+        $actioncomm->userownerid = $user->id;
+        $actioncomm->percentage = -1;
+        $actioncomm->label = $label;
+        $actioncomm->array_options['options_reedcrm_status_object'] = $statusTag;
+        $rescreate = $actioncomm->create($user);
+        if ($rescreate > 0) {
+            $sqlExtra = "INSERT INTO " . MAIN_DB_PREFIX . "actioncomm_extrafields (fk_object, reedcrm_status_object) VALUES (" . (int)$rescreate . ", '" . $this->db->escape($statusTag) . "') ON DUPLICATE KEY UPDATE reedcrm_status_object = '" . $this->db->escape($statusTag) . "'";
+            $this->db->query($sqlExtra);
+        }
+    }
+
     public function runTrigger($action, $object, User $user, Translate $langs, Conf $conf): int
     {
         if (!isModEnabled('reedcrm')) {
@@ -110,6 +163,31 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
             case 'BILLREC_CREATE' :
                 $object->fetch($object->id);
                 set_notation_object_contact($object);
+                break;
+                
+            // ReedCRM Object Status Extrafield Tracking
+            case 'PROJECT_CREATE':   $this->tagStateEvent('project', $object->id, 'project_draft', $user, 'Projet créé (Brouillon)'); break;
+            case 'PROJECT_VALIDATE': $this->tagStateEvent('project', $object->id, 'project_valid', $user, 'Projet validé (Ouvert)'); break;
+            case 'PROJECT_CLOSE':    $this->tagStateEvent('project', $object->id, 'project_closed', $user, 'Projet clôturé'); break;
+            
+            case 'PROPAL_CREATE':          $this->tagStateEvent('propal', $object->id, 'propal_draft', $user, 'Proposition créée (Brouillon)'); break;
+            case 'PROPAL_VALIDATE':        $this->tagStateEvent('propal', $object->id, 'propal_valid', $user, 'Proposition validée (Ouverte)'); break;
+            case 'PROPAL_CLASSIFY_BILLED': $this->tagStateEvent('propal', $object->id, 'propal_billed', $user, 'Proposition classée facturée'); break;
+            
+            case 'PROPAL_CLOSE_SIGNED':
+                $this->tagStateEvent('propal', $object->id, 'propal_signed', $user, 'Proposition signée');
+                // Execute standard hook legacy code below
+            case 'PROPAL_CLOSE_REFUSED':
+                if ($action === 'PROPAL_CLOSE_REFUSED') {
+                    $this->tagStateEvent('propal', $object->id, 'propal_notsigned', $user, 'Proposition refusée');
+                }
+                
+                if (isset($_SESSION['LAST_ACTION_CREATED'])) {
+                    $actioncomm->fetch($_SESSION['LAST_ACTION_CREATED']);
+                    if ($actioncomm->id > 0 && $actioncomm->elementtype == 'propal' && !empty(GETPOST('note_private'))) {
+                        $actioncomm->setValueFrom('note', GETPOST('note_private', 'alpha'), '', null, '', 'id');
+                    }
+                }
                 break;
             case 'PROJECT_ADD_CONTACT':
 
@@ -186,13 +264,6 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                             return -1;
                         }
                     }
-                }
-                break;
-            case 'PROPAL_CLOSE_SIGNED':
-            case 'PROPAL_CLOSE_REFUSED':
-                $actioncomm->fetch($_SESSION['LAST_ACTION_CREATED']);
-                if ($actioncomm->id > 0 && $actioncomm->elementtype == 'propal' && !empty(GETPOST('note_private'))) {
-                    $actioncomm->setValueFrom('note', GETPOST('note_private', 'alpha'), '', null, '', 'id');
                 }
                 break;
         }
