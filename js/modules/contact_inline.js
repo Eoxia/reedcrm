@@ -136,8 +136,12 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     let input = $('<input type="' + inputType + '" style="width: ' + inputWidth + '; border: 1px solid #3b82f6; border-radius: 4px; padding: 2px 6px; ' + extraPadding + 'font-weight: inherit; font-size: inherit; color: #0f172a; outline: none; box-sizing: border-box; background: white; margin: 0; display: inline-block; line-height: normal; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);" value="">');
     input.val(currentVal);
     
-    if (isWebsite && currentVal === '') {
-        input.val('https://');
+    if (isWebsite) {
+        if (currentVal === '' || currentVal === 'http://') {
+            input.val('https://');
+        } else if (currentVal.startsWith('http://')) {
+            input.val('https://' + currentVal.substring(7));
+        }
     }
     
     span.html('').append(input);
@@ -204,8 +208,6 @@ window.saturne.contact_inline.submitTitleDetail = function(span, input, original
         let firstContactSpan = $('.contact-inline-wrapper .inline-edit-contact').first();
         if (firstContactSpan.length > 0) {
             firstContactSpan.click();
-        } else {
-            setTimeout(() => window.location.reload(), 300);
         }
     };
 
@@ -242,8 +244,6 @@ window.saturne.contact_inline.submitTitleDetail = function(span, input, original
             setTimeout(function() { span.css({color: ''}); }, 1500);
             if (isTabbing) {
                 focusNextSpan();
-            } else {
-                setTimeout(() => window.location.reload(), 300);
             }
         },
         error: function(jqXHR) {
@@ -270,8 +270,6 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
         let currentIndex = allSpans.index(span);
         if (currentIndex >= 0 && currentIndex < allSpans.length - 1) {
             allSpans.eq(currentIndex + 1).click();
-        } else {
-            setTimeout(() => window.location.reload(), 300);
         }
     };
     
@@ -288,12 +286,22 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
     }
     
     // Website Validation
-    if (field === 'website' && newVal !== '') {
-        const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
-        if (!materialUrlRegex.test(newVal)) {
-            alert('Format du site web invalide.');
-            input.focus();
-            return;
+    if (field === 'website') {
+        if (newVal === 'https://' || newVal === 'http://') {
+            newVal = '';
+            input.val('');
+        }
+        if (newVal !== '') {
+            if (!newVal.startsWith('http://') && !newVal.startsWith('https://')) {
+                newVal = 'https://' + newVal;
+                input.val(newVal);
+            }
+            const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+            if (!materialUrlRegex.test(newVal)) {
+                alert('Format du site web invalide.');
+                input.focus();
+                return;
+            }
         }
     }
 
@@ -349,8 +357,6 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
                 span.html(newVal ? newVal : '<span style="color:#cbd5e0; font-style:italic;">' + pText + '</span>');
                 setTimeout(function() { span.css({color: ''}); }, 1500);
                 focusNextSpan();
-            } else {
-                setTimeout(() => window.location.reload(), 300);
             }
         },
         error: function(jqXHR) {
@@ -415,7 +421,6 @@ window.saturne.contact_inline.editPercent = function(e) {
                     span.data('val', newVal);
                     span.html(newVal + ' %');
                     span.css({color: '#2ecc71'});
-                    setTimeout(() => window.location.reload(), 300);
                 } else {
                     span.html(originalText).css({color: '#e74c3c'});
                     setTimeout(() => span.css({color: ''}), 1500);
@@ -479,7 +484,6 @@ window.saturne.contact_inline.editAmount = function(e) {
                     span.data('val', newVal);
                     span.html(res.formatted_amount);
                     span.css({color: '#2ecc71'});
-                    setTimeout(() => window.location.reload(), 300);
                 } else {
                     span.html(originalText).css({color: '#e74c3c'});
                     setTimeout(() => span.css({color: ''}), 1500);
