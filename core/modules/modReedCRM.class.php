@@ -694,7 +694,27 @@ class modReedCRM extends DolibarrModules
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
 
-            'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']]
+            'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']],
+            
+            'reedcrm_status_object' => [
+                'Label' => 'ReedCRMObjectStatus',
+                'type' => 'select',
+                'elementtype' => ['actioncomm'],
+                'position' => $this->numero . 20,
+                'list' => 1,
+                'enabled' => 1,
+                'alwayseditable' => 1,
+                'params' => [
+                    'project_draft'    => 'ProjectStatusDraft',
+                    'project_valid'    => 'ProjectStatusValidated',
+                    'project_closed'   => 'ProjectStatusClosed',
+                    'propal_draft'     => 'PropalStatusDraft',
+                    'propal_valid'     => 'PropalStatusValidated',
+                    'propal_signed'    => 'PropalStatusSigned',
+                    'propal_notsigned' => 'PropalStatusNotSigned',
+                    'propal_billed'    => 'PropalStatusBilled'
+                ]
+            ]
         ];
 
         saturne_manage_extrafields($extraFieldsArrays, $commonExtraFieldsValue);

@@ -181,6 +181,8 @@ ToSignElsewhere                        = A signer ailleurs
 NotAProjectAnymore                     = Ce n'est plus un projet
 GoesBackOnExcel                        = Repart sur Excel
 DontWantToSay                          = Ne veulent pas le dire
+Interface                              = Interface
+Other                                  = Autre
 CommercialStatus                       = Statut commercial
 CommercialStatusHelp                   = Statut commercial de la proposition commerciale
 RefusalReason                          = Raison refus
@@ -318,3 +320,14 @@ ImportedOpportunityList = Liste des opportunités importés
 # Onglet Keyyo pour tiers
 KeyyoCalls = Appels Keyyo
 UnknownContact = Contact inconnu
+
+# Status Objects
+ReedCRMObjectStatus=Statut d'objet ReedCRM
+ProjectStatusDraft=Brouillon
+ProjectStatusValidated=Validé (Ouvert)
+ProjectStatusClosed=Clôturé
+PropalStatusDraft=Brouillon (Provisoire)
+PropalStatusValidated=Validée (Ouverte)
+PropalStatusSigned=Signée / Acceptée
+PropalStatusNotSigned=Non signée / Refusée
+PropalStatusBilled=Facturée
