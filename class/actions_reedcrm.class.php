@@ -1357,7 +1357,8 @@ class ActionsReedcrm
                 $hLastName = $opt_lastname ? dol_escape_htmltag($opt_lastname) : '<span style="color:#cbd5e0; font-style:italic;">Nom</span>';
                 $hPhone = $opt_phone ? dol_escape_htmltag($opt_phone) : '<span style="color:#cbd5e0; font-style:italic;">Téléphone</span>';
                 $hEmail = $opt_email ? dol_escape_htmltag($opt_email) : '<span style="color:#cbd5e0; font-style:italic;">Email</span>';
-                $hWeb = $opt_website ? dol_escape_htmltag($opt_website) : '<span style="color:#cbd5e0; font-style:italic;">Site Web</span>';
+                $hWebClean = $opt_website ? preg_replace('#^https?://#', '', $opt_website) : '';
+                $hWeb = $opt_website ? dol_escape_htmltag($hWebClean) : '<span style="color:#cbd5e0; font-style:italic;">Site Web</span>';
                 
                 $linkPhone = $opt_phone ? '<a href="tel:'.dol_escape_htmltag($opt_phone).'" style="color: inherit; text-decoration: none;" title="Appeler"><i class="fas fa-phone" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-phone" style="color: #64748b; margin-right: 6px;"></i>';
                 $linkEmail = $opt_email ? '<a href="mailto:'.dol_escape_htmltag($opt_email).'" style="color: inherit; text-decoration: none;" title="Envoyer un email"><i class="fas fa-envelope" style="color: #64748b; margin-right: 6px; cursor: pointer;"></i></a>' : '<i class="fas fa-envelope" style="color: #64748b; margin-right: 6px;"></i>';
@@ -1738,8 +1739,8 @@ class ActionsReedcrm
                         $lostBorder = ($statusCode === 'LOST') ? 'border:2px solid #dc3545;' : 'border:2px solid transparent; opacity:0.6;';
                         $wonBorder = $isWon ? 'border:2px solid #28a745;' : 'border:2px solid transparent; opacity:0.6;';
                         
-                        $btnIcon = $isWon ? 'fa-undo' : 'fa-lock';
-                        $btnTitle = $isWon ? 'Annuler la signature et repasser en opportunité' : 'Rouvrir le projet';
+                        $btnIcon = 'fa-undo';
+                        $btnTitle = $isWon ? 'Annuler la signature et repasser en opportunité' : 'Annuler la clôture et repasser en opportunité';
                         
                         $closureWidgetHtml = '
                         <script>
@@ -1763,7 +1764,7 @@ class ActionsReedcrm
                                                 <div style="flex-grow:1; border:1px solid #ced4da; background:#f8f9fa; border-radius:4px; font-size:12px; padding:4px 8px; color:#495057; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px;" title="' . htmlspecialchars($rawLabel, ENT_QUOTES) . '">
                                                     ' . htmlspecialchars($truncatedLabel, ENT_QUOTES) . '
                                                 </div>
-                                                <button type="button" id="rcrm-btn-reopen" title="' . $btnTitle . '" style="background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas ' . $btnIcon . '"></i></button>
+                                                <button type="button" id="rcrm-btn-reopen" title="' . $btnTitle . '" style="margin-left:auto; background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas ' . $btnIcon . '"></i></button>
                                             </div>
                                         </div>
                                     `;
@@ -1807,7 +1808,7 @@ class ActionsReedcrm
                                                 <div style="flex-grow:1; border:1px solid #ced4da; background:#f8f9fa; border-radius:4px; font-size:12px; padding:4px 8px; color:#495057;">
                                                     Projet clôturé (aucun événement historique trouvé)
                                                 </div>
-                                                <button type="button" id="rcrm-btn-reopen" title="\' . ($btnTitle ?? \'Rouvrir le projet\') . \'" style="background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas \' . ($btnIcon ?? \'fa-lock\') . \'"></i></button>
+                                                <button type="button" id="rcrm-btn-reopen" title="\' . ($btnTitle ?? \'Rouvrir le projet\') . \'" style="margin-left:auto; background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas \' . ($btnIcon ?? \'fa-undo\') . \'"></i></button>
                                             </div>
                                         </div>
                                     `;
@@ -1823,7 +1824,7 @@ class ActionsReedcrm
                                             data: { action: "reopen", id: objId, type: type, token: "' . newToken() . '" },
                                             dataType: "json",
                                             success: function(res) { if (res.success) window.location.reload(); },
-                                            error: function() { alert("Erreur de connexion."); $("#rcrm-btn-reopen").html("<i class=\'fas ' . ($btnIcon ?? 'fa-lock') . '\'></i>"); }
+                                            error: function() { alert("Erreur de connexion."); $("#rcrm-btn-reopen").html("<i class=\'fas ' . ($btnIcon ?? 'fa-undo') . '\'></i>"); }
                                         });
                                     });
                                 }
