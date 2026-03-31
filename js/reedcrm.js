@@ -119,6 +119,11 @@ if (!window.reedcrm.scriptsLoaded) {
   $(document).ready(window.reedcrm.init);
 }
 
+
+
+
+
+
 window.saturne.contact_inline = {};
 
 window.saturne.contact_inline.init = function() {
@@ -130,10 +135,11 @@ window.saturne.contact_inline.event = function() {
     // Liste: copy icons, cancel buttons inside standard contacts (if any left)
     $(document).on('click', '.copy-action-icon', window.saturne.contact_inline.copyToClipboard);
     
-    // Inline quick-edit click delegator logic (Handles Title, Contact spans, Percent, Amount)
+    // Inline quick-edit click delegator logic (Handles Title, Contact spans, Percent, Amount, Company)
     $(document).on('click', '.inline-edit-proj-title, .inline-edit-contact', window.saturne.contact_inline.startInlineEdit);
     $(document).on('click', '.inline-edit-proj-percent', window.saturne.contact_inline.editPercent);
     $(document).on('click', '.inline-edit-proj-amount', window.saturne.contact_inline.editAmount);
+    $(document).on('click', '.inline-edit-company-badge', window.saturne.contact_inline.startCompanyEdit);
 };
 
 window.saturne.contact_inline.copyToClipboard = function(e) {
@@ -155,6 +161,7 @@ window.saturne.contact_inline.copyToClipboard = function(e) {
 window.saturne.contact_inline.mountCardUi = function() {
     let contextData = $('#reedcrm-inline-data');
     if (contextData.length === 0) return;
+    if ($('.reedcrm-card-header-blocks').length > 0) return; // UI already mounted, prevent duplicates
     
     let projId = contextData.data('project-id');
     let rawAmount = parseFloat(contextData.data('amount') || 0);
@@ -189,7 +196,7 @@ window.saturne.contact_inline.mountCardUi = function() {
                 wrapper.append(prefixSpan).append(editableSpan);
                 prefixSpan.on('click', function(e) { e.stopPropagation(); editableSpan.click(); });
             }
-        } else { /* fixed */
+        } else {
              let wrapperHtml = '<div class="reedcrm-header-title-wrapper" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 600; font-size: 0.95em; margin-bottom: 2px; margin-right: 6px;">' +
                  '<img src="' + logoPath + '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" title="Géré par ReedCRM" />' +
                  '<span style="color: #4a5568; font-weight: bold; margin-right: 4px;">Libellé :</span>' +
@@ -213,7 +220,7 @@ window.saturne.contact_inline.mountCardUi = function() {
             let badge = statusRef.find('.badge, .status, .label');
             if (badge.length > 0) {
                 $(statsHtml).insertBefore(badge.first());
-            } else { /* fixed */
+            } else {
                 statusRef.prepend(statsHtml);
             }
         } else if (titleBlock.length > 0) {
@@ -236,6 +243,155 @@ window.saturne.contact_inline.mountCardUi = function() {
         titleWrapper.css({'margin-left': '0', 'margin-right': '0', 'margin-bottom': '0'});
         contactWrapper.css({'margin-left': '0', 'margin-right': '0', 'margin-bottom': '0'});
     }
+    
+    // 4. Third-Party Badge Styling & Interception
+    // Find the standard third-party link (usually an <a> tag that contains "socid=" inside refidno, avoiding tiny C/P/S badges)
+    let companyBadge = refidno.find('a[href*="socid="]').not('.customer-back').not('.vendor-back').first();
+    if (companyBadge.length > 0) {
+        // Wrap it with our standard UI badge styling if not already done
+        if (!companyBadge.parent().hasClass('reedcrm-header-company-wrapper')) {
+            let compWrapperHtml = '<div class="reedcrm-header-company-wrapper" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;"></div>';
+            companyBadge.wrap(compWrapperHtml);
+            companyBadge.before('<img src="' + logoPath + '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />');
+        }
+        
+        // Ensure the link looks like the editable fields
+        companyBadge.addClass('inline-edit-company-badge').css({
+            'cursor': 'pointer',
+            'transition': 'color 0.3s',
+            'color': '#0f172a'
+        }).attr('title', 'Modifier l\'entreprise rattachée');
+        
+        // Force the wrapper into the align flexbox if it exists
+        let companyWrapper = companyBadge.closest('.reedcrm-header-company-wrapper');
+        let alignWrapper = $('.reedcrm-card-header-blocks');
+        if (alignWrapper.length > 0 && companyWrapper.length > 0) {
+            companyWrapper.insertAfter($('.reedcrm-header-title-wrapper'));
+            companyWrapper.css({'margin-left': '0', 'margin-right': '0', 'margin-bottom': '0'});
+        }
+    } else {
+        // No company linked yet! Provide a UI to assign one.
+        let titleWrapper = $('.reedcrm-header-title-wrapper');
+        let alignWrapper = $('.reedcrm-card-header-blocks');
+        
+        if (titleWrapper.length > 0) {
+             let placeholderHtml = '<div class="reedcrm-header-company-wrapper" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">' +
+                 '<img src="' + logoPath + '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />' +
+                 '<a href="#" class="inline-edit-company-badge" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="Affecter une entreprise"><i class="fas fa-building" style="margin-right:5px; color:#64748b;"></i>Affecter un tiers</a>' +
+                 '</div>';
+             
+             let newWrapper = $(placeholderHtml);
+             if (alignWrapper.length > 0) {
+                 newWrapper.insertAfter(titleWrapper);
+                 newWrapper.css({'margin-left': '0', 'margin-right': '0', 'margin-bottom': '0'});
+             } else {
+                 newWrapper.insertAfter(titleWrapper);
+             }
+        }
+    }
+}
+
+window.saturne.contact_inline.startCompanyEdit = function(e) {
+    if ($(e.target).hasClass('select2-selection__choice__remove') || $(e.target).closest('.select2-container').length > 0) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    let aTag = $(this);
+    let originalHtml = aTag.html();
+    
+    // Retrieve the hidden selector we injected in php
+    let hiddenSelectorWrap = $('#reedcrm-hidden-company-selector');
+    if (hiddenSelectorWrap.length === 0) return;
+    
+    // Check if we already injected it in place, avoiding duplicates
+    if (aTag.parent().find('#reedcrm-hidden-company-selector').length > 0) {
+        // Just show it
+        aTag.hide();
+        hiddenSelectorWrap.show();
+        let s2 = hiddenSelectorWrap.find('select');
+        if (s2.data('select2')) { s2.select2('open'); }
+        return;
+    }
+    
+    aTag.hide();
+    hiddenSelectorWrap.insertAfter(aTag).show();
+    
+    let select2Elem = $('#reedcrm_inline_socid');
+    if (select2Elem.data('select2')) {
+        select2Elem.select2('open');
+    }
+    
+    // Disable native change events from other listeners if any, then add ours
+    select2Elem.off('change.inlineedit').on('change.inlineedit', function() {
+        let newSocid = $(this).val();
+        let projId = $('#reedcrm-inline-data').data('project-id');
+        let token = $('input[name="token"]').val() || '';
+        
+        // Basic revert if no change or empty selected
+        if (!newSocid || newSocid == 0) {
+            hiddenSelectorWrap.hide();
+            aTag.show();
+            return;
+        }
+        
+        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
+        if (!url) {
+            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+        }
+        
+        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsocid&token=' + token;
+        
+        aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
+        hiddenSelectorWrap.hide();
+        aTag.show();
+        
+        $.ajax({
+            url: ajaxUrl,
+            type: 'POST',
+            data: { projectid: projId, socid: newSocid },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    if (res.new_company_url) {
+                        // The res.new_company_url is already the full HTML string for the third party (Dolibarr's native format)
+                        // It natively comes out as `<a href="..."> <span class="..."></span> Title </a>`
+                        // So we extract its inner HTML and href
+                        let tempDiv = $('<div>').html(res.new_company_url);
+                        let nativeA = tempDiv.find('a').first();
+                        
+                        if (nativeA.length > 0) {
+                            aTag.attr('href', nativeA.attr('href'));
+                            aTag.html(nativeA.html());
+                        } else {
+                            aTag.html(res.new_company_url);
+                        }
+                    } else {
+                        aTag.html(originalHtml);
+                    }
+                } else {
+                    alert("Erreur: " + (res.error || "Inconnue"));
+                    aTag.html(originalHtml);
+                }
+            },
+            error: function() {
+                alert("Impossible de joindre le serveur");
+                aTag.html(originalHtml);
+            }
+        });
+    });
+    
+    // Try to catch when Select2 is closed without change to revert UI
+    select2Elem.on('select2:close', function () {
+        setTimeout(function() {
+            if (hiddenSelectorWrap.is(':visible')) {
+                // Not selecting anything ? just revert
+                hiddenSelectorWrap.hide();
+                aTag.show();
+            }
+        }, 100);
+    });
 };
 
 window.saturne.contact_inline.startInlineEdit = function(e) {
@@ -277,7 +433,7 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
             const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
             if (val !== '' && val !== 'https://' && val !== 'http://' && !materialUrlRegex.test(val)) {
                 $(this).css({ 'border-color': '#e53935', 'color': '#e53935', 'box-shadow': '0 0 0 2px rgba(229, 57, 53, 0.2)' });
-            } else { /* fixed */
+            } else {
                 $(this).css({ 'border-color': '#3b82f6', 'color': '#0f172a', 'box-shadow': '0 0 0 2px rgba(59, 130, 246, 0.2)' });
             }
         });
@@ -542,7 +698,7 @@ window.saturne.contact_inline.editPercent = function(e) {
                     span.data('val', newVal);
                     span.html(newVal + ' %');
                     span.css({color: '#2ecc71'});
-                } else { /* fixed */
+                } else {
                     span.html(originalText).css({color: '#e74c3c'});
                     setTimeout(() => span.css({color: ''}), 1500);
                 }
@@ -605,7 +761,7 @@ window.saturne.contact_inline.editAmount = function(e) {
                     span.data('val', newVal);
                     span.html(res.formatted_amount);
                     span.css({color: '#2ecc71'});
-                } else { /* fixed */
+                } else {
                     span.html(originalText).css({color: '#e74c3c'});
                     setTimeout(() => span.css({color: ''}), 1500);
                 }

@@ -1406,6 +1406,17 @@ class ActionsReedcrm
                     'data-logo-path="' . $logoPath . '" ' .
                     '></div>';
 
+                // Setup the hidden full ThirdParty combobox that JS will grab
+                require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+                if (!isset($form) || !is_object($form)) {
+                    $form = new Form($db);
+                }
+                
+                $jsMountDataHtml .= '<div id="reedcrm-hidden-company-selector" style="display:none; width: 100%;">';
+                // params: ($selected, $htmlname, $filter, $showempty, $showtype, $forcecombo, $events, $limit, $morecss, $moreparam, $selected_input_value, $hidelabel)
+                $jsMountDataHtml .= $form->select_company($object->socid, 'reedcrm_inline_socid', '', 'Rechercher un tiers...', 1, 0, array(), 0, 'minwidth100', '', '', 1);
+                $jsMountDataHtml .= '</div>';
+
                 // Ensure our custom reedcrm assets are injected so the UI logic works
                 $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
                 $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);

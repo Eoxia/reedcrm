@@ -229,6 +229,66 @@ if ($action == 'updateopptitle') {
     exit;
 }
 
+if ($action == 'updateoppsocid') {
+    $projectId = GETPOST('projectid', 'int');
+    $newSocid = GETPOST('socid', 'int');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldSocid = $proj->socid;
+            $oldCompanyName = '';
+            if ($oldSocid > 0) {
+                $oldSoc = new Societe($db);
+                if ($oldSoc->fetch($oldSocid) > 0) {
+                    $oldCompanyName = $oldSoc->name;
+                }
+            }
+
+            $proj->socid = $newSocid;
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+                
+                $newSoc = new Societe($db);
+                $newCompanyName = '';
+                $newCompanyUrl = '';
+                if ($newSocid > 0 && $newSoc->fetch($newSocid) > 0) {
+                    $newCompanyName = $newSoc->name;
+                    $newCompanyUrl = $newSoc->getNomUrl(1); // Standard dolibarr company HTML Link
+                }
+                
+                $res['new_socid'] = $newSocid;
+                $res['new_company_name'] = $newCompanyName;
+                $res['new_company_url'] = $newCompanyUrl;
+                
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code = 'AC_OTH'; 
+                $autoEvent->label = "Modification de l'entreprise rattachée";
+                $autoEvent->datep = dol_now();
+                $autoEvent->datef = dol_now();
+                $autoEvent->percentage = 100;
+                $autoEvent->userownerid = $user->id;
+                $autoEvent->fk_project = $proj->id;
+                $autoEvent->socid = $newSocid;
+                
+                $oldNameStr = empty($oldCompanyName) ? '(Aucune)' : $oldCompanyName;
+                $newNameStr = empty($newCompanyName) ? '(Aucune)' : $newCompanyName;
+                $autoEvent->note_private = "Mise à jour par ".$user->login." :\n- Tiers : " . $oldNameStr . " -> " . $newNameStr;
+                $autoEvent->create($user);
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        } else {
+            $res['error'] = 'Project not found';
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'updateoppamount') {
     $projectId = GETPOST('projectid', 'int');
     $newAmount = price2num(GETPOST('amount', 'alpha'));
