@@ -279,11 +279,14 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     
     let isPhone = span.data('field') === 'phone';
     let isWebsite = span.data('field') === 'website';
-    let inputWidth = isTitle ? '250px' : (isPhone || isWebsite ? '180px' : '140px');
+    let isEmail = span.data('field') === 'email';
+    let isFlexChild = span.data('field') === 'firstname' || span.data('field') === 'lastname' || isEmail;
+    let inputType = isPhone ? 'tel' : (isWebsite ? 'url' : (isEmail ? 'email' : 'text'));
+    
+    let inputWidth = isTitle ? '250px' : (isFlexChild ? '100%' : (isPhone || isWebsite ? '180px' : '140px'));
     
     // Pour le téléphone avec le widget intlTelInput, forcer un padding à gauche pour éviter la superposition du drapeau
     let extraPadding = isPhone ? 'padding-left: 52px !important; ' : '';
-    let inputType = isPhone ? 'tel' : (isWebsite ? 'url' : 'text');
     let input = $('<input type="' + inputType + '" style="width: ' + inputWidth + '; border: 1px solid #3b82f6; border-radius: 4px; padding: 2px 6px; ' + extraPadding + 'font-weight: inherit; font-size: inherit; color: #0f172a; outline: none; box-sizing: border-box; background: white; margin: 0; display: inline-block; line-height: normal; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);" value="">');
     input.val(currentVal);
     
@@ -324,7 +327,8 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
             initialCountry: "fr",
             preferredCountries: ["fr", "be", "ch", "lu", "ca"],
             nationalMode: false,
-            autoPlaceholder: "polite"
+            autoPlaceholder: "polite",
+            dropdownContainer: document.body
         });
         $('.iti__flag-container').css('z-index', 9999);
         
@@ -417,7 +421,7 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
     let contactWrapper = span.closest('.contact-inline-wrapper');
     
     let focusNextSpan = function() {
-        let allSpans = contactWrapper.find('.inline-edit-contact');
+        let allSpans = contactWrapper.find('.inline-edit-contact:visible');
         let currentIndex = allSpans.index(span);
         if (currentIndex >= 0 && currentIndex < allSpans.length - 1) {
             allSpans.eq(currentIndex + 1).click();
@@ -498,15 +502,16 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
         },
         success: function(res) {
             span.css({color: '#2ecc71', 'min-width': ''});
+            var pText = '';
+            if (field === 'firstname') pText = 'Prénom';
+            if (field === 'lastname') pText = 'Nom';
+            if (field === 'phone') pText = 'Téléphone';
+            if (field === 'email') pText = 'Email';
+            if (field === 'website') pText = 'Site Web';
+            span.html(newVal ? newVal : '<span style="color:#cbd5e0; font-style:italic;">' + pText + '</span>');
+            setTimeout(function() { span.css({color: ''}); }, 1500);
+            
             if (isTabbing) {
-                var pText = '';
-                if (field === 'firstname') pText = 'Prénom';
-                if (field === 'lastname') pText = 'Nom';
-                if (field === 'phone') pText = 'Téléphone';
-                if (field === 'email') pText = 'Email';
-                if (field === 'website') pText = 'Site Web';
-                span.html(newVal ? newVal : '<span style="color:#cbd5e0; font-style:italic;">' + pText + '</span>');
-                setTimeout(function() { span.css({color: ''}); }, 1500);
                 focusNextSpan();
             }
         },
