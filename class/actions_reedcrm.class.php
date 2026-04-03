@@ -648,6 +648,37 @@ class ActionsReedcrm
                     var probCell = $('.liste > tbody > tr.liste_titre').find('th.right').has('a[href*="opp_percent"]');
 
                     probCell.append(outJS);
+                    
+                    // Inject intlTelInput into list view
+                    if (typeof window.intlTelInput === 'undefined') {
+                        var cssId = 'intlTelInputCss';
+                        if (!document.getElementById(cssId)) {
+                            var head  = document.getElementsByTagName('head')[0];
+                            var link  = document.createElement('link');
+                            link.id   = cssId;
+                            link.rel  = 'stylesheet';
+                            link.type = 'text/css';
+                            link.href = '<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/css/intlTelInput.css', 1); ?>';
+                            link.media = 'all';
+                            head.appendChild(link);
+                        }
+                        
+                        var jsId = 'intlTelInputJs';
+                        if (!document.getElementById(jsId)) {
+                            var script = document.createElement('script');
+                            script.id = jsId;
+                            script.src = '<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js', 1); ?>';
+                            document.head.appendChild(script);
+                        }
+                    }
+                        
+                    var reedJsId = 'reedcrmMainJs';
+                    if (!document.getElementById(reedJsId) && (typeof window.saturne === 'undefined' || typeof window.saturne.contact_inline === 'undefined')) {
+                        var scriptMain = document.createElement('script');
+                        scriptMain.id = reedJsId;
+                        scriptMain.src = '<?php echo dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1); ?>';
+                        document.head.appendChild(scriptMain);
+                    }
                 </script>
                 <?php
             }
@@ -908,54 +939,36 @@ class ActionsReedcrm
                         $thirdPartyEmail = !empty($parameters['obj']->options_reedcrm_email) ? dol_escape_htmltag($parameters['obj']->options_reedcrm_email) : '';
                         $thirdPartyPhone = !empty($parameters['obj']->options_projectphone) ? dol_escape_htmltag($parameters['obj']->options_projectphone) : '';
 
-                        // Retrieve the Societe logo using exact native approach as dol_banner_tab
-                        /*$logoHtml = '';
-                        if (!empty($parameters['obj']->socid)) {
-                            require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-                            $tmpsoc = new Societe($this->db);
-                            if ($tmpsoc->fetch($parameters['obj']->socid) > 0) {
-                                require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
-                                if (!in_array('Form', get_declared_classes())) {
-                                    $form = new Form($this->db);
-                                } else {
-                                    $form = new Form($this->db);
-                                }
-                                // Call showphoto exactly as dol_banner_tab does, but adapted width
-                                $logoHtml = $form->showphoto('societe', $tmpsoc, 42, 42, 0, 'reedcrm-coordonnees-avatar-img', 'small', 0, 0);
-                            }
-                        }
+                        // We can generate avatar using dolGetFirstLastname tooltip logic or just uncommenting logoHtml if needed
+                        $out5 = '<td class="tdoverflowmax300 valignmiddle">';
+                        $out5 .= '<div class="reedcrm-plist-coordonnees contact-inline-wrapper" data-project-id="' . $parameters['obj']->id . '">';
 
-                        if (empty($logoHtml)) {
-                            $logoPlaceholderUrl = dol_buildpath('/theme/common/company.png', 1);
-                            $logoHtml = '<img src="' . $logoPlaceholderUrl . '" alt="" class="reedcrm-plist-coordonnees-avatar-img" width="42" height="42">';
-                        }*/
-
-                        $out5 = '<td class="tdoverflowmax200 valignmiddle">';
-                        $out5 .= '<div class="reedcrm-plist-coordonnees">';
-
-                        // We remove the explicit height/width from the wrapper if showphoto generates a div to avoid layout breaks
-//                        $out5 .= '<div class="reedcrm-plist-coordonnees-avatar">';
-//                        $out5 .= $logoHtml;
-//                        $out5 .= '</div>';
-
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-avatar" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">';
+                        $out5 .= '<img src="' . dol_buildpath('/reedcrm/img/reedcrm_color.png', 1) . '" style="width:20px; height:20px; object-fit:contain;" alt="ReedCRM">';
+                        $out5 .= '</div>';
+                        
                         $out5 .= '<div class="reedcrm-plist-coordonnees-box">';
-                        if ($thirdPartyName) {
-                            $out5 .= '<div class="reedcrm-plist-coordonnees-name">' . $thirdPartyName . ' ' . $thirdPartyName2 . '</div>';
-                        }
-                        if ($thirdPartyEmail) {
-                            $out5 .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $thirdPartyEmail . '</div>';
-                        }
-                        if ($thirdPartyPhone) {
-                            $out5 .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . $thirdPartyPhone . '</div>';
-                        }
-                        if (!$thirdPartyName && !$thirdPartyEmail && !$thirdPartyPhone) {
-                            $out5 .= '<span class="opacitymedium">-</span>';
-                        }
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-name" style="display: flex; align-items: center; border-left: 1px solid #e2e8f0; padding-left: 8px;">';
+                        $out5 .= '<i class="fas fa-address-book" style="color:#64748b; margin-right:4px; flex-shrink: 0;"></i>';
+                        $out5 .= '<span class="inline-edit-contact" data-field="firstname" data-val="' . dol_escape_htmltag($thirdPartyName2) . '" style="cursor:pointer; border-bottom:1px dashed #cbd5e0; padding-bottom:1px; margin-right:4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' . ($thirdPartyName2 ? $thirdPartyName2 : 'Prénom') . '</span>';
+                        $out5 .= '<span class="inline-edit-contact" data-field="lastname" data-val="' . dol_escape_htmltag($thirdPartyName) . '" style="cursor:pointer; border-bottom:1px dashed #cbd5e0; padding-bottom:1px; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' . ($thirdPartyName ? $thirdPartyName : 'Nom') . '</span>';
+                        $out5 .= '</div>';
+                        
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-email" style="display: flex; align-items: center; padding-left: 8px;">';
+                        $out5 .= '<i class="fas fa-envelope" style="color:#64748b; margin-right:4px; flex-shrink: 0;"></i>';
+                        $out5 .= '<span class="inline-edit-contact" data-field="email" data-val="' . dol_escape_htmltag($thirdPartyEmail) . '" style="cursor:pointer; border-bottom:1px dashed #cbd5e0; padding-bottom:1px; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' . ($thirdPartyEmail ? $thirdPartyEmail : 'Email') . '</span>';
+                        $out5 .= '</div>';
+                        
+                        // Hidden field for website to prevent JS errors
+                        $out5 .= '<span class="inline-edit-contact" data-field="website" data-val="" style="display:none;"></span>';
                         $out5 .= '</div>';
 
-                        $out5 .= '<div class="reedcrm-plist-coordonnees-actions">';
+                        $out5 .= '<div class="reedcrm-plist-coordonnees-phone-wrapper" style="margin-left: auto; text-align: right;">';
+                        $out5 .= '<span class="inline-edit-contact" data-field="phone" data-val="' . dol_escape_htmltag($thirdPartyPhone) . '" style="cursor:pointer; border-bottom:1px dashed #cbd5e0; padding-bottom:1px; font-size: 13px; color: #2c3e50; margin-right: 6px;">' . ($thirdPartyPhone ? $thirdPartyPhone : 'Téléphone') . '</span>';
                         if ($thirdPartyPhone) {
-                            $out5 .= '<a href="tel:' . preg_replace('/\s+/', '', $parameters['obj']->phone) . '" class="reedcrm-plist-coordonnees-btn"><i class="fas fa-phone-alt"></i></a>';
+                            $out5 .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/[^0-9+]/', '', $thirdPartyPhone)) . '" title="Appeler" style="color: #64748b; text-decoration: none;"><i class="fas fa-phone-alt fa-lg reedcrm-icon-hover" style="transition: color 0.2s;"></i></a>';
+                        } else {
+                            $out5 .= '<i class="fas fa-phone-alt fa-lg" style="color: #64748b;"></i>';
                         }
                         $out5 .= '</div>';
 
@@ -1315,16 +1328,6 @@ class ActionsReedcrm
                     $data['custom_desc'] = '<div style="margin-top: 5px;"><b>' . $langs->trans('Description') . ':</b> ' . dol_string_nohtmltag($object->description) . '</div>';
                 }
 
-                // Add the 5 Relaunch actions directly into the tooltip (the hover)
-                $urlQuickEvent = DOL_URL_ROOT . '/custom/reedcrm/view/quickevent.php?projectid=' . $object->id;
-                $buttons = '<div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap;">';
-                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE J0') . '">RELANCE J0</a>';
-                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE J7') . '">RELANCE J7</a>';
-                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE J14') . '">RELANCE J14</a>';
-                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE M1') . '">RELANCE M1</a>';
-                $buttons .= '<a class="butAction" style="padding: 2px 5px; font-size: 10px;" href="' . $urlQuickEvent . '&label=' . urlencode('RELANCE M6+') . '">RELANCE M6+</a>';
-                $buttons .= '</div>';
-                $data['relaunch_actions'] = $buttons;
 
                 // Remove unwanted fields and extra margin wrappings
                 unset($data['visibility']);
