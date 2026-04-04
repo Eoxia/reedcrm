@@ -187,6 +187,34 @@ if ($action == 'updateopppercent') {
     exit;
 }
 
+if ($action == 'updateopporigin') {
+    $projectId = GETPOST('projectid', 'int');
+    $newOrigin = GETPOST('origin', 'aZ09');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $proj->fetch_optionals();
+            $proj->array_options['options_opporigin'] = $newOrigin;
+            
+            if ($proj->insertExtraFields() > 0) {
+                // If it worked, we might want to return the translated label of the origin
+                $res['success'] = true;
+                
+                // Fetch the actual label from c_opporigin if it exists (assuming it is a dictionary)
+                // Extrafields might be populated via dictionary, we'll return the raw value, the frontend JS can use the selected option text
+                $res['new_origin'] = $newOrigin;
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'updateopptitle') {
     $projectId = GETPOST('projectid', 'int');
     $newTitle = trim(GETPOST('title'));

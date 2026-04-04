@@ -14,6 +14,7 @@ window.saturne.contact_inline.event = function() {
     $(document).on('click', '.inline-edit-proj-percent', window.saturne.contact_inline.editPercent);
     $(document).on('click', '.inline-edit-proj-amount', window.saturne.contact_inline.editAmount);
     $(document).on('click', '.inline-edit-company-badge', window.saturne.contact_inline.startCompanyEdit);
+    $(document).on('click', '.inline-edit-origin-badge', window.saturne.contact_inline.startOriginEdit);
 };
 
 window.saturne.contact_inline.copyToClipboard = function(e) {
@@ -122,14 +123,27 @@ window.saturne.contact_inline.mountCardUi = function() {
     // Find the standard third-party link (usually an <a> tag that contains "socid=" inside refidno, avoiding tiny C/P/S badges)
     let companyBadge = refidno.find('a[href*="socid="]').not('.customer-back').not('.vendor-back').first();
     if (companyBadge.length > 0) {
+        let compHref = companyBadge.attr('href');
+        
+        // Remove native building icons from the text link
+        let buildingIcon = companyBadge.find('.fa-building, .fa-building-o, .fa-industry');
+        if (buildingIcon.length > 0) {
+            buildingIcon.remove();
+            // Also trim leading spaces left after icon removal
+            companyBadge.html(companyBadge.html().replace(/&nbsp;/g, '').trim());
+        }
+        
         // Wrap it with our standard UI badge styling if not already done
         if (!companyBadge.parent().hasClass('reedcrm-header-company-wrapper')) {
             let compWrapperHtml = '<div class="reedcrm-header-company-wrapper" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;"></div>';
             companyBadge.wrap(compWrapperHtml);
             companyBadge.before('<img src="' + logoPath + '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />');
+            
+            // Inject the dedicated _blank hyperlink using the building icon
+            companyBadge.before('<a href="' + compHref + '" target="_blank" style="color: #64748b; margin-right: 6px; display: inline-flex; align-items: center;" title="Ouvrir la fiche tiers"><i class="fas fa-building"></i></a>');
         }
         
-        // Ensure the link looks like the editable fields
+        // Ensure the text looks like editable fields
         companyBadge.addClass('inline-edit-company-badge').css({
             'cursor': 'pointer',
             'transition': 'color 0.3s',
@@ -261,6 +275,92 @@ window.saturne.contact_inline.startCompanyEdit = function(e) {
         setTimeout(function() {
             if (hiddenSelectorWrap.is(':visible')) {
                 // Not selecting anything ? just revert
+                hiddenSelectorWrap.hide();
+                aTag.show();
+            }
+        }, 100);
+    });
+};
+
+window.saturne.contact_inline.startOriginEdit = function(e) {
+    if ($(e.target).hasClass('select2-selection__choice__remove') || $(e.target).closest('.select2-container').length > 0) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    let aTag = $(this);
+    let originalHtml = aTag.html();
+    
+    let hiddenSelectorWrap = aTag.parent().find('.reedcrm-hidden-origin-selector-wrap');
+    if (hiddenSelectorWrap.length === 0) return;
+    
+    aTag.hide();
+    hiddenSelectorWrap.show();
+    
+    let selectElem = hiddenSelectorWrap.find('select');
+    if (selectElem.length === 0) return;
+    
+    try {
+        // Ensure Select2 is instantiated
+        if (!selectElem.data('select2') && !selectElem.hasClass('select2-hidden-accessible')) {
+            selectElem.select2({ width: '180px' });
+        } else {
+            // Explicitly fix Select2 width if it was 0 px due to being initialized while display:none
+            let sc = selectElem.next('.select2-container');
+            if (sc.length > 0) {
+                sc.css('width', '180px');
+            }
+        }
+        
+        selectElem.select2('open');
+    } catch (err) {
+        console.error("SELECT2 ERROR: ", err);
+        return;
+    }
+    
+    selectElem.off('change.inlineedit').on('change.inlineedit', function() {
+        let newOrigin = $(this).val();
+        let newOriginText = $(this).find('option:selected').text();
+        let projId = $('#reedcrm-inline-data').data('project-id');
+        let token = $('input[name="token"]').val() || '';
+        
+        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
+        if (!url) {
+            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+        }
+        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateopporigin';
+        
+        aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
+        hiddenSelectorWrap.hide();
+        aTag.show();
+        
+        $.ajax({
+            url: ajaxUrl,
+            type: 'POST',
+            data: { projectid: projId, origin: newOrigin, token: token },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    aTag.text(newOriginText);
+                    aTag.css('color', '#2ecc71');
+                    setTimeout(() => aTag.css('color', ''), 1500);
+                } else {
+                    alert("Erreur: " + (res.error || "Inconnue"));
+                    aTag.html(originalHtml);
+                }
+            },
+            error: function() {
+                alert("Impossible de joindre le serveur");
+                aTag.html(originalHtml);
+            }
+        });
+    });
+    
+    // Revert UI on close if no change happened
+    selectElem.off('select2:close').on('select2:close', function () {
+        setTimeout(function() {
+            if (hiddenSelectorWrap.is(':visible')) {
                 hiddenSelectorWrap.hide();
                 aTag.show();
             }
@@ -577,21 +677,33 @@ window.saturne.contact_inline.editPercent = function(e) {
                     span.data('val', newVal);
                     span.html(newVal + ' %');
                     span.css({color: '#2ecc71'});
+                    setTimeout(() => span.css({color: '#0f172a'}), 1500);
                 } else {
                     span.html(originalText).css({color: '#e74c3c'});
-                    setTimeout(() => span.css({color: ''}), 1500);
+                    setTimeout(() => span.css({color: '#0f172a'}), 1500);
                 }
             },
             error: function(jqXHR) {
                 alert("Erreur XHR Percent: " + jqXHR.status + "\n" + (jqXHR.responseText ? jqXHR.responseText.substring(0, 300) : 'Aucune reponse'));
                 span.html(originalText).css({color: '#e74c3c'});
-                setTimeout(() => span.css({color: ''}), 1500);
+                setTimeout(() => span.css({color: originalColor}), 1500);
             }
         });
     };
     
     input.on('blur', submitValuePercent);
     input.on('keypress', function(ev) { ev.stopPropagation(); if (ev.which === 13) { ev.preventDefault(); input.off('blur'); submitValuePercent(); } });
+    input.on('keydown', function(ev) {
+        if (ev.which === 9) { // Tab
+            ev.preventDefault();
+            input.off('blur');
+            submitValuePercent();
+            let amountSpan = span.parent().find('.inline-edit-proj-amount');
+            if (amountSpan.length > 0) {
+                setTimeout(() => amountSpan.click(), 50);
+            }
+        }
+    });
     input.on('click', function(ev) { ev.stopPropagation(); });
 };
 
@@ -640,21 +752,29 @@ window.saturne.contact_inline.editAmount = function(e) {
                     span.data('val', newVal);
                     span.html(res.formatted_amount);
                     span.css({color: '#2ecc71'});
+                    setTimeout(() => span.css({color: '#3b82f6'}), 1500);
                 } else {
                     span.html(originalText).css({color: '#e74c3c'});
-                    setTimeout(() => span.css({color: ''}), 1500);
+                    setTimeout(() => span.css({color: '#3b82f6'}), 1500);
                 }
             },
             error: function(jqXHR) {
                 alert("Erreur XHR Percent: " + jqXHR.status + "\n" + (jqXHR.responseText ? jqXHR.responseText.substring(0, 300) : 'Aucune reponse'));
                 span.html(originalText).css({color: '#e74c3c'});
-                setTimeout(() => span.css({color: ''}), 1500);
+                setTimeout(() => span.css({color: '#3b82f6'}), 1500);
             }
         });
     };
     
     input.on('blur', submitValueAmount);
     input.on('keypress', function(ev) { ev.stopPropagation(); if (ev.which === 13) { ev.preventDefault(); input.off('blur'); submitValueAmount(); } });
+    input.on('keydown', function(ev) {
+        if (ev.which === 9) { // Tab
+            ev.preventDefault();
+            input.off('blur');
+            submitValueAmount();
+        }
+    });
     input.on('click', function(ev) { ev.stopPropagation(); });
 };
 
@@ -665,10 +785,7 @@ $(document).ready(function() {
         window.saturne.contact_inline.mountCardUi();
         
         // Bind all click delegates
-        $(document).on('click', '.inline-edit-proj-title', window.saturne.contact_inline.startInlineEdit);
-        $(document).on('click', '.inline-edit-contact', window.saturne.contact_inline.startInlineEdit);
-        $(document).on('click', '.inline-edit-proj-percent', window.saturne.contact_inline.startPercentEdit);
-        $(document).on('click', '.inline-edit-proj-amount', window.saturne.contact_inline.startAmountEdit);
-        $(document).on('click', '.reedcrm-copy-text', window.saturne.contact_inline.copyText);
+        // (Delegates are mostly handled in init -> event(), keeping document bounds clean)
+        $(document).on('click', '.reedcrm-copy-text', window.saturne.contact_inline.copyToClipboard);
     }
 });
