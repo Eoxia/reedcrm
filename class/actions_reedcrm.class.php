@@ -355,21 +355,113 @@ class ActionsReedcrm
                 }
 
                 $url = '?socid=' . $socid . (strpos($_SERVER['PHP_SELF'], 'projet') ? '&fromtype=project' . '&project_id=' . $object->id : '') . '&action=create&token=' . newToken();
-                $out = '<tr><td class="titlefield">' . $pictoMod . $langs->trans('CommercialsRelaunching') . '</td>';
+                $out = '<tr id="reedcrm-relaunch-row-hidden" style="display:none;"><td colspan="2">';
 
                 $picto     = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
                 $socidAttr = $isThirdpartyContext ? ' data-socid="' . (int) $socid . '"' : '';
 
-                // Badge wrapped in hover-tooltip trigger (same popup mechanic as list)
-                $out .= '<td><div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . '>';
-                $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3">';
-                $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '"></span>';
-                $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
-                $out .= '</div></div>';
-
-                if ($nbActionComms > 0) {
-                    $out .= ' - ' . '<span>' . $langs->trans('LastCommercialReminderDate') . ' : ' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
+                // Build exactly like contactHtml wrapper
+                $out .= '<div class="contact-inline-wrapper reedcrm-header-relaunch-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
+                $out .= '<img src="' . $pictoPath . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+                // Show the specific event icon if it exists, otherwise fallback to the headset
+                if (!empty($lastActionComm) && !empty($lastActionComm->picto)) {
+                    $out .= '<span style="margin-right: 6px; color: #64748b;">' . img_picto('', $lastActionComm->picto) . '</span>';
+                } else {
+                    $out .= '<i class="fas fa-headset" style="color: #64748b; margin-right: 6px;"></i>';
                 }
+
+                if (!empty($lastActionComm)) {
+                    $urlAction = DOL_URL_ROOT . '/comm/action/card.php?id=' . $lastActionComm->id;
+                    $out .= '<a href="' . $urlAction . '" style="font-weight: 500; color: inherit; text-decoration: none; margin-right: 8px;" class="classlink">' . $lastActionComm->id . '</a>';
+                    
+                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+                    
+                    $labelHtml = '<span class="inline-edit-action-title reedcrm-edit-action-title" data-action-id="' . $lastActionComm->id . '" data-val="' . dol_escape_htmltag($lastActionComm->label) . '" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px; min-width: 50px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $lastActionComm->label . '</span>';
+                    $out .= $labelHtml;
+
+                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+                    $out .= '<span style="color: #64748b; margin-right: 8px;">' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
+
+                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+
+                    $out .= '<div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . ' style="display: inline-block;">';
+                    $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3" style="cursor:pointer;">';
+                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '"></span>';
+                    $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
+                    $out .= '</div></div>';
+                    
+                    $out .= '<script>
+                    $(document).ready(function() {
+                        $(document).off("click", ".reedcrm-edit-action-title").on("click", ".reedcrm-edit-action-title", function(e) {
+                            if ($(this).find("input").length > 0) return;
+                            e.stopPropagation();
+                            
+                            let span = $(this);
+                            let currentVal = span.data("val") || "";
+                            let actionId = span.data("action-id");
+                            
+                            let input = $("<input type=\\"text\\" style=\\"width: 100%; min-width: 150px; border: 1px solid #3b82f6; border-radius: 4px; padding: 4px 8px; font-weight: inherit; font-size: inherit; color: #0f172a; outline: none; box-sizing: border-box; background: white; margin: 0; display: inline-block; line-height: normal;\\" value=\\"\\">");
+                            input.val(currentVal);
+                            
+                            span.html("").append(input);
+                            input.focus();
+                            input.select();
+                            
+                            let submitActionLabel = function() {
+                                let newVal = input.val().trim();
+                                if (newVal === currentVal) {
+                                    span.html(currentVal);
+                                    return;
+                                }
+                                
+                                span.data("val", newVal);
+                                span.html("<i class=\\"fas fa-spinner fa-spin\\" style=\\"color: #9b59b6;\\"></i>");
+                                
+                                let token = $(\'input[name="token"]\').val() || \'\';
+                                let targetUrl = "' . DOL_URL_ROOT . '/custom/reedcrm/ajax/update_action_label.php";
+                                $.ajax({
+                                    url: targetUrl,
+                                    type: "POST",
+                                    data: { actionid: actionId, label: newVal, token: token },
+                                    success: function(res) {
+                                        if (res && res.success) {
+                                            span.html(newVal).css({color: "#2ecc71"});
+                                            setTimeout(function() { span.css({color: ""}); }, 1500);
+                                        } else {
+                                            span.html(currentVal).css({color: "#e74c3c"});
+                                            setTimeout(function() { span.css({color: ""}); }, 1500);
+                                        }
+                                    },
+                                    error: function() {
+                                        span.html(currentVal).css({color: "#e74c3c"});
+                                        setTimeout(function() { span.css({color: ""}); }, 1500);
+                                    }
+                                });
+                            };
+                            
+                            input.on("blur", submitActionLabel);
+                            input.on("keydown", function(ev) { 
+                                if (ev.which === 13) { 
+                                    ev.preventDefault(); 
+                                    input.off("blur"); 
+                                    submitActionLabel(); 
+                                } else if (ev.which === 9) {
+                                    input.off("blur");
+                                    setTimeout(submitActionLabel, 10);
+                                }
+                            });
+                            input.on("click", function(ev) { ev.stopPropagation(); });
+                        });
+                    });
+                    </script>';
+                } else {
+                    $out .= '<div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . ' style="display: inline-block; margin-right: 8px;">';
+                    $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3" style="cursor:pointer;">';
+                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '"></span>';
+                    $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
+                    $out .= '</div></div>';
+                }
+
                 if ($user->hasRight('agenda', 'myactions', 'create')) {
                     $modalId = 'eventproCardModal';
                     if ($isThirdpartyContext) {
@@ -377,13 +469,28 @@ class ActionsReedcrm
                     } else {
                         $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id;
                     }
-                    $out .= ' <span class="fa fa-plus-circle valignmiddle paddingleft reedcrm-card-modal-open" style="cursor:pointer;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . ($isThirdpartyContext ? '' : $object->id) . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
+                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+                    $out .= '<i class="fas fa-plus reedcrm-card-modal-open" style="cursor:pointer; color: #3b82f6; padding: 2px 4px;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . ($isThirdpartyContext ? '' : $object->id) . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '"></i>';
                     $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
-                    $out .= '</span>';
                 }
-                if (!empty($lastActionComm)) {
-                    $out .= '<br>' . dolButtonToOpenUrlInDialogPopup('lastActionComm' . $object->id, $langs->transnoentities('LastEvent') . ' : ' . $lastActionComm->label, $form->textwithpicto(img_picto('', $lastActionComm->picto) . ' ' . $lastActionComm->label, $lastActionComm->note_private), '/comm/action/card.php?id=' . $lastActionComm->id, '', 'classlink button bordertransp', "window.saturne.toolbox.checkIframeCreation();");
-                }
+
+                $out .= '</div>'; // End wrapper block
+
+                // Teleport the block to the top left area
+                $out .= '<script>
+                    $(document).ready(function() {
+                        setTimeout(function() {
+                            let flexContainer = document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
+                            let relaunchBlock = document.querySelector(".reedcrm-header-relaunch-master");
+                            if (flexContainer && relaunchBlock) {
+                                flexContainer.appendChild(relaunchBlock);
+                                relaunchBlock.style.marginLeft = "0";
+                                relaunchBlock.style.marginBottom = "0";
+                            }
+                        }, 50); // slight delay to allow contact_inline.js to build the flex container
+                    });
+                </script>';
+
                 $out .= '</td></tr>';
 
                 ?>
@@ -1433,16 +1540,45 @@ class ActionsReedcrm
                 $assetsHtml .= '<style> .iti { width: 100%; display: block; } .iti input[type="tel"] { padding-left: 52px !important; } input.input-invalid-material { border-color: #e53935 !important; border-bottom: 2px solid #e53935 !important; color: #e53935 !important; } </style>';
                 $assetsHtml .= '<script src="' . $itiJsPath . '"></script>';
 
-                // Inject ReedCRM favicon next to the "Origine de l'opportunitée" extrafield label
-                $pictoOpporiginHtml = img_picto('', $logoPath, '', 1, 0, 0, '', 'pictoModule');
+                // Origin (Provenance) Inline Edit UI implementation
+                $oppOriginVal = isset($object->array_options['options_opporigin']) ? $object->array_options['options_opporigin'] : '';
+                
+                require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+                $extrafieldsObj = new ExtraFields($db);
+                $extrafieldsObj->fetch_name_optionals_label($object->table_element);
+                
+                // Natively output the text label of the selected origin and strip native HTML wrappers that trigger native Dolibarr conflicts
+                $rawOutput = $extrafieldsObj->showOutputField('opporigin', $oppOriginVal, '', $object->table_element);
+                $cleanLabelText = trim(strip_tags($rawOutput));
+                
+                if (empty($cleanLabelText)) {
+                    $oppOriginLabel = '<span style="color:#cbd5e0; font-style:italic;">' . dol_escape_htmltag($langs->transnoentities('OpportunityOrigin')) . '</span>';
+                } else {
+                    $oppOriginLabel = $cleanLabelText;
+                }
+                
+                // Mount the `<select>` markup locally to guarantee DOM presence
+                $hiddenOriginSelect = $extrafieldsObj->showInputField('opporigin', $oppOriginVal, 'id="reedcrm_inline_opporigin"', '', '', '', $object, $object->table_element, 0);
+                if (empty($hiddenOriginSelect) || strpos($hiddenOriginSelect, '<select') === false) {
+                    // Fallback if dolibarr fails to generate the tag
+                    $hiddenOriginSelect = '<select id="reedcrm_inline_opporigin" name="options_opporigin" class="flat"><option value="">' . dol_escape_htmltag($langs->trans('None')) . '</option></select>';
+                }
+
+                // Build exactly like contactHtml wrapper
+                $originHtml = '<div class="contact-inline-wrapper reedcrm-header-origin-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
+                $originHtml .= '<img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+                $originHtml .= '<i class="fas fa-bullseye" style="color: #64748b; margin-right: 6px;"></i>';
+                $originHtml .= '<a href="#" class="classlink inline-edit-origin-badge" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $oppOriginLabel . '</a>';
+                $originHtml .= '<div class="reedcrm-hidden-origin-selector-wrap" style="display:none; margin-left:6px;">' . $hiddenOriginSelect . '</div>';
+                $originHtml .= '</div>';
+
                 $assetsHtml .= '<script>
                     (function() {
-                        var iconHtml = ' . json_encode($pictoOpporiginHtml) . ';
-                        var labelText = "' . dol_escape_js($langs->transnoentities('OpportunityOrigin')) . '";
+                        var originHtmlStr = ' . json_encode($originHtml) . ';
                         
-                        function addFaviconToLabel() {
+                        function processOriginField() {
+                            // 1. Hide the original row
                             var tr = null;
-                            // Find the row containing the extrafield
                             var input = document.getElementById("options_opporigin");
                             if (input) {
                                 tr = input.closest("tr");
@@ -1452,29 +1588,43 @@ class ActionsReedcrm
                                     tr = valCell.closest("tr");
                                 }
                             }
-                            
                             if (tr) {
-                                var labelTd = tr.firstElementChild;
-                                if (labelTd && !labelTd.querySelector("img.pictoModule")) {
-                                    var targetContainer = labelTd;
-                                    // Traverse to the deepest element that contains the text but NO tables
-                                    // This preserves Dolibarr native layout tables used for the "Edit Pencil" icon alignment
-                                    var innerNodes = labelTd.querySelectorAll("td, span, div, label");
-                                    for (var i = 0; i < innerNodes.length; i++) {
-                                        var node = innerNodes[i];
-                                        if (node.textContent.trim().indexOf(labelText) !== -1 && !node.querySelector("table")) {
-                                            targetContainer = node;
-                                        }
-                                    }
-                                    targetContainer.insertAdjacentHTML("afterbegin", iconHtml + "&nbsp;");
-                                }
+                                tr.style.display = "none";
                             }
+                            
+                            // 2. Append the new UI teleport block to the header flex container
+                            setTimeout(function() {
+                                var flexContainer = document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
+                                if (flexContainer) {
+                                    var tempWrap = document.createElement("div");
+                                    tempWrap.innerHTML = originHtmlStr;
+                                    var node = tempWrap.firstElementChild;
+                                    
+                                    var companyWrapper = flexContainer.querySelector(".reedcrm-header-company-wrapper");
+                                    if (companyWrapper) {
+                                        // Wrap company and origin in a horizontal flex row to display side-by-side
+                                        if (companyWrapper.parentElement && !companyWrapper.parentElement.classList.contains("rcrm-co-org-row")) {
+                                            var row = document.createElement("div");
+                                            row.className = "rcrm-co-org-row";
+                                            row.style.display = "flex";
+                                            row.style.gap = "8px";
+                                            row.style.alignItems = "center";
+                                            row.style.flexWrap = "wrap";
+                                            companyWrapper.parentNode.insertBefore(row, companyWrapper);
+                                            row.appendChild(companyWrapper);
+                                        }
+                                        companyWrapper.parentElement.appendChild(node);
+                                    } else {
+                                        flexContainer.appendChild(node);
+                                    }
+                                }
+                            }, 100);
                         }
                         
                         if (document.readyState === "loading") {
-                            document.addEventListener("DOMContentLoaded", addFaviconToLabel);
+                            document.addEventListener("DOMContentLoaded", processOriginField);
                         } else {
-                            addFaviconToLabel();
+                            processOriginField();
                         }
                     })();
                 </script>';
@@ -1599,10 +1749,12 @@ class ActionsReedcrm
                     $closureWidgetHtml = '
                     <script>
                         $(document).ready(function() {
-                            var $target = $(".arearef, .titre").first();
-                            if ($target.length > 0 && !$("#reedcrm-closure-widget").length) {
+                            var $statusRef = $(".statusref").first();
+                            var $fallback = $(".arearef, .titre").first();
+                            
+                            if (($statusRef.length > 0 || $fallback.length > 0) && !$("#reedcrm-closure-widget").length) {
                                 var widgetHtml = `
-                                    <div id="reedcrm-closure-widget" style="display:inline-block; background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-top:5px; margin-bottom:15px; clear:both; float:right;">
+                                    <div id="reedcrm-closure-widget" style="position:absolute; top:calc(100% + 8px); right:0; z-index:50; width:max-content; display:block; background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                                         <div style="display:flex; align-items:center; gap:8px;">
                                             <img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height:24px; width:auto;" alt="ReedCRM" />
                                             <select id="rcrm-close-reason" style="border:1px solid #ced4da; border-radius:4px; padding:3px; outline:none; font-size:12px; min-width:130px;" class="flat">
@@ -1622,7 +1774,15 @@ class ActionsReedcrm
                                     </div>
                                 `;
                                 
-                                $target.after(widgetHtml);
+                                if ($statusRef.length > 0) {
+                                    if ($statusRef.css("position") === "static") $statusRef.css("position", "relative");
+                                    $statusRef.css("overflow", "visible");
+                                    $statusRef.append(widgetHtml);
+                                } else {
+                                    if ($fallback.css("position") === "static") $fallback.css("position", "relative");
+                                    $fallback.css("overflow", "visible");
+                                    $fallback.append(widgetHtml);
+                                }
 
                                 var selectedStatus = null;
 
@@ -1733,6 +1893,7 @@ class ActionsReedcrm
                         $eventUrl = dol_buildpath('/comm/action/card.php', 1) . '?id=' . ((int)$objEvent->id);
                         $eventNomUrlSafe = '<a href="' . $eventUrl . '" target="_blank" style="color:#000; text-decoration:none;" title="Ouvrir l\'événement complet"><strong>' . ((int)$objEvent->id) . '</strong></a>';
                         
+                        
                         // Action Date
                         $dateFormatted = dol_print_date($db->jdate($objEvent->datep), 'dayhour');
                         
@@ -1756,64 +1917,91 @@ class ActionsReedcrm
                         $btnIcon = 'fa-undo';
                         $btnTitle = $isWon ? 'Annuler la signature et repasser en opportunité' : 'Annuler la clôture et repasser en opportunité';
                         
-                        $closureWidgetHtml = '
+                        $btnTitleSafe = dol_escape_js($btnTitle);
+                        $btnIconSafe  = dol_escape_js($btnIcon);
+                        $objElementSafe = dol_escape_js($object->element);
+                        $objIdSecure = (int)$object->id;
+                        $closeAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/close_record.php', 1);
+                        $imgLogo = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+                        $newTokenStr = newToken();
+                        $labelSafe = htmlspecialchars($rawLabel, ENT_QUOTES);
+                        $labelTruncSafe = htmlspecialchars($truncatedLabel, ENT_QUOTES);
+                        
+                        $closureWidgetHtml = <<<EOT
                         <script>
                             $(document).ready(function() {
-                                var $target = $(".arearef, .titre").first();
-                                if ($target.length > 0 && !$("#reedcrm-closure-widget").length) {
+                                var \$statusRef = $(".statusref").first();
+                                var \$fallback = $(".arearef, .titre").first();
+                                if ((\$statusRef.length > 0 || \$fallback.length > 0) && !$("#reedcrm-closure-widget").length) {
                                     var widgetHtml = `
-                                        <div id="reedcrm-closure-widget" style="display:inline-block; background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-top:5px; margin-bottom:15px; clear:both; float:right;">
+                                        <div id="reedcrm-closure-widget" style="position:absolute; top:calc(100% + 8px); right:0; z-index:50; width:max-content; display:block; background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                                             <div style="display:flex; align-items:center; gap:8px;">
-                                                <img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height:24px; width:auto;" alt="ReedCRM" />
+                                                <img src="{$imgLogo}" style="height:24px; width:auto;" alt="ReedCRM" />
                                                 <i class="far fa-calendar-alt" style="color:#6c757d;"></i>
-                                                <span style="font-size:13px; font-weight:normal; color:#000;">' . $eventNomUrlSafe . '</span>
-                                                <span style="font-size:13px; color:#495057;">' . $dateFormatted . '</span>
-                                                <div style="margin-left:4px; height:24px; display:inline-flex; align-items:center;">' . $avatarHtmlSafe . '</div>
+                                                <span style="font-size:13px; font-weight:normal; color:#000;">{$eventNomUrlSafe}</span>
+                                                <span style="font-size:13px; color:#495057;">{$dateFormatted}</span>
+                                                <div style="margin-left:4px; height:24px; display:inline-flex; align-items:center;">{$avatarHtmlSafe}</div>
                                                 <div style="margin-left:8px; display:flex; gap:8px;">
-                                                    <span style="' . $lostBorder . ' border-radius:4px; padding:2px; font-size:20px; line-height:1; display:inline-block;" title="Perdu">😭</span>
-                                                    <span style="' . $wonBorder . ' border-radius:4px; padding:2px; font-size:20px; line-height:1; display:inline-block;" title="Gagné">🤩</span>
+                                                    <span style="{$lostBorder} border-radius:4px; padding:2px; font-size:20px; line-height:1; display:inline-block;" title="Perdu">😭</span>
+                                                    <span style="{$wonBorder} border-radius:4px; padding:2px; font-size:20px; line-height:1; display:inline-block;" title="Gagné">🤩</span>
                                                 </div>
                                             </div>
                                             <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                                                <div style="flex-grow:1; border:1px solid #ced4da; background:#f8f9fa; border-radius:4px; font-size:12px; padding:4px 8px; color:#495057; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px;" title="' . htmlspecialchars($rawLabel, ENT_QUOTES) . '">
-                                                    ' . htmlspecialchars($truncatedLabel, ENT_QUOTES) . '
+                                                <div style="flex-grow:1; border:1px solid #ced4da; background:#f8f9fa; border-radius:4px; font-size:12px; padding:4px 8px; color:#495057; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px;" title="{$labelSafe}">
+                                                    {$labelTruncSafe}
                                                 </div>
-                                                <button type="button" id="rcrm-btn-reopen" title="' . $btnTitle . '" style="margin-left:auto; background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas ' . $btnIcon . '"></i></button>
+                                                <button type="button" id="rcrm-btn-reopen" title="{$btnTitleSafe}" style="margin-left:auto; background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas {$btnIconSafe}"></i></button>
                                             </div>
                                         </div>
                                     `;
                                     
-                                    $target.after(widgetHtml);
+                                    if (\$statusRef.length > 0) {
+                                        if (\$statusRef.css("position") === "static") \$statusRef.css("position", "relative");
+                                        \$statusRef.css("overflow", "visible");
+                                        \$statusRef.append(widgetHtml);
+                                    } else {
+                                        if (\$fallback.css("position") === "static") \$fallback.css("position", "relative");
+                                        \$fallback.css("overflow", "visible");
+                                        \$fallback.append(widgetHtml);
+                                    }
                                     
                                     $("#rcrm-btn-reopen").on("click", function(e) {
                                         e.preventDefault();
-                                        var objId = ' . (int)$object->id . ';
-                                        var type = "' . dol_escape_js($object->element) . '";
-                                        $(this).html("<i class=\'fas fa-spinner fa-spin\'></i>");
+                                        $(this).html("<i class='fas fa-spinner fa-spin'></i>");
                                         
                                         $.ajax({
-                                            url: "' . dol_buildpath('/custom/reedcrm/ajax/close_record.php', 1) . '",
+                                            url: "{$closeAjaxUrl}",
                                             method: "POST",
-                                            data: { action: "reopen", id: objId, type: type, token: "' . newToken() . '" },
+                                            data: { action: "reopen", id: {$objIdSecure}, type: "{$objElementSafe}", token: "{$newTokenStr}" },
                                             dataType: "json",
-                                            success: function(res) { if (res.success) window.location.reload(); else { alert("Erreur: " + res.error); $("#rcrm-btn-reopen").html("<i class=\'fas ' . $btnIcon . '\'></i>"); } },
-                                            error: function() { alert("Erreur de connexion."); $("#rcrm-btn-reopen").html("<i class=\'fas ' . $btnIcon . '\'></i>"); }
+                                            success: function(res) { if (res.success) window.location.reload(); else { alert("Erreur: " + res.error); $("#rcrm-btn-reopen").html("<i class='fas {$btnIconSafe}'></i>"); } },
+                                            error: function() { alert("Erreur de connexion."); $("#rcrm-btn-reopen").html("<i class='fas {$btnIconSafe}'></i>"); }
                                         });
                                     });
                                 }
                             });
-                        </script>';
+                        </script>
+EOT;
                     } else {
                         // Fallback: No actioncomm found for this project
-                        $closureWidgetHtml = '
+                        $btnTitleSafe = dol_escape_js('Rouvrir le projet');
+                        $btnIconSafe  = dol_escape_js('fa-undo');
+                        $objElementSafe = dol_escape_js($object->element);
+                        $objIdSecure = (int)$object->id;
+                        $closeAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/close_record.php', 1);
+                        $imgLogo = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+                        $newTokenStr = newToken();
+                        
+                        $closureWidgetHtml = <<<EOT
                         <script>
                             $(document).ready(function() {
-                                var $target = $(".arearef, .titre").first();
-                                if ($target.length > 0 && !$("#reedcrm-closure-widget").length) {
+                                var \$statusRef = $(".statusref").first();
+                                var \$fallback = $(".arearef, .titre").first();
+                                if ((\$statusRef.length > 0 || \$fallback.length > 0) && !$("#reedcrm-closure-widget").length) {
                                     var widgetHtml = `
-                                        <div id="reedcrm-closure-widget" style="display:inline-block; background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-top:5px; margin-bottom:15px; clear:both; float:right;">
+                                        <div id="reedcrm-closure-widget" style="position:absolute; top:calc(100% + 8px); right:0; z-index:50; width:max-content; display:block; background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                                             <div style="display:flex; align-items:center; gap:8px;">
-                                                <img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height:24px; width:auto;" alt="ReedCRM" />
+                                                <img src="{$imgLogo}" style="height:24px; width:auto;" alt="ReedCRM" />
                                                 <i class="far fa-calendar-alt" style="color:#6c757d;"></i>
                                                 <span style="font-size:13px; font-weight:bold; color:#000;">N/A</span>
                                                 <span style="font-size:13px; color:#495057;">--/--/-- --:--</span>
@@ -1822,28 +2010,36 @@ class ActionsReedcrm
                                                 <div style="flex-grow:1; border:1px solid #ced4da; background:#f8f9fa; border-radius:4px; font-size:12px; padding:4px 8px; color:#495057;">
                                                     Projet clôturé (aucun événement historique trouvé)
                                                 </div>
-                                                <button type="button" id="rcrm-btn-reopen" title="\' . ($btnTitle ?? \'Rouvrir le projet\') . \'" style="margin-left:auto; background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas \' . ($btnIcon ?? \'fa-undo\') . \'"></i></button>
+                                                <button type="button" id="rcrm-btn-reopen" title="{$btnTitleSafe}" style="margin-left:auto; background:#fff; border:2px solid #28a745; color:#28a745; border-radius:4px; padding:2px 6px; cursor:pointer; font-size:14px; transition:all 0.2s;"><i class="fas {$btnIconSafe}"></i></button>
                                             </div>
                                         </div>
                                     `;
-                                    $target.after(widgetHtml);
+                                    if (\$statusRef.length > 0) {
+                                        if (\$statusRef.css("position") === "static") \$statusRef.css("position", "relative");
+                                        \$statusRef.css("overflow", "visible");
+                                        \$statusRef.append(widgetHtml);
+                                    } else {
+                                        if (\$fallback.css("position") === "static") \$fallback.css("position", "relative");
+                                        \$fallback.css("overflow", "visible");
+                                        \$fallback.append(widgetHtml);
+                                    }
+                                    
                                     $("#rcrm-btn-reopen").on("click", function(e) {
                                         e.preventDefault();
-                                        var objId = ' . (int)$object->id . ';
-                                        var type = "' . dol_escape_js($object->element) . '";
-                                        $(this).html("<i class=\'fas fa-spinner fa-spin\'></i>");
+                                        $(this).html("<i class='fas fa-spinner fa-spin'></i>");
                                         $.ajax({
-                                            url: "' . dol_buildpath('/custom/reedcrm/ajax/close_record.php', 1) . '",
+                                            url: "{$closeAjaxUrl}",
                                             method: "POST",
-                                            data: { action: "reopen", id: objId, type: type, token: "' . newToken() . '" },
+                                            data: { action: "reopen", id: {$objIdSecure}, type: "{$objElementSafe}", token: "{$newTokenStr}" },
                                             dataType: "json",
                                             success: function(res) { if (res.success) window.location.reload(); },
-                                            error: function() { alert("Erreur de connexion."); $("#rcrm-btn-reopen").html("<i class=\'fas ' . ($btnIcon ?? 'fa-undo') . '\'></i>"); }
+                                            error: function() { alert("Erreur de connexion."); $("#rcrm-btn-reopen").html("<i class='fas {$btnIconSafe}'></i>"); }
                                         });
                                     });
                                 }
                             });
-                        </script>';
+                        </script>
+EOT;
                     }
                 }
 
