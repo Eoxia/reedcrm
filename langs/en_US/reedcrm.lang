@@ -17,9 +17,9 @@
 # ReedCRM
 #
 
-ModuleReedCRMName      = ReedCRM
-ModuleReedCRMDesc      = Simplification of CRM
-ReedCRMDescription     = Simplification of CRM
+ModuleReedCRMName = ReedCRM
+ModuleReedCRMDesc = Simplification of CRM
+ReedCRMDescription = Simplification of CRM
 ReedCRMDescriptionLong = Simplification of CRM
 
 # Keyyo Calls
@@ -46,7 +46,7 @@ Disable call notifications globally for all users = Disable call notifications g
 How often to check for new calls (in seconds, min: 2, max: 60) = How often to check for new calls (in seconds, min: 2, max: 60)
 Automatically open contact card when receiving a call notification = Automatically open contact card when receiving a call notification
 Open contact card in a new tab instead of current window = Open contact card in a new tab instead of current window
-Security token for Keyyo webhook (leave empty to disable token check) = Security token for Keyyo webhook (leave empty to disable token check)
+ReedCRMKeyyoSecurityToken = Security token for Keyyo webhook (leave empty to disable token check)
 
 # Projects import
 ImportProjectsFromCSV = Import projects from CSV

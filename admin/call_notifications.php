@@ -141,7 +141,7 @@ print '</td></tr>';
 // Keyyo token
 print '<tr class="oddeven">';
 print '<td>' . $langs->trans('KeyyoWebhookToken') . '</td>';
-print '<td>' . $langs->trans('Security token for Keyyo webhook (leave empty to disable token check)') . '</td>';
+print '<td>' . $langs->trans('ReedCRMKeyyoSecurityToken') . '</td>';
 print '<td class="center">';
 print '<input type="text" name="REEDCRM_KEYYO_EXPECTED_TOKEN" value="' . getDolGlobalString('REEDCRM_KEYYO_EXPECTED_TOKEN') . '" size="30">';
 print '</td></tr>';
