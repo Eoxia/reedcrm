@@ -560,14 +560,16 @@ if ($action == 'add') {
 
         $project->add_contact($user->id, 'PROJECTLEADER', 'internal');
 
-        if (empty(GETPOST('geolocation-error'))) {
-            $geolocation->latitude = GETPOST('latitude');
-            $geolocation->longitude = GETPOST('longitude');
+        $lat = GETPOST('latitude');
+        $lon = GETPOST('longitude');
+        if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
+            $geolocation->latitude = (float)$lat;
+            $geolocation->longitude = (float)$lon;
             $geolocation->element_type = $project->element;
             $geolocation->fk_element = $projectID;
 
             $geolocation->create($user);
-        } else {
+        } elseif (!empty(GETPOST('geolocation-error'))) {
             setEventMessage($langs->transnoentities('GeolocationError', GETPOST('geolocation-error')));
         }
 

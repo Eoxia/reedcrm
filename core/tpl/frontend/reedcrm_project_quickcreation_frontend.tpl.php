@@ -35,102 +35,9 @@ if (!$permissionToAddProject) {
 
 require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.tpl.php'; ?>
 
-<div id="id-top" class="page-header-tabs" style="position: fixed; top: 0; left: 0; right: 0; z-index: 999; width: 100%; box-sizing: border-box; margin: 0; border-radius: 0; background-color: #ffffff; padding: 0 15px; height: 48px; border-bottom: 2px solid #3b82f6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; align-items: center;">
-    <div class="company-logo-wrapper" style="margin-right: 20px; display: flex; align-items: center;">
-        <?php
-        global $mysoc, $db, $conf;
-        if (empty($mysoc)) {
-            require_once DOL_DOCUMENT_ROOT.'/societe/class/societe.class.php';
-            $mysoc = new Societe($db);
-            $mysoc->setMysoc($conf);
-        }
-        $logoFile = '';
-        if (!empty($mysoc->logo_squarred)) {
-            $logoFile = 'logos/'.$mysoc->logo_squarred; // viewimage handles thumbs directly if you pass the root file, or we just pass logos/...
-        } elseif (!empty($mysoc->logo)) {
-            $logoFile = 'logos/'.$mysoc->logo;
-        }
-        if (!empty($logoFile)) {
-            $logoUrl = DOL_URL_ROOT.'/viewimage.php?cache=1&modulepart=mycompany&file='.urlencode($logoFile);
-            print '<img class="company-logo" src="'.$logoUrl.'" alt="Logo" style="max-height: 28px; max-width: 120px; object-fit: contain;">';
-        }
-        ?>
-    </div>
-    <div class="tabs-nav" style="display: flex; height: 100%; gap: 15px;">
-        <a href="<?php echo $_SERVER["PHP_SELF"]; ?>" class="tab active" style="display: flex; align-items: center; height: 100%; padding: 0 10px; color: #0f172a; text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 3px solid #0f172a;">
-            <i class="fas fa-share-alt" style="margin-right: 6px; font-size: 14px;"></i> Opportunités
-        </a>
-        <a href="<?php echo dol_buildpath('/ticket/list.php', 1); ?>" target="_blank" class="tab" style="display: flex; align-items: center; height: 100%; padding: 0 10px; color: #64748b; text-decoration: none; font-size: 15px; font-weight: 600; border-bottom: 3px solid transparent; transition: all 0.2s ease;">
-            <i class="fas fa-ticket-alt" style="margin-right: 6px; font-size: 14px;"></i> Ticket
-        </a>
-    </div>
-    
-    <!-- User Profile Badge & VCard Trigger -->
-    <?php
-    global $user;
-    $vcardUrl = '';
-    if (getDolUserInt('USER_ENABLE_PUBLIC', 0, $user)) {
-        $vcardUrl = $user->getOnlineVirtualCardUrl('', 'internal');
-    }
-    ?>
-    <?php
-    if ($vcardUrl) {
-        $widgetTag = 'div';
-        $widgetAttr = 'onclick="document.getElementById(\'vcard-modal\').style.display=\'flex\'"';
-    } else {
-        $widgetTag = 'a';
-        $profileUrl = dol_buildpath('/user/virtualcard.php', 1) . '?id=' . $user->id;
-        $widgetAttr = 'href="' . dol_escape_htmltag($profileUrl) . '" target="_blank" title="Cliquez ici pour activer votre carte de visite (rechargez ensuite cette page)"';
-    }
-    ?>
-    <<?php echo $widgetTag; ?> class="user-profile-widget" <?php echo $widgetAttr; ?> style="margin-left: auto; display: flex; align-items: center; gap: 12px; cursor: pointer; color: #1e293b; text-decoration: none; padding: 4px 10px; border-radius: 8px; transition: background 0.2s; border: 1px solid transparent;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0';" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent';">
-        <?php
-        global $db;
-        $formObj = new Form($db);
-        $nativeAvatar = $formObj->showphoto('userphoto', $user, 0, 0, 0, 'custom-badge-avatar', 'small', 0);
-        
-        print '<div class="user-avatar-wrap" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: transparent;">';
-        print $nativeAvatar;
-        print '</div>';
-        
-        if ($vcardUrl) {
-            print '<i class="fas fa-qrcode" style="font-size: 22px; color: #64748b;"></i>';
-        }
-        ?>
-    </<?php echo $widgetTag; ?>>
-</div>
-
-<!-- VCard Modal -->
-<?php if ($vcardUrl) { ?>
-<div id="vcard-modal" class="wpeo-modal modal-vcard" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); z-index: 9999; display: none; align-items: center; justify-content: center;">
-    <div class="modal-container" style="background: #ffffff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); width: 95%; max-width: 480px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; animation: modalFadeIn 0.3s ease;">
-        <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
-            <h2 class="modal-title" style="margin: 0; font-size: 18px; font-weight: 600; color: #1e293b;">Carte de visite</h2>
-            <div class="modal-close" onclick="document.getElementById('vcard-modal').style.display='none'" style="cursor: pointer; color: #64748b; font-size: 20px; line-height: 1;" onmouseover="this.style.color='#e74c3c';" onmouseout="this.style.color='#64748b';"><i class="fas fa-times"></i></div>
-        </div>
-        <div class="modal-content" style="padding: 0; overflow-y: auto; flex-grow: 1; height: 75vh; background: #f1f5f9;">
-            <iframe src="<?php echo dol_escape_htmltag($vcardUrl); ?>" style="width: 100%; height: 100%; border: none;"></iframe>
-        </div>
-    </div>
-</div>
-<?php } ?>
+<?php require_once __DIR__ . '/reedcrm_pwa_header.tpl.php'; ?>
 
 <style>
-    /* Expand global desktop form limit to leverage widescreen real estate, whilst sticking header to the top */
-    body.quickcreation-frontend {
-        padding: 0 !important;
-        padding-top: 48px !important; /* Offset content exactly by the height of the fixed navbar */
-        margin: 0 !important;
-    }
-    
-    /* Safely zero-out Dolibarr's native llxHeader layout classes only inside our module */
-    body.quickcreation-frontend .fiche,
-    body.quickcreation-frontend #id-right,
-    body.quickcreation-frontend #id-container {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-    }
     .quickcreation-frontend .quickcreation-form-container,
     .quickcreation-frontend .page-content {
         padding: 0 10px !important;
@@ -141,57 +48,8 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     }
 
     @media (max-width: 1024px) {
-        body.quickcreation-frontend {
-            padding: 0 !important;
-            padding-top: 48px !important; /* Retain identical 48px offset on mobile to dock content cleanly under fixed header */
-            margin: 0 !important;
-        }
-        .page-content {
-            max-width: 100% !important;
-            padding-top: 0 !important;
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-            margin-top: 0 !important;
-        }
-        .quickcreation-form-container {
-            padding: 5px 5px 10px 5px !important;
-            margin-top: 0 !important;
-            border-radius: 0 !important;
-        }
         .quickcreation-form-container .form-group {
             margin-bottom: 5px !important;
-        }
-        
-        /* Compress Navigation Header (id-top) to fit sub-300px viepworts */
-        #id-top {
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-            border-top: none !important;
-            border-left: none !important;
-            border-right: none !important;
-            border-bottom: none !important;
-            border-radius: 0 !important;
-            padding: 0 10px !important;
-            gap: 5px !important;
-            overflow-x: auto;
-        }
-        #id-top .company-logo-wrapper {
-            margin-right: 5px !important;
-        }
-        #id-top .company-logo {
-            max-width: 60px !important;
-        }
-        #id-top .tabs-nav {
-            gap: 5px !important;
-        }
-        #id-top .tab {
-            padding: 0 5px !important;
-            font-size: 12px !important;
-            white-space: nowrap;
-        }
-        #id-top .user-profile-widget {
-            gap: 6px !important;
-            padding: 2px 4px !important;
         }
 
         /* Force single-column collapse universally on all tablets and phones */
@@ -608,6 +466,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitBtn.disabled = false;
             });
         });
+    }
+
+    // --- Slider Opportunity Percent Sync ---
+    const oppSlider = document.getElementById('opp_percent');
+    const oppValueEl = document.querySelector('.opp_percent-value');
+    if (oppSlider && oppValueEl) {
+        
+        function updateSlider() {
+            let val = parseInt(oppSlider.value) || 0;
+            oppValueEl.textContent = val + '%';
+            
+            // Calc exact left position directly via JS to override any broken CSS calc() on mobile
+            // Assume track is 100%, thumb is 45px width.
+            // At 0%, center is 22.5px. At 100%, center is calc(100% - 22.5px).
+            let percentage = val / 100;
+            oppValueEl.style.left = 'calc(' + (percentage * 100) + '% - ' + (percentage * 45) + 'px + 22.5px)';
+        }
+        // Init
+        updateSlider();
+        
+        // Update on drag
+        oppSlider.addEventListener('input', updateSlider);
     }
 });
 </script>
