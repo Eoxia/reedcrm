@@ -1537,7 +1537,7 @@ class ActionsReedcrm
                 $itiCssPath = dol_buildpath('/reedcrm/js/intl-tel-input/css/intlTelInput.css', 1);
                 $itiJsPath  = dol_buildpath('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js', 1);
                 $assetsHtml .= '<link href="' . $itiCssPath . '" rel="stylesheet">';
-                $assetsHtml .= '<style> .iti { width: 100%; display: block; } .iti input[type="tel"] { padding-left: 52px !important; } input.input-invalid-material { border-color: #e53935 !important; border-bottom: 2px solid #e53935 !important; color: #e53935 !important; } </style>';
+                $assetsHtml .= '<style> @media (max-width: 768px) { .reedcrm-header-contact-master, .reedcrm-header-origin-master, .reedcrm-header-title-wrapper { flex-wrap: wrap !important; height: auto !important; padding-bottom: 6px !important; margin-right: 0 !important; } .rcrm-inline-title-container { max-width: 100vw !important; flex-wrap: wrap !important; } .rcrm-inline-title-container input { width: 100% !important; margin-bottom: 5px !important; } } .iti { width: 100%; display: block; } .iti input[type="tel"] { padding-left: 52px !important; } input.input-invalid-material { border-color: #e53935 !important; border-bottom: 2px solid #e53935 !important; color: #e53935 !important; } </style>';
                 $assetsHtml .= '<script src="' . $itiJsPath . '"></script>';
 
                 // Origin (Provenance) Inline Edit UI implementation
