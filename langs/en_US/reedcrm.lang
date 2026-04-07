@@ -67,5 +67,11 @@ ProjectsImported = %s projects imported out of %s rows.
 ProjectsImportErrors = %s rows could not be imported.
 NbLines = Number of lines
 
+# Map / Geolocation - Carte / Géolocalisation
+ShowRoute = Show Route
+ThisWeek = This week
+ThisMonth = This month
+NearMe = Near me
+
 # Keyyo Tab for Thirdparty
 KeyyoCalls = Keyyo Calls

@@ -159,6 +159,10 @@ NotFound = Non géolocalisé
 # Data - Donnée
 GeolocationError = Erreur possible lors la géolocalisation : %s
 MyPosition = Ma position
+ShowRoute = Afficher le trajet
+ThisWeek = Cette semaine
+ThisMonth = Ce mois
+NearMe = Autour de moi
 
 
 #
