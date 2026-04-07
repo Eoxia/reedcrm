@@ -562,14 +562,7 @@ if ($action == 'add') {
 
         $lat = GETPOST('latitude');
         $lon = GETPOST('longitude');
-        if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
-            $geolocation->latitude = (float)$lat;
-            $geolocation->longitude = (float)$lon;
-            $geolocation->element_type = $project->element;
-            $geolocation->fk_element = $projectID;
-
-            $geolocation->create($user);
-        } elseif (!empty(GETPOST('geolocation-error'))) {
+        if (!empty(GETPOST('geolocation-error'))) {
             setEventMessage($langs->transnoentities('GeolocationError', GETPOST('geolocation-error')));
         }
 
@@ -586,6 +579,44 @@ if ($action == 'add') {
         } else {
             setEventMessages($task->error, $task->errors, 'errors');
             $error++;
+        }
+
+        // Create a contact if firstname and lastname are provided
+        $contactFirstname = trim($project->array_options['options_reedcrm_firstname'] ?? '');
+        $contactLastname  = trim($project->array_options['options_reedcrm_lastname'] ?? '');
+        if (!empty($contactFirstname) && !empty($contactLastname)) {
+            require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+            $contact            = new Contact($db);
+            $contact->firstname = $contactFirstname;
+            $contact->lastname  = $contactLastname;
+            $contact->socid     = $project->socid > 0 ? $project->socid : 0;
+            $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
+            $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
+            $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
+            $contact->address   = $geolocation->getAddressFromLatLon($lat, $lon)['display_name'] ?? '';
+            $contact->status    = 1;
+            $contactID = $contact->create($user);
+            if ($contactID > 0) {
+                $project->add_contact($contactID, 'PROJECTADDRESS', 'external');
+
+                // Link geolocation to the contact instead of the project
+                if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
+                    $geolocation->latitude    = (float)$lat;
+                    $geolocation->longitude   = (float)$lon;
+                    $geolocation->element_type = $contact->element;
+                    $geolocation->fk_element  = $contactID;
+                    $geolocation->create($user);
+                }
+            } else {
+                setEventMessages($contact->error, $contact->errors, 'errors');
+            }
+        } elseif (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
+            // No contact: fallback, link geolocation to the project
+            $geolocation->latitude    = (float)$lat;
+            $geolocation->longitude   = (float)$lon;
+            $geolocation->element_type = $project->element;
+            $geolocation->fk_element  = $projectID;
+            $geolocation->create($user);
         }
     } else {
         $langs->load('errors');

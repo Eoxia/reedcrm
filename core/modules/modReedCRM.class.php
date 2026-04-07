@@ -748,6 +748,57 @@ class modReedCRM extends DolibarrModules
             dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
         }
 
+        if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') == 0) {
+            require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+            require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+            require_once __DIR__ . '/../../class/geolocation.class.php';
+
+            $geolocation  = new Geolocation($this->db);
+            $geolocations = $geolocation->fetchAll('', '', 0, 0, ['customsql' => "element_type = 'project'"]);
+
+            if (is_array($geolocations) && !empty($geolocations)) {
+                foreach ($geolocations as $objGeoloc) {
+                    $proj = new Project($this->db);
+                    if ($proj->fetch($objGeoloc->fk_element) <= 0) {
+                        continue;
+                    }
+                    $proj->fetch_optionals();
+
+                    $firstname = trim($proj->array_options['options_reedcrm_firstname'] ?? '');
+                    $lastname  = trim($proj->array_options['options_reedcrm_lastname'] ?? '');
+
+                    if (empty($firstname) && empty($lastname)) {
+                        continue;
+                    }
+
+                    $osmData = $geolocation->getAddressFromLatLon((float)$objGeoloc->latitude, (float)$objGeoloc->longitude);
+
+                    $contact            = new Contact($this->db);
+                    $contact->firstname = $firstname;
+                    $contact->lastname  = $lastname;
+                    $contact->socid     = $proj->socid > 0 ? $proj->socid : 0;
+                    $contact->phone_pro = $proj->array_options['options_projectphone'] ?? '';
+                    $contact->email     = $proj->array_options['options_reedcrm_email'] ?? '';
+                    $contact->url       = $proj->array_options['options_reedcrm_website'] ?? '';
+                    $contact->address   = $osmData['display_name'] ?? '';
+                    $contact->status    = 1;
+                    $contactID = $contact->create($user);
+
+                    if ($contactID > 0) {
+                        $proj->add_contact($contactID, 'PROJECTADDRESS', 'external');
+
+                        // Move the geolocation from the project to the new contact
+                        $objGeoloc->element_type = 'contact';
+                        $objGeoloc->fk_element   = $contactID;
+                        $objGeoloc->status     = (!empty($objGeoloc->latitude) && !empty($objGeoloc->longitude)) ? Geolocation::STATUS_GEOLOCATED : Geolocation::STATUS_NOTFOUND;
+                        $objGeoloc->update($user);
+                    }
+                }
+            }
+
+            dolibarr_set_const($this->db, 'REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT', 1, 'integer', 0, '', $conf->entity);
+        }
+
         if (getDolGlobalInt('REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY') == 0) {
             require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
             require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';

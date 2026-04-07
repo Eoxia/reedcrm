@@ -232,13 +232,13 @@ if (is_array($contacts) && !empty($contacts)) {
         $geolocation = new Geolocation($db);
 
         if (is_object($contactSingle)) {
-            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle->id);
+            $geolocation->fetch(0, '', ' AND t.fk_element = ' . $contactSingle->id);
             $contactName    = $contactSingle->firstname . ' ' . $contactSingle->lastname;
             $contactAddress = $contactSingle->address;
             $contactPhone   = !empty($contactSingle->phone_mobile) ? $contactSingle->phone_mobile : $contactSingle->phone_pro;
             $contactEmail   = $contactSingle->email;
         } else if (is_array($contactSingle) && $contactSingle['code'] == 'PROJECTADDRESS') {
-            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle['id']);
+            $geolocation->fetch(0, '', ' AND t.fk_element = ' . $contactSingle['id']);
             $contact->fetch($contactSingle['id']);
             $contactName    = $contact->firstname . ' ' . $contact->lastname;
             $contactAddress = $contact->address;
@@ -306,21 +306,20 @@ if (is_array($geolocations) && !empty($geolocations)) {
         $objectLinkedInfo .= '</div>';
 
         $num++;
-        $objectList[$num]['color']  = '#F00';
-        switch ($objectLinked->opp_percent) {
-            case $objectLinked->opp_percent >= 40 && $objectLinked->opp_percent < 60:
-                $objectList[$num]['scale'] = 1.5;
-                break;
-            case $objectLinked->opp_percent >= 60 && $objectLinked->opp_percent < 100:
-                $objectList[$num]['scale'] = 1.75;
-                break;
-            case $objectLinked->opp_percent == 100:
-                $objectList[$num]['scale'] = 2;
-                break;
-            default:
-                $objectList[$num]['scale'] = 1;
-                break;
+        if ($objectLinked->opp_percent == 0) {
+            $objectList[$num]['color'] = '#95a5a6';
+        } elseif ($objectLinked->opp_percent == 100) {
+            $objectList[$num]['color'] = '#27ae60';
+        } elseif ($objectLinked->opp_percent >= 60) {
+            $objectList[$num]['color'] = '#2ecc71';
+        } elseif ($objectLinked->opp_percent >= 40) {
+            $objectList[$num]['color'] = '#f39c12';
+        } elseif ($objectLinked->opp_percent >= 20) {
+            $objectList[$num]['color'] = '#e67e22';
+        } else {
+            $objectList[$num]['color'] = '#e74c3c';
         }
+        $objectList[$num]['scale'] = 1;
 
         // Add geoJSON point
         $features[] = [
@@ -411,6 +410,8 @@ if ($source != 'pwa') {
 
 $picto = img_picto($langs->trans('MyPosition'), 'fontawesome_search-location_fas_#007BFF');
 print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>';
+$pictoRoute = img_picto($langs->trans('ShowRoute'), 'fontawesome_route_fas_#007BFF');
+print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute . '</div>';
 
 ?>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
@@ -564,6 +565,58 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 		});
 
 		/**
+		 * Spider layer for spread features and legs.
+		 */
+		var spiderSource = new ol.source.Vector();
+		var spiderLayer  = new ol.layer.Vector({ source: spiderSource, zIndex: 10 });
+		map.addLayer(spiderLayer);
+
+		var spiderActive     = false;
+		var spiderFeatureMap = {};
+
+		function collapseSpider() {
+			spiderSource.clear();
+			spiderActive     = false;
+			spiderFeatureMap = {};
+			popupOverlay.setPosition(undefined);
+		}
+
+		function activateSpider(center, features) {
+			spiderSource.clear();
+			spiderFeatureMap = {};
+			spiderActive     = true;
+
+			var resolution = mapView.getResolution();
+			var mapRadius  = 60 * resolution;
+
+			features.forEach(function(feature, i) {
+				var angle      = (2 * Math.PI * i) / features.length - Math.PI / 2;
+				var spiderCoord = [
+					center[0] + mapRadius * Math.cos(angle),
+					center[1] + mapRadius * Math.sin(angle)
+				];
+
+				var leg = new ol.Feature({ geometry: new ol.geom.LineString([center, spiderCoord]) });
+				leg.setStyle(new ol.style.Style({
+					stroke: new ol.style.Stroke({ color: 'rgba(0,0,0,0.35)', width: 1.5 })
+				}));
+				spiderSource.addFeature(leg);
+
+				var spiderFeature = new ol.Feature({ geometry: new ol.geom.Point(spiderCoord) });
+				spiderFeature.set('desc', feature.get('desc'));
+				spiderFeature.setStyle(styleFunction(feature));
+				var spiderId = 'spider_' + i;
+				spiderFeature.setId(spiderId);
+				spiderFeatureMap[spiderId] = feature;
+				spiderSource.addFeature(spiderFeature);
+			});
+		}
+
+		mapView.on('change:resolution', function() {
+			if (spiderActive) collapseSpider();
+		});
+
+		/**
 		 * Fit map for markers.
 		 */
 		if (<?php print $num ?> > 1) {
@@ -588,6 +641,88 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 			}
 			return extent;
 		}
+
+		/**
+		 * Route layer between markers.
+		 */
+		var routeSource = new ol.source.Vector();
+		var routeLayer  = new ol.layer.Vector({ source: routeSource, zIndex: 2 });
+		map.addLayer(routeLayer);
+		var routeVisible = false;
+
+		function nearestNeighborOrder(coords) {
+			if (coords.length <= 1) return coords;
+			var remaining = coords.slice();
+			var ordered   = remaining.splice(0, 1);
+			while (remaining.length > 0) {
+				var last        = ordered[ordered.length - 1];
+				var nearestIdx  = 0;
+				var nearestDist = Infinity;
+				remaining.forEach(function(c, i) {
+					var dist = Math.pow(c[0] - last[0], 2) + Math.pow(c[1] - last[1], 2);
+					if (dist < nearestDist) { nearestDist = dist; nearestIdx = i; }
+				});
+				ordered.push(remaining.splice(nearestIdx, 1)[0]);
+			}
+			return ordered;
+		}
+
+		function drawStraightRoute(coords3857) {
+			routeSource.clear();
+			var line = new ol.Feature({ geometry: new ol.geom.LineString(coords3857) });
+			line.setStyle(new ol.style.Style({
+				stroke: new ol.style.Stroke({ color: '#3498db', width: 3, lineDash: [8, 6] })
+			}));
+			routeSource.addFeature(line);
+		}
+
+		function drawRoute() {
+			var points = prospectSource.getFeatures().filter(function(f) {
+				return f.getGeometry().getType() === 'Point';
+			});
+			if (points.length < 2) return;
+
+			var coords3857  = points.map(function(f) { return f.getGeometry().getCoordinates(); });
+			var ordered3857 = nearestNeighborOrder(coords3857);
+			var orderedWGS84 = ordered3857.map(function(c) {
+				return ol.proj.transform(c, 'EPSG:3857', 'EPSG:4326');
+			});
+
+			var waypointsStr = orderedWGS84.map(function(c) {
+				return c[0].toFixed(6) + ',' + c[1].toFixed(6);
+			}).join(';');
+
+			fetch('https://router.project-osrm.org/route/v1/driving/' + waypointsStr + '?overview=full&geometries=geojson')
+				.then(function(r) {
+					if (!r.ok) throw new Error('OSRM ' + r.status);
+					return r.json();
+				})
+				.then(function(data) {
+					if (!data.routes || data.routes.length === 0) throw new Error('no route');
+					var routeFeature = (new ol.format.GeoJSON()).readFeature(
+						{ type: 'Feature', geometry: data.routes[0].geometry },
+						{ dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }
+					);
+					routeFeature.setStyle(new ol.style.Style({
+						stroke: new ol.style.Stroke({ color: '#3498db', width: 3 })
+					}));
+					routeSource.clear();
+					routeSource.addFeature(routeFeature);
+				})
+				.catch(function() {
+					drawStraightRoute(ordered3857);
+				});
+		}
+
+		var routeBtn = document.getElementById('route-toggle-button');
+
+		routeBtn.addEventListener('click', function() {
+			routeVisible = !routeVisible;
+			routeLayer.setVisible(routeVisible);
+			routeBtn.classList.toggle('route-active', routeVisible);
+			if (routeVisible && routeSource.getFeatures().length === 0) drawRoute();
+		});
+		routeLayer.setVisible(false);
 
         /**
          * Initialize geolocation control.
@@ -666,17 +801,53 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
          * Add a click handler to the map to render the popup.
          */
         map.on('singleclick', function(evt) {
-            var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-                return feature;
+            // If spider is active, check if clicking on a spider feature
+            if (spiderActive) {
+                var spiderFeatureClicked = map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                    if (f.getId() && String(f.getId()).indexOf('spider_') === 0) return f;
+                });
+                if (spiderFeatureClicked) {
+                    var coords    = spiderFeatureClicked.getGeometry().getCoordinates();
+                    var desc      = spiderFeatureClicked.get('desc');
+                    popupContent.innerHTML = desc;
+                    popupOverlay.setPosition(coords);
+                } else {
+                    collapseSpider();
+                }
+                return;
+            }
+
+            // Collect all point features at clicked pixel
+            var clickedFeatures = [];
+            map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                if (f.getGeometry().getType() === 'Point') clickedFeatures.push(f);
+            }, { hitTolerance: 6 });
+
+            if (clickedFeatures.length === 0) {
+                popupCloser.click();
+                return;
+            }
+
+            if (clickedFeatures.length === 1) {
+                var coordinates = clickedFeatures[0].getGeometry().getCoordinates();
+                popupContent.innerHTML = clickedFeatures[0].get('customText') || clickedFeatures[0].get('desc');
+                popupOverlay.setPosition(coordinates);
+                return;
+            }
+
+            // Multiple features — check if they share the same coordinate
+            var center    = clickedFeatures[0].getGeometry().getCoordinates();
+            var threshold = mapView.getResolution() * 2;
+            var stacked   = clickedFeatures.filter(function(f) {
+                var c = f.getGeometry().getCoordinates();
+                return Math.abs(c[0] - center[0]) <= threshold && Math.abs(c[1] - center[1]) <= threshold;
             });
 
-            if (feature) {
-                var coordinates = feature.getGeometry().getCoordinates();
-                var customText = feature.get('customText') || feature.get('desc');
-                popupContent.innerHTML = customText;
-                popupOverlay.setPosition(coordinates);
+            if (stacked.length > 1) {
+                activateSpider(center, stacked);
             } else {
-                popupCloser.click();
+                popupContent.innerHTML = clickedFeatures[0].get('customText') || clickedFeatures[0].get('desc');
+                popupOverlay.setPosition(center);
             }
         });
 
