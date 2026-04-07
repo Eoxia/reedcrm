@@ -232,13 +232,13 @@ if (is_array($contacts) && !empty($contacts)) {
         $geolocation = new Geolocation($db);
 
         if (is_object($contactSingle)) {
-            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle->id);
+            $geolocation->fetch(0, '', ' AND t.fk_element = ' . $contactSingle->id);
             $contactName    = $contactSingle->firstname . ' ' . $contactSingle->lastname;
             $contactAddress = $contactSingle->address;
             $contactPhone   = !empty($contactSingle->phone_mobile) ? $contactSingle->phone_mobile : $contactSingle->phone_pro;
             $contactEmail   = $contactSingle->email;
         } else if (is_array($contactSingle) && $contactSingle['code'] == 'PROJECTADDRESS') {
-            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle['id']);
+            $geolocation->fetch(0, '', ' AND t.fk_element = ' . $contactSingle['id']);
             $contact->fetch($contactSingle['id']);
             $contactName    = $contact->firstname . ' ' . $contact->lastname;
             $contactAddress = $contact->address;
@@ -306,21 +306,20 @@ if (is_array($geolocations) && !empty($geolocations)) {
         $objectLinkedInfo .= '</div>';
 
         $num++;
-        $objectList[$num]['color']  = '#F00';
-        switch ($objectLinked->opp_percent) {
-            case $objectLinked->opp_percent >= 40 && $objectLinked->opp_percent < 60:
-                $objectList[$num]['scale'] = 1.5;
-                break;
-            case $objectLinked->opp_percent >= 60 && $objectLinked->opp_percent < 100:
-                $objectList[$num]['scale'] = 1.75;
-                break;
-            case $objectLinked->opp_percent == 100:
-                $objectList[$num]['scale'] = 2;
-                break;
-            default:
-                $objectList[$num]['scale'] = 1;
-                break;
+        if ($objectLinked->opp_percent == 0) {
+            $objectList[$num]['color'] = '#95a5a6';
+        } elseif ($objectLinked->opp_percent == 100) {
+            $objectList[$num]['color'] = '#27ae60';
+        } elseif ($objectLinked->opp_percent >= 60) {
+            $objectList[$num]['color'] = '#2ecc71';
+        } elseif ($objectLinked->opp_percent >= 40) {
+            $objectList[$num]['color'] = '#f39c12';
+        } elseif ($objectLinked->opp_percent >= 20) {
+            $objectList[$num]['color'] = '#e67e22';
+        } else {
+            $objectList[$num]['color'] = '#e74c3c';
         }
+        $objectList[$num]['scale'] = 1;
 
         // Add geoJSON point
         $features[] = [

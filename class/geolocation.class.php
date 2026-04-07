@@ -231,12 +231,33 @@ class Geolocation extends SaturneObject
         global $langs, $user;
 
         $parameters = (dol_strlen($contact->address) > 0 ? $contact->address : '');
-        $parameters = dol_sanitizeFileName($parameters);
-        $parameters = str_replace(' ', '+', $parameters);
+        $parameters = urlencode($parameters);
 
-        $context  = stream_context_create(["http" => ["header" => "Referer:" . $_SERVER['HTTP_REFERER']]]);
-        $response = file_get_contents('https://nominatim.openstreetmap.org/search?q='. $parameters .'&format=json&polygon=1&addressdetails=1', false, $context);
-        $data     = json_decode($response, false);
+        $url = 'https://nominatim.openstreetmap.org/search?q=' . $parameters . '&format=json&polygon=1&addressdetails=1';
+        $referer = (!empty($_SERVER['HTTP_HOST']) ? 'https://' . $_SERVER['HTTP_HOST'] : DOL_MAIN_URL_ROOT);
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_HTTPHEADER     => [
+                'User-Agent: Dolibarr/ReedCRM (contact@reedcrm.fr)',
+                'Referer: ' . $referer,
+                'Accept: application/json',
+            ],
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+
+        if ($response === false || $httpCode !== 200) {
+            $this->errors[] = 'OSM fetch error (HTTP ' . $httpCode . '): ' . $curlError;
+            return [];
+        }
+
+        $data = json_decode($response, false);
 
         if (is_array($data) && !empty($data)) {
             $address = $data[0];
@@ -259,5 +280,67 @@ class Geolocation extends SaturneObject
             $this->errors[] = $langs->trans('CouldntFindDataOnOSM');
             return [];
         }
+    }
+
+    /**
+     * Get address data from OpenStreetMap API using lat/lon (reverse geocoding)
+     *
+     * @param  float $lat Latitude
+     * @param  float $lon Longitude
+     * @return array      Empty array if KO, address data if OK (keys: address, zip, town, country_code, country_id, display_name)
+     */
+    public function getAddressFromLatLon(float $lat, float $lon): array
+    {
+        global $langs;
+
+        $url     = 'https://nominatim.openstreetmap.org/reverse?lat=' . $lat . '&lon=' . $lon . '&format=json&addressdetails=1';
+        $referer = (!empty($_SERVER['HTTP_HOST']) ? 'https://' . $_SERVER['HTTP_HOST'] : DOL_MAIN_URL_ROOT);
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_HTTPHEADER     => [
+                'User-Agent: Dolibarr/ReedCRM (contact@reedcrm.fr)',
+                'Referer: ' . $referer,
+                'Accept: application/json',
+            ],
+        ]);
+        $response  = curl_exec($ch);
+        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+
+        if ($response === false || $httpCode !== 200) {
+            $this->errors[] = 'OSM reverse fetch error (HTTP ' . $httpCode . '): ' . $curlError;
+            return [];
+        }
+
+        $data = json_decode($response, false);
+
+        if (empty($data) || !isset($data->address)) {
+            $this->errors[] = $langs->trans('CouldntFindDataOnOSM');
+            return [];
+        }
+
+        $result = [];
+
+        $road     = $data->address->road ?? $data->address->pedestrian ?? $data->address->footway ?? '';
+        $houseNum = $data->address->house_number ?? '';
+        $result['address']      = trim(($houseNum ? $houseNum . ' ' : '') . $road);
+        $result['zip']          = $data->address->postcode ?? '';
+        $result['town']         = $data->address->city ?? $data->address->town ?? $data->address->village ?? '';
+        $result['country_code'] = dol_strtoupper($data->address->country_code ?? '');
+        $result['display_name'] = $data->display_name ?? '';
+
+        if (!empty($result['country_code'])) {
+            $countryID = getCountry($result['country_code'], 3);
+            $result['country_id'] = $countryID > 0 ? $countryID : 0;
+        } else {
+            $result['country_id'] = 0;
+        }
+
+        return $result;
     }
 }
