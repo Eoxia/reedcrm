@@ -410,6 +410,8 @@ if ($source != 'pwa') {
 
 $picto = img_picto($langs->trans('MyPosition'), 'fontawesome_search-location_fas_#007BFF');
 print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>';
+$pictoRoute = img_picto($langs->trans('ShowRoute'), 'fontawesome_route_fas_#007BFF');
+print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute . '</div>';
 
 ?>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
@@ -639,6 +641,88 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 			}
 			return extent;
 		}
+
+		/**
+		 * Route layer between markers.
+		 */
+		var routeSource = new ol.source.Vector();
+		var routeLayer  = new ol.layer.Vector({ source: routeSource, zIndex: 2 });
+		map.addLayer(routeLayer);
+		var routeVisible = false;
+
+		function nearestNeighborOrder(coords) {
+			if (coords.length <= 1) return coords;
+			var remaining = coords.slice();
+			var ordered   = remaining.splice(0, 1);
+			while (remaining.length > 0) {
+				var last        = ordered[ordered.length - 1];
+				var nearestIdx  = 0;
+				var nearestDist = Infinity;
+				remaining.forEach(function(c, i) {
+					var dist = Math.pow(c[0] - last[0], 2) + Math.pow(c[1] - last[1], 2);
+					if (dist < nearestDist) { nearestDist = dist; nearestIdx = i; }
+				});
+				ordered.push(remaining.splice(nearestIdx, 1)[0]);
+			}
+			return ordered;
+		}
+
+		function drawStraightRoute(coords3857) {
+			routeSource.clear();
+			var line = new ol.Feature({ geometry: new ol.geom.LineString(coords3857) });
+			line.setStyle(new ol.style.Style({
+				stroke: new ol.style.Stroke({ color: '#3498db', width: 3, lineDash: [8, 6] })
+			}));
+			routeSource.addFeature(line);
+		}
+
+		function drawRoute() {
+			var points = prospectSource.getFeatures().filter(function(f) {
+				return f.getGeometry().getType() === 'Point';
+			});
+			if (points.length < 2) return;
+
+			var coords3857  = points.map(function(f) { return f.getGeometry().getCoordinates(); });
+			var ordered3857 = nearestNeighborOrder(coords3857);
+			var orderedWGS84 = ordered3857.map(function(c) {
+				return ol.proj.transform(c, 'EPSG:3857', 'EPSG:4326');
+			});
+
+			var waypointsStr = orderedWGS84.map(function(c) {
+				return c[0].toFixed(6) + ',' + c[1].toFixed(6);
+			}).join(';');
+
+			fetch('https://router.project-osrm.org/route/v1/driving/' + waypointsStr + '?overview=full&geometries=geojson')
+				.then(function(r) {
+					if (!r.ok) throw new Error('OSRM ' + r.status);
+					return r.json();
+				})
+				.then(function(data) {
+					if (!data.routes || data.routes.length === 0) throw new Error('no route');
+					var routeFeature = (new ol.format.GeoJSON()).readFeature(
+						{ type: 'Feature', geometry: data.routes[0].geometry },
+						{ dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }
+					);
+					routeFeature.setStyle(new ol.style.Style({
+						stroke: new ol.style.Stroke({ color: '#3498db', width: 3 })
+					}));
+					routeSource.clear();
+					routeSource.addFeature(routeFeature);
+				})
+				.catch(function() {
+					drawStraightRoute(ordered3857);
+				});
+		}
+
+		var routeBtn = document.getElementById('route-toggle-button');
+
+		routeBtn.addEventListener('click', function() {
+			routeVisible = !routeVisible;
+			routeLayer.setVisible(routeVisible);
+			routeBtn.classList.toggle('route-active', routeVisible);
+			if (routeVisible && routeSource.getFeatures().length === 0) drawRoute();
+		});
+		routeLayer.setVisible(false);
 
         /**
          * Initialize geolocation control.
