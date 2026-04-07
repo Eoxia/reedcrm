@@ -563,6 +563,58 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 		});
 
 		/**
+		 * Spider layer for spread features and legs.
+		 */
+		var spiderSource = new ol.source.Vector();
+		var spiderLayer  = new ol.layer.Vector({ source: spiderSource, zIndex: 10 });
+		map.addLayer(spiderLayer);
+
+		var spiderActive     = false;
+		var spiderFeatureMap = {};
+
+		function collapseSpider() {
+			spiderSource.clear();
+			spiderActive     = false;
+			spiderFeatureMap = {};
+			popupOverlay.setPosition(undefined);
+		}
+
+		function activateSpider(center, features) {
+			spiderSource.clear();
+			spiderFeatureMap = {};
+			spiderActive     = true;
+
+			var resolution = mapView.getResolution();
+			var mapRadius  = 60 * resolution;
+
+			features.forEach(function(feature, i) {
+				var angle      = (2 * Math.PI * i) / features.length - Math.PI / 2;
+				var spiderCoord = [
+					center[0] + mapRadius * Math.cos(angle),
+					center[1] + mapRadius * Math.sin(angle)
+				];
+
+				var leg = new ol.Feature({ geometry: new ol.geom.LineString([center, spiderCoord]) });
+				leg.setStyle(new ol.style.Style({
+					stroke: new ol.style.Stroke({ color: 'rgba(0,0,0,0.35)', width: 1.5 })
+				}));
+				spiderSource.addFeature(leg);
+
+				var spiderFeature = new ol.Feature({ geometry: new ol.geom.Point(spiderCoord) });
+				spiderFeature.set('desc', feature.get('desc'));
+				spiderFeature.setStyle(styleFunction(feature));
+				var spiderId = 'spider_' + i;
+				spiderFeature.setId(spiderId);
+				spiderFeatureMap[spiderId] = feature;
+				spiderSource.addFeature(spiderFeature);
+			});
+		}
+
+		mapView.on('change:resolution', function() {
+			if (spiderActive) collapseSpider();
+		});
+
+		/**
 		 * Fit map for markers.
 		 */
 		if (<?php print $num ?> > 1) {
@@ -665,17 +717,53 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
          * Add a click handler to the map to render the popup.
          */
         map.on('singleclick', function(evt) {
-            var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-                return feature;
+            // If spider is active, check if clicking on a spider feature
+            if (spiderActive) {
+                var spiderFeatureClicked = map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                    if (f.getId() && String(f.getId()).indexOf('spider_') === 0) return f;
+                });
+                if (spiderFeatureClicked) {
+                    var coords    = spiderFeatureClicked.getGeometry().getCoordinates();
+                    var desc      = spiderFeatureClicked.get('desc');
+                    popupContent.innerHTML = desc;
+                    popupOverlay.setPosition(coords);
+                } else {
+                    collapseSpider();
+                }
+                return;
+            }
+
+            // Collect all point features at clicked pixel
+            var clickedFeatures = [];
+            map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                if (f.getGeometry().getType() === 'Point') clickedFeatures.push(f);
+            }, { hitTolerance: 6 });
+
+            if (clickedFeatures.length === 0) {
+                popupCloser.click();
+                return;
+            }
+
+            if (clickedFeatures.length === 1) {
+                var coordinates = clickedFeatures[0].getGeometry().getCoordinates();
+                popupContent.innerHTML = clickedFeatures[0].get('customText') || clickedFeatures[0].get('desc');
+                popupOverlay.setPosition(coordinates);
+                return;
+            }
+
+            // Multiple features — check if they share the same coordinate
+            var center    = clickedFeatures[0].getGeometry().getCoordinates();
+            var threshold = mapView.getResolution() * 2;
+            var stacked   = clickedFeatures.filter(function(f) {
+                var c = f.getGeometry().getCoordinates();
+                return Math.abs(c[0] - center[0]) <= threshold && Math.abs(c[1] - center[1]) <= threshold;
             });
 
-            if (feature) {
-                var coordinates = feature.getGeometry().getCoordinates();
-                var customText = feature.get('customText') || feature.get('desc');
-                popupContent.innerHTML = customText;
-                popupOverlay.setPosition(coordinates);
+            if (stacked.length > 1) {
+                activateSpider(center, stacked);
             } else {
-                popupCloser.click();
+                popupContent.innerHTML = clickedFeatures[0].get('customText') || clickedFeatures[0].get('desc');
+                popupOverlay.setPosition(center);
             }
         });
 
