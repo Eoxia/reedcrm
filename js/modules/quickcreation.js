@@ -73,10 +73,8 @@ window.reedcrm.quickcreation.init = function() {
 window.reedcrm.quickcreation.event = function() {
   // Upload image and display on canvas with signature pad
   // Image manipulation (uploadImage, drawOnImage, rotation, undo, erase) features from saturne/js/modules/media.js
-  // $(document).on('change', '#upload-image', window.saturne.media.uploadImage);
-  // $(document).on('click', '.image-validate', window.reedcrm.quickcreation.createImg);
-
-  console.log('Get current GPS position of navigator user');
+  $(document).on('change', '#upload-image', window.saturne.media.uploadImage);
+  $(document).on('click', '.image-validate', window.reedcrm.quickcreation.createImg);
 
   // Get current GPS position of navigator user
   window.reedcrm.quickcreation.getCurrentPosition();
