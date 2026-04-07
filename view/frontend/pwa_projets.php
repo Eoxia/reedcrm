@@ -28,6 +28,18 @@ $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 $conf->global->MAIN_FAVICON_URL = DOL_URL_ROOT . '/custom/reedcrm/img/reedcrm_color_512.png';
 
+$action = GETPOST('action', 'aZ09');
+if (!empty($action)) {
+    require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
+    $project = new Project($db);
+    $task    = new Task($db);
+    $extraFields = new ExtraFields($db);
+    $extraFields->fetch_name_optionals_label($project->table_element);
+    $permissionToAddProject = $user->rights->projet->creer;
+    require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_quickcreation_actions_frontend.tpl.php';
+}
+
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-projets-list');
 
 if (!$user->rights->projet->lire) {

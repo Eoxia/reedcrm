@@ -30,6 +30,8 @@
 $listTitle = $langs->trans('LatestCreatedOpportunities');
 print '<div class="page-content" style="margin-top: 5px; padding-top: 0; max-width: 1000px; margin: 5px auto 0 auto;">';
 
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+
 print '<div class="title" style="color: #5a7b97; font-size: 0.95em; font-weight: bold; margin-bottom: 15px; padding-left: 20px;">' . $listTitle . '</div>';
 
 
@@ -508,6 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let span = $(this);
         let currentVal = span.data('val');
         let projId = span.data('project-id');
+        let originalText = span.text();
         let input = $('<input type="number" min="0" max="100" class="percent-input" style="width: 25px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0; font-weight: 600; font-size: 1em; color: #0f172a; outline: none; box-sizing: border-box; background: transparent; margin: 0; display: inline-block; vertical-align: middle; line-height: normal; -moz-appearance: textfield;" value="'+currentVal+'">');
         
         if ($('#css-no-spinners').length === 0) {
