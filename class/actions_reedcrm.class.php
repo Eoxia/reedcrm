@@ -587,11 +587,11 @@ class ActionsReedcrm
             }
         }
 
-        if (preg_match('/invoicelist|invoicereclist|thirdpartylist|projectlist/', $parameters['context'])) {
+        if (preg_match('/invoicelist|invoicereclist|thirdpartylist|projectlist|propallist/', $parameters['context'])) {
             $cssPath = dol_buildpath('/saturne/css/saturne.min.css', 1);
             print '<link href="' . $cssPath . '" rel="stylesheet">';
-            // Load reedcrm modal CSS and JS for projectlist
-            if (strpos($parameters['context'], 'projectlist') !== false) {
+            // Load reedcrm modal CSS and JS for projectlist and propallist
+            if (preg_match('/projectlist|propallist/', $parameters['context'])) {
                 global $langs;
                 // Load main reedcrm CSS
                 $reedcrmMainCssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
@@ -621,7 +621,7 @@ class ActionsReedcrm
                 </div>
                 <script type="text/javascript" src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>"></script>
                 <script type="text/javascript"
-                    src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/vocal-player.js', 1); ?>"></script>
+                        src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/vocal-player.js', 1); ?>"></script>
                 <script>
                     jQuery(document).ready(function () {
                         if (typeof window.reedcrm !== 'undefined' && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
@@ -1347,6 +1347,80 @@ class ActionsReedcrm
                     setEventMessages($langs->trans('OppStatusAssignedTo', $count), []);
                     header('Location:' . $_SERVER['PHP_SELF']);
                 }
+            }
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the saturneListAddCustomFields hook : inject custom fields for propal list
+     *
+     * @param  array        $parameters Hook metadatas (objectType, excludeFields)
+     * @param  CommonObject $object     The object to process
+     * @return int                      0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function saturneListAddCustomFields(array $parameters, CommonObject $object): int
+    {
+        if ($parameters['objectType'] !== 'propal') {
+            return 0;
+        }
+
+        // Override visible for fields we want shown by default in the list
+        $visibleFields = ['ref', 'fk_soc', 'datec', 'datep', 'fin_validite', 'fk_statut', 'total_ht', 'total_ttc', 'fk_user_author', 'fk_projet'];
+        foreach ($visibleFields as $fieldKey) {
+            if (isset($object->fields[$fieldKey])) {
+                $object->fields[$fieldKey]['visible'] = 1;
+            }
+        }
+
+        $object->fields['relauch_commercial'] = ['label' => 'RelauchCommercial', 'enabled' => 1, 'position' => 150, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
+        $object->fields['contact_details']    = ['label' => 'ContactDetails',    'enabled' => 1, 'position' => 151, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
+        $object->fields['fk_statut']          = ['type' => 'smallint', 'label' => 'Status', 'enabled' => 1, 'position' => 500, 'notnull' => 1, 'visible' => 1, 'searchmulti' => 1, 'arrayofkeyval' => [0 => 'Draft', 1 => 'Validated', 2 => 'Signed', 3 => 'NotSigned', 4 => 'Billed'], 'csslist' => 'minwidth200', 'disablesort' => 1];
+        $object->fields['fk_projet']['label'] = 'Project';
+
+        $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['relauch_commercial', 'contact_details']);
+
+        return 1;
+    }
+
+
+    /**
+     * Overloading the printFieldListWhere hook : add WHERE conditions for propal list
+     *
+     * @param  array        $parameters Hook metadatas (context, search, ...)
+     * @param  CommonObject $object     The object to process
+     * @param  string       $action     Current action
+     * @return int                      0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printFieldListWhere(array $parameters, CommonObject $object, string $action): int
+    {
+        if (strpos($parameters['context'], 'propallist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
+            $this->resprints = ' AND t.fk_statut >= 0';
+        }
+
+        return 0;
+    }
+
+    public function saturnePrintFieldListLoopObject(array $parameters, CommonObject $object): int
+    {
+        if (preg_match('/propallist|projectlist/', $parameters['context'])) {
+            require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
+
+            $fieldMap = [
+                'relauch_commercial' => 'reedcrm_field_relaunch_commercial',
+                'contact_details'    => 'reedcrm_field_contact_details',
+                'photo'              => 'reedcrm_field_photo',
+                'fk_opp_status'      => 'reedcrm_field_opp_status',
+                'fk_statut'          => 'reedcrm_field_propal_status',
+            ];
+
+            $key = $parameters['key'];
+
+            if (isset($fieldMap[$key])) {
+                $fn                = $fieldMap[$key];
+                $this->results     = [$key => $fn($parameters, $object)];
+                return 1;
             }
         }
 
