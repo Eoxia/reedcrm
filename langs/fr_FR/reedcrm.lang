@@ -235,6 +235,7 @@ ProductLastSellList = Dernières ventes du produit (Commande et Facture)
 Opportunities = Opportunités
 OpenedPropals = PR ouvertes
 RecurringInvoices = Factures récurrentes
+GravityFormLink                        = Lien GravityForm
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall = Appel entrant
