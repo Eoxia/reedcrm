@@ -4,9 +4,9 @@
 
   .pwa-graphs-container {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 16px;
-    margin: 15px 0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 8px 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
@@ -14,32 +14,32 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 8px;
   }
 
   .pwa-graphs-nav-info {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 1px;
     flex: 1;
     text-align: center;
   }
 
   .pwa-graphs-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     color: #1e293b;
     margin: 0;
 
     i {
       color: #3b82f6;
-      margin-right: 6px;
+      margin-right: 5px;
     }
   }
 
   .pwa-graphs-date-range {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     color: #94a3b8;
   }
@@ -48,8 +48,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: #f1f5f9;
     color: #475569;
@@ -68,19 +68,65 @@
     }
 
     i {
-      font-size: 13px;
+      font-size: 11px;
     }
   }
 
+  .pwa-stats-widget {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 7px 6px;
+    margin-bottom: 10px;
+    gap: 2px;
+  }
+
+  .pwa-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    gap: 1px;
+  }
+
+  .pwa-stat-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+
+    &--violet { color: #a67fc4; }
+    &--green  { color: #5dcca7; }
+    &--teal   { color: #5dcca7; }
+  }
+
+  .pwa-stat-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  .pwa-stat-divider {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+    flex-shrink: 0;
+  }
+
   .pwa-graphs-chart-label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #64748b;
-    margin: 0 0 8px 0;
+    margin: 0 0 5px 0;
     text-align: center;
 
     &--spaced {
-      margin-top: 20px;
+      margin-top: 12px;
     }
   }
 

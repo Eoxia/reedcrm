@@ -70,6 +70,20 @@ if (is_array($projects) && !empty($projects)) {
 // Date range label
 $dateRangeLabel = $days[$startDate]['full_date'] . ' — ' . $days[$endDate]['full_date'];
 
+// Weekly totals for the stats widget
+$weekTotalCount    = 0;
+$weekTotalCount50  = 0;
+$weekTotalCount80  = 0;
+$weekTotalAmount   = 0.0;
+$weekTotalWeighted = 0.0;
+foreach ($days as $day) {
+    $weekTotalCount    += $day['count'];
+    $weekTotalCount50  += $day['count_50'];
+    $weekTotalCount80  += $day['count_80'];
+    $weekTotalAmount   += $day['amount'];
+    $weekTotalWeighted += $day['weighted_amount'];
+}
+
 // Prepare JS arrays
 $urlBase           = dol_buildpath('/projet/list.php', 1);
 $currentPageUrl    = dol_buildpath('/custom/reedcrm/view/frontend/pwa_home.php', 1);
@@ -135,6 +149,33 @@ $nextUrl    = $currentPageUrl . '?week_offset=' . $nextOffset;
         </a>
     </div>
 
+    <div class="pwa-stats-widget">
+        <div class="pwa-stat-item">
+            <span class="pwa-stat-value"><?= $weekTotalCount ?></span>
+            <span class="pwa-stat-label">Total</span>
+        </div>
+        <div class="pwa-stat-divider"></div>
+        <div class="pwa-stat-item">
+            <span class="pwa-stat-value pwa-stat-value--violet"><?= $weekTotalCount50 ?></span>
+            <span class="pwa-stat-label">&gt; 50%</span>
+        </div>
+        <div class="pwa-stat-divider"></div>
+        <div class="pwa-stat-item">
+            <span class="pwa-stat-value pwa-stat-value--green"><?= $weekTotalCount80 ?></span>
+            <span class="pwa-stat-label">&gt; 80%</span>
+        </div>
+        <div class="pwa-stat-divider"></div>
+        <div class="pwa-stat-item">
+            <span class="pwa-stat-value"><?= price($weekTotalAmount, 0, '', 1, -1, 0) ?> €</span>
+            <span class="pwa-stat-label">Montant</span>
+        </div>
+        <div class="pwa-stat-divider"></div>
+        <div class="pwa-stat-item">
+            <span class="pwa-stat-value pwa-stat-value--teal"><?= price($weekTotalWeighted, 0, '', 1, -1, 0) ?> €</span>
+            <span class="pwa-stat-label">Pondéré</span>
+        </div>
+    </div>
+
     <p class="pwa-graphs-chart-label">Montant total &amp; pondéré (€)</p>
     <div class="pwa-chart-wrapper">
         <canvas id="pwaHomeAmountChart"></canvas>
@@ -175,15 +216,23 @@ $nextUrl    = $currentPageUrl . '?week_offset=' . $nextOffset;
         };
     }
 
+    var commonDatasetProps = {
+        borderWidth: 2,
+        borderRadius: 4,
+        borderSkipped: false,
+        barPercentage: 0.7,
+        categoryPercentage: 0.75
+    };
+
     var commonScales = {
         y: {
             beginAtZero: true,
             grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: { font: { size: 11 }, color: '#64748b' }
+            ticks: { font: { size: 9 }, color: '#64748b', maxTicksLimit: 4 }
         },
         x: {
             grid: { display: false },
-            ticks: { font: { size: 11 }, color: '#64748b' }
+            ticks: { font: { size: 9 }, color: '#64748b' }
         }
     };
 
@@ -197,24 +246,8 @@ $nextUrl    = $currentPageUrl . '?week_offset=' . $nextOffset;
         data: {
             labels: labels,
             datasets: [
-                {
-                    label: 'Montant total (€)',
-                    data: amounts,
-                    backgroundColor: '#A7C7E7',
-                    borderColor: '#6fa8d6',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false
-                },
-                {
-                    label: 'Montant pondéré (€)',
-                    data: weightedAmounts,
-                    backgroundColor: '#A8E6CF',
-                    borderColor: '#5dcca7',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false
-                }
+                Object.assign({ label: 'Montant total (€)',   data: amounts,         backgroundColor: '#A7C7E7', borderColor: '#6fa8d6' }, commonDatasetProps),
+                Object.assign({ label: 'Montant pondéré (€)', data: weightedAmounts, backgroundColor: '#A8E6CF', borderColor: '#5dcca7' }, commonDatasetProps)
             ]
         },
         options: {
@@ -224,7 +257,7 @@ $nextUrl    = $currentPageUrl . '?week_offset=' . $nextOffset;
                 legend: {
                     display: true,
                     position: 'top',
-                    labels: { font: { size: 11 }, color: '#64748b', boxWidth: 12 }
+                    labels: { font: { size: 9 }, color: '#64748b', boxWidth: 8, padding: 6 }
                 },
                 tooltip: commonTooltip
             },
@@ -245,33 +278,9 @@ $nextUrl    = $currentPageUrl . '?week_offset=' . $nextOffset;
         data: {
             labels: labels,
             datasets: [
-                {
-                    label: 'Total',
-                    data: counts,
-                    backgroundColor: '#A7C7E7',
-                    borderColor: '#6fa8d6',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false
-                },
-                {
-                    label: '> 50%',
-                    data: counts50,
-                    backgroundColor: '#CDB4DB',
-                    borderColor: '#a67fc4',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false
-                },
-                {
-                    label: '> 80%',
-                    data: counts80,
-                    backgroundColor: '#FFC8DD',
-                    borderColor: '#ff85aa',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false
-                }
+                Object.assign({ label: 'Total', data: counts,   backgroundColor: '#A7C7E7', borderColor: '#6fa8d6' }, commonDatasetProps),
+                Object.assign({ label: '> 50%', data: counts50, backgroundColor: '#CDB4DB', borderColor: '#a67fc4' }, commonDatasetProps),
+                Object.assign({ label: '> 80%', data: counts80, backgroundColor: '#A8E6CF', borderColor: '#5dcca7' }, commonDatasetProps)
             ]
         },
         options: {
@@ -281,7 +290,7 @@ $nextUrl    = $currentPageUrl . '?week_offset=' . $nextOffset;
                 legend: {
                     display: true,
                     position: 'top',
-                    labels: { font: { size: 11 }, color: '#64748b', boxWidth: 12 }
+                    labels: { font: { size: 9 }, color: '#64748b', boxWidth: 8, padding: 6 }
                 },
                 tooltip: commonTooltip
             },
