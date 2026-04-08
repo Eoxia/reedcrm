@@ -595,7 +595,7 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
-            'titre'    => 'PWA',
+            'titre'    => 'App',
             'prefix'   => '<i class="fa fa-mobile pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'quickcreationfrontendpwa',

@@ -1382,6 +1382,57 @@ class ActionsReedcrm
         return 0; // or return 1 to replace standard code
     }
 
+    public function tabContentCreateThirdparty($parameters, &$object, &$action, $hookmanager)
+    {
+        global $langs;
+
+        if (strpos($parameters['context'], 'thirdpartycard') !== false && $action == 'create') {
+
+            ?>
+
+            <script>
+
+                $(window).on('load', function() {
+
+                    function updateLink() {
+                        let $td = $('input[name="name"]').closest('td');
+
+                        let name = $('input[name="name"]').val();
+                        let town = $('input[name="town"]').val();
+
+                        let query = name;
+
+                        if (town && town.trim() !== '') {
+                            query += ' ' + town;
+                        }
+
+                        query += ' SIRET';
+
+                        let searchUrl = "https://www.google.com/search?q=" + encodeURIComponent(query);
+
+                        let $link = $td.find('a.test');
+
+                        if ($link.length === 0) {
+                            $link = $('<a>', {
+                                class: 'test',
+                                target: '_blank',
+                                html: '<i class="fas fa-external-link-alt"></i>'
+                            }).appendTo($td);
+                        }
+
+                        $link.attr('href', searchUrl);
+                    }
+
+                    $('input[name="name"], input[name="town"]').on('input', updateLink);
+
+                });
+            </script>
+
+            <?php
+
+        }
+    }
+
     /**
      * Overloading the formObjectOptions function : replacing the parent's function with the one below
      *
