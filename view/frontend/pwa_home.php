@@ -31,8 +31,9 @@ require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
 print '<div class="pwa-container" style="padding: 15px;">';
 print '  <h2><i class="fas fa-home" style="color: #64748b;"></i> Accueil App</h2>';
-print '  <p style="color: #64748b;">Le tableau de bord / page d\'accueil de l\'app viendra ici.</p>';
 print '</div>';
+
+require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_home_graphs.tpl.php';
 
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
 
