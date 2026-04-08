@@ -2,7 +2,7 @@
 /**
  * \file    core/tpl/frontend/reedcrm_pwa_header.tpl.php
  * \ingroup reedcrm
- * \brief   Homogeneous top header for all PWA pages
+ * \brief   Homogeneous top header for all App pages
  */
 
 // We expect $pwaHeaderCenterHtml to be optionally defined by the parent script
@@ -90,7 +90,7 @@
 <?php } ?>
 
 <style>
-    /* Global PWA layout alignment */
+    /* Global App layout alignment */
     body.template-pwa {
         padding: 0 !important;
         padding-top: 60px !important; /* Offset content exactly by the height of the fixed navbar */

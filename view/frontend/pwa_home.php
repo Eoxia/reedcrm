@@ -2,7 +2,7 @@
 /**
  * \file    view/frontend/pwa_home.php
  * \ingroup reedcrm
- * \brief   PWA Dashboard / Home
+ * \brief   App Dashboard / Home
  */
 
 if (file_exists('../reedcrm.main.inc.php')) {
@@ -30,8 +30,8 @@ $pwaHeaderCenterHtml = '<div style="background: #e2e8f0; padding: 4px 10px; bord
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
 print '<div class="pwa-container" style="padding: 15px;">';
-print '  <h2><i class="fas fa-home" style="color: #64748b;"></i> Accueil PWA</h2>';
-print '  <p style="color: #64748b;">Le tableau de bord / page d\'accueil de la PWA viendra ici.</p>';
+print '  <h2><i class="fas fa-home" style="color: #64748b;"></i> Accueil App</h2>';
+print '  <p style="color: #64748b;">Le tableau de bord / page d\'accueil de l\'app viendra ici.</p>';
 print '</div>';
 
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';

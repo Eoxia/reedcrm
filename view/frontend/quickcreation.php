@@ -138,7 +138,7 @@ if ($nbLatestOpportunities > 0) {
     }
 }
 
-// Include the Bottom Navigation Bar for PWA
+// Include the Bottom Navigation Bar for App
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
 
 // End of page

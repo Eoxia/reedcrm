@@ -2,7 +2,7 @@
 /**
  * \file    core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php
  * \ingroup reedcrm
- * \brief   Bottom navigation bar for mobile/PWA frontend pages
+ * \brief   Bottom navigation bar for mobile/App frontend pages
  */
 
 $urlBase = dol_buildpath('/custom/reedcrm/view/frontend/', 1);
@@ -50,7 +50,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 </nav>
 
 <style>
-/* CSS styles for PWA Bottom Nav */
+/* CSS styles for App Bottom Nav */
 	.pwa-bottom-nav {
 		position: fixed;
 		bottom: 0;

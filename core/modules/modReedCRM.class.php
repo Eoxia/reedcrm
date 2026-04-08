@@ -235,7 +235,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_UNIT', 'chaine', 'i', '', 0, 'current'],
 
-            // CONST PWA
+            // CONST App
             $i++ => ['REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
 
             // CONST ADDRESS

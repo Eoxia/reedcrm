@@ -1355,7 +1355,7 @@ class ActionsReedcrm
         global $langs;
 
         if (GETPOST('module_name') == 'ReedCRM' && strpos($parameters['context'], 'pwaadmin') !== false) {
-            // PWA configuration
+            // App configuration
             $out = load_fiche_titre($langs->trans('Config'), '', '');
 
             $out .= '<table class="noborder centpercent">';
@@ -1365,11 +1365,11 @@ class ActionsReedcrm
             $out .= '<td class="center">' . $langs->trans('Status') . '</td>';
             $out .= '</tr>';
 
-            // PWA close project when probability zero
+            // App close project when probability zero
             $out .= '<tr class="oddeven"><td>';
-            $out .= $langs->trans('PWACloseProjectOpportunityZero');
+            $out .= $langs->trans('AppCloseProjectOpportunityZero');
             $out .= '</td><td>';
-            $out .= $langs->trans('PWACloseProjectOpportunityZeroDescription');
+            $out .= $langs->trans('AppCloseProjectOpportunityZeroDescription');
             $out .= '</td><td class="center">';
             $out .= ajax_constantonoff('REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO');
             $out .= '</td></tr>';

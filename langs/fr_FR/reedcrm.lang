@@ -72,9 +72,10 @@ OpportunityStatusDescription = Selection du statut d'opportunité <br> Valeur pa
 OpportunityAmountDescription = Selection du montant d'opportunité <br> Valeur par défaut : <b> 3000 € </b>
 ProspectCustomerDescription = Selection de la nature des tiers <br> Valeur par défaut : <b> Prospect </b>
 
-# PWA - Progressive Web App
-PWACloseProjectOpportunityZero = Clôturer le projet
-PWACloseProjectOpportunityZeroDescription = Clôturer le projet quand l'opportunité est à 0
+# App
+App = App
+AppCloseProjectOpportunityZero = Clôturer le projet
+AppCloseProjectOpportunityZeroDescription = Clôturer le projet quand l'opportunité est à 0
 
 # Product Kit - Produit Kit
 ProductKitConf = Compléter la description d'une ligne de devis avec la composition du kit

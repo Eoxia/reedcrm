@@ -18,7 +18,7 @@
 /**
  * \file    view/frontend/pwa_geoloc.php
  * \ingroup reedcrm
- * \brief   Page to show geolocated map on frontend PWA view
+ * \brief   Page to show geolocated map on frontend App view
  */
 
 // Load ReedCRM environment

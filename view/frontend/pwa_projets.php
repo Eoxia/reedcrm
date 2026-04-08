@@ -2,7 +2,7 @@
 /**
  * \file    view/frontend/pwa_projets.php
  * \ingroup reedcrm
- * \brief   Page to list Projects/Opportunities on frontend PWA view
+ * \brief   Page to list Projects/Opportunities on frontend App view
  */
 
 if (file_exists('../reedcrm.main.inc.php')) {
@@ -146,7 +146,7 @@ if ($totalPages > 1) {
 
 print '</div>';
 
-// Include the Bottom Navigation Bar for PWA
+// Include the Bottom Navigation Bar for App
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
 
 llxFooter();

@@ -2,7 +2,7 @@
 /**
  * \file    view/frontend/pwa_contacts.php
  * \ingroup reedcrm
- * \brief   Page to list Contacts on frontend PWA view
+ * \brief   Page to list Contacts on frontend App view
  */
 
 if (file_exists('../reedcrm.main.inc.php')) {
@@ -39,10 +39,10 @@ require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
 print '<div class="pwa-container" style="padding: 15px;">';
 print '  <h2><i class="fas fa-address-book" style="color: #64748b;"></i> ' . $langs->trans('Contacts') . '</h2>';
-print '  <p style="color: #64748b;">La liste optimisée PWA sera développée ici lors de la prochaine étape !</p>';
+print '  <p style="color: #64748b;">La liste optimisée App sera développée ici lors de la prochaine étape !</p>';
 print '</div>';
 
-// Include the Bottom Navigation Bar for PWA
+// Include the Bottom Navigation Bar for App
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
 
 llxFooter();

@@ -22,6 +22,11 @@ ModuleReedCRMDesc = Simplification of CRM
 ReedCRMDescription = Simplification of CRM
 ReedCRMDescriptionLong = Simplification of CRM
 
+# App
+App = App
+AppCloseProjectOpportunityZero = Close project
+AppCloseProjectOpportunityZeroDescription = Close project when opportunity is at 0
+
 # Keyyo Calls
 IncomingCall = Incoming Call
 ViewContact = View Contact
