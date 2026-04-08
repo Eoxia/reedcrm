@@ -489,8 +489,66 @@ print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute
 				});
 			}
 		});
+		var badgeStyleCache = {};
+
+		function createBadgeStyle(count) {
+			if (badgeStyleCache[count]) return badgeStyleCache[count];
+
+			var text    = String(count);
+			var font    = 'bold 10px sans-serif';
+			var padH    = 5, padV = 3;
+
+			var tmpCanvas = document.createElement('canvas');
+			var tmpCtx    = tmpCanvas.getContext('2d');
+			tmpCtx.font   = font;
+			var textW     = tmpCtx.measureText(text).width;
+
+			var badgeH = 10 + padV * 2;
+			var badgeW = Math.max(badgeH, textW + padH * 2);
+			var r      = badgeH / 2;
+
+			var canvas  = document.createElement('canvas');
+			canvas.width  = badgeW;
+			canvas.height = badgeH;
+			var ctx = canvas.getContext('2d');
+
+			// Pill shape
+			ctx.beginPath();
+			ctx.moveTo(r, 0);
+			ctx.arcTo(badgeW, 0,    badgeW, badgeH, r);
+			ctx.arcTo(badgeW, badgeH, 0,    badgeH, r);
+			ctx.arcTo(0,      badgeH, 0,    0,      r);
+			ctx.arcTo(0,      0,      badgeW, 0,    r);
+			ctx.closePath();
+			ctx.fillStyle = '#ff4757';
+			ctx.fill();
+
+			// Number
+			ctx.fillStyle    = '#fff';
+			ctx.font         = font;
+			ctx.textAlign    = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(text, badgeW / 2, badgeH / 2);
+
+			badgeStyleCache[count] = new ol.style.Style({
+				image: new ol.style.Icon({
+					img:          canvas,
+					imgSize:      [badgeW, badgeH],
+					displacement: [badgeW / 2 + 4, 28]
+				})
+			});
+
+			return badgeStyleCache[count];
+		}
+
 		var styleFunction = function(feature) {
-			return markerStyles[feature.get('address')];
+			var baseStyle = markerStyles[feature.get('address')];
+			if (!baseStyle) return baseStyle;
+			var count = feature.get('stackCount');
+			if (count && count > 1) {
+				return [baseStyle, createBadgeStyle(count)];
+			}
+			return baseStyle;
 		};
 
 		/**
@@ -499,6 +557,25 @@ print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute
 		var prospectSource = new ol.source.Vector({
 			features: (new ol.format.GeoJSON()).readFeatures(geojsonMarkers)
 		});
+
+		/**
+		 * Compute stack count per coordinate and set it on each feature.
+		 */
+		(function() {
+			var coordCountMap = {};
+			prospectSource.getFeatures().forEach(function(f) {
+				if (f.getGeometry().getType() !== 'Point') return;
+				var c   = f.getGeometry().getCoordinates();
+				var key = c[0].toFixed(1) + ',' + c[1].toFixed(1);
+				coordCountMap[key] = (coordCountMap[key] || 0) + 1;
+			});
+			prospectSource.getFeatures().forEach(function(f) {
+				if (f.getGeometry().getType() !== 'Point') return;
+				var c   = f.getGeometry().getCoordinates();
+				var key = c[0].toFixed(1) + ',' + c[1].toFixed(1);
+				f.set('stackCount', coordCountMap[key]);
+			});
+		})();
 
 		/**
 		 * Prospect markers layer.
@@ -621,7 +698,7 @@ print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute
 
 				var spiderFeature = new ol.Feature({ geometry: new ol.geom.Point(spiderCoord) });
 				spiderFeature.set('desc', feature.get('desc'));
-				spiderFeature.setStyle(styleFunction(feature));
+				spiderFeature.setStyle(markerStyles[feature.get('address')]);
 				var spiderId = 'spider_' + i;
 				spiderFeature.setId(spiderId);
 				spiderFeatureMap[spiderId] = feature;
