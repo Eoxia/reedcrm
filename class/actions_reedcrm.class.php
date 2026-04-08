@@ -1383,6 +1383,29 @@ class ActionsReedcrm
     }
 
     /**
+     * Overloading the formObjectOptions function : replacing the parent's function with the one below
+     *
+     * @param  array     $parameters Hook metadata (context, etc...)
+     * @return int                   0 < on error, 0 on success, 1 to replace standard code
+     * @throws Exception
+     */
+    public function formObjectOptions(array $parameters, $object, $action): int
+    {
+        global $extrafields, $langs;
+
+        if (strpos($parameters['context'], 'projectcard') !== false && $object instanceof Project) {
+            $picto            = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule"');
+            $extraFieldsNames = ['opporigin'];
+            foreach ($extraFieldsNames as $extraFieldsName) {
+                $extrafields->attributes['projet']['label'][$extraFieldsName] = $picto . $langs->transnoentities($extrafields->attributes['projet']['label'][$extraFieldsName]);
+            }
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+
+    /**
      * Overloading the getTooltipContent function : intercepting the tooltip content
      *
      * @param  array        $parameters Hook metadatas (context, etc...)
