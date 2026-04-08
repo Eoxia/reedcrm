@@ -200,3 +200,36 @@ function reedcrm_field_propal_status(array $parameters, CommonObject $object): s
 {
     return $object->getLibStatut(5);
 }
+
+/**
+ * Render the opp_percent field as a colored badge and inject row background color.
+ *
+ * @param  array        $parameters Hook parameters (key, context, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_opp_percent(array $parameters, CommonObject $object): string
+{
+    $oppPercent = $object->opp_percent;
+
+    if (!isset($oppPercent)) {
+        return '';
+    }
+
+    if ($oppPercent < 20) {
+        $statusBadge = 8;
+        $rowColor    = 'rgba(107, 114, 128, 0.08)';
+    } elseif ($oppPercent < 60) {
+        $statusBadge = 1;
+        $rowColor    = 'rgba(239, 68, 68, 0.08)';
+    } else {
+        $statusBadge = 4;
+        $rowColor    = 'rgba(34, 197, 94, 0.08)';
+    }
+
+    $rowId = (int) $object->rowid;
+    $out   = '<style>tr[data-rowid="' . $rowId . '"]{background-color:' . $rowColor . '!important}</style>';
+    $out  .= dolGetBadge($oppPercent . ' %', '', 'status' . $statusBadge);
+
+    return $out;
+}

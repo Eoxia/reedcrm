@@ -914,7 +914,7 @@ class ActionsReedcrm
                             // @todo is a backward, should be removed one day when corrupted tools repair is added in saturne
                             if ($parameters['obj']->options_commrelaunch != $nbActionComms) {
                                 $project = new Project($db);
-                                $project->fetch($parameters['obj']->id);
+                                $project->fetch($objId);
                                 $project->array_options['options_commrelaunch'] = $nbActionComms;
                                 $project->updateExtrafield('commrelaunch');
                             }
@@ -1413,6 +1413,7 @@ class ActionsReedcrm
                 'photo'              => 'reedcrm_field_photo',
                 'fk_opp_status'      => 'reedcrm_field_opp_status',
                 'fk_statut'          => 'reedcrm_field_propal_status',
+                'opp_percent'        => 'reedcrm_field_opp_percent',
             ];
 
             $key = $parameters['key'];
