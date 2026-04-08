@@ -17,21 +17,42 @@
     <label>
         <i class="far fa-bell"></i>
         <?= $langs->trans('AddReminder'); ?>
-        <input type="checkbox" name="add_reminder" value="1">
+        <input type="checkbox" name="add_reminder" id="add_reminder_checkbox" value="1" <?php echo GETPOSTISSET('add_reminder') ? 'checked' : ''; ?>>
     </label>
 
-    <div>
-        <label for="title">
-            <input type="text" id="title" name="reminder_title"  maxlength="255" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('reminder_title') ? GETPOST('reminder_title') : '')); ?>">
-        </label>
-    </div>
+    <div id="reminder_fields" class="reminder-fields">
+        <div>
+            <label for="reminder_title">
+                <input type="text" id="reminder_title" name="reminder_title" maxlength="255" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('reminder_title') ? GETPOST('reminder_title') : '')); ?>">
+            </label>
+        </div>
 
+        <div class="reminder-date-row">
+            <?php echo $form->selectDate(dol_now('tzuser'), 'reminder_', 1, 1); ?>
+        </div>
 
-    <div style="display: flex; align-items: center;">
-        <?php echo $form->selectDate(dol_now('tzuser'), 'reminder_', 1, 1); ?>
+        <div class="reminder-user-row">
+            <?php echo img_picto('', 'user'); ?>
+            <?php echo $form->select_dolusers(GETPOSTISSET('reminder_user_id') ? GETPOSTINT('reminder_user_id') : $user->id, 'reminder_user_id', 0, null, 0, '', '', 0, 0, 0, '', 0, '', 'maxwidth200'); ?>
+        </div>
     </div>
     <script>
     $(function() {
+        // Afficher/masquer les champs de rappel selon la checkbox
+        var $checkbox = $('#add_reminder_checkbox');
+        var $fields = $('#reminder_fields');
+
+        function toggleReminderFields() {
+            if ($checkbox.is(':checked')) {
+                $fields.css('display', 'block');
+            } else {
+                $fields.hide();
+            }
+        }
+
+        toggleReminderFields();
+        $checkbox.on('change', toggleReminderFields);
+
         /*
          * Fix mise en page selectDate dans wpeo-grid (flex).
          * jQuery UI injecte le bouton calendrier à l'intérieur de .divfordateinput (après l'<input>),
