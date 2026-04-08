@@ -1393,7 +1393,7 @@ class ActionsReedcrm
      * @param  string       $action     Current action
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListWhere(array $parameters, CommonObject $object, string $action): int
+    public function printFieldListWhere(array $parameters, ?CommonObject $object, string $action): int
     {
         if (strpos($parameters['context'], 'propallist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
             $this->resprints = ' AND t.fk_statut >= 0';
