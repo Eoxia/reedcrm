@@ -159,7 +159,7 @@ class ReedcrmDashboard
         // Graph Title parameters.
 		$array['title'] = $langs->transnoentities($title);
         $array['name']  = $title;
-		$array['picto'] = '';
+		$array['picto'] = 'project';
 
 		// Graph parameters.
 		$array['width']   = '100%';

@@ -191,6 +191,7 @@ CommercialStatus = Statut commercial
 CommercialStatusHelp = Statut commercial de la proposition commerciale
 RefusalReason = Raison refus
 RefusalReasonHelp = Raison du refus de la proposition commerciale
+OpportunitySources = Répartition des sources d'opportunités
 PropalStatusCommRepartition = Répartition du statut des propositions commerciale ouvertes
 PropalRefusalReasonRepartition = Répartition des raisons de refus des propositions commerciale
 NotationObjectContact = Contact facturation

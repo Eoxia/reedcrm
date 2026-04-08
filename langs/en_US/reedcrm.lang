@@ -67,6 +67,9 @@ ProjectsImported = %s projects imported out of %s rows.
 ProjectsImportErrors = %s rows could not be imported.
 NbLines = Number of lines
 
+# Dashboard graphs
+OpportunitySources = Distribution of opportunity sources
+
 # Map / Geolocation - Carte / Géolocalisation
 ShowRoute = Show Route
 ThisWeek = This week
