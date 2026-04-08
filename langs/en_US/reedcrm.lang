@@ -36,16 +36,16 @@ CallDate = Call Date
 CallStatus = Call Status
 AutoOpenContact = Auto-open Contact
 CallNotificationsDisabled = Call Notifications Disabled
+CallNotificationsDisabledDesc = Disable call notifications globally for all users
 CallCheckFrequency = Call Check Frequency (in seconds)
+CallCheckFrequencyDesc = How often to check for new calls (in seconds, min: 2, max: 60)
 OpenInNewTab = Open in New Tab
+OpenInNewTabDesc = Open contact card in a new tab instead of current window
+AutoOpenContactDesc = Automatically open contact card when receiving a call notification
 KeyyoWebhookToken = Keyyo Webhook Token
 WebhookConfiguration = Webhook Configuration
 WebhookURL = Webhook URL
 Method = Method
-Disable call notifications globally for all users = Disable call notifications globally for all users
-How often to check for new calls (in seconds, min: 2, max: 60) = How often to check for new calls (in seconds, min: 2, max: 60)
-Automatically open contact card when receiving a call notification = Automatically open contact card when receiving a call notification
-Open contact card in a new tab instead of current window = Open contact card in a new tab instead of current window
 ReedCRMKeyyoSecurityToken = Security token for Keyyo webhook (leave empty to disable token check)
 
 # Projects import

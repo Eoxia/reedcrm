@@ -109,7 +109,7 @@ print '</tr>';
 // Call notifications disabled
 print '<tr class="oddeven">';
 print '<td>' . $langs->trans('CallNotificationsDisabled') . '</td>';
-print '<td>' . $langs->trans('Disable call notifications globally for all users') . '</td>';
+print '<td>' . $langs->trans('CallNotificationsDisabledDesc') . '</td>';
 print '<td class="center">';
 print '<input type="checkbox" name="REEDCRM_CALL_NOTIFICATIONS_DISABLED" value="1"' . (getDolGlobalInt('REEDCRM_CALL_NOTIFICATIONS_DISABLED') ? ' checked' : '') . '>';
 print '</td></tr>';
@@ -117,7 +117,7 @@ print '</td></tr>';
 // Call check frequency
 print '<tr class="oddeven">';
 print '<td>' . $langs->trans('CallCheckFrequency') . '</td>';
-print '<td>' . $langs->trans('How often to check for new calls (in seconds, min: 2, max: 60)') . '</td>';
+print '<td>' . $langs->trans('CallCheckFrequencyDesc') . '</td>';
 print '<td class="center">';
 print '<input type="number" name="REEDCRM_CALL_CHECK_FREQUENCY" min="2" max="60" value="' . getDolGlobalInt('REEDCRM_CALL_CHECK_FREQUENCY', 5) . '">';
 print '</td></tr>';
@@ -125,7 +125,7 @@ print '</td></tr>';
 // Auto open contact
 print '<tr class="oddeven">';
 print '<td>' . $langs->trans('AutoOpenContact') . '</td>';
-print '<td>' . $langs->trans('Automatically open contact card when receiving a call notification') . '</td>';
+print '<td>' . $langs->trans('AutoOpenContactDesc') . '</td>';
 print '<td class="center">';
 print '<input type="checkbox" name="REEDCRM_AUTO_OPEN_CONTACT" value="1"' . (getDolGlobalInt('REEDCRM_AUTO_OPEN_CONTACT') ? ' checked' : '') . '>';
 print '</td></tr>';
@@ -133,7 +133,7 @@ print '</td></tr>';
 // Open in new tab
 print '<tr class="oddeven">';
 print '<td>' . $langs->trans('OpenInNewTab') . '</td>';
-print '<td>' . $langs->trans('Open contact card in a new tab instead of current window') . '</td>';
+print '<td>' . $langs->trans('OpenInNewTabDesc') . '</td>';
 print '<td class="center">';
 print '<input type="checkbox" name="REEDCRM_OPEN_IN_NEW_TAB" value="1"' . (getDolGlobalInt('REEDCRM_OPEN_IN_NEW_TAB', 1) ? ' checked' : '') . '>';
 print '</td></tr>';
