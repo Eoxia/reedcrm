@@ -709,7 +709,10 @@ class modReedCRM extends DolibarrModules
             'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
 
             'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']],
-            
+
+            'reedcrm_gravityform'            => ['Label' => 'ReedCRMGravityForm', 'type' => 'url',    'length' => 255, 'elementtype' => ['projet'],     'position' => $this->numero . 15, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_gravityform_actioncomm' => ['Label' => 'ReedCRMGravityForm', 'type' => 'select',              'elementtype' => ['actioncomm'], 'position' => $this->numero . 15, 'list' => 1, 'enabled' => 1, 'alwayseditable' => 1, 'params' => ['none' => 'None', 'contact_form' => 'ContactForm', 'opportunity_form' => 'OpportunityForm']],
+
             'reedcrm_status_object' => [
                 'Label' => 'ReedCRMObjectStatus',
                 'type' => 'select',
