@@ -566,7 +566,7 @@ class modReedCRM extends DolibarrModules
             'titre'    => $langs->transnoentities('RecurringInvoices'),
             'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
-             'leftmenu' => 'recurringinvoices',
+            'leftmenu' => 'recurringinvoices',
             'url'      => '/compta/facture/list.php?search_status=4',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
@@ -606,6 +606,20 @@ class modReedCRM extends DolibarrModules
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
+            'leftmenu' => 'map',
+            'url'      => 'reedcrm/view/map.php?from_type=project',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'address\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
         ];
 
         $this->menu[$r++] = [

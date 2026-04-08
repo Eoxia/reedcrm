@@ -24,6 +24,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="fas fa-file-invoice-dollar"></i>
             <span>Devis</span>
         </a>
+        <a href="<?= $urlBase ?>pwa_geoloc.php?source=pwa" class="pwa-nav-item <?= ($currentPage == 'pwa_geoloc.php') ? 'active' : '' ?>">
+            <i class="fas fa-map-marked-alt"></i>
+            <span>Carte</span>
+        </a>
     </div>
 
     <!-- Central spacer -->
