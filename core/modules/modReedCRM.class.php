@@ -740,6 +740,14 @@ class modReedCRM extends DolibarrModules
 
             $extrafields = new ExtraFields($this->db);
 
+            // Backward compatibility: remove deprecated extrafields
+            if (!getDolGlobalInt('REEDCRM_DEPRECATED_EXTRAFIELDS_REMOVED')) {
+                $extrafields->delete('vocal', 'projet');
+                $extrafields->delete('contact_informations', 'projet');
+                $extrafields->delete('description', 'projet');
+                dolibarr_set_const($this->db, 'REEDCRM_DEPRECATED_EXTRAFIELDS_REMOVED', 1, 'integer', 0, '', $conf->entity);
+            }
+
             foreach ($objectsMetadata as $objectType => $objectMetadata) {
                 if ($objectType != 'project') {
                     // Backward compatibility
