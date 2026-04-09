@@ -734,18 +734,19 @@ class modReedCRM extends DolibarrModules
 
         saturne_manage_extrafields($extraFieldsArrays, $commonExtraFieldsValue);
 
-        // Backward compatibility: remove deprecated extrafields
-        require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
-        $extrafields = new ExtraFields($this->db);
-        $extrafields->delete('vocal', 'projet');
-        $extrafields->delete('contact_informations', 'projet');
-        $extrafields->delete('description', 'projet');
-
         $objectsMetadata = saturne_get_objects_metadata();
         if (!empty($objectsMetadata)) {
             require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
             $extrafields = new ExtraFields($this->db);
+
+            // Backward compatibility: remove deprecated extrafields
+            if (!getDolGlobalInt('REEDCRM_DEPRECATED_EXTRAFIELDS_REMOVED')) {
+                $extrafields->delete('vocal', 'projet');
+                $extrafields->delete('contact_informations', 'projet');
+                $extrafields->delete('description', 'projet');
+                dolibarr_set_const($this->db, 'REEDCRM_DEPRECATED_EXTRAFIELDS_REMOVED', 1, 'integer', 0, '', $conf->entity);
+            }
 
             foreach ($objectsMetadata as $objectType => $objectMetadata) {
                 if ($objectType != 'project') {
