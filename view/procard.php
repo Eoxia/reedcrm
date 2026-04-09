@@ -191,7 +191,7 @@ if (empty($resHook)) {
         $category->fetch(getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG'));
         $category->add_type($actionComm, 'actioncomm');
 
-        if ($result > 0 && GETPOST('add_reminder')) {
+        if ($result > 0 && !empty(GETPOST('reminder_title'))) {
             $date_reminder = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
 
             $actionComm->type_code    = 'AC_OTH';

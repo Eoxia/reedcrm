@@ -17,7 +17,6 @@
     <label>
         <i class="far fa-bell"></i>
         <?= $langs->trans('AddReminder'); ?>
-        <input type="checkbox" name="add_reminder" id="add_reminder_checkbox" value="1" <?php echo GETPOSTISSET('add_reminder') ? 'checked' : ''; ?>>
     </label>
 
     <div id="reminder_fields" class="reminder-fields">
@@ -38,21 +37,6 @@
     </div>
     <script>
     $(function() {
-        // Afficher/masquer les champs de rappel selon la checkbox
-        var $checkbox = $('#add_reminder_checkbox');
-        var $fields = $('#reminder_fields');
-
-        function toggleReminderFields() {
-            if ($checkbox.is(':checked')) {
-                $fields.css('display', 'block');
-            } else {
-                $fields.hide();
-            }
-        }
-
-        toggleReminderFields();
-        $checkbox.on('change', toggleReminderFields);
-
         /*
          * Fix mise en page selectDate dans wpeo-grid (flex).
          * jQuery UI injecte le bouton calendrier à l'intérieur de .divfordateinput (après l'<input>),
