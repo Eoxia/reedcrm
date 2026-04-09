@@ -219,7 +219,7 @@ if (empty($resHook)) {
 
             $actionCommReminder->fk_actioncomm = $result;
 
-            $actionCommReminder->fk_user = $user->id;
+            $actionCommReminder->fk_user = GETPOSTINT('reminder_user_id') ?: $user->id;
 
             $actionCommReminder->status = $actionCommReminder::STATUS_TODO;
 
