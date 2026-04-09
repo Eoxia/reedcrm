@@ -766,7 +766,7 @@ class modReedCRM extends DolibarrModules
             dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
         }
 
-        if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') == 0) {
+        if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') < 2) {
             require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
             require_once __DIR__ . '/../../class/geolocation.class.php';
@@ -786,7 +786,8 @@ class modReedCRM extends DolibarrModules
                     $lastname  = trim($proj->array_options['options_reedcrm_lastname'] ?? '');
 
                     if (empty($firstname) && empty($lastname)) {
-                        continue;
+                        $firstname = 'Address';
+                        $lastname  = $proj->ref;
                     }
 
                     $osmData = $geolocation->getAddressFromLatLon((float)$objGeoloc->latitude, (float)$objGeoloc->longitude);
@@ -814,7 +815,7 @@ class modReedCRM extends DolibarrModules
                 }
             }
 
-            dolibarr_set_const($this->db, 'REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT', 1, 'integer', 0, '', $conf->entity);
+            dolibarr_set_const($this->db, 'REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT', 2, 'integer', 0, '', $conf->entity);
         }
 
         if (getDolGlobalInt('REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY') == 0) {
