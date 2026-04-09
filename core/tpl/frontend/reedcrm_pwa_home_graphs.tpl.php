@@ -15,12 +15,12 @@ if ($weekOffset > 0) {
     $weekOffset = 0;
 }
 
-// Build 7-day range based on offset, excluding Sundays
+// Build 7-day range based on offset, excluding weekends
 $days = [];
 for ($i = 6; $i >= 0; $i--) {
     $shift   = $i + (-$weekOffset * 7);
     $ts      = dol_time_plus_duree(dol_now(), -$shift, 'd');
-    if (date('N', $ts) == 7) { // 7 = dimanche
+    if (in_array(date('N', $ts), [6, 7])) { // 6 = samedi, 7 = dimanche
         continue;
     }
     $dateKey        = dol_print_date($ts, '%Y-%m-%d');
