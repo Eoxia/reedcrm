@@ -568,7 +568,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'recurringinvoices',
-            'url'      => '/compta/facture/list.php?search_status=4',
+            'url'      => '/compta/facture/invoicetemplate_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
