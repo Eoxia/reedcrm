@@ -58,10 +58,12 @@ if (is_array($projects) && !empty($projects)) {
         $amount      = (float) $project->opp_amount;
         $probability = (float) $project->opp_percent;
 
-        $days[$dayKey]['count']++;
         $days[$dayKey]['amount']          += $amount;
         $days[$dayKey]['weighted_amount'] += $amount * ($probability / 100.0);
-        if ($probability > 50) {
+        if ($probability <= 50) {
+            $days[$dayKey]['count']++;
+        }
+        if ($probability > 50 && $probability <= 80) {
             $days[$dayKey]['count_50']++;
         }
         if ($probability > 80) {
@@ -125,10 +127,10 @@ foreach ($days as $dateKey => $day) {
 
     $baseOpp    = $urlBase . '?search_usage_opportunity=1' . $dateFilter;
 
-    $jsUrls[]          = $baseOpp;
+    $jsUrls[]          = $baseOpp . '&search_opp_percent=' . urlencode('<=50');
     $jsUrlsWeighted[]  = $baseOpp . '&search_opp_percent=>0&search_opp_amount=>0';
-    $jsUrls50[]        = $baseOpp . '&search_opp_percent=>50';
-    $jsUrls80[]        = $baseOpp . '&search_opp_percent=>80';
+    $jsUrls50[]        = $baseOpp . '&search_opp_percent=' . urlencode('>50 <=80');
+    $jsUrls80[]        = $baseOpp . '&search_opp_percent=' . urlencode('>80');
 }
 
 $prevOffset = $weekOffset - 1;
