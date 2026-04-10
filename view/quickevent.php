@@ -176,7 +176,7 @@ if (empty($reshook)) {
                 }
 
                 if ($fromtype == 'project') {
-                    $result = $project->fetch(GETPOST('project_id'));
+                    $result = $project->fetch(GETPOSTINT('project_id'));
                     if ($result > 0) {
                         $project->fetch_optionals();
                         $commTaskID    = $project->array_options['options_commtask'];
@@ -357,7 +357,7 @@ if (isModEnabled('societe') && $socid > 0) {
 // Project
 if (isModEnabled('project') && $fromtype == 'project') {
     print '<tr><td class="titlefieldcreate">' . $langs->trans('Project'). '</td>';
-    $project->fetch(GETPOST('project_id'));
+    $project->fetch(GETPOSTINT('project_id'));
     print '<td>' . $project->getNomUrl(1) . '</td>';
     print '</tr>';
 

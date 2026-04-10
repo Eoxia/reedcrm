@@ -565,7 +565,7 @@ class ActionsReedcrm
                 $project = new Project($db);
                 $task    = new Task($db);
 
-                $project->fetch(GETPOST('id'));
+                $project->fetch(GETPOSTINT('id'));
                 $project->fetch_optionals();
 
                 if (!empty($project->array_options['options_commtask'])) {
