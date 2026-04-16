@@ -58,7 +58,7 @@
     }
   }
 
-  // The <label> wrapping the hidden input + visible date text
+  // Wrapper that triggers Flatpickr on click
   .pwa-week-picker-wrap {
     cursor: pointer;
     display: flex;
@@ -68,17 +68,113 @@
     position: relative;
   }
 
-  // The native week input is invisible but sits on top of the label for tap targeting
+  // The Flatpickr anchor input — hidden but keeps its position in the DOM
   .pwa-week-picker-input {
     position: absolute;
-    inset: 0;
+    width: 0;
+    height: 0;
     opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
+    pointer-events: none;
     border: none;
-    background: transparent;
-    z-index: 1;
+    padding: 0;
+  }
+
+  // -----------------------------------------------------------------------
+  // Flatpickr calendar overrides (scoped to .pwa-home)
+  // -----------------------------------------------------------------------
+  .flatpickr-calendar {
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+    border: 1px solid #e2e8f0;
+    font-family: inherit;
+  }
+
+  .flatpickr-months {
+    background: #3b82f6;
+    border-radius: 11px 11px 0 0;
+    padding: 4px 0;
+
+    .flatpickr-prev-month,
+    .flatpickr-next-month {
+      color: #fff !important;
+      fill: #fff !important;
+
+      &:hover svg {
+        fill: rgba(255, 255, 255, 0.8) !important;
+      }
+    }
+
+    .flatpickr-month {
+      color: #fff;
+    }
+
+    .flatpickr-current-month {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+
+      .numInput,
+      .flatpickr-monthDropdown-months {
+        color: #fff;
+        font-weight: 700;
+      }
+
+      .arrowUp,
+      .arrowDown {
+        border-bottom-color: rgba(255, 255, 255, 0.7);
+        border-top-color: rgba(255, 255, 255, 0.7);
+      }
+    }
+  }
+
+  .flatpickr-weekdays {
+    background: #f8fafc;
+
+    .flatpickr-weekday {
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+    }
+  }
+
+  .flatpickr-weeks {
+    background: #f1f5f9;
+
+    .flatpickr-day.week-number {
+      color: #94a3b8;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: default;
+    }
+  }
+
+  .flatpickr-day {
+    border-radius: 6px;
+    font-size: 12px;
+    transition: background 0.12s;
+
+    &.selected,
+    &.selected:hover {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    &.today:not(.selected) {
+      border-color: #3b82f6;
+      color: #3b82f6;
+      font-weight: 700;
+    }
+
+    &.flatpickr-disabled {
+      color: #cbd5e0;
+    }
+
+    // Full-week hover highlight (added by pwa_home.js)
+    &.pwa-week-hover {
+      background: #eff6ff;
+      color: #1e40af;
+    }
   }
 
   .pwa-graphs-nav-btn {

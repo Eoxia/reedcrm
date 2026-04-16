@@ -179,19 +179,20 @@ $maxWeekVal   = date('Y', $currentMondayTs) . '-W' . date('W', $currentMondayTs)
 
         <div class="pwa-graphs-nav-info">
             <span class="pwa-graphs-title"><i class="fas fa-handshake"></i> Opportunités</span>
-            <label class="pwa-week-picker-wrap" title="Choisir une semaine">
+            <div class="pwa-week-picker-wrap" title="Choisir une semaine">
                 <input
-                    type="week"
+                    type="text"
                     id="pwa-week-picker"
-                    value="<?= dol_escape_htmltag($weekInputVal) ?>"
-                    max="<?= dol_escape_htmltag($maxWeekVal) ?>"
+                    class="pwa-week-picker-input"
                     data-page-url="<?= dol_escape_htmltag($currentPageUrl) ?>"
-                    class="pwa-week-picker-input">
+                    data-default-date="<?= dol_escape_htmltag(date('Y-m-d', $weekStartTs)) ?>"
+                    data-max-date="<?= dol_escape_htmltag(date('Y-m-d', $currentMondayTs + 6 * 86400)) ?>"
+                    readonly>
                 <span class="pwa-graphs-date-range">
                     <?= dol_escape_htmltag($dateRangeLabel) ?>
                     <i class="fas fa-calendar-alt pwa-week-picker-icon"></i>
                 </span>
-            </label>
+            </div>
         </div>
 
         <?php if ($isCurrentWeek) { ?>
