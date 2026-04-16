@@ -5,7 +5,7 @@
  * \brief   Graphs section for the PWA home page (Chart.js)
  */
 
-global $db, $conf;
+global $db, $conf, $user;
 
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 
@@ -41,8 +41,12 @@ $endDate   = array_key_last($days);
 $safeStart = preg_replace('/[^0-9\-]/', '', $startDate);
 $safeEnd   = preg_replace('/[^0-9\-]/', '', $endDate);
 
+$graphsFilterUserId = getDolUserInt('REEDCRM_PWA_FILTER_USER_ID', 0, $user);
+$userFilterSql = $graphsFilterUserId > 0 ? " AND t.fk_user_creat = " . (int) $graphsFilterUserId : '';
+
 $filter = [
     'customsql' => "t.usage_opportunity = 1"
+                 . $userFilterSql
                  . " AND DATE(t.datec) >= '" . $safeStart . "'"
                  . " AND DATE(t.datec) <= '" . $safeEnd . "'",
 ];
