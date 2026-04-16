@@ -1,0 +1,128 @@
+// PWA fixed header — layout & component styles
+
+body.template-pwa {
+  padding: 0 !important;
+  padding-top: 60px !important;
+  margin: 0 !important;
+
+  .fiche,
+  #id-right,
+  #id-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  body.template-pwa {
+    padding-top: 60px !important;
+  }
+
+  #id-top {
+    padding: 0 10px !important;
+    gap: 5px !important;
+    overflow-x: auto;
+
+    .company-logo {
+      max-width: 60px !important;
+    }
+
+    .user-profile-widget {
+      gap: 6px !important;
+      padding: 2px 4px !important;
+    }
+  }
+}
+
+// Normalize showphoto() img for the logged-in user badge
+.custom-badge-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  object-fit: contain !important;
+  border: none !important;
+}
+
+// Person-filter combobox trigger avatar
+.pwa-filter-avatar-wrap {
+  img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    object-fit: cover !important;
+    border: none !important;
+    display: block !important;
+  }
+
+  i {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+// Person-filter combobox dropdown
+#pwa-filter-uid-list {
+  .pwa-combo-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 12px;
+    cursor: pointer;
+
+    &:hover {
+      background: #eff6ff;
+    }
+
+    &--everyone {
+      .pwa-combo-item-name {
+        color: #64748b;
+      }
+    }
+  }
+
+  .pwa-combo-item-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e2e8f0;
+
+    img,
+    .pwa-combo-avatar,
+    img[class*="photo"],
+    img[class*="gravatar"] {
+      width: 28px !important;
+      height: 28px !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      object-fit: cover !important;
+      border: none !important;
+      display: block !important;
+    }
+  }
+
+  .pwa-combo-item-name {
+    font-size: 13px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .pwa-combo-no-result {
+    padding: 8px 14px;
+    color: #94a3b8;
+    font-size: 12px;
+  }
+}
