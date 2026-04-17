@@ -17,17 +17,9 @@ global $conf, $db, $hookmanager, $langs, $user;
 
 $title    = $langs->trans('Home');
 $help_url = 'FR:Module_ReedCRM';
-$moreJS   = [
-    'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js',
-    'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/fr.js',
-    '/custom/saturne/js/saturne.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js',
-];
-$moreCSS  = [
-    'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css',
-    '/custom/reedcrm/css/reedcrm.min.css',
-];
- 
+$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
+$moreCSS  = ['/custom/reedcrm/css/reedcrm.min.css'];
+
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 

@@ -9,10 +9,10 @@
 // to inject page-specific indicators in the middle of the header.
 
 ?>
-<div id="id-top" class="page-header-tabs" style="position: fixed; top: 0; left: 0; right: 0; z-index: 999; width: 100%; box-sizing: border-box; margin: 0; border-radius: 0; background-color: #ffffff; padding: 0 15px; height: 60px; border-bottom: 2px solid #3b82f6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;">
+<div id="id-top" class="page-header-tabs" style="position: fixed; top: 0; left: 0; right: 0; z-index: 999; width: 100%; box-sizing: border-box; margin: 0; border-radius: 0; background-color: #ffffff; padding: 0 15px; height: 60px; border-bottom: 2px solid #3b82f6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between;">
     
-    <!-- Left: Logo (grid col 1 — justify-self: start keeps it on the left) -->
-    <a href="<?php echo dol_buildpath('/custom/reedcrm/view/frontend/pwa_home.php?source=pwa', 1); ?>" class="company-logo-wrapper" style="display: flex; align-items: center; text-decoration: none; justify-self: start;">
+    <!-- Left: Logo -->
+    <a href="<?php echo dol_buildpath('/custom/reedcrm/view/frontend/pwa_home.php?source=pwa', 1); ?>" class="company-logo-wrapper" style="display: flex; align-items: center; text-decoration: none;">
         <?php
         global $mysoc, $db, $conf, $user;
         if (empty($mysoc)) {
@@ -33,8 +33,8 @@
         ?>
     </a>
     
-    <!-- Center: Page Specific Indicators (grid col 2 — naturally centered) -->
-    <div class="pwa-header-center" style="display: flex; align-items: center; justify-content: center; margin: 0 10px;">
+    <!-- Center: Page Specific Indicators -->
+    <div class="pwa-header-center" style="display: flex; align-items: center; justify-content: center; flex: 1; margin: 0 15px;">
         <?php 
         if (!empty($pwaHeaderCenterHtml)) {
             print $pwaHeaderCenterHtml;
@@ -42,83 +42,7 @@
         ?>
     </div>
 
-    <!-- Right: Person Filter + User Profile Badge (grid col 3 — justify-self: end keeps it on the right) -->
-    <div style="display: flex; align-items: center; justify-self: end;">
-    <?php
-    // --- Person filter selector ---
-    $pwaCurrentFilterUserId = getDolUserInt('REEDCRM_PWA_FILTER_USER_ID', 0, $user);
-    $setFilterUrl = dol_buildpath('/custom/reedcrm/view/frontend/pwa_set_filter_user.php', 1);
-    $currentPageUri = dol_escape_htmltag($_SERVER['REQUEST_URI']);
-
-    // Fetch all active users via direct SQL (simple and reliable)
-    $resqlUsers  = $db->query("SELECT rowid AS id, firstname, lastname, email, photo FROM " . MAIN_DB_PREFIX . "user WHERE statut = 1 AND entity IN (0, " . (int) $conf->entity . ") ORDER BY lastname, firstname");
-    $pwaUserList = [];
-    if ($resqlUsers) {
-        while ($rowUser = $db->fetch_object($resqlUsers)) {
-            $pwaUserList[] = $rowUser;
-        }
-    }
-    ?>
-    <?php
-    // Build JS data array and resolve current label + avatar HTML via showphoto() (same as elsewhere)
-    $pwaFormObj = new Form($db);
-
-    $pwaUserData           = [['id' => 0, 'label' => 'Tout le monde', 'avatarHtml' => '<i class="fas fa-users" style="font-size:11px;color:#94a3b8;"></i>']];
-    $pwaCurrentFilterLabel = 'Tout le monde';
-    $pwaCurrentFilterAvatarHtml = '<i class="fas fa-users" style="font-size:11px;color:#94a3b8;"></i>';
-
-    foreach ($pwaUserList as $pwaUserRow) {
-        $fullName = trim($pwaUserRow->firstname . ' ' . $pwaUserRow->lastname);
-        if (empty($fullName)) $fullName = 'User #' . $pwaUserRow->id;
-
-        // Pass the real User object directly to showphoto() — same as everywhere else in the module
-        $listAvatarHtml = $pwaFormObj->showphoto('userphoto', $pwaUserRow, 28, 28, 0, 'pwa-combo-avatar', 'small', 0);
-
-        $pwaUserData[] = ['id' => (int) $pwaUserRow->id, 'label' => $fullName, 'avatarHtml' => $listAvatarHtml];
-
-        if ((int) $pwaUserRow->id === $pwaCurrentFilterUserId) {
-            $pwaCurrentFilterLabel      = $fullName;
-            $pwaCurrentFilterAvatarHtml = $pwaFormObj->showphoto('userphoto', $pwaUserRow, 22, 22, 0, 'pwa-trigger-avatar', 'small', 0);
-        }
-        // Keep fallback label in sync with renamed "Tout le monde"
-        if ((int) $pwaUserRow->id === $pwaCurrentFilterUserId && $pwaCurrentFilterUserId === 0) {
-            $pwaCurrentFilterLabel = 'Tout le monde';
-        }
-    }
-    $isFiltered = $pwaCurrentFilterUserId > 0;
-    ?>
-    <form id="pwa-filter-user-form" method="POST" action="<?php echo $setFilterUrl; ?>" style="display: flex; align-items: center; margin-right: 8px;">
-        <input type="hidden" name="backtopage" value="<?php echo $currentPageUri; ?>">
-        <input type="hidden" name="token" value="<?php echo newToken(); ?>">
-        <input type="hidden" name="pwa_filter_user_id" id="pwa-filter-uid-val" value="<?php echo $pwaCurrentFilterUserId; ?>">
-
-        <div id="pwa-user-combo" style="position: relative;" data-users="<?php echo htmlspecialchars(json_encode($pwaUserData), ENT_QUOTES, 'UTF-8'); ?>">
-            <!-- Trigger: looks like a pill input -->
-            <div id="pwa-filter-uid-trigger"
-                style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1.5px solid <?php echo $isFiltered ? '#3b82f6' : '#cbd5e0'; ?>; border-radius: 20px; background: <?php echo $isFiltered ? '#eff6ff' : '#fff'; ?>; cursor: text; max-width: 160px;">
-
-                <!-- Avatar via showphoto() — identical rendering as the rest of the app -->
-                <div class="pwa-filter-avatar-wrap" style="width: 22px; height: 22px; border-radius: 50%; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #e2e8f0;">
-                    <?php echo $pwaCurrentFilterAvatarHtml; ?>
-                </div>
-
-                <!-- Text input -->
-                <input type="text" id="pwa-filter-uid-input" autocomplete="off"
-                    value="<?php echo dol_escape_htmltag($pwaCurrentFilterLabel); ?>"
-                    style="border: none; outline: none; background: transparent; font-size: 12px; color: <?php echo $isFiltered ? '#1e40af' : '#94a3b8'; ?>; width: 95px; min-width: 0; cursor: text;">
-
-                <!-- Clear button -->
-                <i id="pwa-filter-uid-clear" class="fas fa-times" title="Retirer le filtre"
-                    style="font-size: 10px; color: #94a3b8; cursor: pointer; flex-shrink: 0; display: <?php echo $isFiltered ? 'block' : 'none'; ?>;"></i>
-            </div>
-
-            <!-- Dropdown list -->
-            <ul id="pwa-filter-uid-list"
-                style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 200px; max-height: 240px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 4px 0; margin: 0; list-style: none; z-index: 10000;">
-            </ul>
-        </div>
-    </form>
-
+    <!-- Right: User Profile Badge & VCard Trigger -->
     <?php
     $vcardUrl = '';
     if (getDolUserInt('USER_ENABLE_PUBLIC', 0, $user)) {
@@ -148,7 +72,6 @@
         }
         ?>
     </<?php echo $widgetTag; ?>>
-    </div><!-- end right col -->
 </div>
 
 <!-- VCard Modal -->
@@ -166,3 +89,49 @@
 </div>
 <?php } ?>
 
+<style>
+    /* Global App layout alignment */
+    body.template-pwa {
+        padding: 0 !important;
+        padding-top: 60px !important; /* Offset content exactly by the height of the fixed navbar */
+        margin: 0 !important;
+    }
+    
+    body.template-pwa .fiche,
+    body.template-pwa #id-right,
+    body.template-pwa #id-container {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    @media (max-width: 1024px) {
+        body.template-pwa {
+            padding-top: 60px !important;
+        }
+        /* Compress Navigation Header (id-top) to fit sub-300px viepworts */
+        #id-top {
+            padding: 0 10px !important;
+            gap: 5px !important; /* using flex gap for spacing elements inside the top bar */
+            overflow-x: auto;
+        }
+        #id-top .company-logo {
+            max-width: 60px !important;
+        }
+        #id-top .user-profile-widget {
+            gap: 6px !important;
+            padding: 2px 4px !important;
+        }
+    }
+    
+    /* Ensure user avatar is kept contained natively */
+    .custom-badge-avatar {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        object-fit: contain !important;
+        border: none !important;
+    }
+</style>
