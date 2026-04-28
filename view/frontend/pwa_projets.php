@@ -57,29 +57,18 @@ if ($limit <= 0) $limit = 15;
 $offset = $limit * $page;
 
 // 2. Build Filters
-$pwaFilterUserId = getDolUserInt('REEDCRM_PWA_FILTER_USER_ID', 0, $user);
-
 $filter = [];
-$filterParts = [];
-
-if ($pwaFilterUserId > 0) {
-    $filterParts[] = "t.fk_user_creat = " . (int) $pwaFilterUserId;
-}
-
 if (!empty($searchStr)) {
     $searchEscaped = $db->escape($searchStr);
-    $filterParts[] = "(t.ref LIKE '%" . $searchEscaped . "%'"
-                   . " OR t.title LIKE '%" . $searchEscaped . "%'"
-                   . " OR t.description LIKE '%" . $searchEscaped . "%'"
-                   . " OR eft.reedcrm_firstname LIKE '%" . $searchEscaped . "%'"
-                   . " OR eft.reedcrm_lastname LIKE '%" . $searchEscaped . "%'"
-                   . " OR eft.projectphone LIKE '%" . $searchEscaped . "%'"
-                   . " OR eft.reedcrm_email LIKE '%" . $searchEscaped . "%'"
-                   . ")";
-}
-
-if (!empty($filterParts)) {
-    $filter['customsql'] = implode(' AND ', $filterParts);
+    $customSql = "(t.ref LIKE '%" . $searchEscaped . "%' ";
+    $customSql .= " OR t.title LIKE '%" . $searchEscaped . "%' ";
+    $customSql .= " OR t.description LIKE '%" . $searchEscaped . "%' ";
+    $customSql .= " OR eft.reedcrm_firstname LIKE '%" . $searchEscaped . "%' ";
+    $customSql .= " OR eft.reedcrm_lastname LIKE '%" . $searchEscaped . "%' ";
+    $customSql .= " OR eft.projectphone LIKE '%" . $searchEscaped . "%' ";
+    $customSql .= " OR eft.reedcrm_email LIKE '%" . $searchEscaped . "%' ";
+    $customSql .= ")";
+    $filter['customsql'] = $customSql;
 }
 
 // 3. Fetch Total Count & Data

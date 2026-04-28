@@ -91,10 +91,6 @@ $num = 0;
 $dateStartSQL = (!empty($filterDateStart) ? " AND p.datec >= '" . date('Y-m-d H:i:s', $filterDateStart) . "'" : '');
 $dateEndSQL   = (!empty($filterDateEnd)   ? " AND p.datec <= '" . date('Y-m-d H:i:s', $filterDateEnd)   . "'" : '');
 
-// Person filter
-$geolocFilterUserId = getDolUserInt('REEDCRM_PWA_FILTER_USER_ID', 0, $user);
-$userGeolocSQL = $geolocFilterUserId > 0 ? " AND p.fk_user_creat = " . (int) $geolocFilterUserId : '';
-
 if ($fromId > 0) {
     $project->fetch($fromId);
     $projectDateC = (int) $project->date_creation;
@@ -104,7 +100,7 @@ if ($fromId > 0) {
         $contacts = $project->liste_contact();
     }
 } else {
-    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"' . $dateStartSQL . $dateEndSQL . $userGeolocSQL], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON ec.element_id = p.rowid');
+    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"' . $dateStartSQL . $dateEndSQL], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON ec.element_id = p.rowid');
 }
 
 $geolocations = [];
