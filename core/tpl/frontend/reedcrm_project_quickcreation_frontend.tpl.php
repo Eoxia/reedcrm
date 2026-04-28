@@ -191,6 +191,15 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <input type="hidden" id="longitude" name="longitude" value="">
         <input type="hidden" id="geolocation-error" name="geolocation-error" value="">
 
+        <!-- Current address display -->
+        <div id="current-address-block" style="display:flex; align-items:center; gap:10px; margin-top:10px; margin-bottom:20px; padding:12px 14px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; overflow:hidden;">
+            <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size:16px; color:#3498db; flex-shrink:0;"></i>
+            <div style="flex:1; min-width:0;">
+                <div id="current-address-text" style="font-size:13px; color:#34495e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
+                <div id="current-address-coords" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
+            </div>
+        </div>
+
     </div>
 </div>
 

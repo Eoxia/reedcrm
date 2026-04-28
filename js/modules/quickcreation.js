@@ -129,40 +129,107 @@ window.reedcrm.quickcreation.createImg = function() {
  * @return {void}
  */
 window.reedcrm.quickcreation.getCurrentPosition = function() {
-  // Check if geolocation is supported by the browser
-  if (navigator.geolocation) {
-    // Get the current position
-    navigator.geolocation.getCurrentPosition(
-      // Success callback function
-      function (position) {
-        // Access the latitude and longitude from the position object
-        window.reedcrm.quickcreation.latitude  = position.coords.latitude;
-        window.reedcrm.quickcreation.longitude = position.coords.longitude;
-        $('#id-container #latitude').val(window.reedcrm.quickcreation.latitude);
-        $('#id-container #longitude').val(window.reedcrm.quickcreation.longitude);
-      },
-      // Error callback function
-      function (error) {
-        // Handle errors
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            $('#id-container #geolocation-error').val('User denied the request for geolocation.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            $('#id-container #geolocation-error').val('Location information is unavailable.');
-            break;
-          case error.TIMEOUT:
-            $('#id-container #geolocation-error').val('The request to get user location timed out.');
-            break;
-          case error.UNKNOWN_ERROR:
-            $('#id-container #geolocation-error').val('An unknown error occurred.');
-            break;
-        }
-      }
-    );
-  } else {
+  if (!navigator.geolocation) {
     $('#id-container #geolocation-error').val('Geolocation is not supported by this browser.');
+    window.reedcrm.quickcreation.setAddressBlockState('error', 'Géolocalisation non supportée.');
+    return;
   }
+
+  navigator.geolocation.getCurrentPosition(
+    function (position) {
+      window.reedcrm.quickcreation.latitude  = position.coords.latitude;
+      window.reedcrm.quickcreation.longitude = position.coords.longitude;
+      $('#id-container #latitude').val(window.reedcrm.quickcreation.latitude);
+      $('#id-container #longitude').val(window.reedcrm.quickcreation.longitude);
+      window.reedcrm.quickcreation.resolveCurrentAddress(
+        window.reedcrm.quickcreation.latitude,
+        window.reedcrm.quickcreation.longitude
+      );
+    },
+    function (error) {
+      var messages = {
+        1: 'User denied the request for geolocation.',
+        2: 'Location information is unavailable.',
+        3: 'The request to get user location timed out.'
+      };
+      $('#id-container #geolocation-error').val(messages[error.code] || 'An unknown error occurred.');
+      window.reedcrm.quickcreation.setAddressBlockState('error', 'Accès à la position refusé.');
+    }
+  );
+};
+
+/**
+ * Reverse geocode lat/lon via OSM Nominatim and display the resolved address
+ *
+ * @since   1.4.0
+ * @version 1.4.0
+ *
+ * @param {number} lat Latitude
+ * @param {number} lon Longitude
+ *
+ * @return {void}
+ */
+window.reedcrm.quickcreation.resolveCurrentAddress = function(lat, lon) {
+  $('#current-address-coords').text(lat.toFixed(6) + ' / ' + lon.toFixed(6));
+
+  $.getJSON(
+    'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&addressdetails=1',
+    function (data) {
+      if (!data || !data.address) {
+        window.reedcrm.quickcreation.setAddressBlockState('error', 'Adresse introuvable.');
+        return;
+      }
+
+      var a        = data.address;
+      var road     = a.road || a.pedestrian || a.footway || '';
+      var house    = a.house_number || '';
+      var postcode = a.postcode || '';
+      var city     = a.city || a.town || a.village || '';
+      var street   = house ? house + ' ' + road : road;
+      var parts    = $.grep([street, postcode, city], function(v) { return v !== ''; });
+      var label    = parts.length > 0 ? parts.join(', ') : data.display_name;
+
+      window.reedcrm.quickcreation.setAddressBlockState('success', label);
+    }
+  ).fail(function() {
+    window.reedcrm.quickcreation.setAddressBlockState('error', 'Impossible de récupérer l\'adresse.');
+  });
+};
+
+/**
+ * Update the address block visual state
+ *
+ * @since   1.4.0
+ * @version 1.4.0
+ *
+ * @param {string} state   'loading' | 'success' | 'error'
+ * @param {string} message Text to display
+ *
+ * @return {void}
+ */
+window.reedcrm.quickcreation.setAddressBlockState = function(state, message) {
+  var $icon = $('#current-address-icon');
+  var $text = $('#current-address-text');
+
+  $icon.removeClass('fa-circle-notch fa-spin fa-map-marker-alt fa-exclamation-triangle');
+
+  var $block = $('#current-address-block');
+
+  if (state === 'success') {
+    $icon.addClass('fa-map-marker-alt').css('color', '#3498db');
+    $text.css('color', '#34495e');
+    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
+  } else if (state === 'error') {
+    $icon.addClass('fa-exclamation-triangle').css('color', '#e74c3c');
+    $text.css('color', '#e74c3c');
+    $block.css({ background: '#fef2f2', 'border-color': '#fecaca' });
+  } else {
+    $icon.addClass('fa-circle-notch fa-spin').css('color', '#3498db');
+    $text.css('color', '#94a3b8');
+    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
+  }
+
+  $text.text(message);
 };
 
 /**

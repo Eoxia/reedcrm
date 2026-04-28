@@ -86,3 +86,8 @@ KeyyoCalls = Keyyo Calls
 
 # Project Extra
 GravityFormLink=GravityForm Link
+
+# Geolocation PWA
+DetectingLocation = Detecting your location
+GeolocationNotSupported = Geolocation is not supported by this browser
+GeolocationDenied = Location access denied
