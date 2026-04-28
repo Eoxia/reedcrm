@@ -338,3 +338,8 @@ PropalStatusValidated = Validée (Ouverte)
 PropalStatusSigned = Signée / Acceptée
 PropalStatusNotSigned = Non signée / Refusée
 PropalStatusBilled = Facturée
+
+# Geolocation PWA
+DetectingLocation = Détection de la position en cours
+GeolocationNotSupported = Géolocalisation non supportée par ce navigateur
+GeolocationDenied = Accès à la position refusé
