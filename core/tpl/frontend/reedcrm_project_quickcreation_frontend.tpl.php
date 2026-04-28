@@ -111,7 +111,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
             $extraFields->attributes['projet']['type'] = $sortedType; 
 
             foreach ($extraFields->attributes['projet']['type'] as $key => $value) {
-                if (strpos($key, 'reedcrm') === false && $key != 'projectphone') {
+                if ((strpos($key, 'reedcrm') === false && $key != 'projectphone') || $key == 'reedcrm_gravityform') {
                     continue;
                 }
 
@@ -180,6 +180,13 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <?php endif; ?>
 
         <!-- Visual Section Divider Removed & Relocated Below -->
+
+        <!-- Tags / Categories -->
+        <?php if (isModEnabled('categorie')) : ?>
+            <div class="form-group" style="margin-top: 8px;">
+                <?php print $form->selectCategories(Categorie::TYPE_PROJECT, 'categories'); ?>
+            </div>
+        <?php endif; ?>
 
         <!-- Media & Submit Block -->
         <div class="action-buttons-row" style="margin-top: 15px; margin-bottom: 15px;">

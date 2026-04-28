@@ -490,15 +490,15 @@ if ($action == 'add') {
     }
     
     if ($projectID > 0) {
-//        // Category association
-//        $categories = GETPOST('categories_project', 'array');
-//        if (count($categories) > 0) {
-//            $result = $project->setCategories($categories);
-//            if ($result < 0) {
-//                setEventMessages($project->error, $project->errors, 'errors');
-//                $error++;
-//            }
-//        }
+        // Category association
+        $categories = GETPOST('categories', 'array:int');
+        if (!empty($categories)) {
+            $result = $project->setCategories($categories);
+            if ($result < 0) {
+                setEventMessages($project->error, $project->errors, 'errors');
+                $error++;
+            }
+        }
 
         $pathToProjectDir = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
         if (!dol_is_dir($pathToProjectDir)) {
