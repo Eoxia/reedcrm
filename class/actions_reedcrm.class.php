@@ -325,20 +325,26 @@ class ActionsReedcrm
         }
 
         // Do something only for the current context
-        if (preg_match('/thirdpartycomm|projectcard/', $parameters['context'])) {
+        if (preg_match('/thirdpartycomm|thirdpartycard|projectcard|propalcard/', $parameters['context'])) {
             $pictoPath = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
             $pictoMod  = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
 
             if (isModEnabled('agenda')) {
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
-                $actionComm          = new ActionComm($db);
-                $socid               = (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
-                $isThirdpartyContext = (strpos($parameters['context'], 'thirdpartycomm') !== false);
-                $projectId           = $isThirdpartyContext ? 0 : (int) $object->id;
+                $actionComm       = new ActionComm($db);
+                $isProjectContext = (strpos($parameters['context'], 'projectcard') !== false);
+                $isThirdpartyContext = preg_match('/thirdpartycomm|thirdpartycard/', $parameters['context']);
+
+                if (strpos($parameters['context'], 'thirdpartycard') !== false) {
+                    $socid = (int) $object->id;
+                } else {
+                    $socid = (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
+                }
+                $projectId = $isProjectContext ? (int) $object->id : 0;
 
                 $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') . ')';
-                $actionComms = $actionComm->getActions($socid, ($isThirdpartyContext ? '' : GETPOST('id')), ($isThirdpartyContext ? '' : 'project'), $filter, 'a.datec');
+                $actionComms = $actionComm->getActions($socid, ($isProjectContext ? GETPOST('id') : ''), ($isProjectContext ? 'project' : ''), $filter, 'a.datec');
                 if (is_array($actionComms) && !empty($actionComms)) {
                     $nbActionComms  = count($actionComms);
                     $lastActionComm = array_shift($actionComms);
@@ -354,11 +360,11 @@ class ActionsReedcrm
                     $badgeClass = 8;
                 }
 
-                $url = '?socid=' . $socid . (strpos($_SERVER['PHP_SELF'], 'projet') ? '&fromtype=project' . '&project_id=' . $object->id : '') . '&action=create&token=' . newToken();
+                $url = '?socid=' . $socid . ($isProjectContext ? '&fromtype=project' . '&project_id=' . $object->id : '') . '&action=create&token=' . newToken();
                 $out = '<tr id="reedcrm-relaunch-row-hidden" style="display:none;"><td colspan="2">';
 
                 $picto     = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
-                $socidAttr = $isThirdpartyContext ? ' data-socid="' . (int) $socid . '"' : '';
+                $socidAttr = !$isProjectContext ? ' data-socid="' . (int) $socid . '"' : '';
 
                 // Build exactly like contactHtml wrapper
                 $out .= '<div class="contact-inline-wrapper reedcrm-header-relaunch-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
@@ -384,12 +390,13 @@ class ActionsReedcrm
 
                     $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
 
+                    $relaunchAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
                     $out .= '<div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . ' style="display: inline-block;">';
                     $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3" style="cursor:pointer;">';
-                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '"></span>';
+                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '" data-ajax-url="' . dol_escape_htmltag($relaunchAjaxUrl) . '"></span>';
                     $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
                     $out .= '</div></div>';
-                    
+
                     $out .= '<script>
                     $(document).ready(function() {
                         $(document).off("click", ".reedcrm-edit-action-title").on("click", ".reedcrm-edit-action-title", function(e) {
@@ -457,35 +464,44 @@ class ActionsReedcrm
                 } else {
                     $out .= '<div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . ' style="display: inline-block; margin-right: 8px;">';
                     $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3" style="cursor:pointer;">';
-                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '"></span>';
+                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '" data-ajax-url="' . dol_escape_htmltag($relaunchAjaxUrl) . '"></span>';
                     $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
                     $out .= '</div></div>';
                 }
 
                 if ($user->hasRight('agenda', 'myactions', 'create')) {
                     $modalId = 'eventproCardModal';
-                    if ($isThirdpartyContext) {
-                        $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe';
-                    } else {
+                    if ($isProjectContext) {
                         $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id;
+                    } else {
+                        $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe';
                     }
                     $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
-                    $out .= '<i class="fas fa-plus reedcrm-card-modal-open" style="cursor:pointer; color: #3b82f6; padding: 2px 4px;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . ($isThirdpartyContext ? '' : $object->id) . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '"></i>';
+                    $out .= '<i class="fas fa-plus reedcrm-card-modal-open" style="cursor:pointer; color: #3b82f6; padding: 2px 4px;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . ($isProjectContext ? $object->id : '') . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '"></i>';
                     $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                 }
 
                 $out .= '</div>'; // End wrapper block
 
-                // Teleport the block to the top left area
+                // Teleport the block to the header area
                 $out .= '<script>
                     $(document).ready(function() {
                         setTimeout(function() {
-                            let flexContainer = document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
+                            let flexContainer = document.querySelector(".reedcrm-card-header-blocks");
                             let relaunchBlock = document.querySelector(".reedcrm-header-relaunch-master");
                             if (flexContainer && relaunchBlock) {
                                 flexContainer.appendChild(relaunchBlock);
                                 relaunchBlock.style.marginLeft = "0";
                                 relaunchBlock.style.marginBottom = "0";
+                            } else {
+                                let refBlock = document.querySelector(".refid");
+                                if (refBlock && relaunchBlock) {
+                                    let wrapper = document.createElement("div");
+                                    wrapper.style.clear = "both";
+                                    wrapper.style.marginTop = "6px";
+                                    wrapper.appendChild(relaunchBlock);
+                                    refBlock.insertAdjacentElement("afterend", wrapper);
+                                }
                             }
                         }, 50); // slight delay to allow contact_inline.js to build the flex container
                     });
