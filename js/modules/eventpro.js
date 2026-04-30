@@ -535,16 +535,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
 
     tooltipTimeout = setTimeout(function () {
       $currentTooltip.fadeIn(200);
-      var currentUrl = window.location.href;
-      var urlObj = new URL(currentUrl);
-      var pathname = urlObj.pathname;
-
-      var pathParts = pathname.split('/').filter(function (p) { return p && p !== ''; });
-      if (pathParts.length >= 2) {
-        pathParts = pathParts.slice(0, -2);
-      }
-      var basePath = pathParts.length > 0 ? '/' + pathParts.join('/') : '';
-      const ajaxUrl = basePath + '/custom/reedcrm/ajax/get_relaunches_list.php';
+      const ajaxUrl = $wrapper.find('.reedcrm-modal-open').first().data('ajax-url') || '/custom/reedcrm/ajax/get_relaunches_list.php';
 
       $.ajax({
         url: ajaxUrl,
