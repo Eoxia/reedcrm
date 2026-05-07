@@ -1,21 +1,21 @@
-<div class="linked-medias project" id="master-media-row-container" style="width: 100%; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; box-sizing: border-box; min-height: 44px;">
+<div class="linked-medias project" id="master-media-row-container" style="width: 100%; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; box-sizing: border-box; min-height: 48px;">
     
     <!-- LEFT CLUSTER ITEMS (Auto-Flowing) -->
-    <div class="media-cluster-left" style="display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex: 1;">
+    <div class="media-cluster-left" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1;">
         
         <!-- BLOCK SON -->
         <div class="media-logical-block block-sound" style="display: flex; gap: 5px; align-items: center;">
             <!-- Mic -->
-            <button type="button" id="start-recording" class="btn-secondary" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease;">
-                <i class="fas fa-microphone" style="font-size: 20px; color: #fff;"></i>
+            <button type="button" id="start-recording" class="btn-secondary" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease;">
+                <i class="fas fa-microphone" style="font-size: 24px; color: #fff;"></i>
             </button>
             
             <!-- Play -->
             <div style="position: relative;">
-                <button type="button" id="play-recording" class="btn-secondary" disabled style="border: none; cursor:not-allowed; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #cbd5e1;">
-                    <i class="fas fa-play" style="font-size: 20px; color: #fff;"></i>
+                <button type="button" id="play-recording" class="btn-secondary" disabled style="border: none; cursor:not-allowed; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #cbd5e1;">
+                    <i class="fas fa-play" style="font-size: 24px; color: #fff;"></i>
                 </button>
-                <button type="button" id="delete-recording" style="display:none; position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 10px; cursor: pointer; justify-content: center; align-items: center; z-index: 10; padding: 0; line-height: 1;">
+                <button type="button" id="delete-recording" style="display:none; position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background-color: #e74c3c; color: white; border: none; font-size: 12px; cursor: pointer; justify-content: center; align-items: center; z-index: 10; padding: 0; line-height: 1;">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -26,15 +26,10 @@
         <!-- BLOCK PHOTO -->
         <div class="media-logical-block block-photo" style="display: flex; gap: 5px; align-items: center;">
             <!-- Camera -->
-            <label for="upload-photo" id="label-upload-photo" class="btn-orange" style="cursor:pointer; display:flex; justify-content:center; align-items:center; width: 44px; height: 44px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
-                <i class="fas fa-camera" style="font-size: 20px; color: #fff;"></i>
+            <label for="upload-photo" id="label-upload-photo" class="btn-orange" style="cursor:pointer; display:flex; justify-content:center; align-items:center; width: 48px; height: 48px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
+                <i class="fas fa-camera" style="font-size: 24px; color: #fff;"></i>
                 <input type="file" id="upload-photo" name="userfile[]" accept="image/*" capture="environment" multiple style="display: none;">
             </label>
-            
-            <!-- Gallery (Dotted Border) -->
-            <div id="gallery-add-btn" class="add-thumbnail-btn" style="width: 44px; height: 44px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; justify-content: center; align-items: center; color: #94a3b8; margin: 0;">
-                <i class="fas fa-image" style="font-size: 20px;"></i>
-            </div>
             
             <!-- Photo Thumbnails Injection Point -->
             <div id="photo-thumbnail-container" style="display: flex; gap: 5px;"></div>
@@ -43,20 +38,20 @@
     </div>
 
     <!-- RIGHT CLUSTER (Auto-Flowing) -->
-    <div class="media-cluster-right" style="position: relative; margin-left: auto; display: flex; align-items: center; gap: 5px;">
+    <div class="media-cluster-right" style="position: relative; margin-left: auto; display: flex; align-items: center; gap: 8px;">
         
         <!-- BLOCK ACTIONS -->
         <div class="media-logical-block block-actions" style="display: flex; gap: 5px; align-items: center;">
             <!-- Upload File -->
-            <label for="upload-media" id="label-upload-media" style="position: relative; background-color: #3b82f6; cursor:pointer; display:flex; justify-content:center; align-items:center; width: 44px; height: 44px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
-                <i class="fas fa-upload" style="font-size: 20px; color: #fff;"></i>
+            <label for="upload-media" id="label-upload-media" style="position: relative; background-color: #3b82f6; cursor:pointer; display:flex; justify-content:center; align-items:center; width: 48px; height: 48px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; transition: all 0.2s ease;">
+                <i class="fas fa-upload" style="font-size: 24px; color: #fff;"></i>
                 <span id="upload-media-counter" style="display:none; position: absolute; top: -6px; right: -6px; background:#94a3b8; color:white; font-size:10px; font-weight:bold; border-radius:12px; min-width: 14px; padding: 2px 4px; box-shadow:0 1px 2px rgba(0,0,0,0.2); border: 2px solid white; z-index: 10; justify-content: center; align-items: center; line-height: 1;">0</span>
                 <input type="file" id="upload-media" class="file-upload-input" name="userfile[]" accept="*/*" multiple style="display: none;">
             </label>
             
             <!-- Submit Button -->
-            <button type="submit" class="btn-submit-purple" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 44px; height: 44px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #9b59b6;">
-                <i class="fas fa-save" style="font-size: 20px; color: #fff;"></i>
+            <button type="submit" class="btn-submit-purple" style="border: none; cursor:pointer; margin:0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-radius: 12px; width: 48px; height: 48px; padding: 0; display:flex; justify-content:center; align-items:center; transition: all 0.2s ease; background-color: #9b59b6;">
+                <i class="fas fa-save" style="font-size: 24px; color: #fff;"></i>
             </button>
         </div>
         
@@ -357,9 +352,21 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="photo-editor-modal-content">
         
         <!-- Header -->
-        <div style="display:flex; justify-content: flex-start; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; width: fit-content;">
-            <i class="fas fa-crop-alt" style="color: #f39c12; margin-right: 8px; font-size: 1.2em;"></i>
-            <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Éditer la photo</h3>
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; width: 100%;">
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-crop-alt" style="color: #f39c12; margin-right: 8px; font-size: 1.2em;"></i>
+                <h3 style="margin: 0; font-size: 1.1em; color: #333; font-weight: 600;">Éditer la photo <span id="photo-resolution-display" style="color: #e74c3c; font-weight: normal; margin-left: 5px; font-size: 10px;"></span></h3>
+            </div>
+            
+            <!-- Settings (Moved to top) -->
+            <div style="position: relative; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 0 5px;" title="Réglages de qualité de l'image">
+                <i class="fas fa-ellipsis-v"></i>
+                <select id="photo-size-select" style="position: absolute; top: 0; right: 0; width: 30px; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                    <option value="hd" selected>HD (720p)</option>
+                    <option value="fullhd">Full HD (1080p)</option>
+                    <option value="full">Originale (FULL)</option>
+                </select>
+            </div>
         </div>
 
         <!-- Canvas Area -->
@@ -370,14 +377,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         <!-- Unified Horizontal Toolbar -->
         <div class="photo-editor-toolbar">
+            
+            <!-- 2. Camera Button (Left, Orange) -->
+            <button type="button" id="btn-cancel-photo" title="Reprendre la photo" style="flex-shrink: 0; background-color:#f39c12; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
+                <i class="fas fa-camera"></i>
+            </button>
+
+            <!-- Tools Center -->
             <button type="button" class="doli-tool-btn" data-mode="crop" title="Recadrer" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
                 <i class="fas fa-crop"></i>
             </button>
             <button type="button" class="doli-tool-btn" data-mode="rotate" title="Pivoter" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-undo"></i>
-            </button>
-            <button type="button" class="doli-tool-btn" id="btn-undo-action" title="Annuler dessin" style="flex-shrink: 0; background-color: #7f8c8d; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-reply"></i>
+                <i class="fas fa-redo"></i>
             </button>
             <div style="flex-shrink: 0; display: flex; background-color: #3498db; border-radius: 4px; overflow: hidden; height: 40px;" id="pencil-tool-container">
                 <button type="button" class="doli-tool-btn active" data-mode="pencil" title="Crayon" style="background-color: transparent; color: white; border: none; width: 40px; height: 100%; cursor: pointer; display:flex; justify-content:center; align-items:center;">
@@ -390,35 +401,28 @@ document.addEventListener('DOMContentLoaded', function() {
             <button type="button" class="doli-tool-btn" data-mode="text" title="Texte" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
                 <i class="fas fa-font"></i>
             </button>
-            <button type="button" class="doli-tool-btn" data-mode="arrow" title="Flèche" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-location-arrow" style="transform: rotate(-45deg);"></i>
+            <button type="button" class="doli-tool-btn" data-mode="arrow" title="Dessiner une flèche" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
+                <i class="fas fa-long-arrow-alt-right" style="transform: rotate(-45deg);"></i>
             </button>
             <button type="button" class="doli-tool-btn" data-mode="rect" title="Cadre" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
                 <i class="far fa-square"></i>
             </button>
-            <button type="button" class="doli-tool-btn" data-mode="blur" title="Flouter" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
-                <i class="fas fa-tint-slash"></i>
+            <button type="button" class="doli-tool-btn" data-mode="blur" title="Flouter / Masquer" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
+                <i class="fas fa-eye-slash"></i>
             </button>
             <button type="button" class="doli-tool-btn" data-mode="sequence" title="Puce Numérotée" style="flex-shrink: 0; background-color: #34495e; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; font-weight: bold; font-family: sans-serif;">
                 <i class="fas fa-list-ol"></i>
             </button>
             
-            <div style="position: relative; flex-shrink: 0; width: 40px; height: 40px; background-color: #34495e; border-radius: 4px; display: flex; justify-content: center; align-items: center; color: white; margin-left: auto;" title="Réglages de qualité de l'image">
-                <i class="fas fa-cog"></i>
-                <select id="photo-size-select" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none;">
-                    <option value="hd" selected>HD (720p)</option>
-                    <option value="fullhd">Full HD (1080p)</option>
-                    <option value="full">Originale (FULL)</option>
-                </select>
+            <!-- 3. Right Block (Undo & Save) Wrapping restricted -->
+            <div style="display: flex; gap: 6px; margin-left: auto; flex-shrink: 0; flex-wrap: nowrap;">
+                <button type="button" class="doli-tool-btn" id="btn-undo-action" title="Annuler dessin" style="flex-shrink: 0; background-color: #7f8c8d; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: background 0.2s;">
+                    <i class="fas fa-reply"></i>
+                </button>
+                <button type="button" id="btn-validate-photo" title="Valider" style="flex-shrink: 0; background-color:#2ecc71; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
+                    <i class="fas fa-check" style="font-size: 1.2em;"></i>
+                </button>
             </div>
-
-            <button type="button" id="btn-cancel-photo" title="Annuler (Reprendre)" style="flex-shrink: 0; background-color:#e74c3c; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
-                <i class="fas fa-camera"></i>
-            </button>
-            
-            <button type="button" id="btn-validate-photo" title="Valider" style="flex-shrink: 0; background-color:#2ecc71; color: white; border: none; width: 40px; height: 40px; border-radius: 4px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: opacity 0.2s;">
-                <i class="fas fa-check" style="font-size: 1.2em;"></i>
-            </button>
         </div>
     </div>
 </div>
@@ -448,6 +452,22 @@ document.addEventListener("DOMContentLoaded", function () {
     var snapshot = null;
     let sequenceCounter = 1;
     let historyStack = []; // Pour Undo
+
+    // Display current resolution
+    function updatePhotoResolutionDisplay() {
+        const displaySpan = document.getElementById('photo-resolution-display');
+        const selectedOption = sizeSelect.options[sizeSelect.selectedIndex];
+        if (displaySpan && selectedOption) {
+            const match = selectedOption.text.match(/\(([^)]+)\)/);
+            if (match) {
+                displaySpan.textContent = '(' + match[1] + ')';
+            } else {
+                displaySpan.textContent = '(' + selectedOption.text + ')';
+            }
+        }
+    }
+    updatePhotoResolutionDisplay();
+    sizeSelect.addEventListener('change', updatePhotoResolutionDisplay);
 
     // Stylisation des boutons
     const toolBtns = document.querySelectorAll('.doli-tool-btn[data-mode]');
@@ -488,6 +508,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if(e.touches && e.touches.length > 0) {
             clientX = e.touches[0].clientX;
             clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
         }
         const logicalX = clientX - rect.left;
         const logicalY = clientY - rect.top;
@@ -884,12 +907,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 wrap.style.display = 'inline-flex';
                 wrap.style.alignItems = 'center';
                 wrap.style.justifyContent = 'center';
-                wrap.style.width = '44px';
-                wrap.style.height = '44px';
+                wrap.style.width = '48px';
+                wrap.style.height = '48px';
                 
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
-                img.style.width = '44px'; img.style.height = '44px';
+                img.style.width = '48px'; img.style.height = '48px';
                 img.style.objectFit = 'cover'; img.style.borderRadius = '12px';
                 img.style.border = '1px solid #e2e8f0';
                 img.style.margin = '0';

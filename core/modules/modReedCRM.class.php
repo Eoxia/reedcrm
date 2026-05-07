@@ -81,7 +81,7 @@ class modReedCRM extends DolibarrModules
         //$this->editor_squarred_logo = ''; // Must be image filename into the reedcrm/img directory followed with @reedcrm. Example: 'reedcrm.png@reedcrm'
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '22.1.0';
+        $this->version = '23.0.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -125,7 +125,9 @@ class modReedCRM extends DolibarrModules
                 'thirdpartycomm',
                 'projectcard',
                 'projectlist',
+                'projectdao',
                 'propalcard',
+                'propallist',
                 'invoicereccard',
                 'invoicereccontact',
                 'invoicereclist',
@@ -234,7 +236,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_UNIT', 'chaine', 'i', '', 0, 'current'],
 
-            // CONST PWA
+            // CONST App
             $i++ => ['REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO', 'integer', 0, '', 0, 'current'],
 
             // CONST ADDRESS
@@ -502,11 +504,43 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'opportunities',
-            'url'      => '/projet/list.php?search_usage_opportunity=1',
+            'url'      => '/saturne/view/saturne_list.php?object_type=project&search_usage_opportunity=1',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=opportunities',
+            'type'     => 'left',
+            'titre'    => $langs->trans('ImportedOpportunityList'),
+            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'importedopportunities',
+            'url'      => '/reedcrm/view/reedcrm_imported_projects.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=opportunities',
+            'type'     => 'left',
+            'titre'    => $langs->trans('OpportunitiesImport'),
+            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'opportunitiesimport',
+            'url'      => '/reedcrm/view/reedcrmimport.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -518,7 +552,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-file-signature pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'openedpropals',
-            'url'      => '/comm/propal/list.php?search_status=1',
+            'url'      => '/saturne/view/saturne_list.php?object_type=propal&search_fk_statut[]=0&search_fk_statut[]=1',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -533,8 +567,8 @@ class modReedCRM extends DolibarrModules
             'titre'    => $langs->transnoentities('RecurringInvoices'),
             'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
-             'leftmenu' => 'recurringinvoices',
-            'url'      => '/compta/facture/list.php?search_status=4',
+            'leftmenu' => 'recurringinvoices',
+            'url'      => '/compta/facture/invoicetemplate_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -562,40 +596,8 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
-            'titre'    => $langs->trans('ProjectImport'),
-            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
-            'mainmenu' => 'reedcrm',
-            'leftmenu' => 'projectimport',
-            'url'      => '/reedcrm/view/reedcrmimport.php',
-            'langs'    => 'reedcrm@reedcrm',
-            'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
-            'target'   => '',
-            'user'     => 0,
-        ];
-
-        $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=reedcrm',
-            'type'     => 'left',
-            'titre'    => $langs->trans('ImportedProjectList'),
-            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
-            'mainmenu' => 'reedcrm',
-            'leftmenu' => 'importedprojects',
-            'url'      => '/reedcrm/view/reedcrm_imported_projects.php',
-            'langs'    => 'reedcrm@reedcrm',
-            'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
-            'target'   => '',
-            'user'     => 0,
-        ];
-
-        $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=reedcrm',
-            'type'     => 'left',
-            'titre'    => $langs->transnoentities('PWA'),
-            'prefix'   => '<i class="fa fa-ticket-alt pictofixedwidth"></i>',
+            'titre'    => 'App',
+            'prefix'   => '<i class="fa fa-mobile pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'quickcreationfrontendpwa',
             'url'      => '/custom/reedcrm/view/frontend/quickcreation.php?source=pwa',
@@ -605,6 +607,20 @@ class modReedCRM extends DolibarrModules
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
+            'leftmenu' => 'map',
+            'url'      => 'reedcrm/view/map.php?from_type=project',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'address\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
         ];
 
         $this->menu[$r++] = [
@@ -680,18 +696,40 @@ class modReedCRM extends DolibarrModules
             'reedcrm_website'      => ['Label' => 'Website',                'type' => 'url',     'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 45, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'projectphone'         => ['Label' => 'ProjectPhone',           'type' => 'phone',                    'elementtype' => ['projet'], 'position' => $this->numero . 50, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'reedcrm_email'        => ['Label' => 'Email',                  'type' => 'mail',                     'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'opporigin'            => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:label:rowid' => null]],
+            'opporigin'            => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:code:rowid' => null]],
             'projectaddress'       => ['Label' => 'FavoriteAddress',        'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 80, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['reedcrm_address:name:rowid::((element_type:=:\'project\') AND (status:=:1))' => null], 'perms' => '$user->hasRight(\'reedcrm\', \'address\', \'write\')', 'moreparams' => ['css' => 'minwidth100 maxwidth300 widthcentpercentminusx']],
-            'vocal'                => ['Label' => 'Vocal',                  'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 7, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'contact_informations' => ['Label' => 'ContactInformations',    'type' => 'text',                     'elementtype' => ['projet'], 'position' => $this->numero . 8, 'list' => 2, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'description'          => ['Label' => 'Description',            'type' => 'text',                     'elementtype' => ['projet'], 'position' => $this->numero . 9, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')'],
+            'opprefusal'           => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 85, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
+            'commrefusal'          => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['propal'], 'position' => $this->numero . 90, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
 
 
             'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
 
-            'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']]
+            'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']],
+
+            'reedcrm_gravityform'            => ['Label' => 'ReedCRMGravityForm', 'type' => 'url',    'length' => 255, 'elementtype' => ['projet'],     'position' => $this->numero . 15, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_gravityform_actioncomm' => ['Label' => 'ReedCRMGravityForm', 'type' => 'select',              'elementtype' => ['actioncomm'], 'position' => $this->numero . 15, 'list' => 1, 'enabled' => 1, 'alwayseditable' => 1, 'params' => ['none' => 'None', 'contact_form' => 'ContactForm', 'opportunity_form' => 'OpportunityForm']],
+
+            'reedcrm_status_object' => [
+                'Label' => 'ReedCRMObjectStatus',
+                'type' => 'select',
+                'elementtype' => ['actioncomm'],
+                'position' => $this->numero . 20,
+                'list' => 1,
+                'enabled' => 1,
+                'alwayseditable' => 1,
+                'params' => [
+                    'project_draft'    => 'ProjectStatusDraft',
+                    'project_valid'    => 'ProjectStatusValidated',
+                    'project_closed'   => 'ProjectStatusClosed',
+                    'propal_draft'     => 'PropalStatusDraft',
+                    'propal_valid'     => 'PropalStatusValidated',
+                    'propal_signed'    => 'PropalStatusSigned',
+                    'propal_notsigned' => 'PropalStatusNotSigned',
+                    'propal_billed'    => 'PropalStatusBilled'
+                ]
+            ]
         ];
 
         saturne_manage_extrafields($extraFieldsArrays, $commonExtraFieldsValue);
@@ -701,6 +739,14 @@ class modReedCRM extends DolibarrModules
             require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
             $extrafields = new ExtraFields($this->db);
+
+            // Backward compatibility: remove deprecated extrafields
+            if (!getDolGlobalInt('REEDCRM_DEPRECATED_EXTRAFIELDS_REMOVED')) {
+                $extrafields->delete('vocal', 'projet');
+                $extrafields->delete('contact_informations', 'projet');
+                $extrafields->delete('description', 'projet');
+                dolibarr_set_const($this->db, 'REEDCRM_DEPRECATED_EXTRAFIELDS_REMOVED', 1, 'integer', 0, '', $conf->entity);
+            }
 
             foreach ($objectsMetadata as $objectType => $objectMetadata) {
                 if ($objectType != 'project') {
@@ -723,6 +769,58 @@ class modReedCRM extends DolibarrModules
             $categoryID      = $category->create($user);
 
             dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+        }
+
+        if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') < 2) {
+            require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+            require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+            require_once __DIR__ . '/../../class/geolocation.class.php';
+
+            $geolocation  = new Geolocation($this->db);
+            $geolocations = $geolocation->fetchAll('', '', 0, 0, ['customsql' => "element_type = 'project'"]);
+
+            if (is_array($geolocations) && !empty($geolocations)) {
+                foreach ($geolocations as $objGeoloc) {
+                    $proj = new Project($this->db);
+                    if ($proj->fetch($objGeoloc->fk_element) <= 0) {
+                        continue;
+                    }
+                    $proj->fetch_optionals();
+
+                    $firstname = trim($proj->array_options['options_reedcrm_firstname'] ?? '');
+                    $lastname  = trim($proj->array_options['options_reedcrm_lastname'] ?? '');
+
+                    if (empty($firstname) && empty($lastname)) {
+                        $firstname = 'Address';
+                        $lastname  = $proj->ref;
+                    }
+
+                    $osmData = $geolocation->getAddressFromLatLon((float)$objGeoloc->latitude, (float)$objGeoloc->longitude);
+
+                    $contact            = new Contact($this->db);
+                    $contact->firstname = $firstname;
+                    $contact->lastname  = $lastname;
+                    $contact->socid     = $proj->socid > 0 ? $proj->socid : 0;
+                    $contact->phone_pro = $proj->array_options['options_projectphone'] ?? '';
+                    $contact->email     = $proj->array_options['options_reedcrm_email'] ?? '';
+                    $contact->url       = $proj->array_options['options_reedcrm_website'] ?? '';
+                    $contact->address   = $osmData['display_name'] ?? '';
+                    $contact->status    = 1;
+                    $contactID = $contact->create($user);
+
+                    if ($contactID > 0) {
+                        $proj->add_contact($contactID, 'PROJECTADDRESS', 'external');
+
+                        // Move the geolocation from the project to the new contact
+                        $objGeoloc->element_type = 'contact';
+                        $objGeoloc->fk_element   = $contactID;
+                        $objGeoloc->status     = (!empty($objGeoloc->latitude) && !empty($objGeoloc->longitude)) ? Geolocation::STATUS_GEOLOCATED : Geolocation::STATUS_NOTFOUND;
+                        $objGeoloc->update($user);
+                    }
+                }
+            }
+
+            dolibarr_set_const($this->db, 'REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT', 2, 'integer', 0, '', $conf->entity);
         }
 
         if (getDolGlobalInt('REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY') == 0) {

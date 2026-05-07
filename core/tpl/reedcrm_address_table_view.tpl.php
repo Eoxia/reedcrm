@@ -34,6 +34,7 @@ print '<table class="border centpercent tableforfield">';
 print '<tr class="liste_titre">';
 print '<td>' . $langs->trans('Name') . '</td>';
 print '<td>' . $langs->trans('Address') . '</td>';
+print '<td>' . $langs->trans('Latitude') . ' / ' . $langs->trans('Longitude') . '</td>';
 print '<td class="right">' . $langs->trans('SignatureActions') . '</td>';
 print '</tr>';
 
@@ -64,6 +65,17 @@ if (is_array($addresses) && !empty($addresses)) {
         }
 		print dol_strlen($contact->address) > 0 ? $contact->address : $langs->trans('N/A');
 		print '</td>';
+
+        // Lat / Lon
+        print '<td>';
+        if (!empty($lastGeolocation) && ($lastGeolocation->latitude != 0 || $lastGeolocation->longitude != 0)) {
+            print '<span title="' . $langs->trans('Latitude') . '">' . round($lastGeolocation->latitude, 6) . '</span>';
+            print ' / ';
+            print '<span title="' . $langs->trans('Longitude') . '">' . round($lastGeolocation->longitude, 6) . '</span>';
+        } else {
+            print '<span class="opacitymedium">' . $langs->trans('N/A') . '</span>';
+        }
+        print '</td>';
 
 		// Actions
 		print '<td class="right">';
@@ -106,6 +118,7 @@ if ($permissiontoadd) {
 
 	print '<tr class="oddeven">';
 	print '<td>' . $langs->trans('AddAnAddress') . '</td>';
+	print '<td></td>';
 	print '<td></td>';
 	print '<td class="right">';
 	print '<button type="submit" class="wpeo-button button-blue"><i class="fas fa-plus"></i></button>';

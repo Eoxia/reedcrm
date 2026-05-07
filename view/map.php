@@ -61,9 +61,10 @@ $filterRegion  = GETPOST('filter_region');
 $filterState   = GETPOST('filter_state');
 $filterTown    = trim(GETPOST('filter_town', 'alpha'));
 $filterCat       = GETPOST("search_category_" . $objectType ."_list", 'array');
-$filterDateStart = dol_mktime(0, 0, 0, GETPOST('filter_date_startmonth', 'int'), GETPOST('filter_date_startday', 'int'), GETPOST('filter_date_startyear', 'int'));
-$filterDateEnd   = dol_mktime(23, 59, 59, GETPOST('filter_date_endmonth', 'int'), GETPOST('filter_date_endday', 'int'), GETPOST('filter_date_endyear', 'int'));
-$source          = GETPOSTISSET('source') ? GETPOST('source') : '';
+$filterDateStart   = dol_mktime(0, 0, 0, GETPOST('filter_date_startmonth', 'int'), GETPOST('filter_date_startday', 'int'), GETPOST('filter_date_startyear', 'int'));
+$filterDateEnd     = dol_mktime(23, 59, 59, GETPOST('filter_date_endmonth', 'int'), GETPOST('filter_date_endday', 'int'), GETPOST('filter_date_endyear', 'int'));
+$filterNearRadius  = GETPOST('filter_near_radius', 'int'); // km, 0 = disabled
+$source            = GETPOSTISSET('source') ? GETPOST('source') : '';
 
 // Initialize technical object
 $objectInfos  = saturne_get_objects_metadata($objectType);
@@ -104,15 +105,16 @@ if (empty($resHook)) {
     // Purge search criteria
     if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')) // All tests are required to be compatible with all browsers
     {
-        $filterCat       = [];
-        $filterId        = 0;
-        $filterCountry   = 0;
-        $filterRegion    = 0;
-        $filterState     = 0;
-        $filterTown      = '';
-        $filterType      = '';
-        $filterDateStart = '';
-        $filterDateEnd   = '';
+        $filterCat        = [];
+        $filterId         = 0;
+        $filterCountry    = 0;
+        $filterRegion     = 0;
+        $filterState      = 0;
+        $filterTown       = '';
+        $filterType       = '';
+        $filterDateStart  = '';
+        $filterDateEnd    = '';
+        $filterNearRadius = 0;
     }
 }
 
@@ -232,13 +234,13 @@ if (is_array($contacts) && !empty($contacts)) {
         $geolocation = new Geolocation($db);
 
         if (is_object($contactSingle)) {
-            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle->id);
+            $geolocation->fetch(0, '', ' AND t.fk_element = ' . $contactSingle->id);
             $contactName    = $contactSingle->firstname . ' ' . $contactSingle->lastname;
             $contactAddress = $contactSingle->address;
             $contactPhone   = !empty($contactSingle->phone_mobile) ? $contactSingle->phone_mobile : $contactSingle->phone_pro;
             $contactEmail   = $contactSingle->email;
         } else if (is_array($contactSingle) && $contactSingle['code'] == 'PROJECTADDRESS') {
-            $geolocation->fetch('', '', ' AND t.fk_element = ' . $contactSingle['id']);
+            $geolocation->fetch(0, '', ' AND t.fk_element = ' . $contactSingle['id']);
             $contact->fetch($contactSingle['id']);
             $contactName    = $contact->firstname . ' ' . $contact->lastname;
             $contactAddress = $contact->address;
@@ -306,21 +308,20 @@ if (is_array($geolocations) && !empty($geolocations)) {
         $objectLinkedInfo .= '</div>';
 
         $num++;
-        $objectList[$num]['color']  = '#F00';
-        switch ($objectLinked->opp_percent) {
-            case $objectLinked->opp_percent >= 40 && $objectLinked->opp_percent < 60:
-                $objectList[$num]['scale'] = 1.5;
-                break;
-            case $objectLinked->opp_percent >= 60 && $objectLinked->opp_percent < 100:
-                $objectList[$num]['scale'] = 1.75;
-                break;
-            case $objectLinked->opp_percent == 100:
-                $objectList[$num]['scale'] = 2;
-                break;
-            default:
-                $objectList[$num]['scale'] = 1;
-                break;
+        if ($objectLinked->opp_percent == 0) {
+            $objectList[$num]['color'] = '#95a5a6';
+        } elseif ($objectLinked->opp_percent == 100) {
+            $objectList[$num]['color'] = '#27ae60';
+        } elseif ($objectLinked->opp_percent >= 60) {
+            $objectList[$num]['color'] = '#2ecc71';
+        } elseif ($objectLinked->opp_percent >= 40) {
+            $objectList[$num]['color'] = '#f39c12';
+        } elseif ($objectLinked->opp_percent >= 20) {
+            $objectList[$num]['color'] = '#e67e22';
+        } else {
+            $objectList[$num]['color'] = '#e74c3c';
         }
+        $objectList[$num]['scale'] = 1;
 
         // Add geoJSON point
         $features[] = [
@@ -387,12 +388,27 @@ if ($source != 'pwa') {
     print '<input class="flat searchstring maxwidth200" type="text" name="filter_town" value="' . dol_escape_htmltag($filterTown) . '"></div>';
 
     // Date start
-    print '<div class="divsearchfield">' . $langs->trans('DateStart'). ': ';
+    print '<div class="divsearchfield">' . $langs->trans('DateStart') . ': ';
     print $form->selectDate($filterDateStart, 'filter_date_start', 0, 0, 1, 'formfilter', 1, 0) . '</div>';
 
-    // Date end
-    print '<div class="divsearchfield">' . $langs->trans('DateEnd'). ': ';
-    print $form->selectDate($filterDateEnd, 'filter_date_end', 0, 0, 1, 'formfilter', 1, 0) . '</div>';
+    // Date end + quick presets inline
+    print '<div class="divsearchfield">' . $langs->trans('DateEnd') . ': ';
+    print $form->selectDate($filterDateEnd, 'filter_date_end', 0, 0, 1, 'formfilter', 1, 0);
+    print '<span style="margin-left:6px">';
+    print '<button type="button" class="button smallpaddingimp map-preset-btn" data-preset="day">'   . $langs->trans('Today')    . '</button> ';
+    print '<button type="button" class="button smallpaddingimp map-preset-btn" data-preset="week">'  . $langs->trans('ThisWeek')  . '</button> ';
+    print '<button type="button" class="button smallpaddingimp map-preset-btn" data-preset="month">' . $langs->trans('ThisMonth') . '</button>';
+    print '</span></div>';
+
+    // Around-me radius filter — client-side, consistent with other geo selects (Country/Region/State/Town)
+    print '<div class="divsearchfield">' . img_picto('', 'fontawesome_search-location_fas_#007BFF') . ' ' . $langs->trans('NearMe') . ': ';
+    print '<select name="filter_near_radius" id="filter_near_radius" class="flat" onchange="onNearMeChange(parseInt(this.value))">';
+    print '<option value="0">—</option>';
+    foreach ([1, 5, 10, 25, 50] as $km) {
+        $selected = ($filterNearRadius == $km ? ' selected' : '');
+        print '<option value="' . $km . '"' . $selected . '>' . $km . ' km</option>';
+    }
+    print '</select></div>';
 
 //    //Categories project
 //    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
@@ -411,6 +427,8 @@ if ($source != 'pwa') {
 
 $picto = img_picto($langs->trans('MyPosition'), 'fontawesome_search-location_fas_#007BFF');
 print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>';
+$pictoRoute = img_picto($langs->trans('ShowRoute'), 'fontawesome_route_fas_#007BFF');
+print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute . '</div>';
 
 ?>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.15.1/css/ol.css" type="text/css">
@@ -471,8 +489,66 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 				});
 			}
 		});
+		var badgeStyleCache = {};
+
+		function createBadgeStyle(count) {
+			if (badgeStyleCache[count]) return badgeStyleCache[count];
+
+			var text    = String(count);
+			var font    = 'bold 10px sans-serif';
+			var padH    = 5, padV = 3;
+
+			var tmpCanvas = document.createElement('canvas');
+			var tmpCtx    = tmpCanvas.getContext('2d');
+			tmpCtx.font   = font;
+			var textW     = tmpCtx.measureText(text).width;
+
+			var badgeH = 10 + padV * 2;
+			var badgeW = Math.max(badgeH, textW + padH * 2);
+			var r      = badgeH / 2;
+
+			var canvas  = document.createElement('canvas');
+			canvas.width  = badgeW;
+			canvas.height = badgeH;
+			var ctx = canvas.getContext('2d');
+
+			// Pill shape
+			ctx.beginPath();
+			ctx.moveTo(r, 0);
+			ctx.arcTo(badgeW, 0,    badgeW, badgeH, r);
+			ctx.arcTo(badgeW, badgeH, 0,    badgeH, r);
+			ctx.arcTo(0,      badgeH, 0,    0,      r);
+			ctx.arcTo(0,      0,      badgeW, 0,    r);
+			ctx.closePath();
+			ctx.fillStyle = '#ff4757';
+			ctx.fill();
+
+			// Number
+			ctx.fillStyle    = '#fff';
+			ctx.font         = font;
+			ctx.textAlign    = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(text, badgeW / 2, badgeH / 2);
+
+			badgeStyleCache[count] = new ol.style.Style({
+				image: new ol.style.Icon({
+					img:          canvas,
+					imgSize:      [badgeW, badgeH],
+					displacement: [badgeW / 2 + 4, 28]
+				})
+			});
+
+			return badgeStyleCache[count];
+		}
+
 		var styleFunction = function(feature) {
-			return markerStyles[feature.get('address')];
+			var baseStyle = markerStyles[feature.get('address')];
+			if (!baseStyle) return baseStyle;
+			var count = feature.get('stackCount');
+			if (count && count > 1) {
+				return [baseStyle, createBadgeStyle(count)];
+			}
+			return baseStyle;
 		};
 
 		/**
@@ -481,6 +557,25 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 		var prospectSource = new ol.source.Vector({
 			features: (new ol.format.GeoJSON()).readFeatures(geojsonMarkers)
 		});
+
+		/**
+		 * Compute stack count per coordinate and set it on each feature.
+		 */
+		(function() {
+			var coordCountMap = {};
+			prospectSource.getFeatures().forEach(function(f) {
+				if (f.getGeometry().getType() !== 'Point') return;
+				var c   = f.getGeometry().getCoordinates();
+				var key = c[0].toFixed(1) + ',' + c[1].toFixed(1);
+				coordCountMap[key] = (coordCountMap[key] || 0) + 1;
+			});
+			prospectSource.getFeatures().forEach(function(f) {
+				if (f.getGeometry().getType() !== 'Point') return;
+				var c   = f.getGeometry().getCoordinates();
+				var key = c[0].toFixed(1) + ',' + c[1].toFixed(1);
+				f.set('stackCount', coordCountMap[key]);
+			});
+		})();
 
 		/**
 		 * Prospect markers layer.
@@ -564,6 +659,58 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 		});
 
 		/**
+		 * Spider layer for spread features and legs.
+		 */
+		var spiderSource = new ol.source.Vector();
+		var spiderLayer  = new ol.layer.Vector({ source: spiderSource, zIndex: 10 });
+		map.addLayer(spiderLayer);
+
+		var spiderActive     = false;
+		var spiderFeatureMap = {};
+
+		function collapseSpider() {
+			spiderSource.clear();
+			spiderActive     = false;
+			spiderFeatureMap = {};
+			popupOverlay.setPosition(undefined);
+		}
+
+		function activateSpider(center, features) {
+			spiderSource.clear();
+			spiderFeatureMap = {};
+			spiderActive     = true;
+
+			var resolution = mapView.getResolution();
+			var mapRadius  = 60 * resolution;
+
+			features.forEach(function(feature, i) {
+				var angle      = (2 * Math.PI * i) / features.length - Math.PI / 2;
+				var spiderCoord = [
+					center[0] + mapRadius * Math.cos(angle),
+					center[1] + mapRadius * Math.sin(angle)
+				];
+
+				var leg = new ol.Feature({ geometry: new ol.geom.LineString([center, spiderCoord]) });
+				leg.setStyle(new ol.style.Style({
+					stroke: new ol.style.Stroke({ color: 'rgba(0,0,0,0.35)', width: 1.5 })
+				}));
+				spiderSource.addFeature(leg);
+
+				var spiderFeature = new ol.Feature({ geometry: new ol.geom.Point(spiderCoord) });
+				spiderFeature.set('desc', feature.get('desc'));
+				spiderFeature.setStyle(markerStyles[feature.get('address')]);
+				var spiderId = 'spider_' + i;
+				spiderFeature.setId(spiderId);
+				spiderFeatureMap[spiderId] = feature;
+				spiderSource.addFeature(spiderFeature);
+			});
+		}
+
+		mapView.on('change:resolution', function() {
+			if (spiderActive) collapseSpider();
+		});
+
+		/**
 		 * Fit map for markers.
 		 */
 		if (<?php print $num ?> > 1) {
@@ -588,6 +735,88 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
 			}
 			return extent;
 		}
+
+		/**
+		 * Route layer between markers.
+		 */
+		var routeSource = new ol.source.Vector();
+		var routeLayer  = new ol.layer.Vector({ source: routeSource, zIndex: 2 });
+		map.addLayer(routeLayer);
+		var routeVisible = false;
+
+		function nearestNeighborOrder(coords) {
+			if (coords.length <= 1) return coords;
+			var remaining = coords.slice();
+			var ordered   = remaining.splice(0, 1);
+			while (remaining.length > 0) {
+				var last        = ordered[ordered.length - 1];
+				var nearestIdx  = 0;
+				var nearestDist = Infinity;
+				remaining.forEach(function(c, i) {
+					var dist = Math.pow(c[0] - last[0], 2) + Math.pow(c[1] - last[1], 2);
+					if (dist < nearestDist) { nearestDist = dist; nearestIdx = i; }
+				});
+				ordered.push(remaining.splice(nearestIdx, 1)[0]);
+			}
+			return ordered;
+		}
+
+		function drawStraightRoute(coords3857) {
+			routeSource.clear();
+			var line = new ol.Feature({ geometry: new ol.geom.LineString(coords3857) });
+			line.setStyle(new ol.style.Style({
+				stroke: new ol.style.Stroke({ color: '#3498db', width: 3, lineDash: [8, 6] })
+			}));
+			routeSource.addFeature(line);
+		}
+
+		function drawRoute() {
+			var points = prospectSource.getFeatures().filter(function(f) {
+				return f.getGeometry().getType() === 'Point';
+			});
+			if (points.length < 2) return;
+
+			var coords3857  = points.map(function(f) { return f.getGeometry().getCoordinates(); });
+			var ordered3857 = nearestNeighborOrder(coords3857);
+			var orderedWGS84 = ordered3857.map(function(c) {
+				return ol.proj.transform(c, 'EPSG:3857', 'EPSG:4326');
+			});
+
+			var waypointsStr = orderedWGS84.map(function(c) {
+				return c[0].toFixed(6) + ',' + c[1].toFixed(6);
+			}).join(';');
+
+			fetch('https://router.project-osrm.org/route/v1/driving/' + waypointsStr + '?overview=full&geometries=geojson')
+				.then(function(r) {
+					if (!r.ok) throw new Error('OSRM ' + r.status);
+					return r.json();
+				})
+				.then(function(data) {
+					if (!data.routes || data.routes.length === 0) throw new Error('no route');
+					var routeFeature = (new ol.format.GeoJSON()).readFeature(
+						{ type: 'Feature', geometry: data.routes[0].geometry },
+						{ dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857' }
+					);
+					routeFeature.setStyle(new ol.style.Style({
+						stroke: new ol.style.Stroke({ color: '#3498db', width: 3 })
+					}));
+					routeSource.clear();
+					routeSource.addFeature(routeFeature);
+				})
+				.catch(function() {
+					drawStraightRoute(ordered3857);
+				});
+		}
+
+		var routeBtn = document.getElementById('route-toggle-button');
+
+		routeBtn.addEventListener('click', function() {
+			routeVisible = !routeVisible;
+			routeLayer.setVisible(routeVisible);
+			routeBtn.classList.toggle('route-active', routeVisible);
+			if (routeVisible && routeSource.getFeatures().length === 0) drawRoute();
+		});
+		routeLayer.setVisible(false);
 
         /**
          * Initialize geolocation control.
@@ -666,17 +895,53 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
          * Add a click handler to the map to render the popup.
          */
         map.on('singleclick', function(evt) {
-            var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-                return feature;
+            // If spider is active, check if clicking on a spider feature
+            if (spiderActive) {
+                var spiderFeatureClicked = map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                    if (f.getId() && String(f.getId()).indexOf('spider_') === 0) return f;
+                });
+                if (spiderFeatureClicked) {
+                    var coords    = spiderFeatureClicked.getGeometry().getCoordinates();
+                    var desc      = spiderFeatureClicked.get('desc');
+                    popupContent.innerHTML = desc;
+                    popupOverlay.setPosition(coords);
+                } else {
+                    collapseSpider();
+                }
+                return;
+            }
+
+            // Collect all point features at clicked pixel
+            var clickedFeatures = [];
+            map.forEachFeatureAtPixel(evt.pixel, function(f) {
+                if (f.getGeometry().getType() === 'Point') clickedFeatures.push(f);
+            }, { hitTolerance: 6 });
+
+            if (clickedFeatures.length === 0) {
+                popupCloser.click();
+                return;
+            }
+
+            if (clickedFeatures.length === 1) {
+                var coordinates = clickedFeatures[0].getGeometry().getCoordinates();
+                popupContent.innerHTML = clickedFeatures[0].get('customText') || clickedFeatures[0].get('desc');
+                popupOverlay.setPosition(coordinates);
+                return;
+            }
+
+            // Multiple features — check if they share the same coordinate
+            var center    = clickedFeatures[0].getGeometry().getCoordinates();
+            var threshold = mapView.getResolution() * 2;
+            var stacked   = clickedFeatures.filter(function(f) {
+                var c = f.getGeometry().getCoordinates();
+                return Math.abs(c[0] - center[0]) <= threshold && Math.abs(c[1] - center[1]) <= threshold;
             });
 
-            if (feature) {
-                var coordinates = feature.getGeometry().getCoordinates();
-                var customText = feature.get('customText') || feature.get('desc');
-                popupContent.innerHTML = customText;
-                popupOverlay.setPosition(coordinates);
+            if (stacked.length > 1) {
+                activateSpider(center, stacked);
             } else {
-                popupCloser.click();
+                popupContent.innerHTML = clickedFeatures[0].get('customText') || clickedFeatures[0].get('desc');
+                popupOverlay.setPosition(center);
             }
         });
 
@@ -690,6 +955,122 @@ print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>'
                 console.error('Geolocation position is not available.');
             }
         });
+
+        /**
+         * Quick date preset buttons (Today / This week / This month).
+         * Fills the date fields generated by selectDate() and submits the form.
+         */
+        document.querySelectorAll('.map-preset-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var preset = btn.getAttribute('data-preset');
+                var now    = new Date();
+                var start, end;
+
+                if (preset === 'day') {
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    end   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                } else if (preset === 'week') {
+                    var day   = now.getDay() === 0 ? 6 : now.getDay() - 1; // Monday=0
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+                    end   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                } else if (preset === 'month') {
+                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                    end   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                } else {
+                    return;
+                }
+
+                function fillDate(prefix, d) {
+                    var dayEl   = document.querySelector('[name="' + prefix + 'day"]');
+                    var monthEl = document.querySelector('[name="' + prefix + 'month"]');
+                    var yearEl  = document.querySelector('[name="' + prefix + 'year"]');
+                    if (dayEl)   dayEl.value   = d.getDate();
+                    if (monthEl) monthEl.value = d.getMonth() + 1;
+                    if (yearEl)  yearEl.value  = d.getFullYear();
+                }
+
+                fillDate('filter_date_start', start);
+                fillDate('filter_date_end',   end);
+
+                document.forms['formfilter'].submit();
+            });
+        });
+
+        /**
+         * "Around me" client-side radius filter.
+         * Hides/shows prospect markers depending on distance from user position.
+         * The radius circle updates to match the selected distance.
+         */
+        var nearMeActive   = false;
+        var nearMeRadiusKm = <?php print (int)$filterNearRadius ?>;
+        var allProspectFeatures = prospectSource.getFeatures().slice(); // snapshot
+
+        // If a radius was previously selected (from URL param), apply immediately once position is known
+        if (nearMeRadiusKm > 0) {
+            var _nearInitHandler = geolocation.on('change:position', function() {
+                applyNearMeFilter(nearMeRadiusKm);
+                ol.Observable.unByKey(_nearInitHandler);
+            });
+        }
+
+        function applyNearMeFilter(radiusKm) {
+            var userPos = geolocation.getPosition();
+            if (!userPos) {
+                console.warn('Position GPS non disponible.');
+                return;
+            }
+
+            var radiusM = radiusKm * 1000; // EPSG:3857 unit = metres
+
+            // Update the radius circle to the chosen distance
+            radiusFeature.setGeometry(new ol.geom.Circle(userPos, radiusM));
+
+            // Show/hide features based on distance
+            allProspectFeatures.forEach(function(feature) {
+                if (feature.getGeometry().getType() !== 'Point') return;
+                var coords = feature.getGeometry().getCoordinates();
+                var dx     = coords[0] - userPos[0];
+                var dy     = coords[1] - userPos[1];
+                var dist   = Math.sqrt(dx * dx + dy * dy);
+                feature.setStyle(dist <= radiusM ? styleFunction(feature) : new ol.style.Style({}));
+            });
+
+            nearMeActive = true;
+
+            // Center on user with a zoom that roughly fits the radius
+            mapView.setCenter(userPos);
+            var zoomForRadius = Math.round(14 - Math.log2(radiusKm));
+            mapView.setZoom(Math.min(Math.max(zoomForRadius, 8), 16));
+        }
+
+        function resetNearMeFilter() {
+            allProspectFeatures.forEach(function(feature) {
+                if (feature.getGeometry().getType() === 'Point') {
+                    feature.setStyle(styleFunction(feature));
+                }
+            });
+            // Reset radius circle to default 1 km visual hint
+            var userPos = geolocation.getPosition();
+            if (userPos) radiusFeature.setGeometry(new ol.geom.Circle(userPos, 1000));
+            nearMeActive = false;
+        }
+
+        function onNearMeChange(radiusKm) {
+            if (radiusKm > 0) {
+                var pos = geolocation.getPosition();
+                if (pos) {
+                    applyNearMeFilter(radiusKm);
+                } else {
+                    // Wait for first position fix then apply
+                    var _handler = geolocation.on('change:position', function() {
+                        applyNearMeFilter(radiusKm);
+                        ol.Observable.unByKey(_handler);
+                    });
+                }
+            } else {
+                resetNearMeFilter();
+            }
+        }
 	</script>
 <?php if ($user->hasRight('agenda', 'myactions', 'create')): ?>
 	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1); ?>" rel="stylesheet">

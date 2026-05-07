@@ -452,9 +452,11 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   $(document).on('mouseenter', '.reedcrm-relaunch-button', function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
-    var projectId = $button.closest('.reedcrm-relaunch-buttons').find('.reedcrm-modal-open').first().data('project-id');
+    var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
+    var projectId = $wrapper.find('.reedcrm-modal-open').first().data('project-id');
+    var socid = $wrapper.data('socid') || '';
 
-    if (!projectId || !type) {
+    if ((!projectId && !socid) || !type) {
       return;
     }
 
@@ -471,7 +473,8 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
       'call': 'AC_TEL',
       'email': 'AC_EMAIL',
       'rdv': 'AC_RDV',
-      'other': 'AC_OTH'
+      'other': 'AC_OTH',
+      'all': 'all'
     };
     var actionType = actionTypeMap[type] || 'AC_OTH';
 
@@ -482,7 +485,8 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
       'call': 'Appels',
       'email': 'Emails',
       'rdv': 'RDV',
-      'other': 'Autres'
+      'other': 'Autres',
+      'all': 'Relances commerciales'
     };
 
     tooltipContent += '<strong>' + (typeLabels[type] || type) + '</strong>';
@@ -531,23 +535,16 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
 
     tooltipTimeout = setTimeout(function () {
       $currentTooltip.fadeIn(200);
-      var currentUrl = window.location.href;
-      var urlObj = new URL(currentUrl);
-      var pathname = urlObj.pathname;
-
-      var pathParts = pathname.split('/').filter(function (p) { return p && p !== ''; });
-      if (pathParts.length >= 2) {
-        pathParts = pathParts.slice(0, -2);
-      }
-      var basePath = pathParts.length > 0 ? '/' + pathParts.join('/') : '';
-      const ajaxUrl = basePath + '/custom/reedcrm/ajax/get_relaunches_list.php';
+      const ajaxUrl = $wrapper.find('.reedcrm-modal-open').first().data('ajax-url') || '/custom/reedcrm/ajax/get_relaunches_list.php';
 
       $.ajax({
         url: ajaxUrl,
         type: 'GET',
         data: {
-          project_id: projectId,
+          project_id: projectId || '',
+          socid: socid,
           action_type: actionType,
+          limit: $button.data('limit') || 0,
           token: $('meta[name=anti-csrf-currenttoken]').attr('content') || ''
         },
         dataType: 'json',
@@ -596,11 +593,13 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
 
   $(document).on('mouseleave', '.reedcrm-relaunch-button', function () {
     clearTimeout(tooltipTimeout);
-    if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
-      $currentTooltip.fadeOut(150, function () {
-        $(this).remove();
-        $currentTooltip = null;
-      });
-    }
+    tooltipTimeout = setTimeout(function () {
+      if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
+        $currentTooltip.fadeOut(150, function () {
+          $(this).remove();
+          $currentTooltip = null;
+        });
+      }
+    }, 150);
   });
 };

@@ -273,6 +273,22 @@
     align-items: center;
 }
 
+// Card context: badge wrapper (thirdpartycomm / projectcard)
+.reedcrm-card-relaunch-wrapper {
+    display: inline-flex;
+}
+
+.reedcrm-card-badge-trigger {
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    cursor: default !important;
+
+    > .reedcrm-card-badge-ref {
+        display: none;
+    }
+}
+
 .reedcrm-relaunch-buttons-circular .reedcrm-relaunch-button {
     border-radius: 50%;
     width: 40px;

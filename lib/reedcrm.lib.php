@@ -44,12 +44,12 @@ function reedcrm_admin_prepare_head(): array
     $h++;
 
     $head[$h][0] = dol_buildpath('/saturne/admin/pwa.php', 1). '?module_name=ReedCRM&start_url=' . dol_buildpath('custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 3);
-    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-mobile pictofixedwidth"></i>' . $langs->trans('PWA') : '<i class="fas fa-mobile"></i>';
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-mobile pictofixedwidth"></i>' . $langs->trans('App') : '<i class="fas fa-mobile"></i>';
     $head[$h][2] = 'pwa';
     $h++;
 
     $head[$h][0] = dol_buildpath('/reedcrm/admin/call_notifications.php', 1) . '?module_name=ReedCRM';
-    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fab fa-bell pictofixedwidth"></i>' . $langs->trans('CallNotifications') : '<i class="fab fa-bell"></i>';
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-bell pictofixedwidth"></i>' . $langs->trans('CallNotifications') : '<i class="fas fa-bell"></i>';
     $head[$h][2] = 'notifications';
     $h++;
 

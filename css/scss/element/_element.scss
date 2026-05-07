@@ -1,5 +1,5 @@
-@import "form";
-@import "opp-percent";
-@import "map-widget";
-@import "vocal-player";
-@import "project-list";
+@forward "form";
+@forward "opp-percent";
+@forward "map-widget";
+@forward "vocal-player";
+@forward "project-list";

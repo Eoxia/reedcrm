@@ -137,7 +137,7 @@ if (empty($reshook)) {
             $contact->address  = $contactAddress;
             $contact->update($contactID, $user);
 
-            $geolocation->fetch('', '', ' AND fk_element = ' . $contactID);
+            $geolocation->fetch(0, '', ' AND fk_element = ' . $contactID);
             $addressesList = $geolocation->getDataFromOSM($contact);
             if (!empty($addressesList)) {
                 $address = $addressesList[0];

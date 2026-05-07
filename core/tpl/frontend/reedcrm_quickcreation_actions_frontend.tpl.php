@@ -139,7 +139,7 @@ if ($action == 'add_file_existing') {
     exit;
 }
 
-if ($action == 'update_opp_percent') {
+if ($action == 'updateopppercent') {
     $projectId = GETPOST('projectid', 'int');
     $newPercent = GETPOST('percent', 'int');
     $res = array('success' => false);
@@ -187,7 +187,35 @@ if ($action == 'update_opp_percent') {
     exit;
 }
 
-if ($action == 'update_opp_title') {
+if ($action == 'updateopporigin') {
+    $projectId = GETPOST('projectid', 'int');
+    $newOrigin = GETPOST('origin', 'aZ09');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $proj->fetch_optionals();
+            $proj->array_options['options_opporigin'] = $newOrigin;
+            
+            if ($proj->insertExtraFields() > 0) {
+                // If it worked, we might want to return the translated label of the origin
+                $res['success'] = true;
+                
+                // Fetch the actual label from c_opporigin if it exists (assuming it is a dictionary)
+                // Extrafields might be populated via dictionary, we'll return the raw value, the frontend JS can use the selected option text
+                $res['new_origin'] = $newOrigin;
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'updateopptitle') {
     $projectId = GETPOST('projectid', 'int');
     $newTitle = trim(GETPOST('title'));
     $res = array('success' => false);
@@ -229,7 +257,67 @@ if ($action == 'update_opp_title') {
     exit;
 }
 
-if ($action == 'update_opp_amount') {
+if ($action == 'updateoppsocid') {
+    $projectId = GETPOST('projectid', 'int');
+    $newSocid = GETPOST('socid', 'int');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $oldSocid = $proj->socid;
+            $oldCompanyName = '';
+            if ($oldSocid > 0) {
+                $oldSoc = new Societe($db);
+                if ($oldSoc->fetch($oldSocid) > 0) {
+                    $oldCompanyName = $oldSoc->name;
+                }
+            }
+
+            $proj->socid = $newSocid;
+            if ($proj->update($user) > 0) {
+                $res['success'] = true;
+                
+                $newSoc = new Societe($db);
+                $newCompanyName = '';
+                $newCompanyUrl = '';
+                if ($newSocid > 0 && $newSoc->fetch($newSocid) > 0) {
+                    $newCompanyName = $newSoc->name;
+                    $newCompanyUrl = $newSoc->getNomUrl(1); // Standard dolibarr company HTML Link
+                }
+                
+                $res['new_socid'] = $newSocid;
+                $res['new_company_name'] = $newCompanyName;
+                $res['new_company_url'] = $newCompanyUrl;
+                
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code = 'AC_OTH'; 
+                $autoEvent->label = "Modification de l'entreprise rattachée";
+                $autoEvent->datep = dol_now();
+                $autoEvent->datef = dol_now();
+                $autoEvent->percentage = 100;
+                $autoEvent->userownerid = $user->id;
+                $autoEvent->fk_project = $proj->id;
+                $autoEvent->socid = $newSocid;
+                
+                $oldNameStr = empty($oldCompanyName) ? '(Aucune)' : $oldCompanyName;
+                $newNameStr = empty($newCompanyName) ? '(Aucune)' : $newCompanyName;
+                $autoEvent->note_private = "Mise à jour par ".$user->login." :\n- Tiers : " . $oldNameStr . " -> " . $newNameStr;
+                $autoEvent->create($user);
+            } else {
+                $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
+            }
+        } else {
+            $res['error'] = 'Project not found';
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'updateoppamount') {
     $projectId = GETPOST('projectid', 'int');
     $newAmount = price2num(GETPOST('amount', 'alpha'));
     $res = array('success' => false);
@@ -264,6 +352,81 @@ if ($action == 'update_opp_amount') {
             } else {
                 $res['error'] = !empty($proj->errors) ? $proj->errors : $proj->error;
             }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'updateoppcontact') {
+    $projectId = GETPOST('projectid', 'int');
+    $firstname = trim(GETPOST('firstname'));
+    $lastname  = trim(GETPOST('lastname'));
+    $phone     = trim(GETPOST('phone'));
+    $email     = trim(GETPOST('email'));
+    $website   = trim(GETPOST('website'));
+    
+    $res = array('success' => false);
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $proj->fetch_optionals();
+            
+            // Record old values for the history
+            $oldFirstname = $proj->array_options['options_reedcrm_firstname'] ?? '';
+            $oldLastname  = $proj->array_options['options_reedcrm_lastname'] ?? '';
+            $oldPhone     = $proj->array_options['options_projectphone'] ?? '';
+            $oldEmail     = $proj->array_options['options_reedcrm_email'] ?? '';
+            $oldWebsite   = $proj->array_options['options_reedcrm_website'] ?? '';
+
+            // Assign new values
+            $proj->array_options['options_reedcrm_firstname'] = $firstname;
+            $proj->array_options['options_reedcrm_lastname']  = $lastname;
+            $proj->array_options['options_projectphone']      = $phone;
+            $proj->array_options['options_reedcrm_email']     = $email;
+            $proj->array_options['options_reedcrm_website']   = $website;
+            
+            // Update in DB
+            $proj->updateExtraField('reedcrm_firstname');
+            $proj->updateExtraField('reedcrm_lastname');
+            $proj->updateExtraField('projectphone');
+            $proj->updateExtraField('reedcrm_website');
+            $resUpdateEmail = $proj->updateExtraField('reedcrm_email');
+            
+            file_put_contents(DOL_DOCUMENT_ROOT.'/custom/reedcrm/debug_update.log', "Finished extrafields, last result: $resUpdateEmail\n", FILE_APPEND);
+            
+            $res['success']      = true;
+            $res['firstname']    = dol_escape_htmltag($firstname);
+            $res['lastname']     = dol_escape_htmltag($lastname);
+            $res['contactName']  = dol_escape_htmltag(trim($firstname . ' ' . $lastname));
+            $res['contactPhone'] = dol_escape_htmltag($phone);
+            $res['contactEmail'] = dol_escape_htmltag($email);
+
+            // ActionComm Event (Create new trace)
+            $noteChanges = array();
+            if (trim($oldFirstname) !== $firstname) $noteChanges[] = "- Prénom : " . (empty($oldFirstname) ? '(vide)' : $oldFirstname) . " -> " . (empty($firstname) ? '(vide)' : $firstname);
+            if (trim($oldLastname) !== $lastname)   $noteChanges[] = "- Nom : " . (empty($oldLastname) ? '(vide)' : $oldLastname) . " -> " . (empty($lastname) ? '(vide)' : $lastname);
+            if (trim($oldPhone) !== $phone)         $noteChanges[] = "- Téléphone : " . (empty($oldPhone) ? '(vide)' : $oldPhone) . " -> " . (empty($phone) ? '(vide)' : $phone);
+            if (trim($oldEmail) !== $email)         $noteChanges[] = "- Email : " . (empty($oldEmail) ? '(vide)' : $oldEmail) . " -> " . (empty($email) ? '(vide)' : $email);
+            if (trim($oldWebsite) !== $website)     $noteChanges[] = "- Site Web : " . (empty($oldWebsite) ? '(vide)' : $oldWebsite) . " -> " . (empty($website) ? '(vide)' : $website);
+            
+            if (!empty($noteChanges)) {
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code = 'AC_OTH'; 
+                $autoEvent->label = "Modification des contacts de l'opportunité";
+                $autoEvent->datep = dol_now();
+                $autoEvent->datef = dol_now();
+                $autoEvent->percentage = 100;
+                $autoEvent->userownerid = $user->id;
+                $autoEvent->fk_project = $proj->id;
+                $autoEvent->socid = $proj->socid;
+                $autoEvent->note_private = "Mise à jour par ".$user->login." :\n" . implode("\n", $noteChanges);
+                $autoEvent->create($user);
+            }
+        } else {
+            $res['error'] = 'Project not found';
         }
     }
     header('Content-Type: application/json');
@@ -327,15 +490,15 @@ if ($action == 'add') {
     }
     
     if ($projectID > 0) {
-//        // Category association
-//        $categories = GETPOST('categories_project', 'array');
-//        if (count($categories) > 0) {
-//            $result = $project->setCategories($categories);
-//            if ($result < 0) {
-//                setEventMessages($project->error, $project->errors, 'errors');
-//                $error++;
-//            }
-//        }
+        // Category association
+        $categories = GETPOST('categories', 'array:int');
+        if (!empty($categories)) {
+            $result = $project->setCategories($categories);
+            if ($result < 0) {
+                setEventMessages($project->error, $project->errors, 'errors');
+                $error++;
+            }
+        }
 
         $pathToProjectDir = $conf->project->multidir_output[$conf->entity] . '/' . $project->ref;
         if (!dol_is_dir($pathToProjectDir)) {
@@ -397,14 +560,9 @@ if ($action == 'add') {
 
         $project->add_contact($user->id, 'PROJECTLEADER', 'internal');
 
-        if (empty(GETPOST('geolocation-error'))) {
-            $geolocation->latitude = GETPOST('latitude');
-            $geolocation->longitude = GETPOST('longitude');
-            $geolocation->element_type = $project->element;
-            $geolocation->fk_element = $projectID;
-
-            $geolocation->create($user);
-        } else {
+        $lat = GETPOST('latitude');
+        $lon = GETPOST('longitude');
+        if (!empty(GETPOST('geolocation-error'))) {
             setEventMessage($langs->transnoentities('GeolocationError', GETPOST('geolocation-error')));
         }
 
@@ -422,6 +580,39 @@ if ($action == 'add') {
             setEventMessages($task->error, $task->errors, 'errors');
             $error++;
         }
+
+        // Create a contact if firstname and lastname are provided
+        $contactFirstname = trim($project->array_options['options_reedcrm_firstname'] ?? '');
+        $contactLastname  = trim($project->array_options['options_reedcrm_lastname'] ?? '');
+        if (empty($contactFirstname) && !empty($contactLastname)) {
+            $contactFirstname = 'Address';
+            $contactLastname  = $project->ref;
+        }
+        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+        $contact            = new Contact($db);
+        $contact->firstname = $contactFirstname;
+        $contact->lastname  = $contactLastname;
+        $contact->socid     = $project->socid > 0 ? $project->socid : 0;
+        $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
+        $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
+        $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
+        $contact->address   = $geolocation->getAddressFromLatLon($lat, $lon)['display_name'] ?? '';
+        $contact->status    = 1;
+        $contactID = $contact->create($user);
+        if ($contactID > 0) {
+            $project->add_contact($contactID, 'PROJECTADDRESS', 'external');
+
+            // Link geolocation to the contact instead of the project
+            if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
+                $geolocation->latitude    = (float)$lat;
+                $geolocation->longitude   = (float)$lon;
+                $geolocation->element_type = $contact->element;
+                $geolocation->fk_element  = $contactID;
+                $geolocation->create($user);
+            }
+        } else {
+            setEventMessages($contact->error, $contact->errors, 'errors');
+        }
     } else {
         $langs->load('errors');
         setEventMessages($project->error, $project->errors, 'errors');
@@ -430,6 +621,13 @@ if ($action == 'add') {
 
     if (!$error) {
         setEventMessage($langs->transnoentities('QuickCreationFrontendSuccess') . ' : <a href="' . DOL_URL_ROOT . '/projet/card.php?id=' . $projectID . '" target="_blank">'  . $project->ref . '</a>');
+        
+        if (GETPOST('ajax_submission') == '1') {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'redirect_url' => $_SERVER["PHP_SELF"]]);
+            exit;
+        }
+        
         header('Location: ' . $_SERVER["PHP_SELF"]);
         exit;
     } else {
