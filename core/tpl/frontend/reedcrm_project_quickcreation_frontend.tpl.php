@@ -137,7 +137,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         </div>
 
         <!-- Contact -->
-        <div class="form-group">
+        <div class="form-group" id="contact-wrapper" style="display: none;">
             <select name="contactid" id="contactid" class="flat widthcentpercent" data-placeholder="Contact/Adresse">
                 <option value="-1"></option>
             </select>
@@ -569,12 +569,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Init on load
     initContactSelect2();
 
+    // Toggle contact select based on thirdparty selection
+    function toggleContactWrapper() {
+        let socid = $('#socid').val();
+        if (!socid && $('#search_socid').length > 0) {
+            socid = $('#search_socid').val();
+        }
+        if (socid && parseInt(socid) > 0) {
+            $('#contact-wrapper').slideDown(200);
+        } else {
+            $('#contact-wrapper').slideUp(200);
+        }
+    }
+
     // Re-init after Dolibarr native ajax updates the contact dropdown
     $(document).ajaxComplete(function(event, xhr, settings) {
         if (settings.url && settings.url.indexOf('contacts.php') !== -1) {
             initContactSelect2();
+            toggleContactWrapper();
         }
     });
+
+    $(document).on('change', '#socid, #search_socid', function() {
+        toggleContactWrapper();
+    });
+
+    // Check on initial load
+    toggleContactWrapper();
 
     $(document).on('change', '#contactid', function() {
         const contactid = $(this).val();
