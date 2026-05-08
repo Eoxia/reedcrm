@@ -210,17 +210,20 @@ window.reedcrm.quickcreation.resolveCurrentAddress = function(lat, lon) {
 window.reedcrm.quickcreation.setAddressBlockState = function(state, message) {
   var $icon = $('#current-address-icon');
   var $text = $('#current-address-text');
+  var $ko   = $('#current-address-ko');
 
   $icon.removeClass('fa-circle-notch fa-spin fa-map-marker-alt fa-exclamation-triangle');
+  $ko.hide();
 
   var $block = $('#current-address-block');
 
   if (state === 'success') {
-    $icon.addClass('fa-map-marker-alt').css('color', '#3498db');
+    $icon.addClass('fa-map-marker-alt').css('color', '#2ecc71');
     $text.css('color', '#34495e');
     $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
   } else if (state === 'error') {
-    $icon.addClass('fa-exclamation-triangle').css('color', '#e74c3c');
+    $icon.addClass('fa-map-marker-alt').css('color', '#e74c3c');
+    $ko.show();
     $text.css('color', '#e74c3c');
     $block.css({ background: '#fef2f2', 'border-color': '#fecaca' });
   } else {

@@ -86,7 +86,13 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 <div id="id-container" class="page-content">
     <?php print saturne_show_notice('', '', 'error', 'notice-infos', false, true, '', ['Error' => $langs->transnoentities('Error')]); ?>
 
-    <div class="quickcreation-form-container">
+    <div class="quickcreation-form-container" style="position: relative;">
+        <!-- Geoloc Icon Top Right -->
+        <div id="geoloc-top-right-icon" style="position: absolute; top: 15px; right: 15px; cursor: pointer; z-index: 50; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.8); padding: 4px; border-radius: 4px;" title="Cliquez pour afficher/masquer l'adresse" onclick="$('#current-address-block').slideToggle();">
+            <span id="current-address-ko" style="display: none; color: #e74c3c; font-weight: bold; font-size: 14px;">KO</span>
+            <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: #3498db;"></i>
+        </div>
+
         <!-- Project label -->
         <div class="form-group">
             <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?> (ex: Projet Refonte Web...)" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
@@ -199,8 +205,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <input type="hidden" id="geolocation-error" name="geolocation-error" value="">
 
         <!-- Current address display -->
-        <div id="current-address-block" style="display:flex; align-items:center; gap:10px; margin-top:10px; margin-bottom:20px; padding:12px 14px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; overflow:hidden;">
-            <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size:16px; color:#3498db; flex-shrink:0;"></i>
+        <div id="current-address-block" style="display:none; align-items:center; gap:10px; margin-top:10px; margin-bottom:20px; padding:12px 14px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; overflow:hidden;">
             <div style="flex:1; min-width:0;">
                 <div id="current-address-text" style="font-size:13px; color:#34495e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
                 <div id="current-address-coords" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
