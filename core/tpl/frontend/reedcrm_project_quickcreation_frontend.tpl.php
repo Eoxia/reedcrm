@@ -81,6 +81,30 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         object-fit: contain !important; /* Contain handles both true JPG ratios and the tiny fallback PNG natively */
         border: none !important;
     }
+
+    /* Liseret (Border) manquant pour les composants natifs de Dolibarr (Select2 et Autocomplete) dans la PWA */
+    .quickcreation-form-container .select2-container--default .select2-selection--single {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        background: #fff !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal !important;
+        padding-left: 8px !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+    }
+    .quickcreation-form-container input.ui-autocomplete-input {
+        padding: 8px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        background: #fff !important;
+        box-sizing: border-box !important;
+    }
 </style>
 
 <div id="id-container" class="page-content">
