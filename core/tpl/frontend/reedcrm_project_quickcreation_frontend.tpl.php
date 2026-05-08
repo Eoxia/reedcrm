@@ -99,6 +99,20 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
             </div>
         <?php endif; ?>
 
+        <!-- Thirdparty and Contact -->
+        <div class="form-row-grid" style="display: flex; flex-direction: row; gap: 15px; margin-bottom: 10px;">
+            <div class="form-group" style="flex: 1; min-width: 0;">
+                <?php
+                print $form->select_company(GETPOST('socid', 'int'), 'socid', '', 'SelectThirdParty', 0, 0, null, 0, 'minwidth300 widthcentpercent maxwidth500');
+                ?>
+            </div>
+            <div class="form-group" style="flex: 1; min-width: 0;">
+                <select name="contactid" id="contactid" class="flat widthcentpercent maxwidth500" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
+                    <option value="0"><?php echo $langs->trans('Contact'); ?></option>
+                </select>
+            </div>
+        </div>
+
         <!-- ExtraFields -->
         <div class="form-row-grid">
         <?php if (getDolGlobalInt('REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE')) :
@@ -504,6 +518,90 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update on drag
         oppSlider.addEventListener('input', updateSlider);
+    }
+
+    // --- Thirdparty and Contact Select ---
+    const socidSelect = document.getElementById('socid');
+    const contactSelect = document.getElementById('contactid');
+
+    if (socidSelect && contactSelect) {
+        // Initialize Select2 if available
+        if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+            $(contactSelect).select2({
+                width: '100%',
+                language: '<?php echo $langs->defaultlang; ?>'.substring(0, 2)
+            });
+        }
+
+        $(socidSelect).on('change', function() {
+            const socid = $(this).val();
+            contactSelect.innerHTML = '<option value="0"><?php echo addslashes($langs->trans("Contact")); ?></option>';
+            if (socid > 0) {
+                // Fetch contacts
+                let targetUrl = window.location.href;
+                let formData = new FormData();
+                formData.append('action', 'get_contacts_from_socid');
+                formData.append('socid', socid);
+                
+                fetch(targetUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data)) {
+                        data.forEach(function(contact) {
+                            let option = document.createElement('option');
+                            option.value = contact.id;
+                            option.text = contact.name;
+                            option.dataset.phone = contact.phone || '';
+                            option.dataset.email = contact.email || '';
+                            contactSelect.appendChild(option);
+                        });
+                    }
+                    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+                        $(contactSelect).trigger('change');
+                    }
+                })
+                .catch(err => console.error("Error fetching contacts", err));
+            } else {
+                if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+                    $(contactSelect).trigger('change');
+                }
+            }
+        });
+
+        $(contactSelect).on('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.value > 0) {
+                const phone = selectedOption.dataset.phone;
+                const email = selectedOption.dataset.email;
+
+                const phoneInput = document.getElementById('projectphone');
+                if (phoneInput && phone) { 
+                    phoneInput.value = phone; 
+                    phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                const emailInputs = document.querySelectorAll('input[type="email"]');
+                emailInputs.forEach(input => {
+                    if (input.name === 'options_reedcrm_email' && email) {
+                        input.value = email;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
+
+                // Optionnel : prénom / nom
+                let parts = selectedOption.text.split(' ');
+                let prenom = parts[0] || '';
+                let nom = parts.slice(1).join(' ') || '';
+                
+                let firstnameInput = document.getElementById('reedcrm_firstname');
+                if (firstnameInput) { firstnameInput.value = prenom; firstnameInput.dispatchEvent(new Event('input')); }
+                let lastnameInput = document.getElementById('reedcrm_lastname');
+                if (lastnameInput) { lastnameInput.value = nom; lastnameInput.dispatchEvent(new Event('input')); }
+            }
+        });
     }
 });
 </script>

@@ -434,6 +434,23 @@ if ($action == 'updateoppcontact') {
     exit;
 }
 
+if ($action == 'get_contacts_from_socid') {
+    $socid = GETPOST('socid', 'int');
+    $res = array();
+    if ($socid > 0) {
+        $sql = "SELECT rowid, firstname, lastname, phone_pro, email FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = " . $socid . " AND status = 1";
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $res[] = array('id' => $obj->rowid, 'name' => trim($obj->firstname . ' ' . $obj->lastname), 'phone' => $obj->phone_pro, 'email' => $obj->email);
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'add') {
     $numberingModules = [
         'project'      => $conf->global->PROJECT_ADDON,
@@ -444,6 +461,7 @@ if ($action == 'add') {
 
     $project->ref         = $refProjectMod->getNextValue(null, $project);
     $project->title       = GETPOST('title');
+    $project->socid       = GETPOST('socid', 'int');
     $project->description = GETPOST('description', 'restricthtml');
     $project->opp_percent = GETPOST('opp_percent','int');
     switch ($project->opp_percent) {
@@ -581,37 +599,55 @@ if ($action == 'add') {
             $error++;
         }
 
-        // Create a contact if firstname and lastname are provided
-        $contactFirstname = trim($project->array_options['options_reedcrm_firstname'] ?? '');
-        $contactLastname  = trim($project->array_options['options_reedcrm_lastname'] ?? '');
-        if (empty($contactFirstname) && !empty($contactLastname)) {
-            $contactFirstname = 'Address';
-            $contactLastname  = $project->ref;
-        }
-        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-        $contact            = new Contact($db);
-        $contact->firstname = $contactFirstname;
-        $contact->lastname  = $contactLastname;
-        $contact->socid     = $project->socid > 0 ? $project->socid : 0;
-        $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
-        $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
-        $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
-        $contact->address   = $geolocation->getAddressFromLatLon($lat, $lon)['display_name'] ?? '';
-        $contact->status    = 1;
-        $contactID = $contact->create($user);
-        if ($contactID > 0) {
-            $project->add_contact($contactID, 'PROJECTADDRESS', 'external');
+        $contactid = GETPOST('contactid', 'int');
+        if ($contactid > 0) {
+            $project->add_contact($contactid, 'PROJECTADDRESS', 'external');
 
-            // Link geolocation to the contact instead of the project
+            // Link geolocation to this existing contact instead of the project
             if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
-                $geolocation->latitude    = (float)$lat;
-                $geolocation->longitude   = (float)$lon;
-                $geolocation->element_type = $contact->element;
-                $geolocation->fk_element  = $contactID;
-                $geolocation->create($user);
+                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+                $existingContact = new Contact($db);
+                if ($existingContact->fetch($contactid) > 0) {
+                    $geolocation->latitude    = (float)$lat;
+                    $geolocation->longitude   = (float)$lon;
+                    $geolocation->element_type = $existingContact->element;
+                    $geolocation->fk_element  = $contactid;
+                    $geolocation->create($user);
+                }
             }
         } else {
-            setEventMessages($contact->error, $contact->errors, 'errors');
+            // Create a contact if firstname and lastname are provided
+            $contactFirstname = trim($project->array_options['options_reedcrm_firstname'] ?? '');
+            $contactLastname  = trim($project->array_options['options_reedcrm_lastname'] ?? '');
+            if (empty($contactFirstname) && !empty($contactLastname)) {
+                $contactFirstname = 'Address';
+                $contactLastname  = $project->ref;
+            }
+            require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+            $contact            = new Contact($db);
+            $contact->firstname = $contactFirstname;
+            $contact->lastname  = $contactLastname;
+            $contact->socid     = $project->socid > 0 ? $project->socid : 0;
+            $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
+            $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
+            $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
+            $contact->address   = $geolocation->getAddressFromLatLon($lat, $lon)['display_name'] ?? '';
+            $contact->status    = 1;
+            $contactID = $contact->create($user);
+            if ($contactID > 0) {
+                $project->add_contact($contactID, 'PROJECTADDRESS', 'external');
+
+                // Link geolocation to the contact instead of the project
+                if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
+                    $geolocation->latitude    = (float)$lat;
+                    $geolocation->longitude   = (float)$lon;
+                    $geolocation->element_type = $contact->element;
+                    $geolocation->fk_element  = $contactID;
+                    $geolocation->create($user);
+                }
+            } else {
+                setEventMessages($contact->error, $contact->errors, 'errors');
+            }
         }
     } else {
         $langs->load('errors');
