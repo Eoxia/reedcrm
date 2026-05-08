@@ -171,6 +171,7 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
  */
 window.reedcrm.quickcreation.resolveCurrentAddress = function(lat, lon) {
   $('#current-address-coords').text(lat.toFixed(6) + ' / ' + lon.toFixed(6));
+  $('#current-address-block').attr('href', 'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lon).attr('target', '_blank');
 
   $.getJSON(
     'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&addressdetails=1',
@@ -210,23 +211,23 @@ window.reedcrm.quickcreation.resolveCurrentAddress = function(lat, lon) {
 window.reedcrm.quickcreation.setAddressBlockState = function(state, message) {
   var $icon = $('#current-address-icon');
   var $text = $('#current-address-text');
+  var $ko   = $('#current-address-ko');
 
   $icon.removeClass('fa-circle-notch fa-spin fa-map-marker-alt fa-exclamation-triangle');
+  $ko.hide();
 
   var $block = $('#current-address-block');
 
   if (state === 'success') {
-    $icon.addClass('fa-map-marker-alt').css('color', '#3498db');
+    $icon.addClass('fa-map-marker-alt').css('color', '#2ecc71');
     $text.css('color', '#34495e');
-    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
   } else if (state === 'error') {
-    $icon.addClass('fa-exclamation-triangle').css('color', '#e74c3c');
+    $icon.addClass('fa-map-marker-alt').css('color', '#e74c3c');
+    $ko.show();
     $text.css('color', '#e74c3c');
-    $block.css({ background: '#fef2f2', 'border-color': '#fecaca' });
   } else {
     $icon.addClass('fa-circle-notch fa-spin').css('color', '#3498db');
     $text.css('color', '#94a3b8');
-    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
   }
 
   $text.text(message);

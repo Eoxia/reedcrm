@@ -110,12 +110,59 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         box-sizing: border-box !important;
         height: 38px !important;
     }
+    .geoloc-address-link {
+        display: none;
+        flex-direction: column;
+        text-align: right;
+        max-width: 250px;
+        background: #f8fafc;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        border: 1px solid #e2e8f0;
+        transition: background 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .geoloc-address-link.is-visible {
+        display: flex !important;
+    }
+    .geoloc-address-link:hover {
+        background: #e2e8f0 !important;
+    }
 </style>
 
 <div id="id-container" class="page-content">
     <?php print saturne_show_notice('', '', 'error', 'notice-infos', false, true, '', ['Error' => $langs->transnoentities('Error')]); ?>
 
-    <div class="quickcreation-form-container">
+    <div class="quickcreation-form-container" style="position: relative;">
+        <!-- Geoloc Wrapper (Will be moved to PWA header left of avatar via JS) -->
+        <div id="geoloc-header-wrapper" style="display: none; align-items: center; gap: 10px; margin-right: 15px;">
+            <a id="current-address-block" class="geoloc-address-link" href="javascript:void(0);">
+                <div id="current-address-text" style="font-size: 11px; color: #34495e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; font-weight: 500;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
+                <div id="current-address-coords" style="font-size: 9px; color: #94a3b8; line-height: 1.2;"></div>
+            </a>
+            <div id="geoloc-top-right-icon" style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Cliquez pour afficher/masquer l'adresse" onclick="$('#current-address-block').toggleClass('is-visible');">
+                <span id="current-address-ko" style="display: none; color: #e74c3c; font-weight: bold; font-size: 14px;">KO</span>
+                <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: #3498db;"></i>
+            </div>
+        </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Déplacer l'icône et le bloc adresse dans la barre en haut, à gauche de l'avatar (.login_block)
+            setTimeout(function() {
+                var $headerRight = $('.login_block, .header-pwa-right, .saturne-header-right').first();
+                if ($headerRight.length) {
+                    $('#geoloc-header-wrapper').css('display', 'flex').prependTo($headerRight);
+                } else {
+                    // Fallback
+                    $('#geoloc-header-wrapper').css({
+                        'display': 'flex', 'position': 'fixed', 'top': '12px', 'right': '80px', 'z-index': '9999', 'background': 'rgba(255,255,255,0.9)', 'padding': '4px 8px', 'border-radius': '4px'
+                    }).appendTo('body');
+                }
+            }, 500);
+        });
+        </script>
+
         <!-- Project label -->
         <div class="form-group">
             <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?> (ex: Projet Refonte Web...)" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
@@ -242,14 +289,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <input type="hidden" id="longitude" name="longitude" value="">
         <input type="hidden" id="geolocation-error" name="geolocation-error" value="">
 
-        <!-- Current address display -->
-        <div id="current-address-block" style="display:flex; align-items:center; gap:10px; margin-top:10px; margin-bottom:20px; padding:12px 14px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; overflow:hidden;">
-            <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size:16px; color:#3498db; flex-shrink:0;"></i>
-            <div style="flex:1; min-width:0;">
-                <div id="current-address-text" style="font-size:13px; color:#34495e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
-                <div id="current-address-coords" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
-            </div>
-        </div>
+        <!-- Current address display removed from here (moved to header) -->
 
     </div>
 </div>
