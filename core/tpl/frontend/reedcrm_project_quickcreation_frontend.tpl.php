@@ -129,6 +129,43 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     .geoloc-address-link:hover {
         background: #e2e8f0 !important;
     }
+    /* Style custom pour Categories */
+    .category-wrapper .select2-container {
+        width: 100% !important;
+    }
+    .category-wrapper .select2-container--default .select2-selection--multiple,
+    .category-wrapper .select2-container--default .select2-selection--single {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+    .category-wrapper .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border: none !important;
+    }
+    .category-wrapper table, 
+    .category-wrapper tr, 
+    .category-wrapper td {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        display: block;
+        width: 100%;
+    }
+    .category-wrapper tbody {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+    .category-wrapper td:last-child {
+        width: auto !important;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+    }
+    .category-wrapper .buttonAction {
+        margin-left: auto;
+    }
 </style>
 
 <div id="id-container" class="page-content">
@@ -245,9 +282,9 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 
                 <!-- Opportunity option -->
         <?php if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) : ?>
-            <div class="opp-row" style="display: flex; gap: 15px; align-items: center; margin-top: 0; margin-bottom: 0;">
-                <!-- 70% -->
-                <div class="form-group" style="flex: 7; margin-bottom: 0;">
+            <div class="opp-row" style="display: flex; flex-direction: column; gap: 15px; margin-top: 0; margin-bottom: 0;">
+                <!-- 100% Slider -->
+                <div class="form-group" style="width: 100%; margin-bottom: 0;">
                     <div class="opp-percent" style="display: flex; align-items: center;">
                         <span style="font-size: 22px; margin-right: 8px;">🥵</span>
                         <div style="position: relative; flex: 1; display: flex; align-items: center; --val: <?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>;">
@@ -258,15 +295,15 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                     </div>
                 </div>
 
-                <!-- 30% -->
-                <div class="form-group" style="flex: 3; margin-bottom: 0;">
-                    <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
-                        <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
-                            <span class="input-icon">€</span>
-                            <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="Montant" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>" style="width: 100%;">
-                        </div>
-                    <?php endif; ?>
+                <!-- 100% Amount -->
+                <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+                <div class="form-group" style="width: 100%; margin-bottom: 0;">
+                    <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
+                        <span class="input-icon">€</span>
+                        <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="Montant" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>" style="width: 100%;">
+                    </div>
                 </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
@@ -274,8 +311,13 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 
         <!-- Tags / Categories -->
         <?php if (isModEnabled('categorie')) : ?>
-            <div class="form-group" style="margin-top: 8px;">
-                <?php print $form->selectCategories(Categorie::TYPE_PROJECT, 'categories'); ?>
+            <div class="form-group" style="margin-top: 15px;">
+                <div class="category-wrapper" style="border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; padding: 4px 8px; display: flex; align-items: center; min-height: 38px; box-sizing: border-box;">
+                    <i class="fas fa-tags" style="color: #0f172a; margin-right: 8px;"></i>
+                    <div style="flex: 1; min-width: 0;" class="category-select-container">
+                        <?php print $form->selectCategories(Categorie::TYPE_PROJECT, 'categories'); ?>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
 
