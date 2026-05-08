@@ -434,16 +434,20 @@ if ($action == 'updateoppcontact') {
     exit;
 }
 
-if ($action == 'get_contacts_from_socid') {
-    $socid = GETPOST('socid', 'int');
+if ($action == 'get_contact_details') {
+    $contactid = GETPOST('contactid', 'int');
     $res = array();
-    if ($socid > 0) {
-        $sql = "SELECT rowid, firstname, lastname, phone_pro, email FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = " . $socid . " AND status = 1";
-        $resql = $db->query($sql);
-        if ($resql) {
-            while ($obj = $db->fetch_object($resql)) {
-                $res[] = array('id' => $obj->rowid, 'name' => trim($obj->firstname . ' ' . $obj->lastname), 'phone' => $obj->phone_pro, 'email' => $obj->email);
-            }
+    if ($contactid > 0) {
+        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+        $contact = new Contact($db);
+        if ($contact->fetch($contactid) > 0) {
+            $res = array(
+                'id' => $contact->id,
+                'firstname' => $contact->firstname,
+                'lastname' => $contact->lastname,
+                'phone' => $contact->phone_pro,
+                'email' => $contact->email
+            );
         }
     }
     header('Content-Type: application/json');
