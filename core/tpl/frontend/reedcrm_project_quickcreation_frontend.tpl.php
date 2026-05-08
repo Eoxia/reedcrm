@@ -98,12 +98,14 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     .quickcreation-form-container .select2-container--default .select2-selection--single .select2-selection__arrow {
         height: 100% !important;
     }
-    .quickcreation-form-container input.ui-autocomplete-input {
+    .quickcreation-form-container input.ui-autocomplete-input,
+    .quickcreation-form-container select {
         padding: 8px !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 4px !important;
         background: #fff !important;
         box-sizing: border-box !important;
+        height: 38px !important;
     }
 </style>
 
