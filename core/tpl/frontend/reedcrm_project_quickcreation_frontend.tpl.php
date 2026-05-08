@@ -130,60 +130,55 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         background: #e2e8f0 !important;
     }
     /* Style custom pour Categories */
-    .category-wrapper .select2-container {
+    .category-wrapper {
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        background: #fff;
+        padding: 4px 8px;
+        display: flex;
+        align-items: center;
+        min-height: 38px;
+        box-sizing: border-box;
+    }
+    .category-select-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 8px;
+    }
+    .category-select-container > span.fa-tag {
+        color: #0f172a;
+        font-size: 16px;
+    }
+    .category-select-container > span.multiselectarraycategories {
+        flex: 1;
+        min-width: 0;
+        display: block;
+    }
+    .category-select-container .select2-container {
         width: 100% !important;
     }
-    .category-wrapper .select2-container--default .select2-selection--multiple,
-    .category-wrapper .select2-container--default .select2-selection--single {
+    .category-select-container .select2-container--default .select2-selection--multiple,
+    .category-select-container .select2-container--default .select2-selection--single {
         border: none !important;
         background: transparent !important;
         padding: 0 !important;
         box-shadow: none !important;
     }
-    .category-wrapper .select2-container--default.select2-container--focus .select2-selection--multiple {
+    .category-select-container .select2-container--default.select2-container--focus .select2-selection--multiple {
         border: none !important;
     }
-    .category-select-container table {
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        border: none !important;
-        background: transparent !important;
-    }
-    .category-select-container table tr,
-    .category-select-container table td {
-        border: none !important;
-        background: transparent !important;
-        padding: 0 !important;
-    }
-    .category-select-container table td:first-child {
-        width: 100%;
-    }
-    .category-select-container table td:last-child {
-        width: auto;
-        padding-left: 8px !important;
-    }
-    .category-select-container > .select2-container,
-    .category-select-container > select {
-        flex: 1;
-        min-width: 0;
-    }
-    .category-select-container .buttonAction,
-    .category-select-container a.button-add {
+    .category-select-container > a {
         margin-left: auto;
+        flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        text-decoration: none;
     }
-    .category-wrapper i.fa-tags {
+    .category-select-container > a span.fa-plus-circle {
+        font-size: 18px;
         color: #0f172a;
-        margin-right: 8px;
-    }
-    /* S'assurer que le flex marche si pas de tableau */
-    .category-select-container {
-        display: flex;
-        align-items: center;
-        width: 100%;
     }
 </style>
 
@@ -331,7 +326,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <!-- Tags / Categories -->
         <?php if (isModEnabled('categorie')) : ?>
             <div class="form-group" style="margin-top: 15px;">
-                <div class="category-wrapper" style="border: 1px solid #cbd5e1; border-radius: 4px; background: #fff; padding: 4px 8px; display: flex; align-items: center; min-height: 38px; box-sizing: border-box;">
+                <div class="category-wrapper">
                     <div style="flex: 1; min-width: 0;" class="category-select-container">
                         <?php print $form->selectCategories(Categorie::TYPE_PROJECT, 'categories'); ?>
                     </div>
