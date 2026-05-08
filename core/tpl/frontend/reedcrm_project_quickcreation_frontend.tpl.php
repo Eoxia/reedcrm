@@ -125,19 +125,19 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
             </div>
         <?php endif; ?>
 
-        <!-- Thirdparty and Contact -->
-        <div class="form-row-grid" style="display: flex; flex-direction: row; gap: 15px; margin-bottom: 10px;">
-            <div class="form-group" style="flex: 1; min-width: 0;">
-                <?php
-                $events = array(array('method'=>'getContacts', 'url'=>dol_buildpath('/core/ajax/contacts.php', 1), 'htmlname'=>'contactid', 'params'=>array('add-customer-contact'=>'disabled')));
-                print $form->select_company(GETPOST('socid', 'int'), 'socid', '', 'SelectThirdParty', 0, 0, $events, 0, 'minwidth300 widthcentpercent maxwidth500');
-                ?>
-            </div>
-            <div class="form-group" style="flex: 1; min-width: 0;">
-                <select name="contactid" id="contactid" class="flat widthcentpercent maxwidth500" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
-                    <option value="0"><?php echo $langs->trans('Contact'); ?></option>
-                </select>
-            </div>
+        <!-- Thirdparty -->
+        <div class="form-group">
+            <?php
+            $events = array(array('method'=>'getContacts', 'url'=>dol_buildpath('/core/ajax/contacts.php', 1), 'htmlname'=>'contactid', 'params'=>array('add-customer-contact'=>'disabled')));
+            print $form->select_company(GETPOST('socid', 'int'), 'socid', '', 'SelectThirdParty', 0, 0, $events, 0, 'widthcentpercent');
+            ?>
+        </div>
+
+        <!-- Contact -->
+        <div class="form-group">
+            <select name="contactid" id="contactid" class="flat widthcentpercent" data-placeholder="Contact/Adresse">
+                <option value="-1"></option>
+            </select>
         </div>
 
         <!-- ExtraFields -->
@@ -548,6 +548,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Contact Select Event Delegation ---
+    function initContactSelect2() {
+        if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+            let contactSelect = $('#contactid');
+            // Select2 is re-initialized after ajax, make sure to destroy if it exists
+            if (contactSelect.hasClass("select2-hidden-accessible")) {
+                contactSelect.select2('destroy');
+            }
+            contactSelect.select2({
+                width: '100%',
+                language: '<?php echo $langs->defaultlang; ?>'.substring(0, 2),
+                placeholder: "Contact/Adresse",
+                allowClear: true
+            });
+        }
+    }
+
+    // Init on load
+    initContactSelect2();
+
+    // Re-init after Dolibarr native ajax updates the contact dropdown
+    $(document).ajaxComplete(function(event, xhr, settings) {
+        if (settings.url && settings.url.indexOf('contacts.php') !== -1) {
+            initContactSelect2();
+        }
+    });
+
     $(document).on('change', '#contactid', function() {
         const contactid = $(this).val();
         if (contactid > 0) {
