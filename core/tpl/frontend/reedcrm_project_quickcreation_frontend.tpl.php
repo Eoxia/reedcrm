@@ -81,6 +81,35 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         object-fit: contain !important; /* Contain handles both true JPG ratios and the tiny fallback PNG natively */
         border: none !important;
     }
+
+    /* Liseret (Border) manquant pour les composants natifs de Dolibarr (Select2 et Autocomplete) dans la PWA */
+    .quickcreation-form-container .select2-container {
+        width: 100% !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        background: #fff !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal !important;
+        padding-left: 8px !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+    }
+    .quickcreation-form-container input.ui-autocomplete-input,
+    .quickcreation-form-container select {
+        padding: 8px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        background: #fff !important;
+        box-sizing: border-box !important;
+        height: 38px !important;
+    }
 </style>
 
 <div id="id-container" class="page-content">
@@ -98,6 +127,21 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
             </div>
         <?php endif; ?>
+
+        <!-- Thirdparty -->
+        <div class="form-group">
+            <?php
+            $events = array(array('method'=>'getContacts', 'url'=>dol_buildpath('/core/ajax/contacts.php', 1), 'htmlname'=>'contactid', 'params'=>array('add-customer-contact'=>'disabled')));
+            print $form->select_company(GETPOST('socid', 'int'), 'socid', '', 'SelectThirdParty', 0, 0, $events, 0, 'widthcentpercent');
+            ?>
+        </div>
+
+        <!-- Contact -->
+        <div class="form-group" id="contact-wrapper" style="display: none;">
+            <select name="contactid" id="contactid" class="flat widthcentpercent" data-placeholder="Contact/Adresse">
+                <option value="-1"></option>
+            </select>
+        </div>
 
         <!-- ExtraFields -->
         <div class="form-row-grid">
@@ -505,6 +549,89 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update on drag
         oppSlider.addEventListener('input', updateSlider);
     }
+
+    // --- Contact Select Event Delegation ---
+    function initContactSelect2() {
+        if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+            let contactSelect = $('#contactid');
+            // Select2 is re-initialized after ajax, make sure to destroy if it exists
+            if (contactSelect.hasClass("select2-hidden-accessible")) {
+                contactSelect.select2('destroy');
+            }
+            contactSelect.select2({
+                width: '100%',
+                language: '<?php echo $langs->defaultlang; ?>'.substring(0, 2),
+                placeholder: "Contact/Adresse"
+            });
+        }
+    }
+
+    // Init on load
+    initContactSelect2();
+
+    // Toggle contact select based on thirdparty selection
+    function toggleContactWrapper() {
+        let socid = $('#socid').val();
+        if (!socid && $('#search_socid').length > 0) {
+            socid = $('#search_socid').val();
+        }
+        if (socid && parseInt(socid) > 0) {
+            $('#contact-wrapper').slideDown(200);
+        } else {
+            $('#contact-wrapper').slideUp(200);
+        }
+    }
+
+    // Re-init after Dolibarr native ajax updates the contact dropdown
+    $(document).ajaxComplete(function(event, xhr, settings) {
+        if (settings.url && settings.url.indexOf('contacts.php') !== -1) {
+            initContactSelect2();
+            toggleContactWrapper();
+        }
+    });
+
+    $(document).on('change', '#socid, #search_socid', function() {
+        toggleContactWrapper();
+    });
+
+    // Check on initial load
+    toggleContactWrapper();
+
+    $(document).on('change', '#contactid', function() {
+        const contactid = $(this).val();
+        if (contactid > 0) {
+            let targetUrl = window.location.href;
+            let formData = new FormData();
+            formData.append('action', 'get_contact_details');
+            formData.append('contactid', contactid);
+            
+            fetch(targetUrl, { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(contact => {
+                if (contact && contact.id) {
+                    const phoneInput = document.getElementById('projectphone');
+                    if (phoneInput && contact.phone) { 
+                        phoneInput.value = contact.phone; 
+                        phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+
+                    const emailInputs = document.querySelectorAll('input[type="email"]');
+                    emailInputs.forEach(input => {
+                        if (input.name === 'options_reedcrm_email' && contact.email) {
+                            input.value = contact.email;
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    });
+
+                    let firstnameInput = document.getElementById('reedcrm_firstname');
+                    if (firstnameInput && contact.firstname) { firstnameInput.value = contact.firstname; firstnameInput.dispatchEvent(new Event('input')); }
+                    let lastnameInput = document.getElementById('reedcrm_lastname');
+                    if (lastnameInput && contact.lastname) { lastnameInput.value = contact.lastname; lastnameInput.dispatchEvent(new Event('input')); }
+                }
+            })
+            .catch(err => console.error("Error fetching contact details", err));
+        }
+    });
 });
 </script>
 
