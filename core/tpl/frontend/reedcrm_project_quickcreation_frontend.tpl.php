@@ -83,6 +83,9 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     }
 
     /* Liseret (Border) manquant pour les composants natifs de Dolibarr (Select2 et Autocomplete) dans la PWA */
+    .quickcreation-form-container .select2-container {
+        width: 100% !important;
+    }
     .quickcreation-form-container .select2-container--default .select2-selection--single {
         border: 1px solid #cbd5e1 !important;
         border-radius: 4px !important;
@@ -558,8 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
             contactSelect.select2({
                 width: '100%',
                 language: '<?php echo $langs->defaultlang; ?>'.substring(0, 2),
-                placeholder: "Contact/Adresse",
-                allowClear: true
+                placeholder: "Contact/Adresse"
             });
         }
     }
