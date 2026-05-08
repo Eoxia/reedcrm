@@ -171,6 +171,7 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
  */
 window.reedcrm.quickcreation.resolveCurrentAddress = function(lat, lon) {
   $('#current-address-coords').text(lat.toFixed(6) + ' / ' + lon.toFixed(6));
+  $('#current-address-block').attr('href', 'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lon).attr('target', '_blank');
 
   $.getJSON(
     'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&addressdetails=1',
