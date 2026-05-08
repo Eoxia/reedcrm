@@ -220,16 +220,13 @@ window.reedcrm.quickcreation.setAddressBlockState = function(state, message) {
   if (state === 'success') {
     $icon.addClass('fa-map-marker-alt').css('color', '#2ecc71');
     $text.css('color', '#34495e');
-    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
   } else if (state === 'error') {
     $icon.addClass('fa-map-marker-alt').css('color', '#e74c3c');
     $ko.show();
     $text.css('color', '#e74c3c');
-    $block.css({ background: '#fef2f2', 'border-color': '#fecaca' });
   } else {
     $icon.addClass('fa-circle-notch fa-spin').css('color', '#3498db');
     $text.css('color', '#94a3b8');
-    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
   }
 
   $text.text(message);
