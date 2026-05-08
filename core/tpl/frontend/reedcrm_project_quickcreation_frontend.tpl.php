@@ -87,11 +87,27 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     <?php print saturne_show_notice('', '', 'error', 'notice-infos', false, true, '', ['Error' => $langs->transnoentities('Error')]); ?>
 
     <div class="quickcreation-form-container" style="position: relative;">
-        <!-- Geoloc Icon Top Right -->
-        <div id="geoloc-top-right-icon" style="position: absolute; top: 15px; right: 15px; cursor: pointer; z-index: 50; display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.8); padding: 4px; border-radius: 4px;" title="Cliquez pour afficher/masquer l'adresse" onclick="$('#current-address-block').slideToggle();">
+        <!-- Geoloc Icon (Will be moved to PWA header left of avatar via JS) -->
+        <div id="geoloc-top-right-icon" style="display: none; cursor: pointer; align-items: center; gap: 5px; margin-right: 15px;" title="Cliquez pour afficher/masquer l'adresse" onclick="$('#current-address-block').slideToggle();">
             <span id="current-address-ko" style="display: none; color: #e74c3c; font-weight: bold; font-size: 14px;">KO</span>
             <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: #3498db;"></i>
         </div>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Déplacer l'icône dans la barre en haut, à gauche de l'avatar (.login_block)
+            setTimeout(function() {
+                var $headerRight = $('.login_block, .header-pwa-right, .saturne-header-right').first();
+                if ($headerRight.length) {
+                    $('#geoloc-top-right-icon').css('display', 'flex').prependTo($headerRight);
+                } else {
+                    // Fallback
+                    $('#geoloc-top-right-icon').css({
+                        'display': 'flex', 'position': 'fixed', 'top': '12px', 'right': '80px', 'z-index': '9999'
+                    }).appendTo('body');
+                }
+            }, 500);
+        });
+        </script>
 
         <!-- Project label -->
         <div class="form-group">
