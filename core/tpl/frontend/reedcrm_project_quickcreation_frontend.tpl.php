@@ -110,6 +110,22 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         box-sizing: border-box !important;
         height: 38px !important;
     }
+    .geoloc-address-link {
+        display: none;
+        flex-direction: column;
+        text-align: right;
+        max-width: 250px;
+        background: #f8fafc;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        border: 1px solid #e2e8f0;
+        transition: background 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .geoloc-address-link.is-visible {
+        display: flex !important;
+    }
     .geoloc-address-link:hover {
         background: #e2e8f0 !important;
     }
@@ -121,11 +137,11 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
     <div class="quickcreation-form-container" style="position: relative;">
         <!-- Geoloc Wrapper (Will be moved to PWA header left of avatar via JS) -->
         <div id="geoloc-header-wrapper" style="display: none; align-items: center; gap: 10px; margin-right: 15px;">
-            <a id="current-address-block" class="geoloc-address-link" href="javascript:void(0);" style="display: none; flex-direction: column; text-align: right; max-width: 250px; background: #f8fafc; padding: 4px 10px; border-radius: 6px; text-decoration: none; border: 1px solid #e2e8f0; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <a id="current-address-block" class="geoloc-address-link" href="javascript:void(0);">
                 <div id="current-address-text" style="font-size: 11px; color: #34495e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; font-weight: 500;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
                 <div id="current-address-coords" style="font-size: 9px; color: #94a3b8; line-height: 1.2;"></div>
             </a>
-            <div id="geoloc-top-right-icon" style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Cliquez pour afficher/masquer l'adresse" onclick="$('#current-address-block').fadeToggle(200).css('display', 'flex');">
+            <div id="geoloc-top-right-icon" style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Cliquez pour afficher/masquer l'adresse" onclick="$('#current-address-block').toggleClass('is-visible');">
                 <span id="current-address-ko" style="display: none; color: #e74c3c; font-weight: bold; font-size: 14px;">KO</span>
                 <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: #3498db;"></i>
             </div>
