@@ -276,18 +276,34 @@ if ($action == 'search_tiers_ajax') {
 }
 
 if ($action == 'search_contact_ajax') {
-    $q = GETPOST('q', 'alpha');
+    $q         = GETPOST('q', 'alpha');
     $projectId = GETPOST('projectid', 'int');
-    $res = array('results' => array());
-    if ($projectId > 0 && strlen($q) >= 2) {
+    $socidDirect = GETPOST('socid', 'int');
+    $res       = ['results' => []];
+
+    // Resolve the socid: either passed directly or via projectid
+    $targetSocId = 0;
+    if ($socidDirect > 0) {
+        $targetSocId = $socidDirect;
+    } elseif ($projectId > 0) {
         $proj = new Project($db);
         if ($proj->fetch($projectId) > 0 && $proj->socid > 0) {
-            $sql = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = " . (int)$proj->socid . " AND (firstname LIKE '%" . $db->escape($q) . "%' OR lastname LIKE '%" . $db->escape($q) . "%') LIMIT 50";
-            $resql = $db->query($sql);
-            if ($resql) {
-                while ($obj = $db->fetch_object($resql)) {
-                    $res['results'][] = array('id' => $obj->rowid, 'text' => trim($obj->firstname . ' ' . $obj->lastname));
-                }
+            $targetSocId = (int)$proj->socid;
+        }
+    }
+
+    // Require minimum 2 chars only when q is provided and socid was resolved via projectid search
+    // When called with socid directly (preload mode), q can be empty → returns all contacts
+    if ($targetSocId > 0 && ($socidDirect > 0 || strlen($q) >= 2)) {
+        $whereQ = '';
+        if (strlen($q) >= 1) {
+            $whereQ = " AND (firstname LIKE '%" . $db->escape($q) . "%' OR lastname LIKE '%" . $db->escape($q) . "%')";
+        }
+        $sql   = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = " . $targetSocId . $whereQ . " ORDER BY lastname, firstname LIMIT 100";
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $res['results'][] = ['id' => $obj->rowid, 'text' => trim($obj->firstname . ' ' . $obj->lastname)];
             }
         }
     }
@@ -295,6 +311,7 @@ if ($action == 'search_contact_ajax') {
     echo json_encode($res);
     exit;
 }
+
 
 if ($action == 'updateoppcontactid') {
     $projectId = GETPOST('projectid', 'int');

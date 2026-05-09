@@ -1073,7 +1073,9 @@ window.saturne.pwa_selectors.openContactModal = function(e) {
     }
 
     var baseAjaxUrl = window.saturne.pwa_selectors.getBaseUrl();
+    var $select = $('#reedcrm-pwa-modal-select');
 
+    // Open modal immediately with a loading state
     window.saturne.pwa_selectors.openModal('Sélectionner un contact', function(newContactId) {
         var token = $('input[name="token"]').val() || '';
         btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
@@ -1082,21 +1084,35 @@ window.saturne.pwa_selectors.openContactModal = function(e) {
         }).fail(function() { window.location.reload(); });
     });
 
-    // Init Select2 AJAX in the modal
-    $('#reedcrm-pwa-modal-select').select2({
-        dropdownParent: $('#reedcrm-pwa-modal-overlay > div'),
-        placeholder: 'Tapez 2 lettres min...',
-        minimumInputLength: 2,
-        language: { inputTooShort: function() { return 'Tapez au moins 2 caractères...'; }, searching: function() { return 'Recherche...'; }, noResults: function() { return 'Aucun résultat'; } },
-        ajax: {
-            url: baseAjaxUrl,
-            dataType: 'json',
-            delay: 250,
-            data: function(params) { return { action: 'search_contact_ajax', projectid: projectId, q: params.term }; },
-            processResults: function(data) { return { results: data.results || [] }; }
+    // Show a loading indicator while we fetch
+    $select.html('<option value="">Chargement...</option>');
+
+    // Fetch ALL contacts for this company in one shot
+    $.getJSON(baseAjaxUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
+        var results = (data && data.results) ? data.results : [];
+        $select.empty();
+        if (results.length === 0) {
+            $select.html('<option value="">Aucun contact pour ce client</option>');
+        } else {
+            $.each(results, function(i, item) {
+                $select.append($('<option>', { value: item.id, text: item.text }));
+            });
         }
+
+        // Destroy any existing Select2 then re-init with local data (instant filtering, no AJAX)
+        if ($select.data('select2')) { $select.select2('destroy'); }
+        $select.select2({
+            dropdownParent: $('#reedcrm-pwa-modal-overlay > div'),
+            placeholder: 'Rechercher un contact...',
+            allowClear: true,
+            language: { noResults: function() { return 'Aucun résultat'; } }
+        }).select2('open');
+
+    }).fail(function() {
+        $select.html('<option value="">Erreur de chargement</option>');
     });
 };
+
 
 /**
  * PWA Quickcreation Form — Geoloc, Phone, Email, URL, Slider, Contact Select
