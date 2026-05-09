@@ -214,36 +214,50 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
 
             <div class="pwa-selectors-group">
 
-                <!-- Client -->
-                <?php if ($tiersId > 0 && $socName) : ?>
-                <div class="pwa-client-selector" data-project-id="<?php echo $project->id; ?>" title="Changer le tiers">
-                    <?php echo $socBadge; ?>
-                    <i class="far fa-building" style="color:#64748b;"></i>
-                    <span style="font-weight:500;"><?php echo $socName; ?></span>
-                    <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
+                <!-- Client : bouton + select inline caché -->
+                <div class="pwa-selector-wrap" style="position:relative;">
+                    <?php if ($tiersId > 0 && $socName) : ?>
+                    <div class="pwa-client-selector" data-project-id="<?php echo $project->id; ?>" title="Changer le tiers">
+                        <?php echo $socBadge; ?>
+                        <i class="far fa-building" style="color:#64748b;"></i>
+                        <span style="font-weight:500;"><?php echo $socName; ?></span>
+                        <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
+                    </div>
+                    <?php else : ?>
+                    <div class="pwa-client-selector empty" data-project-id="<?php echo $project->id; ?>" title="Associer un tiers">
+                        <i class="far fa-building"></i>
+                        <span style="font-style:italic;">Client</span>
+                        <i class="fas fa-chevron-down" style="font-size:0.8em;"></i>
+                    </div>
+                    <?php endif; ?>
+                    <!-- Select inline (initialisé en Select2 AJAX par JS) -->
+                    <div class="pwa-inline-select-wrap" id="pwa-client-wrap-<?php echo $project->id; ?>" style="display:none; position:absolute; top:100%; left:0; z-index:9999; min-width:220px;">
+                        <select id="pwa-client-select-<?php echo $project->id; ?>"
+                                class="pwa-client-select"
+                                data-project-id="<?php echo $project->id; ?>"
+                                style="width:100%;"></select>
+                    </div>
                 </div>
-                <?php else : ?>
-                <div class="pwa-client-selector empty" data-project-id="<?php echo $project->id; ?>" title="Associer un tiers">
-                    <i class="far fa-building"></i>
-                    <span style="font-style:italic;">Client</span>
-                    <i class="fas fa-chevron-down" style="font-size:0.8em;"></i>
-                </div>
-                <?php endif; ?>
 
-                <!-- Contact -->
-                <div class="pwa-contact-selector" data-project-id="<?php echo $project->id; ?>" title="Changer le contact">
-                    <i class="far fa-address-book" style="color:#64748b;"></i>
-                    <span style="font-weight:500;">Contact</span>
-                    <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
+                <!-- Contact : bouton + select inline caché -->
+                <div class="pwa-selector-wrap" style="position:relative;">
+                    <div class="pwa-contact-selector" data-project-id="<?php echo $project->id; ?>" data-tiers-id="<?php echo $tiersId; ?>" title="Changer le contact">
+                        <i class="far fa-address-book" style="color:#64748b;"></i>
+                        <span style="font-weight:500;">Contact</span>
+                        <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
+                    </div>
+                    <!-- Select inline (initialisé avec tous les contacts de la société par JS) -->
+                    <div class="pwa-inline-select-wrap" id="pwa-contact-wrap-<?php echo $project->id; ?>" style="display:none; position:absolute; top:100%; left:0; z-index:9999; min-width:220px;">
+                        <select id="pwa-contact-select-<?php echo $project->id; ?>"
+                                class="pwa-contact-select"
+                                data-project-id="<?php echo $project->id; ?>"
+                                data-tiers-id="<?php echo $tiersId; ?>"
+                                style="width:100%;"></select>
+                    </div>
                 </div>
-
-                <!-- Hidden placeholder for JS (data-tiers-id used by pwa_selectors module) -->
-                <div id="reedcrm-hidden-contact-selector-pwa-<?php echo $project->id; ?>"
-                     class="reedcrm-hidden-contact-selector-wrap"
-                     data-tiers-id="<?php echo $tiersId; ?>"
-                     style="display:none;"></div>
 
             </div><!-- /pwa-selectors-group -->
+
 
             <!-- Devis -->
             <a href="<?php echo DOL_URL_ROOT; ?>/comm/propal/list.php?search_projet=<?php echo $project->id; ?>"
