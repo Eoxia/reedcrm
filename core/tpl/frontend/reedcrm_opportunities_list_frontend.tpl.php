@@ -130,8 +130,8 @@ foreach ($latestProjects as $project) {
                 $descAttr = ' data-tooltip="' . dol_escape_htmltag($descClean) . '"';
                 
                 print '<div class="fast-css-tooltip" ' . $descAttr . ' style="color: #4a5568; font-size: 0.95em; display: flex; align-items: center; position: relative; cursor: pointer; width: 100%; max-width: 100%; overflow: hidden;">';
-                    print '<span style="color: #64748b; font-weight: 500; margin-right: 6px;">Libellé :</span>';
-                    print '<span class="inline-edit-proj-title" data-project-id="' . $project->id . '" data-val="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; display: block; width: 100%;" title="Modifier le titre">' . dol_escape_htmltag($title) . '</span>';
+                    print '<span style="color: #64748b; font-weight: 500; margin-right: 6px; white-space: nowrap; flex-shrink: 0;">Libellé :</span>';
+                    print '<span class="inline-edit-proj-title" data-project-id="' . $project->id . '" data-val="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; display: block; flex: 1; min-width: 0;" title="Modifier le titre">' . dol_escape_htmltag($title) . '</span>';
                 print '</div>';
             }
             
