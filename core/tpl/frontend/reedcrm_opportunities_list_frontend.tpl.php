@@ -197,33 +197,35 @@ foreach ($latestProjects as $project) {
     
         // Thirdparty (Tiers)
         $tiersId = !empty($project->socid) ? $project->socid : (!empty($project->fk_soc) ? $project->fk_soc : 0);
+        
+        print '<div class="reedcrm-pwa-selectors-group" style="display: flex; gap: 10px; position: relative;">';
+        
         if ($tiersId > 0) {
             $soc = new Societe($db);
             if ($soc->fetch($tiersId) > 0) {
-                // Use a DIV so we don't nest <a> tags (getLibStatut or getNomUrl can contain <a> tags)
-                print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Fiche du tiers">';
+                print '<div class="pwa-client-selector" data-project-id="'.$project->id.'" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le tiers">';
                     print (method_exists($soc, 'getLibStatut') ? $soc->getLibStatut(3) . ' ' : '');
                     print '<i class="far fa-building" style="color: #64748b;"></i>';
-                    // getNomUrl(1) natively returns a link with the company name
-                    print '<span style="font-weight: 500;">' . $soc->getNomUrl(1) . '</span>';
+                    print '<span style="font-weight: 500;">' . dol_escape_htmltag($soc->name) . '</span>';
+                    print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
                 print '</div>';
             }
         } else {
-            $createSocUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id . '&source=pwa';
-            print '<a href="' . $createSocUrl . '" class="pwa-client-selector" style="background: #ffffff; border: 1px dashed #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #94a3b8; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none;" title="Créer un tiers">';
+            print '<div class="pwa-client-selector" data-project-id="'.$project->id.'" style="background: #ffffff; border: 1px dashed #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #94a3b8; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Associer un tiers">';
                 print '<i class="far fa-building"></i>';
                 print '<span style="font-style: italic;">Client</span>';
-                print '<i class="fas fa-plus" style="font-size: 0.8em; margin-left: 4px;"></i>';
-            print '</a>';
+                print '<i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left: 4px;"></i>';
+            print '</div>';
         }
 
         // Contact Selector
-        $contactUrl = DOL_URL_ROOT . '/projet/contact.php?id=' . $project->id . '&source=pwa';
-        print '<a href="' . $contactUrl . '" class="pwa-contact-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-decoration: none;" title="Gérer les contacts du projet">';
+        print '<div class="pwa-contact-selector" data-project-id="'.$project->id.'" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le contact principal">';
             print '<i class="far fa-address-book" style="color: #64748b;"></i>';
             print '<span style="font-weight: 500;">Contact</span>';
-            print '<i class="fas fa-external-link-alt" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
-        print '</a>';
+            print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
+        print '</div>';
+        
+        print '</div>';
         
         // SQL Queries for Propals & Invoices amounts
         $sql_propal = "SELECT SUM(total_ht) as amount FROM " . MAIN_DB_PREFIX . "propal WHERE fk_projet = " . (int)$project->id . " AND fk_statut IN (1, 2)";
@@ -248,6 +250,98 @@ foreach ($latestProjects as $project) {
         print '</a>';
         
     print '</div>'; // End Row 3
+    
+    print '</div>'; // End project-history-card
 }
+print '</div>'; // End page-content
+
+// Inject the hidden selector and JS for Client/Contact dropdowns
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+$formPwa = new Form($db);
+print '<div id="reedcrm-hidden-company-selector-pwa" style="display:none; width: 100%; margin-top: 4px;">';
+print $formPwa->select_company(0, 'reedcrm_inline_socid_pwa', '', 'Rechercher un tiers...', 1, 0, array(), 0, 'minwidth100', '', '', 1);
 print '</div>';
 ?>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if (typeof jQuery === 'undefined') return;
+    
+    // Client Selector Logic
+    $('.pwa-client-selector').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let btn = $(this);
+        let projectId = btn.data('project-id');
+        let hiddenSelectorWrap = $('#reedcrm-hidden-company-selector-pwa');
+        if (!projectId || hiddenSelectorWrap.length === 0) return;
+        
+        // If already open in this card
+        if (btn.parent().find('#reedcrm-hidden-company-selector-pwa').length > 0) {
+            btn.hide();
+            hiddenSelectorWrap.show();
+            let s2 = hiddenSelectorWrap.find('select');
+            if (s2.data('select2')) s2.select2('open');
+            return;
+        }
+        
+        // Move hidden selector below the button inside the group
+        btn.hide();
+        hiddenSelectorWrap.insertAfter(btn).show();
+        
+        let select2Elem = hiddenSelectorWrap.find('select');
+        // Reset previous value
+        select2Elem.val(null).trigger('change.select2');
+        
+        if (select2Elem.data('select2')) {
+            select2Elem.select2('open');
+        }
+        
+        select2Elem.off('change.pwaclient').on('change.pwaclient', function() {
+            let newSocid = $(this).val();
+            let token = $('input[name="token"]').val() || '';
+            
+            if (!newSocid || newSocid == 0) {
+                hiddenSelectorWrap.hide();
+                btn.show();
+                return;
+            }
+            
+            btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
+            hiddenSelectorWrap.hide();
+            btn.show();
+            
+            let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+            if (!url) {
+                if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+                else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+            }
+            let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsocid&token=' + token;
+            
+            $.post(ajaxUrl, { projectid: projectId, socid: newSocid }, function(res) {
+                window.location.reload();
+            }).fail(function() {
+                window.location.reload();
+            });
+        });
+    });
+    
+    // Contact Selector Logic (Fallback to native page redirection since no AJAX endpoint exists for contacts yet)
+    $('.pwa-contact-selector').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        let btn = $(this);
+        let projectId = btn.data('project-id');
+        if (!projectId) return;
+        
+        btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Chargement...');
+        let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+        if (!url) {
+            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+        }
+        window.location.href = url + '/projet/contact.php?id=' + projectId + '&source=pwa';
+    });
+});
+</script>
+<?php
