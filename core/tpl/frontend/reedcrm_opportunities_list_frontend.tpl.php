@@ -79,9 +79,8 @@ foreach ($latestProjects as $project) {
     
     // Ensure some styling for the cards to match image, explicitly neutrering Dolibarr's native .card >1024px breakpoints
     print '<div class="project-history-card" style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 10px; margin: 0 0 10px 0 !important; background-color: #f8fbff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">';
-    
-    // --- ROW 1: Meta, Initials & Amounts ---
-    print '<div style="display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 8px;">';
+       // --- ROW 1: Meta, Initials & Amounts ---
+    print '<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">';
     
         // Top Left
         print '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">';
@@ -99,7 +98,7 @@ foreach ($latestProjects as $project) {
         $rawAmount = empty($project->opp_amount) ? 0 : (float)$project->opp_amount;
         $statVal = isset($project->status) ? $project->status : (isset($project->statut) ? $project->statut : (isset($project->fk_statut) ? $project->fk_statut : 1));
         
-        print '<div style="display: flex; align-items: center; gap: 15px; flex-shrink: 0;">';
+        print '<div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; flex-shrink: 1;">';
         
             // Media Block (moved up here)
             print '<div class="opp-media-row" style="display: flex; align-items: center; gap: 8px;">';
@@ -198,7 +197,7 @@ foreach ($latestProjects as $project) {
         // Thirdparty (Tiers)
         $tiersId = !empty($project->socid) ? $project->socid : (!empty($project->fk_soc) ? $project->fk_soc : 0);
         
-        print '<div class="reedcrm-pwa-selectors-group" style="display: flex; gap: 10px; position: relative;">';
+        print '<div class="reedcrm-pwa-selectors-group" style="display: flex; gap: 10px; flex-wrap: wrap; position: relative;">';
         
         if ($tiersId > 0) {
             $soc = new Societe($db);
@@ -225,13 +224,9 @@ foreach ($latestProjects as $project) {
             print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
         print '</div>';
         
-        // HIDDEN CONTACT SELECTOR FOR THIS PROJECT'S TIERS
-        print '<div class="reedcrm-hidden-contact-selector-wrap" id="reedcrm-hidden-contact-selector-pwa-'.$project->id.'" style="display:none; width: 100%; margin-top: 4px;">';
-        if ($tiersId > 0) {
-            require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
-            $formContactPwa = new Form($db);
-            print $formContactPwa->select_contact($tiersId, '', 'reedcrm_inline_contact_pwa_'.$project->id, 1, '', '', 1, 'minwidth100');
-        } else {
+        // HIDDEN CONTACT SELECTOR PLACEHOLDER
+        print '<div class="reedcrm-hidden-contact-selector-wrap" id="reedcrm-hidden-contact-selector-pwa-'.$project->id.'" style="display:none; width: 100%; margin-top: 4px;" data-tiers-id="'.$tiersId.'">';
+        if ($tiersId <= 0) {
             print '<span style="color:#e74c3c; font-size:0.85em;"><i class="fas fa-exclamation-triangle"></i> Veuillez d\'abord associer un client.</span>';
         }
         print '</div>';
@@ -266,61 +261,66 @@ foreach ($latestProjects as $project) {
 }
 print '</div>'; // End page-content
 
-// Inject the hidden selector and JS for Client/Contact dropdowns
-require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
-$formPwa = new Form($db);
-print '<div id="reedcrm-hidden-company-selector-pwa" style="display:none; width: 100%; margin-top: 4px;">';
-print $formPwa->select_company(0, 'reedcrm_inline_socid_pwa', '', 'Rechercher un tiers...', 1, 0, array(), 0, 'minwidth100', '', '', 1);
-print '</div>';
+// Inject the hidden selector placeholder for Client dropdowns
+print '<div id="reedcrm-hidden-company-selector-pwa" style="display:none; width: 100%; margin-top: 4px;"></div>';
 ?>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     if (typeof jQuery === 'undefined' || typeof Swal === 'undefined') return;
     
-    // Helper to extract clean select HTML
-    function getCleanSelectHtml(wrapper) {
-        let selectClone = wrapper.find('select').clone();
-        selectClone.removeClass('select2-hidden-accessible');
-        selectClone.removeAttr('data-select2-id');
-        selectClone.removeAttr('tabindex');
-        selectClone.removeAttr('aria-hidden');
-        selectClone.find('option').removeAttr('data-select2-id');
-        return selectClone.prop('outerHTML');
+    // Base AJAX URL
+    let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+    if (!url) {
+        if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+        else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
     }
+    let baseAjaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php';
 
-    // Client Selector Logic using SweetAlert2
+    // Client Selector Logic using SweetAlert2 + AJAX
     $(document).on('click', '.pwa-client-selector', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         let btn = $(this);
         let projectId = btn.data('project-id');
-        let hiddenSelectorWrap = $('#reedcrm-hidden-company-selector-pwa');
-        if (!projectId || hiddenSelectorWrap.length === 0) return;
-        
-        let selectHtml = getCleanSelectHtml(hiddenSelectorWrap);
+        if (!projectId) return;
         
         Swal.fire({
             title: 'Sélectionner un tiers',
-            html: '<div class="swal-select-wrap" style="text-align: left; margin-top: 15px;">' + selectHtml + '</div>',
+            html: '<div class="swal-select-wrap" style="text-align: left; margin-top: 15px;"><select id="swal-ajax-select-client" style="width: 100%;"></select></div>',
             showCancelButton: true,
             confirmButtonText: 'Enregistrer',
             cancelButtonText: 'Annuler',
             confirmButtonColor: '#9b59b6',
             didOpen: () => {
-                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                let s2 = Swal.getPopup().querySelector('#swal-ajax-select-client');
                 if (s2) {
-                    $(s2).val(null);
                     $(s2).select2({ 
                         width: '100%', 
-                        dropdownParent: $(Swal.getPopup()) 
+                        dropdownParent: $(Swal.getPopup()),
+                        placeholder: 'Tapez 2 lettres min...',
+                        minimumInputLength: 2,
+                        ajax: {
+                            url: baseAjaxUrl,
+                            dataType: 'json',
+                            delay: 250,
+                            data: function (params) {
+                                return {
+                                    action: 'search_tiers_ajax',
+                                    q: params.term
+                                };
+                            },
+                            processResults: function (data) {
+                                return { results: data.results };
+                            }
+                        }
                     });
                     $(s2).select2('open');
                 }
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                let s2 = Swal.getPopup().querySelector('#swal-ajax-select-client');
                 let newSocid = $(s2).val();
                 let token = $('input[name="token"]').val() || '';
                 
@@ -328,13 +328,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 
                 btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
                 
-                let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-                if (!url) {
-                    if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-                    else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-                }
-                let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsocid&token=' + token;
-                
+                let ajaxUrl = baseAjaxUrl + '?action=updateoppsocid&token=' + token;
                 $.post(ajaxUrl, { projectid: projectId, socid: newSocid }, function(res) {
                     window.location.reload();
                 }).fail(function() {
@@ -344,51 +338,67 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
     
-    // Contact Selector Logic using SweetAlert2
+    // Contact Selector Logic using SweetAlert2 + AJAX
     $(document).on('click', '.pwa-contact-selector', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
         let btn = $(this);
         let projectId = btn.data('project-id');
-        let hiddenSelectorWrap = $('#reedcrm-hidden-contact-selector-pwa-' + projectId);
-        if (!projectId || hiddenSelectorWrap.length === 0) return;
+        let hiddenWrap = $('#reedcrm-hidden-contact-selector-pwa-' + projectId);
+        if (!projectId) return;
         
-        // If it's the warning message (no client assigned)
-        if (hiddenSelectorWrap.find('.fa-exclamation-triangle').length > 0) {
+        let tiersId = hiddenWrap.data('tiers-id') || 0;
+        
+        // If no client assigned
+        if (tiersId <= 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Client manquant',
-                html: hiddenSelectorWrap.html(),
+                html: '<span style="color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> Veuillez d\'abord associer un client.</span>',
                 confirmButtonColor: '#9b59b6',
                 confirmButtonText: 'Compris'
             });
             return;
         }
         
-        let selectHtml = getCleanSelectHtml(hiddenSelectorWrap);
-        
         Swal.fire({
             title: 'Sélectionner un contact',
-            html: '<div class="swal-select-wrap" style="text-align: left; margin-top: 15px;">' + selectHtml + '</div>',
+            html: '<div class="swal-select-wrap" style="text-align: left; margin-top: 15px;"><select id="swal-ajax-select-contact" style="width: 100%;"></select></div>',
             showCancelButton: true,
             confirmButtonText: 'Enregistrer',
             cancelButtonText: 'Annuler',
             confirmButtonColor: '#9b59b6',
             didOpen: () => {
-                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                let s2 = Swal.getPopup().querySelector('#swal-ajax-select-contact');
                 if (s2) {
-                    $(s2).val(null);
                     $(s2).select2({ 
                         width: '100%', 
-                        dropdownParent: $(Swal.getPopup()) 
+                        dropdownParent: $(Swal.getPopup()),
+                        placeholder: 'Tapez 2 lettres min...',
+                        minimumInputLength: 2,
+                        ajax: {
+                            url: baseAjaxUrl,
+                            dataType: 'json',
+                            delay: 250,
+                            data: function (params) {
+                                return {
+                                    action: 'search_contact_ajax',
+                                    projectid: projectId,
+                                    q: params.term
+                                };
+                            },
+                            processResults: function (data) {
+                                return { results: data.results };
+                            }
+                        }
                     });
                     $(s2).select2('open');
                 }
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                let s2 = Swal.getPopup().querySelector('#swal-ajax-select-contact');
                 let newContactId = $(s2).val();
                 let token = $('input[name="token"]').val() || '';
                 
@@ -396,13 +406,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 
                 btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
                 
-                let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-                if (!url) {
-                    if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-                    else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-                }
-                let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppcontactid&token=' + token;
-                
+                let ajaxUrl = baseAjaxUrl + '?action=updateoppcontactid&token=' + token;
                 $.post(ajaxUrl, { projectid: projectId, contactid: newContactId }, function(res) {
                     window.location.reload();
                 }).fail(function() {

@@ -258,6 +258,44 @@ if ($action == 'updateopptitle') {
     exit;
 }
 
+if ($action == 'search_tiers_ajax') {
+    $q = GETPOST('q', 'alpha');
+    $res = array('results' => array());
+    if (strlen($q) >= 2) {
+        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe WHERE nom LIKE '%" . $db->escape($q) . "%' AND entity IN (" . getEntity('societe') . ") LIMIT 50";
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $res['results'][] = array('id' => $obj->rowid, 'text' => $obj->nom);
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'search_contact_ajax') {
+    $q = GETPOST('q', 'alpha');
+    $projectId = GETPOST('projectid', 'int');
+    $res = array('results' => array());
+    if ($projectId > 0 && strlen($q) >= 2) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0 && $proj->socid > 0) {
+            $sql = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = " . (int)$proj->socid . " AND (firstname LIKE '%" . $db->escape($q) . "%' OR lastname LIKE '%" . $db->escape($q) . "%') LIMIT 50";
+            $resql = $db->query($sql);
+            if ($resql) {
+                while ($obj = $db->fetch_object($resql)) {
+                    $res['results'][] = array('id' => $obj->rowid, 'text' => trim($obj->firstname . ' ' . $obj->lastname));
+                }
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'updateoppcontactid') {
     $projectId = GETPOST('projectid', 'int');
     $contactId = GETPOST('contactid', 'int');
