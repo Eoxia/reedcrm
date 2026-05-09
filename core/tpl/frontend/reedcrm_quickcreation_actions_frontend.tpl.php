@@ -362,7 +362,7 @@ if ($action == 'updateoppcontactid') {
                     $autoEvent->fk_project    = $projectId;
                     $autoEvent->note_private  = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
                     $autoEvent->userownerid   = $user->id;
-                    $autoEvent->insert($user);
+                    $autoEvent->create($user);
                 }
             } else {
                 $res['error'] = $proj->error . ' (code: ' . $resAdd . ')';
