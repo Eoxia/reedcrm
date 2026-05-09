@@ -948,7 +948,7 @@ window.saturne.pwa_selectors.getBaseUrl = function() {
 window.saturne.pwa_selectors.openClientModal = function(e) {
     e.preventDefault();
     e.stopPropagation();
-
+    if (typeof Swal === 'undefined') { console.warn('SweetAlert2 not loaded'); return; }
     let btn = $(this);
     let projectId = btn.data('project-id');
     if (!projectId) return;
@@ -997,6 +997,7 @@ window.saturne.pwa_selectors.openClientModal = function(e) {
 window.saturne.pwa_selectors.openContactModal = function(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (typeof Swal === 'undefined') { console.warn('SweetAlert2 not loaded'); return; }
 
     let btn = $(this);
     let projectId = btn.data('project-id');
