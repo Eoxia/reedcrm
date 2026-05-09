@@ -275,9 +275,9 @@ print '</div>';
 ?>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    if (typeof jQuery === 'undefined') return;
+    if (typeof jQuery === 'undefined' || typeof Swal === 'undefined') return;
     
-    // Client Selector Logic
+    // Client Selector Logic using SweetAlert2
     $('.pwa-client-selector').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -287,57 +287,53 @@ document.addEventListener("DOMContentLoaded", function() {
         let hiddenSelectorWrap = $('#reedcrm-hidden-company-selector-pwa');
         if (!projectId || hiddenSelectorWrap.length === 0) return;
         
-        // If already open in this card
-        if (btn.parent().find('#reedcrm-hidden-company-selector-pwa').length > 0) {
-            btn.hide();
-            hiddenSelectorWrap.show();
-            let s2 = hiddenSelectorWrap.find('select');
-            if (s2.data('select2')) s2.select2('open');
-            return;
-        }
+        let selectHtml = hiddenSelectorWrap.html();
         
-        // Move hidden selector below the button inside the group
-        btn.hide();
-        hiddenSelectorWrap.insertAfter(btn).show();
-        
-        let select2Elem = hiddenSelectorWrap.find('select');
-        // Reset previous value
-        select2Elem.val(null).trigger('change.select2');
-        
-        if (select2Elem.data('select2')) {
-            select2Elem.select2('open');
-        }
-        
-        select2Elem.off('change.pwaclient').on('change.pwaclient', function() {
-            let newSocid = $(this).val();
-            let token = $('input[name="token"]').val() || '';
-            
-            if (!newSocid || newSocid == 0) {
-                hiddenSelectorWrap.hide();
-                btn.show();
-                return;
+        Swal.fire({
+            title: 'Sélectionner un tiers',
+            html: '<div class="swal-select-wrap" style="text-align: left; margin-top: 15px;">' + selectHtml + '</div>',
+            showCancelButton: true,
+            confirmButtonText: 'Enregistrer',
+            cancelButtonText: 'Annuler',
+            confirmButtonColor: '#9b59b6',
+            didOpen: () => {
+                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                if (s2) {
+                    $(s2).val(null).trigger('change');
+                    $(s2).select2({ 
+                        width: '100%', 
+                        dropdownParent: $(Swal.getPopup()) 
+                    });
+                    $(s2).select2('open');
+                }
             }
-            
-            btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
-            hiddenSelectorWrap.hide();
-            btn.show();
-            
-            let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-            if (!url) {
-                if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-                else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                let newSocid = $(s2).val();
+                let token = $('input[name="token"]').val() || '';
+                
+                if (!newSocid || newSocid == 0) return;
+                
+                btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
+                
+                let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+                if (!url) {
+                    if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+                    else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+                }
+                let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsocid&token=' + token;
+                
+                $.post(ajaxUrl, { projectid: projectId, socid: newSocid }, function(res) {
+                    window.location.reload();
+                }).fail(function() {
+                    window.location.reload();
+                });
             }
-            let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsocid&token=' + token;
-            
-            $.post(ajaxUrl, { projectid: projectId, socid: newSocid }, function(res) {
-                window.location.reload();
-            }).fail(function() {
-                window.location.reload();
-            });
         });
     });
     
-    // Contact Selector Logic
+    // Contact Selector Logic using SweetAlert2
     $('.pwa-contact-selector').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -347,36 +343,47 @@ document.addEventListener("DOMContentLoaded", function() {
         let hiddenSelectorWrap = $('#reedcrm-hidden-contact-selector-pwa-' + projectId);
         if (!projectId || hiddenSelectorWrap.length === 0) return;
         
-        // Hide other open contact dropdowns
-        $('.reedcrm-hidden-contact-selector-wrap').hide();
-        $('.pwa-contact-selector').show();
+        let selectHtml = hiddenSelectorWrap.html();
         
-        // Move hidden selector below the button inside the group
-        btn.hide();
-        hiddenSelectorWrap.insertAfter(btn).show();
+        // If it's the warning message (no client assigned)
+        if (selectHtml.indexOf('fa-exclamation-triangle') !== -1) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Client manquant',
+                html: selectHtml,
+                confirmButtonColor: '#9b59b6',
+                confirmButtonText: 'Compris'
+            });
+            return;
+        }
         
-        let select2Elem = hiddenSelectorWrap.find('select');
-        if (select2Elem.length > 0) {
-            // Reset previous value
-            select2Elem.val(null).trigger('change.select2');
-            
-            if (select2Elem.data('select2')) {
-                select2Elem.select2('open');
+        Swal.fire({
+            title: 'Sélectionner un contact',
+            html: '<div class="swal-select-wrap" style="text-align: left; margin-top: 15px;">' + selectHtml + '</div>',
+            showCancelButton: true,
+            confirmButtonText: 'Enregistrer',
+            cancelButtonText: 'Annuler',
+            confirmButtonColor: '#9b59b6',
+            didOpen: () => {
+                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                if (s2) {
+                    $(s2).val(null).trigger('change');
+                    $(s2).select2({ 
+                        width: '100%', 
+                        dropdownParent: $(Swal.getPopup()) 
+                    });
+                    $(s2).select2('open');
+                }
             }
-            
-            select2Elem.off('change.pwacontact').on('change.pwacontact', function() {
-                let newContactId = $(this).val();
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
+                let newContactId = $(s2).val();
                 let token = $('input[name="token"]').val() || '';
                 
-                if (!newContactId || newContactId == 0) {
-                    hiddenSelectorWrap.hide();
-                    btn.show();
-                    return;
-                }
+                if (!newContactId || newContactId == 0) return;
                 
                 btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
-                hiddenSelectorWrap.hide();
-                btn.show();
                 
                 let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
                 if (!url) {
@@ -390,8 +397,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 }).fail(function() {
                     window.location.reload();
                 });
-            });
-        }
+            }
+        });
     });
 });
 </script>

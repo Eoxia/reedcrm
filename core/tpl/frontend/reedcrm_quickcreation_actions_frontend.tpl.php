@@ -256,8 +256,6 @@ if ($action == 'updateopptitle') {
     header('Content-Type: application/json');
     echo json_encode($res);
     exit;
-}
-
 if ($action == 'updateoppcontactid') {
     $projectId = GETPOST('projectid', 'int');
     $contactId = GETPOST('contactid', 'int');
@@ -266,11 +264,25 @@ if ($action == 'updateoppcontactid') {
     if ($projectId > 0 && $contactId > 0) {
         $proj = new Project($db);
         if ($proj->fetch($projectId) > 0) {
-            // Add as external project contact (PROJECTADDRESS is the standard external contact role for projects)
-            // Usage: add_contact($contactid, $type_contact, $source='internal')
             $resAdd = $proj->add_contact($contactId, 'PROJECTADDRESS', 'external');
             if ($resAdd >= 0) {
                 $res['success'] = true;
+                
+                // Copy the contact details into the project extrafields so the UI updates!
+                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+                $contact = new Contact($db);
+                if ($contact->fetch($contactId) > 0) {
+                    $proj->fetch_optionals();
+                    $proj->array_options['options_reedcrm_firstname'] = $contact->firstname;
+                    $proj->array_options['options_reedcrm_lastname']  = $contact->lastname;
+                    $proj->array_options['options_projectphone']      = !empty($contact->phone_pro) ? $contact->phone_pro : $contact->phone_perso;
+                    $proj->array_options['options_reedcrm_email']     = $contact->email;
+                    
+                    $proj->updateExtraField('reedcrm_firstname');
+                    $proj->updateExtraField('reedcrm_lastname');
+                    $proj->updateExtraField('projectphone');
+                    $proj->updateExtraField('reedcrm_email');
+                }
                 
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
                 $autoEvent = new ActionComm($db);
