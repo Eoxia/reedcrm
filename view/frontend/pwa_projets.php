@@ -23,8 +23,7 @@ $title    = $langs->trans('Projects');
 $help_url = 'FR:Module_ReedCRM';
 $moreJS   = [
     '/custom/saturne/js/saturne.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js',
-    'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js'
+    '/custom/reedcrm/js/reedcrm.min.js'
 ];
 $moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
 

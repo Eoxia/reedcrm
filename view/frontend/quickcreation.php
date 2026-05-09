@@ -106,7 +106,6 @@ $moreJS   = [
     '/custom/saturne/js/saturne.min.js',
     '/custom/saturne/js/includes/signature-pad.min.js',
     '/custom/saturne/js/includes/hammer.min.js',
-    'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js',
     '/custom/reedcrm/js/intl-tel-input/js/intlTelInput.min.js',
     '/custom/reedcrm/js/reedcrm.min.js'
 ];

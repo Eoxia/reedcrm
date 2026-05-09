@@ -922,10 +922,161 @@ $(document).ready(function() {
 });
 
 /**
- * PWA Project Card - Client & Contact Selector using SweetAlert2 + AJAX Select2
- * Follows the window.saturne module pattern for CSP compliance.
+ * PWA Project Card - Client & Contact Selector
+ * Uses a lightweight custom HTML modal with Select2 AJAX (already loaded by Dolibarr).
+ * No external CDN dependencies.
  */
 window.saturne.pwa_selectors = {};
+
+window.saturne.pwa_selectors.init = function() {
+    window.saturne.pwa_selectors.buildModal();
+    window.saturne.pwa_selectors.event();
+};
+
+window.saturne.pwa_selectors.event = function() {
+    $(document).on('click', '.pwa-client-selector', window.saturne.pwa_selectors.openClientModal);
+    $(document).on('click', '.pwa-contact-selector', window.saturne.pwa_selectors.openContactModal);
+    // Close modal on overlay click
+    $(document).on('click', '#reedcrm-pwa-modal-overlay', function(e) {
+        if ($(e.target).is('#reedcrm-pwa-modal-overlay')) {
+            window.saturne.pwa_selectors.closeModal();
+        }
+    });
+    $(document).on('click', '#reedcrm-pwa-modal-cancel', window.saturne.pwa_selectors.closeModal);
+    $(document).on('keydown', function(e) { if (e.key === 'Escape') window.saturne.pwa_selectors.closeModal(); });
+};
+
+window.saturne.pwa_selectors.buildModal = function() {
+    if ($('#reedcrm-pwa-modal-overlay').length) return;
+    var html = '<div id="reedcrm-pwa-modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">' +
+        '<div style="background:#fff;border-radius:8px;padding:20px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">' +
+        '<div style="font-weight:700;font-size:1.1em;color:#1e293b;margin-bottom:14px;" id="reedcrm-pwa-modal-title"></div>' +
+        '<select id="reedcrm-pwa-modal-select" style="width:100%;"></select>' +
+        '<div id="reedcrm-pwa-modal-msg" style="display:none;padding:10px;border-radius:6px;background:#fef3c7;color:#92400e;margin-top:12px;font-size:0.9em;"></div>' +
+        '<div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">' +
+        '<button id="reedcrm-pwa-modal-cancel" style="padding:8px 16px;border:1px solid #cbd5e0;border-radius:6px;background:#f1f5f9;color:#475569;cursor:pointer;font-size:0.95em;">Annuler</button>' +
+        '<button id="reedcrm-pwa-modal-confirm" style="padding:8px 16px;border:none;border-radius:6px;background:#9b59b6;color:#fff;cursor:pointer;font-size:0.95em;font-weight:600;">Enregistrer</button>' +
+        '</div></div></div>';
+    $('body').append(html);
+};
+
+window.saturne.pwa_selectors.openModal = function(title, onConfirm, msgHtml) {
+    var $overlay = $('#reedcrm-pwa-modal-overlay');
+    var $select  = $('#reedcrm-pwa-modal-select');
+    var $msg     = $('#reedcrm-pwa-modal-msg');
+
+    // Reset
+    $('#reedcrm-pwa-modal-title').text(title);
+    if ($select.data('select2')) { $select.select2('destroy'); }
+    $select.empty().show();
+
+    if (msgHtml) {
+        $select.hide();
+        $msg.html(msgHtml).show();
+        $('#reedcrm-pwa-modal-confirm').hide();
+    } else {
+        $msg.hide().empty();
+        $('#reedcrm-pwa-modal-confirm').show().off('click').on('click', function() {
+            var val = $select.val();
+            if (val) { onConfirm(val); }
+            window.saturne.pwa_selectors.closeModal();
+        });
+    }
+    $overlay.css('display', 'flex');
+};
+
+window.saturne.pwa_selectors.closeModal = function() {
+    var $select = $('#reedcrm-pwa-modal-select');
+    if ($select.data('select2')) { $select.select2('destroy'); }
+    $select.empty();
+    $('#reedcrm-pwa-modal-overlay').hide();
+    $('#reedcrm-pwa-modal-confirm').show();
+    $('#reedcrm-pwa-modal-msg').hide().empty();
+};
+
+window.saturne.pwa_selectors.getBaseUrl = function() {
+    var url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+    if (!url) {
+        if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+        else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+    }
+    return url + '/custom/reedcrm/view/frontend/quickcreation.php';
+};
+
+window.saturne.pwa_selectors.openClientModal = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var btn = $(this);
+    var projectId = btn.data('project-id');
+    if (!projectId) return;
+    var baseAjaxUrl = window.saturne.pwa_selectors.getBaseUrl();
+
+    window.saturne.pwa_selectors.openModal('Sélectionner un tiers', function(newSocid) {
+        var token = $('input[name="token"]').val() || '';
+        btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
+        $.post(baseAjaxUrl + '?action=updateoppsocid&token=' + token, { projectid: projectId, socid: newSocid }, function() {
+            window.location.reload();
+        }).fail(function() { window.location.reload(); });
+    });
+
+    // Init Select2 AJAX in the modal
+    $('#reedcrm-pwa-modal-select').select2({
+        dropdownParent: $('#reedcrm-pwa-modal-overlay > div'),
+        placeholder: 'Tapez 2 lettres min...',
+        minimumInputLength: 2,
+        language: { inputTooShort: function() { return 'Tapez au moins 2 caractères...'; }, searching: function() { return 'Recherche...'; }, noResults: function() { return 'Aucun résultat'; } },
+        ajax: {
+            url: baseAjaxUrl,
+            dataType: 'json',
+            delay: 250,
+            data: function(params) { return { action: 'search_tiers_ajax', q: params.term }; },
+            processResults: function(data) { return { results: data.results || [] }; }
+        }
+    });
+};
+
+window.saturne.pwa_selectors.openContactModal = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var btn = $(this);
+    var projectId = btn.data('project-id');
+    if (!projectId) return;
+
+    var hiddenWrap = $('#reedcrm-hidden-contact-selector-pwa-' + projectId);
+    var tiersId    = hiddenWrap.data('tiers-id') || 0;
+
+    if (tiersId <= 0) {
+        window.saturne.pwa_selectors.openModal('Contact', null,
+            '<i class="fas fa-exclamation-triangle" style="color:#d97706;margin-right:6px;"></i>Veuillez d\'abord associer un client à ce projet.'
+        );
+        return;
+    }
+
+    var baseAjaxUrl = window.saturne.pwa_selectors.getBaseUrl();
+
+    window.saturne.pwa_selectors.openModal('Sélectionner un contact', function(newContactId) {
+        var token = $('input[name="token"]').val() || '';
+        btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
+        $.post(baseAjaxUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function() {
+            window.location.reload();
+        }).fail(function() { window.location.reload(); });
+    });
+
+    // Init Select2 AJAX in the modal
+    $('#reedcrm-pwa-modal-select').select2({
+        dropdownParent: $('#reedcrm-pwa-modal-overlay > div'),
+        placeholder: 'Tapez 2 lettres min...',
+        minimumInputLength: 2,
+        language: { inputTooShort: function() { return 'Tapez au moins 2 caractères...'; }, searching: function() { return 'Recherche...'; }, noResults: function() { return 'Aucun résultat'; } },
+        ajax: {
+            url: baseAjaxUrl,
+            dataType: 'json',
+            delay: 250,
+            data: function(params) { return { action: 'search_contact_ajax', projectid: projectId, q: params.term }; },
+            processResults: function(data) { return { results: data.results || [] }; }
+        }
+    });
+};
 
 window.saturne.pwa_selectors.init = function() {
     window.saturne.pwa_selectors.event();
