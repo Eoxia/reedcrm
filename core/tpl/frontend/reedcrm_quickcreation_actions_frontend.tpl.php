@@ -321,8 +321,9 @@ if ($action == 'updateoppcontactid') {
     if ($projectId > 0 && $contactId > 0) {
         $proj = new Project($db);
         if ($proj->fetch($projectId) > 0) {
-            // PROJECTCONTACT is the correct external contact type for projects in Dolibarr
-            $resAdd = $proj->add_contact($contactId, 'PROJECTCONTACT', 'external');
+            // Use PROJECTCONTRIBUTOR (external) - valid role in this Dolibarr instance
+            // Available external types: PROJECTADDRESS (geoloc), PROJECTCONTRIBUTOR (intervenant), PROJECTLEADER
+            $resAdd = $proj->add_contact($contactId, 'PROJECTCONTRIBUTOR', 'external');
             // -4 = contact already linked (treated as success — just update extrafields)
             if ($resAdd >= 0 || $resAdd == -4) {
                 $res['success'] = true;
