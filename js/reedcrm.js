@@ -912,13 +912,33 @@ window.saturne.contact_inline.editAmount = function(e) {
 // Initialize module on ready
 $(document).ready(function() {
     if (typeof window.saturne !== 'undefined' && window.saturne.contact_inline) {
-        // Mount the UI elements into the banner (Title, Percentage, Amount)
         window.saturne.contact_inline.mountCardUi();
-        
-        // Bind all click delegates
-        // (Delegates are mostly handled in init -> event(), keeping document bounds clean)
         $(document).on('click', '.reedcrm-copy-text', window.saturne.contact_inline.copyToClipboard);
     }
+
+    // --- Data-action event delegation (replaces all inline onclick attributes) ---
+    $(document).on('click', '[data-action="open-vcard-modal"]', function() {
+        var m = document.getElementById('vcard-modal');
+        if (m) m.style.display = 'flex';
+    });
+    $(document).on('click', '[data-action="close-vcard-modal"]', function() {
+        var m = document.getElementById('vcard-modal');
+        if (m) m.style.display = 'none';
+    });
+    $(document).on('click', '[data-action="toggle-geoloc-address"]', function() {
+        $('#current-address-block').toggleClass('is-visible');
+    });
+
+    // --- CSS hover for .reedcrm-hover-bg (replaces inline onmouseover/onmouseout) ---
+    $(document).on('mouseenter', '.reedcrm-hover-bg', function() {
+        $(this).css({ 'background': '#f1f5f9', 'border-color': '#e2e8f0' });
+    }).on('mouseleave', '.reedcrm-hover-bg', function() {
+        $(this).css({ 'background': 'transparent', 'border-color': 'transparent' });
+    });
+    // Close vcard modal on overlay click
+    $(document).on('click', '#vcard-modal', function(e) {
+        if ($(e.target).is('#vcard-modal')) { this.style.display = 'none'; }
+    });
 });
 
 /**

@@ -192,7 +192,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 <div id="current-address-text" style="font-size: 11px; color: #34495e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; font-weight: 500;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
                 <div id="current-address-coords" style="font-size: 9px; color: #94a3b8; line-height: 1.2;"></div>
             </a>
-            <div id="geoloc-top-right-icon" style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Cliquez pour afficher/masquer l'adresse" onclick="$('#current-address-block').toggleClass('is-visible');">
+            <div id="geoloc-top-right-icon" style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Cliquez pour afficher/masquer l'adresse" data-action="toggle-geoloc-address">
                 <span id="current-address-ko" style="display: none; color: #e74c3c; font-weight: bold; font-size: 14px;">KO</span>
                 <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: #3498db;"></i>
             </div>
