@@ -316,16 +316,17 @@ if ($action == 'search_contact_ajax') {
 if ($action == 'updateoppcontactid') {
     $projectId = GETPOST('projectid', 'int');
     $contactId = GETPOST('contactid', 'int');
-    $res = array('success' => false);
+    $res = ['success' => false];
 
     if ($projectId > 0 && $contactId > 0) {
         $proj = new Project($db);
         if ($proj->fetch($projectId) > 0) {
-            $resAdd = $proj->add_contact($contactId, 'PROJECTADDRESS', 'external');
-            if ($resAdd >= 0) {
+            // PROJECTCONTACT is the correct external contact type for projects in Dolibarr
+            $resAdd = $proj->add_contact($contactId, 'PROJECTCONTACT', 'external');
+            // -4 = contact already linked (treated as success — just update extrafields)
+            if ($resAdd >= 0 || $resAdd == -4) {
                 $res['success'] = true;
-                
-                // Copy the contact details into the project extrafields so the UI updates!
+
                 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
                 $contact = new Contact($db);
                 if ($contact->fetch($contactId) > 0) {
@@ -349,20 +350,22 @@ if ($action == 'updateoppcontactid') {
                     ];
                 }
 
-                
-                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-                $autoEvent = new ActionComm($db);
-                $autoEvent->type_code = 'AC_OTH'; 
-                $autoEvent->label = "Ajout d'un contact au projet";
-                $autoEvent->datep = dol_now();
-                $autoEvent->datef = dol_now();
-                $autoEvent->percentage = 100;
-                $autoEvent->fk_project = $projectId;
-                $autoEvent->note_private = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
-                $autoEvent->userownerid = $user->id;
-                $autoEvent->insert($user);
+                if ($resAdd >= 0) {
+                    // Only log the action event on a real new link (not duplicate)
+                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                    $autoEvent = new ActionComm($db);
+                    $autoEvent->type_code     = 'AC_OTH';
+                    $autoEvent->label         = "Ajout d'un contact au projet";
+                    $autoEvent->datep         = dol_now();
+                    $autoEvent->datef         = dol_now();
+                    $autoEvent->percentage    = 100;
+                    $autoEvent->fk_project    = $projectId;
+                    $autoEvent->note_private  = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
+                    $autoEvent->userownerid   = $user->id;
+                    $autoEvent->insert($user);
+                }
             } else {
-                $res['error'] = $proj->error;
+                $res['error'] = $proj->error . ' (code: ' . $resAdd . ')';
             }
         }
     }
@@ -370,6 +373,9 @@ if ($action == 'updateoppcontactid') {
     echo json_encode($res);
     exit;
 }
+
+
+
 
 if ($action == 'updateoppsocid') {
     $projectId = GETPOST('projectid', 'int');
