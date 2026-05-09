@@ -98,17 +98,29 @@ foreach ($latestProjects as $project) {
         // Top Right
         $rawAmount = empty($project->opp_amount) ? 0 : (float)$project->opp_amount;
         $statVal = isset($project->status) ? $project->status : (isset($project->statut) ? $project->statut : (isset($project->fk_statut) ? $project->fk_statut : 1));
-        print '<div style="display: flex; align-items: center; flex-shrink: 0; font-weight: 600; font-size: 0.95em;">';
-            if ($statVal == 1) {
-                print '<div style="width: 10px; height: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-right: 8px;" title="Ouvert"></div>';
-            } elseif ($statVal == 0) {
-                print '<div style="width: 10px; height: 10px; background-color: #fff; border: 2px solid #e74c3c; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-right: 8px;" title="Brouillon"></div>';
-            } else {
-                print '<div style="width: 10px; height: 10px; background-color: #95a5a6; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-right: 8px;" title="Clôturé"></div>';
-            }
-            print '<span class="inline-edit-percent" data-project-id="'.$project->id.'" data-val="'.(int)$project->opp_percent.'" style="color: #0f172a; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="Modifier la probabilité">' . $percent . '</span>';
-            print '<span style="color: #cbd5e0; margin: 0 6px;">-</span>';
-            print '<span class="inline-edit-amount" data-project-id="'.$project->id.'" data-val="'.$rawAmount.'" style="color: #3b82f6; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="Modifier le montant">' . $amount . '</span>';
+        
+        print '<div style="display: flex; align-items: center; gap: 15px; flex-shrink: 0;">';
+        
+            // Media Block (moved up here)
+            print '<div class="opp-media-row" style="display: flex; align-items: center; gap: 8px;">';
+                require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+                print saturne_render_media_block('project', dol_sanitizeFileName($project->ref), 'opp_' . $project->id, '', ['show_photo' => true, 'show_audio' => true]);
+            print '</div>';
+            
+            // Financials
+            print '<div style="display: flex; align-items: center; font-weight: 600; font-size: 0.95em;">';
+                if ($statVal == 1) {
+                    print '<div style="width: 10px; height: 10px; background-color: #2ecc71; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-right: 8px;" title="Ouvert"></div>';
+                } elseif ($statVal == 0) {
+                    print '<div style="width: 10px; height: 10px; background-color: #fff; border: 2px solid #e74c3c; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-right: 8px;" title="Brouillon"></div>';
+                } else {
+                    print '<div style="width: 10px; height: 10px; background-color: #95a5a6; border-radius: 50%; display: inline-block; flex-shrink: 0; margin-right: 8px;" title="Clôturé"></div>';
+                }
+                print '<span class="inline-edit-percent" data-project-id="'.$project->id.'" data-val="'.(int)$project->opp_percent.'" style="color: #0f172a; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="Modifier la probabilité">' . $percent . '</span>';
+                print '<span style="color: #cbd5e0; margin: 0 6px;">-</span>';
+                print '<span class="inline-edit-amount" data-project-id="'.$project->id.'" data-val="'.$rawAmount.'" style="color: #3b82f6; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="Modifier le montant">' . $amount . '</span>';
+            print '</div>';
+            
         print '</div>';
         
     print '</div>';
@@ -169,17 +181,11 @@ foreach ($latestProjects as $project) {
                     print '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
                     
                     print $linkWeb;
-                    print '<span class="inline-edit-contact" data-field="website" data-val="'.dol_escape_htmltag($cWeb).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s;" title="Modifier le site web">' . $hWeb . '</span>';
+                    print '<span class="inline-edit-contact" data-field="website" data-val="'.dol_escape_htmltag($cWeb).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; word-break: break-all;" title="Modifier le site web">' . $hWeb . '</span>';
                 print '</div>';
             print '</div>';
 
         print '</div>'; // End Left Column
-        
-        // Right side: Media Block
-        print '<div class="opp-media-row" style="display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0;">';
-        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
-        print saturne_render_media_block('project', dol_sanitizeFileName($project->ref), 'opp_' . $project->id, '', ['show_photo' => true, 'show_audio' => true]);
-        print '</div>';
         
     print '</div>'; // End Row 2
 
