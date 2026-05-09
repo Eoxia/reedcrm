@@ -200,27 +200,30 @@ foreach ($latestProjects as $project) {
         if ($tiersId > 0) {
             $soc = new Societe($db);
             if ($soc->fetch($tiersId) > 0) {
-                print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le tiers du projet">';
+                $socUrl = DOL_URL_ROOT . '/societe/card.php?socid=' . $soc->id . '&source=pwa';
+                print '<a href="' . $socUrl . '" class="pwa-client-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-decoration: none;" title="Ouvrir la fiche du tiers">';
                     print (method_exists($soc, 'getLibStatut') ? $soc->getLibStatut(3) . ' ' : '');
                     print '<i class="far fa-building" style="color: #64748b;"></i>';
                     print '<span style="font-weight: 500;">' . dol_escape_htmltag($soc->name) . '</span>';
-                    print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
-                print '</div>';
+                    print '<i class="fas fa-external-link-alt" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
+                print '</a>';
             }
         } else {
-            print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px dashed #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #94a3b8; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Associer un tiers">';
+            $createSocUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id . '&source=pwa';
+            print '<a href="' . $createSocUrl . '" class="pwa-client-selector" style="background: #ffffff; border: 1px dashed #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #94a3b8; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none;" title="Créer un tiers">';
                 print '<i class="far fa-building"></i>';
                 print '<span style="font-style: italic;">Client</span>';
-                print '<i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left: 4px;"></i>';
-            print '</div>';
+                print '<i class="fas fa-plus" style="font-size: 0.8em; margin-left: 4px;"></i>';
+            print '</a>';
         }
 
         // Contact Selector
-        print '<div class="pwa-contact-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le contact principal">';
+        $contactUrl = DOL_URL_ROOT . '/projet/contact.php?id=' . $project->id . '&source=pwa';
+        print '<a href="' . $contactUrl . '" class="pwa-contact-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-decoration: none;" title="Gérer les contacts du projet">';
             print '<i class="far fa-address-book" style="color: #64748b;"></i>';
             print '<span style="font-weight: 500;">Contact</span>';
-            print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
-        print '</div>';
+            print '<i class="fas fa-external-link-alt" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
+        print '</a>';
         
         // SQL Queries for Propals & Invoices amounts
         $sql_propal = "SELECT SUM(total_ht) as amount FROM " . MAIN_DB_PREFIX . "propal WHERE fk_projet = " . (int)$project->id . " AND fk_statut IN (1, 2)";
