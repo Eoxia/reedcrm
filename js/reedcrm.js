@@ -1056,3 +1056,148 @@ window.saturne.pwa_selectors.openContactModal = function(e) {
         }).fail(function() { window.location.reload(); });
     });
 };
+
+/**
+ * PWA Quickcreation Form — Geoloc, Phone, Email, URL, Slider, Contact Select
+ * Replaces the inline scripts removed from reedcrm_project_quickcreation_frontend.tpl.php
+ */
+window.saturne.quickcreation_form = {};
+
+window.saturne.quickcreation_form.init = function() {
+    if (!document.querySelector('.quickcreation-form') && !document.getElementById('geoloc-header-wrapper')) return;
+    window.saturne.quickcreation_form.moveGeolocIcon();
+    window.saturne.quickcreation_form.initPhoneValidation();
+    window.saturne.quickcreation_form.initEmailValidation();
+    window.saturne.quickcreation_form.initWebsiteValidation();
+    window.saturne.quickcreation_form.initFormSubmit();
+    window.saturne.quickcreation_form.initOppSlider();
+    window.saturne.quickcreation_form.initContactSelect();
+};
+
+window.saturne.quickcreation_form.moveGeolocIcon = function() {
+    setTimeout(function() {
+        var $headerRight = $('.login_block, .header-pwa-right, .saturne-header-right').first();
+        if ($headerRight.length) {
+            $('#geoloc-header-wrapper').css('display', 'flex').prependTo($headerRight);
+        } else {
+            $('#geoloc-header-wrapper').css({'display':'flex','position':'fixed','top':'12px','right':'80px','z-index':'9999','background':'rgba(255,255,255,0.9)','padding':'4px 8px','border-radius':'4px'}).appendTo('body');
+        }
+    }, 500);
+};
+
+window.saturne.quickcreation_form.initPhoneValidation = function() {
+    var dataDiv = document.getElementById('reedcrm-quickcreation-data');
+    if (!dataDiv) return;
+    var utilsPath = dataDiv.getAttribute('data-utils-path') || '';
+    var phoneInput = document.getElementById('projectphone');
+    if (!phoneInput || typeof window.intlTelInput === 'undefined') return;
+    var iti = window.intlTelInput(phoneInput, {initialCountry:'fr', utilsScript:utilsPath, formatOnDisplay:true, nationalMode:true, autoPlaceholder:'aggressive', preferredCountries:['fr','be','ch','lu','mc']});
+    phoneInput.addEventListener('input', function() {
+        var val = phoneInput.value;
+        var correctedVal = val.replace(/^(?:\+33|0033)[\s\-.]*0([1-9])/, '+33 $1');
+        if (correctedVal !== val) { phoneInput.value = val = correctedVal; }
+        if (window.intlTelInputUtils) {
+            var cp = phoneInput.selectionStart, isEnd = (cp === phoneInput.value.length);
+            var ft = val.startsWith('+') ? window.intlTelInputUtils.numberFormat.INTERNATIONAL : window.intlTelInputUtils.numberFormat.NATIONAL;
+            var formatted = window.intlTelInputUtils.formatNumber(val, iti.getSelectedCountryData().iso2, ft);
+            if (formatted && formatted !== val) { phoneInput.value = formatted; if (!isEnd && phoneInput.setSelectionRange) phoneInput.setSelectionRange(cp, cp); }
+        }
+        if (phoneInput.value.trim()) {
+            if (!iti.isValidNumber()) { phoneInput.classList.add('input-invalid-material'); phoneInput.setCustomValidity('Numéro de téléphone invalide.'); }
+            else { phoneInput.classList.remove('input-invalid-material'); phoneInput.setCustomValidity(''); }
+        } else { phoneInput.classList.remove('input-invalid-material'); phoneInput.setCustomValidity(''); }
+    });
+    var form = phoneInput.closest('form');
+    if (form) form.addEventListener('submit', function() { if (phoneInput.value.trim() && iti.isValidNumber()) phoneInput.value = iti.getNumber(); });
+};
+
+window.saturne.quickcreation_form.initEmailValidation = function() {
+    var re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    document.querySelectorAll('input[type="email"]').forEach(function(el) {
+        el.addEventListener('input', function() {
+            var v = this.value.trim();
+            if (v && !re.test(v)) { this.classList.add('input-invalid-material'); this.setCustomValidity("Format de l'adresse e-mail invalide."); }
+            else { this.classList.remove('input-invalid-material'); this.setCustomValidity(''); }
+        });
+    });
+};
+
+window.saturne.quickcreation_form.initWebsiteValidation = function() {
+    var dr = /^([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+    document.querySelectorAll('.website-input-group').forEach(function(group) {
+        var ps = group.querySelector('.url-protocol'), di = group.querySelector('.url-domain'), hi = group.querySelector('.url-hidden');
+        function validate() {
+            var v = di.value.trim();
+            if (/^https?:\/\//i.test(v)) { if (v.toLowerCase().startsWith('http://')) { ps.value='http://'; v=v.substring(7); } else { ps.value='https://'; v=v.substring(8); } di.value=v; }
+            if (!v) { hi.value=''; group.classList.remove('input-invalid-material'); di.setCustomValidity(''); return; }
+            hi.value = ps.value + v;
+            if (!dr.test(v)) { group.classList.add('input-invalid-material'); di.setCustomValidity('Format du nom de domaine invalide.'); }
+            else { group.classList.remove('input-invalid-material'); di.setCustomValidity(''); }
+        }
+        ps.addEventListener('change', validate);
+        di.addEventListener('input', validate);
+    });
+};
+
+window.saturne.quickcreation_form.initFormSubmit = function() {
+    var er = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    var dr = /^([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+    var mainForm = document.querySelector('.quickcreation-form');
+    if (!mainForm) return;
+    mainForm.addEventListener('submit', function(e) {
+        if (!this.checkValidity()) return;
+        var hasError = false;
+        this.querySelectorAll('input[type="email"]').forEach(function(el) { if (el.value.trim() && !er.test(el.value.trim())) { hasError=true; el.classList.add('input-invalid-material'); el.reportValidity(); el.focus(); } });
+        this.querySelectorAll('.website-input-group').forEach(function(g) { var di=g.querySelector('.url-domain'); if (di.value.trim() && !dr.test(di.value.trim())) { hasError=true; g.classList.add('input-invalid-material'); di.reportValidity(); di.focus(); } });
+        if (hasError) { e.preventDefault(); return; }
+        e.preventDefault();
+        var btn = mainForm.querySelector('button[type="submit"]');
+        if (!btn) return;
+        var orig = btn.innerHTML;
+        btn.innerHTML='<i class="fas fa-spinner fa-spin" style="font-size:20px;color:#fff;"></i>'; btn.disabled=true;
+        var fd = new FormData(mainForm); fd.append('ajax_submission','1');
+        fetch(window.location.href,{method:'POST',body:fd})
+            .then(function(r) { var ct=r.headers.get('content-type'); return ct&&ct.indexOf('application/json')!==-1?r.json():r.text(); })
+            .then(function(data) {
+                if (typeof data==='object'&&data.success) { window.location.href=data.redirect_url||window.location.href; }
+                else if (typeof data==='string') {
+                    var doc=(new DOMParser()).parseFromString(data,'text/html');
+                    var errs=doc.querySelectorAll('.error,.theme-error,.jnotify-container,.alert-danger,.warning,.theme-warning');
+                    if (errs.length) { document.querySelectorAll('.error,.theme-error,.jnotify-container,.alert-danger,.warning,.theme-warning').forEach(function(n){n.remove();}); var cont=document.getElementById('id-container')||mainForm; errs.forEach(function(n){cont.insertBefore(n,cont.firstChild);}); window.scrollTo({top:0,behavior:'smooth'}); }
+                    else if (doc.querySelector('.ok,.theme-success,.theme-statut-ok')) { window.location.reload(); }
+                    else { document.open(); document.write(data); document.close(); }
+                }
+            })
+            .catch(function(err) { console.error('Erreur de soumission',err); alert("Une erreur technique s'est produite."); })
+            .finally(function() { btn.innerHTML=orig; btn.disabled=false; });
+    });
+};
+
+window.saturne.quickcreation_form.initOppSlider = function() {
+    var s=document.getElementById('opp_percent'), v=document.querySelector('.opp_percent-value');
+    if (!s||!v) return;
+    function upd() { var val=parseInt(s.value)||0; v.textContent=val+'%'; var p=val/100; v.style.left='calc('+(p*100)+'% - '+(p*45)+'px + 22.5px)'; }
+    upd(); s.addEventListener('input', upd);
+};
+
+window.saturne.quickcreation_form.initContactSelect = function() {
+    if (typeof jQuery === 'undefined') return;
+    var dataDiv = document.getElementById('reedcrm-quickcreation-data');
+    var lang = dataDiv ? (dataDiv.getAttribute('data-lang') || 'fr') : 'fr';
+    function initS2() { if (!jQuery.fn.select2) return; var s=$('#contactid'); if (s.hasClass('select2-hidden-accessible')) s.select2('destroy'); s.select2({width:'100%',language:lang,placeholder:'Contact/Adresse'}); }
+    function toggleCW() { var sid=$('#socid').val()||($('#search_socid').length?$('#search_socid').val():null); if (sid&&parseInt(sid)>0) $('#contact-wrapper').slideDown(200); else $('#contact-wrapper').slideUp(200); }
+    initS2(); toggleCW();
+    $(document).ajaxComplete(function(ev,xhr,s) { if (s.url&&s.url.indexOf('contacts.php')!==-1) { initS2(); toggleCW(); } });
+    $(document).on('change','#socid, #search_socid', toggleCW);
+    $(document).on('change','#contactid', function() {
+        var cid=$(this).val(); if (!cid||cid<=0) return;
+        var fd=new FormData(); fd.append('action','get_contact_details'); fd.append('contactid',cid);
+        fetch(window.location.href,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(c) {
+            if (!c||!c.id) return;
+            var pi=document.getElementById('projectphone'); if (pi&&c.phone) { pi.value=c.phone; pi.dispatchEvent(new Event('input',{bubbles:true})); }
+            document.querySelectorAll('input[type="email"]').forEach(function(i) { if (i.name==='options_reedcrm_email'&&c.email) { i.value=c.email; i.dispatchEvent(new Event('input',{bubbles:true})); } });
+            var fi=document.getElementById('reedcrm_firstname'); if (fi&&c.firstname) { fi.value=c.firstname; fi.dispatchEvent(new Event('input')); }
+            var li=document.getElementById('reedcrm_lastname'); if (li&&c.lastname) { li.value=c.lastname; li.dispatchEvent(new Event('input')); }
+        }).catch(function(err){console.error('Error fetching contact details',err);});
+    });
+};
