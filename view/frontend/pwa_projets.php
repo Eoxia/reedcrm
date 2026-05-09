@@ -22,7 +22,7 @@ saturne_load_langs(['projects', 'users', 'companies', 'main']);
 $title    = $langs->trans('Projects');
 $help_url = 'FR:Module_ReedCRM';
 $moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS  = ['/custom/reedcrm/css/reedcrm.min.css'];
+$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -148,6 +148,9 @@ print '</div>';
 
 // Include the Bottom Navigation Bar for App
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
+
+// Include Saturne Photo Editor Modal (Required for photo uploads)
+include dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 llxFooter();
 $db->close();
