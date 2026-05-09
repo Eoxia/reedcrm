@@ -256,6 +256,8 @@ if ($action == 'updateopptitle') {
     header('Content-Type: application/json');
     echo json_encode($res);
     exit;
+}
+
 if ($action == 'updateoppcontactid') {
     $projectId = GETPOST('projectid', 'int');
     $contactId = GETPOST('contactid', 'int');
