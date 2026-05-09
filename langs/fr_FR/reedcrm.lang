@@ -211,6 +211,7 @@ ObjectAddContactTrigger = Contact ajouté
 UpdateObjectContactTrigger = Mise à jour du rôle "contacts facturation" des factures
 NoContact = Aucun contact
 AddContactNotificationTrigger = Ajout d'une notification contact "action Facture client validée" des tiers
+DictionarySource = Origine des opportunités/devis/commandes/factures
 OpportunityOrigin = Origine de l'opportunitée
 SRC_INTE = Internet
 SRC_CAMP_MAIL = Campagne Publipostage
