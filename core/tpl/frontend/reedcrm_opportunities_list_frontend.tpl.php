@@ -51,8 +51,8 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .inline-edit-percent,
     .inline-edit-amount { cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; white-space: nowrap; }
-    .inline-edit-percent { color: #0f172a; }
-    .inline-edit-amount { color: #3b82f6; }
+    .inline-edit-proj-percent { color: #0f172a; }
+    .inline-edit-proj-amount  { color: #3b82f6; }
     .initials-badge { font-size: 0.7em; color: #fff; background: #9b59b6; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .dot-sep { color: #cbd5e0; margin: 0 6px; }
 </style>
@@ -166,9 +166,9 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
             </div>
             <div class="pwa-card-row1-right">
                 <div class="pwa-status-dot" style="<?php echo $dotStyle; ?>" title="<?php echo $dotTitle; ?>"></div>
-                <span class="inline-edit-percent" data-project-id="<?php echo $project->id; ?>" data-val="<?php echo (int)$project->opp_percent; ?>" title="Modifier la probabilité"><?php echo $percent; ?></span>
+                <span class="inline-edit-proj-percent" data-project-id="<?php echo $project->id; ?>" data-val="<?php echo (int)$project->opp_percent; ?>" title="Modifier la probabilité"><?php echo $percent; ?></span>
                 <span style="color:#cbd5e0;margin:0 2px;">-</span>
-                <span class="inline-edit-amount"  data-project-id="<?php echo $project->id; ?>" data-val="<?php echo $rawAmount; ?>"           title="Modifier le montant"><?php echo $amount; ?></span>
+                <span class="inline-edit-proj-amount"  data-project-id="<?php echo $project->id; ?>" data-val="<?php echo $rawAmount; ?>"           title="Modifier le montant"><?php echo $amount; ?></span>
             </div>
         </div>
 
