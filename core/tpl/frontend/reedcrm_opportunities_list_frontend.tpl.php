@@ -278,7 +278,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (typeof jQuery === 'undefined' || typeof Swal === 'undefined') return;
     
     // Client Selector Logic using SweetAlert2
-    $('.pwa-client-selector').on('click', function(e) {
+    $(document).on('click', '.pwa-client-selector', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -334,7 +334,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     
     // Contact Selector Logic using SweetAlert2
-    $('.pwa-contact-selector').on('click', function(e) {
+    $(document).on('click', '.pwa-contact-selector', function(e) {
         e.preventDefault();
         e.stopPropagation();
         
