@@ -200,13 +200,13 @@ foreach ($latestProjects as $project) {
         if ($tiersId > 0) {
             $soc = new Societe($db);
             if ($soc->fetch($tiersId) > 0) {
-                $socUrl = DOL_URL_ROOT . '/societe/card.php?socid=' . $soc->id . '&source=pwa';
-                print '<a href="' . $socUrl . '" class="pwa-client-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-decoration: none;" title="Ouvrir la fiche du tiers">';
+                // Use a DIV so we don't nest <a> tags (getLibStatut or getNomUrl can contain <a> tags)
+                print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Fiche du tiers">';
                     print (method_exists($soc, 'getLibStatut') ? $soc->getLibStatut(3) . ' ' : '');
                     print '<i class="far fa-building" style="color: #64748b;"></i>';
-                    print '<span style="font-weight: 500;">' . dol_escape_htmltag($soc->name) . '</span>';
-                    print '<i class="fas fa-external-link-alt" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
-                print '</a>';
+                    // getNomUrl(1) natively returns a link with the company name
+                    print '<span style="font-weight: 500;">' . $soc->getNomUrl(1) . '</span>';
+                print '</div>';
             }
         } else {
             $createSocUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id . '&source=pwa';
