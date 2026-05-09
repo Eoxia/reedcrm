@@ -90,7 +90,7 @@ foreach ($latestProjects as $project) {
             print '<div style="font-size: 0.85em; color: #718096;"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i>' . $creationDate . '</div>';
             
             if (!empty($userInitials)) {
-                print '<span style="color: #cbd5e0; font-size: 0.8em; margin: 0 2px;"></span>';
+                print '<span style="color: #cbd5e0; font-size: 0.8em; margin: 0 4px;">&bull;</span>';
                 print '<div title="' . dol_escape_htmltag($author->getFullName($langs)) . '" style="font-size: 0.7em; color: #fff; background: #9b59b6; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">' . $userInitials . '</div>';
             }
         print '</div>';
@@ -113,8 +113,11 @@ foreach ($latestProjects as $project) {
         
     print '</div>';
     
-    // --- ROW 2: Body (Title, Contact, Actions) ---
-    print '<div style="display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0;">';
+    // --- ROW 2: Body (Title, Contact) AND Media Right ---
+    print '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">';
+        
+        // Left Column: Title and Contact
+        print '<div style="display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0;">';
             
             // Title
             if (!empty($title)) {
@@ -127,7 +130,7 @@ foreach ($latestProjects as $project) {
                 $descAttr = ' data-tooltip="' . dol_escape_htmltag($descClean) . '"';
                 
                 print '<div class="fast-css-tooltip" ' . $descAttr . ' style="color: #4a5568; font-size: 0.95em; display: flex; align-items: center; position: relative; cursor: pointer; width: 100%; max-width: 100%; overflow: hidden;">';
-                    print '<span style="color: #64748b; font-weight: 500; margin-right: 6px;">Libellé</span>';
+                    print '<span style="color: #64748b; font-weight: 500; margin-right: 6px;">Libellé :</span>';
                     print '<span class="inline-edit-title" data-project-id="' . $project->id . '" data-val="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; display: block; width: 100%;" title="Modifier le titre">' . dol_escape_htmltag($title) . '</span>';
                 print '</div>';
             }
@@ -170,75 +173,72 @@ foreach ($latestProjects as $project) {
                 print '</div>';
             print '</div>';
 
-            // Separator
-            print '<hr style="border-top: 1px dashed #cbd5e0; border-bottom: none; border-left: none; border-right: none; margin: 4px 0 6px 0; width: 100%;">';
+        print '</div>'; // End Left Column
+        
+        // Right side: Media Block
+        print '<div class="opp-media-row" style="display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0;">';
+        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+        print saturne_render_media_block('project', dol_sanitizeFileName($project->ref), 'opp_' . $project->id, '', ['show_photo' => true, 'show_audio' => true]);
+        print '</div>';
+        
+    print '</div>'; // End Row 2
 
-            // --- ROW 3: Thirdparty, Contact Dropdown, Amounts AND Media block on the right ---
-            print '<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">';
-            
-                // Left side: Selectors and amounts
-                print '<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1;">';
-                
-                    // Thirdparty (Tiers)
-                    $tiersId = !empty($project->socid) ? $project->socid : (!empty($project->fk_soc) ? $project->fk_soc : 0);
-                    if ($tiersId > 0) {
-                        $soc = new Societe($db);
-                        if ($soc->fetch($tiersId) > 0) {
-                            print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le tiers du projet">';
-                                print (method_exists($soc, 'getLibStatut') ? $soc->getLibStatut(3) . ' ' : '');
-                                print '<i class="far fa-building" style="color: #64748b;"></i>';
-                                print '<span style="font-weight: 500;">' . dol_escape_htmltag($soc->name) . '</span>';
-                                print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
-                            print '</div>';
-                        }
-                    } else {
-                        print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px dashed #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #94a3b8; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Associer un tiers">';
-                            print '<i class="far fa-building"></i>';
-                            print '<span style="font-style: italic;">Client</span>';
-                            print '<i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left: 4px;"></i>';
-                        print '</div>';
-                    }
+    // Separator
+    print '<hr style="border-top: 1px dashed #cbd5e0; border-bottom: none; border-left: none; border-right: none; margin: 4px 0 6px 0; width: 100%;">';
 
-                    // Contact Selector
-                    print '<div class="pwa-contact-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le contact principal">';
-                        print '<i class="far fa-address-book" style="color: #64748b;"></i>';
-                        print '<span style="font-weight: 500;">Contact</span>';
-                        print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
-                    print '</div>';
-                    
-                    // SQL Queries for Propals & Invoices amounts
-                    $sql_propal = "SELECT SUM(total_ht) as amount FROM " . MAIN_DB_PREFIX . "propal WHERE fk_projet = " . (int)$project->id . " AND fk_statut IN (1, 2)";
-                    $res_propal = $db->query($sql_propal);
-                    $obj_propal = $db->fetch_object($res_propal);
-                    $propal_amount = $obj_propal && $obj_propal->amount ? $obj_propal->amount : 0;
-                    
-                    $sql_facture = "SELECT SUM(total_ht) as amount FROM " . MAIN_DB_PREFIX . "facture WHERE fk_projet = " . (int)$project->id . " AND fk_statut IN (0, 1)";
-                    $res_facture = $db->query($sql_facture);
-                    $obj_facture = $db->fetch_object($res_facture);
-                    $facture_amount = $obj_facture && $obj_facture->amount ? $obj_facture->amount : 0;
-                    
-                    // Always show amounts, even if 0, matching the mockup "665,00 €" and "19,00 €"
-                    $urlPropal = DOL_URL_ROOT . '/custom/saturne/view/saturne_list.php?object_type=propal&search_fk_projet=' . $project->id;
-                    print '<a href="' . $urlPropal . '" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #475569; font-size: 0.95em; font-weight: 600; margin-left: 8px;" title="Devis en cours">';
-                    print '<i class="fas fa-file-signature" style="color: #38a169; font-size: 1.1em;"></i> ' . price($propal_amount, 0, '', 11, -1, -1, 'auto');
-                    print '</a>';
-                    
-                    $urlFacture = DOL_URL_ROOT . '/compta/facture/list.php?search_projet=' . $project->id; // Native Dolibarr list or custom? usually native works well.
-                    print '<a href="' . $urlFacture . '" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #475569; font-size: 0.95em; font-weight: 600; margin-left: 8px;" title="Factures en cours">';
-                    print '<i class="fas fa-file-invoice-dollar" style="color: #38a169; font-size: 1.1em;"></i> ' . price($facture_amount, 0, '', 11, -1, -1, 'auto');
-                    print '</a>';
-                    
+    // --- ROW 3: Thirdparty, Contact Dropdown, Amounts ---
+    print '<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%;">';
+    
+        // Thirdparty (Tiers)
+        $tiersId = !empty($project->socid) ? $project->socid : (!empty($project->fk_soc) ? $project->fk_soc : 0);
+        if ($tiersId > 0) {
+            $soc = new Societe($db);
+            if ($soc->fetch($tiersId) > 0) {
+                print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le tiers du projet">';
+                    print (method_exists($soc, 'getLibStatut') ? $soc->getLibStatut(3) . ' ' : '');
+                    print '<i class="far fa-building" style="color: #64748b;"></i>';
+                    print '<span style="font-weight: 500;">' . dol_escape_htmltag($soc->name) . '</span>';
+                    print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
                 print '</div>';
-                
-                // Right side: Media Block
-                print '<div class="opp-media-row" style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">';
-                require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
-                print saturne_render_media_block('project', dol_sanitizeFileName($project->ref), 'opp_' . $project->id, '', ['show_photo' => true, 'show_audio' => true]);
-                print '</div>';
-                
-            print '</div>'; // End Row 3
-            
-    print '</div>'; // End Card Body
+            }
+        } else {
+            print '<div class="pwa-client-selector" style="background: #ffffff; border: 1px dashed #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #94a3b8; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer;" title="Associer un tiers">';
+                print '<i class="far fa-building"></i>';
+                print '<span style="font-style: italic;">Client</span>';
+                print '<i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left: 4px;"></i>';
+            print '</div>';
+        }
+
+        // Contact Selector
+        print '<div class="pwa-contact-selector" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 4px; padding: 4px 8px; color: #475569; font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" title="Changer le contact principal">';
+            print '<i class="far fa-address-book" style="color: #64748b;"></i>';
+            print '<span style="font-weight: 500;">Contact</span>';
+            print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
+        print '</div>';
+        
+        // SQL Queries for Propals & Invoices amounts
+        $sql_propal = "SELECT SUM(total_ht) as amount FROM " . MAIN_DB_PREFIX . "propal WHERE fk_projet = " . (int)$project->id . " AND fk_statut IN (1, 2)";
+        $res_propal = $db->query($sql_propal);
+        $obj_propal = $db->fetch_object($res_propal);
+        $propal_amount = $obj_propal && $obj_propal->amount ? $obj_propal->amount : 0;
+        
+        $sql_facture = "SELECT SUM(total_ht) as amount FROM " . MAIN_DB_PREFIX . "facture WHERE fk_projet = " . (int)$project->id . " AND fk_statut IN (0, 1)";
+        $res_facture = $db->query($sql_facture);
+        $obj_facture = $db->fetch_object($res_facture);
+        $facture_amount = $obj_facture && $obj_facture->amount ? $obj_facture->amount : 0;
+        
+        // Always show amounts, even if 0, matching the mockup "665,00 €" and "19,00 €"
+        $urlPropal = DOL_URL_ROOT . '/custom/saturne/view/saturne_list.php?object_type=propal&search_fk_projet=' . $project->id;
+        print '<a href="' . $urlPropal . '" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #475569; font-size: 0.95em; font-weight: 600; margin-left: 8px;" title="Devis en cours">';
+        print '<i class="fas fa-file-signature" style="color: #38a169; font-size: 1.1em;"></i> ' . price($propal_amount, 0, '', 11, -1, -1, 'auto');
+        print '</a>';
+        
+        $urlFacture = DOL_URL_ROOT . '/compta/facture/list.php?search_projet=' . $project->id; // Native Dolibarr list or custom? usually native works well.
+        print '<a href="' . $urlFacture . '" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #475569; font-size: 0.95em; font-weight: 600; margin-left: 8px;" title="Factures en cours">';
+        print '<i class="fas fa-file-invoice-dollar" style="color: #38a169; font-size: 1.1em;"></i> ' . price($facture_amount, 0, '', 11, -1, -1, 'auto');
+        print '</a>';
+        
+    print '</div>'; // End Row 3
 }
 print '</div>';
 ?>
