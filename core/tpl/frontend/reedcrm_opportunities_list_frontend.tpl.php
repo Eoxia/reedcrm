@@ -264,7 +264,7 @@ print '</div>'; // End page-content
 // Inject the hidden selector placeholder for Client dropdowns
 print '<div id="reedcrm-hidden-company-selector-pwa" style="display:none; width: 100%; margin-top: 4px;"></div>';
 ?>
-<script>
+<script nonce="<?php echo function_exists('getNonce') ? getNonce() : ''; ?>">
 document.addEventListener("DOMContentLoaded", function() {
     if (typeof jQuery === 'undefined' || typeof Swal === 'undefined') return;
     
