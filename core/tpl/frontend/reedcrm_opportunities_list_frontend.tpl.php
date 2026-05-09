@@ -230,7 +230,7 @@ foreach ($latestProjects as $project) {
         if ($tiersId > 0) {
             require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
             $formContactPwa = new Form($db);
-            print $formContactPwa->select_contacts($tiersId, '', 'reedcrm_inline_contact_pwa_'.$project->id, 1, '', '', 1, 'minwidth100');
+            print $formContactPwa->select_contact($tiersId, '', 'reedcrm_inline_contact_pwa_'.$project->id, 1, '', '', 1, 'minwidth100');
         } else {
             print '<span style="color:#e74c3c; font-size:0.85em;"><i class="fas fa-exclamation-triangle"></i> Veuillez d\'abord associer un client.</span>';
         }
