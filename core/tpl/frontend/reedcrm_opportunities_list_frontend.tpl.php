@@ -250,7 +250,7 @@ foreach ($latestProjects as $project) {
         $facture_amount = $obj_facture && $obj_facture->amount ? $obj_facture->amount : 0;
         
         // Always show amounts, even if 0, matching the mockup "665,00 €" and "19,00 €"
-        $urlPropal = DOL_URL_ROOT . '/custom/saturne/view/saturne_list.php?object_type=propal&search_fk_projet=' . $project->id;
+        $urlPropal = DOL_URL_ROOT . '/comm/propal/list.php?search_projet=' . $project->id;
         print '<a href="' . $urlPropal . '" style="display: flex; align-items: center; gap: 6px; text-decoration: none; color: #475569; font-size: 0.95em; font-weight: 600; margin-left: 8px;" title="Devis en cours">';
         print '<i class="fas fa-file-signature" style="color: #38a169; font-size: 1.1em;"></i> ' . price($propal_amount, 0, '', 11, -1, -1, 'auto');
         print '</a>';
@@ -277,6 +277,17 @@ print '</div>';
 document.addEventListener("DOMContentLoaded", function() {
     if (typeof jQuery === 'undefined' || typeof Swal === 'undefined') return;
     
+    // Helper to extract clean select HTML
+    function getCleanSelectHtml(wrapper) {
+        let selectClone = wrapper.find('select').clone();
+        selectClone.removeClass('select2-hidden-accessible');
+        selectClone.removeAttr('data-select2-id');
+        selectClone.removeAttr('tabindex');
+        selectClone.removeAttr('aria-hidden');
+        selectClone.find('option').removeAttr('data-select2-id');
+        return selectClone.prop('outerHTML');
+    }
+
     // Client Selector Logic using SweetAlert2
     $(document).on('click', '.pwa-client-selector', function(e) {
         e.preventDefault();
@@ -287,7 +298,7 @@ document.addEventListener("DOMContentLoaded", function() {
         let hiddenSelectorWrap = $('#reedcrm-hidden-company-selector-pwa');
         if (!projectId || hiddenSelectorWrap.length === 0) return;
         
-        let selectHtml = hiddenSelectorWrap.html();
+        let selectHtml = getCleanSelectHtml(hiddenSelectorWrap);
         
         Swal.fire({
             title: 'Sélectionner un tiers',
@@ -299,7 +310,7 @@ document.addEventListener("DOMContentLoaded", function() {
             didOpen: () => {
                 let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
                 if (s2) {
-                    $(s2).val(null).trigger('change');
+                    $(s2).val(null);
                     $(s2).select2({ 
                         width: '100%', 
                         dropdownParent: $(Swal.getPopup()) 
@@ -343,19 +354,19 @@ document.addEventListener("DOMContentLoaded", function() {
         let hiddenSelectorWrap = $('#reedcrm-hidden-contact-selector-pwa-' + projectId);
         if (!projectId || hiddenSelectorWrap.length === 0) return;
         
-        let selectHtml = hiddenSelectorWrap.html();
-        
         // If it's the warning message (no client assigned)
-        if (selectHtml.indexOf('fa-exclamation-triangle') !== -1) {
+        if (hiddenSelectorWrap.find('.fa-exclamation-triangle').length > 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Client manquant',
-                html: selectHtml,
+                html: hiddenSelectorWrap.html(),
                 confirmButtonColor: '#9b59b6',
                 confirmButtonText: 'Compris'
             });
             return;
         }
+        
+        let selectHtml = getCleanSelectHtml(hiddenSelectorWrap);
         
         Swal.fire({
             title: 'Sélectionner un contact',
@@ -367,7 +378,7 @@ document.addEventListener("DOMContentLoaded", function() {
             didOpen: () => {
                 let s2 = Swal.getPopup().querySelector('.swal-select-wrap select');
                 if (s2) {
-                    $(s2).val(null).trigger('change');
+                    $(s2).val(null);
                     $(s2).select2({ 
                         width: '100%', 
                         dropdownParent: $(Swal.getPopup()) 
