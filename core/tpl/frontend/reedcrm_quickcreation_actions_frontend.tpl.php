@@ -334,12 +334,21 @@ if ($action == 'updateoppcontactid') {
                     $proj->array_options['options_reedcrm_lastname']  = $contact->lastname;
                     $proj->array_options['options_projectphone']      = !empty($contact->phone_pro) ? $contact->phone_pro : $contact->phone_perso;
                     $proj->array_options['options_reedcrm_email']     = $contact->email;
-                    
+
                     $proj->updateExtraField('reedcrm_firstname');
                     $proj->updateExtraField('reedcrm_lastname');
                     $proj->updateExtraField('projectphone');
                     $proj->updateExtraField('reedcrm_email');
+
+                    // Return contact data so JS can update DOM without page reload
+                    $res['contact'] = [
+                        'firstname' => $contact->firstname,
+                        'lastname'  => $contact->lastname,
+                        'phone'     => !empty($contact->phone_pro) ? $contact->phone_pro : $contact->phone_perso,
+                        'email'     => $contact->email,
+                    ];
                 }
+
                 
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
                 $autoEvent = new ActionComm($db);

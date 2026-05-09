@@ -1003,14 +1003,35 @@ window.saturne.pwa_selectors.event = function() {
                 }
             });
 
-            // On selection → save & reload
+            // On selection → save & update DOM (no page reload)
             $select.on('select2:select', function(ev) {
-                var newSocid = ev.params.data.id;
+                var newSocid   = ev.params.data.id;
+                var newSocName = ev.params.data.text;
                 wrap.hide();
-                btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
-                $.post(baseUrl + '?action=updateoppsocid&token=' + token, { projectid: projectId, socid: newSocid }, function() {
-                    window.location.reload();
-                }).fail(function() { window.location.reload(); });
+                var $btn = $('.pwa-client-selector[data-project-id="' + projectId + '"]');
+                $btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
+                $.post(baseUrl + '?action=updateoppsocid&token=' + token, { projectid: projectId, socid: newSocid }, function(res) {
+                    if (res && res.success) {
+                        // Update button label in place
+                        $btn.html(
+                            '<i class="far fa-building" style="color:#64748b;"></i>' +
+                            '<span style="font-weight:500;">' + $('<span>').text(newSocName).html() + '</span>' +
+                            '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
+                        );
+                        $btn.removeClass('empty');
+                        // Reset contact preload flag since company changed
+                        var $cSelect = $('#pwa-contact-select-' + projectId);
+                        $cSelect.removeData('contacts-loaded').empty();
+                        if ($cSelect.data('select2')) { $cSelect.select2('destroy'); }
+                        // Update tiers-id on contact button
+                        $('.pwa-contact-selector[data-project-id="' + projectId + '"]').data('tiers-id', newSocid);
+                        $('#pwa-contact-wrap-' + projectId).hide();
+                    } else {
+                        $btn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                    }
+                }, 'json').fail(function() {
+                    $btn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                });
             });
 
             // Close on clear / close event
@@ -1062,13 +1083,33 @@ window.saturne.pwa_selectors.event = function() {
                 language:    { noResults: function() { return 'Aucun résultat'; } }
             });
             $select.on('select2:select', function(ev) {
-                var newContactId = ev.params.data.id;
+                var newContactId   = ev.params.data.id;
+                var newContactName = ev.params.data.text;
                 wrap.hide();
-                btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
-                $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function() {
-                    window.location.reload();
-                }).fail(function() { window.location.reload(); });
+                var $cBtn = $('.pwa-contact-selector[data-project-id="' + projectId + '"]');
+                $cBtn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
+                $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function(res) {
+                    if (res && res.success) {
+                        $cBtn.html(
+                            '<i class="far fa-address-book" style="color:#64748b;"></i>' +
+                            '<span style="font-weight:500;">' + $('<span>').text(newContactName).html() + '</span>' +
+                            '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
+                        );
+                        if (res.contact) {
+                            var $cw = $('.contact-inline-wrapper[data-project-id="' + projectId + '"]');
+                            $cw.find('[data-field="firstname"]').data('val', res.contact.firstname || '').text(res.contact.firstname || 'Prénom');
+                            $cw.find('[data-field="lastname"]').data('val',  res.contact.lastname  || '').text(res.contact.lastname  || 'Nom');
+                            $cw.find('[data-field="phone"]').data('val',    res.contact.phone     || '').text(res.contact.phone     || 'Téléphone');
+                            $cw.find('[data-field="email"]').data('val',    res.contact.email     || '').text(res.contact.email     || 'Email');
+                        }
+                    } else {
+                        $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                    }
+                }, 'json').fail(function() {
+                    $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                });
             });
+
             $select.on('select2:close', function() {
                 setTimeout(function() { wrap.hide(); }, 100);
             });
@@ -1092,12 +1133,31 @@ window.saturne.pwa_selectors.event = function() {
                 language:    { noResults: function() { return 'Aucun résultat'; } }
             });
             $select.on('select2:select', function(ev) {
-                var newContactId = ev.params.data.id;
+                var newContactId   = ev.params.data.id;
+                var newContactName = ev.params.data.text;
                 wrap.hide();
-                btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
-                $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function() {
-                    window.location.reload();
-                }).fail(function() { window.location.reload(); });
+                var $cBtn = $('.pwa-contact-selector[data-project-id="' + projectId + '"]');
+                $cBtn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
+                $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function(res) {
+                    if (res && res.success) {
+                        $cBtn.html(
+                            '<i class="far fa-address-book" style="color:#64748b;"></i>' +
+                            '<span style="font-weight:500;">' + $('<span>').text(newContactName).html() + '</span>' +
+                            '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
+                        );
+                        if (res.contact) {
+                            var $cw = $('.contact-inline-wrapper[data-project-id="' + projectId + '"]');
+                            $cw.find('[data-field="firstname"]').data('val', res.contact.firstname || '').text(res.contact.firstname || 'Prénom');
+                            $cw.find('[data-field="lastname"]').data('val', res.contact.lastname   || '').text(res.contact.lastname  || 'Nom');
+                            $cw.find('[data-field="phone"]').data('val', res.contact.phone       || '').text(res.contact.phone     || 'Téléphone');
+                            $cw.find('[data-field="email"]').data('val', res.contact.email       || '').text(res.contact.email     || 'Email');
+                        }
+                    } else {
+                        $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                    }
+                }, 'json').fail(function() {
+                    $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                });
             });
             $select.on('select2:close', function() {
                 setTimeout(function() { wrap.hide(); }, 100);
