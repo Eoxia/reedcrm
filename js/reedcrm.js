@@ -1005,14 +1005,14 @@ window.saturne.pwa_selectors.event = function() {
 
             // On selection → save & update DOM (no page reload)
             $select.on('select2:select', function(ev) {
-                var newSocid   = ev.params.data.id;
-                var newSocName = ev.params.data.text;
+                var newSocid    = ev.params.data.id;
+                var newSocName  = ev.params.data.text;
                 wrap.hide();
-                var $btn = $('.pwa-client-selector[data-project-id="' + projectId + '"]');
+                var $btn       = $('.pwa-client-selector[data-project-id="' + projectId + '"]');
+                var origHtml   = $btn.html();
                 $btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
                 $.post(baseUrl + '?action=updateoppsocid&token=' + token, { projectid: projectId, socid: newSocid }, function(res) {
                     if (res && res.success) {
-                        // Update button label in place
                         $btn.html(
                             '<i class="far fa-building" style="color:#64748b;"></i>' +
                             '<span style="font-weight:500;">' + $('<span>').text(newSocName).html() + '</span>' +
@@ -1027,10 +1027,14 @@ window.saturne.pwa_selectors.event = function() {
                         $('.pwa-contact-selector[data-project-id="' + projectId + '"]').data('tiers-id', newSocid);
                         $('#pwa-contact-wrap-' + projectId).hide();
                     } else {
-                        $btn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                        $btn.html(origHtml);
+                        $btn.css({ border: '1px solid #e74c3c' });
+                        setTimeout(function() { $btn.css({ border: '' }); }, 2000);
                     }
                 }, 'json').fail(function() {
-                    $btn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                    $btn.html(origHtml);
+                    $btn.css({ border: '1px solid #e74c3c' });
+                    setTimeout(function() { $btn.css({ border: '' }); }, 2000);
                 });
             });
 
@@ -1086,7 +1090,8 @@ window.saturne.pwa_selectors.event = function() {
                 var newContactId   = ev.params.data.id;
                 var newContactName = ev.params.data.text;
                 wrap.hide();
-                var $cBtn = $('.pwa-contact-selector[data-project-id="' + projectId + '"]');
+                var $cBtn    = $('.pwa-contact-selector[data-project-id="' + projectId + '"]');
+                var origHtml = $cBtn.html();
                 $cBtn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
                 $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function(res) {
                     if (res && res.success) {
@@ -1103,10 +1108,14 @@ window.saturne.pwa_selectors.event = function() {
                             $cw.find('[data-field="email"]').data('val',    res.contact.email     || '').text(res.contact.email     || 'Email');
                         }
                     } else {
-                        $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                        $cBtn.html(origHtml);
+                        $cBtn.css({ border: '1px solid #e74c3c' });
+                        setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
                     }
                 }, 'json').fail(function() {
-                    $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                    $cBtn.html(origHtml);
+                    $cBtn.css({ border: '1px solid #e74c3c' });
+                    setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
                 });
             });
 
