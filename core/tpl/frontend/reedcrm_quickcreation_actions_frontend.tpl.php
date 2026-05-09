@@ -34,110 +34,111 @@ if (!$permissionToAddProject) {
     exit;
 }
 
+require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
-if ($action == 'add_audio') {
-    $uploadDir  = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
-    $uploadFile = $uploadDir . basename($_FILES['audio']['name']);
+// --- Début des actions de la brique média Saturne ---
+$saturneModule = GETPOST('module_name', 'alpha');
+$saturneSubDir = GETPOST('sub_dir', 'alphanohtml');
+
+if ($action == 'uploadPhoto' && !empty($saturneModule)) {
+
+    $moduleNameLowerCase = dol_strtolower($saturneModule);
+    $uploadDir           = !empty($conf->$moduleNameLowerCase->dir_output)
+        ? $conf->$moduleNameLowerCase->dir_output
+        : $conf->ecm->dir_output . '/' . $moduleNameLowerCase;
+    if (!empty($saturneSubDir)) {
+        $uploadDir .= '/' . $saturneSubDir;
+    }
+
     if (!dol_is_dir($uploadDir)) {
         dol_mkdir($uploadDir);
     }
-    move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
-}
 
-if ($action == 'add_audio_existing') {
-    $projectId = GETPOST('projectid', 'int');
-    if ($projectId > 0) {
-        $proj = new Project($db);
-        if ($proj->fetch($projectId) > 0) {
-            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
+    // Validate that every uploaded file is a real image via MIME type
+    $uploadedFiles = isset($_FILES['userfile']) ? $_FILES['userfile'] : [];
+    $invalidFile   = false;
+    if (!empty($uploadedFiles['tmp_name'])) {
+        $tmpNames = is_array($uploadedFiles['tmp_name']) ? $uploadedFiles['tmp_name'] : [$uploadedFiles['tmp_name']];
+        foreach ($tmpNames as $tmpName) {
+            if (empty($tmpName)) {
+                continue;
             }
-            $filename = 'audio_' . time() . '.wav';
-            $uploadFile = $uploadDir . '/' . $filename;
-            move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
-        }
-    }
-    exit;
-}
-
-if ($action == 'add_photo_existing') {
-    $projectId = GETPOST('projectid', 'int');
-    if ($projectId > 0) {
-        $proj = new Project($db);
-        if ($proj->fetch($projectId) > 0) {
-            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
-            }
-            if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
-                $filename = 'photo_' . time() . '.jpg';
-                $uploadFile = $uploadDir . '/' . $filename;
-                if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)) {
-                    if (function_exists('vignette')) {
-                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
-                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
-                    }
-                    
-                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-                    $actionComm = new ActionComm($db);
-                    $actionComm->label = $proj->ref . "-Ajout-Photo";
-                    $actionComm->note_private = "L'utilisateur " . $user->login . " a ajouté une nouvelle photo depuis le listing.";
-                    $actionComm->fk_project = $proj->id;
-                    $actionComm->elementtype = 'project';
-                    $actionComm->datep = dol_now();
-                    $actionComm->datef = dol_now();
-                    $actionComm->type_id = 0;
-                    $actionComm->percentage = -1;
-                    $actionComm->create($user);
-                }
+            $finfo    = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($tmpName);
+            if (strpos($mimeType, 'image/') !== 0) {
+                $invalidFile = true;
+                break;
             }
         }
     }
-    exit;
-}
 
-if ($action == 'add_file_existing') {
-    $projectId = GETPOST('projectid', 'int');
-    if ($projectId > 0) {
-        $proj = new Project($db);
-        if ($proj->fetch($projectId) > 0) {
-            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
-            }
-            if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
-                $nbFiles = count($_FILES['userfile']['name']);
-                for ($i = 0; $i < $nbFiles; $i++) {
-                    if ($_FILES['userfile']['error'][$i] == 0) {
-                        $fileName = dol_sanitizeFileName($_FILES['userfile']['name'][$i]);
-                        $fullPath = $uploadDir . '/' . $fileName;
-                        
-                        if (dol_move_uploaded_file($_FILES['userfile']['tmp_name'][$i], $fullPath, 1, 0, $_FILES['userfile']['error'][$i])) {
-                            if (function_exists('vignette')) {
-                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
-                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
-                            }
-                            
-                            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-                            $actionComm = new ActionComm($db);
-                            $actionComm->label = $proj->ref . "-Ajout-Document";
-                            $actionComm->note_private = "L'utilisateur " . $user->login . " a joint le document '" . $fileName . "' depuis le listing.";
-                            $actionComm->fk_project = $proj->id;
-                            $actionComm->elementtype = 'project';
-                            $actionComm->datep = dol_now();
-                            $actionComm->datef = dol_now();
-                            $actionComm->type_id = 0;
-                            $actionComm->percentage = -1;
-                            $actionComm->create($user);
-                        }
-                    }
-                }
-            }
+    if ($invalidFile) {
+        setEventMessages($langs->trans('ErrorFileNotAnImage'), null, 'errors');
+    } else {
+        $allowOverwrite = GETPOSTINT('overwrite') ? 1 : 0;
+        if (!dol_is_dir($uploadDir)) {
+            dol_mkdir($uploadDir);
+        }
+
+        $res = dol_add_file_process($uploadDir, $allowOverwrite, 1, 'userfile', '', null, '', 1);
+
+        if ($res > 0) {
+            setEventMessages($langs->trans('PhotoWellSent'), null, 'mesgs');
+        } else {
+            setEventMessages($langs->trans('PhotoNotSent'), null, 'errors');
+        }
+
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+            print saturne_render_media_block($saturneModule, $saturneSubDir);
+            exit;
         }
     }
-    exit;
 }
+
+if ($action == 'delete_audio' && !empty($saturneModule)) {
+    $audioFilename  = GETPOST('filename', 'alpha');
+    $audioModLower  = dol_strtolower($saturneModule);
+
+    $uploadDir = !empty($conf->$audioModLower->dir_output)
+        ? $conf->$audioModLower->dir_output
+        : $conf->ecm->dir_output . '/' . $audioModLower;
+    if (!empty($saturneSubDir)) {
+        $uploadDir .= '/' . $saturneSubDir;
+    }
+
+    $filePath = $uploadDir . '/' . basename($audioFilename);
+    if (!empty($audioFilename) && file_exists($filePath) && dol_delete_file($filePath)) {
+        setEventMessages($langs->trans('FileDeleted'), null, 'mesgs');
+    } else {
+        setEventMessages($langs->trans('ErrorFileNotDeleted'), null, 'errors');
+    }
+}
+
+if ($action == 'add_audio' && !empty($saturneModule) && !empty($_FILES['audio']['tmp_name'])) {
+    $audioModLower  = dol_strtolower($saturneModule);
+
+    $uploadDir = !empty($conf->$audioModLower->dir_output)
+        ? $conf->$audioModLower->dir_output
+        : $conf->ecm->dir_output . '/' . $audioModLower;
+    if (!empty($saturneSubDir)) {
+        $uploadDir .= '/' . $saturneSubDir;
+    }
+
+    if (!dol_is_dir($uploadDir)) {
+        dol_mkdir($uploadDir);
+    }
+
+    $fileName = dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
+    $destFile = $uploadDir . '/' . $fileName;
+
+    if (move_uploaded_file($_FILES['audio']['tmp_name'], $destFile)) {
+        setEventMessages($langs->trans('PhotoWellSent'), null, 'mesgs');
+    } else {
+        setEventMessages($langs->trans('PhotoNotSent'), null, 'errors');
+    }
+}
+// --- Fin des actions de la brique média Saturne ---
 
 if ($action == 'updateopppercent') {
     $projectId = GETPOST('projectid', 'int');
@@ -527,58 +528,25 @@ if ($action == 'add') {
             dol_mkdir($pathToProjectDir);
         }
 
-        // Standard File Upload processing
-        $hasFilesToUpload = false;
-        if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
-            foreach ($_FILES['userfile']['name'] as $fileName) {
-                if (!empty($fileName)) {
-                    $hasFilesToUpload = true;
-                    break;
-                }
-            }
-        }
-        
-        if ($hasFilesToUpload) {
-            $nbFiles = count($_FILES['userfile']['name']);
-            for ($i = 0; $i < $nbFiles; $i++) {
-                if ($_FILES['userfile']['error'][$i] == 0) {
-                    $fileName = dol_sanitizeFileName($_FILES['userfile']['name'][$i]);
-                    $fullPath = $pathToProjectDir . '/' . $fileName;
-                    
-                    if (dol_move_uploaded_file($_FILES['userfile']['tmp_name'][$i], $fullPath, 1, 0, $_FILES['userfile']['error'][$i])) {
-                        if (function_exists('vignette')) {
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL);
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE, '_large');
-                        }
-                    } else {
-                        setEventMessages($langs->transnoentities('ErrorFileNotUploaded').' (dol_move_uploaded_file failed)', null, 'errors');
-                        $error++;
-                    }
-                } else if ($_FILES['userfile']['error'][$i] == UPLOAD_ERR_INI_SIZE || $_FILES['userfile']['error'][$i] == UPLOAD_ERR_FORM_SIZE) {
-                    setEventMessages('La taille du fichier dépasse la limite autorisée par le serveur (upload_max_filesize).', null, 'errors');
-                    $error++;
-                } else if ($_FILES['userfile']['error'][$i] != UPLOAD_ERR_NO_FILE) {
-                    setEventMessages('Erreur technique lors du téléversement du fichier (Code: '.$_FILES['userfile']['error'][$i].').', null, 'errors');
-                    $error++;
-                }
-            }
-        }
+        // Saturne Media Module Migration
+        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+        $uploadContext = 'reedcrm_quickcreation_' . $user->id;
+        $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
 
-        $pathToTmpAudio = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
-        $audioList      = dol_dir_list($pathToTmpAudio, 'files');
-        if (!empty($audioList)) {
-            foreach ($audioList as $audio) {
-                if (!dol_is_dir($pathToProjectDir)) {
-                    dol_mkdir($pathToProjectDir);
-                }
-
-                $fullPath = $pathToProjectDir . '/' . $audio['name'];
-                dol_copy($audio['fullname'], $fullPath);
-                unlink($audio['fullname']);
+        $uploadedFiles = saturne_get_media_files('project', $subDir);
+        foreach ($uploadedFiles as $file) {
+            $fullPath = $pathToProjectDir . '/' . $file['name'];
+            dol_copy($file['fullname'], $fullPath);
+            
+            // Thumbnail generation for images
+            if ($file['type'] === 'image' && function_exists('vignette')) {
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM ?? 500, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM ?? 500, '_medium');
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE ?? 800, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE ?? 800, '_large');
             }
         }
+        saturne_invalidate_upload_token($uploadContext, 'project', 'tmp');
 
         $project->add_contact($user->id, 'PROJECTLEADER', 'internal');
 

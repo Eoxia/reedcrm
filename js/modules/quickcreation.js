@@ -71,12 +71,6 @@ window.reedcrm.quickcreation.init = function() {
  * @returns {void}
  */
 window.reedcrm.quickcreation.event = function() {
-  // Upload image and display on canvas with signature pad
-  // Image manipulation (uploadImage, drawOnImage, rotation, undo, erase) features from saturne/js/modules/media.js
-  if (typeof window.saturne !== 'undefined' && window.saturne.media && typeof window.saturne.media.uploadImage === 'function') {
-      $(document).on('change', '#upload-image', window.saturne.media.uploadImage);
-  }
-  $(document).on('click', '.image-validate', window.reedcrm.quickcreation.createImg);
 
   // Get current GPS position of navigator user
   window.reedcrm.quickcreation.getCurrentPosition();
@@ -88,37 +82,6 @@ window.reedcrm.quickcreation.event = function() {
   $(document).on('input', '#opp_percent', window.reedcrm.quickcreation.showOppPercentValue);
 };
 
-/**
- * create img action
- *
- * @since   1.3.0
- * @version 1.3.0
- *
- * @return {void}
- */
-window.reedcrm.quickcreation.createImg = function() {
-  let canvas = $(this).closest('.wpeo-modal').find('canvas')[0];
-  let img    = canvas.toDataURL('image/jpeg');
-
-  let token          = window.saturne.toolbox.getToken();
-  let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
-
-  let url = document.URL + querySeparator + 'action=add_img&token=' + token;
-  $.ajax({
-    url: url,
-    type: 'POST',
-    processData: false,
-    contentType: 'application/octet-stream',
-    data: JSON.stringify({
-      img: img,
-    }),
-    success: function(resp) {
-      $('.wpeo-modal').removeClass('modal-active');
-      $('#id-container .linked-medias-list').replaceWith($(resp).find('#id-container .linked-medias-list'));
-    },
-    error: function () {}
-  });
-};
 
 /**
  * Get current GPS position of navigator user
