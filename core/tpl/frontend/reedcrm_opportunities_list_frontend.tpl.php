@@ -225,6 +225,17 @@ foreach ($latestProjects as $project) {
             print '<i class="fas fa-chevron-down" style="color: #94a3b8; font-size: 0.8em; margin-left: 4px;"></i>';
         print '</div>';
         
+        // HIDDEN CONTACT SELECTOR FOR THIS PROJECT'S TIERS
+        print '<div class="reedcrm-hidden-contact-selector-wrap" id="reedcrm-hidden-contact-selector-pwa-'.$project->id.'" style="display:none; width: 100%; margin-top: 4px;">';
+        if ($tiersId > 0) {
+            require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+            $formContactPwa = new Form($db);
+            print $formContactPwa->select_contacts($tiersId, '', 'reedcrm_inline_contact_pwa_'.$project->id, 1, '', '', 1, 'minwidth100');
+        } else {
+            print '<span style="color:#e74c3c; font-size:0.85em;"><i class="fas fa-exclamation-triangle"></i> Veuillez d\'abord associer un client.</span>';
+        }
+        print '</div>';
+        
         print '</div>';
         
         // SQL Queries for Propals & Invoices amounts
@@ -326,21 +337,61 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
     
-    // Contact Selector Logic (Fallback to native page redirection since no AJAX endpoint exists for contacts yet)
+    // Contact Selector Logic
     $('.pwa-contact-selector').on('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        
         let btn = $(this);
         let projectId = btn.data('project-id');
-        if (!projectId) return;
+        let hiddenSelectorWrap = $('#reedcrm-hidden-contact-selector-pwa-' + projectId);
+        if (!projectId || hiddenSelectorWrap.length === 0) return;
         
-        btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Chargement...');
-        let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-        if (!url) {
-            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+        // Hide other open contact dropdowns
+        $('.reedcrm-hidden-contact-selector-wrap').hide();
+        $('.pwa-contact-selector').show();
+        
+        // Move hidden selector below the button inside the group
+        btn.hide();
+        hiddenSelectorWrap.insertAfter(btn).show();
+        
+        let select2Elem = hiddenSelectorWrap.find('select');
+        if (select2Elem.length > 0) {
+            // Reset previous value
+            select2Elem.val(null).trigger('change.select2');
+            
+            if (select2Elem.data('select2')) {
+                select2Elem.select2('open');
+            }
+            
+            select2Elem.off('change.pwacontact').on('change.pwacontact', function() {
+                let newContactId = $(this).val();
+                let token = $('input[name="token"]').val() || '';
+                
+                if (!newContactId || newContactId == 0) {
+                    hiddenSelectorWrap.hide();
+                    btn.show();
+                    return;
+                }
+                
+                btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
+                hiddenSelectorWrap.hide();
+                btn.show();
+                
+                let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+                if (!url) {
+                    if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+                    else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+                }
+                let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppcontactid&token=' + token;
+                
+                $.post(ajaxUrl, { projectid: projectId, contactid: newContactId }, function(res) {
+                    window.location.reload();
+                }).fail(function() {
+                    window.location.reload();
+                });
+            });
         }
-        window.location.href = url + '/projet/contact.php?id=' + projectId + '&source=pwa';
     });
 });
 </script>

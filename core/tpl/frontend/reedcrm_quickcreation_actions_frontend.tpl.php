@@ -258,6 +258,41 @@ if ($action == 'updateopptitle') {
     exit;
 }
 
+if ($action == 'updateoppcontactid') {
+    $projectId = GETPOST('projectid', 'int');
+    $contactId = GETPOST('contactid', 'int');
+    $res = array('success' => false);
+
+    if ($projectId > 0 && $contactId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            // Add as external project contact (PROJECTADDRESS is the standard external contact role for projects)
+            // Usage: add_contact($contactid, $type_contact, $source='internal')
+            $resAdd = $proj->add_contact($contactId, 'PROJECTADDRESS', 'external');
+            if ($resAdd >= 0) {
+                $res['success'] = true;
+                
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code = 'AC_OTH'; 
+                $autoEvent->label = "Ajout d'un contact au projet";
+                $autoEvent->datep = dol_now();
+                $autoEvent->datef = dol_now();
+                $autoEvent->percentage = 100;
+                $autoEvent->fk_project = $projectId;
+                $autoEvent->note_private = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
+                $autoEvent->userownerid = $user->id;
+                $autoEvent->insert($user);
+            } else {
+                $res['error'] = $proj->error;
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'updateoppsocid') {
     $projectId = GETPOST('projectid', 'int');
     $newSocid = GETPOST('socid', 'int');
