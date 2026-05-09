@@ -920,3 +920,139 @@ $(document).ready(function() {
         $(document).on('click', '.reedcrm-copy-text', window.saturne.contact_inline.copyToClipboard);
     }
 });
+
+/**
+ * PWA Project Card - Client & Contact Selector using SweetAlert2 + AJAX Select2
+ * Follows the window.saturne module pattern for CSP compliance.
+ */
+window.saturne.pwa_selectors = {};
+
+window.saturne.pwa_selectors.init = function() {
+    window.saturne.pwa_selectors.event();
+};
+
+window.saturne.pwa_selectors.event = function() {
+    $(document).on('click', '.pwa-client-selector', window.saturne.pwa_selectors.openClientModal);
+    $(document).on('click', '.pwa-contact-selector', window.saturne.pwa_selectors.openContactModal);
+};
+
+window.saturne.pwa_selectors.getBaseUrl = function() {
+    let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+    if (!url) {
+        if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+        else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+    }
+    return url + '/custom/reedcrm/view/frontend/quickcreation.php';
+};
+
+window.saturne.pwa_selectors.openClientModal = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    let btn = $(this);
+    let projectId = btn.data('project-id');
+    if (!projectId) return;
+
+    let baseAjaxUrl = window.saturne.pwa_selectors.getBaseUrl();
+
+    Swal.fire({
+        title: 'Sélectionner un tiers',
+        html: '<div style="text-align: left; margin-top: 15px;"><select id="swal-ajax-select-client" style="width: 100%;"></select></div>',
+        showCancelButton: true,
+        confirmButtonText: 'Enregistrer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#9b59b6',
+        didOpen: function() {
+            let s2 = Swal.getPopup().querySelector('#swal-ajax-select-client');
+            if (!s2) return;
+            $(s2).select2({
+                width: '100%',
+                dropdownParent: $(Swal.getPopup()),
+                placeholder: 'Tapez 2 lettres min...',
+                minimumInputLength: 2,
+                ajax: {
+                    url: baseAjaxUrl,
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) { return { action: 'search_tiers_ajax', q: params.term }; },
+                    processResults: function(data) { return { results: data.results }; }
+                }
+            });
+            $(s2).select2('open');
+        }
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+        let s2 = Swal.getPopup().querySelector('#swal-ajax-select-client');
+        let newSocid = $(s2).val();
+        let token = $('input[name="token"]').val() || '';
+        if (!newSocid || newSocid == 0) return;
+
+        btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i>');
+        $.post(baseAjaxUrl + '?action=updateoppsocid&token=' + token, { projectid: projectId, socid: newSocid }, function() {
+            window.location.reload();
+        }).fail(function() { window.location.reload(); });
+    });
+};
+
+window.saturne.pwa_selectors.openContactModal = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    let btn = $(this);
+    let projectId = btn.data('project-id');
+    if (!projectId) return;
+
+    let hiddenWrap = $('#reedcrm-hidden-contact-selector-pwa-' + projectId);
+    let tiersId = hiddenWrap.data('tiers-id') || 0;
+
+    if (tiersId <= 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Client manquant',
+            html: '<span style="color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> Veuillez d\'abord associer un client.</span>',
+            confirmButtonColor: '#9b59b6',
+            confirmButtonText: 'Compris'
+        });
+        return;
+    }
+
+    let baseAjaxUrl = window.saturne.pwa_selectors.getBaseUrl();
+
+    Swal.fire({
+        title: 'Sélectionner un contact',
+        html: '<div style="text-align: left; margin-top: 15px;"><select id="swal-ajax-select-contact" style="width: 100%;"></select></div>',
+        showCancelButton: true,
+        confirmButtonText: 'Enregistrer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#9b59b6',
+        didOpen: function() {
+            let s2 = Swal.getPopup().querySelector('#swal-ajax-select-contact');
+            if (!s2) return;
+            $(s2).select2({
+                width: '100%',
+                dropdownParent: $(Swal.getPopup()),
+                placeholder: 'Tapez 2 lettres min...',
+                minimumInputLength: 2,
+                ajax: {
+                    url: baseAjaxUrl,
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) { return { action: 'search_contact_ajax', projectid: projectId, q: params.term }; },
+                    processResults: function(data) { return { results: data.results }; }
+                }
+            });
+            $(s2).select2('open');
+        }
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+        let s2 = Swal.getPopup().querySelector('#swal-ajax-select-contact');
+        let newContactId = $(s2).val();
+        let token = $('input[name="token"]').val() || '';
+        if (!newContactId || newContactId == 0) return;
+
+        btn.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i>');
+        $.post(baseAjaxUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function() {
+            window.location.reload();
+        }).fail(function() { window.location.reload(); });
+    });
+};
