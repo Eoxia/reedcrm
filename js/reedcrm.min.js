@@ -1019,11 +1019,21 @@ window.saturne.pwa_selectors.event = function() {
                             '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
                         );
                         $btn.removeClass('empty');
-                        // Reset contact preload flag since company changed
+
+                        // Reset the client Select2 field (clear search term so next open is clean)
+                        $select.val(null).trigger('change');
+
+                        // Reset contact preload flag since company changed (old contact selector)
                         var $cSelect = $('#pwa-contact-select-' + projectId);
                         $cSelect.removeData('contacts-loaded').empty();
                         if ($cSelect.data('select2')) { $cSelect.select2('destroy'); }
-                        // Update tiers-id on contact button
+
+                        // ── New chip system: update data-tiers-id on the contact tags wrap ──
+                        var $tagsWrap = $('.pwa-contact-tags-wrap[data-project-id="' + projectId + '"]');
+                        $tagsWrap.data('tiers-id', newSocid);
+                        $tagsWrap.attr('data-tiers-id', newSocid);
+
+                        // Update tiers-id on old contact button (legacy, harmless)
                         $('.pwa-contact-selector[data-project-id="' + projectId + '"]').data('tiers-id', newSocid);
                         $('#pwa-contact-wrap-' + projectId).hide();
                     } else {
