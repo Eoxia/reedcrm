@@ -167,12 +167,13 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
         if ($tiersId > 0) {
             $soc = new Societe($db);
             if ($soc->fetch($tiersId) > 0) {
-                $socName  = dol_escape_htmltag($soc->name);
-                $socBadge = method_exists($soc, 'getLibStatut') ? $soc->getLibStatut(3) . ' ' : '';
+                $socName    = dol_escape_htmltag($soc->name);
+                $socBadge   = method_exists($soc, 'getLibStatut') ? $soc->getLibStatut(3) . ' ' : '';
+                $socNomUrl  = $soc->getNomUrl(1); // lien cliquable vers la fiche client
             }
         }
+        $socNomUrl = $socNomUrl ?? '';
 
-        // --- Description tooltip ---
         $descParts = [];
         if (!empty($project->description)) $descParts[] = trim(dol_string_nohtmltag($project->description, 1));
         if (!empty($project->note_public))  $descParts[] = trim(dol_string_nohtmltag($project->note_public, 1));
@@ -249,12 +250,14 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
 
             <div class="pwa-selectors-group">
 
-                <!-- Client : bouton + select inline caché -->
-                <div class="pwa-selector-wrap" style="position:relative;">
+                <!-- Client : icône externe (lien) + bouton + select inline -->
+                <div class="pwa-selector-wrap" style="position:relative; display:flex; align-items:center; gap:4px;">
                     <?php if ($tiersId > 0 && $socName) : ?>
+                    <a href="<?php echo DOL_URL_ROOT; ?>/societe/card.php?socid=<?php echo $tiersId; ?>" class="prevent-edit-click" title="Voir la fiche client" style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">
+                        <i class="far fa-building"></i>
+                    </a>
                     <div class="pwa-client-selector" data-project-id="<?php echo $project->id; ?>" title="Changer le tiers">
                         <?php echo $socBadge; ?>
-                        <i class="far fa-building" style="color:#64748b;"></i>
                         <span style="font-weight:500;"><?php echo $socName; ?></span>
                         <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
                     </div>
@@ -274,6 +277,8 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                     </div>
                 </div>
 
+                <span class="dot-sep">&bull;</span>
+
                 <!-- Contact : bouton + select inline caché -->
                 <div class="pwa-selector-wrap" style="position:relative;">
                     <div class="pwa-contact-selector" data-project-id="<?php echo $project->id; ?>" data-tiers-id="<?php echo $tiersId; ?>" title="Changer le contact">
@@ -289,9 +294,11 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                                 data-tiers-id="<?php echo $tiersId; ?>"
                                 style="width:100%;"></select>
                     </div>
-                </div>
+                </div><!-- /contact pwa-selector-wrap -->
 
             </div><!-- /pwa-selectors-group -->
+
+            <span class="dot-sep">&bull;</span>
 
 
             <!-- Devis -->
