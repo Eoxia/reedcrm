@@ -41,6 +41,19 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-card-contacts { color: #718096; font-size: 0.9em; display: flex; align-items: center; flex-wrap: wrap; gap: 0; padding: 2px 0; }
     .inline-edit-contact { cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; }
     .pwa-card-media-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 6px; }
+    /* Force all media block children to the same height & vertical alignment */
+    .pwa-card-media-row .linked-medias.medias { display: inline-flex; align-items: center; }
+    .pwa-card-media-row .saturne-media-upload-block { display: inline-flex; align-items: center; gap: 6px; }
+    .pwa-card-media-row .open-media-editor-as-gallery {
+        position: relative; display: inline-flex; align-items: center; justify-content: center;
+        width: 44px; height: 44px; border-radius: 12px; overflow: hidden; cursor: pointer; flex-shrink: 0;
+    }
+    .pwa-card-media-row .open-media-editor-as-gallery img {
+        width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
+    }
+    .pwa-card-media-row .open-media-editor-as-gallery .saturne-media-count-badge {
+        position: absolute; top: 2px; right: 2px;
+    }
     .pwa-card-separator { border-top: 1px dashed #cbd5e0; border-bottom: none; border-left: none; border-right: none; margin: 4px 0 6px 0; }
     .pwa-card-row3 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .pwa-selectors-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
