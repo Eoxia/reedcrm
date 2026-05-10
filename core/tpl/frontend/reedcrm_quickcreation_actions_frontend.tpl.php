@@ -766,7 +766,9 @@ if ($action == 'add') {
             $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
             $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
             $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
-            $contact->address   = $geolocation->getAddressFromLatLon($lat, $lon)['display_name'] ?? '';
+            $contact->address   = (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '')
+                                  ? ($geolocation->getAddressFromLatLon((float)$lat, (float)$lon)['display_name'] ?? '')
+                                  : '';
             $contact->status    = 1;
             $contactID = $contact->create($user);
             if ($contactID > 0) {
