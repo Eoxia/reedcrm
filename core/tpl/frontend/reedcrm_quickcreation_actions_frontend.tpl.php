@@ -336,10 +336,18 @@ if ($action == 'updateoppcontactid') {
     if ($projectId > 0 && $contactId > 0) {
         $proj = new Project($db);
         if ($proj->fetch($projectId) > 0) {
-            // Use PROJECTCONTRIBUTOR (external) - valid role in this Dolibarr instance
-            // Available external types: PROJECTADDRESS (geoloc), PROJECTCONTRIBUTOR (intervenant), PROJECTLEADER
+            // Remove any existing PROJECTCONTRIBUTOR links first (only one contact allowed at a time)
+            $db->query(
+                "DELETE FROM " . MAIN_DB_PREFIX . "element_contact
+                  WHERE element_id = " . (int)$projectId . "
+                    AND fk_c_type_contact IN (
+                        SELECT rowid FROM " . MAIN_DB_PREFIX . "c_type_contact
+                        WHERE code = 'PROJECTCONTRIBUTOR' AND element = 'project'
+                    )"
+            );
+
             $resAdd = $proj->add_contact($contactId, 'PROJECTCONTRIBUTOR', 'external');
-            // -4 = contact already linked (treated as success — just update extrafields)
+            // -4 = contact already linked (treated as success)
             if ($resAdd >= 0 || $resAdd == -4) {
                 $res['success'] = true;
 

@@ -187,7 +187,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
               WHERE ec.element_id = " . (int)$project->id . "
                 AND ctc.code = 'PROJECTCONTRIBUTOR'
-              ORDER BY ec.rowid LIMIT 1"
+              ORDER BY ec.rowid DESC LIMIT 1"
         );
         if ($resLinkedContact && ($cRow = $db->fetch_object($resLinkedContact))) {
             $linkedContactId   = (int)$cRow->fk_socpeople;
