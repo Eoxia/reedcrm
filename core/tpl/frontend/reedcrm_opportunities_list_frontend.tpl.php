@@ -301,7 +301,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                 <span class="dot-sep">&bull;</span>
 
                 <!-- Contact : icône externe + bouton + select inline -->
-                <div class="pwa-selector-wrap" style="position:relative;">
+                <div class="pwa-selector-wrap" style="position:relative; display:flex; align-items:center; gap:4px;">
                     <?php if ($linkedContactId > 0) : ?>
                     <a href="<?php echo DOL_URL_ROOT; ?>/contact/card.php?id=<?php echo $linkedContactId; ?>" class="prevent-edit-click" title="Voir la fiche contact" style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">
                         <i class="fas fa-address-book"></i>
