@@ -266,7 +266,7 @@ if ($action == 'search_tiers_ajax') {
         // No search term: return the 10 most recently modified companies
         $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
                 WHERE entity IN (" . getEntity('societe') . ")
-                  AND client IN (1, 3)
+                  AND client IN (1, 2, 3)
                 ORDER BY tms DESC
                 LIMIT 10";
     } else {
