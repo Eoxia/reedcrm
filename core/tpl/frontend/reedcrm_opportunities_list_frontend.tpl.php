@@ -30,6 +30,9 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
 
 <style>
     .opp-media-row .linked-medias.medias { width: auto !important; }
+    /* Select2 scroll fix on touch devices */
+    .select2-results__options { touch-action: pan-y !important; -ms-touch-action: pan-y !important; }
+    .select2-dropdown { touch-action: pan-y !important; }
     .pwa-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 10px; margin: 0 0 10px 0 !important; background: #f8fbff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .pwa-card-row1 { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
     .pwa-card-row1-left { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }

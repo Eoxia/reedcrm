@@ -987,7 +987,6 @@ window.saturne.pwa_selectors.event = function() {
         // Init Select2 once (AJAX — shows 10 recent companies on open, search on typing)
         if (!$select.data('select2')) {
             $select.select2({
-                dropdownParent: $(document.body),
                 placeholder: 'Clients récents ou tapez pour chercher...',
                 minimumInputLength: 0,
                 language: {
