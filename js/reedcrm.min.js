@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2025 EVARISK <technique@evarisk.com>
+﻿/* Copyright (C) 2022-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1059,17 +1059,16 @@ window.saturne.pwa_selectors.event = function() {
     });
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Multi-contact tag system : [+] add button → Select2 AJAX panel
+    // Multi-contact tag system : [+] add button → native dropdown (no Select2)
     // ─────────────────────────────────────────────────────────────────────────
     $(document).on('click', '.pwa-add-contact-btn', function(e) {
         e.stopPropagation();
-        var $btn     = $(this);
-        var $wrap    = $btn.closest('.pwa-contact-tags-wrap');
-        var $panel   = $wrap.find('.pwa-contact-add-panel');
+        var $btn      = $(this);
+        var $wrap     = $btn.closest('.pwa-contact-tags-wrap');
+        var $panel    = $wrap.find('.pwa-contact-add-panel');
         var projectId = $wrap.data('project-id');
         var tiersId   = $wrap.data('tiers-id') || 0;
         var baseUrl   = window.saturne.pwa_selectors.getBaseUrl();
-        var token     = $('input[name="token"]').val() || '';
 
         // Toggle
         if ($panel.is(':visible')) { $panel.hide(); return; }
@@ -1080,110 +1079,87 @@ window.saturne.pwa_selectors.event = function() {
 
         // No company → warn
         if (tiersId <= 0) {
-            $panel.html('<p style="color:#d97706;font-size:0.85em;margin:0;"><i class="fas fa-exclamation-triangle"></i> Associez d\'abord un client</p>');
+            $panel.html('<div class="pwa-contact-loading-inline"><i class="fas fa-exclamation-triangle" style="color:#d97706;"></i> Associez d\'abord un client</div>');
             return;
         }
 
-        var $select = $panel.find('.pwa-contact-add-select');
-
-        // Collect already linked contact IDs from existing chips
+        // Collect already linked contact IDs
         var linkedIds = [];
         $wrap.find('.pwa-contact-chip').each(function() {
             linkedIds.push(parseInt($(this).data('contact-id'), 10));
         });
 
-        // Show loading spinner while contacts are fetched
-        if ($select.data('select2')) { $select.select2('destroy'); }
-        $select.empty().hide();
-        $panel.find('.pwa-contact-loading, .pwa-contact-error').remove();
-        $panel.prepend('<div class="pwa-contact-loading" style="text-align:center;padding:8px 0;color:#64748b;font-size:0.85em;"><i class="fas fa-spinner fa-spin" style="margin-right:5px;"></i>Chargement...</div>');
+        // Show spinner while loading
+        $panel.html('<div class="pwa-contact-loading-inline"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>');
 
-        // Fetch contacts then populate a plain <select> — no ajax Select2 → no "Searching..." ever
+        // Fetch contacts and build native <ul> — no Select2, no "Searching...", list appears immediately
         $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
             var results = (data && data.results) ? data.results : [];
-
-            // Build native <option> tags — Select2 will read from DOM (no data:[] = no "Searching..." ever)
-            $select.empty();
-            $select.append('<option value=""></option>'); // placeholder
-            $.each(results, function(i, item) {
-                var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
-                var opt = $('<option>', { value: item.id, text: item.text });
-                if (isLinked) opt.prop('disabled', true).attr('data-linked', '1');
-                $select.append(opt);
-            });
-
-            $panel.find('.pwa-contact-loading').remove();
-            $select.show();
-
-            // NO data: option → Select2 reads native <option> tags synchronously → never "Searching..."
-            // minimumResultsForSearch: Infinity → hides search box entirely
-            $select.select2({
-                width:                   '100%',
-                placeholder:             'Choisir un contact...',
-                minimumResultsForSearch: Infinity,
-                dropdownParent:          $panel,
-                language:                { noResults: function() { return 'Aucun résultat'; } },
-                templateResult: function(item) {
-                    if (!item.id) return item.text;
+            var $ul = $('<ul class="pwa-contact-list">');
+            if (results.length === 0) {
+                $ul.append('<li class="pwa-contact-list-empty">Aucun contact pour ce client</li>');
+            } else {
+                $.each(results, function(i, item) {
                     var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
-                    var $el = $('<span>').text(item.text);
-                    if (isLinked) $el.css({ color: '#94a3b8', fontStyle: 'italic' }).append(' ✓');
-                    return $el;
-                }
-            });
-
-            // Auto-open after a short render delay
-            if ($panel.is(':visible')) {
-                setTimeout(function() {
-                    if ($panel.is(':visible')) { $select.select2('open'); }
-                }, 60);
+                    var $li = $('<li>').attr('data-contact-id', item.id).attr('data-contact-name', item.text);
+                    if (isLinked) {
+                        $li.addClass('pwa-contact-list-linked').html($('<span>').text(item.text).prop('outerHTML') + '<i class="fas fa-check pwa-linked-check"></i>');
+                    } else {
+                        $li.text(item.text);
+                    }
+                    $ul.append($li);
+                });
             }
-
-            // On contact selection → save via addoppcontact
-            $select.off('select2:select').on('select2:select', function(ev) {
-                var newContactId   = parseInt(ev.params.data.id, 10);
-                var newContactName = ev.params.data.text;
-                if (!newContactId) return;
-
-                $panel.hide();
-                $btn.html('<i class="fas fa-spinner fa-spin"></i>');
-
-                $.post(baseUrl + '?action=addoppcontact&token=' + token,
-                    { projectid: projectId, contactid: newContactId },
-                    function(res) {
-                        $btn.html('<i class="fas fa-plus"></i>');
-                        if (res && res.success && res.link_id) {
-                            // Inject new chip before the [+] button
-                            var chipHtml =
-                                '<span class="pwa-contact-chip" data-link-id="' + res.link_id + '" data-contact-id="' + newContactId + '">' +
-                                    '<a href="' + res.contact_url + '" class="prevent-edit-click" title="Voir la fiche contact">' +
-                                        $('<span>').text(newContactName).html() +
-                                    '</a>' +
-                                    '<span class="pwa-chip-role">- Intervenant</span>' +
-                                    '<span class="pwa-chip-remove prevent-edit-click" data-link-id="' + res.link_id + '" title="Retirer ce contact"><i class="fas fa-unlink" style="font-size:0.75em;"></i></span>' +
-                                '</span>';
-                            $btn.before(chipHtml);
-                            linkedIds.push(newContactId);
-
-                            // Update icon link to first contact
-                            $wrap.find('.pwa-contact-icon-nolink').replaceWith(
-                                '<a href="' + res.contact_url + '" class="pwa-contact-icon-link prevent-edit-click" title="Voir la fiche contact"><i class="fas fa-address-book"></i></a>'
-                            );
-                        } else {
-                            var errMsg = (res && res.error) ? ' (' + res.error + ')' : '';
-                            $btn.attr('title', 'Erreur' + errMsg).css({ outline: '2px solid #e74c3c' });
-                            setTimeout(function() { $btn.css({ outline: '' }).removeAttr('title'); }, 3000);
-                        }
-                    }, 'json').fail(function() {
-                        $btn.html('<i class="fas fa-plus"></i>');
-                        $btn.css({ outline: '2px solid #e74c3c' });
-                        setTimeout(function() { $btn.css({ outline: '' }); }, 2000);
-                    });
-            });
+            $panel.html($ul); // render immediately — no intermediate state
         }).fail(function() {
-            $panel.find('.pwa-contact-loading').remove();
-            $panel.prepend('<div style="color:#e74c3c;font-size:0.85em;padding:4px 0;"><i class="fas fa-exclamation-circle"></i> Impossible de charger les contacts</div>');
+            $panel.html('<div class="pwa-contact-loading-inline" style="color:#e74c3c;"><i class="fas fa-exclamation-circle"></i> Impossible de charger les contacts</div>');
         });
+    });
+
+    // Click on a contact row → addoppcontact
+    $(document).on('click', '.pwa-contact-list li:not(.pwa-contact-list-empty):not(.pwa-contact-list-linked)', function(e) {
+        e.stopPropagation();
+        var $li            = $(this);
+        var $panel         = $li.closest('.pwa-contact-add-panel');
+        var $wrap          = $panel.closest('.pwa-contact-tags-wrap');
+        var $btn           = $wrap.find('.pwa-add-contact-btn');
+        var newContactId   = parseInt($li.data('contact-id'), 10);
+        var newContactName = $li.data('contact-name') || $li.text().trim();
+        var projectId      = $wrap.data('project-id');
+        var baseUrl        = window.saturne.pwa_selectors.getBaseUrl();
+        var token          = $('input[name="token"]').val() || '';
+
+        if (!newContactId) return;
+        $panel.hide();
+        $btn.html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.post(baseUrl + '?action=addoppcontact&token=' + token,
+            { projectid: projectId, contactid: newContactId },
+            function(res) {
+                $btn.html('<i class="fas fa-plus"></i>');
+                if (res && res.success && res.link_id) {
+                    var chipHtml =
+                        '<span class="pwa-contact-chip" data-link-id="' + res.link_id + '" data-contact-id="' + newContactId + '">' +
+                            '<a href="' + res.contact_url + '" class="prevent-edit-click" title="Voir la fiche contact">' +
+                                $('<span>').text(newContactName).html() +
+                            '</a>' +
+                            '<span class="pwa-chip-role">- Intervenant</span>' +
+                            '<span class="pwa-chip-remove prevent-edit-click" data-link-id="' + res.link_id + '" title="Retirer ce contact"><i class="fas fa-unlink" style="font-size:0.75em;"></i></span>' +
+                        '</span>';
+                    $btn.before(chipHtml);
+                    $wrap.find('.pwa-contact-icon-nolink').replaceWith(
+                        '<a href="' + res.contact_url + '" class="pwa-contact-icon-link prevent-edit-click" title="Voir la fiche contact"><i class="fas fa-address-book"></i></a>'
+                    );
+                } else {
+                    var errMsg = (res && res.error) ? ' (' + res.error + ')' : '';
+                    $btn.attr('title', 'Erreur' + errMsg).css({ outline: '2px solid #e74c3c' });
+                    setTimeout(function() { $btn.css({ outline: '' }).removeAttr('title'); }, 3000);
+                }
+            }, 'json').fail(function() {
+                $btn.html('<i class="fas fa-plus"></i>');
+                $btn.css({ outline: '2px solid #e74c3c' });
+                setTimeout(function() { $btn.css({ outline: '' }); }, 2000);
+            });
     });
 
     // Close add-panel on click outside
@@ -1192,6 +1168,7 @@ window.saturne.pwa_selectors.event = function() {
             $('.pwa-contact-add-panel').hide();
         }
     });
+
 
     // ─────────────────────────────────────────────────────────────────────────
     // Remove a contact chip → unlink via removeoppcontact

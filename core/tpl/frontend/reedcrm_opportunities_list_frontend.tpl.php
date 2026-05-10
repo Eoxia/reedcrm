@@ -104,7 +104,15 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-chip-remove:hover { color:#e74c3c; }
     .pwa-add-contact-btn { cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#f1f5f9; color:#64748b; font-size:0.75em; border:1px solid #cbd5e0; transition:background 0.15s; flex-shrink:0; }
     .pwa-add-contact-btn:hover { background:#dbeafe; color:#3b5bdb; border-color:#3b5bdb; }
-    .pwa-contact-add-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:9999; background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:8px; min-width:240px; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+    .pwa-contact-add-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:9999; background:#fff; border:1px solid #e2e8f0; border-radius:6px; min-width:220px; box-shadow:0 4px 12px rgba(0,0,0,0.15); overflow:hidden; }
+    /* Custom native dropdown — replaces Select2 entirely */
+    .pwa-contact-list { list-style:none; margin:0; padding:2px 0; max-height:200px; overflow-y:auto; }
+    .pwa-contact-list li { padding:6px 12px; font-size:0.83em; cursor:pointer; display:flex; align-items:center; justify-content:space-between; color:#334155; white-space:nowrap; transition:background 0.1s; }
+    .pwa-contact-list li:hover:not(.pwa-contact-list-empty):not(.pwa-contact-list-linked) { background:#eff6ff; color:#1d4ed8; }
+    .pwa-contact-list-empty { color:#94a3b8; font-style:italic; cursor:default; }
+    .pwa-contact-list-linked { color:#94a3b8; cursor:not-allowed; }
+    .pwa-linked-check { color:#38a169; margin-left:8px; font-size:0.8em; }
+    .pwa-contact-loading-inline { padding:8px 12px; color:#64748b; font-size:0.83em; display:flex; align-items:center; gap:6px; }
 </style>
 
 <div class="page-content" style="margin-top: 5px; max-width: 1000px; margin: 5px auto 0 auto;">
@@ -360,9 +368,9 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                         <i class="fas fa-plus"></i>
                     </span>
 
-                    <!-- Panel d'ajout (hidden) -->
-                    <div class="pwa-contact-add-panel" style="display:none;">
-                        <select class="pwa-contact-add-select" style="width:100%;"></select>
+                    <!-- Panel d'ajout (hidden) — contient la liste native (pas de Select2) -->
+                    <div class="pwa-contact-add-panel prevent-edit-click" style="display:none;">
+                        <!-- La liste est construite dynamiquement par JS -->
                     </div>
 
                 </div><!-- /pwa-contact-tags-wrap -->
