@@ -1,4 +1,4 @@
-﻿/* Copyright (C) 2022-2025 EVARISK <technique@evarisk.com>
+/* Copyright (C) 2022-2025 EVARISK <technique@evarisk.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1019,7 +1019,25 @@ window.saturne.pwa_selectors.event = function() {
                             '<span style="font-weight:500;">' + $('<span>').text(newSocName).html() + '</span>' +
                             '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
                         );
-                        $btn.removeClass('empty');
+                        $btn.removeClass('empty').attr('title', 'Changer le tiers');
+
+                        // ── Inject / update the clickable building icon link (absent when project had no client) ──
+                        var cardUrl = res.new_company_card_url || '';
+                        if (cardUrl) {
+                            var $selectorWrap = $btn.closest('.pwa-selector-wrap');
+                            var $existingIcon = $selectorWrap.find('a[title="Voir la fiche client"]');
+                            if ($existingIcon.length) {
+                                // Update existing link
+                                $existingIcon.attr('href', cardUrl);
+                            } else {
+                                // Project had no client before → inject the icon link before the button
+                                $btn.before(
+                                    '<a href="' + cardUrl + '" class="prevent-edit-click" title="Voir la fiche client" ' +
+                                    'style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">' +
+                                    '<i class="fas fa-building"></i></a>'
+                                );
+                            }
+                        }
 
                         // Reset the client Select2 field (clear search term so next open is clean)
                         $select.val(null).trigger('change');
