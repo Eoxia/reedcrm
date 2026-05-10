@@ -254,8 +254,9 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                 <div class="pwa-selector-wrap" style="position:relative; display:flex; align-items:center; gap:4px;">
                     <?php if ($tiersId > 0 && $socName) : ?>
                     <a href="<?php echo DOL_URL_ROOT; ?>/societe/card.php?socid=<?php echo $tiersId; ?>" class="prevent-edit-click" title="Voir la fiche client" style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">
-                        <i class="far fa-building"></i>
+                        <i class="fas fa-building"></i>
                     </a>
+                    <span class="dot-sep">&bull;</span>
                     <div class="pwa-client-selector" data-project-id="<?php echo $project->id; ?>" title="Changer le tiers">
                         <?php echo $socBadge; ?>
                         <span style="font-weight:500;"><?php echo $socName; ?></span>
@@ -309,6 +310,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
             </a>
 
             <!-- Factures -->
+            <span class="dot-sep">&bull;</span>
             <a href="<?php echo DOL_URL_ROOT; ?>/compta/facture/list.php?search_projet=<?php echo $project->id; ?>"
                class="pwa-amount-link" title="Factures en cours">
                 <i class="fas fa-file-invoice-dollar" style="color:#38a169;font-size:1.1em;"></i>
