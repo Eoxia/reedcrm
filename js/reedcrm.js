@@ -1101,28 +1101,25 @@ window.saturne.pwa_selectors.event = function() {
         $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
             var results = (data && data.results) ? data.results : [];
 
-            // Build native <option> tags AND a data array for Select2
+            // Build native <option> tags — Select2 will read from DOM (no data:[] = no "Searching..." ever)
             $select.empty();
             $select.append('<option value=""></option>'); // placeholder
-            var s2Data = [{ id: '', text: '' }];
             $.each(results, function(i, item) {
                 var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
                 var opt = $('<option>', { value: item.id, text: item.text });
-                if (isLinked) opt.prop('disabled', true);
+                if (isLinked) opt.prop('disabled', true).attr('data-linked', '1');
                 $select.append(opt);
-                s2Data.push({ id: item.id, text: item.text, disabled: isLinked });
             });
 
             $panel.find('.pwa-contact-loading').remove();
             $select.show();
 
-            // data: s2Data + minimumResultsForSearch:-1 = no "Searching..." ever (Infinity doesn't work in this Select2 version)
-            // dropdownParent: $panel = correct positioning relative to the chip row
+            // NO data: option → Select2 reads native <option> tags synchronously → never "Searching..."
+            // minimumResultsForSearch: Infinity → hides search box entirely
             $select.select2({
                 width:                   '100%',
-                data:                    s2Data,
                 placeholder:             'Choisir un contact...',
-                minimumResultsForSearch: -1,
+                minimumResultsForSearch: Infinity,
                 dropdownParent:          $panel,
                 language:                { noResults: function() { return 'Aucun résultat'; } },
                 templateResult: function(item) {
