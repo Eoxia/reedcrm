@@ -259,15 +259,29 @@ if ($action == 'updateopptitle') {
 }
 
 if ($action == 'search_tiers_ajax') {
-    $q = GETPOST('q', 'alpha');
-    $res = array('results' => array());
-    if (strlen($q) >= 2) {
-        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe WHERE nom LIKE '%" . $db->escape($q) . "%' AND entity IN (" . getEntity('societe') . ") LIMIT 50";
-        $resql = $db->query($sql);
-        if ($resql) {
-            while ($obj = $db->fetch_object($resql)) {
-                $res['results'][] = array('id' => $obj->rowid, 'text' => $obj->nom);
-            }
+    $q   = GETPOST('q', 'alpha');
+    $res = ['results' => []];
+
+    if (strlen($q) === 0) {
+        // No search term: return the 10 most recently modified companies
+        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
+                WHERE entity IN (" . getEntity('societe') . ")
+                  AND client IN (1, 3)
+                ORDER BY tms DESC
+                LIMIT 10";
+    } else {
+        // Search by name
+        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
+                WHERE nom LIKE '%" . $db->escape($q) . "%'
+                  AND entity IN (" . getEntity('societe') . ")
+                ORDER BY nom
+                LIMIT 50";
+    }
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $res['results'][] = ['id' => $obj->rowid, 'text' => $obj->nom];
         }
     }
     header('Content-Type: application/json');

@@ -984,21 +984,21 @@ window.saturne.pwa_selectors.event = function() {
         $('.pwa-inline-select-wrap').hide();
         wrap.show();
 
-        // Init Select2 once (AJAX search — many companies possible)
+        // Init Select2 once (AJAX — shows 10 recent companies on open, search on typing)
         if (!$select.data('select2')) {
             $select.select2({
-                placeholder: 'Rechercher un tiers...',
-                minimumInputLength: 1,
+                placeholder: 'Clients récents ou tapez pour chercher...',
+                minimumInputLength: 0,
                 language: {
-                    inputTooShort: function() { return 'Tapez au moins 1 caractère...'; },
-                    searching:     function() { return 'Recherche...'; },
-                    noResults:     function() { return 'Aucun résultat'; }
+                    searching: function() { return 'Chargement...'; },
+                    noResults: function() { return 'Aucun résultat'; }
                 },
                 ajax: {
                     url:      baseUrl,
                     dataType: 'json',
                     delay:    200,
-                    data:     function(p) { return { action: 'search_tiers_ajax', q: p.term }; },
+                    cache:    true,
+                    data:     function(p) { return { action: 'search_tiers_ajax', q: p.term || '' }; },
                     processResults: function(d) { return { results: d.results || [] }; }
                 }
             });
