@@ -258,6 +258,167 @@ if ($action == 'updateopptitle') {
     exit;
 }
 
+if ($action == 'search_tiers_ajax') {
+    $q   = GETPOST('q', 'alpha');
+    $res = ['results' => []];
+
+    if (strlen($q) === 0) {
+        // No search term: return the 20 most recently modified companies
+        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
+                WHERE entity IN (" . getEntity('societe') . ")
+                  AND client IN (1, 2, 3)
+                ORDER BY tms DESC
+                LIMIT 20";
+    } else {
+        // Search by name (clients/prospects only)
+        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
+                WHERE nom LIKE '%" . $db->escape($q) . "%'
+                  AND entity IN (" . getEntity('societe') . ")
+                  AND client IN (1, 2, 3)
+                ORDER BY nom
+                LIMIT 50";
+    }
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $res['results'][] = ['id' => $obj->rowid, 'text' => $obj->nom];
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'search_contact_ajax') {
+    $q         = GETPOST('q', 'alpha');
+    $projectId = GETPOST('projectid', 'int');
+    $socidDirect = GETPOST('socid', 'int');
+    $res       = ['results' => []];
+
+    // Resolve the socid: either passed directly or via projectid
+    $targetSocId = 0;
+    if ($socidDirect > 0) {
+        $targetSocId = $socidDirect;
+    } elseif ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0 && $proj->socid > 0) {
+            $targetSocId = (int)$proj->socid;
+        }
+    }
+
+    // Require minimum 2 chars only when q is provided and socid was resolved via projectid search
+    // When called with socid directly (preload mode), q can be empty → returns all contacts
+    if ($targetSocId > 0 && ($socidDirect > 0 || strlen($q) >= 2)) {
+        $whereQ = '';
+        if (strlen($q) >= 1) {
+            $whereQ = " AND (firstname LIKE '%" . $db->escape($q) . "%' OR lastname LIKE '%" . $db->escape($q) . "%')";
+        }
+        $sql   = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = " . $targetSocId . $whereQ . " ORDER BY lastname, firstname LIMIT 100";
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $res['results'][] = ['id' => $obj->rowid, 'text' => trim($obj->firstname . ' ' . $obj->lastname)];
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+
+if ($action == 'addoppcontact') {
+    $projectId = GETPOST('projectid', 'int');
+    $contactId = GETPOST('contactid', 'int');
+    $res = ['success' => false];
+
+    if ($projectId > 0 && $contactId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            // Add contact as PROJECTCONTRIBUTOR (Option A: fixed role)
+            $resAdd = $proj->add_contact($contactId, 'PROJECTCONTRIBUTOR', 'external');
+            if ($resAdd > 0) {
+                $res['success']  = true;
+                $res['link_id']  = (int)$resAdd;
+                $res['contact_url'] = DOL_URL_ROOT . '/contact/card.php?id=' . $contactId;
+
+                // Update project extrafields with latest contact (optional — keeps row2 in sync)
+                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+                $contact = new Contact($db);
+                if ($contact->fetch($contactId) > 0) {
+                    $proj->fetch_optionals();
+                    $proj->array_options['options_reedcrm_firstname'] = $contact->firstname;
+                    $proj->array_options['options_reedcrm_lastname']  = $contact->lastname;
+                    $proj->array_options['options_projectphone']      = !empty($contact->phone_pro) ? $contact->phone_pro : $contact->phone_perso;
+                    $proj->array_options['options_reedcrm_email']     = $contact->email;
+                    $proj->updateExtraField('reedcrm_firstname');
+                    $proj->updateExtraField('reedcrm_lastname');
+                    $proj->updateExtraField('projectphone');
+                    $proj->updateExtraField('reedcrm_email');
+                }
+
+                // Log action event
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code    = 'AC_OTH';
+                $autoEvent->label        = "Ajout d'un contact au projet";
+                $autoEvent->datep        = dol_now();
+                $autoEvent->datef        = dol_now();
+                $autoEvent->percentage   = 100;
+                $autoEvent->fk_project   = $projectId;
+                $autoEvent->note_private = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
+                $autoEvent->userownerid  = $user->id;
+                $autoEvent->create($user);
+            } elseif ($resAdd == -4) {
+                // Already linked — return the existing link_id
+                $sqlLinkId = "SELECT ec.rowid FROM " . MAIN_DB_PREFIX . "element_contact ec
+                              JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
+                             WHERE ec.element_id = " . (int)$projectId . "
+                               AND ec.fk_socpeople = " . (int)$contactId . "
+                               AND ctc.code = 'PROJECTCONTRIBUTOR'
+                             LIMIT 1";
+                $rLinkId = $db->query($sqlLinkId);
+                $oLinkId = $rLinkId ? $db->fetch_object($rLinkId) : null;
+                $res['success']     = true;
+                $res['link_id']     = $oLinkId ? (int)$oLinkId->rowid : 0;
+                $res['contact_url'] = DOL_URL_ROOT . '/contact/card.php?id=' . $contactId;
+            } else {
+                $res['error'] = $proj->error . ' (code: ' . $resAdd . ')';
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'removeoppcontact') {
+    $linkId = GETPOST('link_id', 'int');
+    $res = ['success' => false];
+    if ($linkId > 0) {
+        $sql   = "DELETE FROM " . MAIN_DB_PREFIX . "element_contact WHERE rowid = " . (int)$linkId;
+        $resql = $db->query($sql);
+        if ($resql) {
+            // Dolibarr affected_rows() takes no parameter
+            $affected = $db->affected_rows($resql);
+            // Consider success even if 0 rows (idempotent — already deleted)
+            $res['success'] = true;
+            if ($affected === 0) {
+                $res['warning'] = 'Link already removed (link_id=' . $linkId . ')';
+            }
+        } else {
+            $res['error'] = $db->lasterror();
+        }
+    } else {
+        $res['error'] = 'Invalid link_id';
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+
 if ($action == 'updateoppsocid') {
     $projectId = GETPOST('projectid', 'int');
     $newSocid = GETPOST('socid', 'int');
@@ -287,9 +448,11 @@ if ($action == 'updateoppsocid') {
                     $newCompanyUrl = $newSoc->getNomUrl(1); // Standard dolibarr company HTML Link
                 }
                 
-                $res['new_socid'] = $newSocid;
-                $res['new_company_name'] = $newCompanyName;
-                $res['new_company_url'] = $newCompanyUrl;
+                $res['new_socid']           = $newSocid;
+                $res['new_company_name']     = $newCompanyName;
+                $res['new_company_url']      = $newCompanyUrl;
+                $res['new_company_badge']    = ($newSocid > 0 && method_exists($newSoc, 'getLibStatut')) ? $newSoc->getLibStatut(3) : '';
+                $res['new_company_card_url'] = ($newSocid > 0) ? DOL_URL_ROOT . '/societe/card.php?socid=' . (int)$newSocid : '';
                 
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
                 $autoEvent = new ActionComm($db);
@@ -603,7 +766,9 @@ if ($action == 'add') {
             $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
             $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
             $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
-            $contact->address   = $geolocation->getAddressFromLatLon($lat, $lon)['display_name'] ?? '';
+            $contact->address   = (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '')
+                                  ? ($geolocation->getAddressFromLatLon((float)$lat, (float)$lon)['display_name'] ?? '')
+                                  : '';
             $contact->status    = 1;
             $contactID = $contact->create($user);
             if ($contactID > 0) {
