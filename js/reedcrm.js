@@ -1086,7 +1086,7 @@ window.saturne.pwa_selectors.event = function() {
                 allowClear:  true,
                 language:    { noResults: function() { return 'Aucun résultat'; } }
             });
-            $select.on('select2:select', function(ev) {
+            $select.off('select2:select').on('select2:select', function(ev) {
                 var newContactId   = ev.params.data.id;
                 var newContactName = ev.params.data.text;
                 wrap.hide();
@@ -1096,7 +1096,6 @@ window.saturne.pwa_selectors.event = function() {
                 $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function(res) {
                     if (res && res.success) {
                         $cBtn.html(
-                            '<i class="far fa-address-book" style="color:#64748b;"></i>' +
                             '<span style="font-weight:500;">' + $('<span>').text(newContactName).html() + '</span>' +
                             '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
                         );
@@ -1119,7 +1118,7 @@ window.saturne.pwa_selectors.event = function() {
                 });
             });
 
-            $select.on('select2:close', function() {
+            $select.off('select2:close').on('select2:close', function() {
                 setTimeout(function() { wrap.hide(); }, 100);
             });
         }
@@ -1141,16 +1140,16 @@ window.saturne.pwa_selectors.event = function() {
                 allowClear:  true,
                 language:    { noResults: function() { return 'Aucun résultat'; } }
             });
-            $select.on('select2:select', function(ev) {
+            $select.off('select2:select').on('select2:select', function(ev) {
                 var newContactId   = ev.params.data.id;
                 var newContactName = ev.params.data.text;
                 wrap.hide();
                 var $cBtn = $('.pwa-contact-selector[data-project-id="' + projectId + '"]');
+                var origHtml = $cBtn.html();
                 $cBtn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
                 $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function(res) {
                     if (res && res.success) {
                         $cBtn.html(
-                            '<i class="far fa-address-book" style="color:#64748b;"></i>' +
                             '<span style="font-weight:500;">' + $('<span>').text(newContactName).html() + '</span>' +
                             '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
                         );
@@ -1162,13 +1161,17 @@ window.saturne.pwa_selectors.event = function() {
                             $cw.find('[data-field="email"]').data('val', res.contact.email       || '').text(res.contact.email     || 'Email');
                         }
                     } else {
-                        $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                        $cBtn.html(origHtml);
+                        $cBtn.css({ border: '1px solid #e74c3c' });
+                        setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
                     }
                 }, 'json').fail(function() {
-                    $cBtn.html('<i class="fas fa-exclamation-triangle" style="color:#e74c3c;"></i>');
+                    $cBtn.html(origHtml);
+                    $cBtn.css({ border: '1px solid #e74c3c' });
+                    setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
                 });
             });
-            $select.on('select2:close', function() {
+            $select.off('select2:close').on('select2:close', function() {
                 setTimeout(function() { wrap.hide(); }, 100);
             });
             $select.select2('open');

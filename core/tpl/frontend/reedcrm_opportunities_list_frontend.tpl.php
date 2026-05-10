@@ -177,6 +177,23 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
         }
         $socNomUrl = $socNomUrl ?? '';
 
+        // --- Linked contact (first PROJECTCONTRIBUTOR) ---
+        $linkedContactId   = 0;
+        $linkedContactName = '';
+        $resLinkedContact  = $db->query(
+            "SELECT ec.fk_socpeople, CONCAT(sp.firstname, ' ', sp.lastname) as fullname
+               FROM " . MAIN_DB_PREFIX . "element_contact ec
+               JOIN " . MAIN_DB_PREFIX . "socpeople sp ON sp.rowid = ec.fk_socpeople
+               JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
+              WHERE ec.element_id = " . (int)$project->id . "
+                AND ctc.code = 'PROJECTCONTRIBUTOR'
+              ORDER BY ec.rowid LIMIT 1"
+        );
+        if ($resLinkedContact && ($cRow = $db->fetch_object($resLinkedContact))) {
+            $linkedContactId   = (int)$cRow->fk_socpeople;
+            $linkedContactName = trim(dol_escape_htmltag($cRow->fullname));
+        }
+
         $descParts = [];
         if (!empty($project->description)) $descParts[] = trim(dol_string_nohtmltag($project->description, 1));
         if (!empty($project->note_public))  $descParts[] = trim(dol_string_nohtmltag($project->note_public, 1));
@@ -283,11 +300,19 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
 
                 <span class="dot-sep">&bull;</span>
 
-                <!-- Contact : bouton + select inline caché -->
+                <!-- Contact : icône externe + bouton + select inline -->
                 <div class="pwa-selector-wrap" style="position:relative;">
+                    <?php if ($linkedContactId > 0) : ?>
+                    <a href="<?php echo DOL_URL_ROOT; ?>/contact/card.php?id=<?php echo $linkedContactId; ?>" class="prevent-edit-click" title="Voir la fiche contact" style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">
+                        <i class="fas fa-address-book"></i>
+                    </a>
+                    <span class="dot-sep">&bull;</span>
+                    <?php else : ?>
+                    <i class="fas fa-address-book" style="color:#cbd5e0;font-size:1.1em;"></i>
+                    <span class="dot-sep">&bull;</span>
+                    <?php endif; ?>
                     <div class="pwa-contact-selector" data-project-id="<?php echo $project->id; ?>" data-tiers-id="<?php echo $tiersId; ?>" title="Changer le contact">
-                        <i class="fas fa-address-book" style="color:#64748b;"></i>
-                        <span style="font-weight:500;">Contact</span>
+                        <span style="font-weight:500;"><?php echo $linkedContactName ?: 'Contact'; ?></span>
                         <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
                     </div>
                     <!-- Select inline (initialisé avec tous les contacts de la société par JS) -->
