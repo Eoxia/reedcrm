@@ -44,17 +44,21 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     /* Force all media block children to the same height & vertical alignment */
     .pwa-card-media-row .linked-medias.medias        { display: inline-flex; align-items: center; flex-direction: row; }
     .pwa-card-media-row .saturne-media-upload-block  { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
+    .pwa-card-media-row .saturne-media-gallery       { display: inline-flex; align-items: center; }
     .pwa-card-media-row .saturne-audio-controls      { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
     .pwa-card-media-row .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
     .pwa-card-media-row .open-media-editor-as-gallery {
         position: relative; display: inline-flex; align-items: center; justify-content: center;
-        width: 44px; height: 44px; border-radius: 12px; overflow: hidden; cursor: pointer; flex-shrink: 0;
+        width: 44px; height: 44px; border-radius: 12px;
+        overflow: visible; /* let the count badge overflow */
+        cursor: pointer; flex-shrink: 0; align-self: center;
     }
     .pwa-card-media-row .open-media-editor-as-gallery img {
-        width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
+        width: 44px; height: 44px; object-fit: cover; border-radius: 12px;
+        display: block; overflow: hidden;
     }
     .pwa-card-media-row .open-media-editor-as-gallery .saturne-media-count-badge {
-        position: absolute; top: 2px; right: 2px;
+        position: absolute; top: -6px; right: -6px; z-index: 2;
     }
     .pwa-card-separator { border-top: 1px dashed #cbd5e0; border-bottom: none; border-left: none; border-right: none; margin: 4px 0 6px 0; }
     .pwa-card-row3 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
