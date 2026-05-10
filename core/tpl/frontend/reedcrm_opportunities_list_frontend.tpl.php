@@ -283,7 +283,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                 <!-- Contact : bouton + select inline caché -->
                 <div class="pwa-selector-wrap" style="position:relative;">
                     <div class="pwa-contact-selector" data-project-id="<?php echo $project->id; ?>" data-tiers-id="<?php echo $tiersId; ?>" title="Changer le contact">
-                        <i class="far fa-address-book" style="color:#64748b;"></i>
+                        <i class="fas fa-address-book" style="color:#64748b;"></i>
                         <span style="font-weight:500;">Contact</span>
                         <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
                     </div>
