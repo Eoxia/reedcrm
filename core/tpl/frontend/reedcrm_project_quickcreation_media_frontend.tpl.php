@@ -34,6 +34,13 @@ $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
     #master-media-row-container .saturne-media-gallery       { display: inline-flex; align-items: center; }
     #master-media-row-container .saturne-audio-controls      { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
     #master-media-row-container .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
+    /* Uniform 44x44px for all action buttons */
+    #master-media-row-container .saturne-upload-label,
+    #master-media-row-container .saturne-media-btn {
+        width: 44px; height: 44px; min-width: 44px; flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        box-sizing: border-box;
+    }
     #master-media-row-container .open-media-editor-as-gallery {
         position: relative; display: inline-flex; align-items: center; justify-content: center;
         width: 44px; height: 44px; border-radius: 12px;

@@ -47,6 +47,13 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-card-media-row .saturne-media-gallery       { display: inline-flex; align-items: center; }
     .pwa-card-media-row .saturne-audio-controls      { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
     .pwa-card-media-row .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
+    /* Uniform 44x44px for all action buttons */
+    .pwa-card-media-row .saturne-upload-label,
+    .pwa-card-media-row .saturne-media-btn {
+        width: 44px; height: 44px; min-width: 44px; flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        box-sizing: border-box;
+    }
     .pwa-card-media-row .open-media-editor-as-gallery {
         position: relative; display: inline-flex; align-items: center; justify-content: center;
         width: 44px; height: 44px; border-radius: 12px;
