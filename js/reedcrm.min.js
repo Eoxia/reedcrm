@@ -1013,8 +1013,9 @@ window.saturne.pwa_selectors.event = function() {
                 $btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
                 $.post(baseUrl + '?action=updateoppsocid&token=' + token, { projectid: projectId, socid: newSocid }, function(res) {
                     if (res && res.success) {
+                        var badge = (res.new_company_badge && res.new_company_badge.trim()) ? res.new_company_badge + ' ' : '<i class="far fa-building" style="color:#64748b;"></i> ';
                         $btn.html(
-                            '<i class="far fa-building" style="color:#64748b;"></i>' +
+                            badge +
                             '<span style="font-weight:500;">' + $('<span>').text(newSocName).html() + '</span>' +
                             '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
                         );

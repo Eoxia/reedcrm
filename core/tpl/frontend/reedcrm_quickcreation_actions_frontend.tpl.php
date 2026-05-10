@@ -435,9 +435,10 @@ if ($action == 'updateoppsocid') {
                     $newCompanyUrl = $newSoc->getNomUrl(1); // Standard dolibarr company HTML Link
                 }
                 
-                $res['new_socid'] = $newSocid;
-                $res['new_company_name'] = $newCompanyName;
-                $res['new_company_url'] = $newCompanyUrl;
+                $res['new_socid']        = $newSocid;
+                $res['new_company_name']  = $newCompanyName;
+                $res['new_company_url']   = $newCompanyUrl;
+                $res['new_company_badge'] = ($newSocid > 0 && method_exists($newSoc, 'getLibStatut')) ? $newSoc->getLibStatut(3) : '';
                 
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
                 $autoEvent = new ActionComm($db);
