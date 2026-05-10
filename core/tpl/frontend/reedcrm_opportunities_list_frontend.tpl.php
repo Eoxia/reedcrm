@@ -100,7 +100,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-contact-chip { display:inline-flex; align-items:center; gap:3px; background:#e8f0fe; border-radius:10px; padding:2px 6px 2px 8px; font-size:0.82em; color:#334155; white-space:nowrap; }
     .pwa-contact-chip a { color:#3b5bdb; text-decoration:none; }
     .pwa-chip-role { color:#64748b; font-style:italic; font-size:0.9em; }
-    .pwa-chip-remove { cursor:pointer; color:#94a3b8; font-weight:bold; padding:0 2px; margin-left:2px; transition:color 0.15s; line-height:1; }
+    .pwa-chip-remove { cursor:pointer; color:#94a3b8; padding:0 3px; margin-left:2px; transition:color 0.15s; line-height:1; display:inline-flex; align-items:center; }
     .pwa-chip-remove:hover { color:#e74c3c; }
     .pwa-add-contact-btn { cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#f1f5f9; color:#64748b; font-size:0.75em; border:1px solid #cbd5e0; transition:background 0.15s; flex-shrink:0; }
     .pwa-add-contact-btn:hover { background:#dbeafe; color:#3b5bdb; border-color:#3b5bdb; }
@@ -351,7 +351,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                         <span class="pwa-chip-role">- <?php echo $lc['role_label']; ?></span>
                         <span class="pwa-chip-remove prevent-edit-click"
                               data-link-id="<?php echo $lc['link_id']; ?>"
-                              title="Retirer ce contact">&times;</span>
+                              title="Retirer ce contact"><i class="fas fa-unlink" style="font-size:0.75em;"></i></span>
                     </span>
                     <?php endforeach; ?>
 

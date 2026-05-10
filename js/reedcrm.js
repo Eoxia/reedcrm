@@ -1159,7 +1159,7 @@ window.saturne.pwa_selectors.event = function() {
                                         $('<span>').text(newContactName).html() +
                                     '</a>' +
                                     '<span class="pwa-chip-role">- Intervenant</span>' +
-                                    '<span class="pwa-chip-remove prevent-edit-click" data-link-id="' + res.link_id + '" title="Retirer ce contact">&times;</span>' +
+                                    '<span class="pwa-chip-remove prevent-edit-click" data-link-id="' + res.link_id + '" title="Retirer ce contact"><i class="fas fa-unlink" style="font-size:0.75em;"></i></span>' +
                                 '</span>';
                             $btn.before(chipHtml);
                             linkedIds.push(newContactId);
@@ -1204,26 +1204,30 @@ window.saturne.pwa_selectors.event = function() {
         var baseUrl    = window.saturne.pwa_selectors.getBaseUrl();
         var token      = $('input[name="token"]').val() || '';
 
-        $removeBtn.html('<i class="fas fa-spinner fa-spin"></i>');
+        $removeBtn.html('<i class="fas fa-spinner fa-spin" style="font-size:0.75em;"></i>');
 
         $.post(baseUrl + '?action=removeoppcontact&token=' + token, { link_id: linkId }, function(res) {
             if (res && res.success) {
-                $chip.fadeOut(200, function() {
-                    $(this).remove();
-                    // If no chips left, revert icon to greyed-out
-                    if ($wrap.find('.pwa-contact-chip').length === 0) {
-                        $wrap.find('.pwa-contact-icon-link').replaceWith(
-                            '<i class="fas fa-address-book pwa-contact-icon-nolink" title="Ajouter un contact"></i>'
-                        );
-                    }
-                });
+                // Green flash confirmation before fade-out
+                $chip.css({ outline: '2px solid #38a169', transition: 'outline 0.2s' });
+                setTimeout(function() {
+                    $chip.fadeOut(250, function() {
+                        $(this).remove();
+                        // If no chips left, revert icon to greyed-out
+                        if ($wrap.find('.pwa-contact-chip').length === 0) {
+                            $wrap.find('.pwa-contact-icon-link').replaceWith(
+                                '<i class="fas fa-address-book pwa-contact-icon-nolink" title="Ajouter un contact"></i>'
+                            );
+                        }
+                    });
+                }, 300);
             } else {
-                $removeBtn.html('&times;');
+                $removeBtn.html('<i class="fas fa-unlink" style="font-size:0.75em;"></i>');
                 $chip.css({ outline: '2px solid #e74c3c' });
                 setTimeout(function() { $chip.css({ outline: '' }); }, 2000);
             }
         }, 'json').fail(function() {
-            $removeBtn.html('&times;');
+            $removeBtn.html('<i class="fas fa-unlink" style="font-size:0.75em;"></i>');
         });
     });
 };
