@@ -263,17 +263,18 @@ if ($action == 'search_tiers_ajax') {
     $res = ['results' => []];
 
     if (strlen($q) === 0) {
-        // No search term: return the 10 most recently modified companies
+        // No search term: return the 20 most recently modified companies
         $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
                 WHERE entity IN (" . getEntity('societe') . ")
                   AND client IN (1, 2, 3)
                 ORDER BY tms DESC
-                LIMIT 10";
+                LIMIT 20";
     } else {
-        // Search by name
+        // Search by name (clients/prospects only)
         $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
                 WHERE nom LIKE '%" . $db->escape($q) . "%'
                   AND entity IN (" . getEntity('societe') . ")
+                  AND client IN (1, 2, 3)
                 ORDER BY nom
                 LIMIT 50";
     }
