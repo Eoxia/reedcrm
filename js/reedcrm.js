@@ -1081,37 +1081,40 @@ window.saturne.pwa_selectors.event = function() {
             linkedIds.push(parseInt($(this).data('contact-id'), 10));
         });
 
-        // Init or reinit Select2
+        // Show loading spinner while contacts are fetched
         if ($select.data('select2')) { $select.select2('destroy'); }
-        $select.empty().append('<option value="">Chargement...</option>');
-        $select.select2({
-            width:       '100%',
-            placeholder: 'Choisir un contact...',
-            language:    { noResults: function() { return 'Aucun résultat'; } },
-            templateResult: function(item) {
-                if (!item.id) return item.text;
-                var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
-                var $el = $('<span>').text(item.text);
-                if (isLinked) $el.css({ color: '#94a3b8', fontStyle: 'italic' }).append(' ✓');
-                return $el;
-            }
-        });
+        $select.empty().hide();
+        $panel.find('.pwa-contact-loading, .pwa-contact-error').remove();
+        $panel.prepend('<div class="pwa-contact-loading" style="text-align:center;padding:8px 0;color:#64748b;font-size:0.85em;"><i class="fas fa-spinner fa-spin" style="margin-right:5px;"></i>Chargement...</div>');
 
-        // Load contacts
+        // Fetch contacts then populate a plain <select> — no ajax Select2 → no "Searching..." ever
         $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
             var results = (data && data.results) ? data.results : [];
-            $select.empty().append('<option value=""></option>');
+
+            // Build native <option> tags AND a data array for Select2
+            $select.empty();
+            $select.append('<option value=""></option>'); // placeholder
+            var s2Data = [{ id: '', text: '' }];
             $.each(results, function(i, item) {
-                $select.append($('<option>', { value: item.id, text: item.text }));
+                var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
+                var opt = $('<option>', { value: item.id, text: item.text });
+                if (isLinked) opt.prop('disabled', true);
+                $select.append(opt);
+                s2Data.push({ id: item.id, text: item.text, disabled: isLinked });
             });
-            if (results.length === 0) {
-                $select.append($('<option>', { value: '', text: 'Aucun contact pour ce client' }));
-            }
-            if ($select.data('select2')) { $select.select2('destroy'); }
+
+            $panel.find('.pwa-contact-loading').remove();
+            $select.show();
+
+            // data: s2Data + minimumResultsForSearch:-1 = no "Searching..." ever (Infinity doesn't work in this Select2 version)
+            // dropdownParent: $panel = correct positioning relative to the chip row
             $select.select2({
-                width:       '100%',
-                placeholder: 'Choisir un contact...',
-                language:    { noResults: function() { return 'Aucun résultat'; } },
+                width:                   '100%',
+                data:                    s2Data,
+                placeholder:             'Choisir un contact...',
+                minimumResultsForSearch: -1,
+                dropdownParent:          $panel,
+                language:                { noResults: function() { return 'Aucun résultat'; } },
                 templateResult: function(item) {
                     if (!item.id) return item.text;
                     var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
@@ -1120,6 +1123,13 @@ window.saturne.pwa_selectors.event = function() {
                     return $el;
                 }
             });
+
+            // Auto-open after a short render delay
+            if ($panel.is(':visible')) {
+                setTimeout(function() {
+                    if ($panel.is(':visible')) { $select.select2('open'); }
+                }, 60);
+            }
 
             // On contact selection → save via addoppcontact
             $select.off('select2:select').on('select2:select', function(ev) {
@@ -1152,8 +1162,9 @@ window.saturne.pwa_selectors.event = function() {
                                 '<a href="' + res.contact_url + '" class="pwa-contact-icon-link prevent-edit-click" title="Voir la fiche contact"><i class="fas fa-address-book"></i></a>'
                             );
                         } else {
-                            $btn.css({ outline: '2px solid #e74c3c' });
-                            setTimeout(function() { $btn.css({ outline: '' }); }, 2000);
+                            var errMsg = (res && res.error) ? ' (' + res.error + ')' : '';
+                            $btn.attr('title', 'Erreur' + errMsg).css({ outline: '2px solid #e74c3c' });
+                            setTimeout(function() { $btn.css({ outline: '' }).removeAttr('title'); }, 3000);
                         }
                     }, 'json').fail(function() {
                         $btn.html('<i class="fas fa-plus"></i>');
@@ -1161,7 +1172,10 @@ window.saturne.pwa_selectors.event = function() {
                         setTimeout(function() { $btn.css({ outline: '' }); }, 2000);
                     });
             });
-        }).fail(function() { $panel.hide(); });
+        }).fail(function() {
+            $panel.find('.pwa-contact-loading').remove();
+            $panel.prepend('<div style="color:#e74c3c;font-size:0.85em;padding:4px 0;"><i class="fas fa-exclamation-circle"></i> Impossible de charger les contacts</div>');
+        });
     });
 
     // Close add-panel on click outside
