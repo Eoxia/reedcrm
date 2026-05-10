@@ -1083,7 +1083,6 @@ window.saturne.pwa_selectors.event = function() {
         if (!$select.data('select2')) {
             $select.select2({
                 placeholder: 'Rechercher un contact...',
-                allowClear:  true,
                 language:    { noResults: function() { return 'Aucun résultat'; } }
             });
             $select.off('select2:select').on('select2:select', function(ev) {
@@ -1137,7 +1136,6 @@ window.saturne.pwa_selectors.event = function() {
             if ($select.data('select2')) { $select.select2('destroy'); }
             $select.select2({
                 placeholder: 'Rechercher un contact...',
-                allowClear:  true,
                 language:    { noResults: function() { return 'Aucun résultat'; } }
             });
             $select.off('select2:select').on('select2:select', function(ev) {

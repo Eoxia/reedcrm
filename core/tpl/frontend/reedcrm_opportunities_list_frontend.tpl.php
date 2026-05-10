@@ -276,7 +276,6 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                     <a href="<?php echo DOL_URL_ROOT; ?>/societe/card.php?socid=<?php echo $tiersId; ?>" class="prevent-edit-click" title="Voir la fiche client" style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">
                         <i class="fas fa-building"></i>
                     </a>
-                    <span class="dot-sep">&bull;</span>
                     <div class="pwa-client-selector" data-project-id="<?php echo $project->id; ?>" title="Changer le tiers">
                         <?php echo $socBadge; ?>
                         <span style="font-weight:500;"><?php echo $socName; ?></span>
@@ -306,10 +305,8 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                     <a href="<?php echo DOL_URL_ROOT; ?>/contact/card.php?id=<?php echo $linkedContactId; ?>" class="prevent-edit-click" title="Voir la fiche contact" style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">
                         <i class="fas fa-address-book"></i>
                     </a>
-                    <span class="dot-sep">&bull;</span>
                     <?php else : ?>
                     <i class="fas fa-address-book" style="color:#cbd5e0;font-size:1.1em;"></i>
-                    <span class="dot-sep">&bull;</span>
                     <?php endif; ?>
                     <div class="pwa-contact-selector" data-project-id="<?php echo $project->id; ?>" data-tiers-id="<?php echo $tiersId; ?>" title="Changer le contact">
                         <span style="font-weight:500;"><?php echo $linkedContactName ?: 'Contact'; ?></span>
