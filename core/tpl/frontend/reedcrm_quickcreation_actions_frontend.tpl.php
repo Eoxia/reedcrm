@@ -328,7 +328,7 @@ if ($action == 'search_contact_ajax') {
 }
 
 
-if ($action == 'updateoppcontactid') {
+if ($action == 'addoppcontact') {
     $projectId = GETPOST('projectid', 'int');
     $contactId = GETPOST('contactid', 'int');
     $res = ['success' => false];
@@ -336,21 +336,14 @@ if ($action == 'updateoppcontactid') {
     if ($projectId > 0 && $contactId > 0) {
         $proj = new Project($db);
         if ($proj->fetch($projectId) > 0) {
-            // Remove any existing PROJECTCONTRIBUTOR links first (only one contact allowed at a time)
-            $db->query(
-                "DELETE FROM " . MAIN_DB_PREFIX . "element_contact
-                  WHERE element_id = " . (int)$projectId . "
-                    AND fk_c_type_contact IN (
-                        SELECT rowid FROM " . MAIN_DB_PREFIX . "c_type_contact
-                        WHERE code = 'PROJECTCONTRIBUTOR' AND element = 'project'
-                    )"
-            );
-
+            // Add contact as PROJECTCONTRIBUTOR (Option A: fixed role)
             $resAdd = $proj->add_contact($contactId, 'PROJECTCONTRIBUTOR', 'external');
-            // -4 = contact already linked (treated as success)
-            if ($resAdd >= 0 || $resAdd == -4) {
-                $res['success'] = true;
+            if ($resAdd > 0) {
+                $res['success']  = true;
+                $res['link_id']  = (int)$resAdd;
+                $res['contact_url'] = DOL_URL_ROOT . '/contact/card.php?id=' . $contactId;
 
+                // Update project extrafields with latest contact (optional — keeps row2 in sync)
                 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
                 $contact = new Contact($db);
                 if ($contact->fetch($contactId) > 0) {
@@ -359,35 +352,37 @@ if ($action == 'updateoppcontactid') {
                     $proj->array_options['options_reedcrm_lastname']  = $contact->lastname;
                     $proj->array_options['options_projectphone']      = !empty($contact->phone_pro) ? $contact->phone_pro : $contact->phone_perso;
                     $proj->array_options['options_reedcrm_email']     = $contact->email;
-
                     $proj->updateExtraField('reedcrm_firstname');
                     $proj->updateExtraField('reedcrm_lastname');
                     $proj->updateExtraField('projectphone');
                     $proj->updateExtraField('reedcrm_email');
-
-                    // Return contact data so JS can update DOM without page reload
-                    $res['contact'] = [
-                        'firstname' => $contact->firstname,
-                        'lastname'  => $contact->lastname,
-                        'phone'     => !empty($contact->phone_pro) ? $contact->phone_pro : $contact->phone_perso,
-                        'email'     => $contact->email,
-                    ];
                 }
 
-                if ($resAdd >= 0) {
-                    // Only log the action event on a real new link (not duplicate)
-                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-                    $autoEvent = new ActionComm($db);
-                    $autoEvent->type_code     = 'AC_OTH';
-                    $autoEvent->label         = "Ajout d'un contact au projet";
-                    $autoEvent->datep         = dol_now();
-                    $autoEvent->datef         = dol_now();
-                    $autoEvent->percentage    = 100;
-                    $autoEvent->fk_project    = $projectId;
-                    $autoEvent->note_private  = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
-                    $autoEvent->userownerid   = $user->id;
-                    $autoEvent->create($user);
-                }
+                // Log action event
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code    = 'AC_OTH';
+                $autoEvent->label        = "Ajout d'un contact au projet";
+                $autoEvent->datep        = dol_now();
+                $autoEvent->datef        = dol_now();
+                $autoEvent->percentage   = 100;
+                $autoEvent->fk_project   = $projectId;
+                $autoEvent->note_private = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
+                $autoEvent->userownerid  = $user->id;
+                $autoEvent->create($user);
+            } elseif ($resAdd == -4) {
+                // Already linked — return the existing link_id
+                $sqlLinkId = "SELECT ec.rowid FROM " . MAIN_DB_PREFIX . "element_contact ec
+                              JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
+                             WHERE ec.element_id = " . (int)$projectId . "
+                               AND ec.fk_socpeople = " . (int)$contactId . "
+                               AND ctc.code = 'PROJECTCONTRIBUTOR'
+                             LIMIT 1";
+                $rLinkId = $db->query($sqlLinkId);
+                $oLinkId = $rLinkId ? $db->fetch_object($rLinkId) : null;
+                $res['success']     = true;
+                $res['link_id']     = $oLinkId ? (int)$oLinkId->rowid : 0;
+                $res['contact_url'] = DOL_URL_ROOT . '/contact/card.php?id=' . $contactId;
             } else {
                 $res['error'] = $proj->error . ' (code: ' . $resAdd . ')';
             }
@@ -398,7 +393,17 @@ if ($action == 'updateoppcontactid') {
     exit;
 }
 
-
+if ($action == 'removeoppcontact') {
+    $linkId = GETPOST('link_id', 'int');
+    $res = ['success' => false];
+    if ($linkId > 0) {
+        $db->query("DELETE FROM " . MAIN_DB_PREFIX . "element_contact WHERE rowid = " . (int)$linkId);
+        $res['success'] = ($db->affected_rows() > 0);
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
 
 
 if ($action == 'updateoppsocid') {

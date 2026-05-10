@@ -1047,134 +1047,162 @@ window.saturne.pwa_selectors.event = function() {
         $select.select2('open');
     });
 
-    // Contact selector : preload all contacts of the company → local filter
-    $(document).on('click', '.pwa-contact-selector', function(e) {
+    // ─────────────────────────────────────────────────────────────────────────
+    // Multi-contact tag system : [+] add button → Select2 AJAX panel
+    // ─────────────────────────────────────────────────────────────────────────
+    $(document).on('click', '.pwa-add-contact-btn', function(e) {
         e.stopPropagation();
-        var btn       = $(this);
-        var projectId = btn.data('project-id');
-        var tiersId   = btn.data('tiers-id') || 0;
-        var wrap      = $('#pwa-contact-wrap-' + projectId);
-        var $select   = $('#pwa-contact-select-' + projectId);
+        var $btn     = $(this);
+        var $wrap    = $btn.closest('.pwa-contact-tags-wrap');
+        var $panel   = $wrap.find('.pwa-contact-add-panel');
+        var projectId = $wrap.data('project-id');
+        var tiersId   = $wrap.data('tiers-id') || 0;
         var baseUrl   = window.saturne.pwa_selectors.getBaseUrl();
         var token     = $('input[name="token"]').val() || '';
 
         // Toggle
-        if (wrap.is(':visible')) { wrap.hide(); return; }
+        if ($panel.is(':visible')) { $panel.hide(); return; }
 
-        // No company → show inline warning badge
+        // Close other open panels
+        $('.pwa-contact-add-panel').hide();
+        $panel.show();
+
+        // No company → warn
         if (tiersId <= 0) {
-            btn.after('<span class="pwa-warn-badge" style="color:#d97706;font-size:0.8em;margin-left:6px;"><i class="fas fa-exclamation-triangle"></i> Associez d\'abord un client</span>');
-            setTimeout(function() { btn.siblings('.pwa-warn-badge').remove(); }, 3000);
+            $panel.html('<p style="color:#d97706;font-size:0.85em;margin:0;"><i class="fas fa-exclamation-triangle"></i> Associez d\'abord un client</p>');
             return;
         }
 
-        // Hide all other open selectors
-        $('.pwa-inline-select-wrap').hide();
-        wrap.show();
+        var $select = $panel.find('.pwa-contact-add-select');
 
-        // If already loaded, just open
-        if ($select.data('contacts-loaded')) {
-            $select.select2('open');
-            return;
-        }
+        // Collect already linked contact IDs from existing chips
+        var linkedIds = [];
+        $wrap.find('.pwa-contact-chip').each(function() {
+            linkedIds.push(parseInt($(this).data('contact-id'), 10));
+        });
 
-        // First open: preload all contacts of this company
-        $select.html('<option value="">Chargement...</option>');
-        if (!$select.data('select2')) {
-            $select.select2({
-                placeholder: 'Rechercher un contact...',
-                language:    { noResults: function() { return 'Aucun résultat'; } }
-            });
-            $select.off('select2:select').on('select2:select', function(ev) {
-                var newContactId   = ev.params.data.id;
-                var newContactName = ev.params.data.text;
-                wrap.hide();
-                var $cBtn    = $('.pwa-contact-selector[data-project-id="' + projectId + '"]');
-                var origHtml = $cBtn.html();
-                $cBtn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
-                $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function(res) {
-                    if (res && res.success) {
-                        $cBtn.html(
-                            '<span style="font-weight:500;">' + $('<span>').text(newContactName).html() + '</span>' +
-                            '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
-                        );
-                        if (res.contact) {
-                            var $cw = $('.contact-inline-wrapper[data-project-id="' + projectId + '"]');
-                            $cw.find('[data-field="firstname"]').data('val', res.contact.firstname || '').text(res.contact.firstname || 'Prénom');
-                            $cw.find('[data-field="lastname"]').data('val',  res.contact.lastname  || '').text(res.contact.lastname  || 'Nom');
-                            $cw.find('[data-field="phone"]').data('val',    res.contact.phone     || '').text(res.contact.phone     || 'Téléphone');
-                            $cw.find('[data-field="email"]').data('val',    res.contact.email     || '').text(res.contact.email     || 'Email');
-                        }
-                    } else {
-                        $cBtn.html(origHtml);
-                        $cBtn.css({ border: '1px solid #e74c3c' });
-                        setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
-                    }
-                }, 'json').fail(function() {
-                    $cBtn.html(origHtml);
-                    $cBtn.css({ border: '1px solid #e74c3c' });
-                    setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
-                });
-            });
+        // Init or reinit Select2
+        if ($select.data('select2')) { $select.select2('destroy'); }
+        $select.empty().append('<option value="">Chargement...</option>');
+        $select.select2({
+            width:       '100%',
+            placeholder: 'Choisir un contact...',
+            language:    { noResults: function() { return 'Aucun résultat'; } },
+            templateResult: function(item) {
+                if (!item.id) return item.text;
+                var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
+                var $el = $('<span>').text(item.text);
+                if (isLinked) $el.css({ color: '#94a3b8', fontStyle: 'italic' }).append(' ✓');
+                return $el;
+            }
+        });
 
-            $select.off('select2:close').on('select2:close', function() {
-                setTimeout(function() { wrap.hide(); }, 100);
-            });
-        }
-
+        // Load contacts
         $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
             var results = (data && data.results) ? data.results : [];
-            $select.empty();
+            $select.empty().append('<option value=""></option>');
             $.each(results, function(i, item) {
                 $select.append($('<option>', { value: item.id, text: item.text }));
             });
             if (results.length === 0) {
                 $select.append($('<option>', { value: '', text: 'Aucun contact pour ce client' }));
             }
-            $select.data('contacts-loaded', true);
-            // Refresh Select2 local data
             if ($select.data('select2')) { $select.select2('destroy'); }
             $select.select2({
-                placeholder: 'Rechercher un contact...',
-                language:    { noResults: function() { return 'Aucun résultat'; } }
+                width:       '100%',
+                placeholder: 'Choisir un contact...',
+                language:    { noResults: function() { return 'Aucun résultat'; } },
+                templateResult: function(item) {
+                    if (!item.id) return item.text;
+                    var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
+                    var $el = $('<span>').text(item.text);
+                    if (isLinked) $el.css({ color: '#94a3b8', fontStyle: 'italic' }).append(' ✓');
+                    return $el;
+                }
             });
+
+            // On contact selection → save via addoppcontact
             $select.off('select2:select').on('select2:select', function(ev) {
-                var newContactId   = ev.params.data.id;
+                var newContactId   = parseInt(ev.params.data.id, 10);
                 var newContactName = ev.params.data.text;
-                wrap.hide();
-                var $cBtn = $('.pwa-contact-selector[data-project-id="' + projectId + '"]');
-                var origHtml = $cBtn.html();
-                $cBtn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
-                $.post(baseUrl + '?action=updateoppcontactid&token=' + token, { projectid: projectId, contactid: newContactId }, function(res) {
-                    if (res && res.success) {
-                        $cBtn.html(
-                            '<span style="font-weight:500;">' + $('<span>').text(newContactName).html() + '</span>' +
-                            '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
-                        );
-                        if (res.contact) {
-                            var $cw = $('.contact-inline-wrapper[data-project-id="' + projectId + '"]');
-                            $cw.find('[data-field="firstname"]').data('val', res.contact.firstname || '').text(res.contact.firstname || 'Prénom');
-                            $cw.find('[data-field="lastname"]').data('val', res.contact.lastname   || '').text(res.contact.lastname  || 'Nom');
-                            $cw.find('[data-field="phone"]').data('val', res.contact.phone       || '').text(res.contact.phone     || 'Téléphone');
-                            $cw.find('[data-field="email"]').data('val', res.contact.email       || '').text(res.contact.email     || 'Email');
+                if (!newContactId) return;
+
+                $panel.hide();
+                $btn.html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.post(baseUrl + '?action=addoppcontact&token=' + token,
+                    { projectid: projectId, contactid: newContactId },
+                    function(res) {
+                        $btn.html('<i class="fas fa-plus"></i>');
+                        if (res && res.success && res.link_id) {
+                            // Inject new chip before the [+] button
+                            var chipHtml =
+                                '<span class="pwa-contact-chip" data-link-id="' + res.link_id + '" data-contact-id="' + newContactId + '">' +
+                                    '<a href="' + res.contact_url + '" class="prevent-edit-click" title="Voir la fiche contact">' +
+                                        $('<span>').text(newContactName).html() +
+                                    '</a>' +
+                                    '<span class="pwa-chip-role">- Intervenant</span>' +
+                                    '<span class="pwa-chip-remove prevent-edit-click" data-link-id="' + res.link_id + '" title="Retirer ce contact">&times;</span>' +
+                                '</span>';
+                            $btn.before(chipHtml);
+                            linkedIds.push(newContactId);
+
+                            // Update icon link to first contact
+                            $wrap.find('.pwa-contact-icon-nolink').replaceWith(
+                                '<a href="' + res.contact_url + '" class="pwa-contact-icon-link prevent-edit-click" title="Voir la fiche contact"><i class="fas fa-address-book"></i></a>'
+                            );
+                        } else {
+                            $btn.css({ outline: '2px solid #e74c3c' });
+                            setTimeout(function() { $btn.css({ outline: '' }); }, 2000);
                         }
-                    } else {
-                        $cBtn.html(origHtml);
-                        $cBtn.css({ border: '1px solid #e74c3c' });
-                        setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
+                    }, 'json').fail(function() {
+                        $btn.html('<i class="fas fa-plus"></i>');
+                        $btn.css({ outline: '2px solid #e74c3c' });
+                        setTimeout(function() { $btn.css({ outline: '' }); }, 2000);
+                    });
+            });
+        }).fail(function() { $panel.hide(); });
+    });
+
+    // Close add-panel on click outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.pwa-contact-tags-wrap').length) {
+            $('.pwa-contact-add-panel').hide();
+        }
+    });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Remove a contact chip → unlink via removeoppcontact
+    // ─────────────────────────────────────────────────────────────────────────
+    $(document).on('click', '.pwa-chip-remove', function(e) {
+        e.stopPropagation();
+        var $removeBtn = $(this);
+        var linkId     = parseInt($removeBtn.data('link-id'), 10);
+        var $chip      = $removeBtn.closest('.pwa-contact-chip');
+        var $wrap      = $chip.closest('.pwa-contact-tags-wrap');
+        var baseUrl    = window.saturne.pwa_selectors.getBaseUrl();
+        var token      = $('input[name="token"]').val() || '';
+
+        $removeBtn.html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.post(baseUrl + '?action=removeoppcontact&token=' + token, { link_id: linkId }, function(res) {
+            if (res && res.success) {
+                $chip.fadeOut(200, function() {
+                    $(this).remove();
+                    // If no chips left, revert icon to greyed-out
+                    if ($wrap.find('.pwa-contact-chip').length === 0) {
+                        $wrap.find('.pwa-contact-icon-link').replaceWith(
+                            '<i class="fas fa-address-book pwa-contact-icon-nolink" title="Ajouter un contact"></i>'
+                        );
                     }
-                }, 'json').fail(function() {
-                    $cBtn.html(origHtml);
-                    $cBtn.css({ border: '1px solid #e74c3c' });
-                    setTimeout(function() { $cBtn.css({ border: '' }); }, 2000);
                 });
-            });
-            $select.off('select2:close').on('select2:close', function() {
-                setTimeout(function() { wrap.hide(); }, 100);
-            });
-            $select.select2('open');
-        }).fail(function() {
-            wrap.hide();
+            } else {
+                $removeBtn.html('&times;');
+                $chip.css({ outline: '2px solid #e74c3c' });
+                setTimeout(function() { $chip.css({ outline: '' }); }, 2000);
+            }
+        }, 'json').fail(function() {
+            $removeBtn.html('&times;');
         });
     });
 };

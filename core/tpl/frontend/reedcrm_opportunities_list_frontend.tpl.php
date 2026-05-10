@@ -93,6 +93,18 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .inline-edit-proj-amount  { color: #3b82f6; }
     .initials-badge { font-size: 0.7em; color: #fff; background: #9b59b6; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     .dot-sep { color: #cbd5e0; margin: 0 6px; }
+    /* Multi-contact tag chips */
+    .pwa-contact-tags-wrap { display:flex; align-items:center; flex-wrap:wrap; gap:4px; position:relative; }
+    .pwa-contact-icon-link { display:inline-flex; align-items:center; color:#64748b; font-size:1.15em; flex-shrink:0; text-decoration:none; }
+    .pwa-contact-icon-nolink { color:#cbd5e0; font-size:1.1em; }
+    .pwa-contact-chip { display:inline-flex; align-items:center; gap:3px; background:#e8f0fe; border-radius:10px; padding:2px 6px 2px 8px; font-size:0.82em; color:#334155; white-space:nowrap; }
+    .pwa-contact-chip a { color:#3b5bdb; text-decoration:none; }
+    .pwa-chip-role { color:#64748b; font-style:italic; font-size:0.9em; }
+    .pwa-chip-remove { cursor:pointer; color:#94a3b8; font-weight:bold; padding:0 2px; margin-left:2px; transition:color 0.15s; line-height:1; }
+    .pwa-chip-remove:hover { color:#e74c3c; }
+    .pwa-add-contact-btn { cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#f1f5f9; color:#64748b; font-size:0.75em; border:1px solid #cbd5e0; transition:background 0.15s; flex-shrink:0; }
+    .pwa-add-contact-btn:hover { background:#dbeafe; color:#3b5bdb; border-color:#3b5bdb; }
+    .pwa-contact-add-panel { position:absolute; top:calc(100% + 4px); left:0; z-index:9999; background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:8px; min-width:240px; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
 </style>
 
 <div class="page-content" style="margin-top: 5px; max-width: 1000px; margin: 5px auto 0 auto;">
@@ -177,22 +189,35 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
         }
         $socNomUrl = $socNomUrl ?? '';
 
-        // --- Linked contact (first PROJECTCONTRIBUTOR) ---
-        $linkedContactId   = 0;
-        $linkedContactName = '';
-        $resLinkedContact  = $db->query(
-            "SELECT ec.fk_socpeople, CONCAT(sp.firstname, ' ', sp.lastname) as fullname
+        // --- Linked contacts (all PROJECTCONTRIBUTOR/LEADER/SALESREP) ---
+        $linkedContacts = [];
+        $resLC = $db->query(
+            "SELECT ec.rowid as link_id, ec.fk_socpeople,
+                    CONCAT(sp.firstname, ' ', sp.lastname) as fullname,
+                    ctc.code as role_code, ctc.libelle as role_label
                FROM " . MAIN_DB_PREFIX . "element_contact ec
-               JOIN " . MAIN_DB_PREFIX . "socpeople sp ON sp.rowid = ec.fk_socpeople
+               JOIN " . MAIN_DB_PREFIX . "socpeople sp  ON sp.rowid  = ec.fk_socpeople
                JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
               WHERE ec.element_id = " . (int)$project->id . "
-                AND ctc.code = 'PROJECTCONTRIBUTOR'
-              ORDER BY ec.rowid DESC LIMIT 1"
+                AND ctc.element = 'project'
+                AND ctc.code IN ('PROJECTLEADER','PROJECTCONTRIBUTOR','SALESREPINTERNAL')
+              ORDER BY ec.rowid ASC"
         );
-        if ($resLinkedContact && ($cRow = $db->fetch_object($resLinkedContact))) {
-            $linkedContactId   = (int)$cRow->fk_socpeople;
-            $linkedContactName = trim(dol_escape_htmltag($cRow->fullname));
+        if ($resLC) {
+            while ($lcRow = $db->fetch_object($resLC)) {
+                $linkedContacts[] = [
+                    'link_id'    => (int)$lcRow->link_id,
+                    'contact_id' => (int)$lcRow->fk_socpeople,
+                    'name'       => trim(dol_escape_htmltag($lcRow->fullname)),
+                    'role_code'  => $lcRow->role_code,
+                    'role_label' => dol_escape_htmltag($lcRow->role_label),
+                ];
+            }
         }
+        // Build tooltip for icon
+        $contactTooltip = !empty($linkedContacts)
+            ? implode('&#10;', array_map(fn($c) => $c['name'] . ' (' . $c['role_label'] . ')', $linkedContacts))
+            : 'Ajouter un contact';
 
         $descParts = [];
         if (!empty($project->description)) $descParts[] = trim(dol_string_nohtmltag($project->description, 1));
@@ -299,33 +324,52 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
 
                 <span class="dot-sep">&bull;</span>
 
-                <!-- Contact : icône externe + bouton + select inline -->
-                <div class="pwa-selector-wrap" style="position:relative; display:flex; align-items:center; gap:4px;">
-                    <?php if ($linkedContactId > 0) : ?>
-                    <a href="<?php echo DOL_URL_ROOT; ?>/contact/card.php?id=<?php echo $linkedContactId; ?>" class="prevent-edit-click" title="Voir la fiche contact" style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">
+                <!-- Contact : icône + chips multi-contact + bouton + -->
+                <div class="pwa-contact-tags-wrap"
+                     data-project-id="<?php echo $project->id; ?>"
+                     data-tiers-id="<?php echo $tiersId; ?>">
+
+                    <!-- Icône 📒 : lien vers 1er contact si existant, sinon grisée -->
+                    <?php if (!empty($linkedContacts)) : ?>
+                    <a href="<?php echo DOL_URL_ROOT; ?>/contact/card.php?id=<?php echo $linkedContacts[0]['contact_id']; ?>"
+                       class="pwa-contact-icon-link prevent-edit-click"
+                       title="<?php echo $contactTooltip; ?>">
                         <i class="fas fa-address-book"></i>
                     </a>
                     <?php else : ?>
-                    <i class="fas fa-address-book" style="color:#cbd5e0;font-size:1.1em;"></i>
+                    <i class="fas fa-address-book pwa-contact-icon-nolink" title="<?php echo $contactTooltip; ?>"></i>
                     <?php endif; ?>
-                    <div class="pwa-contact-selector" data-project-id="<?php echo $project->id; ?>" data-tiers-id="<?php echo $tiersId; ?>" title="Changer le contact">
-                        <span style="font-weight:500;"><?php echo $linkedContactName ?: 'Contact'; ?></span>
-                        <i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>
+
+                    <!-- Chips contacts liés -->
+                    <?php foreach ($linkedContacts as $lc) : ?>
+                    <span class="pwa-contact-chip"
+                          data-link-id="<?php echo $lc['link_id']; ?>"
+                          data-contact-id="<?php echo $lc['contact_id']; ?>">
+                        <a href="<?php echo DOL_URL_ROOT; ?>/contact/card.php?id=<?php echo $lc['contact_id']; ?>"
+                           class="prevent-edit-click"
+                           title="Voir la fiche contact"><?php echo $lc['name']; ?></a>
+                        <span class="pwa-chip-role">- <?php echo $lc['role_label']; ?></span>
+                        <span class="pwa-chip-remove prevent-edit-click"
+                              data-link-id="<?php echo $lc['link_id']; ?>"
+                              title="Retirer ce contact">&times;</span>
+                    </span>
+                    <?php endforeach; ?>
+
+                    <!-- Bouton + Ajouter -->
+                    <span class="pwa-add-contact-btn prevent-edit-click" title="Ajouter un contact">
+                        <i class="fas fa-plus"></i>
+                    </span>
+
+                    <!-- Panel d'ajout (hidden) -->
+                    <div class="pwa-contact-add-panel" style="display:none;">
+                        <select class="pwa-contact-add-select" style="width:100%;"></select>
                     </div>
-                    <!-- Select inline (initialisé avec tous les contacts de la société par JS) -->
-                    <div class="pwa-inline-select-wrap" id="pwa-contact-wrap-<?php echo $project->id; ?>" style="display:none; position:absolute; top:100%; left:0; z-index:9999; min-width:220px;">
-                        <select id="pwa-contact-select-<?php echo $project->id; ?>"
-                                class="pwa-contact-select"
-                                data-project-id="<?php echo $project->id; ?>"
-                                data-tiers-id="<?php echo $tiersId; ?>"
-                                style="width:100%;"></select>
-                    </div>
-                </div><!-- /contact pwa-selector-wrap -->
+
+                </div><!-- /pwa-contact-tags-wrap -->
 
             </div><!-- /pwa-selectors-group -->
 
             <span class="dot-sep">&bull;</span>
-
 
             <!-- Devis -->
             <a href="<?php echo DOL_URL_ROOT; ?>/comm/propal/list.php?search_projet=<?php echo $project->id; ?>"
