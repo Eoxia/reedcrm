@@ -29,8 +29,9 @@ $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
 <div class="linked-medias project" id="master-media-row-container" style="width: 100%; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; box-sizing: border-box; min-height: 48px;">
     
     <style>
+    #master-media-row-container [id$="master-media-row-container-photo"] { flex-direction: row !important; gap: 6px !important; }
     #master-media-row-container .linked-medias.medias        { width: auto !important; display: inline-flex; align-items: center; flex-direction: row; }
-    #master-media-row-container .saturne-media-upload-block  { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
+    #master-media-row-container .saturne-media-upload-block  { display: inline-flex !important; align-items: center !important; flex-direction: row !important; gap: 6px !important; margin-top: 0 !important; }
     #master-media-row-container .saturne-media-gallery       { display: inline-flex; align-items: center; }
     #master-media-row-container .saturne-audio-controls      { display: inline-flex !important; align-items: center !important; flex-direction: row !important; gap: 6px !important; margin-top: 0 !important; }
     #master-media-row-container .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
@@ -38,6 +39,7 @@ $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
     #master-media-row-container [id$="master-media-row-container-audio"] { padding: 0 !important; }
     #master-media-row-container .saturne-upload-label {
         width: 44px !important; height: 44px !important;
+        min-width: 44px !important; min-height: 44px !important;
         display: inline-flex !important; align-items: center !important; justify-content: center !important;
         box-sizing: border-box; flex-shrink: 0;
     }
@@ -47,12 +49,14 @@ $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
         box-sizing: border-box;
     }
     #master-media-row-container .open-media-editor-as-gallery {
-        position: relative; display: inline-flex; align-items: center; justify-content: center;
-        width: 44px; height: 44px; border-radius: 12px;
-        overflow: visible; cursor: pointer; flex-shrink: 0; align-self: center;
+        position: relative; display: inline-flex !important; align-items: center; justify-content: center;
+        width: 44px !important; height: 44px !important;
+        min-width: 44px !important; min-height: 44px !important;
+        border-radius: 12px; overflow: visible; cursor: pointer; flex-shrink: 0; align-self: center;
     }
     #master-media-row-container .open-media-editor-as-gallery img {
-        width: 44px; height: 44px; object-fit: cover; border-radius: 12px; display: block;
+        width: 44px !important; height: 44px !important;
+        object-fit: cover !important; border-radius: 12px !important; display: block !important;
     }
     #master-media-row-container .open-media-editor-as-gallery .saturne-media-count-badge {
         position: absolute; top: -6px; right: -6px; z-index: 2;

@@ -42,8 +42,9 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .inline-edit-contact { cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; }
     .pwa-card-media-row { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 6px; }
     /* Force all media block children to the same height & vertical alignment */
+    .pwa-card-media-row [id$="master-media-row-container-photo"] { flex-direction: row !important; gap: 6px !important; }
     .pwa-card-media-row .linked-medias.medias        { display: inline-flex; align-items: center; flex-direction: row; }
-    .pwa-card-media-row .saturne-media-upload-block  { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
+    .pwa-card-media-row .saturne-media-upload-block  { display: inline-flex !important; align-items: center !important; flex-direction: row !important; gap: 6px !important; margin-top: 0 !important; }
     .pwa-card-media-row .saturne-media-gallery       { display: inline-flex; align-items: center; }
     .pwa-card-media-row .saturne-audio-controls      { display: inline-flex !important; align-items: center !important; flex-direction: row !important; gap: 6px !important; margin-top: 0 !important; }
     .pwa-card-media-row .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
@@ -51,6 +52,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-card-media-row [id$="master-media-row-container-audio"] { padding: 0 !important; }
     .pwa-card-media-row .saturne-upload-label {
         width: 44px !important; height: 44px !important;
+        min-width: 44px !important; min-height: 44px !important;
         display: inline-flex !important; align-items: center !important; justify-content: center !important;
         box-sizing: border-box; flex-shrink: 0;
     }
@@ -60,14 +62,16 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
         box-sizing: border-box;
     }
     .pwa-card-media-row .open-media-editor-as-gallery {
-        position: relative; display: inline-flex; align-items: center; justify-content: center;
-        width: 44px; height: 44px; border-radius: 12px;
-        overflow: visible; /* let the count badge overflow */
-        cursor: pointer; flex-shrink: 0; align-self: center;
+        position: relative; display: inline-flex !important; align-items: center; justify-content: center;
+        width: 44px !important; height: 44px !important;
+        min-width: 44px !important; min-height: 44px !important;
+        border-radius: 12px;
+        overflow: visible; cursor: pointer; flex-shrink: 0; align-self: center;
     }
     .pwa-card-media-row .open-media-editor-as-gallery img {
-        width: 44px; height: 44px; object-fit: cover; border-radius: 12px;
-        display: block; overflow: hidden;
+        width: 44px !important; height: 44px !important;
+        object-fit: cover !important; border-radius: 12px !important;
+        display: block !important;
     }
     .pwa-card-media-row .open-media-editor-as-gallery .saturne-media-count-badge {
         position: absolute; top: -6px; right: -6px; z-index: 2;
