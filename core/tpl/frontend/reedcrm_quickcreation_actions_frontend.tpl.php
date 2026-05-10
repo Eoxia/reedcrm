@@ -397,8 +397,21 @@ if ($action == 'removeoppcontact') {
     $linkId = GETPOST('link_id', 'int');
     $res = ['success' => false];
     if ($linkId > 0) {
-        $db->query("DELETE FROM " . MAIN_DB_PREFIX . "element_contact WHERE rowid = " . (int)$linkId);
-        $res['success'] = ($db->affected_rows() > 0);
+        $sql   = "DELETE FROM " . MAIN_DB_PREFIX . "element_contact WHERE rowid = " . (int)$linkId;
+        $resql = $db->query($sql);
+        if ($resql) {
+            // Dolibarr affected_rows() takes no parameter
+            $affected = $db->affected_rows($resql);
+            // Consider success even if 0 rows (idempotent — already deleted)
+            $res['success'] = true;
+            if ($affected === 0) {
+                $res['warning'] = 'Link already removed (link_id=' . $linkId . ')';
+            }
+        } else {
+            $res['error'] = $db->lasterror();
+        }
+    } else {
+        $res['error'] = 'Invalid link_id';
     }
     header('Content-Type: application/json');
     echo json_encode($res);
