@@ -29,8 +29,21 @@ $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
 <div class="linked-medias project" id="master-media-row-container" style="width: 100%; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; box-sizing: border-box; min-height: 48px;">
     
     <style>
-    #master-media-row-container .linked-medias.medias {
-        width: auto !important;
+    #master-media-row-container .linked-medias.medias        { width: auto !important; display: inline-flex; align-items: center; flex-direction: row; }
+    #master-media-row-container .saturne-media-upload-block  { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
+    #master-media-row-container .saturne-media-gallery       { display: inline-flex; align-items: center; }
+    #master-media-row-container .saturne-audio-controls      { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
+    #master-media-row-container .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
+    #master-media-row-container .open-media-editor-as-gallery {
+        position: relative; display: inline-flex; align-items: center; justify-content: center;
+        width: 44px; height: 44px; border-radius: 12px;
+        overflow: visible; cursor: pointer; flex-shrink: 0; align-self: center;
+    }
+    #master-media-row-container .open-media-editor-as-gallery img {
+        width: 44px; height: 44px; object-fit: cover; border-radius: 12px; display: block;
+    }
+    #master-media-row-container .open-media-editor-as-gallery .saturne-media-count-badge {
+        position: absolute; top: -6px; right: -6px; z-index: 2;
     }
     </style>
     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
