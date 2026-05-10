@@ -32,13 +32,18 @@ $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
     #master-media-row-container .linked-medias.medias        { width: auto !important; display: inline-flex; align-items: center; flex-direction: row; }
     #master-media-row-container .saturne-media-upload-block  { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
     #master-media-row-container .saturne-media-gallery       { display: inline-flex; align-items: center; }
-    #master-media-row-container .saturne-audio-controls      { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
+    #master-media-row-container .saturne-audio-controls      { display: inline-flex !important; align-items: center !important; flex-direction: row !important; gap: 6px !important; margin-top: 0 !important; }
     #master-media-row-container .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
-    /* Uniform 44x44px for all action buttons */
-    #master-media-row-container .saturne-upload-label,
+    /* Override Saturne 50px buttons → uniform 44×44px */
+    #master-media-row-container [id$="master-media-row-container-audio"] { padding: 0 !important; }
+    #master-media-row-container .saturne-upload-label {
+        width: 44px !important; height: 44px !important;
+        display: inline-flex !important; align-items: center !important; justify-content: center !important;
+        box-sizing: border-box; flex-shrink: 0;
+    }
     #master-media-row-container .saturne-media-btn {
-        width: 44px; height: 44px; min-width: 44px; flex-shrink: 0;
-        display: inline-flex; align-items: center; justify-content: center;
+        width: 44px !important; height: 44px !important;
+        min-width: 44px !important; min-height: 44px !important;
         box-sizing: border-box;
     }
     #master-media-row-container .open-media-editor-as-gallery {

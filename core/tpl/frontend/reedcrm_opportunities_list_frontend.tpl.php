@@ -45,13 +45,18 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-card-media-row .linked-medias.medias        { display: inline-flex; align-items: center; flex-direction: row; }
     .pwa-card-media-row .saturne-media-upload-block  { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
     .pwa-card-media-row .saturne-media-gallery       { display: inline-flex; align-items: center; }
-    .pwa-card-media-row .saturne-audio-controls      { display: inline-flex; align-items: center; flex-direction: row; gap: 6px; }
+    .pwa-card-media-row .saturne-audio-controls      { display: inline-flex !important; align-items: center !important; flex-direction: row !important; gap: 6px !important; margin-top: 0 !important; }
     .pwa-card-media-row .saturne-play-recording-wrapper { display: inline-flex; align-items: center; }
-    /* Uniform 44x44px for all action buttons */
-    .pwa-card-media-row .saturne-upload-label,
+    /* Override Saturne 50px buttons → uniform 44×44px */
+    .pwa-card-media-row [id$="master-media-row-container-audio"] { padding: 0 !important; }
+    .pwa-card-media-row .saturne-upload-label {
+        width: 44px !important; height: 44px !important;
+        display: inline-flex !important; align-items: center !important; justify-content: center !important;
+        box-sizing: border-box; flex-shrink: 0;
+    }
     .pwa-card-media-row .saturne-media-btn {
-        width: 44px; height: 44px; min-width: 44px; flex-shrink: 0;
-        display: inline-flex; align-items: center; justify-content: center;
+        width: 44px !important; height: 44px !important;
+        min-width: 44px !important; min-height: 44px !important;
         box-sizing: border-box;
     }
     .pwa-card-media-row .open-media-editor-as-gallery {
