@@ -91,3 +91,6 @@ GravityFormLink=GravityForm Link
 DetectingLocation = Detecting your location
 GeolocationNotSupported = Geolocation is not supported by this browser
 GeolocationDenied = Location access denied
+
+# Project overview - Forecast Profit
+ForecastProfit = Forecast Profit

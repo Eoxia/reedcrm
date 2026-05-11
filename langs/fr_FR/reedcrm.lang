@@ -344,3 +344,6 @@ PropalStatusBilled = Facturée
 DetectingLocation = Détection de la position en cours
 GeolocationNotSupported = Géolocalisation non supportée par ce navigateur
 GeolocationDenied = Accès à la position refusé
+
+# Project overview - Bénéfice prévisionnel
+ForecastProfit = Bénéfice prévisionnel
