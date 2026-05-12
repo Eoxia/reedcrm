@@ -197,7 +197,7 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
         }
         $socNomUrl = $socNomUrl ?? '';
 
-        // --- Linked contacts (all PROJECTCONTRIBUTOR/LEADER/SALESREP) ---
+        // --- Linked contacts (external only — internal PROJECTLEADER excluded from chips) ---
         $linkedContacts = [];
         $resLC = $db->query(
             "SELECT ec.rowid as link_id, ec.fk_socpeople,
@@ -208,7 +208,8 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
                JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
               WHERE ec.element_id = " . (int)$project->id . "
                 AND ctc.element = 'project'
-                AND ctc.code IN ('PROJECTLEADER','PROJECTCONTRIBUTOR','SALESREPINTERNAL')
+                AND ec.source = 'external'
+                AND ctc.code IN ('PROJECTCONTRIBUTOR','SALESREPINTERNAL')
               ORDER BY ec.rowid ASC"
         );
         if ($resLC) {
