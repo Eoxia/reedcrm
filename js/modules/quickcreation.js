@@ -60,6 +60,10 @@ window.reedcrm.quickcreation.longitude = null;
  */
 window.reedcrm.quickcreation.init = function() {
   window.reedcrm.quickcreation.setAddressBlockState('searching', 'Détection de la position en cours...');
+  // Also boot the saturne quickcreation_form module (geoloc icon positioning, phone/email/slider)
+  if (window.saturne && window.saturne.quickcreation_form && window.saturne.quickcreation_form.init) {
+    window.saturne.quickcreation_form.init();
+  }
   window.reedcrm.quickcreation.event();
 };
 
