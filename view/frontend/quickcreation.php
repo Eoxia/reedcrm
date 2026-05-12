@@ -107,8 +107,8 @@ $moreJS   = [
     '/custom/saturne/js/includes/signature-pad.min.js',
     '/custom/saturne/js/includes/hammer.min.js',
     '/custom/reedcrm/js/intl-tel-input/js/intlTelInput.min.js',
-    '/custom/reedcrm/js/modules/quickcreation.js',
-    '/custom/reedcrm/js/reedcrm.min.js'
+    '/custom/reedcrm/js/reedcrm.min.js',
+    '/custom/reedcrm/js/modules/quickcreation.js'
 ];
 $moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
 

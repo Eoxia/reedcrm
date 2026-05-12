@@ -272,3 +272,11 @@ window.reedcrm.quickcreation.showOppPercentValue = function() {
   $('.opp_percent-value').text(val + '%');
   $('#opp_percent').parent().get(0).style.setProperty('--val', val);
 };
+
+// Self-boot: this module loads after $(document).ready has fired (placed after reedcrm.min.js).
+// jQuery fires the callback immediately if DOM is already ready.
+$(document).ready(function() {
+  if (document.querySelector('.quickcreation-form') || document.getElementById('geoloc-header-wrapper')) {
+    window.reedcrm.quickcreation.init();
+  }
+});
