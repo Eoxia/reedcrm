@@ -111,13 +111,14 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
     },
     function (error) {
       var messages = {
-        1: 'User denied the request for geolocation.',
-        2: 'Location information is unavailable.',
-        3: 'The request to get user location timed out.'
+        1: 'Accès à la position refusé.',
+        2: 'Position indisponible.',
+        3: 'Délai de géolocalisation dépassé.'
       };
-      $('#id-container #geolocation-error').val(messages[error.code] || 'An unknown error occurred.');
-      window.reedcrm.quickcreation.setAddressBlockState('error', 'Accès à la position refusé.');
-    }
+      $('#id-container #geolocation-error').val(error.message || '');
+      window.reedcrm.quickcreation.setAddressBlockState('error', messages[error.code] || 'Erreur de géolocalisation.');
+    },
+    { timeout: 10000, maximumAge: 300000 }
   );
 };
 
@@ -184,13 +185,16 @@ window.reedcrm.quickcreation.setAddressBlockState = function(state, message) {
   if (state === 'success') {
     $icon.addClass('fa-map-marker-alt').css('color', '#2ecc71');
     $text.css('color', '#34495e');
+    $block.addClass('is-visible');
   } else if (state === 'error') {
     $icon.addClass('fa-map-marker-alt').css('color', '#e74c3c');
     $ko.show();
     $text.css('color', '#e74c3c');
+    $block.addClass('is-visible');
   } else {
     $icon.addClass('fa-circle-notch fa-spin').css('color', '#3498db');
     $text.css('color', '#94a3b8');
+    $block.removeClass('is-visible');
   }
 
   $text.text(message);
