@@ -59,6 +59,11 @@ window.reedcrm.quickcreation.longitude = null;
  * @returns {void}
  */
 window.reedcrm.quickcreation.init = function() {
+  window.reedcrm.quickcreation.setAddressBlockState('searching', 'Détection de la position en cours...');
+  // Also boot the saturne quickcreation_form module (geoloc icon positioning, phone/email/slider)
+  if (window.saturne && window.saturne.quickcreation_form && window.saturne.quickcreation_form.init) {
+    window.saturne.quickcreation_form.init();
+  }
   window.reedcrm.quickcreation.event();
 };
 
@@ -98,8 +103,21 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
     return;
   }
 
+  // Safety fallback: if browser silently ignores permission (no popup shown),
+  // the native timeout may never fire. Force error state after 12s.
+  var _geolocResolved = false;
+  var _safetyTimer = setTimeout(function() {
+    if (!_geolocResolved) {
+      _geolocResolved = true;
+      $('#id-container #geolocation-error').val('Timeout');
+      window.reedcrm.quickcreation.setAddressBlockState('error', 'Délai dépassé. Autorisez la localisation dans votre navigateur.');
+    }
+  }, 12000);
+
   navigator.geolocation.getCurrentPosition(
     function (position) {
+      _geolocResolved = true;
+      clearTimeout(_safetyTimer);
       window.reedcrm.quickcreation.latitude  = position.coords.latitude;
       window.reedcrm.quickcreation.longitude = position.coords.longitude;
       $('#id-container #latitude').val(window.reedcrm.quickcreation.latitude);
@@ -110,6 +128,9 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
       );
     },
     function (error) {
+      if (_geolocResolved) return; // safety timer already fired
+      _geolocResolved = true;
+      clearTimeout(_safetyTimer);
       var messages = {
         1: 'Accès à la position refusé.',
         2: 'Position indisponible.',
@@ -251,3 +272,11 @@ window.reedcrm.quickcreation.showOppPercentValue = function() {
   $('.opp_percent-value').text(val + '%');
   $('#opp_percent').parent().get(0).style.setProperty('--val', val);
 };
+
+// Self-boot: this module loads after $(document).ready has fired (placed after reedcrm.min.js).
+// jQuery fires the callback immediately if DOM is already ready.
+$(document).ready(function() {
+  if (document.querySelector('.quickcreation-form') || document.getElementById('geoloc-header-wrapper')) {
+    window.reedcrm.quickcreation.init();
+  }
+});

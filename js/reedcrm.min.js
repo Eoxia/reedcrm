@@ -1250,6 +1250,16 @@ window.saturne.quickcreation_form.init = function() {
 
 window.saturne.quickcreation_form.moveGeolocIcon = function() {
     setTimeout(function() {
+        var $pwaHeader = $('#id-top');
+        if ($pwaHeader.length) {
+            var $userWidget = $pwaHeader.find('.user-profile-widget');
+            if ($userWidget.length) {
+                $('#geoloc-header-wrapper').css('display', 'flex').insertBefore($userWidget);
+            } else {
+                $pwaHeader.append($('#geoloc-header-wrapper').css('display', 'flex'));
+            }
+            return;
+        }
         var $headerRight = $('.login_block, .header-pwa-right, .saturne-header-right').first();
         if ($headerRight.length) {
             $('#geoloc-header-wrapper').css('display', 'flex').prependTo($headerRight);
