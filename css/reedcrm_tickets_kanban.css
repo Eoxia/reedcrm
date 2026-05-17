@@ -1,0 +1,617 @@
+﻿/* =====================================================================
+ *  ReedCRM — Kanban Tickets PWA Stylesheet v3
+ *  File: css/reedcrm_tickets_kanban.css
+ * ===================================================================== */
+
+/* ── VIEW TOGGLE ───────────────────────────────────────────────────── */
+.kanban-view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    padding: 2px;
+    flex-shrink: 0;
+}
+.view-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 26px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #64748b;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.view-toggle-btn:hover {
+    background: rgba(255,255,255,0.5);
+    color: #1e293b;
+}
+.view-toggle-btn.active {
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ── KANBAN FILTER BAR ─────────────────────────────────────────────── */
+.kanban-filters {
+    padding: 10px 15px 0 15px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.kanban-filter-chips {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: max-content;
+}
+.kanban-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 20px;
+    background: #fff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.kanban-chip:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+.kanban-chip.active {
+    background: #1e293b;
+    border-color: #1e293b;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(30, 41, 59, 0.25);
+}
+.kanban-chip .chip-count {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+}
+.kanban-chip.active .chip-count {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Avatar in chip */
+.kanban-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.kanban-avatar-placeholder {
+    background: #cbd5e1;
+    color: #64748b;
+    font-size: 10px;
+}
+.kanban-avatar-img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.kanban-chip.active .kanban-avatar {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* ── STATUS FILTER BAR (Notion-like) ───────────────────────────────── */
+.kanban-status-filters {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-width: max-content;
+}
+.status-filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    white-space: nowrap;
+    margin-right: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.status-filter-label i {
+    font-size: 10px;
+}
+.status-filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.status-filter-chip:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+.status-filter-chip.active {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+.status-filter-chip:not(.active) {
+    opacity: 0.45;
+    background: #f1f5f9;
+    text-decoration: line-through;
+}
+.sf-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.sf-label {
+    font-size: 11px;
+}
+.sf-count {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 0 5px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 14px;
+    text-align: center;
+}
+
+/* ── KANBAN BOARD ──────────────────────────────────────────────────── */
+.kanban-board {
+    display: flex;
+    gap: 12px;
+    padding: 0 15px 90px 15px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: calc(100vh - 220px);
+    align-items: flex-start;
+}
+
+/* ── LIST MODE ─────────────────────────────────────────────────────── */
+.kanban-board.kanban-list-mode {
+    flex-direction: column;
+    overflow-x: visible;
+    gap: 16px;
+}
+.kanban-board.kanban-list-mode .kanban-column {
+    flex: 1 1 auto;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    max-height: none;
+}
+.kanban-board.kanban-list-mode .kanban-column-body {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    overflow-y: visible;
+}
+.kanban-board.kanban-list-mode .ticket-card-kanban {
+    flex: 0 0 calc(50% - 5px);
+    max-width: calc(50% - 5px);
+}
+.kanban-board.kanban-list-mode .kanban-resize-handle {
+    display: none;
+}
+@media (max-width: 768px) {
+    .kanban-board.kanban-list-mode .ticket-card-kanban {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+@media (min-width: 1200px) {
+    .kanban-board.kanban-list-mode .ticket-card-kanban {
+        flex: 0 0 calc(33.33% - 7px);
+        max-width: calc(33.33% - 7px);
+    }
+}
+
+/* ── KANBAN COLUMN ─────────────────────────────────────────────────── */
+.kanban-column {
+    flex: 0 0 280px;
+    min-width: 280px;
+    max-width: 320px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 220px);
+    transition: opacity 0.3s;
+    position: relative;
+}
+.kanban-column.collapsed .kanban-column-body {
+    display: none;
+}
+.kanban-column.collapsed .kanban-column-toggle i {
+    transform: rotate(-90deg);
+}
+
+/* Column header — clickable */
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--col-color, #e2e8f0);
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(248,250,252,0.95));
+    border-radius: 12px 12px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+.kanban-column-header:hover {
+    background: linear-gradient(135deg, rgba(241,245,249,1), rgba(248,250,252,0.95));
+}
+.kanban-column-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.kanban-column-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e293b;
+    flex: 1;
+}
+.kanban-column-count {
+    background: #e2e8f0;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 20px;
+    text-align: center;
+}
+.kanban-column-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 2px 4px;
+    transition: transform 0.2s;
+}
+
+/* ── COLUMN RESIZE HANDLE ──────────────────────────────────────────── */
+.kanban-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -4px;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10;
+    background: transparent;
+    transition: background 0.2s;
+}
+.kanban-resize-handle:hover,
+.kanban-column.resizing .kanban-resize-handle {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 4px;
+}
+.kanban-column.resizing {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+/* Column body */
+.kanban-column-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Empty state */
+.kanban-empty-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 10px;
+    color: #cbd5e1;
+    font-size: 12px;
+    gap: 8px;
+}
+.kanban-empty-col i {
+    font-size: 24px;
+}
+
+/* ── TICKET CARD ───────────────────────────────────────────────────── */
+.ticket-card-kanban {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: box-shadow 0.2s, border-color 0.2s, opacity 0.3s, transform 0.2s;
+    cursor: grab;
+}
+.ticket-card-kanban:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+}
+.ticket-card-kanban.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+.ticket-card-kanban.hidden-by-filter {
+    display: none;
+}
+
+/* Card header */
+.ticket-card-kanban .tc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+.ticket-card-kanban .tc-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 11px;
+    color: #64748b;
+}
+.ticket-card-kanban .tc-ref {
+    font-weight: 600;
+    color: #0f172a;
+    text-decoration: none;
+    font-size: 11px;
+}
+.ticket-card-kanban .tc-ref:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+.ticket-card-kanban .tc-sep {
+    color: #cbd5e1;
+    font-size: 10px;
+}
+.ticket-card-kanban .tc-company {
+    color: #475569;
+    font-weight: 500;
+    font-size: 11px;
+}
+.ticket-card-kanban .tc-date,
+.ticket-card-kanban .tc-time {
+    font-size: 11px;
+}
+
+/* Assignee avatar */
+.ticket-card-kanban .tc-assignee {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.ticket-card-kanban .tc-assignee-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Severity & progress row */
+.ticket-card-kanban .tc-row-middle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+.ticket-card-kanban .tc-severity {
+    font-weight: 600;
+    color: #0f172a;
+}
+.ticket-card-kanban .tc-progress {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Title & Actions row */
+.ticket-card-kanban .tc-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+.ticket-card-kanban .tc-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.3;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.ticket-card-kanban .tc-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.ticket-card-kanban .tc-status-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.ticket-card-kanban .tc-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.ticket-card-kanban .tc-chat-link {
+    color: #94a3b8;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+.ticket-card-kanban .tc-chat-link:hover {
+    color: #3b82f6;
+}
+
+/* Message preview */
+.ticket-card-kanban .tc-body {
+    margin-top: 2px;
+}
+.ticket-card-kanban .tc-message-preview {
+    font-size: 12px;
+    color: #334155;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+/* ── DRAG & DROP FEEDBACK ──────────────────────────────────────────── */
+.kanban-column.drag-over .kanban-column-body {
+    background: rgba(59, 130, 246, 0.04);
+    border: 2px dashed #3b82f6;
+    border-radius: 8px;
+    min-height: 80px;
+}
+.kanban-column.drag-over .kanban-column-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(248, 250, 252, 0.95));
+}
+
+.kanban-drop-placeholder {
+    border: 2px dashed #93c5fd;
+    border-radius: 8px;
+    background: rgba(59, 130, 246, 0.05);
+    min-height: 60px;
+    transition: all 0.2s;
+}
+
+/* ── RESPONSIVE ────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .kanban-board {
+        padding: 0 10px 90px 10px;
+        gap: 10px;
+    }
+    .kanban-column {
+        flex: 0 0 260px;
+        min-width: 260px;
+    }
+    .ticket-card-kanban {
+        padding: 8px 10px;
+        cursor: default;
+    }
+    .ticket-card-kanban[draggable="true"] {
+        -webkit-user-drag: none;
+    }
+    .kanban-resize-handle {
+        display: none;
+    }
+}
+
+@media (min-width: 1200px) {
+    .kanban-board:not(.kanban-list-mode) {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    .kanban-board:not(.kanban-list-mode) .kanban-column {
+        flex: 1 1 0;
+        max-width: 320px;
+    }
+}
+
+/* ── LOADING SPINNER ───────────────────────────────────────────────── */
+.kanban-card-loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+.kanban-card-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 3px solid rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: kanban-spin 0.6s linear infinite;
+}
+@keyframes kanban-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Custom scrollbar for columns */
+.kanban-column-body::-webkit-scrollbar { width: 4px; }
+.kanban-column-body::-webkit-scrollbar-track { background: transparent; }
+.kanban-column-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.kanban-column-body::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Custom scrollbar for board */
+.kanban-board::-webkit-scrollbar { height: 6px; }
+.kanban-board::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+.kanban-board::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
