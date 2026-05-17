@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * \file    core/tpl/frontend/reedcrm_tickets_kanban.tpl.php
  * \ingroup reedcrm
@@ -79,32 +79,36 @@ function buildSortHeader($field, $label, $icon, $currentSort, $currentOrder, $ba
     <input type="hidden" name="sortorder" value="<?php echo dol_escape_htmltag($sortorder); ?>">
 
     <div class="nt-grid nt-header-row">
-        <div class="nt-cell nt-cell-ref"><?php echo buildSortHeader('ref', 'Réf', 'fas fa-hashtag', $sortfield, $sortorder, $baseParams); ?></div>
-        <div class="nt-cell nt-cell-author">
+        <div class="nt-cell nt-cell-ref" data-col-index="0"><?php echo buildSortHeader('ref', 'Réf', 'fas fa-hashtag', $sortfield, $sortorder, $baseParams); ?></div>
+        <div class="nt-cell nt-cell-author" data-col-index="1">
             <span class="nt-header-label"><i class="fas fa-user nt-header-icon"></i> Auteur</span>
         </div>
-        <div class="nt-cell nt-cell-subject"><?php echo buildSortHeader('subject', 'Sujet', 'fas fa-font', $sortfield, $sortorder, $baseParams); ?></div>
-        <div class="nt-cell nt-cell-severity"><?php echo buildSortHeader('severity_code', 'Sévérité', 'fas fa-exclamation-triangle', $sortfield, $sortorder, $baseParams); ?></div>
-        <div class="nt-cell nt-cell-date"><?php echo buildSortHeader('datec', 'Création', 'fas fa-calendar', $sortfield, $sortorder, $baseParams); ?></div>
-        <div class="nt-cell nt-cell-assignee"><?php echo buildSortHeader('fk_user_assign', 'Assigné à', 'fas fa-user-check', $sortfield, $sortorder, $baseParams); ?></div>
-        <div class="nt-cell nt-cell-status"><?php echo buildSortHeader('fk_statut', 'État', 'fas fa-circle', $sortfield, $sortorder, $baseParams); ?></div>
-        <div class="nt-cell nt-cell-tags">
+        <div class="nt-cell nt-cell-subject" data-col-index="2"><?php echo buildSortHeader('subject', 'Sujet', 'fas fa-font', $sortfield, $sortorder, $baseParams); ?></div>
+        <div class="nt-cell nt-cell-message" data-col-index="3">
+            <span class="nt-header-label"><i class="fas fa-comment-alt nt-header-icon"></i> Message</span>
+        </div>
+        <div class="nt-cell nt-cell-severity" data-col-index="4"><?php echo buildSortHeader('severity_code', 'Sévérité', 'fas fa-exclamation-triangle', $sortfield, $sortorder, $baseParams); ?></div>
+        <div class="nt-cell nt-cell-date" data-col-index="5"><?php echo buildSortHeader('datec', 'Création', 'fas fa-calendar', $sortfield, $sortorder, $baseParams); ?></div>
+        <div class="nt-cell nt-cell-assignee" data-col-index="6"><?php echo buildSortHeader('fk_user_assign', 'Assigné à', 'fas fa-user-check', $sortfield, $sortorder, $baseParams); ?></div>
+        <div class="nt-cell nt-cell-status" data-col-index="7"><?php echo buildSortHeader('fk_statut', 'État', 'fas fa-circle', $sortfield, $sortorder, $baseParams); ?></div>
+        <div class="nt-cell nt-cell-tags" data-col-index="8">
             <span class="nt-header-label"><i class="fas fa-tags nt-header-icon"></i> Tags</span>
         </div>
     </div>
 
     <!-- SEARCH ROW -->
     <div class="nt-grid nt-search-row">
-        <div class="nt-cell nt-cell-ref">
+        <div class="nt-cell nt-cell-ref" data-col-index="0">
             <input type="text" name="s_ref" value="<?php echo dol_escape_htmltag($s_ref); ?>" placeholder="Filtrer..." class="nt-search-input" autocomplete="off">
         </div>
-        <div class="nt-cell nt-cell-author">
+        <div class="nt-cell nt-cell-author" data-col-index="1">
             <input type="text" name="s_author" value="<?php echo dol_escape_htmltag($s_author); ?>" placeholder="Filtrer..." class="nt-search-input" autocomplete="off">
         </div>
-        <div class="nt-cell nt-cell-subject">
+        <div class="nt-cell nt-cell-subject" data-col-index="2">
             <input type="text" name="s_subject" value="<?php echo dol_escape_htmltag($s_subject); ?>" placeholder="Filtrer..." class="nt-search-input" autocomplete="off">
         </div>
-        <div class="nt-cell nt-cell-severity">
+        <div class="nt-cell nt-cell-message" data-col-index="3"></div>
+        <div class="nt-cell nt-cell-severity" data-col-index="4">
             <select name="s_severity" class="nt-search-select">
                 <option value="">Tous</option>
                 <?php foreach ($severityMap as $code => $label) { ?>
@@ -112,8 +116,8 @@ function buildSortHeader($field, $label, $icon, $currentSort, $currentOrder, $ba
                 <?php } ?>
             </select>
         </div>
-        <div class="nt-cell nt-cell-date"></div>
-        <div class="nt-cell nt-cell-assignee">
+        <div class="nt-cell nt-cell-date" data-col-index="5"></div>
+        <div class="nt-cell nt-cell-assignee" data-col-index="6">
             <select name="s_assignee" class="nt-search-select">
                 <option value="">Tous</option>
                 <option value="0"<?php echo ($s_assignee === '0') ? ' selected' : ''; ?>>Non assigné</option>
@@ -125,7 +129,7 @@ function buildSortHeader($field, $label, $icon, $currentSort, $currentOrder, $ba
                 <?php } ?>
             </select>
         </div>
-        <div class="nt-cell nt-cell-status">
+        <div class="nt-cell nt-cell-status" data-col-index="7">
             <select name="s_status" class="nt-search-select">
                 <option value="">Tous</option>
                 <?php foreach ($statusMap as $stCode => $stInfo) { ?>
@@ -133,7 +137,7 @@ function buildSortHeader($field, $label, $icon, $currentSort, $currentOrder, $ba
                 <?php } ?>
             </select>
         </div>
-        <div class="nt-cell nt-cell-tags">
+        <div class="nt-cell nt-cell-tags" data-col-index="8">
             <input type="text" name="s_tags" value="<?php echo dol_escape_htmltag($s_tags); ?>" placeholder="Filtrer..." class="nt-search-input" autocomplete="off">
         </div>
     </div>
@@ -196,6 +200,17 @@ foreach ($tickets as $ticket) {
     <!-- Sujet (editable text) -->
     <div class="nt-cell nt-cell-subject nt-editable" data-field="subject" data-edit-type="text" data-value="<?php echo dol_escape_htmltag($ticket->subject ?? ''); ?>">
         <span class="nt-cell-text"><?php echo dol_escape_htmltag($ticket->subject ?? 'Sans titre'); ?></span>
+    </div>
+
+    <!-- Message initial (read-only, truncated) -->
+    <?php
+        $rawMsg = strip_tags(str_replace(['<br>', '<br/>', '<br />'], ' ', $ticket->message ?? ''));
+        $rawMsg = trim(preg_replace('/\s+/', ' ', $rawMsg));
+        $msgPreview = mb_substr($rawMsg, 0, 120);
+        if (mb_strlen($rawMsg) > 120) $msgPreview .= '…';
+    ?>
+    <div class="nt-cell nt-cell-message" title="<?php echo dol_escape_htmltag($rawMsg); ?>">
+        <span class="nt-cell-text"><?php echo dol_escape_htmltag($msgPreview ?: '-'); ?></span>
     </div>
 
     <!-- Sévérité (editable select) -->

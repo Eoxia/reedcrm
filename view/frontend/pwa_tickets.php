@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * \file    view/frontend/pwa_tickets.php
  * \ingroup reedcrm
@@ -144,6 +144,37 @@ if ($action == 'updateticketfield') {
         }
     } else {
         $res['error'] = 'Invalid parameters';
+    }
+    echo json_encode($res);
+    exit;
+}
+
+// AJAX: Save column widths preference
+if ($action == 'savecolwidths') {
+    header('Content-Type: application/json; charset=utf-8');
+    $widths = GETPOST('widths', 'alphanohtml');
+    $res = ['success' => false];
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
+
+    if (!empty($widths)) {
+        // Validate format: comma-separated integers, exactly 8 columns
+        $parts = array_map('intval', explode(',', $widths));
+        if (count($parts) === 9) {
+            $cleanWidths = implode(',', $parts);
+            $result = dol_set_user_param($db, $conf, $user, [
+                'REEDCRM_TICKET_COL_WIDTHS' => $cleanWidths
+            ]);
+            $res['success'] = ($result > 0);
+        } else {
+            $res['error'] = 'Invalid widths count';
+        }
+    } else {
+        // Reset: delete the param by setting empty value
+        $result = dol_set_user_param($db, $conf, $user, [
+            'REEDCRM_TICKET_COL_WIDTHS' => ''
+        ]);
+        $res['success'] = ($result > 0);
     }
     echo json_encode($res);
     exit;
@@ -335,6 +366,7 @@ $pwaHeaderCenterHtml .= '  <div class="kanban-view-toggle" id="kanban-view-toggl
 $pwaHeaderCenterHtml .= '    <button class="view-toggle-btn' . ($viewmode == 'kanban' ? ' active' : '') . '" data-view="kanban" title="Vue Kanban"><i class="fas fa-columns"></i></button>';
 $pwaHeaderCenterHtml .= '    <button class="view-toggle-btn' . ($viewmode == 'table' ? ' active' : '') . '" data-view="table" title="Vue Table"><i class="fas fa-list"></i></button>';
 $pwaHeaderCenterHtml .= '  </div>';
+$pwaHeaderCenterHtml .= '  <button class="nt-reset-cols-btn" id="nt-reset-cols-btn" title="Réinitialiser les largeurs de colonnes" style="display:none;"><i class="fas fa-undo-alt"></i></button>';
 
 $pwaHeaderCenterHtml .= '</div>';
 
@@ -371,6 +403,10 @@ print 'window.KANBAN_TAGS = ' . json_encode($tagsJsonData) . ';';
 print 'window.KANBAN_STATUSES = ' . json_encode(array_map(function($k, $v) { return ['code' => $k, 'label' => $v['label'], 'color' => $v['color']]; }, array_keys($statusMap), array_values($statusMap))) . ';';
 print 'window.KANBAN_SEVERITIES = ' . json_encode(array_map(function($k, $v) { return ['code' => $k, 'label' => $v]; }, array_keys($severityMap), array_values($severityMap))) . ';';
 print 'window.KANBAN_VIEW = ' . json_encode($viewmode) . ';';
+print 'window.REEDCRM_USER_ID = ' . json_encode((int)$user->id) . ';';
+// Column widths from user preferences (llx_user_param)
+$savedColWidths = !empty($user->conf->REEDCRM_TICKET_COL_WIDTHS) ? $user->conf->REEDCRM_TICKET_COL_WIDTHS : '';
+print 'window.REEDCRM_COL_WIDTHS = ' . json_encode($savedColWidths) . ';';
 print '</script>';
 
 // --- TEMPLATE ---

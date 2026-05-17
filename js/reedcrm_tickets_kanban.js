@@ -22,6 +22,7 @@
         initViewToggle();
         initNotionTableSearch();
         initInlineEditing();
+        initColumnResize();
         initKanbanColumnToggle();
         initKanbanAssigneeFilter();
         if (!isMobile) {
@@ -519,6 +520,212 @@
             activeDropdown = null;
             if (parent) parent.classList.remove('nt-editing');
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // NOTION TABLE — COLUMN RESIZE
+    // ═══════════════════════════════════════════════════════════════════
+
+    var COL_COUNT = 9;
+    var MIN_COL_WIDTH = 60;
+    var DEFAULT_GRID_TEMPLATE = '';
+    var currentColWidths = null;
+    var resizeState = null;
+
+    /** @description Initialize column resize handles and restore saved widths */
+    function initColumnResize() {
+        var wrapper = document.getElementById('notion-table-wrapper');
+        var headerRow = wrapper ? wrapper.querySelector('.nt-header-row') : null;
+        if (!headerRow) return;
+
+        // Save the original CSS grid-template-columns for reset
+        DEFAULT_GRID_TEMPLATE = window.getComputedStyle(headerRow).gridTemplateColumns;
+
+        createResizeHandles(headerRow);
+
+        // Restore saved widths from server (injected by PHP)
+        var saved = window.REEDCRM_COL_WIDTHS || '';
+        if (saved) {
+            var widths = saved.split(',').map(Number);
+            if (widths.length === COL_COUNT) {
+                applyColumnWidths(widths);
+                showResetButton(true);
+            }
+        }
+
+        // Bind reset button
+        var resetBtn = document.getElementById('nt-reset-cols-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                resetColumnWidths();
+            });
+        }
+    }
+
+    /**
+     * @description Create invisible drag handles on right edge of each header cell
+     * @param {Element} headerRow
+     */
+    function createResizeHandles(headerRow) {
+        var cells = headerRow.querySelectorAll('.nt-cell[data-col-index]');
+        cells.forEach(function (cell) {
+            var handle = document.createElement('div');
+            handle.className = 'nt-resize-handle';
+            handle.setAttribute('data-col-index', cell.getAttribute('data-col-index'));
+            cell.appendChild(handle);
+
+            // Prevent sort link click when dragging
+            handle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            });
+
+            handle.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                onResizeStart(e, handle);
+            });
+
+            handle.addEventListener('touchstart', function (e) {
+                e.stopPropagation();
+                onResizeStart(e, handle);
+            }, { passive: false });
+        });
+    }
+
+    /**
+     * @description Start column resize drag
+     * @param {Event} e
+     * @param {Element} handle
+     */
+    function onResizeStart(e, handle) {
+        var wrapper = document.getElementById('notion-table-wrapper');
+        if (!wrapper) return;
+
+        var colIndex = parseInt(handle.getAttribute('data-col-index'), 10);
+        var headerRow = wrapper.querySelector('.nt-header-row');
+        if (!headerRow) return;
+
+        // Get current widths from computed style
+        var computedCols = window.getComputedStyle(headerRow).gridTemplateColumns;
+        var widths = computedCols.split(/\s+/).map(parseFloat);
+        if (widths.length !== COL_COUNT) return;
+
+        var startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+
+        resizeState = {
+            colIndex: colIndex,
+            startX: startX,
+            startWidth: widths[colIndex],
+            widths: widths
+        };
+
+        currentColWidths = widths.slice();
+        wrapper.classList.add('nt-resizing');
+        handle.classList.add('nt-resizing');
+
+        document.addEventListener('mousemove', onResizeMove);
+        document.addEventListener('mouseup', onResizeEnd);
+        document.addEventListener('touchmove', onResizeMove, { passive: false });
+        document.addEventListener('touchend', onResizeEnd);
+    }
+
+    /** @description Handle column resize drag movement */
+    function onResizeMove(e) {
+        if (!resizeState) return;
+        if (e.type === 'touchmove') e.preventDefault();
+
+        var currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+        var delta = currentX - resizeState.startX;
+        var newWidth = Math.max(MIN_COL_WIDTH, resizeState.startWidth + delta);
+
+        currentColWidths[resizeState.colIndex] = newWidth;
+        applyColumnWidths(currentColWidths);
+    }
+
+    /** @description End column resize and save to server */
+    function onResizeEnd() {
+        if (!resizeState) return;
+
+        var wrapper = document.getElementById('notion-table-wrapper');
+        if (wrapper) wrapper.classList.remove('nt-resizing');
+
+        var handle = wrapper ? wrapper.querySelector('.nt-resize-handle.nt-resizing') : null;
+        if (handle) handle.classList.remove('nt-resizing');
+
+        document.removeEventListener('mousemove', onResizeMove);
+        document.removeEventListener('mouseup', onResizeEnd);
+        document.removeEventListener('touchmove', onResizeMove);
+        document.removeEventListener('touchend', onResizeEnd);
+
+        // Save to server
+        if (currentColWidths) {
+            var widthsStr = currentColWidths.map(Math.round).join(',');
+            saveColumnWidthsAjax(widthsStr);
+            showResetButton(true);
+        }
+
+        resizeState = null;
+    }
+
+    /**
+     * @description Apply column widths to all .nt-grid elements
+     * @param {number[]} widths Array of pixel widths
+     */
+    function applyColumnWidths(widths) {
+        var template = widths.map(function (w) { return w + 'px'; }).join(' ');
+        var wrapper = document.getElementById('notion-table-wrapper');
+        if (!wrapper) return;
+
+        wrapper.querySelectorAll('.nt-grid').forEach(function (grid) {
+            grid.style.gridTemplateColumns = template;
+        });
+    }
+
+    /**
+     * @description Save column widths via AJAX to llx_user_param
+     * @param {string} widthsStr Comma-separated integer widths
+     */
+    function saveColumnWidthsAjax(widthsStr) {
+        var token = '';
+        var tokenInput = document.querySelector('input[name="token"]');
+        if (tokenInput) token = tokenInput.value;
+
+        var baseUrl = window.location.pathname;
+        var params = 'action=savecolwidths'
+            + '&token=' + encodeURIComponent(token)
+            + '&widths=' + encodeURIComponent(widthsStr);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', baseUrl + '?' + params, true);
+        xhr.send();
+    }
+
+    /** @description Reset column widths to CSS defaults and clear server preference */
+    function resetColumnWidths() {
+        var wrapper = document.getElementById('notion-table-wrapper');
+        if (!wrapper) return;
+
+        // Restore original CSS grid
+        wrapper.querySelectorAll('.nt-grid').forEach(function (grid) {
+            grid.style.gridTemplateColumns = '';
+        });
+
+        currentColWidths = null;
+        showResetButton(false);
+
+        // Clear server preference
+        saveColumnWidthsAjax('');
+    }
+
+    /**
+     * @description Show or hide the reset button
+     * @param {boolean} visible
+     */
+    function showResetButton(visible) {
+        var btn = document.getElementById('nt-reset-cols-btn');
+        if (btn) btn.style.display = visible ? '' : 'none';
     }
 
     // ═══════════════════════════════════════════════════════════════════
