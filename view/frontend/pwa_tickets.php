@@ -83,6 +83,37 @@ if ($action == 'updateticketstatus') {
     exit;
 }
 
+// --- AJAX: Change assigned user ---
+if ($action == 'updateticketassignee') {
+    header('Content-Type: application/json; charset=utf-8');
+    $ticketId   = GETPOST('ticketid', 'int');
+    $assigneeId = GETPOST('assigneeid', 'int');
+    $res = ['success' => false];
+
+    if ($ticketId > 0) {
+        $ticket = new Ticket($db);
+        $fetchRes = $ticket->fetch($ticketId);
+        if ($fetchRes > 0 && $ticket->id > 0) {
+            $result = $ticket->assignUser($user, $assigneeId > 0 ? $assigneeId : 0);
+            if ($result > 0) {
+                $res['success']     = true;
+                $res['assignee_id'] = $assigneeId;
+                // Return new status (assignUser changes it)
+                $ticket->fetch($ticketId);
+                $res['new_status']  = (int)$ticket->fk_statut;
+            } else {
+                $res['error'] = $ticket->error ?: 'Assign failed';
+            }
+        } else {
+            $res['error'] = 'Ticket not found';
+        }
+    } else {
+        $res['error'] = 'Invalid ticket ID';
+    }
+    echo json_encode($res);
+    exit;
+}
+
 // --- PERMISSION CHECK ---
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-tickets-list');
 
@@ -115,20 +146,24 @@ if ($resql) {
 }
 $totalTickets = count($tickets);
 
-// --- FETCH ASSIGNEE USER DATA ---
+// --- FETCH ALL INTERNAL USERS (for assignee dropdown + filter chips) ---
 $usersData = [];
-if (!empty($assignees)) {
-    $userIds = array_keys($assignees);
-    $sqlU  = "SELECT u.rowid, u.firstname, u.lastname, u.login, u.photo";
-    $sqlU .= " FROM " . MAIN_DB_PREFIX . "user as u";
-    $sqlU .= " WHERE u.rowid IN (" . implode(',', array_map('intval', $userIds)) . ")";
-    $resU = $db->query($sqlU);
-    if ($resU) {
-        while ($uObj = $db->fetch_object($resU)) {
+$allInternalUsers = [];
+$sqlU  = "SELECT u.rowid, u.firstname, u.lastname, u.login, u.photo, u.statut as user_status";
+$sqlU .= " FROM " . MAIN_DB_PREFIX . "user as u";
+$sqlU .= " WHERE u.entity IN (" . getEntity('user') . ")";
+$sqlU .= " AND u.statut = 1"; // active users only
+$sqlU .= " ORDER BY u.firstname ASC, u.lastname ASC";
+$resU = $db->query($sqlU);
+if ($resU) {
+    while ($uObj = $db->fetch_object($resU)) {
+        $allInternalUsers[$uObj->rowid] = $uObj;
+        // Also populate usersData for assignees that have tickets
+        if (isset($assignees[$uObj->rowid])) {
             $usersData[$uObj->rowid] = $uObj;
         }
-        $db->free($resU);
     }
+    $db->free($resU);
 }
 
 // --- Status Map (Dolibarr 23 Ticket constants) ---
@@ -190,6 +225,20 @@ require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 // Output CSRF token for JS
 print '<input type="hidden" name="token" value="' . $csrfToken . '">';
 
+// Output all internal users as JSON for assignee dropdown
+$usersJsonData = [];
+foreach ($allInternalUsers as $uid => $uObj) {
+    $fn = trim(($uObj->firstname ?? '') . ' ' . ($uObj->lastname ?? ''));
+    if (empty($fn)) $fn = $uObj->login ?? 'User #' . $uid;
+    $usersJsonData[] = [
+        'id'       => (int)$uid,
+        'name'     => $fn,
+        'initials' => mb_strtoupper(mb_substr($uObj->firstname ?? '', 0, 1) . mb_substr($uObj->lastname ?? '', 0, 1)),
+        'photo'    => (!empty($uObj->photo) && trim($uObj->photo) !== '') ? DOL_URL_ROOT . '/viewimage.php?modulepart=user&file=' . urlencode($uid . '/' . $uObj->photo) : '',
+    ];
+}
+print '<script>window.KANBAN_USERS = ' . json_encode($usersJsonData) . ';</script>';
+
 // --- KANBAN TEMPLATE ---
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_tickets_kanban.tpl.php';
 
@@ -198,3 +247,5 @@ require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php'
 
 llxFooter();
 $db->close();
+
+

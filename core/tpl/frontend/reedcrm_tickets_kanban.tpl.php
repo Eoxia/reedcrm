@@ -159,7 +159,7 @@
                  data-assignee="<?php echo $assigneeId; ?>"
                  data-search="<?php echo dol_escape_htmltag($searchStr); ?>">
                 <div class="tc-header">
-                    <div class="tc-meta">
+                    <div class="tc-meta" style="flex:1;min-width:0;">
                         <a href="<?php echo $ticketUrl; ?>" class="tc-ref"><?php echo dol_escape_htmltag($ref); ?></a>
                         <span class="tc-sep">&bull;</span>
                         <?php if (!empty($companyName)) { ?>
@@ -170,8 +170,9 @@
                         <span class="tc-sep">&bull;</span>
                         <span class="tc-time" title="Temps écoulé"><?php echo dol_escape_htmltag($elapsedTimeStr); ?></span>
                     </div>
-                    <div class="tc-assignee" title="Assigné à">
+                    <div class="tc-assignee tc-assignee-picker" title="Changer l'assigné" data-ticket-id="<?php echo (int)$ticket->rowid; ?>" data-current-assignee="<?php echo $assigneeId; ?>">
                         <?php echo $photoHtml ?: dol_escape_htmltag($initials); ?>
+                        <i class="fas fa-caret-down tc-assignee-caret"></i>
                     </div>
                 </div>
                 <div class="tc-row-middle">
@@ -202,4 +203,5 @@
     </div>
     <?php } ?>
 </div>
+
 

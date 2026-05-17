@@ -26,6 +26,7 @@
         initColumnToggle();
         initViewToggle();
         initStatusFilter();
+        initAssigneePicker();
         if (!isMobile) {
             initDragAndDrop();
             initColumnResize();
@@ -502,4 +503,243 @@
         });
     }
 
+    // ── ASSIGNEE PICKER DROPDOWN ──────────────────────────────────────
+    /**
+     * @description Click on assignee avatar to show a dropdown of all users
+     */
+    function initAssigneePicker() {
+        var users = window.KANBAN_USERS || [];
+        var activeDropdown = null;
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function (e) {
+            if (activeDropdown && !activeDropdown.contains(e.target) && !e.target.closest('.tc-assignee-picker')) {
+                closeDropdown();
+            }
+        });
+
+        document.querySelectorAll('.tc-assignee-picker').forEach(function (picker) {
+            picker.addEventListener('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                // Close existing dropdown
+                if (activeDropdown) {
+                    var wasOnSame = activeDropdown.parentElement === picker;
+                    closeDropdown();
+                    if (wasOnSame) return;
+                }
+
+                var ticketId = picker.getAttribute('data-ticket-id');
+                var currentAssignee = parseInt(picker.getAttribute('data-current-assignee') || '0', 10);
+
+                // Build dropdown
+                var dd = document.createElement('div');
+                dd.className = 'assignee-dropdown';
+
+                // "Non assigné" option
+                var unassignItem = createDropdownItem(0, 'Non assigné', '?', '', currentAssignee === 0);
+                unassignItem.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                    selectAssignee(ticketId, 0, picker);
+                });
+                dd.appendChild(unassignItem);
+
+                // Separator
+                var sep = document.createElement('div');
+                sep.className = 'assignee-dropdown-separator';
+                dd.appendChild(sep);
+
+                // All users
+                users.forEach(function (u) {
+                    var item = createDropdownItem(u.id, u.name, u.initials, u.photo, currentAssignee === u.id);
+                    item.addEventListener('click', function (ev) {
+                        ev.stopPropagation();
+                        selectAssignee(ticketId, u.id, picker);
+                    });
+                    dd.appendChild(item);
+                });
+
+                picker.appendChild(dd);
+                activeDropdown = dd;
+            });
+        });
+
+        /**
+         * @description Create a single dropdown item element
+         * @param {number} userId
+         * @param {string} name
+         * @param {string} initials
+         * @param {string} photoUrl
+         * @param {boolean} isSelected
+         * @returns {HTMLElement}
+         */
+        function createDropdownItem(userId, name, initials, photoUrl, isSelected) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'assignee-dropdown-item' + (isSelected ? ' selected' : '');
+            btn.setAttribute('data-user-id', userId);
+
+            var avatarHtml = '';
+            if (photoUrl) {
+                avatarHtml = '<div class="dd-avatar"><img src="' + photoUrl + '" alt="' + initials + '"></div>';
+            } else {
+                avatarHtml = '<div class="dd-avatar">' + (initials || '?') + '</div>';
+            }
+
+            btn.innerHTML = avatarHtml
+                + '<span>' + escapeHtml(name) + '</span>'
+                + (isSelected ? '<i class="fas fa-check dd-check"></i>' : '');
+
+            return btn;
+        }
+
+        /**
+         * @description AJAX call to assign a user to a ticket
+         * @param {string} ticketId
+         * @param {number} newAssigneeId
+         * @param {Element} pickerEl
+         */
+        function selectAssignee(ticketId, newAssigneeId, pickerEl) {
+            closeDropdown();
+
+            var card = pickerEl.closest('.ticket-card-kanban');
+            if (!card) return;
+
+            card.classList.add('kanban-card-loading');
+            card.style.position = 'relative';
+
+            var token = '';
+            var tokenInput = document.querySelector('input[name="token"]');
+            if (tokenInput) token = tokenInput.value;
+
+            var baseUrl = window.location.pathname;
+            var params = 'action=updateticketassignee'
+                + '&token=' + encodeURIComponent(token)
+                + '&ticketid=' + encodeURIComponent(ticketId)
+                + '&assigneeid=' + encodeURIComponent(newAssigneeId);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', baseUrl + '?' + params, true);
+            xhr.onload = function () {
+                card.classList.remove('kanban-card-loading');
+                try {
+                    var res = JSON.parse(xhr.responseText);
+                    if (res.success) {
+                        // Update card data
+                        card.setAttribute('data-assignee', String(newAssigneeId));
+                        pickerEl.setAttribute('data-current-assignee', String(newAssigneeId));
+
+                        // Update avatar display
+                        updatePickerAvatar(pickerEl, newAssigneeId);
+
+                        // Update status if changed by assignUser()
+                        if (typeof res.new_status !== 'undefined') {
+                            var newSt = String(res.new_status);
+                            var oldSt = card.getAttribute('data-status');
+                            if (newSt !== oldSt) {
+                                card.setAttribute('data-status', newSt);
+                                updateTicketStatusCard(card, newSt);
+                                // Move card to correct column
+                                var targetBody = document.getElementById('kanban-body-' + newSt);
+                                if (targetBody) {
+                                    targetBody.appendChild(card);
+                                    // Remove empty state from target
+                                    var emptyEl = targetBody.querySelector('.kanban-empty-col');
+                                    if (emptyEl) emptyEl.remove();
+                                }
+                                updateColumnCounts();
+                            }
+                        }
+
+                        // Success flash
+                        card.style.borderColor = '#22c55e';
+                        card.style.boxShadow = '0 0 0 2px rgba(34,197,94,0.3)';
+                        setTimeout(function () {
+                            card.style.borderColor = '';
+                            card.style.boxShadow = '';
+                        }, 1500);
+                    } else {
+                        console.error('Assignee update failed:', res.error);
+                        card.style.borderColor = '#ef4444';
+                        card.style.boxShadow = '0 0 0 2px rgba(239,68,68,0.3)';
+                        setTimeout(function () {
+                            card.style.borderColor = '';
+                            card.style.boxShadow = '';
+                        }, 3000);
+                    }
+                } catch (e) {
+                    console.error('Invalid JSON response:', xhr.responseText);
+                }
+            };
+            xhr.onerror = function () {
+                card.classList.remove('kanban-card-loading');
+                console.error('Network error during assignee update');
+            };
+            xhr.send();
+        }
+
+        /**
+         * @description Update the avatar display in the picker after reassignment
+         * @param {Element} pickerEl
+         * @param {number} userId
+         */
+        function updatePickerAvatar(pickerEl, userId) {
+            // Remove existing content except the caret
+            var caret = pickerEl.querySelector('.tc-assignee-caret');
+            pickerEl.textContent = '';
+
+            if (userId > 0) {
+                var user = null;
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].id === userId) { user = users[i]; break; }
+                }
+                if (user) {
+                    if (user.photo) {
+                        var img = document.createElement('img');
+                        img.src = user.photo;
+                        img.alt = user.initials;
+                        img.className = 'tc-assignee-img';
+                        pickerEl.appendChild(img);
+                    } else {
+                        pickerEl.appendChild(document.createTextNode(user.initials || '?'));
+                    }
+                } else {
+                    pickerEl.appendChild(document.createTextNode('?'));
+                }
+            } else {
+                pickerEl.appendChild(document.createTextNode('?'));
+            }
+
+            // Re-add caret
+            if (caret) {
+                pickerEl.appendChild(caret);
+            } else {
+                var newCaret = document.createElement('i');
+                newCaret.className = 'fas fa-caret-down tc-assignee-caret';
+                pickerEl.appendChild(newCaret);
+            }
+        }
+
+        function closeDropdown() {
+            if (activeDropdown) {
+                activeDropdown.remove();
+                activeDropdown = null;
+            }
+        }
+
+        /**
+         * @description Escape HTML characters
+         * @param {string} str
+         * @returns {string}
+         */
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+    }
+
 })();
+

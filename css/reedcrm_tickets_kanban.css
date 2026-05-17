@@ -615,3 +615,107 @@
 .kanban-board::-webkit-scrollbar { height: 6px; }
 .kanban-board::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
 .kanban-board::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* ── ASSIGNEE PICKER DROPDOWN ──────────────────────────────────────── */
+.tc-assignee-picker {
+    cursor: pointer;
+    position: relative;
+    transition: box-shadow 0.2s;
+}
+.tc-assignee-picker:hover {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+.tc-assignee-caret {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 8px;
+    color: #94a3b8;
+    background: #fff;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.tc-assignee-picker:hover .tc-assignee-caret {
+    color: #3b82f6;
+}
+
+/* Dropdown overlay */
+.assignee-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 100;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
+    min-width: 200px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 4px;
+    animation: assignee-dd-in 0.15s ease;
+}
+@keyframes assignee-dd-in {
+    from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.assignee-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+    color: #1e293b;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+.assignee-dropdown-item:hover {
+    background: #f1f5f9;
+}
+.assignee-dropdown-item.selected {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 700;
+}
+.assignee-dropdown-item .dd-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.assignee-dropdown-item .dd-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+.assignee-dropdown-item .dd-check {
+    margin-left: auto;
+    color: #2563eb;
+    font-size: 11px;
+}
+.assignee-dropdown-separator {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 4px 6px;
+}
