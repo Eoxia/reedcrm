@@ -1508,6 +1508,30 @@ class ActionsReedcrm
             ];
         }
 
+        // Per-user saved views (stored in llx_user_param)
+        global $user;
+        foreach (get_object_vars($user->conf) as $paramKey => $paramVal) {
+            if (strpos($paramKey, 'REEDCRM_VIEW_PROJECT_') !== 0) {
+                continue;
+            }
+            $decoded = json_decode($paramVal, true);
+            if (empty($decoded['label'])) {
+                continue;
+            }
+            $viewQuery  = !empty($decoded['query']) ? $decoded['query'] : '';
+            $presets[]  = [
+                'label'       => $decoded['label'],
+                'icon'        => 'fas fa-star',
+                'url'         => $baseUrl . ($viewQuery !== '' ? '&' . $viewQuery : ''),
+                'removeKey'   => $paramKey,
+                'removeTitle' => $langs->trans('Delete'),
+            ];
+        }
+
+        // "Save current view" button (raw caller-built chip)
+        $saveLabel = dol_escape_htmltag($langs->trans('ReedCRMSaveView'));
+        $presets[] = ['raw' => '<button type="button" class="saturne-list-preset reedcrm-save-view" title="' . $saveLabel . '"><i class="fas fa-save"></i> ' . $saveLabel . '</button>'];
+
         return saturne_render_list_presets($presets);
     }
 
