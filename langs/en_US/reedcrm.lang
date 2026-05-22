@@ -97,3 +97,9 @@ ReedCRMKpiNbOpportunities = Opportunities
 ReedCRMKpiTotalAmount = Total amount
 ReedCRMKpiWeightedAmount = Weighted pipeline
 ReedCRMKpiAvgProbability = Average probability
+
+# List presets - opportunity project list
+ReedCRMPresetMine = My opportunities
+ReedCRMPresetHot = Hot
+ReedCRMPresetOpen = Open
+ReedCRMPresetToRelaunch = To follow up

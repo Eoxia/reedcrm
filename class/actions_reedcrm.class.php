@@ -1420,9 +1420,13 @@ class ActionsReedcrm
 
         require_once __DIR__ . '/../../saturne/lib/saturne_functions.lib.php';
 
+        // Predefined view presets (one-click filtered views)
+        $presetsBar = $this->reedcrmRenderProjectPresets();
+
         // Snapshot of the current filtered query, exposed by the generic list before sort/pagination
         $baseSql = $GLOBALS['sqlForList'] ?? '';
         if (empty($baseSql)) {
+            $this->resprints = $presetsBar;
             return 0;
         }
 
@@ -1434,6 +1438,7 @@ class ActionsReedcrm
             'avgproba' => 'AVG(NULLIF(opp_percent, 0))',
         ]);
         if ($aggregates === null) {
+            $this->resprints = $presetsBar;
             return 0;
         }
 
@@ -1464,7 +1469,62 @@ class ActionsReedcrm
             ],
         ];
 
-        $this->resprints = saturne_render_kpi_cards($cards);
+        $this->resprints = $presetsBar . saturne_render_kpi_cards($cards);
+
+        return 0;
+    }
+
+    /**
+     * Build the predefined view presets bar for the opportunity project list.
+     *
+     * @return string HTML presets bar (uses the generic saturne_render_list_presets renderer)
+     */
+    protected function reedcrmRenderProjectPresets(): string
+    {
+        global $langs;
+
+        $activePreset = GETPOST('search_preset', 'aZ09');
+        $baseUrl      = $_SERVER['PHP_SELF'] . '?object_type=project';
+
+        $presetDefs = [
+            'mine'       => ['label' => $langs->trans('ReedCRMPresetMine'),       'icon' => 'fas fa-user'],
+            'hot'        => ['label' => $langs->trans('ReedCRMPresetHot'),        'icon' => 'fas fa-fire'],
+            'open'       => ['label' => $langs->trans('ReedCRMPresetOpen'),       'icon' => 'fas fa-folder-open'],
+            'torelaunch' => ['label' => $langs->trans('ReedCRMPresetToRelaunch'), 'icon' => 'fas fa-bell'],
+        ];
+
+        $presets = [[
+            'label'  => $langs->trans('All'),
+            'icon'   => 'fas fa-list',
+            'url'    => $baseUrl,
+            'active' => empty($activePreset),
+        ]];
+        foreach ($presetDefs as $key => $def) {
+            $presets[] = [
+                'label'  => $def['label'],
+                'icon'   => $def['icon'],
+                'url'    => $baseUrl . '&search_preset=' . $key,
+                'active' => ($activePreset === $key),
+            ];
+        }
+
+        return saturne_render_list_presets($presets);
+    }
+
+    /**
+     * Overloading the printFieldListSearchParam hook : keep the active preset across sort/pagination links.
+     *
+     * @param  array $parameters Hook metadatas (context, ...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printFieldListSearchParam(array $parameters): int
+    {
+        if (strpos($parameters['context'], 'projectlist') !== false) {
+            $preset = GETPOST('search_preset', 'aZ09');
+            if (!empty($preset)) {
+                $this->resprints = '&search_preset=' . urlencode($preset);
+            }
+        }
 
         return 0;
     }
@@ -1481,6 +1541,41 @@ class ActionsReedcrm
     {
         if (strpos($parameters['context'], 'propallist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
             $this->resprints = ' AND t.fk_statut >= 0';
+        }
+
+        if (strpos($parameters['context'], 'projectlist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
+            global $db, $user;
+
+            $preset    = GETPOST('search_preset', 'aZ09');
+            $notClosed = ' (t.fk_opp_status IS NULL OR t.fk_opp_status NOT IN (SELECT rowid FROM ' . MAIN_DB_PREFIX . "c_lead_status WHERE code IN ('WON', 'LOST')))";
+            $sql       = '';
+
+            switch ($preset) {
+                case 'mine':
+                    $sql = ' AND EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'element_contact ec'
+                         . ' INNER JOIN ' . MAIN_DB_PREFIX . 'c_type_contact tc ON tc.rowid = ec.fk_c_type_contact'
+                         . " AND tc.element = 'project' AND tc.source = 'internal'"
+                         . ' WHERE ec.element_id = t.rowid AND ec.fk_socpeople = ' . (int) $user->id . ')';
+                    break;
+                case 'hot':
+                    $sql = ' AND t.opp_percent >= 60';
+                    break;
+                case 'open':
+                    $sql = ' AND' . $notClosed;
+                    break;
+                case 'torelaunch':
+                    $relaunchTag = getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG');
+                    $sql  = ' AND' . $notClosed;
+                    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'actioncomm a'
+                          . ' WHERE a.fk_project = t.rowid AND a.datep >= ' . "'" . $db->idate(dol_now() - 30 * 24 * 3600) . "'";
+                    if ($relaunchTag > 0) {
+                        $sql .= ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm c WHERE c.fk_categorie = ' . $relaunchTag . ')';
+                    }
+                    $sql .= ')';
+                    break;
+            }
+
+            $this->resprints = $sql;
         }
 
         return 0;

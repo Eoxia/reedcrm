@@ -350,3 +350,9 @@ ReedCRMKpiNbOpportunities = Opportunités
 ReedCRMKpiTotalAmount = Montant total
 ReedCRMKpiWeightedAmount = Pipeline pondéré
 ReedCRMKpiAvgProbability = Probabilité moyenne
+
+# List presets - opportunity project list
+ReedCRMPresetMine = Mes opportunités
+ReedCRMPresetHot = Chaudes
+ReedCRMPresetOpen = Ouvertes
+ReedCRMPresetToRelaunch = À relancer
