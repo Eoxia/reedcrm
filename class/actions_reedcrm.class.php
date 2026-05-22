@@ -1611,6 +1611,7 @@ class ActionsReedcrm
             require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
 
             $fieldMap = [
+                'ref'                => 'reedcrm_field_ref_with_actions',
                 'relauch_commercial' => 'reedcrm_field_relaunch_commercial',
                 'contact_details'    => 'reedcrm_field_contact_details',
                 'photo'              => 'reedcrm_field_photo',

@@ -1,3 +1,40 @@
+// Quick-access actions in the project ref cell (call / email / preview)
+.reedcrm-ref-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.reedcrm-row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reedcrm-row-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-size: 12px;
+    color: #6c7a89;
+    background: #fff;
+    border: 1px solid #d4d8dd;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+        color: #2c7be5;
+        border-color: #2c7be5;
+        text-decoration: none;
+    }
+}
+
 .reedcrm-plist-relaunch-wrapper {
     display: flex;
     align-items: center;

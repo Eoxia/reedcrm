@@ -152,11 +152,6 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     } else {
         $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></div>';
     }
-
-    // Quick preview: opens the project detail in the existing eventpro modal (reedcrm/js/modules/eventpro.js)
-    $previewUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . (int) $object->id . '&from_type=project&project_id=' . (int) $object->id;
-    $out .= '<button type="button" class="reedcrm-plist-coordonnees-btn reedcrm-card-modal-open" title="' . dol_escape_htmltag($langs->trans('Preview')) . '" data-project-id="' . (int) $object->id . '" data-modal-url="' . dol_escape_htmltag($previewUrl) . '"><i class="fas fa-eye"></i></button>';
-
     $out .= '</div>';
     $out .= '</div>';
 
@@ -286,4 +281,43 @@ function reedcrm_field_opp_percent(array $parameters, CommonObject $object): str
     }
 
     return $out;
+}
+
+/**
+ * Render the project ref cell with quick-access actions (call / email / preview).
+ *
+ * Only on the project list; returns '' on other lists so the default ref rendering applies.
+ * Reuses the standard ref output, then appends a compact action group:
+ * tel: (project phone), mailto: (contact email) and an eye opening the detail in the eventpro side panel.
+ *
+ * @param  array        $parameters Hook parameters (key, val, context, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output ('' to fall back to default rendering)
+ */
+function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object): string
+{
+    global $langs;
+
+    if (strpos($parameters['context'] ?? '', 'projectlist') === false) {
+        return '';
+    }
+
+    $refHtml = $object->showOutputField($parameters['val'], $parameters['key'], $object->ref);
+
+    $id    = (int) $object->id;
+    $phone = !empty($object->options_projectphone) ? $object->options_projectphone : '';
+    $email = !empty($object->options_reedcrm_email) ? $object->options_reedcrm_email : '';
+
+    $actions = '<span class="reedcrm-row-actions">';
+    if ($phone !== '') {
+        $actions .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/\s+/', '', $phone)) . '" class="reedcrm-row-action" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></a>';
+    }
+    if ($email !== '') {
+        $actions .= '<a href="mailto:' . dol_escape_htmltag($email) . '" class="reedcrm-row-action" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></a>';
+    }
+    $previewUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $id . '&from_type=project&project_id=' . $id;
+    $actions   .= '<button type="button" class="reedcrm-row-action reedcrm-card-modal-open" title="' . dol_escape_htmltag($langs->trans('Preview')) . '" data-project-id="' . $id . '" data-modal-url="' . dol_escape_htmltag($previewUrl) . '"><i class="fas fa-eye"></i></button>';
+    $actions   .= '</span>';
+
+    return '<div class="reedcrm-ref-cell">' . $refHtml . $actions . '</div>';
 }
