@@ -71,13 +71,38 @@ window.reedcrm.projectPresets.saveView = function (e) {
     return;
   }
 
-  var current = new URLSearchParams(window.location.search);
-  var keep    = new URLSearchParams();
-  current.forEach(function (value, key) {
-    if (key.indexOf('search_') === 0 || key === 'search_preset') {
-      keep.append(key, value);
-    }
-  });
+  // The list form is POST, so current filters live in #searchFormList, not in the URL.
+  var keep = new URLSearchParams();
+  var seen = {};
+  var $form = $('#searchFormList');
+  if ($form.length) {
+    $form.serializeArray().forEach(function (f) {
+      var name = f.name;
+      if (name.indexOf('search_') !== 0) {
+        return;
+      }
+      if (f.value === '' || f.value === '-1') {
+        return; // empty or "all"
+      }
+      if (/_mode$/.test(name) && f.value === 'inc') {
+        return; // default include mode, not a real filter
+      }
+      var isArray = /\[\]$/.test(name);
+      if (!isArray) {
+        if (seen[name]) {
+          return; // dedupe scalar fields (panel + column row can both be present)
+        }
+        seen[name] = true;
+      }
+      keep.append(name, f.value);
+    });
+  }
+
+  // The active preset lives in the URL, not the form
+  var urlPreset = new URLSearchParams(window.location.search).get('search_preset');
+  if (urlPreset && !keep.has('search_preset')) {
+    keep.append('search_preset', urlPreset);
+  }
 
   $.ajax({
     url: window.reedcrm.projectPresets.url(),

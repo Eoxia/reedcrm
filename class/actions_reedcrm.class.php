@@ -1484,7 +1484,8 @@ class ActionsReedcrm
         global $langs;
 
         $activePreset = GETPOST('search_preset', 'aZ09');
-        $baseUrl      = $_SERVER['PHP_SELF'] . '?object_type=project';
+        // Keep the opportunity scope on every preset link
+        $baseUrl      = $_SERVER['PHP_SELF'] . '?object_type=project&search_usage_opportunity=1';
 
         $presetDefs = [
             'mine'       => ['label' => $langs->trans('ReedCRMPresetMine'),       'icon' => 'fas fa-user'],
