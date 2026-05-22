@@ -1401,12 +1401,13 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldPreListTitle hook : display opportunity KPI cards above the project list
+     * Overloading the saturneListTopBanner hook : display opportunity KPI cards + view presets above the project list
+     * (rendered above the title bar, outside the list header)
      *
      * @param  array $parameters Hook metadatas (context, ...)
      * @return int               0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldPreListTitle(array $parameters): int
+    public function saturneListTopBanner(array $parameters): int
     {
         global $conf, $db, $langs;
 
