@@ -1444,25 +1444,29 @@ class ActionsReedcrm
         }
 
         $cards = [
-            [
+            'nb' => [
+                'id'    => 'nb',
                 'label' => $langs->trans('ReedCRMKpiNbOpportunities'),
                 'value' => (string) ((int) $aggregates->nb),
                 'icon'  => 'fas fa-bullseye',
                 'color' => 'blue',
             ],
-            [
+            'total' => [
+                'id'    => 'total',
                 'label' => $langs->trans('ReedCRMKpiTotalAmount'),
                 'value' => price((float) $aggregates->total, 0, $langs, 1, -1, -1, $conf->currency),
                 'icon'  => 'fas fa-coins',
                 'color' => 'grey',
             ],
-            [
+            'weighted' => [
+                'id'    => 'weighted',
                 'label' => $langs->trans('ReedCRMKpiWeightedAmount'),
                 'value' => price((float) $aggregates->weighted, 0, $langs, 1, -1, -1, $conf->currency),
                 'icon'  => 'fas fa-balance-scale',
                 'color' => 'green',
             ],
-            [
+            'avgproba' => [
+                'id'    => 'avgproba',
                 'label' => $langs->trans('ReedCRMKpiAvgProbability'),
                 'value' => price2num((float) $aggregates->avgproba, 1) . ' %',
                 'icon'  => 'fas fa-percent',
@@ -1470,9 +1474,64 @@ class ActionsReedcrm
             ],
         ];
 
-        $this->resprints = $presetsBar . saturne_render_kpi_cards($cards);
+        // Apply the per-user saved layout (order + hidden cards), stored in llx_user_param
+        $cards = $this->reedcrmApplyKpiLayout($cards);
+
+        // Customize controls (edit-mode toggle + reset)
+        $customizeBar  = '<div class="reedcrm-kpi-customize-bar">';
+        $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-toggle" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '"><i class="fas fa-sliders-h"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '</button>';
+        $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-reset" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '"><i class="fas fa-undo"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '</button>';
+        $customizeBar .= '</div>';
+
+        $this->resprints = $presetsBar . $customizeBar . saturne_render_kpi_cards(array_values($cards));
 
         return 0;
+    }
+
+    /**
+     * Apply the per-user KPI banner layout (order + hidden cards) read from llx_user_param.
+     *
+     * @param  array<string,array> $cards KPI cards keyed by id
+     * @return array<string,array>        Reordered cards with hidden ones flagged
+     */
+    protected function reedcrmApplyKpiLayout(array $cards): array
+    {
+        global $user;
+
+        $raw = isset($user->conf->REEDCRM_KPI_LAYOUT) ? $user->conf->REEDCRM_KPI_LAYOUT : '';
+        if (empty($raw)) {
+            return $cards;
+        }
+        $layout = json_decode($raw, true);
+        if (!is_array($layout)) {
+            return $cards;
+        }
+
+        if (!empty($layout['hidden']) && is_array($layout['hidden'])) {
+            foreach ($layout['hidden'] as $id) {
+                if (isset($cards[$id])) {
+                    $cards[$id]['hidden'] = true;
+                }
+            }
+        }
+
+        if (!empty($layout['order']) && is_array($layout['order'])) {
+            $ordered = [];
+            foreach ($layout['order'] as $id) {
+                if (isset($cards[$id])) {
+                    $ordered[$id] = $cards[$id];
+                }
+            }
+            // Keep any card not present in the saved order (e.g. newly added) at the end
+            foreach ($cards as $id => $card) {
+                if (!isset($ordered[$id])) {
+                    $ordered[$id] = $card;
+                }
+            }
+            $cards = $ordered;
+        }
+
+        return $cards;
     }
 
     /**

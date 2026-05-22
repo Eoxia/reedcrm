@@ -105,3 +105,7 @@ ReedCRMPresetOpen = Open
 ReedCRMPresetToRelaunch = To follow up
 
 ReedCRMSaveView = Save view
+
+# KPI banner customization
+ReedCRMKpiCustomize = Customize
+ReedCRMKpiReset = Reset
