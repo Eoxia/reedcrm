@@ -167,18 +167,47 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
  */
 function reedcrm_field_opp_status(array $parameters, CommonObject $object): string
 {
-    global $db, $langs;
+    global $db, $langs, $user;
 
-    $statusId = $object->fk_opp_status;
+    $statusId = (int) $object->fk_opp_status;
 
-    if (empty($statusId)) {
-        return '';
+    // Lead statuses are loaded once per page request (avoids an N+1 query per row)
+    static $leadStatuses = null;
+    if ($leadStatuses === null) {
+        $leadStatuses = [];
+        $sql  = 'SELECT rowid, code, label FROM ' . MAIN_DB_PREFIX . 'c_lead_status';
+        $sql .= ' WHERE active = 1 AND entity IN (' . getEntity('c_lead_status') . ')';
+        $sql .= ' ORDER BY position ASC';
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($row = $db->fetch_object($resql)) {
+                $leadStatuses[(int) $row->rowid] = ['code' => $row->code, 'label' => $row->label];
+            }
+            $db->free($resql);
+        }
     }
 
-    $label = dol_getIdFromCode($db, $statusId, 'c_lead_status', 'rowid', 'label');
-    $code  = dol_getIdFromCode($db, $statusId, 'c_lead_status', 'rowid', 'code');
+    $currentCode = $statusId && isset($leadStatuses[$statusId]) ? $leadStatuses[$statusId]['code'] : '';
 
-    return '<span class="reedcrm-opp-status reedcrm-opp-status-' . dol_escape_htmltag($code) . '">' . dol_escape_htmltag($langs->trans($label)) . '</span>';
+    // Read-only badge when the user cannot edit projects
+    if (!$user->hasRight('projet', 'creer')) {
+        if (empty($statusId) || !isset($leadStatuses[$statusId])) {
+            return '';
+        }
+        return '<span class="reedcrm-opp-status reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '">' . dol_escape_htmltag($langs->trans($leadStatuses[$statusId]['label'])) . '</span>';
+    }
+
+    // Inline editable select (saved through the generic saturne_update_field endpoint)
+    $out  = '<select class="saturne-inline-select reedcrm-opp-status-select reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '"';
+    $out .= ' data-field="fk_opp_status" data-element="' . dol_escape_htmltag($object->element) . '" data-id="' . (int) $object->rowid . '">';
+    $out .= '<option value="0"' . (empty($statusId) ? ' selected' : '') . '>&nbsp;</option>';
+    foreach ($leadStatuses as $rowid => $leadStatus) {
+        $selected = ($rowid === $statusId) ? ' selected' : '';
+        $out     .= '<option value="' . $rowid . '"' . $selected . '>' . dol_escape_htmltag($langs->trans($leadStatus['label'])) . '</option>';
+    }
+    $out .= '</select>';
+
+    return $out;
 }
 
 /**
@@ -217,6 +246,8 @@ function reedcrm_field_propal_status(array $parameters, CommonObject $object): s
  */
 function reedcrm_field_opp_percent(array $parameters, CommonObject $object): string
 {
+    global $langs, $user;
+
     $oppPercent = $object->opp_percent;
 
     if (!isset($oppPercent)) {
@@ -236,7 +267,17 @@ function reedcrm_field_opp_percent(array $parameters, CommonObject $object): str
 
     $rowId = (int) $object->rowid;
     $out   = '<style>tr[data-rowid="' . $rowId . '"]{background-color:' . $rowColor . '!important}</style>';
-    $out  .= dolGetBadge($oppPercent . ' %', '', 'status' . $statusBadge);
+
+    // Inline editable percentage when the user can edit projects, otherwise the read-only badge
+    if ($user->hasRight('projet', 'creer')) {
+        $displayValue = rtrim(rtrim((string) (float) $oppPercent, '0'), '.');
+        $out .= '<span class="saturne-inline-percent">';
+        $out .= '<span class="contenteditable" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityProbabilityShort')) . '" data-field="opp_percent" data-id="' . $rowId . '" data-element="' . dol_escape_htmltag($object->element) . '" data-table="' . dol_escape_htmltag($object->table_element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($displayValue) . '</span>';
+        $out .= '<span class="saturne-inline-percent-suffix">%</span>';
+        $out .= '</span>';
+    } else {
+        $out .= dolGetBadge($oppPercent . ' %', '', 'status' . $statusBadge);
+    }
 
     return $out;
 }
