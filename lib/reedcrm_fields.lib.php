@@ -123,6 +123,8 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
  */
 function reedcrm_field_contact_details(array $parameters, CommonObject $object): string
 {
+    global $langs;
+
     $out = '';
 
     $thirdPartyName  = !empty($object->options_reedcrm_lastname)  ? dol_escape_htmltag($object->options_reedcrm_lastname)  : '';
@@ -141,9 +143,14 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
 
     $out .= '<div class="reedcrm-plist-coordonnees-actions">';
     if ($thirdPartyPhone) {
-        $out .= '<a href="tel:' . preg_replace('/\s+/', '', $object->phone) . '" class="reedcrm-plist-coordonnees-btn"><i class="fas fa-phone-alt"></i></a>';
+        $out .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/\s+/', '', $thirdPartyPhone)) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></a>';
     } else {
-        $out .= '<div class="reedcrm-plist-coordonnees-btn disabled"><i class="fas fa-phone-alt"></i></div>';
+        $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></div>';
+    }
+    if ($thirdPartyEmail) {
+        $out .= '<a href="mailto:' . dol_escape_htmltag($thirdPartyEmail) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></a>';
+    } else {
+        $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></div>';
     }
     $out .= '</div>';
     $out .= '</div>';
