@@ -154,8 +154,8 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     }
 
     // Quick preview: opens the project detail in the existing eventpro modal (reedcrm/js/modules/eventpro.js)
-    $previewUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . (int) $object->rowid . '&from_type=project&project_id=' . (int) $object->rowid;
-    $out .= '<button type="button" class="reedcrm-plist-coordonnees-btn reedcrm-card-modal-open" title="' . dol_escape_htmltag($langs->trans('Preview')) . '" data-project-id="' . (int) $object->rowid . '" data-modal-url="' . dol_escape_htmltag($previewUrl) . '"><i class="fas fa-eye"></i></button>';
+    $previewUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . (int) $object->id . '&from_type=project&project_id=' . (int) $object->id;
+    $out .= '<button type="button" class="reedcrm-plist-coordonnees-btn reedcrm-card-modal-open" title="' . dol_escape_htmltag($langs->trans('Preview')) . '" data-project-id="' . (int) $object->id . '" data-modal-url="' . dol_escape_htmltag($previewUrl) . '"><i class="fas fa-eye"></i></button>';
 
     $out .= '</div>';
     $out .= '</div>';
@@ -204,7 +204,7 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
 
     // Inline editable select (saved through the generic saturne_update_field endpoint)
     $out  = '<select class="saturne-inline-select reedcrm-opp-status-select reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '"';
-    $out .= ' data-field="fk_opp_status" data-element="' . dol_escape_htmltag($object->element) . '" data-id="' . (int) $object->rowid . '">';
+    $out .= ' data-field="fk_opp_status" data-element="' . dol_escape_htmltag($object->element) . '" data-id="' . (int) $object->id . '">';
     $out .= '<option value="0"' . (empty($statusId) ? ' selected' : '') . '>&nbsp;</option>';
     foreach ($leadStatuses as $rowid => $leadStatus) {
         $selected = ($rowid === $statusId) ? ' selected' : '';
@@ -270,12 +270,13 @@ function reedcrm_field_opp_percent(array $parameters, CommonObject $object): str
         $rowColor    = 'rgba(34, 197, 94, 0.08)';
     }
 
-    $rowId = (int) $object->rowid;
+    $rowId = (int) $object->id;
     $out   = '<style>tr[data-rowid="' . $rowId . '"]{background-color:' . $rowColor . '!important}</style>';
 
     // Inline editable percentage when the user can edit projects, otherwise the read-only badge
     if ($user->hasRight('projet', 'creer')) {
-        $displayValue = rtrim(rtrim((string) (float) $oppPercent, '0'), '.');
+        // Format with 2 decimals first, then trim only the trailing decimal zeros (so 60 stays "60", not "6")
+        $displayValue = rtrim(rtrim(sprintf('%.2f', (float) $oppPercent), '0'), '.');
         $out .= '<span class="saturne-inline-percent">';
         $out .= '<span class="contenteditable" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityProbabilityShort')) . '" data-field="opp_percent" data-id="' . $rowId . '" data-element="' . dol_escape_htmltag($object->element) . '" data-table="' . dol_escape_htmltag($object->table_element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($displayValue) . '</span>';
         $out .= '<span class="saturne-inline-percent-suffix">%</span>';
