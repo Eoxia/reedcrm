@@ -91,3 +91,9 @@ GravityFormLink=GravityForm Link
 DetectingLocation = Detecting your location
 GeolocationNotSupported = Geolocation is not supported by this browser
 GeolocationDenied = Location access denied
+
+# KPI cards - opportunity project list
+ReedCRMKpiNbOpportunities = Opportunities
+ReedCRMKpiTotalAmount = Total amount
+ReedCRMKpiWeightedAmount = Weighted pipeline
+ReedCRMKpiAvgProbability = Average probability

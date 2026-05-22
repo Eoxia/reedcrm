@@ -344,3 +344,9 @@ PropalStatusBilled = Facturée
 DetectingLocation = Détection de la position en cours
 GeolocationNotSupported = Géolocalisation non supportée par ce navigateur
 GeolocationDenied = Accès à la position refusé
+
+# KPI cards - opportunity project list
+ReedCRMKpiNbOpportunities = Opportunités
+ReedCRMKpiTotalAmount = Montant total
+ReedCRMKpiWeightedAmount = Pipeline pondéré
+ReedCRMKpiAvgProbability = Probabilité moyenne

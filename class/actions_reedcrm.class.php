@@ -1400,6 +1400,74 @@ class ActionsReedcrm
         return 1;
     }
 
+    /**
+     * Overloading the printFieldPreListTitle hook : display opportunity KPI cards above the project list
+     *
+     * @param  array $parameters Hook metadatas (context, ...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printFieldPreListTitle(array $parameters): int
+    {
+        global $conf, $db, $langs;
+
+        // Only on the saturne project list, when the opportunity feature is enabled
+        if (strpos($parameters['context'], 'projectlist') === false || strpos($parameters['context'], 'saturnelist') === false) {
+            return 0;
+        }
+        if (!getDolGlobalString('PROJECT_USE_OPPORTUNITIES')) {
+            return 0;
+        }
+
+        require_once __DIR__ . '/../../saturne/lib/saturne_functions.lib.php';
+
+        // Snapshot of the current filtered query, exposed by the generic list before sort/pagination
+        $baseSql = $GLOBALS['sqlForList'] ?? '';
+        if (empty($baseSql)) {
+            return 0;
+        }
+
+        // Aggregates computed over the whole filtered set
+        $aggregates = saturne_get_list_aggregates($db, $baseSql, [
+            'nb'       => 'COUNT(*)',
+            'total'    => 'COALESCE(SUM(opp_amount), 0)',
+            'weighted' => 'COALESCE(SUM(opp_amount * opp_percent / 100), 0)',
+            'avgproba' => 'AVG(NULLIF(opp_percent, 0))',
+        ]);
+        if ($aggregates === null) {
+            return 0;
+        }
+
+        $cards = [
+            [
+                'label' => $langs->trans('ReedCRMKpiNbOpportunities'),
+                'value' => (string) ((int) $aggregates->nb),
+                'icon'  => 'fas fa-bullseye',
+                'color' => 'blue',
+            ],
+            [
+                'label' => $langs->trans('ReedCRMKpiTotalAmount'),
+                'value' => price((float) $aggregates->total, 0, $langs, 1, -1, -1, $conf->currency),
+                'icon'  => 'fas fa-coins',
+                'color' => 'grey',
+            ],
+            [
+                'label' => $langs->trans('ReedCRMKpiWeightedAmount'),
+                'value' => price((float) $aggregates->weighted, 0, $langs, 1, -1, -1, $conf->currency),
+                'icon'  => 'fas fa-balance-scale',
+                'color' => 'green',
+            ],
+            [
+                'label' => $langs->trans('ReedCRMKpiAvgProbability'),
+                'value' => price2num((float) $aggregates->avgproba, 1) . ' %',
+                'icon'  => 'fas fa-percent',
+                'color' => 'yellow',
+            ],
+        ];
+
+        $this->resprints = saturne_render_kpi_cards($cards);
+
+        return 0;
+    }
 
     /**
      * Overloading the printFieldListWhere hook : add WHERE conditions for propal list
