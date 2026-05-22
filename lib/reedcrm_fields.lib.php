@@ -152,6 +152,11 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     } else {
         $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></div>';
     }
+
+    // Quick preview: opens the project detail in the existing eventpro modal (reedcrm/js/modules/eventpro.js)
+    $previewUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . (int) $object->rowid . '&from_type=project&project_id=' . (int) $object->rowid;
+    $out .= '<button type="button" class="reedcrm-plist-coordonnees-btn reedcrm-card-modal-open" title="' . dol_escape_htmltag($langs->trans('Preview')) . '" data-project-id="' . (int) $object->rowid . '" data-modal-url="' . dol_escape_htmltag($previewUrl) . '"><i class="fas fa-eye"></i></button>';
+
     $out .= '</div>';
     $out .= '</div>';
 
