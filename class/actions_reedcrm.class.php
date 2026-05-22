@@ -1484,6 +1484,7 @@ class ActionsReedcrm
         global $langs;
 
         $activePreset = GETPOST('search_preset', 'aZ09');
+        $activeView   = GETPOST('reedcrm_view', 'alphanohtml');
         // Keep the opportunity scope on every preset link
         $baseUrl      = $_SERVER['PHP_SELF'] . '?object_type=project&search_usage_opportunity=1';
 
@@ -1498,7 +1499,7 @@ class ActionsReedcrm
             'label'  => $langs->trans('All'),
             'icon'   => 'fas fa-list',
             'url'    => $baseUrl,
-            'active' => empty($activePreset),
+            'active' => empty($activePreset) && empty($activeView),
         ]];
         foreach ($presetDefs as $key => $def) {
             $presets[] = [
@@ -1523,7 +1524,8 @@ class ActionsReedcrm
             $presets[]  = [
                 'label'       => $decoded['label'],
                 'icon'        => 'fas fa-star',
-                'url'         => $baseUrl . ($viewQuery !== '' ? '&' . $viewQuery : ''),
+                'url'         => $baseUrl . ($viewQuery !== '' ? '&' . $viewQuery : '') . '&reedcrm_view=' . urlencode($paramKey),
+                'active'      => ($activeView === $paramKey),
                 'removeKey'   => $paramKey,
                 'removeTitle' => $langs->trans('Delete'),
             ];
@@ -1545,10 +1547,16 @@ class ActionsReedcrm
     public function printFieldListSearchParam(array $parameters): int
     {
         if (strpos($parameters['context'], 'projectlist') !== false) {
+            $param  = '';
             $preset = GETPOST('search_preset', 'aZ09');
             if (!empty($preset)) {
-                $this->resprints = '&search_preset=' . urlencode($preset);
+                $param .= '&search_preset=' . urlencode($preset);
             }
+            $view = GETPOST('reedcrm_view', 'alphanohtml');
+            if (!empty($view)) {
+                $param .= '&reedcrm_view=' . urlencode($view);
+            }
+            $this->resprints = $param;
         }
 
         return 0;
