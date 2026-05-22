@@ -44,8 +44,9 @@ if ($action === 'save') {
         exit;
     }
 
-    // Keep only safe querystring characters (search params)
-    $query = preg_replace('/[^A-Za-z0-9_\-=&%\[\].]/', '', GETPOST('query', 'restricthtml'));
+    // GETPOST('restricthtml') HTML-encodes '&' to '&amp;'; decode it back, then keep only safe querystring characters
+    $query = htmlspecialchars_decode(GETPOST('query', 'restricthtml'), ENT_QUOTES);
+    $query = preg_replace('/[^A-Za-z0-9_\-=&%\[\].]/', '', $query);
 
     $slug = trim(strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $label)), '_');
     if ($slug === '') {
