@@ -309,3 +309,64 @@ function showEventProInfos(CommonObject $object): string
 
     return $out;
 }
+
+/**
+ * Render a compact opportunity summary header for the project preview modal.
+ *
+ * Shows the project ref + thirdparty, the opportunity amount, the weighted pipeline
+ * (amount x probability / 100), the probability and the opportunity status.
+ *
+ * @param  CommonObject $object Project object
+ * @return string               HTML summary header (empty for non-project objects)
+ */
+function reedcrm_project_summary_header(CommonObject $object): string
+{
+    global $conf, $db, $langs;
+
+    if ($object->element !== 'project') {
+        return '';
+    }
+
+    $langs->load('projects');
+
+    $socName = '';
+    if (!empty($object->socid)) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+        $thirdparty = new Societe($db);
+        if ($thirdparty->fetch($object->socid) > 0) {
+            $socName = $thirdparty->name;
+        }
+    }
+
+    $oppAmount  = (float) $object->opp_amount;
+    $oppPercent = (float) $object->opp_percent;
+    $weighted   = $oppAmount * $oppPercent / 100;
+
+    $statusLabel = '';
+    if (!empty($object->fk_opp_status)) {
+        $statusLabel = $langs->trans(dol_getIdFromCode($db, $object->fk_opp_status, 'c_lead_status', 'rowid', 'label'));
+    }
+
+    $metrics = [
+        ['label' => $langs->trans('OpportunityAmount'),           'value' => price($oppAmount, 0, $langs, 1, -1, -1, $conf->currency)],
+        ['label' => $langs->trans('ReedCRMKpiWeightedAmount'),    'value' => price($weighted, 0, $langs, 1, -1, -1, $conf->currency)],
+        ['label' => $langs->trans('OpportunityProbabilityShort'), 'value' => price2num($oppPercent, 1) . ' %'],
+    ];
+    if ($statusLabel !== '') {
+        $metrics[] = ['label' => $langs->trans('OpportunityStatus'), 'value' => dol_escape_htmltag($statusLabel)];
+    }
+
+    $out  = '<div class="reedcrm-preview-summary">';
+    $out .= '<div class="reedcrm-preview-summary-title">' . dol_escape_htmltag($object->ref) . ($socName !== '' ? ' — ' . dol_escape_htmltag($socName) : '') . '</div>';
+    $out .= '<div class="reedcrm-preview-summary-metrics">';
+    foreach ($metrics as $metric) {
+        $out .= '<div class="reedcrm-preview-metric">';
+        $out .= '<span class="reedcrm-preview-metric-label">' . $metric['label'] . '</span>';
+        $out .= '<span class="reedcrm-preview-metric-value">' . $metric['value'] . '</span>';
+        $out .= '</div>';
+    }
+    $out .= '</div>';
+    $out .= '</div>';
+
+    return $out;
+}
