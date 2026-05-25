@@ -249,9 +249,9 @@ function reedcrm_field_status_badge(array $parameters, CommonObject $object): st
         $classes = [0 => 'status0', 1 => 'status4', 2 => 'status6'];
         $label   = $langs->trans($labels[$status] ?? 'Unknown');
 
-        // Per-user display preference: colored dot with a lightweight native tooltip (title)
+        // Per-user display preference: colored dot with a small custom CSS tooltip
         if (isset($user->conf->REEDCRM_STATUS_DISPLAY) && $user->conf->REEDCRM_STATUS_DISPLAY === 'dot') {
-            return '<span class="reedcrm-status-dot reedcrm-status-dot-' . $status . '" title="' . dol_escape_htmltag($label) . '"></span>';
+            return '<span class="reedcrm-status-dot reedcrm-status-dot-' . $status . '" data-tooltip="' . dol_escape_htmltag($label) . '"></span>';
         }
 
         return dolGetStatus($label, $label, '', $classes[$status] ?? 'status0', 5);
