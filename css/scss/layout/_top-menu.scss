@@ -6,14 +6,17 @@
     display: none !important;
 }
 
-// Kept entries: icon only (labels removed) and centered; "Plus" keeps its label
-#id-top li[id^="mainmenutd_"] .mainmenuaspan {
+// Module entries only (never the company logo, the menu hider, or the end spacer)
+$module-entries: 'li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainmenutd_menu):not(#mainmenutd_)';
+
+// Kept module entries: icon only (labels removed)
+#id-top #{$module-entries} .mainmenuaspan {
     display: none;
 }
 
-// Labels removed: vertically center the icon by centering the li content
+// Vertically center the icon by centering the li content
 // (inline-flex keeps the horizontal bar layout; the icon internals are untouched, so PNG icons stay intact)
-#id-top li[id^="mainmenutd_"] {
+#id-top #{$module-entries} {
     display: inline-flex !important;
     align-items: center !important;
     height: 52px;
