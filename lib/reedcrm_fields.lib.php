@@ -127,10 +127,13 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
 
     $out = '';
 
-    $thirdPartyName  = !empty($object->options_reedcrm_lastname)  ? dol_escape_htmltag($object->options_reedcrm_lastname)  : '';
-    $thirdPartyName2 = !empty($object->options_reedcrm_firstname) ? dol_escape_htmltag($object->options_reedcrm_firstname) : '';
-    $thirdPartyEmail = !empty($object->options_reedcrm_email)     ? dol_escape_htmltag($object->options_reedcrm_email)     : '';
-    $thirdPartyPhone = !empty($object->options_projectphone)      ? dol_escape_htmltag($object->options_projectphone)      : '';
+    // Extrafield values live on the raw fetched row (setVarsFromFetchObj only fills $object->fields)
+    $row = !empty($parameters['obj']) ? $parameters['obj'] : $object;
+
+    $thirdPartyName  = !empty($row->options_reedcrm_lastname)  ? dol_escape_htmltag($row->options_reedcrm_lastname)  : '';
+    $thirdPartyName2 = !empty($row->options_reedcrm_firstname) ? dol_escape_htmltag($row->options_reedcrm_firstname) : '';
+    $thirdPartyEmail = !empty($row->options_reedcrm_email)     ? dol_escape_htmltag($row->options_reedcrm_email)     : '';
+    $thirdPartyPhone = !empty($row->options_projectphone)      ? dol_escape_htmltag($row->options_projectphone)      : '';
 
     $out .= '<div class="reedcrm-plist-coordonnees">';
     $out .= '<div class="reedcrm-plist-coordonnees-box">';
@@ -304,18 +307,10 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
 
     $refHtml = $object->showOutputField($parameters['val'], $parameters['key'], $object->ref);
 
-    $id    = (int) $object->id;
-    $phone = !empty($object->options_projectphone) ? $object->options_projectphone : '';
-    $email = !empty($object->options_reedcrm_email) ? $object->options_reedcrm_email : '';
-
-    $actions = '<span class="reedcrm-row-actions">';
-    if ($phone !== '') {
-        $actions .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/\s+/', '', $phone)) . '" class="reedcrm-row-action" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></a>';
-    }
-    if ($email !== '') {
-        $actions .= '<a href="mailto:' . dol_escape_htmltag($email) . '" class="reedcrm-row-action" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></a>';
-    }
+    // Quick preview (call/email now live in the merged "Coordonnées" column)
+    $id         = (int) $object->id;
     $previewUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $id . '&from_type=project&project_id=' . $id;
+    $actions    = '<span class="reedcrm-row-actions">';
     $actions   .= '<button type="button" class="reedcrm-row-action reedcrm-card-modal-open" title="' . dol_escape_htmltag($langs->trans('Preview')) . '" data-project-id="' . $id . '" data-modal-url="' . dol_escape_htmltag($previewUrl) . '"><i class="fas fa-eye"></i></button>';
     $actions   .= '</span>';
 

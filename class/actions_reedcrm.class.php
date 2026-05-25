@@ -1378,6 +1378,24 @@ class ActionsReedcrm
      */
     public function saturneListAddCustomFields(array $parameters, CommonObject $object): int
     {
+        // Project list: merge the individual contact extrafields into a single "Coordonnées" column
+        if ($parameters['objectType'] === 'project') {
+            global $extrafields;
+
+            $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'disablesort' => 1];
+
+            // Hide the individual extrafield columns; their data stays selected for the combined renderer
+            foreach (['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone'] as $efName) {
+                if (isset($extrafields->attributes[$object->table_element]['list'][$efName])) {
+                    $extrafields->attributes[$object->table_element]['list'][$efName] = 0;
+                }
+            }
+
+            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details']);
+
+            return 1;
+        }
+
         if ($parameters['objectType'] !== 'propal') {
             return 0;
         }
