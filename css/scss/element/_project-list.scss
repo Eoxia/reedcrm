@@ -35,6 +35,13 @@
     }
 }
 
+// Inline-editable text spans inside merged cells (coordonnées, etc.) — clickable even when empty
+.reedcrm-ce-inline {
+    display: inline-block;
+    min-width: 40px;
+    min-height: 1em;
+}
+
 // Status shown as a single colored dot (per-user display preference)
 .reedcrm-status-dot {
     position: relative;

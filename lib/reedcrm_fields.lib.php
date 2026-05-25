@@ -123,35 +123,43 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
  */
 function reedcrm_field_contact_details(array $parameters, CommonObject $object): string
 {
-    global $langs;
-
-    $out = '';
+    global $langs, $user;
 
     // Extrafield values live on the raw fetched row (setVarsFromFetchObj only fills $object->fields)
     $row = !empty($parameters['obj']) ? $parameters['obj'] : $object;
 
-    $thirdPartyName  = !empty($row->options_reedcrm_lastname)  ? dol_escape_htmltag($row->options_reedcrm_lastname)  : '';
-    $thirdPartyName2 = !empty($row->options_reedcrm_firstname) ? dol_escape_htmltag($row->options_reedcrm_firstname) : '';
-    $thirdPartyEmail = !empty($row->options_reedcrm_email)     ? dol_escape_htmltag($row->options_reedcrm_email)     : '';
-    $thirdPartyPhone = !empty($row->options_projectphone)      ? dol_escape_htmltag($row->options_projectphone)      : '';
+    $lastname  = !empty($row->options_reedcrm_lastname)  ? (string) $row->options_reedcrm_lastname  : '';
+    $firstname = !empty($row->options_reedcrm_firstname) ? (string) $row->options_reedcrm_firstname : '';
+    $email     = !empty($row->options_reedcrm_email)     ? (string) $row->options_reedcrm_email     : '';
+    $phone     = !empty($row->options_projectphone)      ? (string) $row->options_projectphone      : '';
 
-    $out .= '<div class="reedcrm-plist-coordonnees">';
+    $canEdit = $user->hasRight('projet', 'creer');
+    $id      = (int) $object->id;
+    $element = $object->element ?? 'project';
+
+    // Inline-editable span (extrafields) when the user can write, otherwise plain text
+    $field = function (string $name, string $value) use ($canEdit, $id, $element) {
+        if ($canEdit) {
+            return '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" data-field="' . dol_escape_htmltag($name) . '" data-id="' . $id . '" data-element="' . dol_escape_htmltag($element) . '" data-type="text" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($value) . '</span>';
+        }
+        return dol_escape_htmltag($value !== '' ? $value : 'N/A');
+    };
+
+    $out  = '<div class="reedcrm-plist-coordonnees">';
     $out .= '<div class="reedcrm-plist-coordonnees-box">';
-
-    $thirdPartyName = $thirdPartyName ? ($thirdPartyName . ' ' . $thirdPartyName2) : 'N/A';
-    $out .= '<div class="reedcrm-plist-coordonnees-name">' . $thirdPartyName . '</div>';
-    $out .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . ($thirdPartyEmail ?: 'N/A') . '</div>';
-    $out .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . ($thirdPartyPhone ?: 'N/A') . '</div>';
+    $out .= '<div class="reedcrm-plist-coordonnees-name">' . $field('reedcrm_lastname', $lastname) . ' ' . $field('reedcrm_firstname', $firstname) . '</div>';
+    $out .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $field('reedcrm_email', $email) . '</div>';
+    $out .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . $field('projectphone', $phone) . '</div>';
     $out .= '</div>';
 
     $out .= '<div class="reedcrm-plist-coordonnees-actions">';
-    if ($thirdPartyPhone) {
-        $out .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/\s+/', '', $thirdPartyPhone)) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></a>';
+    if ($phone !== '') {
+        $out .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/\s+/', '', $phone)) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></a>';
     } else {
         $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></div>';
     }
-    if ($thirdPartyEmail) {
-        $out .= '<a href="mailto:' . dol_escape_htmltag($thirdPartyEmail) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></a>';
+    if ($email !== '') {
+        $out .= '<a href="mailto:' . dol_escape_htmltag($email) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></a>';
     } else {
         $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></div>';
     }
@@ -349,11 +357,19 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
  */
 function reedcrm_field_opportunity_details(array $parameters, CommonObject $object): string
 {
-    global $conf, $langs;
+    global $conf, $langs, $user;
 
     $statusHtml  = reedcrm_field_opp_status($parameters, $object);
     $percentHtml = reedcrm_field_opp_percent($parameters, $object);
-    $amountHtml  = isset($object->opp_amount) ? price((float) $object->opp_amount, 0, $langs, 1, -1, -1, $conf->currency) : '';
+
+    // Amount (budget): inline-editable when the user can write (even when empty), otherwise formatted price
+    $hasAmount = isset($object->opp_amount) && $object->opp_amount !== '' && $object->opp_amount !== null;
+    if ($user->hasRight('projet', 'creer')) {
+        $amountNum  = $hasAmount ? rtrim(rtrim(number_format((float) $object->opp_amount, 2, '.', ''), '0'), '.') : '';
+        $amountHtml = '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityAmount')) . '" data-field="opp_amount" data-id="' . (int) $object->id . '" data-element="' . dol_escape_htmltag($object->element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($amountNum) . '</span> ' . dol_escape_htmltag($conf->currency);
+    } else {
+        $amountHtml = $hasAmount ? price((float) $object->opp_amount, 0, $langs, 1, -1, -1, $conf->currency) : '';
+    }
 
     $out  = '<div class="reedcrm-opp-cell">';
     $out .= '<div class="reedcrm-opp-cell-row">' . $statusHtml . '</div>';
