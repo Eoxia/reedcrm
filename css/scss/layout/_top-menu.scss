@@ -16,3 +16,45 @@
 #id-top .tmenusel .mainmenuaspan {
     font-size: 12px;
 }
+
+// "Plus" dropdown gathering the non-CRM entries (built by topMenu.js)
+.reedcrm-topmenu-more {
+    position: relative;
+}
+
+.reedcrm-topmenu-more-toggle {
+    cursor: pointer;
+}
+
+.reedcrm-topmenu-more-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 190px;
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #e3e6ea;
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    z-index: 1050;
+}
+
+.reedcrm-topmenu-more.open .reedcrm-topmenu-more-panel {
+    display: block;
+}
+
+.reedcrm-topmenu-more-panel li a {
+    display: block;
+    padding: 7px 16px;
+    color: #2b2b2b;
+    white-space: nowrap;
+    text-decoration: none;
+
+    &:hover {
+        background: #f0f3f7;
+        color: #2c7be5;
+    }
+}
