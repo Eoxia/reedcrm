@@ -1,0 +1,18 @@
+// CRM-focused top menu: this file is compiled into reedcrm.min.css, which is only loaded on
+// reedcrm/opportunity pages — so these rules declutter the Dolibarr top menu in the CRM context only.
+
+// Keep a lean, CRM-oriented set of top-menu entries; hide every other module entry.
+#id-top li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainmenutd_menu):not(#mainmenutd_home):not(#mainmenutd_companies):not(#mainmenutd_commercial):not(#mainmenutd_project):not(#mainmenutd_agenda):not(#mainmenutd_reedcrm):not(#mainmenutd_) {
+    display: none !important;
+}
+
+// Slightly more compact remaining entries
+#id-top .tmenu a.tmenu {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+#id-top .tmenu .mainmenuaspan,
+#id-top .tmenusel .mainmenuaspan {
+    font-size: 12px;
+}
