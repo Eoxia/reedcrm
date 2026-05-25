@@ -15,14 +15,6 @@ window.saturne.contact_inline.event = function() {
     $(document).on('click', '.inline-edit-proj-amount', window.saturne.contact_inline.editAmount);
     $(document).on('click', '.inline-edit-company-badge', window.saturne.contact_inline.startCompanyEdit);
     $(document).on('click', '.inline-edit-origin-badge', window.saturne.contact_inline.startOriginEdit);
-
-    // Keep the phone editor input focused when interacting with the intlTelInput country
-    // selector / list. Without this the flag click blurs the input first, which tears the
-    // editor down before the dropdown can open (so the country can never be changed).
-    // preventDefault on mousedown stops the focus loss without blocking the toggling click.
-    $(document).on('mousedown', '.iti__selected-flag, .iti__flag-container, .iti__country-list, .iti__country', function(e) {
-        e.preventDefault();
-    });
 };
 
 window.saturne.contact_inline.copyToClipboard = function(e) {
@@ -472,6 +464,13 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
         input[0].addEventListener("close:countrydropdown", function() {
             input[0].itiDropdownOpen = false;
             setTimeout(() => input.focus(), 50);
+        });
+        // The flag's mousedown fires before the input's blur; mark the dropdown as open right
+        // away so the blur handler doesn't tear the editor down before the open event arrives.
+        // Letting focus leave the input also lets intlTelInput's type-ahead country search
+        // receive keystrokes (otherwise typed letters would land in the phone number field).
+        $(input).closest('.iti').on('mousedown', '.iti__selected-flag, .iti__flag-container', function() {
+            input[0].itiDropdownOpen = true;
         });
     }
     
