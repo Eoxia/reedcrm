@@ -1390,6 +1390,11 @@ class ActionsReedcrm
                 }
             }
 
+            // Center the status (État) column header + cells
+            if (isset($object->fields['fk_statut'])) {
+                $object->fields['fk_statut']['csslist'] = 'center';
+            }
+
             // Merge the individual contact extrafields into one "Coordonnées" column
             $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'disablesort' => 1];
             foreach (['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone'] as $efName) {
