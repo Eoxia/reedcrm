@@ -1712,7 +1712,7 @@ class ActionsReedcrm
                 'contact_details'     => 'reedcrm_field_contact_details',
                 'photo'              => 'reedcrm_field_photo',
                 'fk_opp_status'      => 'reedcrm_field_opp_status',
-                'fk_statut'          => 'reedcrm_field_propal_status',
+                'fk_statut'          => 'reedcrm_field_status_badge',
                 'opp_percent'        => 'reedcrm_field_opp_percent',
             ];
 

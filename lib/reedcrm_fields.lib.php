@@ -229,14 +229,29 @@ function reedcrm_field_photo(array $parameters, CommonObject $object): string
     return saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 30, 30, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, '', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpg|gif)$']);
 }
 /**
- * Render the propal status field via getLibStatut().
+ * Render the status field as a colored badge (pastille).
+ *
+ * For projects, getLibStatut() reads $object->statut which is not populated in the list loop
+ * (only $object->fk_statut is), so build the badge explicitly from fk_statut. Other objects
+ * keep their native getLibStatut(5) rendering.
  *
  * @param  array        $parameters Hook parameters (key, context, ...)
  * @param  CommonObject $object     The object
  * @return string                   HTML output
  */
-function reedcrm_field_propal_status(array $parameters, CommonObject $object): string
+function reedcrm_field_status_badge(array $parameters, CommonObject $object): string
 {
+    global $langs;
+
+    if ($object->element === 'project') {
+        $status  = (int) ($object->fk_statut ?? $object->statut ?? 0);
+        $labels  = [0 => 'Draft', 1 => 'Validated', 2 => 'Closed'];
+        $classes = [0 => 'status0', 1 => 'status4', 2 => 'status6'];
+        $label   = $langs->trans($labels[$status] ?? 'Unknown');
+
+        return dolGetStatus($label, $label, '', $classes[$status] ?? 'status0', 5);
+    }
+
     return $object->getLibStatut(5);
 }
 
