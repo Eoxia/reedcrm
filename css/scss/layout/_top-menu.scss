@@ -1,6 +1,21 @@
 // CRM-focused top menu: this file is compiled into reedcrm.min.css, which is only loaded on
 // reedcrm/opportunity pages — so these rules declutter the Dolibarr top menu in the CRM context only.
 
+// Center the kept icon group horizontally in the bar. The menu <ul> is normally a left-aligned
+// display:table; make it a full-width centered flex row. The company logo is pinned absolutely
+// to the far left so it stays put and does not shift the centered group.
+#id-top ul.tmenu {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    position: relative;
+    box-sizing: border-box;
+    // Offset the pinned logo on the left so the icons land in the middle of the free space
+    // (between the logo and the right-hand login block), not just the middle of the container.
+    padding-left: 80px;
+}
+
 // Keep a lean, CRM-oriented set of top-menu entries; hide every other module entry.
 #id-top li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainmenutd_menu):not(#mainmenutd_home):not(#mainmenutd_companies):not(#mainmenutd_commercial):not(#mainmenutd_project):not(#mainmenutd_agenda):not(#mainmenutd_reedcrm):not(#mainmenutd_) {
     display: none !important;
@@ -18,6 +33,9 @@ $module-entries: 'li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainme
     width: auto !important;
     height: 52px;
     padding: 0 10px;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 
 #id-top #mainmenutd_companylogo .tmenucenter,
@@ -64,6 +82,18 @@ $module-entries: 'li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainme
 // "Plus" dropdown gathering the non-CRM entries (built by topMenu.js)
 .reedcrm-topmenu-more {
     position: relative;
+}
+
+// "Plus" entry: icon only, vertically centered like the other entries. The label is replaced
+// by a native tooltip (the toggle <a> carries title="Plus").
+#id-top .reedcrm-topmenu-more {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 52px;
+}
+
+#id-top .reedcrm-topmenu-more .mainmenuaspan {
+    display: none;
 }
 
 .reedcrm-topmenu-more-toggle {
