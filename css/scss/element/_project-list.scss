@@ -236,6 +236,12 @@
     }
 }
 
+// The list title's total-record count (e.g. "(302)") duplicates the KPI count card, so hide it
+// on lists that show the KPI banner (scoped via :has so other lists keep their count).
+body:has(.saturne-kpi-cards) .totalnboflines {
+    display: none;
+}
+
 // Contact Coordinates specific logic
 .reedcrm-plist-coordonnees {
     display: flex;
