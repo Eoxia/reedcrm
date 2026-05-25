@@ -81,11 +81,17 @@ window.reedcrm.topMenu.build = function () {
     var $a = $(this).find('a').first();
     var href = $a.attr('href');
     if ($a.length && href && href !== '#') {
-      items.push({
-        href: href,
-        label: $a.attr('title') || $.trim($a.text()),
-        icon: $(this).find('.topmenuimage').html() || '<span class="fas fa-puzzle-piece"></span>'
-      });
+      // Core modules use a Font Awesome span inside .topmenuimage; external modules use
+      // a PNG set as background-image on the .topmenuimage div itself.
+      var $img = $(this).find('.topmenuimage');
+      var bg   = $img.length ? $img.css('background-image') : 'none';
+      var icon;
+      if (bg && bg.indexOf('url(') !== -1) {
+        icon = '<span class="reedcrm-topmenu-more-img" style="background-image:' + bg.replace(/"/g, '') + '"></span>';
+      } else {
+        icon = $img.html() || '<span class="fas fa-puzzle-piece"></span>';
+      }
+      items.push({ href: href, label: $a.attr('title') || $.trim($a.text()), icon: icon });
     }
   });
   if (!items.length) {
