@@ -37,7 +37,10 @@ $module-entries: 'li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainme
     object-fit: contain;
 }
 
-// Kept module entries: icon only (labels removed)
+// Kept module entries: icon only. Hide the whole label link (a.tmenulabel), not just
+// its inner span — the <a> wrapper itself reserves ~15px below the icon otherwise, which
+// both leaves an empty strip and stops the icon from centering vertically.
+#id-top #{$module-entries} .tmenulabel,
 #id-top #{$module-entries} .mainmenuaspan {
     display: none;
 }
@@ -48,6 +51,14 @@ $module-entries: 'li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainme
     display: inline-flex !important;
     align-items: center !important;
     height: 52px;
+}
+
+// The .tmenucenter wrapper keeps the theme's fixed 52px height, so with the label gone the
+// icon would stick to the top. Flex-center it so the lone icon sits in the middle of the bar.
+#id-top #{$module-entries} .tmenucenter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 // "Plus" dropdown gathering the non-CRM entries (built by topMenu.js)
