@@ -652,7 +652,249 @@ class ActionsReedcrm
             }
         }
 
+        // Project overview (/projet/element.php) : prepend forecast table and color profit rows.
+        if (strpos($parameters['context'], 'projectOverview') !== false && !empty($object) && $object->element === 'project') {
+            $this->printProjectForecastAndColorize($object);
+        }
+
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Build and inject the forecast (Bénéfice prévisionnel) block on the project
+     * overview page, plus the JS that moves it above the Profit table and adds
+     * +/- color classes on Profit rows.
+     *
+     * @param  Project $project Current project
+     * @return void
+     */
+    protected function printProjectForecastAndColorize(Project $project): void
+    {
+        global $langs;
+
+        $langs->loadLangs(['orders', 'suppliers', 'mrp', 'reedcrm@reedcrm']);
+
+        $forecast   = $this->getProjectForecastData($project);
+        $blockId    = 'reedcrm-project-forecast';
+        $profitText = $langs->trans('Profit');
+        ?>
+        <div id="<?php echo $blockId; ?>" style="display: none;">
+            <?php echo load_fiche_titre($langs->trans('ForecastProfit'), '', 'title_accountancy'); ?>
+            <table class="noborder centpercent">
+                <tr class="liste_titre">
+                    <td class="left" width="200"><?php echo $langs->trans('Element'); ?></td>
+                    <td class="right" width="100"><?php echo $langs->trans('Number'); ?></td>
+                    <td class="right" width="100"><?php echo $langs->trans('AmountHT'); ?></td>
+                    <td class="right" width="100"><?php echo $langs->trans('AmountTTC'); ?></td>
+                </tr>
+                <?php foreach ($forecast['rows'] as $row) : ?>
+                    <tr class="oddeven<?php echo !empty($row['rowclass']) ? ' ' . $row['rowclass'] : ''; ?>">
+                        <td class="left"><?php echo dol_escape_htmltag($row['label']); ?></td>
+                        <td class="right"><?php echo (int) $row['count']; ?></td>
+                        <td class="right"><?php echo $row['hasamount'] ? price($row['total_ht']) : '<span class="opacitymedium">' . $langs->trans('NA') . '</span>'; ?></td>
+                        <td class="right"><?php echo $row['hasamount'] ? price($row['total_ttc']) : '<span class="opacitymedium">' . $langs->trans('NA') . '</span>'; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <tr class="liste_total">
+                    <td class="right" colspan="2"><?php echo $langs->trans('ForecastProfit'); ?></td>
+                    <td class="right"><?php echo price(price2num($forecast['balance_ht'], 'MT')); ?></td>
+                    <td class="right"><?php echo price(price2num($forecast['balance_ttc'], 'MT')); ?></td>
+                </tr>
+            </table>
+            <br>
+        </div>
+
+        <style>
+            .reedcrm-profit-add  td { background-color: rgba(76, 175, 80, 0.08); }
+            .reedcrm-profit-minus td { background-color: rgba(244, 67, 54, 0.08); }
+            .reedcrm-profit-add  td:first-child { box-shadow: inset 4px 0 0 #4caf50; }
+            .reedcrm-profit-minus td:first-child { box-shadow: inset 4px 0 0 #f44336; }
+        </style>
+        <script>
+            jQuery(function ($) {
+                var block = $('#<?php echo $blockId; ?>');
+                if (!block.length) {
+                    return;
+                }
+                var profitLabel = <?php echo json_encode($profitText); ?>;
+                var profitTable = null;
+
+                $('table.noborder.centpercent').not(block.find('table')).each(function () {
+                    var totalRow = $(this).find('tr.liste_total').first();
+                    if (!totalRow.length) {
+                        return;
+                    }
+                    var firstCellText = totalRow.find('td').eq(0).text().trim();
+                    if (firstCellText === profitLabel) {
+                        profitTable = $(this);
+                        return false;
+                    }
+                });
+
+                if (!profitTable) {
+                    block.remove();
+                    return;
+                }
+
+                // Add +/- color classes on Profit rows : (-) rows render a negative AmountHT.
+                profitTable.find('tr.oddeven').each(function () {
+                    var amountText = $(this).find('td').eq(2).text().trim();
+                    if (!amountText.length || !/\d/.test(amountText)) {
+                        return;
+                    }
+                    if (amountText.charAt(0) === '-' || amountText.charAt(1) === '-') {
+                        $(this).addClass('reedcrm-profit-minus');
+                    } else {
+                        $(this).addClass('reedcrm-profit-add');
+                    }
+                });
+
+                // Insert forecast block right before the Profit title (load_fiche_titre wrapper).
+                var anchor = profitTable.prev('table.table-fiche-title');
+                if (!anchor.length) {
+                    anchor = profitTable;
+                }
+                anchor.before(block.contents());
+                block.remove();
+            });
+        </script>
+        <?php
+    }
+
+    /**
+     * Compute the forecast data shown in the Bénéfice prévisionnel block :
+     * customer orders (+), supplier orders (-), manufacturing orders (count only).
+     *
+     * @param  Project $project Current project
+     * @return array            Forecast structure with rows[], balance_ht, balance_ttc.
+     */
+    protected function getProjectForecastData(Project $project): array
+    {
+        global $db, $langs, $user;
+
+        $rows       = [];
+        $balanceHt  = 0;
+        $balanceTtc = 0;
+
+        // Customer orders : revenue forecast.
+        if (isModEnabled('order') && $user->hasRight('commande', 'lire')) {
+            require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
+            $totals      = $this->sumProjectElementAmounts($project, 'order', 'commande', 'date_commande', 'Commande');
+            $balanceHt  += $totals['total_ht'];
+            $balanceTtc += $totals['total_ttc'];
+            $rows[]      = [
+                'label'     => $langs->trans('CustomersOrders'),
+                'count'     => $totals['count'],
+                'total_ht'  => $totals['total_ht'],
+                'total_ttc' => $totals['total_ttc'],
+                'hasamount' => true,
+                'rowclass'  => 'reedcrm-profit-add'
+            ];
+        }
+
+        // Supplier orders : cost forecast (negated).
+        if (isModEnabled('supplier_order') && ($user->hasRight('fournisseur', 'commande', 'lire') || $user->hasRight('supplier_order', 'lire'))) {
+            require_once DOL_DOCUMENT_ROOT . '/fourn/class/fournisseur.commande.class.php';
+            $totals      = $this->sumProjectElementAmounts($project, 'order_supplier', 'commande_fournisseur', 'date_commande', 'CommandeFournisseur');
+            $balanceHt  -= $totals['total_ht'];
+            $balanceTtc -= $totals['total_ttc'];
+            $rows[]      = [
+                'label'     => $langs->trans('SuppliersOrders'),
+                'count'     => $totals['count'],
+                'total_ht'  => -$totals['total_ht'],
+                'total_ttc' => -$totals['total_ttc'],
+                'hasamount' => true,
+                'rowclass'  => 'reedcrm-profit-minus'
+            ];
+        }
+
+        // Manufacturing Orders : count only (Mo has no total_ht).
+        if (isModEnabled('mrp') && $user->hasRight('mrp', 'read')) {
+            require_once DOL_DOCUMENT_ROOT . '/mrp/class/mo.class.php';
+            $idsList = $project->get_element_list('mrp', 'mrp_mo', 'date_valid', null, null, 'fk_project');
+            $count   = is_array($idsList) ? count($idsList) : 0;
+            $rows[]  = [
+                'label'     => $langs->trans('MO'),
+                'count'     => $count,
+                'total_ht'  => 0,
+                'total_ttc' => 0,
+                'hasamount' => false,
+                'rowclass'  => ''
+            ];
+        }
+
+        return [
+            'rows'        => $rows,
+            'balance_ht'  => $balanceHt,
+            'balance_ttc' => $balanceTtc
+        ];
+    }
+
+    /**
+     * Sum total_ht / total_ttc of project-linked elements of a given type using
+     * Project::get_element_list (matches /projet/element.php semantics).
+     *
+     * @param  Project $project       Current project
+     * @param  string  $key           Element key (order, order_supplier, ...)
+     * @param  string  $tablename     Element table name
+     * @param  string  $datefieldname Date field used by get_element_list
+     * @param  string  $classname     PHP class to instantiate per record
+     * @return array                  ['count' => int, 'total_ht' => float, 'total_ttc' => float]
+     */
+    protected function sumProjectElementAmounts(Project $project, string $key, string $tablename, string $datefieldname, string $classname): array
+    {
+        global $db;
+
+        $totals = ['count' => 0, 'total_ht' => 0.0, 'total_ttc' => 0.0];
+        $ids    = $project->get_element_list($key, $tablename, $datefieldname, null, null, 'fk_projet');
+        if (!is_array($ids) || empty($ids)) {
+            return $totals;
+        }
+
+        $element = new $classname($db);
+        foreach ($ids as $idRaw) {
+            $parts = explode('_', $idRaw);
+            $idElement = (int) $parts[0];
+            if ($idElement <= 0) {
+                continue;
+            }
+            if ($element->fetch($idElement) <= 0) {
+                continue;
+            }
+            $totals['count']++;
+            $totals['total_ht']  += (float) $element->total_ht;
+            $totals['total_ttc'] += (float) $element->total_ttc;
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Overloading the printOverviewProfit function : skip rows that do not
+     * contribute to the profit calculation (no margin set), so the table
+     * matches the tooltip explanation and stays compact.
+     *
+     * @param  array        $parameters Hook metadatas (context, etc...)
+     * @param  CommonObject $object     Project being displayed
+     * @param  string       $action     Current action (if set)
+     * @return int                      0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printOverviewProfit(array $parameters, CommonObject $object, string $action): int
+    {
+        if (strpos($parameters['context'], 'projectOverview') === false) {
+            return 0;
+        }
+
+        $value  = $parameters['value'] ?? [];
+        $margin = empty($value['margin']) ? '' : $value['margin'];
+
+        // Only keep rows that contribute to the profit calculation (margin add or minus).
+        if (empty($margin)) {
+            $this->resprints = '';
+            return 1;
+        }
+
+        return 0;
     }
 
     /**
