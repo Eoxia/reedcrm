@@ -152,12 +152,8 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
 
     $out  = '<div class="reedcrm-plist-coordonnees contact-inline-wrapper"' . $wrapperAttr . '>';
 
-    $out .= '<div class="reedcrm-plist-coordonnees-avatar" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">';
-    $out .= '<img src="' . dol_buildpath('/reedcrm/img/reedcrm_color.png', 1) . '" style="width:20px; height:20px; object-fit:contain;" alt="ReedCRM">';
-    $out .= '</div>';
-
     $out .= '<div class="reedcrm-plist-coordonnees-box">';
-    $out .= '<div class="reedcrm-plist-coordonnees-name" style="display:flex; align-items:center; border-left:1px solid #e2e8f0; padding-left:8px;">';
+    $out .= '<div class="reedcrm-plist-coordonnees-name" style="display:flex; align-items:center; padding-left:8px;">';
     $out .= '<i class="fas fa-address-book" style="color:#64748b; margin-right:4px; flex-shrink:0;"></i>';
     $out .= $span('firstname', $firstname, 'Prénom', 'margin-right:4px;');
     $out .= $span('lastname', $lastname, 'Nom', 'flex-grow:1;');
@@ -177,9 +173,9 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     $out .= '<div class="reedcrm-plist-coordonnees-phone-wrapper" style="margin-left:auto; text-align:right;">';
     $out .= $span('phone', $phone, 'Téléphone', 'font-size:13px; color:#2c3e50; margin-right:6px;');
     if ($phone !== '') {
-        $out .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/[^0-9+]/', '', $phone)) . '" title="Appeler" style="color:#64748b; text-decoration:none;"><i class="fas fa-phone-alt fa-lg reedcrm-icon-hover" style="transition:color 0.2s;"></i></a>';
+        $out .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/[^0-9+]/', '', $phone)) . '" title="Appeler" style="color:#64748b; text-decoration:none;"><i class="fas fa-phone-alt reedcrm-icon-hover" style="font-size:13px; transition:color 0.2s;"></i></a>';
     } else {
-        $out .= '<i class="fas fa-phone-alt fa-lg" style="color:#64748b;"></i>';
+        $out .= '<i class="fas fa-phone-alt" style="font-size:13px; color:#64748b;"></i>';
     }
     $out .= '</div>';
 
