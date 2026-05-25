@@ -53,12 +53,12 @@ $module-entries: 'li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainme
     height: 52px;
 }
 
-// The .tmenucenter wrapper keeps the theme's fixed 52px height, so with the label gone the
-// icon would stick to the top. Flex-center it so the lone icon sits in the middle of the bar.
+// The .tmenucenter wrapper carries the theme's fixed 52px height, so with the label gone the
+// icon stuck to the top. Drop that fixed height (don't flex it — flex collapses the PNG-icon
+// modules like reedcrm to 0 width) so it shrinks to the icon and the flex-centered li centers it.
 #id-top #{$module-entries} .tmenucenter {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    height: auto !important;
+    min-height: 0 !important;
 }
 
 // "Plus" dropdown gathering the non-CRM entries (built by topMenu.js)
