@@ -81,7 +81,11 @@ window.reedcrm.topMenu.build = function () {
     var $a = $(this).find('a').first();
     var href = $a.attr('href');
     if ($a.length && href && href !== '#') {
-      items.push({ href: href, label: $a.attr('title') || $.trim($a.text()) });
+      items.push({
+        href: href,
+        label: $a.attr('title') || $.trim($a.text()),
+        icon: $(this).find('.topmenuimage').html() || '<span class="fas fa-puzzle-piece"></span>'
+      });
     }
   });
   if (!items.length) {
@@ -92,7 +96,10 @@ window.reedcrm.topMenu.build = function () {
     + '<a href="#" class="tmenu reedcrm-topmenu-more-toggle"><span class="fas fa-ellipsis-h"></span> Plus</a>'
     + '<ul class="reedcrm-topmenu-more-panel">';
   items.forEach(function (it) {
-    html += '<li><a href="' + it.href + '">' + $('<div>').text(it.label).html() + '</a></li>';
+    html += '<li><a href="' + it.href + '">'
+      + '<span class="reedcrm-topmenu-more-icon">' + it.icon + '</span>'
+      + '<span class="reedcrm-topmenu-more-label">' + $('<div>').text(it.label).html() + '</span>'
+      + '</a></li>';
   });
   html += '</ul></li>';
 
