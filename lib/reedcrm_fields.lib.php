@@ -316,3 +316,32 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
 
     return '<div class="reedcrm-ref-cell">' . $refHtml . $actions . '</div>';
 }
+
+/**
+ * Render the merged "Opportunité" cell: status + probability (both inline-editable) + amount.
+ *
+ * Reuses reedcrm_field_opp_status and reedcrm_field_opp_percent so inline editing keeps working,
+ * and appends the opportunity amount. All values come from standard project fields on $object.
+ *
+ * @param  array        $parameters Hook parameters (key, context, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_opportunity_details(array $parameters, CommonObject $object): string
+{
+    global $conf, $langs;
+
+    $statusHtml  = reedcrm_field_opp_status($parameters, $object);
+    $percentHtml = reedcrm_field_opp_percent($parameters, $object);
+    $amountHtml  = isset($object->opp_amount) ? price((float) $object->opp_amount, 0, $langs, 1, -1, -1, $conf->currency) : '';
+
+    $out  = '<div class="reedcrm-opp-cell">';
+    $out .= '<div class="reedcrm-opp-cell-row">' . $statusHtml . '</div>';
+    $out .= '<div class="reedcrm-opp-cell-row">' . $percentHtml . '</div>';
+    if ($amountHtml !== '') {
+        $out .= '<div class="reedcrm-opp-cell-row reedcrm-opp-cell-amount"><i class="fas fa-coins"></i> ' . $amountHtml . '</div>';
+    }
+    $out .= '</div>';
+
+    return $out;
+}

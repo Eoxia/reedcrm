@@ -1382,16 +1382,24 @@ class ActionsReedcrm
         if ($parameters['objectType'] === 'project') {
             global $extrafields;
 
-            $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'disablesort' => 1];
+            // Merge the opportunity fields (status, probability, amount) into one column
+            $object->fields['opportunity_details'] = ['label' => 'OpportunityDetails', 'enabled' => 1, 'position' => 75, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1];
+            foreach (['fk_opp_status', 'opp_percent', 'opp_amount'] as $oppField) {
+                if (isset($object->fields[$oppField])) {
+                    $object->fields[$oppField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
+                }
+            }
 
-            // Hide the individual extrafield columns; their data stays selected for the combined renderer
+            // Merge the individual contact extrafields into one "Coordonnées" column
+            $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'disablesort' => 1];
             foreach (['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone'] as $efName) {
                 if (isset($extrafields->attributes[$object->table_element]['list'][$efName])) {
                     $extrafields->attributes[$object->table_element]['list'][$efName] = 0;
                 }
             }
 
-            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details']);
+            // Virtual columns (not real DB columns)
+            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details']);
 
             return 1;
         }
@@ -1698,9 +1706,10 @@ class ActionsReedcrm
             require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
 
             $fieldMap = [
-                'ref'                => 'reedcrm_field_ref_with_actions',
-                'relauch_commercial' => 'reedcrm_field_relaunch_commercial',
-                'contact_details'    => 'reedcrm_field_contact_details',
+                'ref'                 => 'reedcrm_field_ref_with_actions',
+                'opportunity_details' => 'reedcrm_field_opportunity_details',
+                'relauch_commercial'  => 'reedcrm_field_relaunch_commercial',
+                'contact_details'     => 'reedcrm_field_contact_details',
                 'photo'              => 'reedcrm_field_photo',
                 'fk_opp_status'      => 'reedcrm_field_opp_status',
                 'fk_statut'          => 'reedcrm_field_propal_status',

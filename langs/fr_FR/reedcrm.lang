@@ -362,3 +362,5 @@ ReedCRMSaveView = Enregistrer la vue
 # KPI banner customization
 ReedCRMKpiCustomize = Personnaliser
 ReedCRMKpiReset = Réinitialiser
+
+OpportunityDetails = Opportunité

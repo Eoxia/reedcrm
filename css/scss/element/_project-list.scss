@@ -35,6 +35,24 @@
     }
 }
 
+// Merged opportunity cell (status + probability + amount)
+.reedcrm-opp-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reedcrm-opp-cell-amount {
+    font-weight: 600;
+    color: #2b2b2b;
+    white-space: nowrap;
+
+    i {
+        color: #6c7a89;
+        margin-right: 3px;
+    }
+}
+
 .reedcrm-plist-relaunch-wrapper {
     display: flex;
     align-items: center;
