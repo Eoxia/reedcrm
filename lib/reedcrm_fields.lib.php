@@ -241,13 +241,18 @@ function reedcrm_field_photo(array $parameters, CommonObject $object): string
  */
 function reedcrm_field_status_badge(array $parameters, CommonObject $object): string
 {
-    global $langs;
+    global $langs, $user;
 
     if ($object->element === 'project') {
         $status  = (int) ($object->fk_statut ?? $object->statut ?? 0);
         $labels  = [0 => 'Draft', 1 => 'Validated', 2 => 'Closed'];
         $classes = [0 => 'status0', 1 => 'status4', 2 => 'status6'];
         $label   = $langs->trans($labels[$status] ?? 'Unknown');
+
+        // Per-user display preference: colored dot instead of the full badge
+        if (isset($user->conf->REEDCRM_STATUS_DISPLAY) && $user->conf->REEDCRM_STATUS_DISPLAY === 'dot') {
+            return '<span class="reedcrm-status-dot reedcrm-status-dot-' . $status . '" title="' . dol_escape_htmltag($label) . '"></span>';
+        }
 
         return dolGetStatus($label, $label, '', $classes[$status] ?? 'status0', 5);
     }

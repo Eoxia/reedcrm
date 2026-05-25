@@ -63,6 +63,14 @@ if ($action === 'save') {
     exit;
 }
 
+if ($action === 'set_status_display') {
+    $mode = GETPOST('mode', 'aZ09');
+    $mode = in_array($mode, ['badge', 'dot'], true) ? $mode : 'badge';
+    $res  = dol_set_user_param($db, $conf, $user, ['REEDCRM_STATUS_DISPLAY' => $mode]);
+    echo json_encode($res > 0 ? ['success' => true] : ['success' => false, 'error' => 'SaveFailed']);
+    exit;
+}
+
 if ($action === 'reset') {
     // An empty value makes dol_set_user_param delete the parameter
     $res = dol_set_user_param($db, $conf, $user, [$key => '']);

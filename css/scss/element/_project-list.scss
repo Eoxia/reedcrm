@@ -35,6 +35,28 @@
     }
 }
 
+// Status shown as a single colored dot (per-user display preference)
+.reedcrm-status-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #b0b6bd;
+    vertical-align: middle;
+}
+
+.reedcrm-status-dot-0 {
+    background: #b0b6bd;
+}
+
+.reedcrm-status-dot-1 {
+    background: #27ae60;
+}
+
+.reedcrm-status-dot-2 {
+    background: #6c7a89;
+}
+
 // Merged opportunity cell (status + probability + amount)
 .reedcrm-opp-cell {
     display: flex;

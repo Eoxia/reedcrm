@@ -364,3 +364,6 @@ ReedCRMKpiCustomize = Personnaliser
 ReedCRMKpiReset = Réinitialiser
 
 OpportunityDetails = Opportunité
+
+ReedCRMStatusAsDot = État : rond
+ReedCRMStatusAsBadge = État : pastille

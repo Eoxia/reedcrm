@@ -1504,8 +1504,13 @@ class ActionsReedcrm
         $cards = $this->reedcrmApplyKpiLayout($cards);
 
         // Customize controls (edit-mode toggle + reset)
+        $statusDisplay = (isset($user->conf->REEDCRM_STATUS_DISPLAY) && $user->conf->REEDCRM_STATUS_DISPLAY === 'dot') ? 'dot' : 'badge';
+        $statusTarget  = $statusDisplay === 'dot' ? 'badge' : 'dot';
+        $statusLabel   = $statusDisplay === 'dot' ? $langs->trans('ReedCRMStatusAsBadge') : $langs->trans('ReedCRMStatusAsDot');
+
         $customizeBar  = '<div class="reedcrm-kpi-customize-bar">';
         $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-toggle" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '"><i class="fas fa-sliders-h"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '</button>';
+        $customizeBar .= '<button type="button" class="reedcrm-status-display-toggle' . ($statusDisplay === 'dot' ? ' active' : '') . '" data-mode="' . $statusTarget . '" title="' . dol_escape_htmltag($statusLabel) . '"><i class="fas fa-circle"></i> ' . dol_escape_htmltag($statusLabel) . '</button>';
         $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-reset" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '"><i class="fas fa-undo"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '</button>';
         $customizeBar .= '</div>';
 

@@ -111,3 +111,6 @@ ReedCRMKpiCustomize = Customize
 ReedCRMKpiReset = Reset
 
 OpportunityDetails = Opportunity
+
+ReedCRMStatusAsDot = Status: dot
+ReedCRMStatusAsBadge = Status: badge
