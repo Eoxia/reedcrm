@@ -1403,8 +1403,11 @@ class ActionsReedcrm
                 }
             }
 
+            // Commercial relaunch column (call / email / rdv / other counters + quick add)
+            $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
+
             // Virtual columns (not real DB columns)
-            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details']);
+            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details', 'relauch_commercial']);
 
             return 1;
         }

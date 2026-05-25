@@ -38,12 +38,18 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
         return $out;
     }
 
+    // In the saturne list loop the record id is $object->id (rowid is 0); the raw row
+    // (carrying the real project id and socid) is passed via the hook param 'obj'.
+    $row       = !empty($parameters['obj']) ? $parameters['obj'] : $object;
+    $projectId = (int) (!empty($row->id) ? $row->id : $object->id);
+    $socid     = (int) ($row->socid ?? 0);
+
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
     $actionComm = new ActionComm($db);
 
     $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
-    $actionComms = $actionComm->getActions($object->socid, $object->rowid, 'project', $filter, 'a.datec');
+    $actionComms = $actionComm->getActions($socid, $projectId, 'project', $filter, 'a.datec');
 
     $actonComsByType = [
         'call' => [
@@ -82,7 +88,7 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
         }
     }
 
-    $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $object->rowid . '&from_type=project&project_id=' . $object->rowid;
+    $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId;
 
     $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
     $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
@@ -90,8 +96,8 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
     foreach ($actonComsByType as $actionCommType => $actonComByType) {
         $dialogUrl = dol_buildpath('custom/reedcrm/core/ajax/get_relaunches_list.php', 1);
 
-        $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $object->rowid . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
-        $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $object->rowid . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $object->rowid . '" data-action-comm-type="' . $actonComByType['actioncode'] . '">';
+        $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $projectId . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
+        $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '" data-action-comm-type="' . $actonComByType['actioncode'] . '">';
 
         $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
         $out .= '<i class="fas fa-' . $actonComByType['picto'] . '"></i>';
@@ -100,7 +106,7 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
 
         if ($user->hasRight('agenda', 'myactions', 'create')) {
             $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=' . $actonComByType['actioncode'];
-            $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $object->rowid . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+            $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
             $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
             $out .= '</span>';
         }
