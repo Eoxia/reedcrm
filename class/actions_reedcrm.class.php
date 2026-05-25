@@ -1411,6 +1411,26 @@ class ActionsReedcrm
                 }
             }
 
+            // Declutter the list by hiding redundant (already shown in a merged cell) and technical
+            // extrafield columns by default — users can re-enable them via the "Colonnes" picker.
+            $hiddenByDefault = [
+                'reedcrm_website',      // shown in the Coordonnées cell
+                'commrelaunch',         // count shown in the Relances column
+                'qc_frequency',         // DigiQuali control frequency, not CRM
+                'projecturlgithub1',    // technical
+                'easy_url_all_link',    // technical
+                'reedcrm_gravityform',  // technical
+                'opporigin',            // situational
+                'opprefusal',           // situational
+                'commtask',             // situational
+                'projectaddress',       // rarely needed in the list
+            ];
+            foreach ($hiddenByDefault as $efName) {
+                if (isset($extrafields->attributes[$object->table_element]['list'][$efName])) {
+                    $extrafields->attributes[$object->table_element]['list'][$efName] = 0;
+                }
+            }
+
             // Commercial relaunch column (call / email / rdv / other counters + quick add)
             $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
 
