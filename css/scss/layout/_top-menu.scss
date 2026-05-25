@@ -9,6 +9,34 @@
 // Module entries only (never the company logo, the menu hider, or the end spacer)
 $module-entries: 'li[id^="mainmenutd_"]:not(#mainmenutd_companylogo):not(#mainmenutd_menu):not(#mainmenutd_)';
 
+// Keep the square company logo visible in the CRM top bar, scaled to fit the 52px bar.
+// (The native theme hides it in the top bar; the old centering rule re-showed it as a
+//  side-effect but ballooned the 512px image — here we show it explicitly at a safe size.)
+#id-top #mainmenutd_companylogo {
+    display: inline-flex !important;
+    align-items: center;
+    width: auto !important;
+    height: 52px;
+    padding: 0 10px;
+}
+
+#id-top #mainmenutd_companylogo .tmenucenter,
+#id-top #mainmenutd_companylogo .menulogocontainer {
+    display: flex;
+    align-items: center;
+    width: auto !important;
+    max-width: none !important;
+    height: 100%;
+    margin: 0;
+}
+
+#id-top #mainmenutd_companylogo img.mycompany {
+    height: 34px;
+    width: auto;
+    max-width: 120px;
+    object-fit: contain;
+}
+
 // Kept module entries: icon only (labels removed)
 #id-top #{$module-entries} .mainmenuaspan {
     display: none;
