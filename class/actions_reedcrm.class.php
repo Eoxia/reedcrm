@@ -345,142 +345,60 @@ class ActionsReedcrm
 
                 $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') . ')';
                 $actionComms = $actionComm->getActions($socid, ($isProjectContext ? GETPOST('id') : ''), ($isProjectContext ? 'project' : ''), $filter, 'a.datec');
+                $actonComsByType = [
+                    'call'  => ['picto' => 'headset',      'actioncode' => 'AC_TEL',   'nb' => 0],
+                    'email' => ['picto' => 'envelope',     'actioncode' => 'AC_EMAIL', 'nb' => 0],
+                    'rdv'   => ['picto' => 'calendar',     'actioncode' => 'AC_RDV',   'nb' => 0],
+                    'other' => ['picto' => 'comment-dots', 'actioncode' => 'AC_OTH',   'nb' => 0],
+                ];
                 if (is_array($actionComms) && !empty($actionComms)) {
-                    $nbActionComms  = count($actionComms);
-                    $lastActionComm = array_shift($actionComms);
-                } else {
-                    $nbActionComms = 0;
+                    foreach ($actionComms as $ac) {
+                        if ($ac->type_code == 'AC_TEL')        $actonComsByType['call']['nb']++;
+                        elseif ($ac->type_code == 'AC_EMAIL')  $actonComsByType['email']['nb']++;
+                        elseif ($ac->type_code == 'AC_RDV')    $actonComsByType['rdv']['nb']++;
+                        else                                   $actonComsByType['other']['nb']++;
+                    }
                 }
 
-                if ($nbActionComms == 0) {
-                    $badgeClass = 1;
-                } else if ($nbActionComms == 1 || $nbActionComms == 2) {
-                    $badgeClass = 4;
-                } else {
-                    $badgeClass = 8;
-                }
-
-                $url = '?socid=' . $socid . ($isProjectContext ? '&fromtype=project' . '&project_id=' . $object->id : '') . '&action=create&token=' . newToken();
                 $out = '<tr id="reedcrm-relaunch-row-hidden" style="display:none;"><td colspan="2">';
 
-                $picto     = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
-                $socidAttr = !$isProjectContext ? ' data-socid="' . (int) $socid . '"' : '';
-
-                // Build exactly like contactHtml wrapper
                 $out .= '<div class="contact-inline-wrapper reedcrm-header-relaunch-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
                 $out .= '<img src="' . $pictoPath . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
-                // Show the specific event icon if it exists, otherwise fallback to the headset
-                if (!empty($lastActionComm) && !empty($lastActionComm->picto)) {
-                    $out .= '<span style="margin-right: 6px; color: #64748b;">' . img_picto('', $lastActionComm->picto) . '</span>';
-                } else {
-                    $out .= '<i class="fas fa-headset" style="color: #64748b; margin-right: 6px;"></i>';
-                }
 
-                if (!empty($lastActionComm)) {
-                    $urlAction = DOL_URL_ROOT . '/comm/action/card.php?id=' . $lastActionComm->id;
-                    $out .= '<a href="' . $urlAction . '" style="font-weight: 500; color: inherit; text-decoration: none; margin-right: 8px;" class="classlink">' . $lastActionComm->id . '</a>';
-                    
-                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
-                    
-                    $labelHtml = '<span class="inline-edit-action-title reedcrm-edit-action-title" data-action-id="' . $lastActionComm->id . '" data-val="' . dol_escape_htmltag($lastActionComm->label) . '" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px; min-width: 50px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $lastActionComm->label . '</span>';
-                    $out .= $labelHtml;
+                $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons" style="display: inline-flex; align-items: center; gap: 4px;">';
+                $relaunchAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
 
-                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
-                    $out .= '<span style="color: #64748b; margin-right: 8px;">' . dol_print_date($lastActionComm->datec, 'dayhourtext', 'tzuser') . '</span>';
+                foreach ($actonComsByType as $actionCommType => $actonComByType) {
+                    $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $object->id . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
+                    $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $object->id . '"';
+                    $out .= ' data-dialog-title="' . $langs->trans($actionCommType) . '"';
+                    $out .= ' data-dialog-icon="fas fa-' . $actonComByType['picto'] . '"';
+                    $out .= ' data-dialog-align="center"';
+                    $out .= ' data-dialog-url="' . dol_escape_htmltag($relaunchAjaxUrl) . '"';
+                    $out .= ' data-dialog-footer="none"';
+                    $out .= ' data-project-id="' . $projectId . '"';
+                    $out .= ' data-action-comm-type="' . $actonComByType['actioncode'] . '">';
 
-                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
+                    $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
+                    $out .= '<i class="fas fa-' . $actonComByType['picto'] . '"></i>';
+                    $out .= '<span class="reedcrm-plist-relaunch-count">' . $actonComByType['nb'] . '</span>';
+                    $out .= '</div>';
 
-                    $relaunchAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
-                    $out .= '<div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . ' style="display: inline-block;">';
-                    $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3" style="cursor:pointer;">';
-                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '" data-ajax-url="' . dol_escape_htmltag($relaunchAjaxUrl) . '"></span>';
-                    $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
-                    $out .= '</div></div>';
-
-                    $out .= '<script>
-                    $(document).ready(function() {
-                        $(document).off("click", ".reedcrm-edit-action-title").on("click", ".reedcrm-edit-action-title", function(e) {
-                            if ($(this).find("input").length > 0) return;
-                            e.stopPropagation();
-                            
-                            let span = $(this);
-                            let currentVal = span.data("val") || "";
-                            let actionId = span.data("action-id");
-                            
-                            let input = $("<input type=\\"text\\" style=\\"width: 100%; min-width: 150px; border: 1px solid #3b82f6; border-radius: 4px; padding: 4px 8px; font-weight: inherit; font-size: inherit; color: #0f172a; outline: none; box-sizing: border-box; background: white; margin: 0; display: inline-block; line-height: normal;\\" value=\\"\\">");
-                            input.val(currentVal);
-                            
-                            span.html("").append(input);
-                            input.focus();
-                            input.select();
-                            
-                            let submitActionLabel = function() {
-                                let newVal = input.val().trim();
-                                if (newVal === currentVal) {
-                                    span.html(currentVal);
-                                    return;
-                                }
-                                
-                                span.data("val", newVal);
-                                span.html("<i class=\\"fas fa-spinner fa-spin\\" style=\\"color: #9b59b6;\\"></i>");
-                                
-                                let token = $(\'input[name="token"]\').val() || \'\';
-                                let targetUrl = "' . DOL_URL_ROOT . '/custom/reedcrm/ajax/update_action_label.php";
-                                $.ajax({
-                                    url: targetUrl,
-                                    type: "POST",
-                                    data: { actionid: actionId, label: newVal, token: token },
-                                    success: function(res) {
-                                        if (res && res.success) {
-                                            span.html(newVal).css({color: "#2ecc71"});
-                                            setTimeout(function() { span.css({color: ""}); }, 1500);
-                                        } else {
-                                            span.html(currentVal).css({color: "#e74c3c"});
-                                            setTimeout(function() { span.css({color: ""}); }, 1500);
-                                        }
-                                    },
-                                    error: function() {
-                                        span.html(currentVal).css({color: "#e74c3c"});
-                                        setTimeout(function() { span.css({color: ""}); }, 1500);
-                                    }
-                                });
-                            };
-                            
-                            input.on("blur", submitActionLabel);
-                            input.on("keydown", function(ev) { 
-                                if (ev.which === 13) { 
-                                    ev.preventDefault(); 
-                                    input.off("blur"); 
-                                    submitActionLabel(); 
-                                } else if (ev.which === 9) {
-                                    input.off("blur");
-                                    setTimeout(submitActionLabel, 10);
-                                }
-                            });
-                            input.on("click", function(ev) { ev.stopPropagation(); });
-                        });
-                    });
-                    </script>';
-                } else {
-                    $out .= '<div class="reedcrm-relaunch-buttons reedcrm-card-relaunch-wrapper"' . $socidAttr . ' style="display: inline-block; margin-right: 8px;">';
-                    $out .= '<div class="reedcrm-relaunch-button reedcrm-card-badge-trigger" data-relaunch-type="all" data-limit="3" style="cursor:pointer;">';
-                    $out .= '<span class="reedcrm-card-badge-ref reedcrm-modal-open" data-project-id="' . $projectId . '" data-ajax-url="' . dol_escape_htmltag($relaunchAjaxUrl) . '"></span>';
-                    $out .= dolGetBadge($picto . ' : ' . $nbActionComms, '', 'status' . $badgeClass);
-                    $out .= '</div></div>';
-                }
-
-                if ($user->hasRight('agenda', 'myactions', 'create')) {
-                    $modalId = 'eventproCardModal';
-                    if ($isProjectContext) {
-                        $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id;
-                    } else {
-                        $cardProUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe';
+                    if ($user->hasRight('agenda', 'myactions', 'create')) {
+                        if ($isProjectContext) {
+                            $cardProUrlFull = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id . '&actioncode=' . $actonComByType['actioncode'];
+                        } else {
+                            $cardProUrlFull = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe&actioncode=' . $actonComByType['actioncode'];
+                        }
+                        $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                        $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
+                        $out .= '</span>';
                     }
-                    $out .= '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>';
-                    $out .= '<i class="fas fa-plus reedcrm-card-modal-open" style="cursor:pointer; color: #3b82f6; padding: 2px 4px;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . ($isProjectContext ? $object->id : '') . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '"></i>';
-                    $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
+
+                    $out .= '</div>';
                 }
 
+                $out .= '</div>'; // End reedcrm-plist-relaunch-buttons
                 $out .= '</div>'; // End wrapper block
 
                 // Teleport the block to the header area
