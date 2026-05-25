@@ -380,6 +380,14 @@ window.saturne.contact_inline.applyInputMaterial = function(el, invalid) {
     el.style.setProperty('box-shadow', shadow, 'important');
 };
 
+// Cancel an inline edit: tear down the phone widget if any and restore the original markup.
+window.saturne.contact_inline.cancelInlineEdit = function(span, input, originalHtml) {
+    if (input && input[0] && input[0].iti) {
+        input[0].iti.destroy();
+    }
+    span.html(originalHtml);
+};
+
 window.saturne.contact_inline.startInlineEdit = function(e) {
     if ($(this).find('input').length > 0) return;
     e.stopPropagation();
@@ -464,14 +472,15 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     
     let submitFunction = isTitle ? window.saturne.contact_inline.submitTitleDetail : window.saturne.contact_inline.submitContactDetail;
     
-    input.on('blur', function() { 
+    input.on('blur', function() {
         if (input[0] && input[0].itiDropdownOpen) return;
-        submitFunction(span, input, originalHtml, currentVal, false); 
+        submitFunction(span, input, originalHtml, currentVal, false, 'blur');
     });
-    input.on('keydown', function(ev) { 
-        ev.stopPropagation(); 
-        if (ev.which === 13) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, false); }
-        else if (ev.which === 9) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, true); }
+    input.on('keydown', function(ev) {
+        ev.stopPropagation();
+        if (ev.which === 13) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, false, 'enter'); }
+        else if (ev.which === 9) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, true, 'tab'); }
+        else if (ev.which === 27) { ev.preventDefault(); input.off('blur'); window.saturne.contact_inline.cancelInlineEdit(span, input, originalHtml); }
     });
     input.on('click', function(ev) { ev.stopPropagation(); });
 };
@@ -529,7 +538,7 @@ window.saturne.contact_inline.submitTitleDetail = function(span, input, original
     });
 };
 
-window.saturne.contact_inline.submitContactDetail = function(span, input, originalHtml, currentVal, isTabbing) {
+window.saturne.contact_inline.submitContactDetail = function(span, input, originalHtml, currentVal, isTabbing, trigger) {
     let newVal = input.val().trim();
     if (span.data('field') === 'phone' && input[0].iti && window.intlTelInputUtils) {
         if (input[0].iti.isValidNumber()) {
@@ -547,18 +556,15 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
     };
     
     let field = span.data('field');
-    
-    // Email Validation
+    let invalid = false;
+
+    // Email validation
     if (field === 'email' && newVal !== '') {
         const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-        if (!materialEmailRegex.test(newVal)) {
-            alert('Format de l\'adresse e-mail invalide.');
-            input.focus();
-            return;
-        }
+        invalid = !materialEmailRegex.test(newVal);
     }
-    
-    // Website Validation
+
+    // Website validation (normalize the protocol first)
     if (field === 'website') {
         if (newVal === 'https://' || newVal === 'http://') {
             newVal = '';
@@ -570,12 +576,22 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
                 input.val(newVal);
             }
             const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
-            if (!materialUrlRegex.test(newVal)) {
-                alert('Format du site web invalide.');
-                input.focus();
-                return;
-            }
+            invalid = !materialUrlRegex.test(newVal);
         }
+    }
+
+    // No blocking alert (it previously trapped the user, with no way to cancel the edit).
+    if (invalid) {
+        if (trigger === 'blur') {
+            // Clicked away from an invalid value: cancel and restore the original.
+            window.saturne.contact_inline.cancelInlineEdit(span, input, originalHtml);
+            span.data('val', currentVal);
+        } else {
+            // Active submit (Enter/Tab): keep editing and flag the field in red.
+            window.saturne.contact_inline.applyInputMaterial(input[0], true);
+            input.focus();
+        }
+        return;
     }
 
     if (newVal === currentVal) {
