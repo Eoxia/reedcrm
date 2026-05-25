@@ -71,6 +71,14 @@ if ($action === 'set_status_display') {
     exit;
 }
 
+if ($action === 'set_list_density') {
+    $mode = GETPOST('mode', 'aZ09');
+    $mode = in_array($mode, ['compact', 'comfortable'], true) ? $mode : 'compact';
+    $res  = dol_set_user_param($db, $conf, $user, ['REEDCRM_LIST_DENSITY' => $mode]);
+    echo json_encode($res > 0 ? ['success' => true] : ['success' => false, 'error' => 'SaveFailed']);
+    exit;
+}
+
 if ($action === 'reset') {
     // An empty value makes dol_set_user_param delete the parameter
     $res = dol_set_user_param($db, $conf, $user, [$key => '']);

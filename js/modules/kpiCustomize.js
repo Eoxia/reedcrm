@@ -47,6 +47,7 @@ window.reedcrm.kpiCustomize.event = function () {
   $(document).on('click', '.reedcrm-kpi-customize-toggle', window.reedcrm.kpiCustomize.toggle);
   $(document).on('click', '.reedcrm-kpi-customize-reset', window.reedcrm.kpiCustomize.reset);
   $(document).on('click', '.reedcrm-status-display-toggle', window.reedcrm.kpiCustomize.toggleStatusDisplay);
+  $(document).on('click', '.reedcrm-list-density-toggle', window.reedcrm.kpiCustomize.toggleListDensity);
   $(document).on('click', '.kpi-hide-btn', window.reedcrm.kpiCustomize.toggleHide);
   $(document).on('dragstart', '.saturne-kpi-card', window.reedcrm.kpiCustomize.onDragStart);
   $(document).on('dragover', '.saturne-kpi-card', window.reedcrm.kpiCustomize.onDragOver);
@@ -201,6 +202,25 @@ window.reedcrm.kpiCustomize.toggleStatusDisplay = function (e) {
     method: 'POST',
     dataType: 'json',
     data: { action: 'set_status_display', token: window.saturne.toolbox.getToken(), mode: mode },
+    success: function () { window.location.reload(); },
+    error: function () { window.location.reload(); }
+  });
+};
+
+/**
+ * Toggle the list row density (compact / comfortable), saved per user.
+ *
+ * @param  {Event} e Click event
+ * @returns {void}
+ */
+window.reedcrm.kpiCustomize.toggleListDensity = function (e) {
+  e.preventDefault();
+  var mode = $(this).data('mode');
+  $.ajax({
+    url: window.reedcrm.kpiCustomize.url(),
+    method: 'POST',
+    dataType: 'json',
+    data: { action: 'set_list_density', token: window.saturne.toolbox.getToken(), mode: mode },
     success: function () { window.location.reload(); },
     error: function () { window.location.reload(); }
   });

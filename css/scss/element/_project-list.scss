@@ -96,8 +96,10 @@
 }
 
 // Density: tighten the merged cells and rows so more opportunities fit without scrolling.
-.bodyforlist {
-    font-size: 12px;
+// Applied only in "compact" mode (per-user toggle in the customize bar); "comfortable" keeps the
+// roomier default. Scoped via :has on the customize bar's data-density marker.
+body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
+    table.liste tbody { font-size: 12px; }
 
     .reedcrm-opp-cell,
     .reedcrm-dates-cell {

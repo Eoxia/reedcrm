@@ -1471,7 +1471,7 @@ class ActionsReedcrm
      */
     public function saturneListTopBanner(array $parameters): int
     {
-        global $conf, $db, $langs;
+        global $conf, $db, $langs, $user;
 
         // Only on the saturne project list, when the opportunity feature is enabled
         if (strpos($parameters['context'], 'projectlist') === false || strpos($parameters['context'], 'saturnelist') === false) {
@@ -1536,6 +1536,11 @@ class ActionsReedcrm
             ],
         ];
 
+        // Per-user params (REEDCRM_*) are not yet loaded into $user->conf when this banner hook
+        // runs (the per-row hooks fire later, once it is), so load them explicitly here — needed
+        // by the KPI layout, the status-display toggle and the density toggle below.
+        $user->loadPersonalConf();
+
         // Apply the per-user saved layout (order + hidden cards), stored in llx_user_param
         $cards = $this->reedcrmApplyKpiLayout($cards);
 
@@ -1544,9 +1549,16 @@ class ActionsReedcrm
         $statusTarget  = $statusDisplay === 'dot' ? 'badge' : 'dot';
         $statusLabel   = $statusDisplay === 'dot' ? $langs->trans('ReedCRMStatusAsBadge') : $langs->trans('ReedCRMStatusAsDot');
 
-        $customizeBar  = '<div class="reedcrm-kpi-customize-bar">';
+        // Row density (per-user): 'compact' (default) packs more rows, 'comfortable' is airier
+        $density       = (isset($user->conf->REEDCRM_LIST_DENSITY) && $user->conf->REEDCRM_LIST_DENSITY === 'comfortable') ? 'comfortable' : 'compact';
+        $densityTarget = $density === 'compact' ? 'comfortable' : 'compact';
+        $densityLabel  = $density === 'compact' ? 'Affichage aéré' : 'Affichage compact';
+        $densityIcon   = $density === 'compact' ? 'fa-expand-alt' : 'fa-compress-alt';
+
+        $customizeBar  = '<div class="reedcrm-kpi-customize-bar" data-density="' . $density . '">';
         $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-toggle" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '"><i class="fas fa-sliders-h"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '</button>';
         $customizeBar .= '<button type="button" class="reedcrm-status-display-toggle' . ($statusDisplay === 'dot' ? ' active' : '') . '" data-mode="' . $statusTarget . '" title="' . dol_escape_htmltag($statusLabel) . '"><i class="fas fa-circle"></i> ' . dol_escape_htmltag($statusLabel) . '</button>';
+        $customizeBar .= '<button type="button" class="reedcrm-list-density-toggle' . ($density === 'compact' ? ' active' : '') . '" data-mode="' . $densityTarget . '" title="' . dol_escape_htmltag($densityLabel) . '"><i class="fas ' . $densityIcon . '"></i> ' . dol_escape_htmltag($densityLabel) . '</button>';
         $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-reset" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '"><i class="fas fa-undo"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '</button>';
         $customizeBar .= '</div>';
 
