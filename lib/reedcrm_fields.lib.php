@@ -402,3 +402,35 @@ function reedcrm_field_opportunity_details(array $parameters, CommonObject $obje
 
     return $out;
 }
+
+/**
+ * Render the merged dates field (start + end) for the project list.
+ *
+ * @param  array        $parameters Hook parameters (key, context, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_date_details(array $parameters, CommonObject $object): string
+{
+    global $db, $langs;
+
+    // Date columns hold the raw SQL value on the fetched row; convert with jdate()
+    $row   = !empty($parameters['obj']) ? $parameters['obj'] : $object;
+    $start = !empty($row->dateo) ? $db->jdate($row->dateo) : 0;
+    $end   = !empty($row->datee) ? $db->jdate($row->datee) : 0;
+
+    if (empty($start) && empty($end)) {
+        return '';
+    }
+
+    $out = '<div class="reedcrm-dates-cell">';
+    if (!empty($start)) {
+        $out .= '<div class="reedcrm-dates-row"><i class="far fa-calendar-plus" title="' . dol_escape_htmltag($langs->trans('DateStart')) . '"></i> ' . dol_print_date($start, 'day') . '</div>';
+    }
+    if (!empty($end)) {
+        $out .= '<div class="reedcrm-dates-row"><i class="far fa-calendar-check" title="' . dol_escape_htmltag($langs->trans('DateEnd')) . '"></i> ' . dol_print_date($end, 'day') . '</div>';
+    }
+    $out .= '</div>';
+
+    return $out;
+}

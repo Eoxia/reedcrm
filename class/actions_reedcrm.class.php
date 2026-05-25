@@ -1390,6 +1390,14 @@ class ActionsReedcrm
                 }
             }
 
+            // Merge the start/end dates into one "Dates" column
+            $object->fields['date_details'] = ['label' => 'Dates', 'enabled' => 1, 'position' => 50, 'visible' => 1, 'csslist' => 'nowraponall', 'disablesort' => 1];
+            foreach (['dateo', 'datee'] as $dateField) {
+                if (isset($object->fields[$dateField])) {
+                    $object->fields[$dateField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
+                }
+            }
+
             // Center the status (État) column header + cells
             if (isset($object->fields['fk_statut'])) {
                 $object->fields['fk_statut']['csslist'] = 'center';
@@ -1407,7 +1415,7 @@ class ActionsReedcrm
             $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
 
             // Virtual columns (not real DB columns)
-            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details', 'relauch_commercial']);
+            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details', 'relauch_commercial', 'date_details']);
 
             return 1;
         }
@@ -1721,6 +1729,7 @@ class ActionsReedcrm
             $fieldMap = [
                 'ref'                 => 'reedcrm_field_ref_with_actions',
                 'opportunity_details' => 'reedcrm_field_opportunity_details',
+                'date_details'        => 'reedcrm_field_date_details',
                 'relauch_commercial'  => 'reedcrm_field_relaunch_commercial',
                 'contact_details'     => 'reedcrm_field_contact_details',
                 'photo'              => 'reedcrm_field_photo',
