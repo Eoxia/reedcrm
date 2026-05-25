@@ -137,10 +137,14 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     $id      = (int) $object->id;
     $element = $object->element ?? 'project';
 
-    // Inline-editable span (extrafields) when the user can write, otherwise plain text
-    $field = function (string $name, string $value) use ($canEdit, $id, $element) {
+    // Inline-editable span (extrafields) when the user can write, otherwise plain text.
+    // $validate opts the field into a saturne format validator (email / phone).
+    $field = function (string $name, string $value, string $validate = '') use ($canEdit, $id, $element) {
         if ($canEdit) {
-            return '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" data-field="' . dol_escape_htmltag($name) . '" data-id="' . $id . '" data-element="' . dol_escape_htmltag($element) . '" data-type="text" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($value) . '</span>';
+            $errors       = ['email' => 'Email invalide', 'phone' => 'Téléphone invalide'];
+            $errorMsg     = $errors[$validate] ?? 'Valeur invalide';
+            $validateAttr = $validate !== '' ? ' data-validate="' . dol_escape_htmltag($validate) . '"' : '';
+            return '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" data-field="' . dol_escape_htmltag($name) . '" data-id="' . $id . '" data-element="' . dol_escape_htmltag($element) . '" data-type="text"' . $validateAttr . ' data-success="Enregistré" data-error="' . dol_escape_htmltag($errorMsg) . '">' . dol_escape_htmltag($value) . '</span>';
         }
         return dol_escape_htmltag($value !== '' ? $value : 'N/A');
     };
@@ -148,8 +152,8 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     $out  = '<div class="reedcrm-plist-coordonnees">';
     $out .= '<div class="reedcrm-plist-coordonnees-box">';
     $out .= '<div class="reedcrm-plist-coordonnees-name">' . $field('reedcrm_lastname', $lastname) . ' ' . $field('reedcrm_firstname', $firstname) . '</div>';
-    $out .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $field('reedcrm_email', $email) . '</div>';
-    $out .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . $field('projectphone', $phone) . '</div>';
+    $out .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $field('reedcrm_email', $email, 'email') . '</div>';
+    $out .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . $field('projectphone', $phone, 'phone') . '</div>';
     $out .= '</div>';
 
     $out .= '<div class="reedcrm-plist-coordonnees-actions">';
