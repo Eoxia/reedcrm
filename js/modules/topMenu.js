@@ -99,7 +99,10 @@ window.reedcrm.topMenu.build = function () {
   }
 
   var html = '<li class="tmenu reedcrm-topmenu-more">'
-    + '<a href="#" class="tmenu reedcrm-topmenu-more-toggle"><span class="fas fa-ellipsis-h"></span> Plus</a>'
+    + '<a href="#" class="tmenuimage tmenu reedcrm-topmenu-more-toggle" title="Plus">'
+    + '<div class="mainmenu topmenuimage"><span class="fas fa-ellipsis-h fa-fw pictofixedwidth"></span></div>'
+    + '<span class="mainmenuaspan">Plus</span>'
+    + '</a>'
     + '<ul class="reedcrm-topmenu-more-panel">';
   items.forEach(function (it) {
     html += '<li><a href="' + it.href + '">'
