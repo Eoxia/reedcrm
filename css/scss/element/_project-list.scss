@@ -102,11 +102,22 @@
     gap: 3px;
     white-space: nowrap;
 
-    .reedcrm-dates-row i {
-        color: #6c7a89;
-        margin-right: 4px;
-        width: 14px;
-        text-align: center;
+    .reedcrm-dates-row {
+        display: flex;
+        align-items: center;
+
+        > i {
+            color: #6c7a89;
+            margin-right: 4px;
+            width: 14px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        // Keep the empty datepicker target clickable
+        .contenteditable {
+            min-width: 70px;
+        }
     }
 }
 

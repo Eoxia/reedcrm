@@ -412,25 +412,42 @@ function reedcrm_field_opportunity_details(array $parameters, CommonObject $obje
  */
 function reedcrm_field_date_details(array $parameters, CommonObject $object): string
 {
-    global $db, $langs;
+    global $db, $langs, $user;
 
     // Date columns hold the raw SQL value on the fetched row; convert with jdate()
     $row   = !empty($parameters['obj']) ? $parameters['obj'] : $object;
     $start = !empty($row->dateo) ? $db->jdate($row->dateo) : 0;
     $end   = !empty($row->datee) ? $db->jdate($row->datee) : 0;
 
-    if (empty($start) && empty($end)) {
+    $canEdit = $user->hasRight('projet', 'creer');
+    $id      = (int) $object->id;
+    $element = $object->element ?? 'project';
+    $table   = $object->table_element ?? 'projet';
+
+    // Same datepicker editor markup as the generic saturne list loop (flatpickr + calendar button)
+    $calBtn = '<button class="contenteditable-cal-btn" type="button" title="Ouvrir le calendrier" aria-label="Ouvrir le calendrier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>';
+
+    // Inline-editable datepicker when the user can write (even when empty), otherwise plain date
+    $field = function (string $key, int $ts, string $icon, string $labelKey) use ($canEdit, $id, $element, $table, $calBtn, $langs) {
+        $label    = dol_escape_htmltag($langs->trans($labelKey));
+        $text     = !empty($ts) ? dol_print_date($ts, 'day') : '';
+        $iconHtml = '<i class="far ' . $icon . '" title="' . $label . '"></i> ';
+        if ($canEdit) {
+            return '<div class="reedcrm-dates-row">' . $iconHtml
+                . '<div class="contenteditable-wrap"><div class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" aria-label="' . $label . '" data-field="' . $key . '" data-id="' . $id . '" data-element="' . dol_escape_htmltag($element) . '" data-table="' . dol_escape_htmltag($table) . '" data-type="datepicker" data-success="Enregistré" data-error="Format invalide">' . $text . '</div>' . $calBtn . '</div></div>';
+        }
+        if ($text === '') {
+            return '';
+        }
+        return '<div class="reedcrm-dates-row">' . $iconHtml . $text . '</div>';
+    };
+
+    $startHtml = $field('dateo', $start, 'fa-calendar-plus', 'DateStart');
+    $endHtml   = $field('datee', $end, 'fa-calendar-check', 'DateEnd');
+
+    if ($startHtml === '' && $endHtml === '') {
         return '';
     }
 
-    $out = '<div class="reedcrm-dates-cell">';
-    if (!empty($start)) {
-        $out .= '<div class="reedcrm-dates-row"><i class="far fa-calendar-plus" title="' . dol_escape_htmltag($langs->trans('DateStart')) . '"></i> ' . dol_print_date($start, 'day') . '</div>';
-    }
-    if (!empty($end)) {
-        $out .= '<div class="reedcrm-dates-row"><i class="far fa-calendar-check" title="' . dol_escape_htmltag($langs->trans('DateEnd')) . '"></i> ' . dol_print_date($end, 'day') . '</div>';
-    }
-    $out .= '</div>';
-
-    return $out;
+    return '<div class="reedcrm-dates-cell">' . $startHtml . $endHtml . '</div>';
 }
