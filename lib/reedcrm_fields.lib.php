@@ -123,7 +123,7 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
  */
 function reedcrm_field_contact_details(array $parameters, CommonObject $object): string
 {
-    global $langs, $user;
+    global $user;
 
     // Extrafield values live on the raw fetched row (setVarsFromFetchObj only fills $object->fields)
     $row = !empty($parameters['obj']) ? $parameters['obj'] : $object;
@@ -132,42 +132,57 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     $firstname = !empty($row->options_reedcrm_firstname) ? (string) $row->options_reedcrm_firstname : '';
     $email     = !empty($row->options_reedcrm_email)     ? (string) $row->options_reedcrm_email     : '';
     $phone     = !empty($row->options_projectphone)      ? (string) $row->options_projectphone      : '';
+    $website   = !empty($row->options_reedcrm_website)   ? (string) $row->options_reedcrm_website   : '';
 
     $canEdit = $user->hasRight('projet', 'creer');
     $id      = (int) $object->id;
-    $element = $object->element ?? 'project';
 
-    // Inline-editable span (extrafields) when the user can write, otherwise plain text.
-    // $validate opts the field into a saturne format validator (email / phone).
-    $field = function (string $name, string $value, string $validate = '') use ($canEdit, $id, $element) {
+    // Reuse the contact_inline.js editor (intlTelInput phone, email/website validation, save via
+    // quickcreation.php?action=updateoppcontact) by rendering the .contact-inline-wrapper markup it
+    // binds to. When the user cannot write, render the same layout with plain (non-clickable) spans.
+    $span = function (string $field, string $value, string $placeholder, string $extraStyle = '') use ($canEdit) {
+        $display = $value !== '' ? dol_escape_htmltag($value) : $placeholder;
         if ($canEdit) {
-            $errors       = ['email' => 'Email invalide', 'phone' => 'Téléphone invalide'];
-            $errorMsg     = $errors[$validate] ?? 'Valeur invalide';
-            $validateAttr = $validate !== '' ? ' data-validate="' . dol_escape_htmltag($validate) . '"' : '';
-            return '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" data-field="' . dol_escape_htmltag($name) . '" data-id="' . $id . '" data-element="' . dol_escape_htmltag($element) . '" data-type="text"' . $validateAttr . ' data-success="Enregistré" data-error="' . dol_escape_htmltag($errorMsg) . '">' . dol_escape_htmltag($value) . '</span>';
+            return '<span class="inline-edit-contact" data-field="' . $field . '" data-val="' . dol_escape_htmltag($value) . '" style="cursor:pointer; border-bottom:1px dashed #cbd5e0; padding-bottom:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ' . $extraStyle . '">' . $display . '</span>';
         }
-        return dol_escape_htmltag($value !== '' ? $value : 'N/A');
+        return '<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ' . $extraStyle . '">' . $display . '</span>';
     };
 
-    $out  = '<div class="reedcrm-plist-coordonnees">';
-    $out .= '<div class="reedcrm-plist-coordonnees-box">';
-    $out .= '<div class="reedcrm-plist-coordonnees-name">' . $field('reedcrm_lastname', $lastname) . ' ' . $field('reedcrm_firstname', $firstname) . '</div>';
-    $out .= '<div class="reedcrm-plist-coordonnees-email"><i class="fas fa-envelope"></i>' . $field('reedcrm_email', $email, 'email') . '</div>';
-    $out .= '<div class="reedcrm-plist-coordonnees-phone"><i class="fas fa-phone-alt"></i>' . $field('projectphone', $phone, 'phone') . '</div>';
+    $wrapperAttr = $canEdit ? ' data-project-id="' . $id . '"' : '';
+
+    $out  = '<div class="reedcrm-plist-coordonnees contact-inline-wrapper"' . $wrapperAttr . '>';
+
+    $out .= '<div class="reedcrm-plist-coordonnees-avatar" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">';
+    $out .= '<img src="' . dol_buildpath('/reedcrm/img/reedcrm_color.png', 1) . '" style="width:20px; height:20px; object-fit:contain;" alt="ReedCRM">';
     $out .= '</div>';
 
-    $out .= '<div class="reedcrm-plist-coordonnees-actions">';
+    $out .= '<div class="reedcrm-plist-coordonnees-box">';
+    $out .= '<div class="reedcrm-plist-coordonnees-name" style="display:flex; align-items:center; border-left:1px solid #e2e8f0; padding-left:8px;">';
+    $out .= '<i class="fas fa-address-book" style="color:#64748b; margin-right:4px; flex-shrink:0;"></i>';
+    $out .= $span('firstname', $firstname, 'Prénom', 'margin-right:4px;');
+    $out .= $span('lastname', $lastname, 'Nom', 'flex-grow:1;');
+    $out .= '</div>';
+
+    $out .= '<div class="reedcrm-plist-coordonnees-email" style="display:flex; align-items:center; padding-left:8px;">';
+    $out .= '<i class="fas fa-envelope" style="color:#64748b; margin-right:4px; flex-shrink:0;"></i>';
+    $out .= $span('email', $email, 'Email', 'flex-grow:1;');
+    $out .= '</div>';
+
+    $out .= '<div class="reedcrm-plist-coordonnees-website" style="display:flex; align-items:center; padding-left:8px;">';
+    $out .= '<i class="fas fa-globe" style="color:#64748b; margin-right:4px; flex-shrink:0;"></i>';
+    $out .= $span('website', $website, 'Site web', 'flex-grow:1;');
+    $out .= '</div>';
+    $out .= '</div>';
+
+    $out .= '<div class="reedcrm-plist-coordonnees-phone-wrapper" style="margin-left:auto; text-align:right;">';
+    $out .= $span('phone', $phone, 'Téléphone', 'font-size:13px; color:#2c3e50; margin-right:6px;');
     if ($phone !== '') {
-        $out .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/\s+/', '', $phone)) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></a>';
+        $out .= '<a href="tel:' . dol_escape_htmltag(preg_replace('/[^0-9+]/', '', $phone)) . '" title="Appeler" style="color:#64748b; text-decoration:none;"><i class="fas fa-phone-alt fa-lg reedcrm-icon-hover" style="transition:color 0.2s;"></i></a>';
     } else {
-        $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('Phone')) . '"><i class="fas fa-phone-alt"></i></div>';
-    }
-    if ($email !== '') {
-        $out .= '<a href="mailto:' . dol_escape_htmltag($email) . '" class="reedcrm-plist-coordonnees-btn" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></a>';
-    } else {
-        $out .= '<div class="reedcrm-plist-coordonnees-btn disabled" title="' . dol_escape_htmltag($langs->trans('EMail')) . '"><i class="fas fa-envelope"></i></div>';
+        $out .= '<i class="fas fa-phone-alt fa-lg" style="color:#64748b;"></i>';
     }
     $out .= '</div>';
+
     $out .= '</div>';
 
     return $out;

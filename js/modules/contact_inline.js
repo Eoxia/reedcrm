@@ -368,10 +368,22 @@ window.saturne.contact_inline.startOriginEdit = function(e) {
     });
 };
 
+// Apply the material look (blue base / red invalid) on an inline editor input. Uses inline
+// !important so it beats the backend list theme's stronger global input border rule.
+window.saturne.contact_inline.applyInputMaterial = function(el, invalid) {
+    if (!el) return;
+    let border = invalid ? '#e53935' : '#3b82f6';
+    let color  = invalid ? '#e53935' : '#0f172a';
+    let shadow = invalid ? '0 0 0 2px rgba(229, 57, 53, 0.2)' : '0 0 0 2px rgba(59, 130, 246, 0.2)';
+    el.style.setProperty('border', '1px solid ' + border, 'important');
+    el.style.setProperty('color', color, 'important');
+    el.style.setProperty('box-shadow', shadow, 'important');
+};
+
 window.saturne.contact_inline.startInlineEdit = function(e) {
     if ($(this).find('input').length > 0) return;
     e.stopPropagation();
-    
+
     let span = $(this);
     let isTitle = span.hasClass('inline-edit-proj-title');
     let currentVal = span.data('val') || '';
@@ -399,7 +411,8 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     }
     
     span.html('').append(input);
-    
+    window.saturne.contact_inline.applyInputMaterial(input[0], false);
+
     if (isWebsite) {
         input.on('input', function() {
             let val = $(this).val().trim();
@@ -408,14 +421,19 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
                 $(this).val(val);
             }
             const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
-            if (val !== '' && val !== 'https://' && val !== 'http://' && !materialUrlRegex.test(val)) {
-                $(this).css({ 'border-color': '#e53935', 'color': '#e53935', 'box-shadow': '0 0 0 2px rgba(229, 57, 53, 0.2)' });
-            } else {
-                $(this).css({ 'border-color': '#3b82f6', 'color': '#0f172a', 'box-shadow': '0 0 0 2px rgba(59, 130, 246, 0.2)' });
-            }
+            const invalid = val !== '' && val !== 'https://' && val !== 'http://' && !materialUrlRegex.test(val);
+            window.saturne.contact_inline.applyInputMaterial(this, invalid);
         });
     }
     
+    if (isEmail) {
+        input.on('input', function() {
+            let val = $(this).val().trim();
+            const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+            window.saturne.contact_inline.applyInputMaterial(this, val !== '' && !materialEmailRegex.test(val));
+        });
+    }
+
     if (isPhone && typeof window.intlTelInput !== 'undefined') {
         let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
         if (!baseRoot) {
