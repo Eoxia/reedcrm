@@ -1391,7 +1391,7 @@ class ActionsReedcrm
             }
 
             // Merge the start/end dates into one "Dates" column
-            $object->fields['date_details'] = ['label' => 'Dates', 'enabled' => 1, 'position' => 50, 'visible' => 1, 'csslist' => 'nowraponall', 'disablesort' => 1];
+            $object->fields['date_details'] = ['label' => 'Dates', 'enabled' => 1, 'position' => 50, 'visible' => 1, 'csslist' => 'nowraponall minwidth150', 'disablesort' => 1];
             foreach (['dateo', 'datee'] as $dateField) {
                 if (isset($object->fields[$dateField])) {
                     $object->fields[$dateField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
