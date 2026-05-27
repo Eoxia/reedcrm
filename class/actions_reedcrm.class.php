@@ -1392,6 +1392,15 @@ class ActionsReedcrm
             $out .= ajax_constantonoff('REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO');
             $out .= '</td></tr>';
 
+            // Create ActionComm on call list call button
+            $out .= '<tr class="oddeven"><td>';
+            $out .= $langs->transnoentities('CallListCreateActioncomm');
+            $out .= '</td><td>';
+            $out .= $langs->transnoentities('CallListCreateActioncommDesc');
+            $out .= '</td><td class="center">';
+            $out .= ajax_constantonoff('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
+            $out .= '</td></tr>';
+
             $out .= '</table>';
 
             $this->resprints = $out;
@@ -2138,64 +2147,6 @@ EOT;
                 $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml;
             }
         }
-        return 0;
-    }
-
-    /**
-     * Overloading the saturneBannerTab function : replacing the core function with the custom one
-     *
-     * @param  array      $parameters Hook metadata
-     * @param  CommonObject $object   Current object
-     * @return int                    0 = no replace, 1 = replace
-     */
-    /**
-     * Overloading the saturneAdminPWAAdditionalConfig hook : inject call list settings into the App admin tab
-     *
-     * @param  array $parameters Hook metadata
-     * @return int               0 = no replace, 1 = replace
-     */
-    public function saturneAdminPWAAdditionalConfig(array $parameters): int
-    {
-        global $conf, $db, $langs;
-
-        if (strpos($parameters['context'], 'reedcrmadmin') === false && strpos($parameters['context'], 'reedcrmpwaadmin') === false) {
-            return 0;
-        }
-
-        saturne_load_langs();
-
-        $action = GETPOST('action', 'alpha');
-
-        if ($action === 'updateCallListPWAConfig') {
-            $createActioncomm = GETPOST('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM', 'alpha') ? 1 : 0;
-            dolibarr_set_const($db, 'REEDCRM_CALL_LIST_CREATE_ACTIONCOMM', $createActioncomm, 'int', 0, '', $conf->entity);
-            setEventMessages($langs->trans('SetupSaved'), null, 'mesgs');
-        }
-
-        $out  = '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?module_name=ReedCRM">';
-        $out .= '<input type="hidden" name="token" value="' . newToken() . '">';
-        $out .= '<input type="hidden" name="action" value="updateCallListPWAConfig">';
-
-        $out .= load_fiche_titre('<i class="fas fa-phone pictofixedwidth"></i>' . $langs->transnoentities('CallList'), '', '');
-
-        $out .= '<table class="noborder centpercent">';
-        $out .= '<tr class="liste_titre">';
-        $out .= '<td>' . $langs->trans('Parameter') . '</td>';
-        $out .= '<td>' . $langs->trans('Description') . '</td>';
-        $out .= '<td class="center">' . $langs->trans('Value') . '</td>';
-        $out .= '</tr>';
-
-        $out .= '<tr class="oddeven">';
-        $out .= '<td>' . $langs->transnoentities('CallListCreateActioncomm') . '</td>';
-        $out .= '<td>' . $langs->transnoentities('CallListCreateActioncommDesc') . '</td>';
-        $out .= '<td class="center"><input type="checkbox" name="REEDCRM_CALL_LIST_CREATE_ACTIONCOMM" value="1"' . (getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM') ? ' checked' : '') . '></td>';
-        $out .= '</tr>';
-
-        $out .= '</table>';
-        $out .= '<div class="center"><input type="submit" class="button button-save" value="' . $langs->trans('Save') . '"></div>';
-        $out .= '</form>';
-
-        $this->resprints = $out;
         return 0;
     }
 
