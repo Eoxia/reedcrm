@@ -209,7 +209,7 @@ class CallList extends SaturneObject
      * @param  int    $save_lastsearch_value Save last search value (-1=autodetect)
      * @return string HTML string
      */
-    public function getNomUrl(int $withpicto = 0, string $option = '', int $notooltip = 0, string $morecss = '', int $save_lastsearch_value = -1): string
+    public function getNomUrl(int $withPicto = 0, string $option = '', int $noToolTip = 0, string $moreCSS = '', int $saveLastSearchValue = -1, int $addLabel = 0): string
     {
         global $langs;
 
@@ -221,24 +221,24 @@ class CallList extends SaturneObject
         $url = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $this->id;
 
         $linkclose = '';
-        if (empty($notooltip)) {
+        if (empty($noToolTip)) {
             $linkclose .= ' title="' . dol_escape_htmltag($label, 1) . '"';
-            $linkclose .= ' class="classfortooltip' . ($morecss ? ' ' . $morecss : '') . '"';
+            $linkclose .= ' class="classfortooltip' . ($moreCSS ? ' ' . $moreCSS : '') . '"';
         } else {
-            $linkclose .= ($morecss ? ' class="' . $morecss . '"' : '');
+            $linkclose .= ($moreCSS ? ' class="' . $moreCSS . '"' : '');
         }
 
         $linkstart = '<a href="' . $url . '"' . $linkclose . '>';
         $linkend   = '</a>';
 
-        if ($withpicto) {
-            $result .= $linkstart . img_object(($notooltip ? '' : $label), $this->picto, ($notooltip ? '' : 'class="classfortooltip"'), 0, 0, $notooltip ? 0 : 1) . $linkend;
-            if ($withpicto != 2) {
+        if ($withPicto) {
+            $result .= $linkstart . img_object(($noToolTip ? '' : $label), $this->picto, ($noToolTip ? '' : 'class="classfortooltip"'), 0, 0, $noToolTip ? 0 : 1) . $linkend;
+            if ($withPicto != 2) {
                 $result .= ' ';
             }
         }
 
-        if ($withpicto != 2) {
+        if ($withPicto != 2) {
             $result .= $linkstart . $this->ref . $linkend;
         }
 
