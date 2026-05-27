@@ -109,7 +109,7 @@ print '<style>
 .pwa-call-source{font-size:.85rem;color:#64748b;margin-bottom:12px;}
 .pwa-call-phone{font-size:1.6rem;font-weight:bold;color:#3b82f6;margin:12px 0;}
 .pwa-call-phone--empty{color:#94a3b8;font-size:1rem;font-weight:normal;}
-.pwa-call-btn{display:block;width:100%;padding:14px;text-align:center;background:#22c55e;color:#fff;font-size:1.2rem;font-weight:bold;border-radius:10px;text-decoration:none;border:none;cursor:pointer;margin-bottom:12px;box-sizing:border-box;}
+.pwa-call-btn{display:block;width:100%;padding:14px;text-align:center;background:#22c55e;color:#fff !important;font-size:1.2rem;font-weight:bold;border-radius:10px;text-decoration:none !important;border:none;cursor:pointer;margin-bottom:12px;box-sizing:border-box;}
 .pwa-call-btn--disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed;}
 .pwa-call-status-btns{display:flex;gap:8px;flex-wrap:wrap;}
 .pwa-status-btn{flex:1;min-width:70px;padding:8px 4px;font-size:.75rem;border-radius:8px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;font-weight:600;transition:background .15s,color .15s;}
