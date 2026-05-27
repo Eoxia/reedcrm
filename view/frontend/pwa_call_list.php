@@ -153,13 +153,13 @@ if (empty($lines)) {
             require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
             $propal = new Propal($db);
             if ($propal->fetch($line->element_id) > 0) {
-                $sourceHtml = '<i class="fas fa-file-contract"></i> ' . $propal->getNomUrl(1);
+                $sourceHtml = $propal->getNomUrl(1);
             }
         } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
             $project = new Project($db);
             if ($project->fetch($line->element_id) > 0) {
-                $sourceHtml = '<i class="fas fa-project-diagram"></i> ' . $project->getNomUrl(1);
+                $sourceHtml = $project->getNomUrl(1);
             }
         }
 
