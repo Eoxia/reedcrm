@@ -382,3 +382,6 @@ ContactToCall = Contact à appeler
 ContactNoPhone = Aucun numéro de téléphone
 CallListLines = Lignes d'appel
 MobileView = Vue mobile
+CallListCreateActioncomm = Créer un événement à l'appel
+CallListCreateActioncommDesc = Crée automatiquement un événement téléphonique dans l'agenda lors du clic sur le bouton d'appel depuis la vue mobile
+CallFrom = Appel depuis

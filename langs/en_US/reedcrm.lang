@@ -129,3 +129,6 @@ ElementTypeProject = Opportunity
 ContactToCall = Contact to call
 ContactNoPhone = No phone number
 MobileView = Mobile view
+CallListCreateActioncomm = Create event on call
+CallListCreateActioncommDesc = Automatically creates a phone event in the agenda when clicking the call button from the mobile view
+CallFrom = Call from

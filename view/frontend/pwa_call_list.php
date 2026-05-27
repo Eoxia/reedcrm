@@ -121,11 +121,15 @@ print '<style>
 .pwa-call-error{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px;margin-top:8px;color:#dc2626;font-size:.85rem;}
 </style>';
 
-$ajaxUrl = dol_buildpath('/custom/reedcrm/ajax/update_call_list_line_status.php', 1);
-$token   = newToken();
+$ajaxUrl          = dol_buildpath('/custom/reedcrm/ajax/update_call_list_line_status.php', 1);
+$actioncommAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/create_call_actioncomm.php', 1);
+$createActioncomm  = getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
+$token             = newToken();
 
 print '<div class="pwa-call-list-container"'
     . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
+    . ' data-actioncomm-url="' . dol_escape_htmltag($actioncommAjaxUrl) . '"'
+    . ' data-create-actioncomm="' . (int) $createActioncomm . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
 
 $dateStart = $object->date_start ? dol_print_date($object->date_start, 'day') : '—';
@@ -216,10 +220,24 @@ print '<script>
 (function () {
     var container  = document.querySelector(".pwa-call-list-container");
     if (!container) return;
-    var ajaxUrl    = container.dataset.ajaxUrl;
-    var token      = container.dataset.token;
+    var ajaxUrl          = container.dataset.ajaxUrl;
+    var actioncommUrl    = container.dataset.actioncommUrl;
+    var createActioncomm = container.dataset.createActioncomm === "1";
+    var token            = container.dataset.token;
     var statusLabels = ' . json_encode($statusLabels) . ';
     var statusColors = ' . json_encode($statusColors) . ';
+
+    document.querySelectorAll(".pwa-call-btn-call").forEach(function (link) {
+        link.addEventListener("click", function () {
+            if (!createActioncomm) return;
+            var card   = link.closest(".pwa-call-card");
+            var lineId = card.dataset.lineId;
+            var body   = new URLSearchParams();
+            body.append("line_id", lineId);
+            body.append("token",   token);
+            fetch(actioncommUrl, { method: "POST", body: body });
+        });
+    });
 
     document.querySelectorAll(".pwa-call-btn-copy").forEach(function (btn) {
         btn.addEventListener("click", function () {
