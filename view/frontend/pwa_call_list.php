@@ -30,6 +30,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
 require_once __DIR__ . '/../../class/calllist.class.php';
 require_once __DIR__ . '/../../class/calllistline.class.php';
 
@@ -68,7 +69,7 @@ foreach ($lines as $line) {
 $title   = dol_escape_htmltag($object->label);
 $helpUrl = 'FR:Module_ReedCRM';
 $moreJS  = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS = ['/custom/reedcrm/css/reedcrm.min.css'];
+$moreCSS = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -112,6 +113,8 @@ print '<style>
 .pwa-call-btn-copy{flex-shrink:0;width:52px;padding:14px 0;text-align:center;background:#3b82f6;color:#fff !important;font-size:1rem;font-weight:bold;border-radius:10px;border:none;cursor:pointer;}
 .pwa-call-btn-copy--ok{background:#22c55e;}
 .pwa-call-phone--empty{color:#94a3b8;font-size:1rem;margin:12px 0;}
+.pwa-call-actions [id$="master-media-row-container-audio"]{padding:0;display:flex;align-items:center;}
+.pwa-call-actions .saturne-audio-controls{margin-top:0;gap:8px;}
 .pwa-call-status-btns{display:flex;gap:8px;flex-wrap:wrap;}
 .pwa-status-btn{flex:1;min-width:70px;padding:8px 4px;font-size:.75rem;border-radius:8px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;font-weight:600;transition:background .15s,color .15s;}
 .pwa-status-btn--active{background:var(--status-color);color:#fff;}
@@ -187,6 +190,7 @@ if (empty($lines)) {
             print '<div class="pwa-call-actions">';
             print '<a class="pwa-call-btn-call" href="tel:' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a>';
             print '<button class="pwa-call-btn-copy" data-phone="' . dol_escape_htmltag($phone) . '" title="Copier le numéro"><i class="fas fa-copy"></i></button>';
+            print saturne_render_media_block('reedcrm', 'calllistline_' . (int) $line->id, 'cll_' . (int) $line->id, '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => true]);
             print '</div>';
         } else {
             print '<div class="pwa-call-phone--empty"><i class="fas fa-phone-slash"></i> Pas de téléphone</div>';
