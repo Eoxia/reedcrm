@@ -108,13 +108,14 @@ print '<style>
 .pwa-call-name--empty{color:#94a3b8;font-style:italic;}
 .pwa-call-badge{font-size:.75rem;font-weight:600;color:#fff;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
 .pwa-call-source{font-size:.85rem;color:#64748b;margin-bottom:12px;}
-.pwa-call-actions{display:flex;gap:8px;margin:12px 0;}
-.pwa-call-btn-call{flex:1;padding:14px;text-align:center;background:#22c55e;color:#fff !important;font-size:1.2rem;font-weight:bold;border-radius:10px;text-decoration:none !important;box-sizing:border-box;}
-.pwa-call-btn-copy{flex-shrink:0;width:52px;padding:14px 0;text-align:center;background:#3b82f6;color:#fff !important;font-size:1rem;font-weight:bold;border-radius:10px;border:none;cursor:pointer;}
+.pwa-call-actions{display:flex;align-items:stretch;gap:8px;margin:12px 0;}
+.pwa-call-btn-call{flex:1;padding:14px;text-align:center;background:#22c55e;color:#fff !important;font-size:1.2rem;font-weight:bold;border-radius:10px;text-decoration:none !important;box-sizing:border-box;display:flex;align-items:center;justify-content:center;}
+.pwa-call-btn-copy{flex-shrink:0;width:52px;padding:0;text-align:center;background:#3b82f6;color:#fff !important;font-size:1rem;font-weight:bold;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .pwa-call-btn-copy--ok{background:#22c55e;}
 .pwa-call-phone--empty{color:#94a3b8;font-size:1rem;margin:12px 0;}
-.pwa-call-actions [id$="master-media-row-container-audio"]{padding:0;display:flex;align-items:center;}
-.pwa-call-actions .saturne-audio-controls{margin-top:0;gap:8px;}
+.pwa-call-actions [id$="master-media-row-container-audio"]{padding:0;display:flex;align-items:stretch;}
+.pwa-call-actions .saturne-audio-controls{margin-top:0;gap:8px;align-items:stretch;}
+.pwa-call-actions .saturne-media-btn{width:52px;min-width:52px;height:auto;min-height:0;border-radius:10px;}
 .pwa-call-status-btns{display:flex;gap:8px;flex-wrap:wrap;}
 .pwa-status-btn{flex:1;min-width:70px;padding:8px 4px;font-size:.75rem;border-radius:8px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;font-weight:600;transition:background .15s,color .15s;}
 .pwa-status-btn--active{background:var(--status-color);color:#fff;}
