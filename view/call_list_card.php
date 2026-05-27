@@ -617,14 +617,11 @@ if ($object->id > 0) {
     // PDF documents
     // =====================================================================
     print '<br>';
-    print load_fiche_titre($langs->trans('Documents'), '', 'generic');
 
     $dir       = $conf->reedcrm->multidir_output[$conf->entity] . '/call_list';
     $urlsource = $_SERVER['PHP_SELF'] . '?id=' . $object->id;
 
-    require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
-    $formFile = new FormFile($db);
-    print $formFile->showdocuments('reedcrm:CallList', 'call_list', $dir, $urlsource, $permissiontoadd, $permissiontodelete, getDolGlobalString('REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'pdf_calllist_standard'), 1, 0, 0, 0, 0, '', '', '', '', $object);
+    print saturne_show_documents('reedcrm:CallList', 'call_list', $dir, $urlsource, $permissiontoadd, $permissiontodelete, getDolGlobalString('REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'pdf_calllist_standard'), 1, 0, 0, 0, '', '', '', '', '', $object, 0, 'remove_file');
 
     // =====================================================================
     // ActionComm list
