@@ -91,3 +91,38 @@ GravityFormLink=GravityForm Link
 DetectingLocation = Detecting your location
 GeolocationNotSupported = Geolocation is not supported by this browser
 GeolocationDenied = Location access denied
+
+#
+# Call List
+#
+
+# Data
+CallList = Call list
+CallLists = Call lists
+NewCallList = New call list
+CallListStatus0 = Draft
+CallListStatus1 = Active
+CallListStatus2 = Archived
+CallListStatusShort0 = Draft
+CallListStatusShort1 = Active
+CallListStatusShort2 = Archived
+
+# Lines
+CallListLine = Call list line
+CallListLines = Call list lines
+CallListLineStatus0 = To call
+CallListLineStatus1 = Called
+CallListLineStatus2 = No answer
+CallListLineStatus3 = Callback
+CallListLineStatusShort0 = To call
+CallListLineStatusShort1 = Called
+CallListLineStatusShort2 = No answer
+CallListLineStatusShort3 = Callback
+
+# UI
+AddCallListLine = Add contact
+NoCallListLine = No contacts in this list
+SelectElementType = Source type
+ElementTypePropal = Quote
+ElementTypeProject = Opportunity
+ContactToCall = Contact to call

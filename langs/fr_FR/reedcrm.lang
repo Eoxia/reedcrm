@@ -344,3 +344,38 @@ PropalStatusBilled = Facturée
 DetectingLocation = Détection de la position en cours
 GeolocationNotSupported = Géolocalisation non supportée par ce navigateur
 GeolocationDenied = Accès à la position refusé
+
+#
+# Call List - Liste d'appel
+#
+
+# Data
+CallList = Liste d'appel
+CallLists = Listes d'appel
+NewCallList = Nouvelle liste d'appel
+CallListStatus0 = Brouillon
+CallListStatus1 = Active
+CallListStatus2 = Archivée
+CallListStatusShort0 = Brouillon
+CallListStatusShort1 = Active
+CallListStatusShort2 = Archivée
+
+# Lines
+CallListLine = Ligne de liste d'appel
+CallListLineStatus0 = À appeler
+CallListLineStatus1 = Appelé
+CallListLineStatus2 = Pas de réponse
+CallListLineStatus3 = À rappeler
+CallListLineStatusShort0 = À appeler
+CallListLineStatusShort1 = Appelé
+CallListLineStatusShort2 = Pas de rép.
+CallListLineStatusShort3 = À rappeler
+
+# UI
+AddCallListLine = Ajouter un contact
+NoCallListLine = Aucun contact dans cette liste
+SelectElementType = Type de source
+ElementTypePropal = Devis
+ElementTypeProject = Opportunité
+ContactToCall = Contact à appeler
+CallListLines = Lignes d'appel
