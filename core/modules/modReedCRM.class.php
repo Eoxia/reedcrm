@@ -891,6 +891,9 @@ class modReedCRM extends DolibarrModules
             }
         }
 
+        delDocumentModel('pdf_calllist_standard', 'calllist');
+        addDocumentModel('pdf_calllist_standard', 'calllist', $langs->transnoentities('CallListPDF'));
+
         return $this->_init([], $options);
     }
 

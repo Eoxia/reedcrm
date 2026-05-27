@@ -169,6 +169,32 @@ class CallListLine extends SaturneObject
     }
 
     /**
+     * Check whether an element is already in the call list.
+     *
+     * @param  int    $fkCallList   ID of the parent CallList
+     * @param  string $elementType  'propal' or 'project'
+     * @param  int    $elementId    ID of the element
+     * @return bool                 true if a line with the same element already exists
+     */
+    public function existsByElement(int $fkCallList, string $elementType, int $elementId): bool
+    {
+        $sql  = 'SELECT rowid FROM ' . $this->db->prefix() . $this->table_element;
+        $sql .= ' WHERE fk_call_list = ' . ((int) $fkCallList);
+        $sql .= " AND element_type = '" . $this->db->escape($elementType) . "'";
+        $sql .= ' AND element_id = ' . ((int) $elementId);
+        $sql .= ' AND entity IN (' . getEntity($this->element) . ')';
+        $sql .= ' AND status != ' . self::STATUS_DELETED;
+        $sql .= ' LIMIT 1';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return false;
+        }
+
+        return $this->db->num_rows($resql) > 0;
+    }
+
+    /**
      * Fetch all lines of a given call list.
      *
      * @param  int   $fkCallList ID of the parent CallList
@@ -178,7 +204,8 @@ class CallListLine extends SaturneObject
     {
         $sql  = 'SELECT rowid FROM ' . $this->db->prefix() . $this->table_element;
         $sql .= ' WHERE fk_call_list = ' . ((int) $fkCallList);
-        $sql .= ' AND entity = ' . ((int) $this->db->entity);
+        $sql .= ' AND entity IN (' . getEntity($this->element) . ')';
+        $sql .= ' AND status != ' . self::STATUS_DELETED;
         $sql .= ' ORDER BY rowid ASC';
 
         $lines = [];
