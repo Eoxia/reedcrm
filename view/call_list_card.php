@@ -164,13 +164,17 @@ if (empty($resHook)) {
     if ($action === 'add_line' && $permissiontoadd) {
         $lineObject->fk_call_list  = $object->id;
         $lineObject->element_type  = GETPOST('element_type', 'aZ09');
-        $lineObject->element_id    = GETPOSTINT('element_id');
+        $lineObject->element_id    = $lineObject->element_type === 'project' ? GETPOSTINT('project_id') : GETPOSTINT('propal_id');
         $lineObject->fk_contact    = GETPOSTINT('fk_contact');
         $lineObject->status        = CallListLine::STATUS_TO_CALL;
         $lineObject->note          = GETPOST('line_note', 'restricthtml');
 
         if (!empty($lineObject->element_type) && $lineObject->element_id > 0) {
-            $lineObject->create($user);
+            if ($lineObject->existsByElement($object->id, $lineObject->element_type, $lineObject->element_id)) {
+                setEventMessages($langs->trans('CallListLineDuplicate'), null, 'warnings');
+            } else {
+                $lineObject->create($user);
+            }
         }
 
         header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
@@ -436,6 +440,7 @@ if ($object->id > 0) {
     if ($permissiontodelete) {
         print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete" class="butActionDelete">' . $langs->trans('Delete') . '</a>';
     }
+    print '<a href="' . dol_buildpath('/custom/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . $object->id . '" class="butAction" target="_blank"><i class="fas fa-mobile-alt"></i> ' . $langs->trans('MobileView') . '</a>';
     print '</div>';
 
     // =====================================================================
@@ -443,7 +448,26 @@ if ($object->id > 0) {
     // =====================================================================
     print load_fiche_titre($langs->trans('CallListLines'), '', 'fontawesome_fa-phone_fas_#63ACC9');
 
-    $lines = $lineObject->fetchAllByCallList($object->id);
+    $lines   = $lineObject->fetchAllByCallList($object->id);
+    $colspan = $permissiontodelete ? 7 : 6;
+    $ajaxUrl = $permissiontoadd ? dol_buildpath('/custom/reedcrm/ajax/get_element_primary_contact.php', 1) : '';
+
+    // Build propal array for native selectarray() (key = rowid, value = label)
+    $propalsArray = [];
+    if ($permissiontoadd && isModEnabled('propale')) {
+        $sql  = 'SELECT p.rowid, p.ref, s.nom AS socnom';
+        $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propal AS p';
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe AS s ON s.rowid = p.fk_soc';
+        $sql .= ' WHERE p.fk_statut >= 0 AND p.entity IN (' . getEntity('propal') . ')';
+        $sql .= ' ORDER BY p.rowid DESC LIMIT 200';
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $propalsArray[$obj->rowid] = $obj->ref . ' — ' . $obj->socnom;
+            }
+            $db->free($resql);
+        }
+    }
 
     print '<table class="noborder centpercent">';
     print '<tr class="liste_titre">';
@@ -454,7 +478,7 @@ if ($object->id > 0) {
     print '<td>' . $langs->trans('Status') . '</td>';
     print '<td>' . $langs->trans('Note') . '</td>';
     if ($permissiontodelete) {
-        print '<td></td>';
+        print '<td class="center"></td>';
     }
     print '</tr>';
 
@@ -493,28 +517,26 @@ if ($object->id > 0) {
             print '<td>' . $firstname . '</td>';
             print '<td>' . ($phone ? '<a href="tel:' . dol_escape_htmltag($phone) . '">' . $phone . '</a>' : '') . '</td>';
             print '<td>' . $sourceLink . '</td>';
-            print '<td>';
+            print '<td class="nowraponall">';
             if ($permissiontoadd) {
-                print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '" style="display:inline">';
+                print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '" style="margin:0">';
                 print '<input type="hidden" name="token" value="' . newToken() . '">';
                 print '<input type="hidden" name="action" value="update_line_status">';
                 print '<input type="hidden" name="line_id" value="' . $line->id . '">';
-
                 $statusOptions = [
                     CallListLine::STATUS_TO_CALL   => $langs->trans('CallListLineStatus0'),
                     CallListLine::STATUS_CALLED    => $langs->trans('CallListLineStatus1'),
                     CallListLine::STATUS_NO_ANSWER => $langs->trans('CallListLineStatus2'),
                     CallListLine::STATUS_CALLBACK  => $langs->trans('CallListLineStatus3'),
                 ];
-
-                print '<select name="line_status" onchange="this.form.submit()">';
+                print '<select name="line_status" class="flat" onchange="this.form.submit()">';
                 foreach ($statusOptions as $val => $lbl) {
                     print '<option value="' . $val . '"' . ($line->status == $val ? ' selected' : '') . '>' . dol_escape_htmltag($lbl) . '</option>';
                 }
                 print '</select>';
                 print '</form>';
             } else {
-                print $line->getLibStatut(0);
+                print $line->getLibStatut(5);
             }
             print '</td>';
             print '<td>' . dol_escape_htmltag($line->note) . '</td>';
@@ -529,27 +551,32 @@ if ($object->id > 0) {
             print '</tr>';
         }
     } else {
-        $colspan = $permissiontodelete ? 7 : 6;
         print '<tr><td colspan="' . $colspan . '"><div class="opacitymedium">' . $langs->trans('NoCallListLine') . '</div></td></tr>';
     }
 
-    print '</table>';
-
-    // Add line form
+    // Add line row — native Dolibarr selectors, inside the same table
     if ($permissiontoadd) {
-        $ajaxUrl = dol_buildpath('/custom/reedcrm/ajax/get_element_primary_contact.php', 1);
-
-        print '<br>';
-        print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '" id="add-call-line-form">';
+        print '<tr class="liste_titre"><td colspan="' . $colspan . '">' . $langs->trans('AddCallListLine') . '</td></tr>';
+        print '<tr><td colspan="' . $colspan . '">';
+        print '<form id="add-call-line-form" method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '">';
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="add_line">';
         print '<input type="hidden" name="fk_contact" id="fk_contact_hidden" value="">';
+        print '<table class="nobordernopadding call-list-add-form">';
 
-        print '<table class="noborder centpercent">';
-        print '<tr class="liste_titre"><td colspan="4">' . $langs->trans('AddCallListLine') . '</td></tr>';
+        // Label row
+        print '<tr>';
+        print '<td class="nowraponall opacitymedium">' . $langs->trans('SelectElementType') . '</td>';
+        print '<td class="nowraponall opacitymedium">' . $langs->trans('SelectElement') . '</td>';
+        print '<td></td>';
+        print '<td></td>';
+        print '</tr>';
+
+        // Input row — all inputs on the same baseline
         print '<tr>';
 
-        print '<td>' . $langs->trans('SelectElementType') . '<br>';
+        // Type select
+        print '<td class="valignmiddle nowraponall">';
         print '<select name="element_type" id="call_line_element_type" class="flat">';
         if (isModEnabled('propale')) {
             print '<option value="propal">' . $langs->trans('ElementTypePropal') . '</option>';
@@ -560,80 +587,75 @@ if ($object->id > 0) {
         print '</select>';
         print '</td>';
 
-        print '<td>' . $langs->trans('SelectElement') . '<br>';
-        print '<select name="element_id" id="call_line_element_id" class="flat minwidth200">';
-        print '<option value="">— ' . $langs->trans('SelectElement') . ' —</option>';
+        // Element select — two native Dolibarr selectors, shown/hidden by JS
+        print '<td class="valignmiddle nowraponall">';
 
         if (isModEnabled('propale')) {
-            require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-            $propalList = new Propal($db);
-            $propals    = $propalList->fetchAll('DESC', 'rowid', 100, 0, ['fk_statut' => ['operator' => 'IN', 'value' => [0, 1]]]);
-            if (is_array($propals)) {
-                foreach ($propals as $p) {
-                    print '<option value="' . $p->id . '" data-type="propal">' . dol_escape_htmltag($p->ref . ' — ' . $p->socnom) . '</option>';
-                }
-            }
+            $propalVisible = true;
+            print '<div id="call-line-propal-wrap">';
+            print $form->selectarray('propal_id', $propalsArray, '', 1, 0, 0, '', 0, 0, 0, '', 'minwidth200 flat');
+            print '</div>';
+        } else {
+            $propalVisible = false;
         }
 
-        print '</select>';
+        if (isModEnabled('projet')) {
+            require_once DOL_DOCUMENT_ROOT . '/core/class/html.formprojet.class.php';
+            $formprojet = new FormProjets($db);
+            print '<div id="call-line-project-wrap"' . ($propalVisible ? ' class="hidden"' : '') . '>';
+            $formprojet->select_projects(-1, '', 'project_id', 0, 0, 1, 0, 0, 0, 'minwidth200 flat');
+            print ajax_combobox('project_id');
+            print '</div>';
+        }
+
         print '</td>';
 
-        print '<td id="call_line_contact_info" style="vertical-align:middle">';
+        // Contact info
+        print '<td class="valignmiddle" id="call_line_contact_info">';
         print '<span class="opacitymedium">' . $langs->trans('ContactToCall') . ' : —</span>';
         print '</td>';
 
-        print '<td><input type="submit" class="button" value="' . dol_escape_htmltag($langs->trans('Add')) . '"></td>';
+        // Submit
+        print '<td class="valignmiddle nowraponall"><input type="submit" class="button" value="' . dol_escape_htmltag($langs->trans('Add')) . '"></td>';
 
         print '</tr>';
         print '</table>';
         print '</form>';
+        print '</td></tr>';
+    }
 
-        // JS for AJAX contact resolution
-        print '<script>';
-        print 'var reedcrmAjaxUrl = ' . json_encode($ajaxUrl) . ';';
-        print '</script>';
+    print '</table>';
 
-        // TODO: move to js/modules/call_list.js once the module is created.
-        print '<script>';
-        print '$(document).on("change", "#call_line_element_id", function() {';
-        print '    var elementId = $(this).val();';
-        print '    var elementType = $("#call_line_element_type").val();';
-        print '    if (!elementId) { $("#call_line_contact_info").html("<span class=\'opacitymedium\'>' . $langs->trans('ContactToCall') . ' : —</span>"); return; }';
-        print '    $.ajax({ url: reedcrmAjaxUrl, data: { element_type: elementType, element_id: elementId }, success: function(data) {';
-        print '        if (data.success && data.contact_id) {';
-        print '            var phone = data.phone ? " — " + data.phone : "";';
-        print '            $("#call_line_contact_info").html("<b>" + data.lastname + " " + data.firstname + "</b>" + phone);';
-        print '            $("#fk_contact_hidden").val(data.contact_id);';
-        print '        } else { $("#call_line_contact_info").html("<span class=\'opacitymedium\'>" + "' . $langs->trans('NoContact') . '" + "</span>"); }';
-        print '    }});';
-        print '});';
-        print '$(document).on("change", "#call_line_element_type", function() {';
-        print '    $("#call_line_element_id").val("").trigger("change");';
-        print '});';
-        print '</script>';
+    if ($permissiontoadd) {
+        print '<div id="call-list-data" class="hidden"'
+            . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
+            . ' data-label-contact="' . dol_escape_htmltag($langs->trans('ContactToCall')) . '"'
+            . ' data-label-no-contact="' . dol_escape_htmltag($langs->trans('NoContact')) . '"'
+            . ' data-label-no-phone="' . dol_escape_htmltag($langs->trans('ContactNoPhone')) . '"'
+            . '></div>';
+
+        print '<script src="' . dol_buildpath('/custom/reedcrm/js/modules/call_list.js', 1) . '"></script>';
     }
 
     // =====================================================================
-    // PDF documents
+    // PDF documents (left) + ActionComm (right)
     // =====================================================================
     print '<br>';
+    print '<div class="fichecenter">';
 
+    print '<div class="fichehalfleft">';
     $dir       = $conf->reedcrm->multidir_output[$conf->entity] . '/call_list';
     $urlsource = $_SERVER['PHP_SELF'] . '?id=' . $object->id;
+    print saturne_show_documents('reedcrm:CallList', 'call_list', $dir, $urlsource, $permissiontoadd, $permissiontodelete, getDolGlobalString('REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'pdf_calllist_standard'), 1, 0, 0, 0, '', '', '', '', '', $object, 0, 'remove_file');
+    print '</div>';
 
-    require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
-    $formFile = new FormFile($db);
-    print $formFile->showdocuments('reedcrm:CallList', 'call_list', $dir, $urlsource, $permissiontoadd, $permissiontodelete, getDolGlobalString('REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'pdf_calllist_standard'), 1, 0, 0, 0, 0, '', '', '', '', '', $object);
-
-    // =====================================================================
-    // ActionComm list
-    // =====================================================================
-    print '<br>';
-    print load_fiche_titre($langs->trans('ActionsComm'), '', 'action');
-
+    print '<div class="fichehalfright">';
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
     $formActions = new FormActions($db);
     $formActions->showactions($object, $object->element, 0, 1, '', 10);
+    print '</div>';
+
+    print '</div>';
 }
 
 llxFooter();
