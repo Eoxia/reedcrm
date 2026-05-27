@@ -107,8 +107,10 @@ print '<style>
 .pwa-call-name--empty{color:#94a3b8;font-style:italic;}
 .pwa-call-badge{font-size:.75rem;font-weight:600;color:#fff;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
 .pwa-call-source{font-size:.85rem;color:#64748b;margin-bottom:12px;}
-.pwa-call-phone-btn{display:block;width:100%;padding:14px;text-align:center;background:#22c55e;color:#fff !important;font-size:1.3rem;font-weight:bold;border-radius:10px;text-decoration:none !important;margin:12px 0;box-sizing:border-box;user-select:none;-webkit-user-select:none;transition:background .2s;}
-.pwa-call-phone-btn--copied{background:#3b82f6 !important;}
+.pwa-call-actions{display:flex;gap:8px;margin:12px 0;}
+.pwa-call-btn-call{flex:1;padding:14px;text-align:center;background:#22c55e;color:#fff !important;font-size:1.2rem;font-weight:bold;border-radius:10px;text-decoration:none !important;box-sizing:border-box;}
+.pwa-call-btn-copy{flex-shrink:0;width:52px;padding:14px 0;text-align:center;background:#3b82f6;color:#fff !important;font-size:1rem;font-weight:bold;border-radius:10px;border:none;cursor:pointer;}
+.pwa-call-btn-copy--ok{background:#22c55e;}
 .pwa-call-phone--empty{color:#94a3b8;font-size:1rem;margin:12px 0;}
 .pwa-call-status-btns{display:flex;gap:8px;flex-wrap:wrap;}
 .pwa-status-btn{flex:1;min-width:70px;padding:8px 4px;font-size:.75rem;border-radius:8px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;font-weight:600;transition:background .15s,color .15s;}
@@ -182,7 +184,10 @@ if (empty($lines)) {
         }
 
         if ($phone) {
-            print '<a class="pwa-call-phone-btn" href="tel:' . dol_escape_htmltag($phone) . '" data-phone="' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a>';
+            print '<div class="pwa-call-actions">';
+            print '<a class="pwa-call-btn-call" href="tel:' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a>';
+            print '<button class="pwa-call-btn-copy" data-phone="' . dol_escape_htmltag($phone) . '" title="Copier le numéro"><i class="fas fa-copy"></i></button>';
+            print '</div>';
         } else {
             print '<div class="pwa-call-phone--empty"><i class="fas fa-phone-slash"></i> Pas de téléphone</div>';
         }
@@ -212,35 +217,17 @@ print '<script>
     var statusLabels = ' . json_encode($statusLabels) . ';
     var statusColors = ' . json_encode($statusColors) . ';
 
-    document.querySelectorAll(".pwa-call-phone-btn").forEach(function (el) {
-        var pressTimer = null;
-        var longPressed = false;
-
-        function startPress() {
-            longPressed = false;
-            pressTimer = setTimeout(function () {
-                longPressed = true;
-                var phone = el.dataset.phone;
-                navigator.clipboard.writeText(phone).then(function () {
-                    var orig = el.innerHTML;
-                    el.innerHTML = "<i class=\"fas fa-check\"></i> Copié !";
-                    el.classList.add("pwa-call-phone-btn--copied");
-                    setTimeout(function () {
-                        el.innerHTML = orig;
-                        el.classList.remove("pwa-call-phone-btn--copied");
-                    }, 1500);
-                });
-            }, 600);
-        }
-
-        function cancelPress() { clearTimeout(pressTimer); }
-
-        el.addEventListener("touchstart", startPress, { passive: true });
-        el.addEventListener("touchend",   function (e) { cancelPress(); if (longPressed) e.preventDefault(); });
-        el.addEventListener("touchmove",  cancelPress, { passive: true });
-        el.addEventListener("mousedown",  startPress);
-        el.addEventListener("mouseup",    cancelPress);
-        el.addEventListener("mouseleave", cancelPress);
+    document.querySelectorAll(".pwa-call-btn-copy").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            navigator.clipboard.writeText(btn.dataset.phone).then(function () {
+                btn.classList.add("pwa-call-btn-copy--ok");
+                btn.innerHTML = "<i class=\"fas fa-check\"></i>";
+                setTimeout(function () {
+                    btn.classList.remove("pwa-call-btn-copy--ok");
+                    btn.innerHTML = "<i class=\"fas fa-copy\"></i>";
+                }, 1500);
+            });
+        });
     });
 
     document.querySelectorAll(".pwa-status-btn").forEach(function (btn) {
