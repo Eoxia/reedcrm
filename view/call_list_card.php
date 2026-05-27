@@ -379,10 +379,6 @@ if ($object->id > 0) {
     $morehtml = '<a href="' . dol_buildpath('/custom/reedcrm/view/call_list_list.php', 1) . '">' . $langs->trans('BackToList') . '</a>';
     saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
 
-    print '<div class="underbanner clearboth">';
-    print '<a href="' . dol_buildpath('/custom/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . (int) $object->id . '" target="_blank"><i class="fas fa-mobile-alt"></i> ' . $langs->trans('MobileView') . '</a>';
-    print '</div>';
-
     // Confirm dialogs
     if ($action === 'delete') {
         print $form->formconfirm($_SERVER['PHP_SELF'] . '?id=' . $object->id, $langs->trans('DeleteCallList'), $langs->trans('ConfirmDeleteCallList'), 'confirm_delete', '', 0, 1);
