@@ -374,8 +374,11 @@ CallListLineStatusShort3 = À rappeler
 # UI
 AddCallListLine = Ajouter un contact
 NoCallListLine = Aucun contact dans cette liste
+CallListLineDuplicate = Ce devis / cette opportunité est déjà dans la liste
 SelectElementType = Type de source
 ElementTypePropal = Devis
 ElementTypeProject = Opportunité
 ContactToCall = Contact à appeler
+ContactNoPhone = Aucun numéro de téléphone
 CallListLines = Lignes d'appel
+MobileView = Vue mobile

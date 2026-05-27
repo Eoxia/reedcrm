@@ -122,7 +122,10 @@ CallListLineStatusShort3 = Callback
 # UI
 AddCallListLine = Add contact
 NoCallListLine = No contacts in this list
+CallListLineDuplicate = This quote / opportunity is already in the list
 SelectElementType = Source type
 ElementTypePropal = Quote
 ElementTypeProject = Opportunity
 ContactToCall = Contact to call
+ContactNoPhone = No phone number
+MobileView = Mobile view
