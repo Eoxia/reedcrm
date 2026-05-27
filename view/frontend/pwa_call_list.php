@@ -115,6 +115,7 @@ print '<style>
 .pwa-call-phone--empty{color:#94a3b8;font-size:1rem;margin:12px 0;}
 .pwa-call-actions [id$="master-media-row-container-audio"]{padding:0;display:flex;align-items:stretch;}
 .pwa-call-actions .saturne-audio-controls{margin-top:0;gap:8px;align-items:stretch;}
+.pwa-call-actions .saturne-play-recording-wrapper{display:flex;align-items:stretch;}
 .pwa-call-actions .saturne-media-btn{width:52px;min-width:52px;height:auto;min-height:0;border-radius:10px;}
 .pwa-call-status-btns{display:flex;gap:8px;flex-wrap:wrap;}
 .pwa-status-btn{flex:1;min-width:70px;padding:8px 4px;font-size:.75rem;border-radius:8px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;font-weight:600;transition:background .15s,color .15s;}

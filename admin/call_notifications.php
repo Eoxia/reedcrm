@@ -54,9 +54,6 @@ $backtopage = GETPOST('backtopage', 'alpha');
  */
 
 if ($action == 'updateconfig') {
-    $create_actioncomm = GETPOST('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM', 'alpha') ? 1 : 0;
-    dolibarr_set_const($db, 'REEDCRM_CALL_LIST_CREATE_ACTIONCOMM', $create_actioncomm, 'int', 0, '', $conf->entity);
-
     $call_notifications_disabled = GETPOST('REEDCRM_CALL_NOTIFICATIONS_DISABLED', 'alpha') ? 1 : 0;
     $call_check_frequency = GETPOSTINT('REEDCRM_CALL_CHECK_FREQUENCY');
     $auto_open_contact = GETPOST('REEDCRM_AUTO_OPEN_CONTACT', 'alpha') ? 1 : 0;
@@ -108,14 +105,6 @@ print '<td>' . $langs->trans("Parameter") . '</td>';
 print '<td>' . $langs->trans("Description") . '</td>';
 print '<td class="center">' . $langs->trans("Value") . '</td>';
 print '</tr>';
-
-// Create ActionComm on call
-print '<tr class="oddeven">';
-print '<td>' . $langs->trans('CallListCreateActioncomm') . '</td>';
-print '<td>' . $langs->trans('CallListCreateActioncommDesc') . '</td>';
-print '<td class="center">';
-print '<input type="checkbox" name="REEDCRM_CALL_LIST_CREATE_ACTIONCOMM" value="1"' . (getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM') ? ' checked' : '') . '>';
-print '</td></tr>';
 
 // Call notifications disabled
 print '<tr class="oddeven">';
