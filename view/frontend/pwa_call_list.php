@@ -30,8 +30,8 @@ if (file_exists('../reedcrm.main.inc.php')) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-require_once __DIR__ . '/../class/calllist.class.php';
-require_once __DIR__ . '/../class/calllistline.class.php';
+require_once __DIR__ . '/../../class/calllist.class.php';
+require_once __DIR__ . '/../../class/calllistline.class.php';
 
 global $conf, $db, $langs, $user;
 

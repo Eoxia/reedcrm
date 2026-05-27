@@ -376,7 +376,8 @@ if ($object->id > 0) {
     $head = call_list_prepare_head($object);
     print dol_get_fiche_head($head, 'card', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
-    $morehtml = '<a href="' . dol_buildpath('/custom/reedcrm/view/call_list_list.php', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    $morehtml  = '<a href="' . dol_buildpath('/custom/reedcrm/view/call_list_list.php', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    $morehtml .= ' &nbsp; <a href="' . dol_buildpath('/custom/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . $object->id . '" target="_blank"><i class="fas fa-mobile-alt"></i> ' . $langs->trans('MobileView') . '</a>';
     saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
 
     // Confirm dialogs
@@ -440,7 +441,6 @@ if ($object->id > 0) {
     if ($permissiontodelete) {
         print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete" class="butActionDelete">' . $langs->trans('Delete') . '</a>';
     }
-    print '<a href="' . dol_buildpath('/custom/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . $object->id . '" class="butAction" target="_blank"><i class="fas fa-mobile-alt"></i> ' . $langs->trans('MobileView') . '</a>';
     print '</div>';
 
     // =====================================================================
