@@ -41,6 +41,11 @@ function call_list_prepare_head(CallList $object): array
     $head[$h][2] = 'card';
     $h++;
 
+    $head[$h][0] = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id . '&show=notes';
+    $head[$h][1] = $langs->trans('Notes');
+    $head[$h][2] = 'notes';
+    $h++;
+
     complete_head_from_modules($conf, $langs, $object, $head, $h, 'call_list@reedcrm');
 
     return $head;

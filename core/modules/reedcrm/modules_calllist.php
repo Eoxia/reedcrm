@@ -16,17 +16,24 @@
  */
 
 /**
- * \file    core/modules/reedcrm/call_list/modules_calllist.php
+ * \file    core/modules/reedcrm/modules_calllist.php
  * \ingroup reedcrm
- * \brief   Abstract class for CallList numbering modules.
+ * \brief   PDF model provider for CallList — used by FormFile::showdocuments.
  */
-
-require_once __DIR__ . '/../../../../saturne/core/modules/saturne/modules_saturne.php';
 
 /**
- * Abstract class for CallList numbering modules.
+ * PDF model provider for FormFile::showdocuments('reedcrm:CallList', ...).
  */
-abstract class ModeleNumRefCallList extends ModeleNumRefSaturne
+class ModelePDFCallList
 {
+    /**
+     * Return list of available PDF models.
+     *
+     * @param  DoliDB $db Database handler
+     * @return array      Associative array [classname => label]
+     */
+    public static function liste_modeles(DoliDB $db): array
+    {
+        return ['pdf_calllist_standard' => 'Standard'];
+    }
 }
-

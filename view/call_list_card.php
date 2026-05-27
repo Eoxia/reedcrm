@@ -45,6 +45,7 @@ saturne_load_langs();
 $id         = GETPOSTINT('id');
 $ref        = GETPOST('ref', 'alpha');
 $action     = GETPOST('action', 'aZ09');
+$show       = GETPOST('show', 'aZ09');
 $backtopage = GETPOST('backtopage', 'alpha');
 $cancel     = GETPOST('cancel', 'aZ09');
 
@@ -107,8 +108,6 @@ if (empty($resHook)) {
     // Edit — save update
     if ($action === 'update' && $permissiontoadd) {
         $object->label          = GETPOST('label', 'alphanohtml');
-        $object->note_public    = GETPOST('note_public', 'restricthtml');
-        $object->note_private   = GETPOST('note_private', 'restricthtml');
         $object->fk_user_assign = GETPOSTINT('fk_user_assign');
         $object->date_start     = dol_mktime(0, 0, 0, GETPOSTINT('date_startmonth'), GETPOSTINT('date_startday'), GETPOSTINT('date_startyear'));
         $object->date_end       = dol_mktime(0, 0, 0, GETPOSTINT('date_endmonth'), GETPOSTINT('date_endday'), GETPOSTINT('date_endyear'));
@@ -117,6 +116,21 @@ if (empty($resHook)) {
 
         if ($result > 0) {
             header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+            exit;
+        } else {
+            setEventMessages($object->error, $object->errors, 'errors');
+        }
+    }
+
+    // Update notes
+    if ($action === 'update_notes' && $permissiontoadd) {
+        $object->note_public  = GETPOST('note_public', 'restricthtml');
+        $object->note_private = GETPOST('note_private', 'restricthtml');
+
+        $result = $object->update($user);
+
+        if ($result > 0) {
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&show=notes');
             exit;
         } else {
             setEventMessages($object->error, $object->errors, 'errors');
@@ -213,10 +227,13 @@ if (empty($resHook)) {
         require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
         $fileToRemove = GETPOST('file', 'alpha');
-        $dir          = $conf->reedcrm->multidir_output[$conf->entity] . '/call_list';
+        $baseDir      = $conf->reedcrm->multidir_output[$conf->entity];
 
-        if (!empty($fileToRemove) && file_exists($dir . '/' . $fileToRemove)) {
-            dol_delete_file($dir . '/' . $fileToRemove);
+        if (!empty($fileToRemove)) {
+            $fullPath = $baseDir . '/' . $fileToRemove;
+            if (file_exists($fullPath)) {
+                dol_delete_file($fullPath);
+            }
         }
 
         header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
@@ -303,6 +320,53 @@ if ($action === 'edit' && $object->id > 0) {
     exit;
 }
 
+// Notes tab
+if ($show === 'notes' && $object->id > 0) {
+    require_once DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php';
+
+    $head = call_list_prepare_head($object);
+    print dol_get_fiche_head($head, 'notes', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
+
+    $morehtml = '<a href="' . dol_buildpath('/custom/reedcrm/view/call_list_list.php', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
+
+    print '<div class="fichecenter">';
+
+    print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '">';
+    print '<input type="hidden" name="token" value="' . newToken() . '">';
+    print '<input type="hidden" name="action" value="update_notes">';
+
+    print '<table class="border centpercent tableforfieldcreate">';
+
+    print '<tr class="field_note_public"><td class="titlefieldcreate">' . $langs->trans('NotePublic') . '</td><td>';
+    $doleditor = new DolEditor('note_public', $object->note_public, '', 180, 'dolibarr_notes', 'In', false, true, 1, ROWS_6, '90%');
+    $doleditor->Create();
+    print '</td></tr>';
+
+    if ($permissiontoadd) {
+        print '<tr class="field_note_private"><td>' . $langs->trans('NotePrivate') . '</td><td>';
+        $doleditor = new DolEditor('note_private', $object->note_private, '', 180, 'dolibarr_notes', 'In', false, true, 1, ROWS_6, '90%');
+        $doleditor->Create();
+        print '</td></tr>';
+    }
+
+    print '</table>';
+
+    print '</div>';
+
+    print dol_get_fiche_end();
+
+    if ($permissiontoadd) {
+        print '<div class="center"><input type="submit" class="button button-save" value="' . dol_escape_htmltag($langs->trans('Save')) . '"></div>';
+    }
+
+    print '</form>';
+
+    llxFooter();
+    $db->close();
+    exit;
+}
+
 // View card
 if ($object->id > 0) {
     $head = call_list_prepare_head($object);
@@ -352,20 +416,7 @@ if ($object->id > 0) {
 
     print '</div>';
 
-    // Notes
-    print '<div class="fichecenter fichehalfleft">';
-    print '<table class="border centpercent tableforfieldcreate">';
-
-    print '<tr><td>' . $langs->trans('NotePublic') . '</td>';
-    print '<td>' . (!empty($object->note_public) ? $object->note_public : '<span class="opacitymedium">' . $langs->trans('None') . '</span>') . '</td></tr>';
-
-    if ($user->hasRight('reedcrm', 'call_list', 'write')) {
-        print '<tr><td>' . $langs->trans('NotePrivate') . '</td>';
-        print '<td>' . (!empty($object->note_private) ? $object->note_private : '<span class="opacitymedium">' . $langs->trans('None') . '</span>') . '</td></tr>';
-    }
-
-    print '</table>';
-    print '</div>';
+    print dol_get_fiche_end();
 
     // Action buttons
     print '<div class="tabsAction">';
@@ -382,8 +433,6 @@ if ($object->id > 0) {
         print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete" class="butActionDelete">' . $langs->trans('Delete') . '</a>';
     }
     print '</div>';
-
-    print dol_get_fiche_end();
 
     // =====================================================================
     // Call list lines
@@ -569,28 +618,9 @@ if ($object->id > 0) {
     $dir       = $conf->reedcrm->multidir_output[$conf->entity] . '/call_list';
     $urlsource = $_SERVER['PHP_SELF'] . '?id=' . $object->id;
 
-    print saturne_show_documents(
-        'call_list@reedcrm',
-        dol_sanitizeFileName($object->ref),
-        $dir,
-        $urlsource,
-        $permissiontoadd,
-        $permissiontodelete,
-        getDolGlobalString('REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'pdf_calllist_standard'),
-        1,
-        0,
-        0,
-        0,
-        '',
-        '',
-        '',
-        '',
-        '',
-        $object,
-        0,
-        'remove_file',
-        1
-    );
+    require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
+    $formFile = new FormFile($db);
+    print $formFile->showdocuments('reedcrm:CallList', 'call_list', $dir, $urlsource, $permissiontoadd, $permissiontodelete, getDolGlobalString('REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'pdf_calllist_standard'), 1, 0, 0, 0, 0, '', '', '', '', $object);
 
     // =====================================================================
     // ActionComm list
@@ -599,16 +629,8 @@ if ($object->id > 0) {
     print load_fiche_titre($langs->trans('ActionsComm'), '', 'action');
 
     require_once DOL_DOCUMENT_ROOT . '/core/class/html.formactions.class.php';
-    require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
-
     $formActions = new FormActions($db);
-
-    $filters = [
-        'search_agenda_label' => '',
-        'search_rowid'        => ''
-    ];
-
-    print_actions_filter($formActions, $filters, $object, '', $langs, $conf, 0, 0);
+    $formActions->showactions($object, $object->element, 0, 1, '', 10);
 }
 
 llxFooter();
