@@ -414,6 +414,10 @@ if ($object->id > 0) {
     print '</table>';
     print '</div>';
 
+    print '<div class="fichehalfright">';
+    print '<div class="underbanner clearboth"></div>';
+    print '</div>';
+
     print '</div>';
 
     print dol_get_fiche_end();
