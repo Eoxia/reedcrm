@@ -18,22 +18,27 @@
 /**
  * \file    core/modules/reedcrm/modules_calllist.php
  * \ingroup reedcrm
- * \brief   PDF model provider for CallList — used by FormFile::showdocuments.
+ * \brief   Abstract class for CallList PDF generation modules.
  */
 
+require_once DOL_DOCUMENT_ROOT . '/core/class/commondocgenerator.class.php';
+
 /**
- * PDF model provider for FormFile::showdocuments('reedcrm:CallList', ...).
+ * Abstract class for CallList PDF generation modules.
  */
-class ModelePDFCallList
+abstract class ModelePDFCallList extends CommonDocGenerator
 {
+    // phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
     /**
-     * Return list of available PDF models.
+     * Return list of active PDF models for CallList.
      *
-     * @param  DoliDB $db Database handler
-     * @return array      Associative array [classname => label]
+     * @param  DoliDB $db                Database handler
+     * @param  int    $maxfilenamelength Max length of filename
+     * @return array                     List of models
      */
-    public static function liste_modeles(DoliDB $db): array
+    public static function liste_modeles($db, $maxfilenamelength = 0)
     {
-        return ['pdf_calllist_standard' => 'Standard'];
+        // phpcs:enable
+        return [getDolGlobalString('REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'pdf_calllist_standard') => 'Standard'];
     }
 }

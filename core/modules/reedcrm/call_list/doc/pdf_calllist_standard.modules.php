@@ -24,11 +24,12 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/pdf.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+require_once __DIR__ . '/../../modules_calllist.php';
 
 /**
  * Class to generate PDF for CallList.
  */
-class pdf_calllist_standard
+class pdf_calllist_standard extends ModelePDFCallList
 {
     /**
      * @var string Module name.
