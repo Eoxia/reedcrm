@@ -258,6 +258,9 @@ print '<script>
                         });
                         card.dataset.status   = newStatus;
                         errorEl.style.display = "none";
+                        if (newStatus !== 0) {
+                            card.parentNode.appendChild(card);
+                        }
                     } else {
                         errorEl.textContent   = data.error || "Erreur inconnue";
                         errorEl.style.display = "block";
