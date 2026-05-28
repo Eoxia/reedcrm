@@ -42,20 +42,21 @@ class pdf_calllist_standard extends ModelePDFCallList
     /** @var string */
     public $error = '';
 
-    // ── Color palette ────────────────────────────────────────────────────────
-    private $cNavy   = [26,  45,  64];
-    private $cTeal   = [0,   157, 170];
-    private $cGray   = [108, 117, 125];
-    private $cLight  = [242, 245, 248];
-    private $cWhite  = [255, 255, 255];
-    private $cBlack  = [30,  30,  30];
+    // ── Color palette ─────────────────────────────────────────────────────────
+    private $cNavy  = [26,  45,  64];
+    private $cTeal  = [0,   157, 170];
+    private $cGray  = [108, 117, 125];
+    private $cLight = [242, 245, 248];
+    private $cWhite = [255, 255, 255];
+    private $cBlack = [30,  30,  30];
 
-    // ── Layout ───────────────────────────────────────────────────────────────
-    private $mLeft    = 15;
-    private $mRight   = 15;
-    private $pWidth   = 180;  // 210 − 15 − 15
-    private $rowH     = 10;   // data row height (mm)
-    private $footerY  = 272;
+    // ── Layout ────────────────────────────────────────────────────────────────
+    private $mLeft   = 5;
+    private $mRight  = 5;
+    private $mTop    = 5;
+    private $pWidth  = 200;   // 210 − 5 − 5
+    private $rowH    = 10;    // data row height
+    private $footerY = 284;   // 297 − 5 (bottom margin) − 8 (footer height)
 
     public function __construct($db)
     {
@@ -90,11 +91,11 @@ class pdf_calllist_standard extends ModelePDFCallList
         $pdf->SetCreator('Dolibarr ' . DOL_VERSION);
         $pdf->SetAuthor($outputlangs->convToOutputCharset($user->getFullName($outputlangs)));
         $pdf->SetTitle($outputlangs->transnoentities('CallList') . ' ' . $object->ref);
-        $pdf->SetMargins($this->mLeft, 15, $this->mRight);
+        $pdf->SetMargins($this->mLeft, $this->mTop, $this->mRight);
         $pdf->SetAutoPageBreak(false);
         $pdf->AddPage('P', 'A4');
 
-        $y       = 15;
+        $y       = $this->mTop;
         $pageNum = 1;
 
         $y = $this->drawHeader($pdf, $object, $outputlangs, $y);
@@ -109,11 +110,11 @@ class pdf_calllist_standard extends ModelePDFCallList
         $fillRow = false;
 
         foreach ($lines as $line) {
-            if ($y + $this->rowH > $this->footerY - 5) {
+            if ($y + $this->rowH > $this->footerY - 4) {
                 $this->drawFooter($pdf, $outputlangs, $pageNum);
                 $pdf->AddPage('P', 'A4');
                 $pageNum++;
-                $y       = 15;
+                $y       = $this->mTop;
                 $fillRow = false;
                 $y       = $this->drawTableHeader($pdf, $outputlangs, $y);
             }
@@ -122,6 +123,7 @@ class pdf_calllist_standard extends ModelePDFCallList
             $firstname = '';
             $phone     = '';
             $sourceRef = '';
+            $amount    = '';
 
             if (!empty($line->fk_contact)) {
                 $contact->fetch($line->fk_contact);
@@ -135,16 +137,18 @@ class pdf_calllist_standard extends ModelePDFCallList
                 $p = new Propal($this->db);
                 if ($p->fetch($line->element_id) > 0) {
                     $sourceRef = $p->ref;
+                    $amount    = !empty($p->total_ht) ? price($p->total_ht) . ' ' . $outputlangs->transnoentities('HT') : '';
                 }
             } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
                 $p = new Project($this->db);
                 if ($p->fetch($line->element_id) > 0) {
                     $sourceRef = $p->ref;
+                    $amount    = !empty($p->opp_amount) ? price($p->opp_amount) : '';
                 }
             }
 
-            $this->drawDataRow($pdf, $outputlangs, $y, $line, $lastname, $firstname, $phone, $sourceRef, $fillRow);
+            $this->drawDataRow($pdf, $outputlangs, $y, $line, $lastname, $firstname, $phone, $sourceRef, $amount, $fillRow);
             $y      += $this->rowH;
             $fillRow = !$fillRow;
         }
@@ -176,20 +180,19 @@ class pdf_calllist_standard extends ModelePDFCallList
         $pdf->Cell($this->pWidth, 14, strtoupper($outputlangs->transnoentities('CallList')), 0, 0, 'C');
         $y += 16;
 
-        // Ref (large) ── left    Status ── right
+        // Ref (large, navy) + status (gray, right)
         $this->text($pdf, $this->cNavy);
         $pdf->SetFont('', 'B', 14);
         $pdf->SetXY($this->mLeft, $y);
-        $pdf->Cell(110, 8, $object->ref, 0, 0, 'L');
+        $pdf->Cell(120, 8, $object->ref, 0, 0, 'L');
 
-        $statusLabel = strip_tags($object->LibStatut($object->status, 0));
         $this->text($pdf, $this->cGray);
         $pdf->SetFont('', '', 9);
-        $pdf->SetXY($this->mLeft + 110, $y);
-        $pdf->Cell(70, 8, $statusLabel, 0, 0, 'R');
+        $pdf->SetXY($this->mLeft + 120, $y);
+        $pdf->Cell(70, 8, strip_tags($object->LibStatut($object->status, 0)), 0, 0, 'R');
         $y += 8;
 
-        // Label
+        // Label subtitle
         if (!empty($object->label)) {
             $this->text($pdf, $this->cGray);
             $pdf->SetFont('', '', 10);
@@ -211,7 +214,7 @@ class pdf_calllist_standard extends ModelePDFCallList
     {
         $h      = 10;
         $labelW = 35;
-        $valueW = 55;
+        $valueW = 65;  // 35+65 = 100 per column, 2×100 = 200 = pWidth
         $col2X  = $this->mLeft + $labelW + $valueW;
 
         $userAssign = null;
@@ -236,28 +239,24 @@ class pdf_calllist_standard extends ModelePDFCallList
         ];
 
         foreach ($rows as $row) {
-            // Label col 1
             $this->fill($pdf, $this->cLight);
             $this->text($pdf, $this->cGray);
             $pdf->SetFont('', 'B', 8);
             $pdf->SetXY($this->mLeft, $y);
             $pdf->Cell($labelW, $h, $row['l1'], 0, 0, 'L', true);
 
-            // Value col 1
             $this->fill($pdf, $this->cWhite);
             $this->text($pdf, $this->cBlack);
             $pdf->SetFont('', '', 9);
             $pdf->SetXY($this->mLeft + $labelW, $y);
             $pdf->Cell($valueW, $h, $row['v1'], 0, 0, 'L', true);
 
-            // Label col 2
             $this->fill($pdf, $this->cLight);
             $this->text($pdf, $this->cGray);
             $pdf->SetFont('', 'B', 8);
             $pdf->SetXY($col2X, $y);
             $pdf->Cell($labelW, $h, $row['l2'], 0, 0, 'L', true);
 
-            // Value col 2
             $this->fill($pdf, $this->cWhite);
             $this->text($pdf, $this->cBlack);
             $pdf->SetFont('', '', 9);
@@ -295,35 +294,35 @@ class pdf_calllist_standard extends ModelePDFCallList
         return $y + 9;
     }
 
-    private function drawDataRow($pdf, $outputlangs, $y, $line, $lastname, $firstname, $phone, $sourceRef, $fill)
+    private function drawDataRow($pdf, $outputlangs, $y, $line, $lastname, $firstname, $phone, $sourceRef, $amount, $fill)
     {
-        $bg = $fill ? $this->cLight : $this->cWhite;
+        $bg   = $fill ? $this->cLight : $this->cWhite;
+        $data = [
+            'source'    => $sourceRef,
+            'lastname'  => $lastname,
+            'firstname' => $firstname,
+            'phone'     => $phone,
+            'amount'    => $amount,
+            'status'    => strip_tags($line->LibStatut((int) $line->status, 4)),
+        ];
 
-        $colDefs = $this->cols($outputlangs);
-        $values  = [$lastname, $firstname, $phone, $sourceRef, ''];
+        foreach ($this->cols($outputlangs) as $col) {
+            $this->fill($pdf, $bg);
+            $value = $data[$col['key']] ?? '';
 
-        foreach ($colDefs as $i => $col) {
-            if ($col['key'] === 'status') {
-                $label = strip_tags($line->LibStatut((int) $line->status, 0));
-                $this->fill($pdf, $bg);
-                $this->text($pdf, $this->cBlack);
-                $pdf->SetFont('', '', 9);
-                $pdf->SetXY($col['x'], $y);
-                $pdf->Cell($col['w'], $this->rowH, $label, 0, 0, 'C', true);
-            } elseif ($col['key'] === 'phone') {
-                // Bold phone
-                $this->fill($pdf, $bg);
+            if ($col['key'] === 'phone') {
                 $this->text($pdf, $this->cNavy);
-                $pdf->SetFont('', 'B', 9);
-                $pdf->SetXY($col['x'], $y);
-                $pdf->Cell($col['w'], $this->rowH, $values[$i], 0, 0, 'L', true);
+                $pdf->SetFont('', 'B', 11);
+            } elseif ($col['key'] === 'amount') {
+                $this->text($pdf, $this->cTeal);
+                $pdf->SetFont('', 'B', 11);
             } else {
-                $this->fill($pdf, $bg);
                 $this->text($pdf, $this->cBlack);
                 $pdf->SetFont('', '', 9);
-                $pdf->SetXY($col['x'], $y);
-                $pdf->Cell($col['w'], $this->rowH, $values[$i], 0, 0, 'L', true);
             }
+
+            $pdf->SetXY($col['x'], $y);
+            $pdf->Cell($col['w'], $this->rowH, $value, 0, 0, $col['align'], true);
         }
     }
 
@@ -333,28 +332,28 @@ class pdf_calllist_standard extends ModelePDFCallList
         $pdf->SetLineWidth(0.2);
         $pdf->Line($this->mLeft, $this->footerY, $this->mLeft + $this->pWidth, $this->footerY);
 
-        $y = $this->footerY + 2;
         $this->text($pdf, $this->cGray);
         $pdf->SetFont('', '', 7);
 
-        $pdf->SetXY($this->mLeft, $y);
-        $pdf->Cell(90, 5, 'ReedCRM · ' . $outputlangs->transnoentities('CallList'), 0, 0, 'L');
+        $pdf->SetXY($this->mLeft, $this->footerY + 2);
+        $pdf->Cell($this->pWidth / 2, 5, 'ReedCRM · ' . $outputlangs->transnoentities('CallList'), 0, 0, 'L');
 
-        $pdf->SetXY($this->mLeft + 90, $y);
-        $pdf->Cell(90, 5, $outputlangs->transnoentities('Page') . ' ' . $pageNum, 0, 0, 'R');
+        $pdf->SetXY($this->mLeft + $this->pWidth / 2, $this->footerY + 2);
+        $pdf->Cell($this->pWidth / 2, 5, $outputlangs->transnoentities('Page') . ' ' . $pageNum, 0, 0, 'R');
     }
 
-    // ── Column definitions ────────────────────────────────────────────────────
+    // ── Column definitions (total = pWidth = 200mm) ───────────────────────────
 
     private function cols($outputlangs)
     {
         $defs = [
-            ['key' => 'lastname',  'label' => $outputlangs->transnoentities('Lastname'),  'w' => 38, 'align' => 'L'],
-            ['key' => 'firstname', 'label' => $outputlangs->transnoentities('Firstname'), 'w' => 38, 'align' => 'L'],
-            ['key' => 'phone',     'label' => $outputlangs->transnoentities('Phone'),     'w' => 50, 'align' => 'L'],
             ['key' => 'source',    'label' => $outputlangs->transnoentities('Source'),    'w' => 28, 'align' => 'L'],
-            ['key' => 'status',    'label' => $outputlangs->transnoentities('Status'),    'w' => 26, 'align' => 'C'],
-        ];
+            ['key' => 'lastname',  'label' => $outputlangs->transnoentities('Lastname'),  'w' => 36, 'align' => 'L'],
+            ['key' => 'firstname', 'label' => $outputlangs->transnoentities('Firstname'), 'w' => 36, 'align' => 'L'],
+            ['key' => 'phone',     'label' => $outputlangs->transnoentities('Phone'),     'w' => 52, 'align' => 'L'],
+            ['key' => 'amount',    'label' => $outputlangs->transnoentities('Amount'),    'w' => 28, 'align' => 'R'],
+            ['key' => 'status',    'label' => $outputlangs->transnoentities('Status'),    'w' => 20, 'align' => 'C'],
+        ];  // 28+36+36+52+28+20 = 200
 
         $x = $this->mLeft;
         foreach ($defs as &$col) {
