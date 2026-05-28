@@ -1,0 +1,19 @@
+.call-list-add-form {
+    td {
+        padding-right: 12px;
+        vertical-align: middle;
+
+        &:last-child {
+            padding-right: 0;
+        }
+    }
+
+    #call-line-propal-wrap,
+    #call-line-project-wrap {
+        max-width: 300px;
+
+        .select2-container {
+            width: 300px !important;
+        }
+    }
+}

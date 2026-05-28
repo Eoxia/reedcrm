@@ -1392,6 +1392,15 @@ class ActionsReedcrm
             $out .= ajax_constantonoff('REEDCRM_PWA_CLOSE_PROJECT_WHEN_OPPORTUNITY_ZERO');
             $out .= '</td></tr>';
 
+            // Create ActionComm on call list call button
+            $out .= '<tr class="oddeven"><td>';
+            $out .= $langs->transnoentities('CallListCreateActioncomm');
+            $out .= '</td><td>';
+            $out .= $langs->transnoentities('CallListCreateActioncommDesc');
+            $out .= '</td><td class="center">';
+            $out .= ajax_constantonoff('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
+            $out .= '</td></tr>';
+
             $out .= '</table>';
 
             $this->resprints = $out;
@@ -2137,6 +2146,28 @@ EOT;
 
                 $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml;
             }
+        }
+        return 0;
+    }
+
+    /**
+     * Overloading the saturneBannerTab function : replacing the core function with the custom one
+     *
+     * @param  array      $parameters Hook metadata
+     * @param  CommonObject $object   Current object
+     * @return int                    0 = no replace, 1 = replace
+     */
+    public function saturneBannerTab(array $parameters, CommonObject $object): int
+    {
+        global $langs;
+
+        if (strpos($parameters['context'], 'call_list_card') !== false) {
+            $mobileUrl        = dol_buildpath('/custom/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . (int) $object->id;
+            $this->resprints  = '<div class="refidno">';
+            $this->resprints .= '<a href="' . dol_escape_htmltag($mobileUrl) . '" target="_blank">';
+            $this->resprints .= '<i class="fas fa-mobile-alt"></i> ' . $langs->transnoentities('MobileView');
+            $this->resprints .= '</a>';
+            $this->resprints .= '</div>';
         }
         return 0;
     }
