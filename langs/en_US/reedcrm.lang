@@ -165,3 +165,5 @@ PwaPieceLabel_facture_fourn = Supp Inv
 PwaPieceLabel_expedition = Cust Ship
 PwaPieceLabel_facture = Cust Inv
 PwaPieceLabel_payment = Payment
+
+App-ReedCRM = App-ReedCRM

@@ -95,7 +95,7 @@ print load_fiche_titre($title, $linkBack, 'reedcrm_color@reedcrm');
 
 // Configuration header
 $head = reedcrm_admin_prepare_head();
-print dol_get_fiche_head($head, 'pwa', $title, -1, 'reedcrm_color@reedcrm');
+print dol_get_fiche_head($head, 'pwa_reedcrm', $title, -1, 'reedcrm_color@reedcrm');
 
 print '<a class="marginrightonly" href="' . $startUrl . '" target="_blank">' . img_picto('', 'url', 'class="pictofixedwidth"') . $langs->trans('PWA') . '</a>';
 print showValueWithClipboardCPButton($startUrl, 0, 'none');
