@@ -30,6 +30,15 @@
     font-size: 0.9em;
     margin-bottom: 2px;
 
+    .reedcrm-add-to-call-list-logo {
+        height: 18px;
+        width: 18px;
+        object-fit: contain;
+        border-right: 1px solid #cbd5e0;
+        padding-right: 8px;
+        margin-right: 2px;
+    }
+
     .reedcrm-call-list-select {
         min-width: 160px;
     }

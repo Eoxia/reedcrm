@@ -2399,10 +2399,13 @@ EOT;
 
         $ajaxUrl = dol_buildpath('/custom/reedcrm/ajax/add_to_call_list.php', 1);
 
+        $logoPath = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+
         $html  = '<div class="reedcrm-add-to-call-list-wrapper"';
         $html .= ' data-element-type="' . dol_escape_htmltag($elementType) . '"';
         $html .= ' data-element-id="' . (int) $elementId . '"';
         $html .= ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '">';
+        $html .= '<img src="' . dol_escape_htmltag($logoPath) . '" class="reedcrm-add-to-call-list-logo" alt="ReedCRM" />';
         $html .= '<i class="fas fa-phone" style="color:#64748b;"></i>';
         $html .= '<select class="reedcrm-call-list-select">';
         $html .= '<option value="">' . dol_escape_htmltag($langs->trans('SelectCallList')) . '</option>';
