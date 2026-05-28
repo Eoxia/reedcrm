@@ -162,14 +162,32 @@ if (empty($resHook)) {
 
     // Add line
     if ($action === 'add_line' && $permissiontoadd) {
-        $lineObject->fk_call_list  = $object->id;
-        $lineObject->element_type  = GETPOST('element_type', 'aZ09');
-        $lineObject->element_id    = $lineObject->element_type === 'project' ? GETPOSTINT('project_id') : GETPOSTINT('propal_id');
-        $lineObject->fk_contact    = GETPOSTINT('fk_contact');
-        $lineObject->status        = CallListLine::STATUS_TO_CALL;
-        $lineObject->note          = GETPOST('line_note', 'restricthtml');
+        $lineObject->fk_call_list = $object->id;
+        $lineObject->element_type = GETPOST('element_type', 'aZ09');
+        $lineObject->element_id   = $lineObject->element_type === 'project' ? GETPOSTINT('project_id') : GETPOSTINT('propal_id');
+        $lineObject->status       = CallListLine::STATUS_TO_CALL;
+        $lineObject->note         = GETPOST('line_note', 'restricthtml');
 
         if (!empty($lineObject->element_type) && $lineObject->element_id > 0) {
+            // Resolve contact server-side, excluding PROJECTADDRESS (addresses, not people)
+            if ($lineObject->element_type === 'project') {
+                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                $elementObj = new Project($db);
+            } else {
+                require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+                $elementObj = new Propal($db);
+            }
+            $lineObject->fk_contact = 0;
+            if ($elementObj->fetch($lineObject->element_id) > 0) {
+                $contacts = array_filter(
+                    (array) $elementObj->liste_contact(-1, 'external'),
+                    static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
+                );
+                if (!empty($contacts)) {
+                    $lineObject->fk_contact = (int) reset($contacts)['id'];
+                }
+            }
+
             if ($lineObject->existsByElement($object->id, $lineObject->element_type, $lineObject->element_id)) {
                 setEventMessages($langs->trans('CallListLineDuplicate'), null, 'warnings');
             } else {
