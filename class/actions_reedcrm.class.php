@@ -1183,7 +1183,15 @@ class ActionsReedcrm
             }
             $ret .= '<option value="assignOppStatus"' . $selected . '>' . $langs->trans('AddAssignOppStatus') . '</option>';
 
-            $this->resprints = $ret;
+            $this->resprints .= $ret;
+        }
+
+        $isTargetContext = strpos($parameters['context'], 'projectlist') !== false
+            || strpos($parameters['context'], 'propallist') !== false;
+
+        if ($isTargetContext && $user->hasRight('reedcrm', 'call_list', 'write')) {
+            $selected = GETPOST('massaction') == 'addToCallList' ? ' selected="selected"' : '';
+            $this->resprints .= '<option value="addToCallList"' . $selected . '>' . $langs->trans('AddToCallList') . '</option>';
         }
 
         return 0; // or return 1 to replace standard code
