@@ -1240,6 +1240,45 @@ class ActionsReedcrm
             $this->resprints = $out;
         }
 
+        $isTargetContext = strpos($parameters['context'], 'projectlist') !== false
+            || strpos($parameters['context'], 'propallist') !== false;
+
+        if ($isTargetContext && $user->hasRight('reedcrm', 'call_list', 'write') && $massAction == 'addToCallList') {
+            require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
+
+            $callList  = new CallList($this->db);
+            $callLists = $callList->fetchAll('ASC', 'label', 0, 0, ['customsql' => 't.status = ' . CallList::STATUS_ACTIVE]);
+
+            $out  = '<div style="padding: 10px 0 20px 0;">';
+            $out .= '<fieldset>';
+            $out .= '<legend>' . $langs->trans('SelectCallList') . '</legend>';
+            $out .= '<table>';
+            $out .= '<tr>';
+            $out .= '<td><label for="fk_call_list">' . $langs->trans('CallList') . '</label></td>';
+            $out .= '<td>';
+            $out .= '<select id="fk_call_list" name="fk_call_list" class="flat">';
+            if (is_array($callLists) && !empty($callLists)) {
+                foreach ($callLists as $cl) {
+                    $out .= '<option value="' . $cl->id . '">' . dol_htmlentities($cl->ref . ' — ' . $cl->label) . '</option>';
+                }
+            } else {
+                $out .= '<option value="">' . $langs->trans('NoActiveCallList') . '</option>';
+            }
+            $out .= '</select>';
+            $out .= '</td>';
+            $out .= '</tr>';
+            $out .= '</table>';
+            $out .= '<input type="hidden" name="massaction" value="addToCallList" />';
+            $out .= '<div style="margin-top: 20px;">';
+            $out .= '<button class="button" type="submit" name="massaction_confirm" value="addToCallList">' . $langs->trans('Confirm') . '</button>';
+            $out .= '<button class="button" type="submit" name="massaction" value="">' . $langs->trans('Cancel') . '</button>';
+            $out .= '</div>';
+            $out .= '</fieldset>';
+            $out .= '</div>';
+
+            $this->resprints = $out;
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
