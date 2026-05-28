@@ -111,5 +111,5 @@ if ($newLine->create($user) <= 0) {
     exit;
 }
 
-echo json_encode(['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->label)]);
+echo json_encode(['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1))]);
 exit;
