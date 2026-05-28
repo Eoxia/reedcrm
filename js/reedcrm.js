@@ -1398,6 +1398,9 @@ window.reedcrm.call_list_widget.initSelect2 = function() {
     $('.reedcrm-call-list-select').each(function() {
         if (!$(this).hasClass('select2-hidden-accessible')) {
             $(this).select2({ width: '200px', minimumResultsForSearch: Infinity });
+            // Prevent Dolibarr's select2:open handler from throwing a SyntaxError
+            // when id and name are both empty (querySelector receives invalid selector)
+            $(this).on('select2:open', function(e) { e.stopPropagation(); });
         }
     });
 };
