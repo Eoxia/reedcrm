@@ -1331,6 +1331,82 @@ class ActionsReedcrm
             }
         }
 
+        $isTargetContext = strpos($parameters['context'], 'projectlist') !== false
+            || strpos($parameters['context'], 'propallist') !== false;
+
+        if ($isTargetContext && $user->hasRight('reedcrm', 'call_list', 'write') && $massActionConfirm == 'addToCallList') {
+            require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
+            require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllistline.class.php';
+
+            $fkCallList = GETPOSTINT('fk_call_list');
+            $toSelect   = $parameters['toselect'];
+
+            if (empty($toSelect)) {
+                $this->errors[] = $langs->trans('ErrorSelectAtLeastOne');
+                return -1;
+            }
+
+            $callList = new CallList($this->db);
+            if ($callList->fetch($fkCallList) <= 0 || $callList->status != CallList::STATUS_ACTIVE) {
+                $this->errors[] = $langs->trans('ErrorRecordNotFound');
+                return -1;
+            }
+
+            $isProjectContext = strpos($parameters['context'], 'projectlist') !== false;
+            $elementType      = $isProjectContext ? 'project' : 'propal';
+
+            if ($isProjectContext) {
+                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                $element = new Project($this->db);
+            } else {
+                require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+                $element = new Propal($this->db);
+            }
+
+            $lineObject            = new CallListLine($this->db);
+            $countAdded            = 0;
+            $countSkippedNoContact = 0;
+
+            foreach ($toSelect as $selectedId) {
+                if ($element->fetch((int) $selectedId) <= 0) {
+                    continue;
+                }
+
+                $contacts = $element->liste_contact(-1, 'external');
+                if (empty($contacts)) {
+                    $countSkippedNoContact++;
+                    continue;
+                }
+
+                $firstContact = reset($contacts);
+                $fkContact    = (int) $firstContact['id'];
+
+                if ($lineObject->existsByElement($fkCallList, $elementType, (int) $selectedId)) {
+                    setEventMessages($langs->trans('CallListLineDuplicateElement', $element->ref), null, 'warnings');
+                    continue;
+                }
+
+                $newLine               = new CallListLine($this->db);
+                $newLine->fk_call_list = $fkCallList;
+                $newLine->element_type = $elementType;
+                $newLine->element_id   = (int) $selectedId;
+                $newLine->fk_contact   = $fkContact;
+                $newLine->status       = CallListLine::STATUS_TO_CALL;
+                $newLine->create($user);
+                $countAdded++;
+            }
+
+            if ($countAdded > 0) {
+                setEventMessages($langs->trans('CallListAddedCount', $countAdded), null, 'mesgs');
+            }
+            if ($countSkippedNoContact > 0) {
+                setEventMessages($langs->trans('CallListSkippedNoContact', $countSkippedNoContact), null, 'warnings');
+            }
+
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit;
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
