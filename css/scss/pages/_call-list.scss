@@ -17,3 +17,38 @@
         }
     }
 }
+
+.reedcrm-add-to-call-list-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fbff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 4px 10px;
+    vertical-align: middle;
+    font-size: 0.9em;
+    margin-bottom: 2px;
+
+    .reedcrm-call-list-select {
+        min-width: 160px;
+    }
+
+    .reedcrm-call-list-add-btn {
+        padding: 2px 10px;
+        cursor: pointer;
+    }
+
+    .reedcrm-call-list-feedback {
+        font-size: 0.85em;
+        min-width: 80px;
+
+        &.success {
+            color: #22c55e;
+        }
+
+        &.error {
+            color: #ef4444;
+        }
+    }
+}
