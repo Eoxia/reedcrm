@@ -38,7 +38,8 @@ global $conf, $db, $langs, $user;
 
 saturne_load_langs();
 
-$id = GETPOSTINT('id');
+$id     = GETPOSTINT('id');
+$action = GETPOST('action', 'alpha');
 
 if (!$user->hasRight('reedcrm', 'call_list', 'read')) {
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);
@@ -55,6 +56,46 @@ if ($id > 0) {
 if (empty($object->id)) {
     accessforbidden($langs->trans('RecordNotFound'), 0);
     exit;
+}
+
+// Handle audio upload — JS posts to current URL with action=add_audio
+if ($action === 'add_audio' && !empty($_FILES['audio']['tmp_name'])) {
+    $audioModule   = GETPOST('module_name', 'alpha');
+    $audioSubDir   = GETPOST('sub_dir', 'alpha');
+    $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
+
+    $uploadDir = !empty($conf->$audioModLower->dir_output)
+        ? $conf->$audioModLower->dir_output
+        : $conf->ecm->dir_output . '/' . $audioModLower;
+    if (!empty($audioSubDir)) {
+        $uploadDir .= '/' . $audioSubDir;
+    }
+    if (!dol_is_dir($uploadDir)) {
+        dol_mkdir($uploadDir);
+    }
+    $destFile = $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
+    move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
+    // Fall through — page renders normally so JS can parse the updated audio block
+}
+
+// Handle audio delete — JS posts to current URL with action=delete_audio
+if ($action === 'delete_audio') {
+    $audioModule   = GETPOST('module_name', 'alpha');
+    $audioSubDir   = GETPOST('sub_dir', 'alpha');
+    $audioFilename = GETPOST('filename', 'alpha');
+    $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
+
+    $uploadDir = !empty($conf->$audioModLower->dir_output)
+        ? $conf->$audioModLower->dir_output
+        : $conf->ecm->dir_output . '/' . $audioModLower;
+    if (!empty($audioSubDir)) {
+        $uploadDir .= '/' . $audioSubDir;
+    }
+    $filePath = $uploadDir . '/' . basename($audioFilename);
+    if (!empty($audioFilename) && file_exists($filePath)) {
+        dol_delete_file($filePath);
+    }
+    // Fall through — page renders normally so JS can parse the updated audio block
 }
 
 $lines = $lineObject->fetchAllByCallList($object->id);
