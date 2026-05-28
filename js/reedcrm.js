@@ -1385,3 +1385,61 @@ window.saturne.quickcreation_form.initContactSelect = function() {
         }).catch(function(err){console.error('Error fetching contact details',err);});
     });
 };
+
+window.reedcrm.call_list_widget = {};
+
+window.reedcrm.call_list_widget.init = function() {
+    if ($('.reedcrm-add-to-call-list-wrapper').length === 0) return;
+
+    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+        $('.reedcrm-call-list-select').each(function() {
+            if (!$(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2({ width: 'resolve' });
+            }
+        });
+    }
+
+    window.reedcrm.call_list_widget.event();
+};
+
+window.reedcrm.call_list_widget.event = function() {
+    $(document).on('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd);
+};
+
+window.reedcrm.call_list_widget.handleAdd = function() {
+    var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+    var elementType = wrapper.data('element-type');
+    var elementId   = wrapper.data('element-id');
+    var ajaxUrl     = wrapper.data('ajax-url');
+    var callListId  = wrapper.find('.reedcrm-call-list-select').val();
+    var feedback    = wrapper.find('.reedcrm-call-list-feedback');
+    var token       = $('input[name="token"]').val() || '';
+
+    if (!callListId) {
+        feedback.removeClass('success').addClass('error').text('Sélectionner une liste');
+        setTimeout(function() { feedback.text('').removeClass('error'); }, 3000);
+        return;
+    }
+
+    var fd = new FormData();
+    fd.append('element_type', elementType);
+    fd.append('element_id', elementId);
+    fd.append('call_list_id', callListId);
+    fd.append('token', token);
+
+    fetch(ajaxUrl, { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            feedback.text(res.message);
+            if (res.success) {
+                feedback.removeClass('error').addClass('success');
+            } else {
+                feedback.removeClass('success').addClass('error');
+            }
+            setTimeout(function() { feedback.text('').removeClass('success error'); }, 3000);
+        })
+        .catch(function() {
+            feedback.removeClass('success').addClass('error').text('Erreur réseau');
+            setTimeout(function() { feedback.text('').removeClass('error'); }, 3000);
+        });
+};
