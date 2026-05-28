@@ -70,9 +70,13 @@ if ($result <= 0) {
     exit;
 }
 
-$contacts = $object->liste_contact(-1, 'external');
+$allContacts = $object->liste_contact(-1, 'external');
+$contacts    = array_filter(
+    is_array($allContacts) ? $allContacts : [],
+    static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
+);
 
-if (empty($contacts) || !is_array($contacts)) {
+if (empty($contacts)) {
     echo json_encode(['success' => true, 'contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '']);
     exit;
 }

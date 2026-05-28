@@ -1380,7 +1380,10 @@ class ActionsReedcrm
                     continue;
                 }
 
-                $contacts = $element->liste_contact(-1, 'external');
+                $contacts = array_filter(
+                    (array) $element->liste_contact(-1, 'external'),
+                    static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
+                );
                 if (empty($contacts)) {
                     setEventMessages($langs->trans('CallListSkippedNoContactElement', $element->ref), null, 'errors');
                     continue;
