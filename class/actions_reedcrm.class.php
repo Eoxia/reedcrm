@@ -1367,9 +1367,8 @@ class ActionsReedcrm
                 $element = new Propal($this->db);
             }
 
-            $lineObject            = new CallListLine($this->db);
-            $countAdded            = 0;
-            $countSkippedNoContact = 0;
+            $lineObject = new CallListLine($this->db);
+            $countAdded = 0;
 
             foreach ($toSelect as $selectedId) {
                 if ($element->fetch((int) $selectedId) <= 0) {
@@ -1378,7 +1377,7 @@ class ActionsReedcrm
 
                 $contacts = $element->liste_contact(-1, 'external');
                 if (empty($contacts)) {
-                    $countSkippedNoContact++;
+                    setEventMessages($langs->trans('CallListSkippedNoContactElement', $element->ref), null, 'warnings');
                     continue;
                 }
 
@@ -1402,9 +1401,6 @@ class ActionsReedcrm
 
             if ($countAdded > 0) {
                 setEventMessages($langs->trans('CallListAddedCount', $countAdded), null, 'mesgs');
-            }
-            if ($countSkippedNoContact > 0) {
-                setEventMessages($langs->trans('CallListSkippedNoContact', $countSkippedNoContact), null, 'warnings');
             }
 
             header('Location: ' . $_SERVER['REQUEST_URI']);
