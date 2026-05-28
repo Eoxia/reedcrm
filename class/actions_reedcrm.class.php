@@ -1382,7 +1382,7 @@ class ActionsReedcrm
 
                 $contacts = $element->liste_contact(-1, 'external');
                 if (empty($contacts)) {
-                    setEventMessages($langs->trans('CallListSkippedNoContactElement', $element->ref), null, 'warnings');
+                    setEventMessages($langs->trans('CallListSkippedNoContactElement', $element->ref), null, 'errors');
                     continue;
                 }
 
