@@ -2279,11 +2279,31 @@ EOT;
                     }
                 }
 
-                $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml;
                 $callListWidgetHtml = $this->renderCallListWidget('project', (int) $object->id);
                 if (!empty($callListWidgetHtml)) {
-                    $parameters['morehtmlright'] .= $callListWidgetHtml;
+                    $assetsHtml .= '<script>
+                        (function() {
+                            var clWidget = ' . json_encode($callListWidgetHtml) . ';
+                            function mountClWidget() {
+                                setTimeout(function() {
+                                    if (document.querySelector(".reedcrm-add-to-call-list-wrapper")) return;
+                                    var row = document.querySelector(".rcrm-co-org-row");
+                                    var container = row || document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
+                                    if (!container) return;
+                                    var t = document.createElement("div");
+                                    t.innerHTML = clWidget;
+                                    container.appendChild(t.firstElementChild);
+                                }, 200);
+                            }
+                            if (document.readyState === "loading") {
+                                document.addEventListener("DOMContentLoaded", mountClWidget);
+                            } else {
+                                mountClWidget();
+                            }
+                        })();
+                    </script>';
                 }
+                $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml;
             }
         }
 
@@ -2292,9 +2312,9 @@ EOT;
             if (!empty($widgetHtml)) {
                 $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
                 $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
-                $parameters['morehtmlright'] .= '<link href="' . $cssPath . '" rel="stylesheet">';
-                $parameters['morehtmlright'] .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
-                $parameters['morehtmlright'] .= $widgetHtml;
+                $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
+                $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
+                $this->resprints .= $widgetHtml;
             }
         }
 
@@ -2303,9 +2323,9 @@ EOT;
             if (!empty($widgetHtml)) {
                 $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
                 $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
-                $parameters['morehtmlright'] .= '<link href="' . $cssPath . '" rel="stylesheet">';
-                $parameters['morehtmlright'] .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
-                $parameters['morehtmlright'] .= $widgetHtml;
+                $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
+                $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
+                $this->resprints .= $widgetHtml;
             }
         }
 
