@@ -2300,10 +2300,15 @@ EOT;
                                         node.style.zIndex = "49";
                                         parent.appendChild(node);
                                     } else {
-                                        var row = document.querySelector(".rcrm-co-org-row");
-                                        var container = row || document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
-                                        if (!container) return;
-                                        container.appendChild(node);
+                                        var statsBlock = document.querySelector(".reedcrm-header-stats");
+                                        if (statsBlock) {
+                                            statsBlock.insertAdjacentElement("afterend", node);
+                                        } else {
+                                            var row = document.querySelector(".rcrm-co-org-row");
+                                            var container = row || document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
+                                            if (!container) return;
+                                            container.appendChild(node);
+                                        }
                                     }
                                     if (window.reedcrm && window.reedcrm.call_list_widget) {
                                         window.reedcrm.call_list_widget.initSelect2();
