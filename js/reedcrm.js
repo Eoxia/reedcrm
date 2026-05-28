@@ -1408,9 +1408,18 @@ window.reedcrm.call_list_widget.initSelect2 = function() {
 window.reedcrm.call_list_widget.event = function() {
     $(document).off('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd)
                .on('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd);
+    $(document).off('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange)
+               .on('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange);
+};
+
+window.reedcrm.call_list_widget.onSelectChange = function() {
+    var btn = $(this).closest('.reedcrm-add-to-call-list-wrapper').find('.reedcrm-call-list-add-btn');
+    btn.prop('disabled', !$(this).val());
 };
 
 window.reedcrm.call_list_widget.handleAdd = function() {
+    if ($(this).prop('disabled')) return;
+
     var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
     var elementType = wrapper.data('element-type');
     var elementId   = wrapper.data('element-id');
@@ -1418,10 +1427,7 @@ window.reedcrm.call_list_widget.handleAdd = function() {
     var callListId  = wrapper.find('.reedcrm-call-list-select').val();
     var token       = $('input[name="token"]').val() || '';
 
-    if (!callListId) {
-        $.jnotify('Sélectionner une liste', {color: 'red'});
-        return;
-    }
+    if (!callListId) return;
 
     var fd = new FormData();
     fd.append('element_type', elementType);

@@ -2410,7 +2410,7 @@ EOT;
             $html .= '<option value="' . (int) $cl->id . '">' . dol_escape_htmltag($cl->label) . '</option>';
         }
         $html .= '</select>';
-        $html .= '<button type="button" class="reedcrm-call-list-add-btn">OK</button>';
+        $html .= '<button type="button" class="reedcrm-call-list-add-btn" disabled><i class="fas fa-save"></i></button>';
         $html .= '</div>';
 
         return $html;

@@ -35,19 +35,26 @@
     }
 
     .reedcrm-call-list-add-btn {
-        background: #fff;
-        border: 2px solid #28a745;
-        color: #28a745;
+        background: #f8f9fa;
+        border: 2px solid #ced4da;
+        color: #adb5bd;
         border-radius: 4px;
         padding: 2px 8px;
-        font-size: 13px;
-        cursor: pointer;
+        font-size: 14px;
+        cursor: not-allowed;
         transition: all 0.2s;
         white-space: nowrap;
 
-        &:hover {
-            background: #28a745;
-            color: #fff;
+        &:not([disabled]) {
+            background: #fff;
+            border-color: #28a745;
+            color: #28a745;
+            cursor: pointer;
+
+            &:hover {
+                background: #28a745;
+                color: #fff;
+            }
         }
     }
 
