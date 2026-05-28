@@ -2287,13 +2287,25 @@ EOT;
                             function mountClWidget() {
                                 setTimeout(function() {
                                     if (document.querySelector(".reedcrm-add-to-call-list-wrapper")) return;
-                                    var row = document.querySelector(".rcrm-co-org-row");
-                                    var container = row || document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
-                                    if (!container) return;
                                     var t = document.createElement("div");
                                     t.innerHTML = clWidget;
-                                    container.appendChild(t.firstElementChild);
-                                }, 200);
+                                    var node = t.firstElementChild;
+                                    var closureWidget = document.getElementById("reedcrm-closure-widget");
+                                    if (closureWidget && closureWidget.parentElement) {
+                                        var parent = closureWidget.parentElement;
+                                        var closureH = closureWidget.offsetHeight;
+                                        node.style.position = "absolute";
+                                        node.style.top = "calc(100% + " + (8 + closureH + 6) + "px)";
+                                        node.style.right = "0";
+                                        node.style.zIndex = "49";
+                                        parent.appendChild(node);
+                                    } else {
+                                        var row = document.querySelector(".rcrm-co-org-row");
+                                        var container = row || document.querySelector(".reedcrm-card-header-blocks") || document.querySelector("div.arearefonsamedir > div:first-child");
+                                        if (!container) return;
+                                        container.appendChild(node);
+                                    }
+                                }, 300);
                             }
                             if (document.readyState === "loading") {
                                 document.addEventListener("DOMContentLoaded", mountClWidget);
