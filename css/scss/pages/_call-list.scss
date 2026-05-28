@@ -39,16 +39,4 @@
         cursor: pointer;
     }
 
-    .reedcrm-call-list-feedback {
-        font-size: 0.85em;
-        min-width: 80px;
-
-        &.success {
-            color: #22c55e;
-        }
-
-        &.error {
-            color: #ef4444;
-        }
-    }
 }

@@ -1416,12 +1416,10 @@ window.reedcrm.call_list_widget.handleAdd = function() {
     var elementId   = wrapper.data('element-id');
     var ajaxUrl     = wrapper.data('ajax-url');
     var callListId  = wrapper.find('.reedcrm-call-list-select').val();
-    var feedback    = wrapper.find('.reedcrm-call-list-feedback');
     var token       = $('input[name="token"]').val() || '';
 
     if (!callListId) {
-        feedback.removeClass('success').addClass('error').text('Sélectionner une liste');
-        setTimeout(function() { feedback.text('').removeClass('error'); }, 3000);
+        $.jnotify('Sélectionner une liste', {color: 'red'});
         return;
     }
 
@@ -1434,16 +1432,13 @@ window.reedcrm.call_list_widget.handleAdd = function() {
     fetch(ajaxUrl, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
-            feedback.text(res.message);
             if (res.success) {
-                feedback.removeClass('error').addClass('success');
+                $.jnotify(res.message, {color: 'green'});
             } else {
-                feedback.removeClass('success').addClass('error');
+                $.jnotify(res.message, {color: 'red'});
             }
-            setTimeout(function() { feedback.text('').removeClass('success error'); }, 3000);
         })
         .catch(function() {
-            feedback.removeClass('success').addClass('error').text('Erreur réseau');
-            setTimeout(function() { feedback.text('').removeClass('error'); }, 3000);
+            $.jnotify('Erreur réseau', {color: 'red'});
         });
 };

@@ -55,17 +55,17 @@ if (!$user->hasRight('reedcrm', 'call_list', 'write')) {
 
 $callList = new CallList($db);
 if ($callList->fetch($callListId) <= 0) {
-    echo json_encode(['success' => false, 'message' => $langs->trans('CallListNotFound')]);
+    echo json_encode(['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListNotFound')]);
     exit;
 }
 if (!in_array($callList->status, [CallList::STATUS_DRAFT, CallList::STATUS_ACTIVE])) {
-    echo json_encode(['success' => false, 'message' => $langs->trans('CallListCannotAddToArchivedList')]);
+    echo json_encode(['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListCannotAddToArchivedList')]);
     exit;
 }
 
 $lineObject = new CallListLine($db);
 if ($lineObject->existsByElement($callListId, $elementType, $elementId)) {
-    echo json_encode(['success' => false, 'message' => $langs->trans('CallListWidgetDuplicate')]);
+    echo json_encode(['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetDuplicate')]);
     exit;
 }
 
@@ -82,7 +82,7 @@ if ($elementType === 'project' && isModEnabled('projet')) {
 }
 
 if ($element === null || $element->fetch($elementId) <= 0) {
-    echo json_encode(['success' => false, 'message' => $langs->trans('CallListWidgetError')]);
+    echo json_encode(['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')]);
     exit;
 }
 
@@ -92,7 +92,7 @@ $contacts = array_filter(
 );
 
 if (empty($contacts)) {
-    echo json_encode(['success' => false, 'message' => $langs->trans('CallListWidgetNoContact')]);
+    echo json_encode(['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoContact')]);
     exit;
 }
 
@@ -107,9 +107,9 @@ $newLine->fk_contact   = $fkContact;
 $newLine->status       = CallListLine::STATUS_TO_CALL;
 
 if ($newLine->create($user) <= 0) {
-    echo json_encode(['success' => false, 'message' => $langs->trans('CallListWidgetError')]);
+    echo json_encode(['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')]);
     exit;
 }
 
-echo json_encode(['success' => true, 'message' => $langs->trans('CallListWidgetSuccess', $callList->label)]);
+echo json_encode(['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->label)]);
 exit;

@@ -2411,7 +2411,6 @@ EOT;
         }
         $html .= '</select>';
         $html .= '<button type="button" class="button reedcrm-call-list-add-btn">OK</button>';
-        $html .= '<span class="reedcrm-call-list-feedback"></span>';
         $html .= '</div>';
 
         return $html;
