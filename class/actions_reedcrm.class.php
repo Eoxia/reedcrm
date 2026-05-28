@@ -1407,7 +1407,7 @@ class ActionsReedcrm
                 setEventMessages($langs->trans('CallListSkippedNoContact', $countSkippedNoContact), null, 'warnings');
             }
 
-            header('Location: ' . $_SERVER['PHP_SELF']);
+            header('Location: ' . $_SERVER['REQUEST_URI']);
             exit;
         }
 
