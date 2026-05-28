@@ -1268,7 +1268,12 @@ class ActionsReedcrm
             $out .= '</td>';
             $out .= '</tr>';
             $out .= '</table>';
+            $referer    = $_SERVER['HTTP_REFERER'] ?? '';
+            $parsed     = parse_url($referer);
+            $returnUrl  = ($parsed['path'] ?? $_SERVER['PHP_SELF']) . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
+
             $out .= '<input type="hidden" name="massaction" value="addToCallList" />';
+            $out .= '<input type="hidden" name="return_url" value="' . dol_htmlentities($returnUrl) . '" />';
             $out .= '<div style="margin-top: 20px;">';
             $out .= '<button class="button" type="submit" name="massaction_confirm" value="addToCallList">' . $langs->trans('Confirm') . '</button>';
             $out .= '<button class="button" type="submit" name="massaction" value="">' . $langs->trans('Cancel') . '</button>';
@@ -1403,7 +1408,11 @@ class ActionsReedcrm
                 setEventMessages($langs->trans('CallListAddedCount', $countAdded), null, 'mesgs');
             }
 
-            header('Location: ' . $_SERVER['REQUEST_URI']);
+            $returnUrl = GETPOST('return_url');
+            if (empty($returnUrl) || strpos($returnUrl, '/') !== 0 || strpos($returnUrl, '//') === 0) {
+                $returnUrl = $_SERVER['PHP_SELF'];
+            }
+            header('Location: ' . $returnUrl);
             exit;
         }
 
