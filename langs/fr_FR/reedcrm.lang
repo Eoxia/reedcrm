@@ -391,3 +391,5 @@ NoActiveCallList = Aucune liste d'appel active
 CallListAddedCount = %d élément(s) ajouté(s) à la liste d'appel
 CallListSkippedNoContact = %d élément(s) ignoré(s) (aucun contact associé)
 CallListLineDuplicateElement = L'élément %s est déjà présent dans cette liste d'appel
+CallListNotFound = La liste d'appel sélectionnée est introuvable
+CallListCannotAddToArchivedList = Impossible d'ajouter des éléments à une liste d'appel archivée

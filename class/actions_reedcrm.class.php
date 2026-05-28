@@ -1347,8 +1347,12 @@ class ActionsReedcrm
             }
 
             $callList = new CallList($this->db);
-            if ($callList->fetch($fkCallList) <= 0 || $callList->status != CallList::STATUS_ACTIVE) {
-                $this->errors[] = $langs->trans('ErrorRecordNotFound');
+            if ($callList->fetch($fkCallList) <= 0) {
+                $this->errors[] = $langs->trans('CallListNotFound');
+                return -1;
+            }
+            if (!in_array($callList->status, [CallList::STATUS_DRAFT, CallList::STATUS_ACTIVE])) {
+                $this->errors[] = $langs->trans('CallListCannotAddToArchivedList');
                 return -1;
             }
 

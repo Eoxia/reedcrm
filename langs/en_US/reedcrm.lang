@@ -138,3 +138,5 @@ NoActiveCallList = No active call list
 CallListAddedCount = %d element(s) added to the call list
 CallListSkippedNoContact = %d element(s) skipped (no contact)
 CallListLineDuplicateElement = Element %s is already in this call list
+CallListNotFound = The selected call list could not be found
+CallListCannotAddToArchivedList = Cannot add elements to an archived call list
