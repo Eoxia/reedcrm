@@ -1247,7 +1247,7 @@ class ActionsReedcrm
             require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
 
             $callList  = new CallList($this->db);
-            $callLists = $callList->fetchAll('ASC', 'label', 0, 0, ['customsql' => 't.status = ' . CallList::STATUS_ACTIVE]);
+            $callLists = $callList->fetchAll('ASC', 'label', 0, 0, ['customsql' => 't.status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')']);
 
             $out  = '<div style="padding: 10px 0 20px 0;">';
             $out .= '<fieldset>';
