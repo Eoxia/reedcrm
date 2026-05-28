@@ -1439,12 +1439,12 @@ window.reedcrm.call_list_widget.handleAdd = function() {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.success) {
-                $.jnotify(res.message, {color: 'green'});
+                $.jnotify(res.message);
             } else {
-                $.jnotify(res.message, {color: 'red'});
+                $.jnotify(res.message, 'error');
             }
         })
         .catch(function() {
-            $.jnotify('Erreur réseau', {color: 'red'});
+            $.jnotify('Erreur réseau', 'error');
         });
 };
