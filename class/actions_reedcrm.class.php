@@ -2279,8 +2279,11 @@ EOT;
                     }
                 }
 
+                $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml;
                 $callListWidgetHtml = $this->renderCallListWidget('project', (int) $object->id);
-                $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml . $callListWidgetHtml;
+                if (!empty($callListWidgetHtml)) {
+                    $parameters['morehtmlright'] .= $callListWidgetHtml;
+                }
             }
         }
 
@@ -2289,9 +2292,9 @@ EOT;
             if (!empty($widgetHtml)) {
                 $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
                 $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
-                $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
-                $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
-                $this->resprints .= $widgetHtml;
+                $parameters['morehtmlright'] .= '<link href="' . $cssPath . '" rel="stylesheet">';
+                $parameters['morehtmlright'] .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
+                $parameters['morehtmlright'] .= $widgetHtml;
             }
         }
 
@@ -2300,9 +2303,9 @@ EOT;
             if (!empty($widgetHtml)) {
                 $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
                 $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
-                $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
-                $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
-                $this->resprints .= $widgetHtml;
+                $parameters['morehtmlright'] .= '<link href="' . $cssPath . '" rel="stylesheet">';
+                $parameters['morehtmlright'] .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
+                $parameters['morehtmlright'] .= $widgetHtml;
             }
         }
 
@@ -2366,13 +2369,13 @@ EOT;
         $html .= ' data-element-id="' . (int) $elementId . '"';
         $html .= ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '">';
         $html .= '<i class="fas fa-phone" style="color:#64748b;"></i>';
-        $html .= '<select class="reedcrm-call-list-select select2">';
+        $html .= '<select class="reedcrm-call-list-select">';
         $html .= '<option value="">' . dol_escape_htmltag($langs->trans('SelectCallList')) . '</option>';
         foreach ($callLists as $cl) {
             $html .= '<option value="' . (int) $cl->id . '">' . dol_escape_htmltag($cl->label) . '</option>';
         }
         $html .= '</select>';
-        $html .= '<button type="button" class="reedcrm-call-list-add-btn">OK</button>';
+        $html .= '<button type="button" class="button reedcrm-call-list-add-btn">OK</button>';
         $html .= '<span class="reedcrm-call-list-feedback"></span>';
         $html .= '</div>';
 

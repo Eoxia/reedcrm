@@ -1394,7 +1394,7 @@ window.reedcrm.call_list_widget.init = function() {
     if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
         $('.reedcrm-call-list-select').each(function() {
             if (!$(this).hasClass('select2-hidden-accessible')) {
-                $(this).select2({ width: 'resolve' });
+                $(this).select2({ width: '200px', minimumResultsForSearch: Infinity });
             }
         });
     }
