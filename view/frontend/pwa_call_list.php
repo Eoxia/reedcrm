@@ -237,7 +237,7 @@ if (empty($lines)) {
             print '<div class="pwa-call-actions">';
             print '<a class="pwa-call-btn-call" href="tel:' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a>';
             print '<button class="pwa-call-btn-copy" data-phone="' . dol_escape_htmltag($phone) . '" title="Copier le numéro"><i class="fas fa-copy"></i></button>';
-            print saturne_render_media_block('reedcrm', 'calllistline_' . (int) $line->id, 'cll_' . (int) $line->id, '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => true]);
+            print saturne_render_media_block('reedcrm', 'calllistline/' . (int) $line->id, 'cll_' . (int) $line->id, '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => true]);
             print '</div>';
         } else {
             print '<div class="pwa-call-phone--empty"><i class="fas fa-phone-slash"></i> Pas de téléphone</div>';
