@@ -2305,6 +2305,9 @@ EOT;
                                         if (!container) return;
                                         container.appendChild(node);
                                     }
+                                    if (window.reedcrm && window.reedcrm.call_list_widget) {
+                                        window.reedcrm.call_list_widget.initSelect2();
+                                    }
                                 }, 300);
                             }
                             if (document.readyState === "loading") {

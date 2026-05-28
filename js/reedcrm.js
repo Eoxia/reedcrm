@@ -1389,21 +1389,22 @@ window.saturne.quickcreation_form.initContactSelect = function() {
 window.reedcrm.call_list_widget = {};
 
 window.reedcrm.call_list_widget.init = function() {
-    if ($('.reedcrm-add-to-call-list-wrapper').length === 0) return;
-
-    if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
-        $('.reedcrm-call-list-select').each(function() {
-            if (!$(this).hasClass('select2-hidden-accessible')) {
-                $(this).select2({ width: '200px', minimumResultsForSearch: Infinity });
-            }
-        });
-    }
-
     window.reedcrm.call_list_widget.event();
+    window.reedcrm.call_list_widget.initSelect2();
+};
+
+window.reedcrm.call_list_widget.initSelect2 = function() {
+    if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
+    $('.reedcrm-call-list-select').each(function() {
+        if (!$(this).hasClass('select2-hidden-accessible')) {
+            $(this).select2({ width: '200px', minimumResultsForSearch: Infinity });
+        }
+    });
 };
 
 window.reedcrm.call_list_widget.event = function() {
-    $(document).on('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd);
+    $(document).off('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd)
+               .on('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd);
 };
 
 window.reedcrm.call_list_widget.handleAdd = function() {
