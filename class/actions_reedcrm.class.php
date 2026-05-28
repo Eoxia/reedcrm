@@ -2279,9 +2279,33 @@ EOT;
                     }
                 }
 
-                $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml;
+                $callListWidgetHtml = $this->renderCallListWidget('project', (int) $object->id);
+                $this->resprints = $contactHtml . $jsMountDataHtml . $assetsHtml . $closureWidgetHtml . $callListWidgetHtml;
             }
         }
+
+        if (strpos($parameters['context'], 'propalcard') !== false) {
+            $widgetHtml = $this->renderCallListWidget('propal', (int) $object->id);
+            if (!empty($widgetHtml)) {
+                $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
+                $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
+                $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
+                $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
+                $this->resprints .= $widgetHtml;
+            }
+        }
+
+        if (strpos($parameters['context'], 'invoicecard') !== false) {
+            $widgetHtml = $this->renderCallListWidget('facture', (int) $object->id);
+            if (!empty($widgetHtml)) {
+                $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
+                $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
+                $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
+                $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
+                $this->resprints .= $widgetHtml;
+            }
+        }
+
         return 0;
     }
 
@@ -2305,5 +2329,53 @@ EOT;
             $this->resprints .= '</div>';
         }
         return 0;
+    }
+
+    /**
+     * Renders the "Add to call list" widget HTML for a card banner.
+     *
+     * @param  string $elementType  'project', 'propal', or 'facture'
+     * @param  int    $elementId    ID of the element
+     * @return string               HTML widget, or '' if no permission / no active lists
+     */
+    private function renderCallListWidget(string $elementType, int $elementId): string
+    {
+        global $user, $langs;
+
+        if (!$user->hasRight('reedcrm', 'call_list', 'write')) {
+            return '';
+        }
+
+        $langs->load('reedcrm@reedcrm');
+
+        require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
+
+        $callListObj = new CallList($this->db);
+        $callLists   = $callListObj->fetchAll('', '', 0, 0, [
+            'customsql' => 'status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')'
+        ]);
+
+        if (empty($callLists) || !is_array($callLists)) {
+            return '';
+        }
+
+        $ajaxUrl = dol_buildpath('/custom/reedcrm/ajax/add_to_call_list.php', 1);
+
+        $html  = '<div class="reedcrm-add-to-call-list-wrapper"';
+        $html .= ' data-element-type="' . dol_escape_htmltag($elementType) . '"';
+        $html .= ' data-element-id="' . (int) $elementId . '"';
+        $html .= ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '">';
+        $html .= '<i class="fas fa-phone" style="color:#64748b;"></i>';
+        $html .= '<select class="reedcrm-call-list-select select2">';
+        $html .= '<option value="">' . dol_escape_htmltag($langs->trans('SelectCallList')) . '</option>';
+        foreach ($callLists as $cl) {
+            $html .= '<option value="' . (int) $cl->id . '">' . dol_escape_htmltag($cl->label) . '</option>';
+        }
+        $html .= '</select>';
+        $html .= '<button type="button" class="reedcrm-call-list-add-btn">OK</button>';
+        $html .= '<span class="reedcrm-call-list-feedback"></span>';
+        $html .= '</div>';
+
+        return $html;
     }
 }
