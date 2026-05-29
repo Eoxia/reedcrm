@@ -385,6 +385,23 @@ MobileView = Vue mobile
 CallListCreateActioncomm = Créer un événement à l'appel
 CallListCreateActioncommDesc = Crée automatiquement un événement téléphonique dans l'agenda lors du clic sur le bouton d'appel depuis la vue mobile
 CallFrom = Appel depuis
+AddToCallList = Ajouter à une liste d'appel
+SelectCallList = Sélectionner une liste d'appel
+NoActiveCallList = Aucune liste d'appel active
+CallListAddedCount = %d élément(s) ajouté(s) à la liste d'appel
+CallListSkippedNoContactElement = L'élément %s a été ignoré car aucun contact ne lui est associé
+CallListLineDuplicateElement = L'élément %s est déjà présent dans cette liste d'appel
+CallListNotFound = La liste d'appel sélectionnée est introuvable
+CallListCannotAddToArchivedList = Impossible d'ajouter des éléments à une liste d'appel archivée
+AddToCallListWidget = Ajouter à une liste d'appel
+CallListWidgetSuccess = Ajouté à la liste "%s"
+CallListWidgetNoContact = Aucun contact associé à cet élément
+CallListWidgetNoPhone = Le contact n'a pas de numéro de téléphone
+CallListWidgetDuplicate = Déjà présent dans cette liste
+CallListWidgetError = Erreur lors de l'ajout
+DefaultCallListLabel = Liste d'appel — %s
+AddToMyCallList = Ajouter à ma liste d'appel
+DefaultCallListNotFound = Aucune liste d'appel par défaut pour cet utilisateur
 
 # PWA Documents Bar
 PwaShowPiecesTitle = Liste des pièces à afficher dans le listing de la PWA
@@ -420,5 +437,3 @@ PwaPieceLabel_facture = Fact Clt
 PwaPieceLabel_payment = Règlement
 
 App-ReedCRM = App-ReedCRM
-
-

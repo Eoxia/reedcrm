@@ -894,6 +894,18 @@ class modReedCRM extends DolibarrModules
         delDocumentModel('pdf_calllist_standard', 'calllist');
         addDocumentModel('pdf_calllist_standard', 'calllist', $langs->transnoentities('CallListPDF'));
 
+        // Ensure every active user owns a default call list
+        require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+        require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
+
+        $userStatic = new User($this->db);
+        $userStatic->fetchAll('', '', 0, 0, '(statut:=:1)', 'AND', true);
+        if (!empty($userStatic->users)) {
+            foreach ($userStatic->users as $targetUser) {
+                reedcrm_get_or_create_user_default_call_list($this->db, $targetUser);
+            }
+        }
+
         return $this->_init([], $options);
     }
 

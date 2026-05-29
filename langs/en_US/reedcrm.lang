@@ -132,6 +132,23 @@ MobileView = Mobile view
 CallListCreateActioncomm = Create event on call
 CallListCreateActioncommDesc = Automatically creates a phone event in the agenda when clicking the call button from the mobile view
 CallFrom = Call from
+AddToCallList = Add to call list
+SelectCallList = Select a call list
+NoActiveCallList = No active call list
+CallListAddedCount = %d element(s) added to the call list
+CallListSkippedNoContactElement = Element %s was skipped because no contact is associated with it
+CallListLineDuplicateElement = Element %s is already in this call list
+CallListNotFound = The selected call list could not be found
+CallListCannotAddToArchivedList = Cannot add elements to an archived call list
+AddToCallListWidget = Add to call list
+CallListWidgetSuccess = Added to list "%s"
+CallListWidgetNoContact = No contact associated with this element
+CallListWidgetNoPhone = The contact has no phone number
+CallListWidgetDuplicate = Already in this call list
+CallListWidgetError = Error while adding
+DefaultCallListLabel = Call list — %s
+AddToMyCallList = Add to my call list
+DefaultCallListNotFound = No default call list for this user
 
 # PWA Documents Bar
 PwaShowPiecesTitle = List of documents to display in the PWA listing

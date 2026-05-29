@@ -1385,3 +1385,96 @@ window.saturne.quickcreation_form.initContactSelect = function() {
         }).catch(function(err){console.error('Error fetching contact details',err);});
     });
 };
+
+window.reedcrm.call_list_widget = {};
+
+window.reedcrm.call_list_widget.init = function() {
+    window.reedcrm.call_list_widget.event();
+    window.reedcrm.call_list_widget.initSelect2();
+};
+
+window.reedcrm.call_list_widget.initSelect2 = function() {
+    if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
+    $('.reedcrm-call-list-select').each(function() {
+        if (!$(this).hasClass('select2-hidden-accessible')) {
+            $(this).select2({ width: '200px', minimumResultsForSearch: Infinity });
+            // Prevent Dolibarr's select2:open handler from throwing a SyntaxError
+            // when id and name are both empty (querySelector receives invalid selector)
+            $(this).on('select2:open', function(e) { e.stopPropagation(); });
+        }
+    });
+};
+
+window.reedcrm.call_list_widget.event = function() {
+    $(document).off('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd)
+               .on('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd);
+    $(document).off('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange)
+               .on('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange);
+    $(document).off('click', '.reedcrm-call-list-default-btn', window.reedcrm.call_list_widget.handleAddDefault)
+               .on('click', '.reedcrm-call-list-default-btn', window.reedcrm.call_list_widget.handleAddDefault);
+};
+
+window.reedcrm.call_list_widget.onSelectChange = function() {
+    var btn = $(this).closest('.reedcrm-add-to-call-list-wrapper').find('.reedcrm-call-list-add-btn');
+    btn.prop('disabled', !$(this).val());
+};
+
+window.reedcrm.call_list_widget.handleAdd = function() {
+    if ($(this).prop('disabled')) return;
+
+    var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+    var elementType = wrapper.data('element-type');
+    var elementId   = wrapper.data('element-id');
+    var ajaxUrl     = wrapper.data('ajax-url');
+    var callListId  = wrapper.find('.reedcrm-call-list-select').val();
+    var token       = $('input[name="token"]').val() || '';
+
+    if (!callListId) return;
+
+    var fd = new FormData();
+    fd.append('element_type', elementType);
+    fd.append('element_id', elementId);
+    fd.append('call_list_id', callListId);
+    fd.append('token', token);
+
+    fetch(ajaxUrl, { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                $.jnotify(res.message);
+            } else {
+                $.jnotify(res.message, 'error');
+            }
+        })
+        .catch(function() {
+            $.jnotify('Erreur réseau', 'error');
+        });
+};
+
+window.reedcrm.call_list_widget.handleAddDefault = function() {
+    var star        = $(this);
+    var wrapper     = star.closest('.reedcrm-add-to-call-list-wrapper');
+    var elementType = wrapper.data('element-type');
+    var elementId   = wrapper.data('element-id');
+    var ajaxUrl     = wrapper.data('default-ajax-url');
+    var token       = $('input[name="token"]').val() || '';
+
+    var fd = new FormData();
+    fd.append('element_type', elementType);
+    fd.append('element_id', elementId);
+    fd.append('token', token);
+
+    fetch(ajaxUrl, { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                star.addClass('is-active');
+                $.jnotify(res.message);
+            } else {
+                $.jnotify(res.message, 'error');
+            }
+        })
+        .catch(function() {
+            $.jnotify('Erreur réseau', 'error');
+        });
+};

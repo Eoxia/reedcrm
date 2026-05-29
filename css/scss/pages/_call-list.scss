@@ -17,3 +17,69 @@
         }
     }
 }
+
+.reedcrm-add-to-call-list-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fbff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 4px 8px 4px 6px;
+    vertical-align: middle;
+    font-size: 0.9em;
+    margin-bottom: 2px;
+
+    .reedcrm-add-to-call-list-logo {
+        height: 18px;
+        width: 18px;
+        object-fit: contain;
+        border-right: 1px solid #cbd5e0;
+        padding-right: 8px;
+        margin-right: 2px;
+    }
+
+    .reedcrm-call-list-default-btn {
+        color: #64748b;
+        cursor: pointer;
+        font-size: 14px;
+        transition: color 0.2s;
+
+        &:hover {
+            color: #eab308;
+        }
+
+        &.is-active {
+            color: #eab308;
+        }
+    }
+
+    .reedcrm-call-list-select {
+        min-width: 160px;
+    }
+
+    .reedcrm-call-list-add-btn {
+        background: #f8f9fa;
+        border: 2px solid #ced4da;
+        color: #adb5bd;
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 14px;
+        cursor: not-allowed;
+        transition: all 0.2s;
+        white-space: nowrap;
+
+        &:not([disabled]) {
+            background: #fff;
+            border-color: #28a745;
+            color: #28a745;
+            cursor: pointer;
+
+            &:hover {
+                background: #28a745;
+                color: #fff;
+            }
+        }
+    }
+
+}
