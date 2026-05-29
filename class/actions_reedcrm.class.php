@@ -2404,12 +2404,15 @@ EOT;
 
         $ajaxUrl = dol_buildpath('/custom/reedcrm/ajax/add_to_call_list.php', 1);
 
+        $defaultAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/add_to_default_call_list.php', 1);
+
         $logoPath = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
 
         $html  = '<div class="reedcrm-add-to-call-list-wrapper"';
         $html .= ' data-element-type="' . dol_escape_htmltag($elementType) . '"';
         $html .= ' data-element-id="' . (int) $elementId . '"';
-        $html .= ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '">';
+        $html .= ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"';
+        $html .= ' data-default-ajax-url="' . dol_escape_htmltag($defaultAjaxUrl) . '">';
         $html .= '<img src="' . dol_escape_htmltag($logoPath) . '" class="reedcrm-add-to-call-list-logo" alt="ReedCRM" />';
         $html .= '<i class="fas fa-phone" style="color:#64748b;"></i>';
         $html .= '<select class="reedcrm-call-list-select">';
@@ -2419,6 +2422,7 @@ EOT;
         }
         $html .= '</select>';
         $html .= '<button type="button" class="reedcrm-call-list-add-btn" disabled><i class="fas fa-save"></i></button>';
+        $html .= '<button type="button" class="reedcrm-call-list-default-btn" title="' . dol_escape_htmltag($langs->trans('AddToMyCallList')) . '"><i class="fas fa-star"></i></button>';
         $html .= '</div>';
 
         return $html;

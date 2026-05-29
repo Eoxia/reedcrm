@@ -398,3 +398,6 @@ CallListWidgetSuccess = Ajouté à la liste "%s"
 CallListWidgetNoContact = Aucun contact associé à cet élément
 CallListWidgetDuplicate = Déjà présent dans cette liste
 CallListWidgetError = Erreur lors de l'ajout
+DefaultCallListLabel = Liste d'appel — %s
+AddToMyCallList = Ajouter à ma liste d'appel
+DefaultCallListNotFound = Aucune liste d'appel par défaut pour cet utilisateur

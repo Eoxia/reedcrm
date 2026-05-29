@@ -16,9 +16,9 @@
  */
 
 /**
- * \file    ajax/add_to_call_list.php
+ * \file    ajax/add_to_default_call_list.php
  * \ingroup reedcrm
- * \brief   AJAX endpoint — adds an element to a call list from a card widget.
+ * \brief   AJAX endpoint — adds an element to the current user's default call list.
  */
 
 if (file_exists('../reedcrm.main.inc.php')) {
@@ -39,15 +39,21 @@ header('Content-Type: application/json');
 
 $elementType = GETPOST('element_type', 'aZ09');
 $elementId   = GETPOSTINT('element_id');
-$callListId  = GETPOSTINT('call_list_id');
 
-if (empty($elementType) || empty($elementId) || empty($callListId)) {
+if (empty($elementType) || empty($elementId)) {
     echo json_encode(['success' => false, 'message' => 'Missing parameters']);
     exit;
 }
 
 if (!$user->hasRight('reedcrm', 'call_list', 'write')) {
     echo json_encode(['success' => false, 'message' => 'Forbidden']);
+    exit;
+}
+
+$callListId = isset($user->conf->REEDCRM_DEFAULT_CALL_LIST) ? (int) $user->conf->REEDCRM_DEFAULT_CALL_LIST : 0;
+
+if ($callListId <= 0) {
+    echo json_encode(['success' => false, 'message' => $langs->transnoentitiesnoconv('DefaultCallListNotFound')]);
     exit;
 }
 

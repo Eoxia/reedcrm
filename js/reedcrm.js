@@ -1410,6 +1410,8 @@ window.reedcrm.call_list_widget.event = function() {
                .on('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd);
     $(document).off('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange)
                .on('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange);
+    $(document).off('click', '.reedcrm-call-list-default-btn', window.reedcrm.call_list_widget.handleAddDefault)
+               .on('click', '.reedcrm-call-list-default-btn', window.reedcrm.call_list_widget.handleAddDefault);
 };
 
 window.reedcrm.call_list_widget.onSelectChange = function() {
@@ -1433,6 +1435,32 @@ window.reedcrm.call_list_widget.handleAdd = function() {
     fd.append('element_type', elementType);
     fd.append('element_id', elementId);
     fd.append('call_list_id', callListId);
+    fd.append('token', token);
+
+    fetch(ajaxUrl, { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                $.jnotify(res.message);
+            } else {
+                $.jnotify(res.message, 'error');
+            }
+        })
+        .catch(function() {
+            $.jnotify('Erreur réseau', 'error');
+        });
+};
+
+window.reedcrm.call_list_widget.handleAddDefault = function() {
+    var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+    var elementType = wrapper.data('element-type');
+    var elementId   = wrapper.data('element-id');
+    var ajaxUrl     = wrapper.data('default-ajax-url');
+    var token       = $('input[name="token"]').val() || '';
+
+    var fd = new FormData();
+    fd.append('element_type', elementType);
+    fd.append('element_id', elementId);
     fd.append('token', token);
 
     fetch(ajaxUrl, { method: 'POST', body: fd })

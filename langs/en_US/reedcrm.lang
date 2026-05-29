@@ -145,3 +145,6 @@ CallListWidgetSuccess = Added to list "%s"
 CallListWidgetNoContact = No contact associated with this element
 CallListWidgetDuplicate = Already in this call list
 CallListWidgetError = Error while adding
+DefaultCallListLabel = Call list — %s
+AddToMyCallList = Add to my call list
+DefaultCallListNotFound = No default call list for this user
