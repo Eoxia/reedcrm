@@ -132,3 +132,38 @@ MobileView = Mobile view
 CallListCreateActioncomm = Create event on call
 CallListCreateActioncommDesc = Automatically creates a phone event in the agenda when clicking the call button from the mobile view
 CallFrom = Call from
+
+# PWA Documents Bar
+PwaShowPiecesTitle = List of documents to display in the PWA listing
+PwaShowPiecesTitleDesc = Select the document types to display as a progress bar on opportunity cards in the PWA.
+
+REEDCRM_PWA_SHOW_OPP_AMOUNT = Show opportunity amount
+REEDCRM_PWA_SHOW_OPP_AMOUNT_Desc = Shows the estimated amount of the opportunity.
+REEDCRM_PWA_SHOW_PROPAL = Show commercial proposal
+REEDCRM_PWA_SHOW_PROPAL_Desc = Shows the latest commercial proposal (quote) linked to the project.
+REEDCRM_PWA_SHOW_COMMANDE = Show sales order
+REEDCRM_PWA_SHOW_COMMANDE_Desc = Shows the latest sales order linked to the project.
+REEDCRM_PWA_SHOW_COMMANDE_FOURN = Show purchase order
+REEDCRM_PWA_SHOW_COMMANDE_FOURN_Desc = Shows the latest supplier purchase order linked to the project.
+REEDCRM_PWA_SHOW_RECEPTION = Show supplier reception
+REEDCRM_PWA_SHOW_RECEPTION_Desc = Shows the latest supplier reception linked to the project.
+REEDCRM_PWA_SHOW_FACTURE_FOURN = Show supplier invoice
+REEDCRM_PWA_SHOW_FACTURE_FOURN_Desc = Shows the latest supplier invoice linked to the project.
+REEDCRM_PWA_SHOW_EXPEDITION = Show customer shipment
+REEDCRM_PWA_SHOW_EXPEDITION_Desc = Shows the latest customer shipment/delivery linked to the project.
+REEDCRM_PWA_SHOW_FACTURE = Show customer invoice
+REEDCRM_PWA_SHOW_FACTURE_Desc = Shows the latest customer invoice linked to the project.
+REEDCRM_PWA_SHOW_PAYMENT = Show customer payment
+REEDCRM_PWA_SHOW_PAYMENT_Desc = Shows the latest payment linked to the project's customer invoices.
+
+PwaPieceLabel_montant = Amount
+PwaPieceLabel_propal = Quote
+PwaPieceLabel_commande = Sales Order
+PwaPieceLabel_commande_fourn = Purch Order
+PwaPieceLabel_reception = Supp Rec
+PwaPieceLabel_facture_fourn = Supp Inv
+PwaPieceLabel_expedition = Cust Ship
+PwaPieceLabel_facture = Cust Inv
+PwaPieceLabel_payment = Payment
+
+App-ReedCRM = App-ReedCRM

@@ -385,3 +385,40 @@ MobileView = Vue mobile
 CallListCreateActioncomm = Créer un événement à l'appel
 CallListCreateActioncommDesc = Crée automatiquement un événement téléphonique dans l'agenda lors du clic sur le bouton d'appel depuis la vue mobile
 CallFrom = Appel depuis
+
+# PWA Documents Bar
+PwaShowPiecesTitle = Liste des pièces à afficher dans le listing de la PWA
+PwaShowPiecesTitleDesc = Sélectionnez les types de documents à afficher sous forme de barre d'avancement sur les fiches opportunités de la PWA.
+
+REEDCRM_PWA_SHOW_OPP_AMOUNT = Afficher le montant de l'opportunité
+REEDCRM_PWA_SHOW_OPP_AMOUNT_Desc = Affiche le montant estimé de l'opportunité.
+REEDCRM_PWA_SHOW_PROPAL = Afficher la proposition commerciale
+REEDCRM_PWA_SHOW_PROPAL_Desc = Affiche la dernière proposition commerciale (devis) liée au projet.
+REEDCRM_PWA_SHOW_COMMANDE = Afficher la commande client
+REEDCRM_PWA_SHOW_COMMANDE_Desc = Affiche la dernière commande client liée au projet.
+REEDCRM_PWA_SHOW_COMMANDE_FOURN = Afficher la commande fournisseur
+REEDCRM_PWA_SHOW_COMMANDE_FOURN_Desc = Affiche la dernière commande fournisseur liée au projet.
+REEDCRM_PWA_SHOW_RECEPTION = Afficher la réception fournisseur
+REEDCRM_PWA_SHOW_RECEPTION_Desc = Affiche la dernière réception de commande fournisseur liée au projet.
+REEDCRM_PWA_SHOW_FACTURE_FOURN = Afficher la facture fournisseur
+REEDCRM_PWA_SHOW_FACTURE_FOURN_Desc = Affiche la dernière facture fournisseur liée au projet.
+REEDCRM_PWA_SHOW_EXPEDITION = Afficher l'expédition client
+REEDCRM_PWA_SHOW_EXPEDITION_Desc = Affiche la dernière expédition client liée au projet.
+REEDCRM_PWA_SHOW_FACTURE = Afficher la facture client
+REEDCRM_PWA_SHOW_FACTURE_Desc = Affiche la dernière facture client liée au projet.
+REEDCRM_PWA_SHOW_PAYMENT = Afficher l'encaissement
+REEDCRM_PWA_SHOW_PAYMENT_Desc = Affiche le dernier encaissement (règlement client) lié aux factures du projet.
+
+PwaPieceLabel_montant = Montant
+PwaPieceLabel_propal = Devis
+PwaPieceLabel_commande = Cmd Clt
+PwaPieceLabel_commande_fourn = Cmd Fourn
+PwaPieceLabel_reception = Rec Fourn
+PwaPieceLabel_facture_fourn = Fact Fourn
+PwaPieceLabel_expedition = Exp Clt
+PwaPieceLabel_facture = Fact Clt
+PwaPieceLabel_payment = Règlement
+
+App-ReedCRM = App-ReedCRM
+
+
