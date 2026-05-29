@@ -143,6 +143,7 @@ CallListCannotAddToArchivedList = Cannot add elements to an archived call list
 AddToCallListWidget = Add to call list
 CallListWidgetSuccess = Added to list "%s"
 CallListWidgetNoContact = No contact associated with this element
+CallListWidgetNoPhone = The contact has no phone number
 CallListWidgetDuplicate = Already in this call list
 CallListWidgetError = Error while adding
 DefaultCallListLabel = Call list — %s

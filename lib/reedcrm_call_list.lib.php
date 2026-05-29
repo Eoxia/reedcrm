@@ -172,11 +172,19 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
 
     $firstContact = reset($contacts);
 
+    $contactObj = new Contact($db);
+    if ($contactObj->fetch((int) $firstContact['id']) <= 0) {
+        return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')];
+    }
+    if (empty($contactObj->phone_pro) && empty($contactObj->phone_mobile) && empty($contactObj->phone_perso)) {
+        return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoPhone')];
+    }
+
     $newLine               = new CallListLine($db);
     $newLine->fk_call_list = $callListId;
     $newLine->element_type = $elementType;
     $newLine->element_id   = $elementId;
-    $newLine->fk_contact   = (int) $firstContact['id'];
+    $newLine->fk_contact   = (int) $contactObj->id;
     $newLine->status       = CallListLine::STATUS_TO_CALL;
 
     if ($newLine->create($user) <= 0) {

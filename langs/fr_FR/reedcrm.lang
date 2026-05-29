@@ -396,6 +396,7 @@ CallListCannotAddToArchivedList = Impossible d'ajouter des éléments à une lis
 AddToCallListWidget = Ajouter à une liste d'appel
 CallListWidgetSuccess = Ajouté à la liste "%s"
 CallListWidgetNoContact = Aucun contact associé à cet élément
+CallListWidgetNoPhone = Le contact n'a pas de numéro de téléphone
 CallListWidgetDuplicate = Déjà présent dans cette liste
 CallListWidgetError = Erreur lors de l'ajout
 DefaultCallListLabel = Liste d'appel — %s
