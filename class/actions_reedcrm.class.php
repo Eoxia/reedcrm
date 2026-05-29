@@ -2415,6 +2415,7 @@ EOT;
         $html .= ' data-default-ajax-url="' . dol_escape_htmltag($defaultAjaxUrl) . '">';
         $html .= '<img src="' . dol_escape_htmltag($logoPath) . '" class="reedcrm-add-to-call-list-logo" alt="ReedCRM" />';
         $html .= '<i class="fas fa-phone" style="color:#64748b;"></i>';
+        $html .= '<i class="fas fa-star reedcrm-call-list-default-btn" title="' . dol_escape_htmltag($langs->trans('AddToMyCallList')) . '"></i>';
         $html .= '<select class="reedcrm-call-list-select">';
         $html .= '<option value="">' . dol_escape_htmltag($langs->trans('SelectCallList')) . '</option>';
         foreach ($callLists as $cl) {
@@ -2422,7 +2423,6 @@ EOT;
         }
         $html .= '</select>';
         $html .= '<button type="button" class="reedcrm-call-list-add-btn" disabled><i class="fas fa-save"></i></button>';
-        $html .= '<button type="button" class="reedcrm-call-list-default-btn" title="' . dol_escape_htmltag($langs->trans('AddToMyCallList')) . '"><i class="fas fa-star"></i></button>';
         $html .= '</div>';
 
         return $html;

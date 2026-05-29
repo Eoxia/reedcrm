@@ -39,6 +39,21 @@
         margin-right: 2px;
     }
 
+    .reedcrm-call-list-default-btn {
+        color: #64748b;
+        cursor: pointer;
+        font-size: 14px;
+        transition: color 0.2s;
+
+        &:hover {
+            color: #eab308;
+        }
+
+        &.is-active {
+            color: #eab308;
+        }
+    }
+
     .reedcrm-call-list-select {
         min-width: 160px;
     }

@@ -1452,7 +1452,8 @@ window.reedcrm.call_list_widget.handleAdd = function() {
 };
 
 window.reedcrm.call_list_widget.handleAddDefault = function() {
-    var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+    var star        = $(this);
+    var wrapper     = star.closest('.reedcrm-add-to-call-list-wrapper');
     var elementType = wrapper.data('element-type');
     var elementId   = wrapper.data('element-id');
     var ajaxUrl     = wrapper.data('default-ajax-url');
@@ -1467,6 +1468,7 @@ window.reedcrm.call_list_widget.handleAddDefault = function() {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.success) {
+                star.addClass('is-active');
                 $.jnotify(res.message);
             } else {
                 $.jnotify(res.message, 'error');
