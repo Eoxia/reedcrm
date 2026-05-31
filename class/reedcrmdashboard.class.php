@@ -52,7 +52,7 @@ class ReedcrmDashboard
         global $user, $langs;
 
         $confName        = 'REEDCRM_DASHBOARD_CONFIG';
-        $dashboardConfig = json_decode($user->conf->$confName);
+        $dashboardConfig = isset($user->conf->$confName) ? json_decode($user->conf->$confName) : null;
         $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
 
         if (empty($dashboardConfig->graphs->OpportunitySources->hide)) {
