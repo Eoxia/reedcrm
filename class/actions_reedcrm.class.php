@@ -81,7 +81,10 @@ class ActionsReedcrm
                 require_once __DIR__ . '/../../saturne/lib/object.lib.php';
 
                 $projects    = saturne_fetch_all_object_type('Project', '', '', 0, 0, ['customsql' => 't.fk_soc = ' . $object->id]);
-                $projectData = [];
+                $projectData = [
+                    'total_opp_amount' => 0,
+                    'total_opp_weighted_amount' => 0,
+                ];
                 if (is_array($projects) && !empty($projects)) {
                     foreach ($projects as $project) {
                         $projectData['total_opp_amount'] += $project->opp_amount;
