@@ -756,13 +756,15 @@ class ActionsReedcrm
                 $picto  = img_picto($langs->trans('CommercialsRelaunching'), 'fontawesome_fa-headset_fas');
                 $filter = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
                 if (is_object($parameters['obj']) && !empty($parameters['obj'])) {
-                    if (!empty($parameters['obj']->id)) {
+                    $objId = (int) ($parameters['obj']->id ?? $parameters['obj']->rowid ?? 0);
+                    $socId = (int) ($parameters['obj']->socid ?? $parameters['obj']->fk_soc ?? $parameters['obj']->fk_societe ?? 0);
+                    if (!empty($objId)) {
                         $out = '<td class="tdoverflowmax200">';
                         if (isModEnabled('agenda')) {
                             require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
                             $actionComm = new ActionComm($db);
 
-                            $actionComms = $actionComm->getActions($parameters['obj']->socid, $parameters['obj']->id, 'project', $filter, 'a.datec');
+                            $actionComms = $actionComm->getActions($socId, $objId, 'project', $filter, 'a.datec');
 
                             $countsByType = [
                                 'call' => 0,
@@ -854,7 +856,7 @@ class ActionsReedcrm
                             }
 
                             $modalId = 'eventproCardModal';
-                            $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $parameters['obj']->id . '&from_type=project&project_id=' . $parameters['obj']->id;
+                            $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $objId . '&from_type=project&project_id=' . $objId;
 
                             $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
                             $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
@@ -866,7 +868,7 @@ class ActionsReedcrm
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_TEL';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
@@ -879,7 +881,7 @@ class ActionsReedcrm
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_EMAIL';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
@@ -892,7 +894,7 @@ class ActionsReedcrm
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_RDV';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
@@ -905,7 +907,7 @@ class ActionsReedcrm
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_OTH';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $parameters['obj']->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
                             }
@@ -938,14 +940,14 @@ class ActionsReedcrm
                         // Workaround: Display project description in the custom extrafield 'description' (or 'descrpitiion' as typoed by user)
                         $out6 = '<td class="tdoverflowmax500">';
                         $tmpProject = new Project($this->db);
-                        if ($tmpProject->fetch($parameters['obj']->id) > 0) {
+                        if ($tmpProject->fetch($objId) > 0) {
                             $desc = $tmpProject->description;
                             $out6 .= !empty($desc) ? (dol_textishtml($desc) ? $desc : dol_nl2br(dol_escape_htmltag($desc))) : '';
                         }
                         $out6 .= '</td>';
 
                         // projectField opp_percent
-                        $out3 = '<td class="center"><span data-project_id="'. $parameters['obj']->id . '">';
+                        $out3 = '<td class="center"><span data-project_id="'. $objId . '">';
                         if (isset($parameters['obj']->opp_percent)) {
                             switch ($parameters['obj']->opp_percent) {
                                 case $parameters['obj']->opp_percent < 20:
@@ -991,7 +993,7 @@ class ActionsReedcrm
 
                         // We can generate avatar using dolGetFirstLastname tooltip logic or just uncommenting logoHtml if needed
                         $out5 = '<td class="tdoverflowmax300 valignmiddle">';
-                        $out5 .= '<div class="reedcrm-plist-coordonnees contact-inline-wrapper" data-project-id="' . $parameters['obj']->id . '">';
+                        $out5 .= '<div class="reedcrm-plist-coordonnees contact-inline-wrapper" data-project-id="' . $objId . '">';
 
                         $out5 .= '<div class="reedcrm-plist-coordonnees-avatar" style="width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">';
                         $out5 .= '<img src="' . dol_buildpath('/reedcrm/img/reedcrm_color.png', 1) . '" style="width:20px; height:20px; object-fit:contain;" alt="ReedCRM">';
@@ -1026,7 +1028,7 @@ class ActionsReedcrm
                         $out5 .= '</td>';
 
                     }
-                    $rowId = (int) $parameters['obj']->id; ?>
+                    $rowId = (int) $objId; ?>
                     <script>
                         (function () {
                             var rowId = <?php echo $rowId; ?>;
