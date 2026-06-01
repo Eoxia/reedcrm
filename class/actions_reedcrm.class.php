@@ -236,7 +236,64 @@ class ActionsReedcrm
             }
         }
 
+        // ReedCRM: on Reception/Shipment cards, the core line views render only the (empty) line
+        // description and expose no per-line hook, so the product description never shows. We inject
+        // it client-side from a data-island computed here.
+        if (preg_match('/receptioncard|expeditioncard/', $parameters['context'])) {
+            $this->printLineProductDescriptions($object);
+        }
+
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Emit a JSON data-island { productId: htmlDescription } and load the JS that injects each
+     * product/service description under its line, on Reception/Shipment cards. Pure-module
+     * workaround: these core views render only the (empty) line description and expose no
+     * per-line hook, so the DOM is augmented client-side.
+     *
+     * @param  CommonObject $object Reception or Expedition currently displayed
+     * @return void
+     */
+    private function printLineProductDescriptions(CommonObject $object): void
+    {
+        if (empty($object->lines) || !is_array($object->lines)) {
+            return;
+        }
+
+        // Distinct predefined products on the document
+        $productIds = [];
+        foreach ($object->lines as $line) {
+            if (!empty($line->fk_product) && $line->fk_product > 0) {
+                $productIds[(int) $line->fk_product] = (int) $line->fk_product;
+            }
+        }
+        if (empty($productIds)) {
+            return;
+        }
+
+        // Single query (no N+1) to fetch each product description
+        $descriptions = [];
+        $sql  = 'SELECT rowid, description FROM ' . MAIN_DB_PREFIX . 'product';
+        $sql .= ' WHERE rowid IN (' . implode(',', array_map('intval', $productIds)) . ')';
+        $resql = $this->db->query($sql);
+        if ($resql) {
+            while ($obj = $this->db->fetch_object($resql)) {
+                $desc = trim((string) $obj->description);
+                if ($desc !== '') {
+                    // Render like the native template so the output matches the other document types
+                    $descriptions[(int) $obj->rowid] = dol_htmlentitiesbr($desc);
+                }
+            }
+        }
+        if (empty($descriptions)) {
+            return;
+        }
+
+        // Data only (JSON, escaped so it is safe inside a <script> tag) + targeted JS load
+        $json = json_encode($descriptions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        print "\n" . '<script type="application/json" id="reedcrm-linedesc-data">' . $json . '</script>' . "\n";
+        print '<script src="' . dol_buildpath('/reedcrm/js/reedcrm_line_description.js', 1) . '"></script>' . "\n";
     }
 
     /**
