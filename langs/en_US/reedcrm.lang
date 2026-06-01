@@ -92,6 +92,28 @@ DetectingLocation = Detecting your location
 GeolocationNotSupported = Geolocation is not supported by this browser
 GeolocationDenied = Location access denied
 
+# KPI cards - opportunity project list
+ReedCRMKpiNbOpportunities = Opportunities
+ReedCRMKpiTotalAmount = Total amount
+ReedCRMKpiWeightedAmount = Weighted pipeline
+ReedCRMKpiAvgProbability = Average probability
+
+# List presets - opportunity project list
+ReedCRMPresetMine = My opportunities
+ReedCRMPresetHot = Hot
+ReedCRMPresetOpen = Open
+ReedCRMPresetToRelaunch = To follow up
+
+ReedCRMSaveView = Save view
+
+# KPI banner customization
+ReedCRMKpiCustomize = Customize
+ReedCRMKpiReset = Reset
+
+OpportunityDetails = Opportunity
+
+ReedCRMStatusAsDot = Status: dot
+ReedCRMStatusAsBadge = Status: badge
 #
 # Call List
 #

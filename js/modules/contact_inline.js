@@ -368,10 +368,30 @@ window.saturne.contact_inline.startOriginEdit = function(e) {
     });
 };
 
+// Apply the material look (blue base / red invalid) on an inline editor input. Uses inline
+// !important so it beats the backend list theme's stronger global input border rule.
+window.saturne.contact_inline.applyInputMaterial = function(el, invalid) {
+    if (!el) return;
+    let border = invalid ? '#e53935' : '#3b82f6';
+    let color  = invalid ? '#e53935' : '#0f172a';
+    let shadow = invalid ? '0 0 0 2px rgba(229, 57, 53, 0.2)' : '0 0 0 2px rgba(59, 130, 246, 0.2)';
+    el.style.setProperty('border', '1px solid ' + border, 'important');
+    el.style.setProperty('color', color, 'important');
+    el.style.setProperty('box-shadow', shadow, 'important');
+};
+
+// Cancel an inline edit: tear down the phone widget if any and restore the original markup.
+window.saturne.contact_inline.cancelInlineEdit = function(span, input, originalHtml) {
+    if (input && input[0] && input[0].iti) {
+        input[0].iti.destroy();
+    }
+    span.html(originalHtml);
+};
+
 window.saturne.contact_inline.startInlineEdit = function(e) {
     if ($(this).find('input').length > 0) return;
     e.stopPropagation();
-    
+
     let span = $(this);
     let isTitle = span.hasClass('inline-edit-proj-title');
     let currentVal = span.data('val') || '';
@@ -399,7 +419,8 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     }
     
     span.html('').append(input);
-    
+    window.saturne.contact_inline.applyInputMaterial(input[0], false);
+
     if (isWebsite) {
         input.on('input', function() {
             let val = $(this).val().trim();
@@ -408,14 +429,19 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
                 $(this).val(val);
             }
             const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
-            if (val !== '' && val !== 'https://' && val !== 'http://' && !materialUrlRegex.test(val)) {
-                $(this).css({ 'border-color': '#e53935', 'color': '#e53935', 'box-shadow': '0 0 0 2px rgba(229, 57, 53, 0.2)' });
-            } else {
-                $(this).css({ 'border-color': '#3b82f6', 'color': '#0f172a', 'box-shadow': '0 0 0 2px rgba(59, 130, 246, 0.2)' });
-            }
+            const invalid = val !== '' && val !== 'https://' && val !== 'http://' && !materialUrlRegex.test(val);
+            window.saturne.contact_inline.applyInputMaterial(this, invalid);
         });
     }
     
+    if (isEmail) {
+        input.on('input', function() {
+            let val = $(this).val().trim();
+            const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+            window.saturne.contact_inline.applyInputMaterial(this, val !== '' && !materialEmailRegex.test(val));
+        });
+    }
+
     if (isPhone && typeof window.intlTelInput !== 'undefined') {
         let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
         if (!baseRoot) {
@@ -439,6 +465,13 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
             input[0].itiDropdownOpen = false;
             setTimeout(() => input.focus(), 50);
         });
+        // The flag's mousedown fires before the input's blur; mark the dropdown as open right
+        // away so the blur handler doesn't tear the editor down before the open event arrives.
+        // Letting focus leave the input also lets intlTelInput's type-ahead country search
+        // receive keystrokes (otherwise typed letters would land in the phone number field).
+        $(input).closest('.iti').on('mousedown', '.iti__selected-flag, .iti__flag-container', function() {
+            input[0].itiDropdownOpen = true;
+        });
     }
     
     input.focus();
@@ -446,14 +479,15 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     
     let submitFunction = isTitle ? window.saturne.contact_inline.submitTitleDetail : window.saturne.contact_inline.submitContactDetail;
     
-    input.on('blur', function() { 
+    input.on('blur', function() {
         if (input[0] && input[0].itiDropdownOpen) return;
-        submitFunction(span, input, originalHtml, currentVal, false); 
+        submitFunction(span, input, originalHtml, currentVal, false, 'blur');
     });
-    input.on('keydown', function(ev) { 
-        ev.stopPropagation(); 
-        if (ev.which === 13) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, false); }
-        else if (ev.which === 9) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, true); }
+    input.on('keydown', function(ev) {
+        ev.stopPropagation();
+        if (ev.which === 13) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, false, 'enter'); }
+        else if (ev.which === 9) { ev.preventDefault(); input.off('blur'); submitFunction(span, input, originalHtml, currentVal, true, 'tab'); }
+        else if (ev.which === 27) { ev.preventDefault(); input.off('blur'); window.saturne.contact_inline.cancelInlineEdit(span, input, originalHtml); }
     });
     input.on('click', function(ev) { ev.stopPropagation(); });
 };
@@ -511,7 +545,7 @@ window.saturne.contact_inline.submitTitleDetail = function(span, input, original
     });
 };
 
-window.saturne.contact_inline.submitContactDetail = function(span, input, originalHtml, currentVal, isTabbing) {
+window.saturne.contact_inline.submitContactDetail = function(span, input, originalHtml, currentVal, isTabbing, trigger) {
     let newVal = input.val().trim();
     if (span.data('field') === 'phone' && input[0].iti && window.intlTelInputUtils) {
         if (input[0].iti.isValidNumber()) {
@@ -529,18 +563,15 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
     };
     
     let field = span.data('field');
-    
-    // Email Validation
+    let invalid = false;
+
+    // Email validation
     if (field === 'email' && newVal !== '') {
         const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-        if (!materialEmailRegex.test(newVal)) {
-            alert('Format de l\'adresse e-mail invalide.');
-            input.focus();
-            return;
-        }
+        invalid = !materialEmailRegex.test(newVal);
     }
-    
-    // Website Validation
+
+    // Website validation (normalize the protocol first)
     if (field === 'website') {
         if (newVal === 'https://' || newVal === 'http://') {
             newVal = '';
@@ -552,12 +583,22 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
                 input.val(newVal);
             }
             const materialUrlRegex = /^(https?:\/\/)?([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
-            if (!materialUrlRegex.test(newVal)) {
-                alert('Format du site web invalide.');
-                input.focus();
-                return;
-            }
+            invalid = !materialUrlRegex.test(newVal);
         }
+    }
+
+    // No blocking alert (it previously trapped the user, with no way to cancel the edit).
+    if (invalid) {
+        if (trigger === 'blur') {
+            // Clicked away from an invalid value: cancel and restore the original.
+            window.saturne.contact_inline.cancelInlineEdit(span, input, originalHtml);
+            span.data('val', currentVal);
+        } else {
+            // Active submit (Enter/Tab): keep editing and flag the field in red.
+            window.saturne.contact_inline.applyInputMaterial(input[0], true);
+            input.focus();
+        }
+        return;
     }
 
     if (newVal === currentVal) {

@@ -1,0 +1,46 @@
+// Opportunity summary header shown at the top of the project preview side panel
+
+.reedcrm-preview-summary {
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    background: #f7f9fc;
+    border-bottom: 1px solid #e3e6ea;
+}
+
+.reedcrm-preview-summary-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2b2b2b;
+    margin-bottom: 10px;
+}
+
+.reedcrm-preview-summary-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.reedcrm-preview-metric {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 100px;
+    min-width: 90px;
+    padding: 8px 10px;
+    background: #fff;
+    border: 1px solid #e3e6ea;
+    border-radius: 6px;
+}
+
+.reedcrm-preview-metric-label {
+    font-size: 11px;
+    color: #7a7a7a;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.reedcrm-preview-metric-value {
+    margin-top: 2px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #2b2b2b;
+}
