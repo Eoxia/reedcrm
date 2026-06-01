@@ -224,3 +224,85 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
     return $results;
 }
 
+/**
+ * Compute, per piece, the chain state (done/current/todo) and the inconsistencies for one opportunity.
+ * Pure function: everything is derived from the documents array of reedcrm_get_pwa_projects_documents().
+ *
+ * @param  array $docs One project entry: [ key => ['ref','amount','status','url'] | null, 'totals' => ['invoiced','paid'] ]
+ * @return array<string,array{state:string,issues:array<array{level:string,msg:string}>}>
+ */
+function reedcrm_compute_opportunity_chain(array $docs): array
+{
+    global $langs;
+
+    // Full display order (matches the admin pieces order)
+    $order = ['montant', 'propal', 'commande', 'commande_fourn', 'reception', 'facture_fourn', 'expedition', 'facture', 'payment'];
+
+    $present = [];
+    foreach ($order as $key) {
+        $present[$key] = !empty($docs[$key]) && !empty($docs[$key]['ref']);
+    }
+
+    // Current = last present piece in the display order
+    $current = '';
+    foreach ($order as $key) {
+        if ($present[$key]) {
+            $current = $key;
+        }
+    }
+
+    $chain = [];
+    foreach ($order as $key) {
+        $state = !$present[$key] ? 'todo' : ($key === $current ? 'current' : 'done');
+        $chain[$key] = ['state' => $state, 'issues' => []];
+    }
+
+    $addIssue = function ($key, $level, $msg) use (&$chain) {
+        if (isset($chain[$key])) {
+            $chain[$key]['issues'][] = ['level' => $level, 'msg' => $msg];
+        }
+    };
+
+    // Reference amount: opportunity amount, fallback to the proposal amount
+    $ref = null;
+    if (!empty($docs['montant']['amount'])) {
+        $ref = (float) $docs['montant']['amount'];
+    } elseif (!empty($docs['propal']['amount'])) {
+        $ref = (float) $docs['propal']['amount'];
+    }
+    $tolerance = (float) getDolGlobalString('REEDCRM_PWA_AMOUNT_TOLERANCE', '0.01');
+
+    // 1. Montant divergent (warn) — customer-side amount pieces vs the reference amount
+    if ($ref !== null && $ref > 0) {
+        foreach (['propal', 'commande', 'facture'] as $key) {
+            if ($present[$key] && isset($docs[$key]['amount']) && abs((float) $docs[$key]['amount'] - $ref) > $tolerance) {
+                $addIssue($key, 'warn', $langs->trans('PwaIssueAmountMismatch', price($docs[$key]['amount']), price($ref)));
+            }
+        }
+    }
+
+    // 2. Document annulé/refusé (warn) — cancelled/refused latest doc status
+    $cancelled = ['propal' => [3], 'commande' => [-1], 'facture' => [3]];
+    foreach ($cancelled as $key => $badStatuses) {
+        if ($present[$key] && isset($docs[$key]['status']) && in_array((int) $docs[$key]['status'], $badStatuses, true)) {
+            $addIssue($key, 'warn', $langs->trans('PwaIssueCancelled'));
+        }
+    }
+
+    // 3. Étape manquante (err) — a downstream customer piece exists without its upstream
+    $requires = ['facture' => 'commande', 'expedition' => 'commande', 'payment' => 'facture'];
+    foreach ($requires as $downstream => $upstream) {
+        if ($present[$downstream] && !$present[$upstream]) {
+            $addIssue($upstream, 'err', $langs->trans('PwaIssueMissingStep', $langs->trans('PwaPieceLabel_' . $downstream)));
+        }
+    }
+
+    // 4. Encaissement incomplet (err) — paid total below invoiced total
+    $invoiced = (float) ($docs['totals']['invoiced'] ?? 0);
+    $paid = (float) ($docs['totals']['paid'] ?? 0);
+    if ($invoiced > 0 && $paid + $tolerance < $invoiced) {
+        $addIssue('payment', 'err', $langs->trans('PwaIssuePaymentIncomplete', price($paid), price($invoiced)));
+    }
+
+    return $chain;
+}
