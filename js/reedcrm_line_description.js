@@ -1,12 +1,10 @@
 /**
  * @file    js/reedcrm_line_description.js
- * @brief   Inject the product/service description under each line on Reception/Shipment
- *          cards. Data is provided as a data-island by the PHP hook. Standalone and
+ * @brief   Inject the product/service description under each line on the validated Reception
+ *          card. Data is provided as a data-island by the PHP hook. Standalone and
  *          self-initialising: the saturne.js bootstrap is NOT loaded on Dolibarr core pages.
  */
 (function () {
-    'use strict';
-
     function injectLineDescriptions() {
         var dataEl = document.getElementById('reedcrm-linedesc-data');
         if (!dataEl) {
