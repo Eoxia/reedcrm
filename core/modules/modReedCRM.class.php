@@ -134,7 +134,6 @@ class modReedCRM extends DolibarrModules
                 'invoicelist',
                 'invoicecard',
                 'receptioncard',
-                'expeditioncard',
                 'contactcard',
                 'thirdpartycard',
                 'thirdpartylist',

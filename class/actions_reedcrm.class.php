@@ -236,10 +236,10 @@ class ActionsReedcrm
             }
         }
 
-        // ReedCRM: on Reception/Shipment cards, the core line views render only the (empty) line
-        // description and expose no per-line hook, so the product description never shows. We inject
-        // it client-side from a data-island computed here.
-        if (preg_match('/receptioncard|expeditioncard/', $parameters['context'])) {
+        // ReedCRM: on the validated Reception card, the core line view renders only the empty line
+        // description and exposes no per-line hook, so the product description never shows. We inject it
+        // client-side from a data-island computed here. (Shipment already shows it natively via the order line.)
+        if (strpos($parameters['context'], 'receptioncard') !== false) {
             $this->printLineProductDescriptions($object);
         }
 
@@ -248,11 +248,11 @@ class ActionsReedcrm
 
     /**
      * Emit a JSON data-island { productId: htmlDescription } and load the JS that injects each
-     * product/service description under its line, on Reception/Shipment cards. Pure-module
-     * workaround: these core views render only the (empty) line description and expose no
+     * product/service description under its line, on the validated Reception card. Pure-module
+     * workaround: that core view renders only the (empty) line description and exposes no
      * per-line hook, so the DOM is augmented client-side.
      *
-     * @param  CommonObject $object Reception or Expedition currently displayed
+     * @param  CommonObject $object Reception currently displayed
      * @return void
      */
     private function printLineProductDescriptions(CommonObject $object): void
