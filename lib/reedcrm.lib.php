@@ -201,23 +201,24 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
         }
     }
 
-    // Project-level totals for the "encaissement incomplet" rule (validated invoices only)
-    $sqlInv = "SELECT fk_projet, SUM(total_ttc) AS invoiced FROM " . MAIN_DB_PREFIX . "facture"
-        . " WHERE fk_projet IN (" . $idListStr . ") AND fk_statut > 0 GROUP BY fk_projet";
-    $resInv = $db->query($sqlInv);
-    if ($resInv) {
-        while ($row = $db->fetch_object($resInv)) {
-            $results[$row->fk_projet]['totals']['invoiced'] = (float) $row->invoiced;
+    // Project-level totals for the "encaissement incomplet" rule — only needed for the invoice/payment pieces
+    if (!empty($conf->global->REEDCRM_PWA_SHOW_FACTURE) || !empty($conf->global->REEDCRM_PWA_SHOW_PAYMENT)) {
+        $sqlInv = "SELECT fk_projet, SUM(total_ttc) AS invoiced FROM " . MAIN_DB_PREFIX . "facture"
+            . " WHERE fk_projet IN (" . $idListStr . ") AND fk_statut IN (1, 2) GROUP BY fk_projet";
+        $resInv = $db->query($sqlInv);
+        if ($resInv) {
+            while ($row = $db->fetch_object($resInv)) {
+                $results[$row->fk_projet]['totals']['invoiced'] = (float) $row->invoiced;
+            }
         }
-    }
-    $sqlPaid = "SELECT f.fk_projet, SUM(p.amount) AS paid FROM " . MAIN_DB_PREFIX . "paiement p"
-        . " JOIN " . MAIN_DB_PREFIX . "paiement_facture pf ON pf.fk_paiement = p.rowid"
-        . " JOIN " . MAIN_DB_PREFIX . "facture f ON f.rowid = pf.fk_facture"
-        . " WHERE f.fk_projet IN (" . $idListStr . ") GROUP BY f.fk_projet";
-    $resPaid = $db->query($sqlPaid);
-    if ($resPaid) {
-        while ($row = $db->fetch_object($resPaid)) {
-            $results[$row->fk_projet]['totals']['paid'] = (float) $row->paid;
+        $sqlPaid = "SELECT f.fk_projet, SUM(pf.amount) AS paid FROM " . MAIN_DB_PREFIX . "paiement_facture pf"
+            . " JOIN " . MAIN_DB_PREFIX . "facture f ON f.rowid = pf.fk_facture"
+            . " WHERE f.fk_projet IN (" . $idListStr . ") GROUP BY f.fk_projet";
+        $resPaid = $db->query($sqlPaid);
+        if ($resPaid) {
+            while ($row = $db->fetch_object($resPaid)) {
+                $results[$row->fk_projet]['totals']['paid'] = (float) $row->paid;
+            }
         }
     }
 
@@ -274,6 +275,7 @@ function reedcrm_compute_opportunity_chain(array $docs): array
 
     // 1. Montant divergent (warn) — customer-side amount pieces vs the reference amount
     if ($ref !== null && $ref > 0) {
+        // When montant is absent, propal becomes the reference, so the propal check below is a harmless no-op.
         foreach (['propal', 'commande', 'facture'] as $key) {
             if ($present[$key] && isset($docs[$key]['amount']) && abs((float) $docs[$key]['amount'] - $ref) > $tolerance) {
                 $addIssue($key, 'warn', $langs->trans('PwaIssueAmountMismatch', price($docs[$key]['amount']), price($ref)));
@@ -282,6 +284,7 @@ function reedcrm_compute_opportunity_chain(array $docs): array
     }
 
     // 2. Document annulé/refusé (warn) — cancelled/refused latest doc status
+    // Cancelled/refused latest doc (propal "not signed" = 3, commande canceled = -1, facture abandoned = 3). Supplier pieces deferred to v2.
     $cancelled = ['propal' => [3], 'commande' => [-1], 'facture' => [3]];
     foreach ($cancelled as $key => $badStatuses) {
         if ($present[$key] && isset($docs[$key]['status']) && in_array((int) $docs[$key]['status'], $badStatuses, true)) {
