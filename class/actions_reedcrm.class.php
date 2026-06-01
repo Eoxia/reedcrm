@@ -275,7 +275,7 @@ class ActionsReedcrm
         // Single query (no N+1) to fetch each product description
         $descriptions = [];
         $sql  = 'SELECT rowid, description FROM ' . MAIN_DB_PREFIX . 'product';
-        $sql .= ' WHERE rowid IN (' . implode(',', array_map('intval', $productIds)) . ')';
+        $sql .= ' WHERE rowid IN (' . implode(',', array_keys($productIds)) . ')';
         $resql = $this->db->query($sql);
         if ($resql) {
             while ($obj = $this->db->fetch_object($resql)) {
@@ -285,6 +285,7 @@ class ActionsReedcrm
                     $descriptions[(int) $obj->rowid] = dol_htmlentitiesbr($desc);
                 }
             }
+            $this->db->free($resql);
         }
         if (empty($descriptions)) {
             return;
