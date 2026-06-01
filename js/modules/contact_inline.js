@@ -15,6 +15,7 @@ window.saturne.contact_inline.event = function() {
     $(document).on('click', '.inline-edit-proj-amount', window.saturne.contact_inline.editAmount);
     $(document).on('click', '.inline-edit-company-badge', window.saturne.contact_inline.startCompanyEdit);
     $(document).on('click', '.inline-edit-origin-badge', window.saturne.contact_inline.startOriginEdit);
+    $(document).on('click', '.inline-edit-salesrep-badge', window.saturne.contact_inline.startSalesRepEdit);
 };
 
 window.saturne.contact_inline.copyToClipboard = function(e) {
@@ -365,10 +366,7 @@ window.saturne.contact_inline.startOriginEdit = function(e) {
                 aTag.show();
             }
         }, 100);
-    });
-};
-
-// Apply the material look (blue base / red invalid) on an inline editor input. Uses inline
+  // Apply the material look (blue base / red invalid) on an inline editor input. Uses inline
 // !important so it beats the backend list theme's stronger global input border rule.
 window.saturne.contact_inline.applyInputMaterial = function(el, invalid) {
     if (!el) return;
@@ -386,6 +384,94 @@ window.saturne.contact_inline.cancelInlineEdit = function(span, input, originalH
         input[0].iti.destroy();
     }
     span.html(originalHtml);
+};
+
+window.saturne.contact_inline.startSalesRepEdit = function(e) {
+    if ($(e.target).hasClass('select2-selection__choice__remove') || $(e.target).closest('.select2-container').length > 0) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    let aTag = $(this);
+    let originalHtml = aTag.html();
+    
+    let hiddenSelectorWrap = aTag.parent().find('.reedcrm-hidden-salesrep-selector-wrap');
+    if (hiddenSelectorWrap.length === 0) return;
+    
+    aTag.hide();
+    hiddenSelectorWrap.show();
+    
+    let selectElem = hiddenSelectorWrap.find('select');
+    if (selectElem.length === 0) return;
+    
+    try {
+        // Ensure Select2 is instantiated
+        if (!selectElem.data('select2') && !selectElem.hasClass('select2-hidden-accessible')) {
+            selectElem.select2({ width: '180px' });
+        } else {
+            let sc = selectElem.next('.select2-container');
+            if (sc.length > 0) {
+                sc.css('width', '180px');
+            }
+        }
+        
+        selectElem.select2('open');
+    } catch (err) {
+        console.error("SELECT2 ERROR: ", err);
+        return;
+    }
+    
+    selectElem.off('change.inlineedit').on('change.inlineedit', function() {
+        let newSalesrep = $(this).val();
+        let newSalesrepText = $(this).find('option:selected').text();
+        let projId = $('#reedcrm-inline-data').data('project-id');
+        let token = $('input[name="token"]').val() || '';
+        
+        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
+        if (!url) {
+            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
+            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+        }
+        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsalesrep';
+        
+        aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
+        hiddenSelectorWrap.hide();
+        aTag.show();
+        
+        $.ajax({
+            url: ajaxUrl,
+            type: 'POST',
+            data: { projectid: projId, salesrepid: newSalesrep, token: token },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    if (res.new_salesrep_name) {
+                        aTag.text(res.new_salesrep_name);
+                    } else {
+                        aTag.html('<span style="color:#cbd5e0; font-style:italic;">Commercial</span>');
+                    }
+                    aTag.css('color', '#2ecc71');
+                    setTimeout(() => aTag.css('color', ''), 1500);
+                } else {
+                    alert("Erreur: " + (res.error || "Inconnue"));
+                    aTag.html(originalHtml);
+                }
+            },
+            error: function() {
+                alert("Impossible de joindre le serveur");
+                aTag.html(originalHtml);
+            }
+        });
+    });
+    
+    selectElem.off('select2:close').on('select2:close', function () {
+        setTimeout(function() {
+            if (hiddenSelectorWrap.is(':visible')) {
+                hiddenSelectorWrap.hide();
+                aTag.show();
+            }
+        }, 100);
+    });
 };
 
 window.saturne.contact_inline.startInlineEdit = function(e) {
