@@ -2151,9 +2151,64 @@ class ActionsReedcrm
                 $originHtml .= '<div class="reedcrm-hidden-origin-selector-wrap" style="display:none; margin-left:6px;">' . $hiddenOriginSelect . '</div>';
                 $originHtml .= '</div>';
 
+                // Fetch linked SALESREPINTERNAL user (Commercial affecté au projet)
+                $salesrepUserId = 0;
+                $salesrepName = '';
+                $sqlSalesRep = "SELECT u.rowid, u.firstname, u.lastname
+                                FROM " . MAIN_DB_PREFIX . "element_contact ec
+                                JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
+                                JOIN " . MAIN_DB_PREFIX . "user u ON u.rowid = ec.fk_socpeople
+                                WHERE ec.element_id = " . (int)$object->id . "
+                                  AND ctc.element = 'project'
+                                  AND ctc.code = 'SALESREPINTERNAL'
+                                  AND ctc.source = 'internal'
+                                LIMIT 1";
+                $resqlSalesRep = $db->query($sqlSalesRep);
+                if ($resqlSalesRep && $db->num_rows($resqlSalesRep) > 0) {
+                    $objSalesRep = $db->fetch_object($resqlSalesRep);
+                    $salesrepUserId = (int)$objSalesRep->rowid;
+                    $salesrepName = trim($objSalesRep->firstname . ' ' . $objSalesRep->lastname);
+                }
+                
+                if (empty($salesrepName)) {
+                    $salesrepLabel = '<span style="color:#cbd5e0; font-style:italic;">Commercial</span>';
+                } else {
+                    $salesrepLabel = dol_escape_htmltag($salesrepName);
+                }
+
+                // Query list of active users to build select HTML options
+                $salesrepUsers = [];
+                $sqlUsers = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "user WHERE statut = 1 ORDER BY lastname, firstname";
+                $resqlUsers = $db->query($sqlUsers);
+                if ($resqlUsers) {
+                    while ($uObj = $db->fetch_object($resqlUsers)) {
+                        $salesrepUsers[] = [
+                            'id' => (int)$uObj->rowid,
+                            'name' => trim($uObj->firstname . ' ' . $uObj->lastname)
+                        ];
+                    }
+                }
+
+                $hiddenSalesRepSelect = '<select id="reedcrm_inline_salesrep" name="salesrepinternal" class="flat" style="width: 180px;">';
+                $hiddenSalesRepSelect .= '<option value="">' . dol_escape_htmltag($langs->trans('None')) . '</option>';
+                foreach ($salesrepUsers as $u) {
+                    $selected = ($u['id'] == $salesrepUserId) ? ' selected' : '';
+                    $hiddenSalesRepSelect .= '<option value="' . $u['id'] . '"' . $selected . '>' . dol_escape_htmltag($u['name']) . '</option>';
+                }
+                $hiddenSalesRepSelect .= '</select>';
+
+                // Build Salesrep HTML badge
+                $salesrepHtml = '<div class="contact-inline-wrapper reedcrm-header-salesrep-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
+                $salesrepHtml .= '<img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+                $salesrepHtml .= '<i class="fas fa-user-tie" style="color: #64748b; margin-right: 6px;"></i>';
+                $salesrepHtml .= '<a href="#" class="classlink inline-edit-salesrep-badge" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $salesrepLabel . '</a>';
+                $salesrepHtml .= '<div class="reedcrm-hidden-salesrep-selector-wrap" style="display:none; margin-left:6px;">' . $hiddenSalesRepSelect . '</div>';
+                $salesrepHtml .= '</div>';
+
                 $assetsHtml .= '<script>
                     (function() {
                         var originHtmlStr = ' . json_encode($originHtml) . ';
+                        var salesrepHtmlStr = ' . json_encode($salesrepHtml) . ';
                         
                         function processOriginField() {
                             // 1. Hide the original row
@@ -2193,8 +2248,19 @@ class ActionsReedcrm
                                             row.appendChild(companyWrapper);
                                         }
                                         companyWrapper.parentElement.appendChild(node);
+                                        
+                                        // Teleport salesrep node
+                                        var tempWrapSales = document.createElement("div");
+                                        tempWrapSales.innerHTML = salesrepHtmlStr;
+                                        var nodeSales = tempWrapSales.firstElementChild;
+                                        companyWrapper.parentElement.appendChild(nodeSales);
                                     } else {
                                         flexContainer.appendChild(node);
+                                        
+                                        var tempWrapSales = document.createElement("div");
+                                        tempWrapSales.innerHTML = salesrepHtmlStr;
+                                        var nodeSales = tempWrapSales.firstElementChild;
+                                        flexContainer.appendChild(nodeSales);
                                     }
                                 }
                             }, 100);

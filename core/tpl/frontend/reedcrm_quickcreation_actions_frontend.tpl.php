@@ -216,6 +216,57 @@ if ($action == 'updateopporigin') {
     exit;
 }
 
+if ($action == 'updateoppsalesrep') {
+    $projectId = GETPOST('projectid', 'int');
+    $salesrepId = GETPOST('salesrepid', 'int');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $db->begin();
+            
+            // Delete existing internal SALESREPINTERNAL contacts for the project
+            $sqlDelete = "DELETE ec FROM " . MAIN_DB_PREFIX . "element_contact ec
+                          JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
+                          WHERE ec.element_id = " . (int)$projectId . "
+                            AND ctc.element = 'project'
+                            AND ctc.code = 'SALESREPINTERNAL'
+                            AND ctc.source = 'internal'";
+            $resDelete = $db->query($sqlDelete);
+            
+            $resAdd = 1;
+            if ($salesrepId > 0) {
+                // Add new internal SALESREPINTERNAL contact
+                $resAdd = $proj->add_contact($salesrepId, 'SALESREPINTERNAL', 'internal');
+            }
+
+            if ($resDelete !== false && $resAdd > 0) {
+                $db->commit();
+                $res['success'] = true;
+                if ($salesrepId > 0) {
+                    require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+                    $u = new User($db);
+                    if ($u->fetch($salesrepId) > 0) {
+                        $res['new_salesrep_name'] = trim($u->firstname . ' ' . $u->lastname);
+                    } else {
+                        $res['new_salesrep_name'] = '';
+                    }
+                } else {
+                    $res['new_salesrep_name'] = '';
+                }
+            } else {
+                $db->rollback();
+                $res['error'] = 'Could not update sales representative link';
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+
 if ($action == 'updateopptitle') {
     $projectId = GETPOST('projectid', 'int');
     $newTitle = trim(GETPOST('title'));
