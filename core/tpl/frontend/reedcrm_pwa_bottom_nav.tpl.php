@@ -126,6 +126,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         padding-bottom: 74px !important; /* Slightly taller for new padding */
     }
 
+    .pwa-container,
+    .pwa-call-list-container,
+    .quickcreation-form,
+    .template-pwa #id-container {
+        padding-bottom: 80px !important;
+    }
+
     /* For very small devices adjust sizing */
     @media (max-width: 360px) {
         .nav-group {

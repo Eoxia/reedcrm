@@ -52,7 +52,7 @@ class ReedcrmDashboard
         global $user, $langs;
 
         $confName        = 'REEDCRM_DASHBOARD_CONFIG';
-        $dashboardConfig = json_decode($user->conf->$confName);
+        $dashboardConfig = isset($user->conf->$confName) ? json_decode($user->conf->$confName) : null;
         $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
 
         if (empty($dashboardConfig->graphs->OpportunitySources->hide)) {
@@ -120,14 +120,14 @@ class ReedcrmDashboard
 		$dictionaries = saturne_fetch_dictionary($dictionary);
 
 		$i                  = 0;
-		$arrayNbDataByLabel = [];
+		$arrayNbDataByLabel = [0 => 0];
 
 		$array['labels'][$i] = ['label' => 'N/A', 'color' => '#999999'];
 
 		if (is_array($dictionaries) && !empty($dictionaries)) {
 			foreach ($dictionaries as $dictionaryValue) {
-                ++$i;
-                $arrayNbDataByLabel[$i] = 0;
+				++$i;
+				$arrayNbDataByLabel[$i] = 0;
 				$array['labels'][$i]    = [
 					'label' => $langs->transnoentities($dictionaryValue->label),
 					'color' => $this->getColorRange($i)
@@ -136,12 +136,15 @@ class ReedcrmDashboard
 
 			if (is_array($propals) && !empty($propals)) {
 				foreach ($propals as $propal) {
-                    if (!empty($propal->array_options['options_' . $fieldName])) {
-                        $commStatus = $propal->array_options['options_' . $fieldName];
-                        $arrayNbDataByLabel[$commStatus]++;
-                    } else {
-                        $arrayNbDataByLabel[0]++;
-                    }
+					if (!empty($propal->array_options['options_' . $fieldName])) {
+						$commStatus = $propal->array_options['options_' . $fieldName];
+						if (!isset($arrayNbDataByLabel[$commStatus])) {
+							$arrayNbDataByLabel[$commStatus] = 0;
+						}
+						$arrayNbDataByLabel[$commStatus]++;
+					} else {
+						$arrayNbDataByLabel[0]++;
+					}
 				}
 				ksort($arrayNbDataByLabel);
 			}

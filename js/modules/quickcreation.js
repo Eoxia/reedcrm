@@ -60,10 +60,6 @@ window.reedcrm.quickcreation.longitude = null;
  */
 window.reedcrm.quickcreation.init = function() {
   window.reedcrm.quickcreation.setAddressBlockState('searching', 'Détection de la position en cours...');
-  // Also boot the saturne quickcreation_form module (geoloc icon positioning, phone/email/slider)
-  if (window.saturne && window.saturne.quickcreation_form && window.saturne.quickcreation_form.init) {
-    window.saturne.quickcreation_form.init();
-  }
   window.reedcrm.quickcreation.event();
 };
 
@@ -118,6 +114,7 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
     function (position) {
       _geolocResolved = true;
       clearTimeout(_safetyTimer);
+      $('#id-container #geolocation-error').val('');
       window.reedcrm.quickcreation.latitude  = position.coords.latitude;
       window.reedcrm.quickcreation.longitude = position.coords.longitude;
       $('#id-container #latitude').val(window.reedcrm.quickcreation.latitude);
@@ -273,10 +270,5 @@ window.reedcrm.quickcreation.showOppPercentValue = function() {
   $('#opp_percent').parent().get(0).style.setProperty('--val', val);
 };
 
-// Self-boot: this module loads after $(document).ready has fired (placed after reedcrm.min.js).
-// jQuery fires the callback immediately if DOM is already ready.
-$(document).ready(function() {
-  if (document.querySelector('.quickcreation-form') || document.getElementById('geoloc-header-wrapper')) {
-    window.reedcrm.quickcreation.init();
-  }
-});
+// Initialisation assurée par reedcrm.load_list_script() dans reedcrm.min.js
+// qui itère window.reedcrm et appelle .init() sur chaque module au document.ready.

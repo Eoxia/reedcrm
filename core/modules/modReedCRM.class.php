@@ -149,7 +149,7 @@ class modReedCRM extends DolibarrModules
         ];
 
         // Data directories to create when module is enabled
-        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/project'];
+        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/project', '/reedcrm/call_list'];
 
         // Config pages. Put here list of php page, stored into reedcrm/admin directory, to use to set up module
         $this->config_page_url = ['setup.php@reedcrm'];
@@ -242,6 +242,10 @@ class modReedCRM extends DolibarrModules
             // CONST ADDRESS
             //$i++ => ['REEDCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
             $i++ => ['REEDCRM_ADDRESS_ADDON', 'chaine', 'mod_address_standard', '', 0, 'current'],
+
+            // CONST CALL LIST
+            $i++ => ['REEDCRM_CALL_LIST_ADDON', 'chaine', 'mod_call_list_standard', '', 0, 'current'],
+            $i++ => ['REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'chaine', 'pdf_calllist_standard', '', 0, 'current'],
 
             // CONST MODULE
             $i++ => ['REEDCRM_VERSION','chaine', $this->version, '', 0, 'current'],
@@ -434,6 +438,23 @@ class modReedCRM extends DolibarrModules
         $this->rights[$r][5] = 'delete';
         $r++;
 
+        /* CALL LIST PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('CallList'));
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('CallList'));
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('CallList'));
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
         /* ADMINPAGE PANEL ACCESS PERMISSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
         $this->rights[$r][1] = $langs->transnoentities('ReadAdminPage', $this->name);
@@ -516,15 +537,15 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=opportunities',
             'type'     => 'left',
-            'titre'    => $langs->trans('ImportedOpportunityList'),
-            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'titre'    => $langs->transnoentities('CallLists'),
+            'prefix'   => '<i class="fas fa-phone pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
-            'leftmenu' => 'importedopportunities',
-            'url'      => '/reedcrm/view/reedcrm_imported_projects.php',
+            'leftmenu' => 'call_list',
+            'url'      => '/reedcrm/view/call_list_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'call_list\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -867,6 +888,21 @@ class modReedCRM extends DolibarrModules
                 }
                 dolibarr_set_const($this->db, 'REEDCRM_ADDRESS_MAIN_CATEGORY', $categoryId, 'integer', 0, '', $conf->entity);
                 dolibarr_set_const($this->db, 'REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
+            }
+        }
+
+        delDocumentModel('pdf_calllist_standard', 'calllist');
+        addDocumentModel('pdf_calllist_standard', 'calllist', $langs->transnoentities('CallListPDF'));
+
+        // Ensure every active user owns a default call list
+        require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+        require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
+
+        $userStatic = new User($this->db);
+        $userStatic->fetchAll('', '', 0, 0, '(statut:=:1)', 'AND', true);
+        if (!empty($userStatic->users)) {
+            foreach ($userStatic->users as $targetUser) {
+                reedcrm_get_or_create_user_default_call_list($this->db, $targetUser);
             }
         }
 

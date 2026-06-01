@@ -24,6 +24,15 @@
  */
 
 require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/lib/reedcrm.lib.php';
+
+$pwaProjectIds = [];
+if (!empty($latestProjects)) {
+    foreach ($latestProjects as $proj) {
+        $pwaProjectIds[] = $proj->id;
+    }
+}
+$pwaDocs = reedcrm_get_pwa_projects_documents($pwaProjectIds);
 ?>
 
 <input type="hidden" name="token" value="<?php echo newToken(); ?>">
@@ -113,6 +122,14 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
     .pwa-contact-list-linked { color:#94a3b8; cursor:not-allowed; }
     .pwa-linked-check { color:#38a169; margin-left:8px; font-size:0.8em; }
     .pwa-contact-loading-inline { padding:8px 12px; color:#64748b; font-size:0.83em; display:flex; align-items:center; gap:6px; }
+
+    /* PWA Documents progress-bar style */
+    .pwa-doc-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #f8fafc; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; box-sizing: border-box; }
+    .pwa-doc-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em; background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e0; color: #475569; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .pwa-doc-item.na { border-style: dashed; color: #94a3b8; background: #fdfdfd; box-shadow: none; }
+    .pwa-doc-item a { color: #1d4ed8; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #cbd5e0; }
+    .pwa-doc-item a:hover { color: #2563eb; }
+    .pwa-doc-label { font-weight: 500; color: #64748b; }
 </style>
 
 <div class="page-content" style="margin-top: 5px; max-width: 1000px; margin: 5px auto 0 auto;">
@@ -378,24 +395,48 @@ require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
 
             </div><!-- /pwa-selectors-group -->
 
-            <span class="dot-sep">&bull;</span>
-
-            <!-- Devis -->
-            <a href="<?php echo DOL_URL_ROOT; ?>/comm/propal/list.php?search_projet=<?php echo $project->id; ?>"
-               class="pwa-amount-link" title="Devis en cours">
-                <i class="fas fa-file-signature" style="color:#38a169;font-size:1.1em;"></i>
-                <?php echo price($propalAmt, 0, '', 11, -1, -1, 'auto'); ?>
-            </a>
-
-            <!-- Factures -->
-            <span class="dot-sep">&bull;</span>
-            <a href="<?php echo DOL_URL_ROOT; ?>/compta/facture/list.php?search_projet=<?php echo $project->id; ?>"
-               class="pwa-amount-link" title="Factures en cours">
-                <i class="fas fa-file-invoice-dollar" style="color:#38a169;font-size:1.1em;"></i>
-                <?php echo price($factureAmt, 0, '', 11, -1, -1, 'auto'); ?>
-            </a>
-
         </div><!-- /ROW 3 -->
+
+        <!-- ROW DOCS BAR (Configurable pieces) -->
+        <?php
+        $enabledPieces = [];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_OPP_AMOUNT))     $enabledPieces['montant']        = ['icon' => 'fas fa-wallet'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_PROPAL))         $enabledPieces['propal']         = ['icon' => 'fas fa-file-signature'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_COMMANDE))       $enabledPieces['commande']       = ['icon' => 'fas fa-shopping-cart'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_COMMANDE_FOURN)) $enabledPieces['commande_fourn'] = ['icon' => 'fas fa-shopping-bag'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_RECEPTION))      $enabledPieces['reception']      = ['icon' => 'fas fa-dolly'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_FACTURE_FOURN))  $enabledPieces['facture_fourn']  = ['icon' => 'fas fa-receipt'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_EXPEDITION))     $enabledPieces['expedition']     = ['icon' => 'fas fa-shipping-fast'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_FACTURE))        $enabledPieces['facture']        = ['icon' => 'fas fa-file-invoice-dollar'];
+        if (!empty($conf->global->REEDCRM_PWA_SHOW_PAYMENT))        $enabledPieces['payment']        = ['icon' => 'fas fa-coins'];
+
+        if (!empty($enabledPieces)) :
+            $projectDocs = $pwaDocs[$project->id] ?? [];
+        ?>
+            <div class="pwa-doc-bar">
+                <?php foreach ($enabledPieces as $key => $item) :
+                    $doc = $projectDocs[$key] ?? null;
+                    if ($doc) :
+                        $formattedAmount = '';
+                        if ($doc['amount'] !== null) {
+                            $formattedAmount = ' - ' . price($doc['amount'], 0, '', 11, -1, -1, 'auto');
+                        }
+                ?>
+                        <div class="pwa-doc-item">
+                            <i class="<?php echo $item['icon']; ?>"></i>
+                            <span class="pwa-doc-label"><?php echo $langs->trans('PwaPieceLabel_' . $key); ?> :</span>
+                            <a href="<?php echo $doc['url']; ?>" class="prevent-edit-click"><?php echo $doc['ref'] . $formattedAmount; ?></a>
+                        </div>
+                <?php else : ?>
+                        <div class="pwa-doc-item na">
+                            <i class="<?php echo $item['icon']; ?>"></i>
+                            <span class="pwa-doc-label"><?php echo $langs->trans('PwaPieceLabel_' . $key); ?> :</span>
+                            <span>NA</span>
+                        </div>
+                <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
 
     </div><!-- /pwa-card -->
 

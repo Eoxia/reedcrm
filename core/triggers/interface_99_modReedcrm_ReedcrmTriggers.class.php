@@ -164,6 +164,13 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                 $object->fetch($object->id);
                 set_notation_object_contact($object);
                 break;
+
+            case 'USER_CREATE':
+                require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
+                if ($object instanceof User && $object->id > 0) {
+                    reedcrm_get_or_create_user_default_call_list($this->db, $object);
+                }
+                break;
                 
             // ReedCRM Object Status Extrafield Tracking
             case 'PROJECT_CREATE':   $this->tagStateEvent('project', $object->id, 'project_draft', $user, 'Projet créé (Brouillon)'); break;

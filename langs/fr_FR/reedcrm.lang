@@ -367,3 +367,95 @@ OpportunityDetails = Opportunité
 
 ReedCRMStatusAsDot = État : rond
 ReedCRMStatusAsBadge = État : pastille
+#
+# Call List - Liste d'appel
+#
+
+# Data
+CallList = Liste d'appel
+CallLists = Listes d'appel
+NewCallList = Nouvelle liste d'appel
+CallListStatus0 = Brouillon
+CallListStatus1 = Active
+CallListStatus2 = Archivée
+CallListStatusShort0 = Brouillon
+CallListStatusShort1 = Active
+CallListStatusShort2 = Archivée
+
+# Lines
+CallListLine = Ligne de liste d'appel
+CallListLineStatus0 = À appeler
+CallListLineStatus1 = Appelé
+CallListLineStatus2 = Pas de réponse
+CallListLineStatus3 = À rappeler
+CallListLineStatusShort0 = À appeler
+CallListLineStatusShort1 = Appelé
+CallListLineStatusShort2 = Pas de rép.
+CallListLineStatusShort3 = À rappeler
+
+# UI
+AddCallListLine = Ajouter un contact
+NoCallListLine = Aucun contact dans cette liste
+CallListLineDuplicate = Ce devis / cette opportunité est déjà dans la liste
+SelectElementType = Type de source
+ElementTypePropal = Devis
+ElementTypeProject = Opportunité
+ContactToCall = Contact à appeler
+ContactNoPhone = Aucun numéro de téléphone
+CallListLines = Lignes d'appel
+MobileView = Vue mobile
+CallListCreateActioncomm = Créer un événement à l'appel
+CallListCreateActioncommDesc = Crée automatiquement un événement téléphonique dans l'agenda lors du clic sur le bouton d'appel depuis la vue mobile
+CallFrom = Appel depuis
+AddToCallList = Ajouter à une liste d'appel
+SelectCallList = Sélectionner une liste d'appel
+NoActiveCallList = Aucune liste d'appel active
+CallListAddedCount = %d élément(s) ajouté(s) à la liste d'appel
+CallListSkippedNoContactElement = L'élément %s a été ignoré car aucun contact ne lui est associé
+CallListLineDuplicateElement = L'élément %s est déjà présent dans cette liste d'appel
+CallListNotFound = La liste d'appel sélectionnée est introuvable
+CallListCannotAddToArchivedList = Impossible d'ajouter des éléments à une liste d'appel archivée
+AddToCallListWidget = Ajouter à une liste d'appel
+CallListWidgetSuccess = Ajouté à la liste "%s"
+CallListWidgetNoContact = Aucun contact associé à cet élément
+CallListWidgetNoPhone = Le contact n'a pas de numéro de téléphone
+CallListWidgetDuplicate = Déjà présent dans cette liste
+CallListWidgetError = Erreur lors de l'ajout
+DefaultCallListLabel = Liste d'appel — %s
+AddToMyCallList = Ajouter à ma liste d'appel
+DefaultCallListNotFound = Aucune liste d'appel par défaut pour cet utilisateur
+
+# PWA Documents Bar
+PwaShowPiecesTitle = Liste des pièces à afficher dans le listing de la PWA
+PwaShowPiecesTitleDesc = Sélectionnez les types de documents à afficher sous forme de barre d'avancement sur les fiches opportunités de la PWA.
+
+REEDCRM_PWA_SHOW_OPP_AMOUNT = Afficher le montant de l'opportunité
+REEDCRM_PWA_SHOW_OPP_AMOUNT_Desc = Affiche le montant estimé de l'opportunité.
+REEDCRM_PWA_SHOW_PROPAL = Afficher la proposition commerciale
+REEDCRM_PWA_SHOW_PROPAL_Desc = Affiche la dernière proposition commerciale (devis) liée au projet.
+REEDCRM_PWA_SHOW_COMMANDE = Afficher la commande client
+REEDCRM_PWA_SHOW_COMMANDE_Desc = Affiche la dernière commande client liée au projet.
+REEDCRM_PWA_SHOW_COMMANDE_FOURN = Afficher la commande fournisseur
+REEDCRM_PWA_SHOW_COMMANDE_FOURN_Desc = Affiche la dernière commande fournisseur liée au projet.
+REEDCRM_PWA_SHOW_RECEPTION = Afficher la réception fournisseur
+REEDCRM_PWA_SHOW_RECEPTION_Desc = Affiche la dernière réception de commande fournisseur liée au projet.
+REEDCRM_PWA_SHOW_FACTURE_FOURN = Afficher la facture fournisseur
+REEDCRM_PWA_SHOW_FACTURE_FOURN_Desc = Affiche la dernière facture fournisseur liée au projet.
+REEDCRM_PWA_SHOW_EXPEDITION = Afficher l'expédition client
+REEDCRM_PWA_SHOW_EXPEDITION_Desc = Affiche la dernière expédition client liée au projet.
+REEDCRM_PWA_SHOW_FACTURE = Afficher la facture client
+REEDCRM_PWA_SHOW_FACTURE_Desc = Affiche la dernière facture client liée au projet.
+REEDCRM_PWA_SHOW_PAYMENT = Afficher l'encaissement
+REEDCRM_PWA_SHOW_PAYMENT_Desc = Affiche le dernier encaissement (règlement client) lié aux factures du projet.
+
+PwaPieceLabel_montant = Montant
+PwaPieceLabel_propal = Devis
+PwaPieceLabel_commande = Cmd Clt
+PwaPieceLabel_commande_fourn = Cmd Fourn
+PwaPieceLabel_reception = Rec Fourn
+PwaPieceLabel_facture_fourn = Fact Fourn
+PwaPieceLabel_expedition = Exp Clt
+PwaPieceLabel_facture = Fact Clt
+PwaPieceLabel_payment = Règlement
+
+App-ReedCRM = App-ReedCRM
