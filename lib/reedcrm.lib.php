@@ -116,6 +116,7 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
                 $results[$row->fk_projet]['montant'] = [
                     'ref' => $row->ref,
                     'amount' => (float)$row->total_ht,
+                    'status' => null,
                     'url' => DOL_URL_ROOT . '/projet/card.php?id=' . $row->fk_projet
                 ];
             }
@@ -129,7 +130,7 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
             return;
         }
 
-        $sql = "SELECT t.fk_projet, t.rowid, t.ref" . ($hasAmount ? ", t.total_ht" : "") . "
+        $sql = "SELECT t.fk_projet, t.rowid, t.ref, t.fk_statut AS status" . ($hasAmount ? ", t.total_ht" : "") . "
                 FROM " . MAIN_DB_PREFIX . $tableName . " t
                 INNER JOIN (
                     SELECT fk_projet, MAX(rowid) as max_id
@@ -144,6 +145,7 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
                 $results[$row->fk_projet][$key] = [
                     'ref' => $row->ref,
                     'amount' => $hasAmount ? (float)$row->total_ht : null,
+                    'status' => isset($row->status) ? (int) $row->status : null,
                     'url' => DOL_URL_ROOT . $urlPath . $row->rowid
                 ];
             }
@@ -192,9 +194,30 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
                 $results[$row->fk_projet]['payment'] = [
                     'ref' => $row->ref,
                     'amount' => (float)$row->amount,
+                    'status' => null,
                     'url' => DOL_URL_ROOT . '/compta/paiement/card.php?id=' . $row->rowid
                 ];
             }
+        }
+    }
+
+    // Project-level totals for the "encaissement incomplet" rule (validated invoices only)
+    $sqlInv = "SELECT fk_projet, SUM(total_ttc) AS invoiced FROM " . MAIN_DB_PREFIX . "facture"
+        . " WHERE fk_projet IN (" . $idListStr . ") AND fk_statut > 0 GROUP BY fk_projet";
+    $resInv = $db->query($sqlInv);
+    if ($resInv) {
+        while ($row = $db->fetch_object($resInv)) {
+            $results[$row->fk_projet]['totals']['invoiced'] = (float) $row->invoiced;
+        }
+    }
+    $sqlPaid = "SELECT f.fk_projet, SUM(p.amount) AS paid FROM " . MAIN_DB_PREFIX . "paiement p"
+        . " JOIN " . MAIN_DB_PREFIX . "paiement_facture pf ON pf.fk_paiement = p.rowid"
+        . " JOIN " . MAIN_DB_PREFIX . "facture f ON f.rowid = pf.fk_facture"
+        . " WHERE f.fk_projet IN (" . $idListStr . ") GROUP BY f.fk_projet";
+    $resPaid = $db->query($sqlPaid);
+    if ($resPaid) {
+        while ($row = $db->fetch_object($resPaid)) {
+            $results[$row->fk_projet]['totals']['paid'] = (float) $row->paid;
         }
     }
 
