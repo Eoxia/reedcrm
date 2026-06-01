@@ -434,7 +434,13 @@ $pwaDocs = reedcrm_get_pwa_projects_documents($pwaProjectIds);
                     $hasErr = false; $hasWarn = false; $issueMsgs = [];
                     foreach ($issues as $iss) { if ($iss['level'] === 'err') { $hasErr = true; } else { $hasWarn = true; } $issueMsgs[] = $iss['msg']; }
                     $label  = $langs->trans('PwaPieceLabel_' . $key);
-                    $statusLabel = ($doc && !empty($doc['status'])) ? $langs->trans('PwaPieceStatus_' . $key . '_' . (int) $doc['status']) : '';
+                    $statusLabel = '';
+                    if ($doc && !empty($doc['status'])) {
+                        $statusKey   = 'PwaPieceStatus_' . $key . '_' . (int) $doc['status'];
+                        $statusTrans = $langs->trans($statusKey);
+                        // Only show a status chip when a label is actually defined (otherwise trans() returns the raw key)
+                        $statusLabel = ($statusTrans !== $statusKey) ? $statusTrans : '';
+                    }
                     $valueText = $doc ? ($doc['ref'] . ($doc['amount'] !== null ? ' · ' . price($doc['amount'], 0, '', 11, -1, -1, 'auto') : '')) : 'NA';
                     $tooltip = trim($label . ' · ' . $valueText . ($statusLabel ? ' · ' . $statusLabel : '') . ($issueMsgs ? ' — ' . implode(' ; ', $issueMsgs) : ''));
                     $cls = 'pwa-doc-item is-' . $state . ($doc ? '' : ' na') . ($hasErr ? ' has-err' : ($hasWarn ? ' has-warn' : ''));
