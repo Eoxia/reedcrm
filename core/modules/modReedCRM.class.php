@@ -133,6 +133,7 @@ class modReedCRM extends DolibarrModules
                 'invoicereclist',
                 'invoicelist',
                 'invoicecard',
+                'receptioncard',
                 'contactcard',
                 'thirdpartycard',
                 'thirdpartylist',
@@ -904,6 +905,12 @@ class modReedCRM extends DolibarrModules
             foreach ($userStatic->users as $targetUser) {
                 reedcrm_get_or_create_user_default_call_list($this->db, $targetUser);
             }
+        }
+
+        // Show product/service description inline under each document line (quotes, orders, invoices, purchase orders, shipments; reception is handled by the ReedCRM JS hook).
+        // Migration-safe: do not overwrite a deliberate non-default client choice (0 = Dolibarr default = unconfigured).
+        if (getDolGlobalInt('PRODUIT_DESC_IN_FORM') <= 0) {
+            dolibarr_set_const($this->db, 'PRODUIT_DESC_IN_FORM', '2', 'chaine', 0, '', $conf->entity);
         }
 
         return $this->_init([], $options);
