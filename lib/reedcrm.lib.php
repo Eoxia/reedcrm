@@ -32,7 +32,7 @@ function reedcrm_admin_prepare_head(): array
     global $conf, $langs;
 
     // Load translation files required by the page
-    saturne_load_langs(['products']);
+    saturne_load_langs(['products', 'sendings']);
 
     // Initialize values
     $h = 0;
