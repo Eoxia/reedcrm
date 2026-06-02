@@ -189,6 +189,13 @@ foreach ($pieces as $piece) {
 
 print '</table>';
 
+// Display option: icons-only pieces bar
+print '<br>';
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre"><td>' . $langs->trans('Parameters') . '</td><td>' . $langs->trans('Description') . '</td><td class="center">' . $langs->trans('Status') . '</td></tr>';
+print '<tr class="oddeven"><td>' . $langs->transnoentities('REEDCRM_PWA_PIECES_ICONS_ONLY') . '</td><td>' . $langs->transnoentities('REEDCRM_PWA_PIECES_ICONS_ONLY_Desc') . '</td><td class="center">' . ajax_constantonoff('REEDCRM_PWA_PIECES_ICONS_ONLY') . '</td></tr>';
+print '</table>';
+
 // Page end
 print dol_get_fiche_end();
 llxFooter();
