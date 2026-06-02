@@ -1866,7 +1866,7 @@ while ($i < $imaxinloop) {
 		if (!empty($arrayfields['e.billed']['checked'])) {
 			print '<td class="center">';
 			if ($obj->billed == 0 && !empty($is_ok)) {
-				print '<span class="cursor-pointer set-billed-js" data-id="'.$obj->rowid.'" style="display:inline-block; padding:2px 5px; border-radius:4px; transition: background-color 0.2s; cursor: pointer;" title="Marquer comme facturé">'.yn($obj->billed).'</span>';
+				print '<span class="cursor-pointer set-billed-js" data-id="'.$obj->rowid.'" data-url="'.dol_buildpath('/reedcrm/ajax/update_expedition_billed.php', 1).'" data-token="'.currentToken().'" style="display:inline-block; padding:2px 5px; border-radius:4px; transition: background-color 0.2s; cursor: pointer;" title="Marquer comme facturé">'.yn($obj->billed).'</span>';
 			} else {
 				print yn($obj->billed);
 			}
@@ -1917,38 +1917,7 @@ $reshook = $hookmanager->executeHooks('printFieldListFooter', $parameters, $obje
 print $hookmanager->resPrint;
 
 ?>
-<script>
-$(document).ready(function() {
-	$('.set-billed-js').on('click', function() {
-		var $this = $(this);
-		var expId = $this.data('id');
-		
-		$this.css('background-color', '#28a745').css('color', '#fff');
-		
-		$.ajax({
-			url: '<?php echo dol_buildpath('/reedcrm/ajax/update_expedition_billed.php', 1); ?>',
-			method: 'POST',
-			data: { id: expId, token: '<?php echo currentToken(); ?>' },
-			dataType: 'json',
-			success: function(response) {
-				if (response.success) {
-					$this.css('background-color', 'transparent').css('color', '');
-					$this.html(<?php echo json_encode(yn(1)); ?>);
-					$this.removeClass('set-billed-js cursor-pointer').off('click');
-					$this.removeAttr('title');
-				} else {
-					alert('Erreur : ' + response.error);
-					$this.css('background-color', 'transparent').css('color', '');
-				}
-			},
-			error: function() {
-				alert('Erreur de communication.');
-				$this.css('background-color', 'transparent').css('color', '');
-			}
-		});
-	});
-});
-</script>
+<script src="<?php echo dol_buildpath('/reedcrm/js/expedition_billed.js', 1); ?>"></script>
 <?php
 
 print "</table>";

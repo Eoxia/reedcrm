@@ -50,5 +50,9 @@ $actioncomm->fk_soc          = $expedition->socid;
 
 $res = $actioncomm->create($user);
 
-echo json_encode(['success' => true]);
+ob_clean();
+echo json_encode([
+    'success' => true,
+    'html' => yn(1)
+]);
 exit;
