@@ -1561,12 +1561,12 @@ while ($i < $imaxinloop) {
 			   FROM " . MAIN_DB_PREFIX . "element_element el1
 			   JOIN " . MAIN_DB_PREFIX . "element_element el2 ON el1.fk_source = el2.fk_source AND el1.sourcetype = el2.sourcetype
 			   JOIN " . MAIN_DB_PREFIX . "facture f ON el2.fk_target = f.rowid AND el2.targettype = 'facture'
-			   WHERE el1.targettype = 'shipping' AND el1.fk_target = " . (int)$obj->rowid . " AND f.fk_statut > 0
+			   WHERE el1.targettype = 'shipping' AND el1.fk_target = " . (int)$obj->rowid . "
 			   UNION 
 			   SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
 			   FROM " . MAIN_DB_PREFIX . "element_element el
 			   JOIN " . MAIN_DB_PREFIX . "facture f ON el.fk_target = f.rowid AND el.targettype = 'facture'
-			   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid . " AND f.fk_statut > 0";
+			   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid;
 	$resInv = $db->query($sqlInv);
 	if ($resInv) {
 		$factureStatic = new Facture($db);
@@ -1575,7 +1575,9 @@ while ($i < $imaxinloop) {
 			$factureStatic->ref = $rowInv->ref;
 			$factureStatic->statut = $rowInv->fk_statut;
 			$invoices_html .= $factureStatic->getNomUrl(1) . ' - ' . price($rowInv->total_ht, 0, $langs, 1, -1, -1, $conf->currency) . '<br>';
-			$total_invoices_ht += $rowInv->total_ht;
+			if ($rowInv->fk_statut > 0) {
+				$total_invoices_ht += $rowInv->total_ht;
+			}
 		}
 	}
 
