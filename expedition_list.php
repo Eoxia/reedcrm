@@ -1402,7 +1402,11 @@ if (!empty($arrayfields['e.signed_status']['checked'])) {
 // Status billed
 if (!empty($arrayfields['e.billed']['checked'])) {
 	print '<td class="liste_titre maxwidthonsmartphone center">';
-	print $form->selectyesno('search_billed', $search_billed, 1, false, 1);
+	print '<select class="flat searchstring" name="search_billed">';
+	print '<option value=""></option>';
+	print '<option value="1"'.((string)$search_billed == '1' ? ' selected' : '').'>'.$langs->trans('Yes').'</option>';
+	print '<option value="0"'.((string)$search_billed == '0' ? ' selected' : '').'>'.$langs->trans('No').'</option>';
+	print '</select>';
 	print '</td>';
 }
 
