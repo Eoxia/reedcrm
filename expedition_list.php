@@ -1574,7 +1574,13 @@ while ($i < $imaxinloop) {
 			$factureStatic->id = $rowInv->rowid;
 			$factureStatic->ref = $rowInv->ref;
 			$factureStatic->statut = $rowInv->fk_statut;
-			$invoices_html .= $factureStatic->getNomUrl(1) . ' - ' . price($rowInv->total_ht, 0, $langs, 1, -1, -1, $conf->currency) . '<br>';
+			
+			$inv_line = $factureStatic->getNomUrl(1) . ' - ' . price($rowInv->total_ht, 0, $langs, 1, -1, -1, $conf->currency);
+			if ($rowInv->fk_statut <= 0) {
+				$inv_line = '<span style="opacity: 0.6; filter: grayscale(100%); display: inline-block;">' . $inv_line . '</span>';
+			}
+			$invoices_html .= $inv_line . '<br>';
+			
 			if ($rowInv->fk_statut > 0) {
 				$total_invoices_ht += $rowInv->total_ht;
 			}
