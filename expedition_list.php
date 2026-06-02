@@ -1660,7 +1660,8 @@ while ($i < $imaxinloop) {
 		
 		// Contrôle
 		print '<td class="nowrap center">';
-		if (abs((float)$obj->expedition_amount_ht - (float)$total_invoices_ht) <= 0.05) {
+		$is_ok = abs((float)$obj->expedition_amount_ht - (float)$total_invoices_ht) <= 0.05;
+		if ($is_ok) {
 			print '<span class="badge badge-success" title="OK" style="background-color: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">OK</span>';
 		} else {
 			print '<span class="badge badge-danger" title="KO" style="background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">KO</span>';
@@ -1859,7 +1860,13 @@ while ($i < $imaxinloop) {
 		}
 		// Billed
 		if (!empty($arrayfields['e.billed']['checked'])) {
-			print '<td class="center">'.yn($obj->billed).'</td>';
+			print '<td class="center">';
+			if ($obj->billed == 0 && !empty($is_ok)) {
+				print '<span class="cursor-pointer set-billed-js" data-id="'.$obj->rowid.'" style="display:inline-block; padding:2px 5px; border-radius:4px; transition: background-color 0.2s; cursor: pointer;" title="Marquer comme facturé">'.yn($obj->billed).'</span>';
+			} else {
+				print yn($obj->billed);
+			}
+			print "</td>\n";
 			if (!$i) {
 				$totalarray['nbfield']++;
 			}
@@ -1904,6 +1911,41 @@ $db->free($resql);
 $parameters = array('arrayfields' => $arrayfields, 'totalarray' => $totalarray, 'sql' => $sql);
 $reshook = $hookmanager->executeHooks('printFieldListFooter', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
 print $hookmanager->resPrint;
+
+?>
+<script>
+$(document).ready(function() {
+	$('.set-billed-js').on('click', function() {
+		var $this = $(this);
+		var expId = $this.data('id');
+		
+		$this.css('background-color', '#28a745').css('color', '#fff');
+		
+		$.ajax({
+			url: '<?php echo dol_buildpath('/reedcrm/ajax/update_expedition_billed.php', 1); ?>',
+			method: 'POST',
+			data: { id: expId, token: '<?php echo currentToken(); ?>' },
+			dataType: 'json',
+			success: function(response) {
+				if (response.success) {
+					$this.css('background-color', 'transparent').css('color', '');
+					$this.html('<?php echo addslashes(yn(1)); ?>');
+					$this.removeClass('set-billed-js cursor-pointer').off('click');
+					$this.removeAttr('title');
+				} else {
+					alert('Erreur : ' + response.error);
+					$this.css('background-color', 'transparent').css('color', '');
+				}
+			},
+			error: function() {
+				alert('Erreur de communication.');
+				$this.css('background-color', 'transparent').css('color', '');
+			}
+		});
+	});
+});
+</script>
+<?php
 
 print "</table>";
 print "</div>";
