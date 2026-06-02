@@ -1933,7 +1933,7 @@ $(document).ready(function() {
 			success: function(response) {
 				if (response.success) {
 					$this.css('background-color', 'transparent').css('color', '');
-					$this.html('<?php echo addslashes(yn(1)); ?>');
+					$this.html(<?php echo json_encode(yn(1)); ?>);
 					$this.removeClass('set-billed-js cursor-pointer').off('click');
 					$this.removeAttr('title');
 				} else {

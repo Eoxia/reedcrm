@@ -1,7 +1,7 @@
 <?php
-if (file_exists('../reedcrm.main.inc.php')) {
+if (file_exists(__DIR__ . '/../reedcrm.main.inc.php')) {
     require_once __DIR__ . '/../reedcrm.main.inc.php';
-} elseif (file_exists('../../reedcrm.main.inc.php')) {
+} elseif (file_exists(__DIR__ . '/../../reedcrm.main.inc.php')) {
     require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
     die('Include of reedcrm main fails');
