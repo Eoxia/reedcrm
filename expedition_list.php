@@ -88,6 +88,8 @@ $search_user = GETPOST('search_user', 'intcomma');
 $search_sale = GETPOST('search_sale', 'intcomma');
 $search_categ_cus = GETPOST("search_categ_cus", 'intcomma');
 $search_product_category = GETPOST('search_product_category', 'intcomma');
+$search_factures_liees = GETPOST('search_factures_liees', 'alpha');
+$search_okko = GETPOST('search_okko', 'alpha');
 
 $limit = GETPOSTINT('limit') ? GETPOSTINT('limit') : $conf->liste_limit;
 $sortfield = GETPOST('sortfield', 'aZ09comma');
@@ -227,6 +229,8 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x'
 	$search_array_options = array();
 	$search_categ_cus = 0;
 	$search_all = '';
+	$search_factures_liees = '';
+	$search_okko = '';
 }
 
 if (empty($reshook)) {
@@ -538,6 +542,12 @@ if (empty($reshook)) {
 			if ($search_all) {
 				$param .= "&search_all=".urlencode($search_all);
 			}
+			if ($search_factures_liees) {
+				$param .= "&search_factures_liees=".urlencode($search_factures_liees);
+			}
+			if ($search_okko) {
+				$param .= "&search_okko=".urlencode($search_okko);
+			}
 			if ($search_ref_exp) {
 				$param .= "&search_ref_exp=".urlencode($search_ref_exp);
 			}
@@ -686,6 +696,7 @@ $sql .= " s.rowid as socid, s.nom as name, s.town, s.zip, s.fk_pays, s.client, s
 $sql .= " typent.code as typent_code,";
 $sql .= " state.code_departement as state_code, state.nom as state_name,";
 $sql .= " e.date_creation as date_creation, e.tms as date_modification,e.note_public, e.note_private,";
+$sql .= " (SELECT SUM(cd.total_ht * (ed.qty / NULLIF(cd.qty, 0))) FROM ".MAIN_DB_PREFIX."expeditiondet ed LEFT JOIN ".MAIN_DB_PREFIX."commandedet cd ON ed.fk_elementdet = cd.rowid AND ed.element_type = 'commande' WHERE ed.fk_expedition = e.rowid) as expedition_amount_ht,";
 $sql .= " u.login";
 // Add fields from extrafields
 if (!empty($extrafields->attributes[$object->table_element]['label'])) {
@@ -797,12 +808,29 @@ if (getDolGlobalInt('MAIN_SUBMODULE_DELIVERY')) {
 	if ($search_ref_liv) {
 		$sql .= natural_search('l.ref', $search_ref_liv);
 	}
+	if ($search_factures_liees) {
+		$sql .= " AND e.rowid IN (
+			SELECT el1.fk_target FROM ".MAIN_DB_PREFIX."element_element el1
+			JOIN ".MAIN_DB_PREFIX."element_element el2 ON el1.fk_source = el2.fk_source AND el1.sourcetype = el2.sourcetype
+			JOIN ".MAIN_DB_PREFIX."facture f ON el2.fk_target = f.rowid AND el2.targettype = 'facture'
+			WHERE el1.targettype = 'shipping' AND f.ref LIKE '%".$db->escape($search_factures_liees)."%'
+			UNION
+			SELECT el.fk_source FROM ".MAIN_DB_PREFIX."element_element el
+			JOIN ".MAIN_DB_PREFIX."facture f ON el.fk_target = f.rowid AND el.targettype = 'facture'
+			WHERE el.sourcetype = 'shipping' AND f.ref LIKE '%".$db->escape($search_factures_liees)."%'
+		)";
+	}
 	if ($search_datereceipt_start) {
 		$sql .= " AND l.date_delivery >= '".$db->idate($search_datereceipt_start)."'";
 	}
 	if ($search_datereceipt_end) {
 		$sql .= " AND l.date_delivery <= '".$db->idate($search_datereceipt_end)."'";
 	}
+}
+if ($search_okko == 'KO') {
+	$sql .= " AND ABS(COALESCE((SELECT SUM(cd.total_ht * (ed.qty / NULLIF(cd.qty, 0))) FROM ".MAIN_DB_PREFIX."expeditiondet ed LEFT JOIN ".MAIN_DB_PREFIX."commandedet cd ON ed.fk_elementdet = cd.rowid AND ed.element_type = 'commande' WHERE ed.fk_expedition = e.rowid), 0) - COALESCE((SELECT SUM(f.total_ht) FROM ".MAIN_DB_PREFIX."facture f WHERE EXISTS (SELECT 1 FROM ".MAIN_DB_PREFIX."element_element el WHERE el.fk_target = f.rowid AND el.targettype = 'facture' AND ((el.sourcetype = 'shipping' AND el.fk_source = e.rowid) OR (el.sourcetype = 'commande' AND el.fk_source IN (SELECT fk_source FROM ".MAIN_DB_PREFIX."element_element WHERE fk_target = e.rowid AND targettype = 'shipping' AND sourcetype = 'commande'))))), 0)) > 0.05";
+} elseif ($search_okko == 'OK') {
+	$sql .= " AND ABS(COALESCE((SELECT SUM(cd.total_ht * (ed.qty / NULLIF(cd.qty, 0))) FROM ".MAIN_DB_PREFIX."expeditiondet ed LEFT JOIN ".MAIN_DB_PREFIX."commandedet cd ON ed.fk_elementdet = cd.rowid AND ed.element_type = 'commande' WHERE ed.fk_expedition = e.rowid), 0) - COALESCE((SELECT SUM(f.total_ht) FROM ".MAIN_DB_PREFIX."facture f WHERE EXISTS (SELECT 1 FROM ".MAIN_DB_PREFIX."element_element el WHERE el.fk_target = f.rowid AND el.targettype = 'facture' AND ((el.sourcetype = 'shipping' AND el.fk_source = e.rowid) OR (el.sourcetype = 'commande' AND el.fk_source IN (SELECT fk_source FROM ".MAIN_DB_PREFIX."element_element WHERE fk_target = e.rowid AND targettype = 'shipping' AND sourcetype = 'commande'))))), 0)) <= 0.05";
 }
 if ($search_all) {
 	$sql .= natural_search(array_keys($fieldstosearchall), $search_all);
@@ -1229,6 +1257,15 @@ if (!empty($arrayfields['e.ref_customer']['checked'])) {
 	print '<input class="flat" size="6" type="text" name="search_ref_customer" value="'.$search_ref_customer.'">';
 	print '</td>';
 }
+// Factures liées
+print '<td class="liste_titre center">';
+print '<input class="flat searchstring" type="text" size="4" name="search_factures_liees" value="'.dol_escape_htmltag($search_factures_liees).'">';
+print '<br><select class="flat searchstring" name="search_okko">';
+print '<option value=""></option>';
+print '<option value="OK"'.($search_okko == 'OK' ? ' selected' : '').'>OK</option>';
+print '<option value="KO"'.($search_okko == 'KO' ? ' selected' : '').'>KO</option>';
+print '</select>';
+print '</td>';
 // Thirdparty
 if (!empty($arrayfields['s.nom']['checked'])) {
 	print '<td class="liste_titre left">';
@@ -1365,7 +1402,7 @@ if (!empty($arrayfields['e.billed']['checked'])) {
 	print $form->selectyesno('search_billed', $search_billed, 1, false, 1);
 	print '</td>';
 }
-print '<td class="liste_titre"></td>'; // Factures liées
+
 // Action column
 if (!getDolGlobalString('MAIN_CHECKBOX_LEFT_COLUMN')) {
 	print '<td class="liste_titre center maxwidthsearch">';
@@ -1395,6 +1432,8 @@ if (!empty($arrayfields['e.ref_customer']['checked'])) {
 	print_liste_field_titre($arrayfields['e.ref_customer']['label'], $_SERVER["PHP_SELF"], "e.ref_customer", "", $param, '', $sortfield, $sortorder);
 	$totalarray['nbfield']++;
 }
+print_liste_field_titre('Factures liées', $_SERVER["PHP_SELF"], "", "", $param, '', $sortfield, $sortorder, 'center ');
+$totalarray['nbfield']++;
 if (!empty($arrayfields['s.nom']['checked'])) {
 	print_liste_field_titre($arrayfields['s.nom']['label'], $_SERVER["PHP_SELF"], "s.nom", "", $param, '', $sortfield, $sortorder, 'left ');
 	$totalarray['nbfield']++;
@@ -1480,7 +1519,7 @@ if (!empty($arrayfields['e.billed']['checked'])) {
 	print_liste_field_titre($arrayfields['e.billed']['label'], $_SERVER["PHP_SELF"], "e.billed", "", $param, '', $sortfield, $sortorder, 'center ');
 	$totalarray['nbfield']++;
 }
-print_liste_field_titre('Factures liées', $_SERVER["PHP_SELF"], "", "", $param, '', $sortfield, $sortorder, 'center ');
+
 $totalarray['nbfield']++;
 // Action column
 if (!getDolGlobalString('MAIN_CHECKBOX_LEFT_COLUMN')) {
@@ -1578,8 +1617,8 @@ while ($i < $imaxinloop) {
 			$filedir = ($conf->expedition->multidir_output[$object->entity ?? $conf->entity] ? $conf->expedition->multidir_output[$object->entity ?? $conf->entity] : $conf->expedition->dir_output).'/sending/'.get_exdir(0, 0, 0, 1, $object, '');
 			$filename = dol_sanitizeFileName($object->ref);
 			print $formfile->getDocumentsLink('expedition', $filename, $filedir);
-			if ($total_invoices_ht > 0) {
-				print ' &nbsp; <span class="amount" style="color: #666; font-weight: normal;">' . price($total_invoices_ht, 0, $langs, 1, -1, -1, $conf->currency) . '</span>';
+			if ((float)$obj->expedition_amount_ht > 0) {
+				print ' &nbsp; <span class="amount" style="color: #666; font-weight: normal;">' . price($obj->expedition_amount_ht, 0, $langs, 1, -1, -1, $conf->currency) . '</span>';
 			}
 			print "</td>\n";
 			if (!$i) {
@@ -1595,6 +1634,19 @@ while ($i < $imaxinloop) {
 			if (!$i) {
 				$totalarray['nbfield']++;
 			}
+		}
+
+		// Factures liées
+		print '<td class="nowrap center" style="line-height: 1.6;">';
+		if (abs((float)$obj->expedition_amount_ht - (float)$total_invoices_ht) <= 0.05) {
+			$invoices_html .= '<span class="badge badge-success" title="OK: Le montant de l\'expédition correspond aux factures" style="background-color: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">OK</span>';
+		} else {
+			$invoices_html .= '<span class="badge badge-danger" title="KO: Le montant de l\'expédition ne correspond pas aux factures" style="background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">KO</span>';
+		}
+		print $invoices_html;
+		print '</td>';
+		if (!$i) {
+			$totalarray['nbfield']++;
 		}
 
 		// Third party
@@ -1792,13 +1844,7 @@ while ($i < $imaxinloop) {
 			}
 		}
 
-		// Factures liées
-		print '<td class="nowrap center" style="line-height: 1.6;">';
-		print $invoices_html;
-		print '</td>';
-		if (!$i) {
-			$totalarray['nbfield']++;
-		}
+
 
 		// Action column
 		if (!getDolGlobalString('MAIN_CHECKBOX_LEFT_COLUMN')) {
