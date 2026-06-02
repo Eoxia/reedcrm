@@ -116,6 +116,7 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
                 $results[$row->fk_projet]['montant'] = [
                     'ref' => $row->ref,
                     'amount' => (float)$row->total_ht,
+                    'status' => null,
                     'url' => DOL_URL_ROOT . '/projet/card.php?id=' . $row->fk_projet
                 ];
             }
@@ -129,7 +130,7 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
             return;
         }
 
-        $sql = "SELECT t.fk_projet, t.rowid, t.ref" . ($hasAmount ? ", t.total_ht" : "") . "
+        $sql = "SELECT t.fk_projet, t.rowid, t.ref, t.fk_statut AS status" . ($hasAmount ? ", t.total_ht" : "") . "
                 FROM " . MAIN_DB_PREFIX . $tableName . " t
                 INNER JOIN (
                     SELECT fk_projet, MAX(rowid) as max_id
@@ -144,6 +145,7 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
                 $results[$row->fk_projet][$key] = [
                     'ref' => $row->ref,
                     'amount' => $hasAmount ? (float)$row->total_ht : null,
+                    'status' => isset($row->status) ? (int) $row->status : null,
                     'url' => DOL_URL_ROOT . $urlPath . $row->rowid
                 ];
             }
@@ -192,8 +194,30 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
                 $results[$row->fk_projet]['payment'] = [
                     'ref' => $row->ref,
                     'amount' => (float)$row->amount,
+                    'status' => null,
                     'url' => DOL_URL_ROOT . '/compta/paiement/card.php?id=' . $row->rowid
                 ];
+            }
+        }
+    }
+
+    // Project-level totals for the "encaissement incomplet" rule — only needed for the invoice/payment pieces
+    if (!empty($conf->global->REEDCRM_PWA_SHOW_FACTURE) || !empty($conf->global->REEDCRM_PWA_SHOW_PAYMENT)) {
+        $sqlInv = "SELECT fk_projet, SUM(total_ttc) AS invoiced FROM " . MAIN_DB_PREFIX . "facture"
+            . " WHERE fk_projet IN (" . $idListStr . ") AND fk_statut IN (1, 2) GROUP BY fk_projet";
+        $resInv = $db->query($sqlInv);
+        if ($resInv) {
+            while ($row = $db->fetch_object($resInv)) {
+                $results[$row->fk_projet]['totals']['invoiced'] = (float) $row->invoiced;
+            }
+        }
+        $sqlPaid = "SELECT f.fk_projet, SUM(pf.amount) AS paid FROM " . MAIN_DB_PREFIX . "paiement_facture pf"
+            . " JOIN " . MAIN_DB_PREFIX . "facture f ON f.rowid = pf.fk_facture"
+            . " WHERE f.fk_projet IN (" . $idListStr . ") GROUP BY f.fk_projet";
+        $resPaid = $db->query($sqlPaid);
+        if ($resPaid) {
+            while ($row = $db->fetch_object($resPaid)) {
+                $results[$row->fk_projet]['totals']['paid'] = (float) $row->paid;
             }
         }
     }
@@ -201,3 +225,87 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
     return $results;
 }
 
+/**
+ * Compute, per piece, the chain state (done/current/todo) and the inconsistencies for one opportunity.
+ * Pure function: everything is derived from the documents array of reedcrm_get_pwa_projects_documents().
+ *
+ * @param  array $docs One project entry: [ key => ['ref','amount','status','url'] | null, 'totals' => ['invoiced','paid'] ]
+ * @return array<string,array{state:string,issues:array<array{level:string,msg:string}>}>
+ */
+function reedcrm_compute_opportunity_chain(array $docs): array
+{
+    global $langs;
+
+    // Full display order (matches the admin pieces order)
+    $order = ['montant', 'propal', 'commande', 'commande_fourn', 'reception', 'facture_fourn', 'expedition', 'facture', 'payment'];
+
+    $present = [];
+    foreach ($order as $key) {
+        $present[$key] = !empty($docs[$key]) && !empty($docs[$key]['ref']);
+    }
+
+    // Current = last present piece in the display order
+    $current = '';
+    foreach ($order as $key) {
+        if ($present[$key]) {
+            $current = $key;
+        }
+    }
+
+    $chain = [];
+    foreach ($order as $key) {
+        $state = !$present[$key] ? 'todo' : ($key === $current ? 'current' : 'done');
+        $chain[$key] = ['state' => $state, 'issues' => []];
+    }
+
+    $addIssue = function ($key, $level, $msg) use (&$chain) {
+        if (isset($chain[$key])) {
+            $chain[$key]['issues'][] = ['level' => $level, 'msg' => $msg];
+        }
+    };
+
+    // Reference amount: opportunity amount, fallback to the proposal amount
+    $ref = null;
+    if (!empty($docs['montant']['amount'])) {
+        $ref = (float) $docs['montant']['amount'];
+    } elseif (!empty($docs['propal']['amount'])) {
+        $ref = (float) $docs['propal']['amount'];
+    }
+    $tolerance = (float) getDolGlobalString('REEDCRM_PWA_AMOUNT_TOLERANCE', '0.01');
+
+    // 1. Montant divergent (warn) — customer-side amount pieces vs the reference amount
+    if ($ref !== null && $ref > 0) {
+        // When montant is absent, propal becomes the reference, so the propal check below is a harmless no-op.
+        foreach (['propal', 'commande', 'facture'] as $key) {
+            if ($present[$key] && isset($docs[$key]['amount']) && abs((float) $docs[$key]['amount'] - $ref) > $tolerance) {
+                $addIssue($key, 'warn', $langs->trans('PwaIssueAmountMismatch', price($docs[$key]['amount']), price($ref)));
+            }
+        }
+    }
+
+    // 2. Document annulé/refusé (warn) — cancelled/refused latest doc status
+    // Cancelled/refused latest doc (propal "not signed" = 3, commande canceled = -1, facture abandoned = 3). Supplier pieces deferred to v2.
+    $cancelled = ['propal' => [3], 'commande' => [-1], 'facture' => [3]];
+    foreach ($cancelled as $key => $badStatuses) {
+        if ($present[$key] && isset($docs[$key]['status']) && in_array((int) $docs[$key]['status'], $badStatuses, true)) {
+            $addIssue($key, 'warn', $langs->trans('PwaIssueCancelled'));
+        }
+    }
+
+    // 3. Étape manquante (err) — a downstream customer piece exists without its upstream
+    $requires = ['facture' => 'commande', 'expedition' => 'commande', 'payment' => 'facture'];
+    foreach ($requires as $downstream => $upstream) {
+        if ($present[$downstream] && !$present[$upstream]) {
+            $addIssue($upstream, 'err', $langs->trans('PwaIssueMissingStep', $langs->trans('PwaPieceLabel_' . $downstream)));
+        }
+    }
+
+    // 4. Encaissement incomplet (err) — paid total below invoiced total
+    $invoiced = (float) ($docs['totals']['invoiced'] ?? 0);
+    $paid = (float) ($docs['totals']['paid'] ?? 0);
+    if ($invoiced > 0 && $paid + $tolerance < $invoiced) {
+        $addIssue('payment', 'err', $langs->trans('PwaIssuePaymentIncomplete', price($paid), price($invoiced)));
+    }
+
+    return $chain;
+}
