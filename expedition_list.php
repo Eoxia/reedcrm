@@ -828,9 +828,9 @@ if (getDolGlobalInt('MAIN_SUBMODULE_DELIVERY')) {
 	}
 }
 if ($search_okko == 'KO') {
-	$sql .= " AND ABS(COALESCE((SELECT SUM(cd.total_ht * (ed.qty / NULLIF(cd.qty, 0))) FROM ".MAIN_DB_PREFIX."expeditiondet ed LEFT JOIN ".MAIN_DB_PREFIX."commandedet cd ON ed.fk_elementdet = cd.rowid AND ed.element_type = 'commande' WHERE ed.fk_expedition = e.rowid), 0) - COALESCE((SELECT SUM(f.total_ht) FROM ".MAIN_DB_PREFIX."facture f WHERE EXISTS (SELECT 1 FROM ".MAIN_DB_PREFIX."element_element el WHERE el.fk_target = f.rowid AND el.targettype = 'facture' AND ((el.sourcetype = 'shipping' AND el.fk_source = e.rowid) OR (el.sourcetype = 'commande' AND el.fk_source IN (SELECT fk_source FROM ".MAIN_DB_PREFIX."element_element WHERE fk_target = e.rowid AND targettype = 'shipping' AND sourcetype = 'commande'))))), 0)) > 0.05";
+	$sql .= " AND ABS(COALESCE((SELECT SUM(cd.total_ht * (ed.qty / NULLIF(cd.qty, 0))) FROM ".MAIN_DB_PREFIX."expeditiondet ed LEFT JOIN ".MAIN_DB_PREFIX."commandedet cd ON ed.fk_elementdet = cd.rowid AND ed.element_type = 'commande' WHERE ed.fk_expedition = e.rowid), 0) - COALESCE((SELECT SUM(f.total_ht) FROM ".MAIN_DB_PREFIX."facture f WHERE f.fk_statut > 0 AND EXISTS (SELECT 1 FROM ".MAIN_DB_PREFIX."element_element el WHERE el.fk_target = f.rowid AND el.targettype = 'facture' AND ((el.sourcetype = 'shipping' AND el.fk_source = e.rowid) OR (el.sourcetype = 'commande' AND el.fk_source IN (SELECT fk_source FROM ".MAIN_DB_PREFIX."element_element WHERE fk_target = e.rowid AND targettype = 'shipping' AND sourcetype = 'commande'))))), 0)) > 0.05";
 } elseif ($search_okko == 'OK') {
-	$sql .= " AND ABS(COALESCE((SELECT SUM(cd.total_ht * (ed.qty / NULLIF(cd.qty, 0))) FROM ".MAIN_DB_PREFIX."expeditiondet ed LEFT JOIN ".MAIN_DB_PREFIX."commandedet cd ON ed.fk_elementdet = cd.rowid AND ed.element_type = 'commande' WHERE ed.fk_expedition = e.rowid), 0) - COALESCE((SELECT SUM(f.total_ht) FROM ".MAIN_DB_PREFIX."facture f WHERE EXISTS (SELECT 1 FROM ".MAIN_DB_PREFIX."element_element el WHERE el.fk_target = f.rowid AND el.targettype = 'facture' AND ((el.sourcetype = 'shipping' AND el.fk_source = e.rowid) OR (el.sourcetype = 'commande' AND el.fk_source IN (SELECT fk_source FROM ".MAIN_DB_PREFIX."element_element WHERE fk_target = e.rowid AND targettype = 'shipping' AND sourcetype = 'commande'))))), 0)) <= 0.05";
+	$sql .= " AND ABS(COALESCE((SELECT SUM(cd.total_ht * (ed.qty / NULLIF(cd.qty, 0))) FROM ".MAIN_DB_PREFIX."expeditiondet ed LEFT JOIN ".MAIN_DB_PREFIX."commandedet cd ON ed.fk_elementdet = cd.rowid AND ed.element_type = 'commande' WHERE ed.fk_expedition = e.rowid), 0) - COALESCE((SELECT SUM(f.total_ht) FROM ".MAIN_DB_PREFIX."facture f WHERE f.fk_statut > 0 AND EXISTS (SELECT 1 FROM ".MAIN_DB_PREFIX."element_element el WHERE el.fk_target = f.rowid AND el.targettype = 'facture' AND ((el.sourcetype = 'shipping' AND el.fk_source = e.rowid) OR (el.sourcetype = 'commande' AND el.fk_source IN (SELECT fk_source FROM ".MAIN_DB_PREFIX."element_element WHERE fk_target = e.rowid AND targettype = 'shipping' AND sourcetype = 'commande'))))), 0)) <= 0.05";
 }
 if ($search_all) {
 	$sql .= natural_search(array_keys($fieldstosearchall), $search_all);
@@ -1260,7 +1260,10 @@ if (!empty($arrayfields['e.ref_customer']['checked'])) {
 // Factures liées
 print '<td class="liste_titre center">';
 print '<input class="flat searchstring" type="text" size="4" name="search_factures_liees" value="'.dol_escape_htmltag($search_factures_liees).'">';
-print '<br><select class="flat searchstring" name="search_okko">';
+print '</td>';
+// Contrôle
+print '<td class="liste_titre center">';
+print '<select class="flat searchstring" name="search_okko">';
 print '<option value=""></option>';
 print '<option value="OK"'.($search_okko == 'OK' ? ' selected' : '').'>OK</option>';
 print '<option value="KO"'.($search_okko == 'KO' ? ' selected' : '').'>KO</option>';
@@ -1434,6 +1437,8 @@ if (!empty($arrayfields['e.ref_customer']['checked'])) {
 }
 print_liste_field_titre('Factures liées', $_SERVER["PHP_SELF"], "", "", $param, '', $sortfield, $sortorder, 'center ');
 $totalarray['nbfield']++;
+print_liste_field_titre('Contrôle', $_SERVER["PHP_SELF"], "", "", $param, '', $sortfield, $sortorder, 'center ');
+$totalarray['nbfield']++;
 if (!empty($arrayfields['s.nom']['checked'])) {
 	print_liste_field_titre($arrayfields['s.nom']['label'], $_SERVER["PHP_SELF"], "s.nom", "", $param, '', $sortfield, $sortorder, 'left ');
 	$totalarray['nbfield']++;
@@ -1556,12 +1561,12 @@ while ($i < $imaxinloop) {
 			   FROM " . MAIN_DB_PREFIX . "element_element el1
 			   JOIN " . MAIN_DB_PREFIX . "element_element el2 ON el1.fk_source = el2.fk_source AND el1.sourcetype = el2.sourcetype
 			   JOIN " . MAIN_DB_PREFIX . "facture f ON el2.fk_target = f.rowid AND el2.targettype = 'facture'
-			   WHERE el1.targettype = 'shipping' AND el1.fk_target = " . (int)$obj->rowid . "
+			   WHERE el1.targettype = 'shipping' AND el1.fk_target = " . (int)$obj->rowid . " AND f.fk_statut > 0
 			   UNION 
 			   SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
 			   FROM " . MAIN_DB_PREFIX . "element_element el
 			   JOIN " . MAIN_DB_PREFIX . "facture f ON el.fk_target = f.rowid AND el.targettype = 'facture'
-			   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid;
+			   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid . " AND f.fk_statut > 0";
 	$resInv = $db->query($sqlInv);
 	if ($resInv) {
 		$factureStatic = new Facture($db);
@@ -1638,12 +1643,19 @@ while ($i < $imaxinloop) {
 
 		// Factures liées
 		print '<td class="nowrap center" style="line-height: 1.6;">';
-		if (abs((float)$obj->expedition_amount_ht - (float)$total_invoices_ht) <= 0.05) {
-			$invoices_html .= '<span class="badge badge-success" title="OK: Le montant de l\'expédition correspond aux factures" style="background-color: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">OK</span>';
-		} else {
-			$invoices_html .= '<span class="badge badge-danger" title="KO: Le montant de l\'expédition ne correspond pas aux factures" style="background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">KO</span>';
-		}
 		print $invoices_html;
+		print '</td>';
+		if (!$i) {
+			$totalarray['nbfield']++;
+		}
+		
+		// Contrôle
+		print '<td class="nowrap center">';
+		if (abs((float)$obj->expedition_amount_ht - (float)$total_invoices_ht) <= 0.05) {
+			print '<span class="badge badge-success" title="OK" style="background-color: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">OK</span>';
+		} else {
+			print '<span class="badge badge-danger" title="KO" style="background-color: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.9em;">KO</span>';
+		}
 		print '</td>';
 		if (!$i) {
 			$totalarray['nbfield']++;
