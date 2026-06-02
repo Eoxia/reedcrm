@@ -123,24 +123,6 @@ $pwaDocs = reedcrm_get_pwa_projects_documents($pwaProjectIds);
     .pwa-linked-check { color:#38a169; margin-left:8px; font-size:0.8em; }
     .pwa-contact-loading-inline { padding:8px 12px; color:#64748b; font-size:0.83em; display:flex; align-items:center; gap:6px; }
 
-    /* PWA Documents progress-bar style */
-    .pwa-doc-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #f8fafc; padding: 8px 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px; width: 100%; box-sizing: border-box; }
-    .pwa-doc-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85em; background: #fff; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e0; color: #475569; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-    .pwa-doc-item.na { border-style: dashed; color: #94a3b8; background: #fdfdfd; box-shadow: none; }
-    .pwa-doc-item a { color: #1d4ed8; font-weight: 600; text-decoration: none; border-bottom: 1px dashed #cbd5e0; }
-    .pwa-doc-item a:hover { color: #2563eb; }
-    .pwa-doc-item { position: relative; }
-    .pwa-doc-item.is-done { background:#e7f5ea; border-color:#bfe3c7; color:#1f8a3b; }
-    .pwa-doc-item.is-current { background:#e8f0fe; border-color:#3b76e8; box-shadow:0 0 0 2px rgba(59,118,232,.25); color:#1f57c3; }
-    .pwa-doc-item.is-todo { background:#fafbfc; border-style:dashed; color:#94a3b8; box-shadow:none; }
-    .pwa-doc-item.has-warn { border-color:#e8923b !important; box-shadow:0 0 0 2px rgba(232,146,59,.25); }
-    .pwa-doc-item.has-err { border-color:#d34a4a !important; box-shadow:0 0 0 2px rgba(211,74,74,.25); }
-    .pwa-doc-badge { position:absolute; top:-7px; right:-7px; width:16px; height:16px; border-radius:50%; color:#fff; font-size:10px; line-height:16px; text-align:center; background:#e8923b; }
-    .pwa-doc-badge.err { background:#d34a4a; }
-    .pwa-doc-curtag { position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:#3b76e8; color:#fff; font-size:8px; padding:1px 6px; border-radius:8px; font-weight:700; white-space:nowrap; }
-    .pwa-doc-bar.icons-only .pwa-doc-item { padding:0; width:34px; height:34px; justify-content:center; }
-    .pwa-doc-bar.icons-only .pwa-doc-label, .pwa-doc-bar.icons-only .pwa-doc-item > span:not(.pwa-doc-badge), .pwa-doc-bar.icons-only .pwa-doc-item > a { display:none; }
-    .pwa-doc-label { font-weight: 500; color: #64748b; }
 </style>
 
 <div class="page-content" style="margin-top: 5px; max-width: 1000px; margin: 5px auto 0 auto;">
@@ -408,57 +390,12 @@ $pwaDocs = reedcrm_get_pwa_projects_documents($pwaProjectIds);
 
         </div><!-- /ROW 3 -->
 
-        <!-- ROW DOCS BAR (Configurable pieces) -->
+        <!-- ROW DOCS BAR (chain bar fragment, shared) -->
         <?php
-        $enabledPieces = [];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_OPP_AMOUNT))     $enabledPieces['montant']        = ['icon' => 'fas fa-wallet'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_PROPAL))         $enabledPieces['propal']         = ['icon' => 'fas fa-file-signature'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_COMMANDE))       $enabledPieces['commande']       = ['icon' => 'fas fa-shopping-cart'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_COMMANDE_FOURN)) $enabledPieces['commande_fourn'] = ['icon' => 'fas fa-shopping-bag'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_RECEPTION))      $enabledPieces['reception']      = ['icon' => 'fas fa-dolly'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_FACTURE_FOURN))  $enabledPieces['facture_fourn']  = ['icon' => 'fas fa-receipt'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_EXPEDITION))     $enabledPieces['expedition']     = ['icon' => 'fas fa-shipping-fast'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_FACTURE))        $enabledPieces['facture']        = ['icon' => 'fas fa-file-invoice-dollar'];
-        if (!empty($conf->global->REEDCRM_PWA_SHOW_PAYMENT))        $enabledPieces['payment']        = ['icon' => 'fas fa-coins'];
-
-        if (!empty($enabledPieces)) :
-            $projectDocs  = $pwaDocs[$project->id] ?? [];
-            $chain        = reedcrm_compute_opportunity_chain($projectDocs);
-            $iconsOnly    = !empty($conf->global->REEDCRM_PWA_PIECES_ICONS_ONLY);
+        print reedcrm_chain_bar_styles(); // emitted once per page (static guard)
+        $chainBarDocs = $pwaDocs[$project->id] ?? [];
+        include __DIR__ . '/reedcrm_opportunity_chain_bar.tpl.php';
         ?>
-            <div class="pwa-doc-bar<?php echo $iconsOnly ? ' icons-only' : ''; ?>">
-                <?php foreach ($enabledPieces as $key => $item) :
-                    $doc    = $projectDocs[$key] ?? null;
-                    $state  = $chain[$key]['state'] ?? 'todo';
-                    $issues = $chain[$key]['issues'] ?? [];
-                    $hasErr = false; $hasWarn = false; $issueMsgs = [];
-                    foreach ($issues as $iss) { if ($iss['level'] === 'err') { $hasErr = true; } else { $hasWarn = true; } $issueMsgs[] = $iss['msg']; }
-                    $label  = $langs->trans('PwaPieceLabel_' . $key);
-                    $statusLabel = '';
-                    if ($doc && !empty($doc['status'])) {
-                        $statusKey   = 'PwaPieceStatus_' . $key . '_' . (int) $doc['status'];
-                        $statusTrans = $langs->trans($statusKey);
-                        // Only show a status chip when a label is actually defined (otherwise trans() returns the raw key)
-                        $statusLabel = ($statusTrans !== $statusKey) ? $statusTrans : '';
-                    }
-                    $valueText = $doc ? ($doc['ref'] . ($doc['amount'] !== null ? ' · ' . price($doc['amount'], 0, '', 11, -1, -1, 'auto') : '')) : 'NA';
-                    $tooltip = trim($label . ' · ' . $valueText . ($statusLabel ? ' · ' . $statusLabel : '') . ($issueMsgs ? ' — ' . implode(' ; ', $issueMsgs) : ''));
-                    $cls = 'pwa-doc-item is-' . $state . ($doc ? '' : ' na') . ($hasErr ? ' has-err' : ($hasWarn ? ' has-warn' : ''));
-                ?>
-                    <div class="<?php echo $cls; ?>" title="<?php echo dol_escape_htmltag($tooltip); ?>">
-                        <?php if ($state === 'current') : ?><span class="pwa-doc-curtag"><?php echo $langs->trans('PwaCurrentStep'); ?></span><?php endif; ?>
-                        <?php if ($hasErr || $hasWarn) : ?><span class="pwa-doc-badge<?php echo $hasErr ? ' err' : ''; ?>"><?php echo $hasErr ? '!' : '⚠'; ?></span><?php endif; ?>
-                        <i class="<?php echo $item['icon']; ?>"></i>
-                        <span class="pwa-doc-label"><?php echo $label; ?> :</span>
-                        <?php if ($doc) : ?>
-                            <a href="<?php echo $doc['url']; ?>" class="prevent-edit-click"><?php echo $doc['ref'] . ($doc['amount'] !== null ? ' - ' . price($doc['amount'], 0, '', 11, -1, -1, 'auto') : ''); ?><?php echo $statusLabel ? ' · ' . $statusLabel : ''; ?></a>
-                        <?php else : ?>
-                            <span>NA</span>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
 
     </div><!-- /pwa-card -->
 

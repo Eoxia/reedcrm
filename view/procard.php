@@ -398,6 +398,15 @@ if (empty($action)) {
     saturne_get_fiche_head($object, 'event', $title);
     saturne_banner_tab($object);
 
+    // ReedCRM: opportunity chain bar (projects only)
+    if ($object->element === 'project') {
+        require_once __DIR__ . '/../lib/reedcrm.lib.php';
+        $reedcrmChainDocs = reedcrm_get_pwa_projects_documents([$object->id]);
+        $chainBarDocs     = $reedcrmChainDocs[$object->id] ?? [];
+        print reedcrm_chain_bar_styles();
+        include __DIR__ . '/../core/tpl/frontend/reedcrm_opportunity_chain_bar.tpl.php';
+    }
+
     print '<div class="fichecenter">';
 
     print '<div class="fichehalfleft">';

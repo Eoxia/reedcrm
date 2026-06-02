@@ -247,6 +247,38 @@ class ActionsReedcrm
     }
 
     /**
+     * Print the opportunity chain bar once at the top of the standard project Overview tab
+     * (projet/element.php). The core hook fires once per referent type in a loop, so a static
+     * guard emits the bar only once. Returns 0 (we add output, never replace the default rendering).
+     *
+     * @param  array        $parameters Hook metadata (context, ...)
+     * @param  CommonObject $object     The project currently displayed
+     * @return int
+     */
+    public function printOverviewProfit(array $parameters, CommonObject $object): int
+    {
+        global $conf, $langs;
+
+        static $done = false;
+        if ($done || strpos($parameters['context'], 'projectOverview') === false) {
+            return 0;
+        }
+        if (empty($object->id)) {
+            return 0;
+        }
+        $done = true;
+
+        require_once __DIR__ . '/../lib/reedcrm.lib.php';
+        $reedcrmChainDocs = reedcrm_get_pwa_projects_documents([$object->id]);
+        $chainBarDocs     = $reedcrmChainDocs[$object->id] ?? [];
+
+        print reedcrm_chain_bar_styles();
+        include __DIR__ . '/../core/tpl/frontend/reedcrm_opportunity_chain_bar.tpl.php';
+
+        return 0;
+    }
+
+    /**
      * Emit a JSON data-island { productId: htmlDescription } and load the JS that injects each
      * product/service description under its line, on the validated Reception card. Pure-module
      * workaround: that core view renders only the (empty) line description and exposes no

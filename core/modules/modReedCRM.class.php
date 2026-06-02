@@ -124,6 +124,7 @@ class modReedCRM extends DolibarrModules
             'hooks' => [
                 'thirdpartycomm',
                 'projectcard',
+                'projectOverview',
                 'projectlist',
                 'projectdao',
                 'propalcard',
