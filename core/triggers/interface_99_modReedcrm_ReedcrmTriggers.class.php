@@ -159,6 +159,18 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
         $actioncomm->percentage  = -1;
 
         switch ($action) {
+            case 'SHIPPING_CREATE':
+                // ReedCRM : si aucune date d'expédition n'a été saisie, l'aligner sur la date de création.
+                if (getDolGlobalInt('REEDCRM_EXPEDITION_SHIPPING_DATE_AS_CREATION_DATE') > 0
+                    && empty($object->date_shipping) && empty($object->date_expedition)
+                    && !empty($object->date_creation) && $object->id > 0) {
+                    if ($object->setShippingDate($user, $object->date_creation) < 0) {
+                        $this->errors[] = $object->error;
+                        return -1;
+                    }
+                }
+                break;
+
             case 'BILL_CREATE' :
             case 'BILLREC_CREATE' :
                 $object->fetch($object->id);
