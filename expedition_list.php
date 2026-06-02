@@ -1511,6 +1511,30 @@ while ($i < $imaxinloop) {
 	$object = new Expedition($db);
 	$object->fetch($obj->rowid);
 
+	$invoices_html = '';
+	$total_invoices_ht = 0;
+	$sqlInv = "SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
+			   FROM " . MAIN_DB_PREFIX . "element_element el1
+			   JOIN " . MAIN_DB_PREFIX . "element_element el2 ON el1.fk_source = el2.fk_source AND el1.sourcetype = el2.sourcetype
+			   JOIN " . MAIN_DB_PREFIX . "facture f ON el2.fk_target = f.rowid AND el2.targettype = 'facture'
+			   WHERE el1.targettype = 'shipping' AND el1.fk_target = " . (int)$obj->rowid . "
+			   UNION 
+			   SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
+			   FROM " . MAIN_DB_PREFIX . "element_element el
+			   JOIN " . MAIN_DB_PREFIX . "facture f ON el.fk_target = f.rowid AND el.targettype = 'facture'
+			   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid;
+	$resInv = $db->query($sqlInv);
+	if ($resInv) {
+		$factureStatic = new Facture($db);
+		while ($rowInv = $db->fetch_object($resInv)) {
+			$factureStatic->id = $rowInv->rowid;
+			$factureStatic->ref = $rowInv->ref;
+			$factureStatic->statut = $rowInv->fk_statut;
+			$invoices_html .= $factureStatic->getNomUrl(1) . ' - ' . price($rowInv->total_ht, 0, $langs, 1, -1, -1, $conf->currency) . '<br>';
+			$total_invoices_ht += $rowInv->total_ht;
+		}
+	}
+
 	if ($mode == 'kanban') {
 		if ($i == 0) {
 			print '<tr class="trkanban"><td colspan="'.$savnbfield.'">';
@@ -1554,6 +1578,9 @@ while ($i < $imaxinloop) {
 			$filedir = ($conf->expedition->multidir_output[$object->entity ?? $conf->entity] ? $conf->expedition->multidir_output[$object->entity ?? $conf->entity] : $conf->expedition->dir_output).'/sending/'.get_exdir(0, 0, 0, 1, $object, '');
 			$filename = dol_sanitizeFileName($object->ref);
 			print $formfile->getDocumentsLink('expedition', $filename, $filedir);
+			if ($total_invoices_ht > 0) {
+				print ' &nbsp; <span class="amount" style="color: #666; font-weight: normal;">' . price($total_invoices_ht, 0, $langs, 1, -1, -1, $conf->currency) . '</span>';
+			}
 			print "</td>\n";
 			if (!$i) {
 				$totalarray['nbfield']++;
@@ -1767,28 +1794,6 @@ while ($i < $imaxinloop) {
 
 		// Factures liées
 		print '<td class="nowrap center" style="line-height: 1.6;">';
-		$invoices_html = '';
-		$origin_id = !empty($obj->origin_id) ? (int)$obj->origin_id : 0;
-		$sqlInv = "SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
-				   FROM " . MAIN_DB_PREFIX . "element_element el1
-				   JOIN " . MAIN_DB_PREFIX . "element_element el2 ON el1.fk_source = el2.fk_source AND el1.sourcetype = el2.sourcetype
-				   JOIN " . MAIN_DB_PREFIX . "facture f ON el2.fk_target = f.rowid AND el2.targettype = 'facture'
-				   WHERE el1.targettype = 'shipping' AND el1.fk_target = " . (int)$obj->rowid . "
-				   UNION 
-				   SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
-				   FROM " . MAIN_DB_PREFIX . "element_element el
-				   JOIN " . MAIN_DB_PREFIX . "facture f ON el.fk_target = f.rowid AND el.targettype = 'facture'
-				   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid;
-		$resInv = $db->query($sqlInv);
-		if ($resInv) {
-			$factureStatic = new Facture($db);
-			while ($rowInv = $db->fetch_object($resInv)) {
-				$factureStatic->id = $rowInv->rowid;
-				$factureStatic->ref = $rowInv->ref;
-				$factureStatic->statut = $rowInv->fk_statut;
-				$invoices_html .= $factureStatic->getNomUrl(1) . ' - ' . price($rowInv->total_ht, 0, $langs, 1, -1, -1, $conf->currency) . '<br>';
-			}
-		}
 		print $invoices_html;
 		print '</td>';
 		if (!$i) {
