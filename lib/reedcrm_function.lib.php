@@ -33,7 +33,8 @@ function set_notation_object_contact(CommonObject $object): int
     $notationObjectContacts = get_notation_object_contacts($object);
     $notationObjectContact  = array_shift($notationObjectContacts);
     $object->fetch_optionals();
-    $object->array_options['options_notation_' . $object->element . '_contact'] = ($notationObjectContact['percentage'] ?: 0) . ' %';
+    $percentage = is_array($notationObjectContact) && isset($notationObjectContact['percentage']) ? $notationObjectContact['percentage'] : 0;
+    $object->array_options['options_notation_' . $object->element . '_contact'] = ($percentage ?: 0) . ' %';
     return $object->updateExtraField('notation_' . $object->element . '_contact');
 }
 
