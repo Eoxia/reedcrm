@@ -53,6 +53,6 @@ $res = $actioncomm->create($user);
 ob_clean();
 echo json_encode([
     'success' => true,
-    'html' => yn(1)
+    'html' => yn(1, 4)
 ]);
 exit;

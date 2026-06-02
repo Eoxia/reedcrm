@@ -1866,9 +1866,9 @@ while ($i < $imaxinloop) {
 		if (!empty($arrayfields['e.billed']['checked'])) {
 			print '<td class="center">';
 			if ($obj->billed == 0 && !empty($is_ok)) {
-				print '<span class="cursor-pointer set-billed-js" data-id="'.$obj->rowid.'" data-url="'.dol_buildpath('/reedcrm/ajax/update_expedition_billed.php', 1).'" data-token="'.currentToken().'" style="display:inline-block; padding:2px 5px; border-radius:4px; transition: background-color 0.2s; cursor: pointer;" title="Marquer comme facturé">'.yn($obj->billed).'</span>';
+				print '<span class="cursor-pointer set-billed-js" data-id="'.$obj->rowid.'" data-url="'.dol_buildpath('/reedcrm/ajax/update_expedition_billed.php', 1).'" data-token="'.currentToken().'" style="display:inline-block; padding:2px 5px; border-radius:4px; transition: background-color 0.2s; cursor: pointer;" title="Marquer comme facturé">'.yn($obj->billed, 4).'</span>';
 			} else {
-				print yn($obj->billed);
+				print yn($obj->billed, 4);
 			}
 			print "</td>\n";
 			if (!$i) {
@@ -1917,7 +1917,7 @@ $reshook = $hookmanager->executeHooks('printFieldListFooter', $parameters, $obje
 print $hookmanager->resPrint;
 
 ?>
-<script src="<?php echo dol_buildpath('/reedcrm/js/expedition_billed.js', 1); ?>"></script>
+<script nonce="<?php echo getNonce(); ?>" src="<?php echo dol_buildpath('/reedcrm/js/expedition_billed.js', 1); ?>"></script>
 <?php
 
 print "</table>";
