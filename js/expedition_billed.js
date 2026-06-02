@@ -17,11 +17,8 @@ $(document).ready(function() {
 					$this.css('background-color', 'transparent').css('color', '');
 					if (response.html) {
 						$this.html(response.html);
-					} else {
-						$this.html("Oui");
 					}
-					$this.removeClass('set-billed-js cursor-pointer').off('click');
-					$this.removeAttr('title');
+					// Removed class removal and event unbinding to allow toggling
 				} else {
 					alert('Erreur : ' + (response.error || 'Erreur inconnue'));
 					$this.css('background-color', 'transparent').css('color', '');

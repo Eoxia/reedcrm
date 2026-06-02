@@ -1865,8 +1865,8 @@ while ($i < $imaxinloop) {
 		// Billed
 		if (!empty($arrayfields['e.billed']['checked'])) {
 			print '<td class="center">';
-			if ($obj->billed == 0 && !empty($is_ok)) {
-				print '<span class="cursor-pointer set-billed-js" data-id="'.$obj->rowid.'" data-url="'.dol_buildpath('/reedcrm/ajax/update_expedition_billed.php', 1).'" data-token="'.currentToken().'" style="display:inline-block; padding:2px 5px; border-radius:4px; transition: background-color 0.2s; cursor: pointer;" title="Marquer comme facturé">'.yn($obj->billed, 4).'</span>';
+			if (!empty($is_ok)) {
+				print '<span class="cursor-pointer set-billed-js" data-id="'.$obj->rowid.'" data-url="'.dol_buildpath('/reedcrm/ajax/update_expedition_billed.php', 1).'" data-token="'.currentToken().'" style="display:inline-block; padding:2px 5px; border-radius:4px; transition: background-color 0.2s; cursor: pointer;" title="Basculer le statut">'.yn($obj->billed, 4).'</span>';
 			} else {
 				print yn($obj->billed, 4);
 			}

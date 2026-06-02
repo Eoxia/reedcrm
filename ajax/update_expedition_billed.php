@@ -31,14 +31,22 @@ if ($expedition->fetch($id) <= 0) {
     exit;
 }
 
-// Update billed status
-$expedition->setBilled();
+// Toggle billed status
+if ($expedition->billed == 1) {
+    $db->query("UPDATE " . MAIN_DB_PREFIX . "expedition SET billed = 0 WHERE rowid = " . $expedition->id);
+    $new_status = 0;
+    $action_label = 'Bon d\'expédition marqué comme NON facturé';
+} else {
+    $expedition->setBilled();
+    $new_status = 1;
+    $action_label = 'Bon d\'expédition marqué comme facturé (contrôle OK)';
+}
 
 // Create ActionComm
 $langs->load('commercial');
 $actioncomm                  = new ActionComm($db);
 $actioncomm->type_code       = 'AC_OTH';
-$actioncomm->label           = 'Bon d\'expédition marqué comme facturé (contrôle OK)';
+$actioncomm->label           = $action_label;
 $actioncomm->datep           = dol_now();
 $actioncomm->datef           = dol_now();
 $actioncomm->percent         = 100;
@@ -53,6 +61,6 @@ $res = $actioncomm->create($user);
 ob_clean();
 echo json_encode([
     'success' => true,
-    'html' => yn(1, 4)
+    'html' => yn($new_status, 4)
 ]);
 exit;
