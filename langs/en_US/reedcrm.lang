@@ -221,3 +221,248 @@ PwaPieceStatus_facture_2 = Paid
 PwaPieceStatus_facture_3 = Abandoned
 
 App-ReedCRM = App-ReedCRM
+
+#
+# --- en_US parity completion (translated from fr_FR, 2026-06-02) ---
+#
+
+# Quick creation
+QuickCreation = Quick add
+QuickCreations = quick adds
+QuickThirdPartyCreation = Quick third-party add
+QuickThirdPartyCreations = quick third-party adds
+QuickProjectCreation = Quick opportunity or project add
+QuickProjectCreations = quick opportunity or project adds
+QuickContactCreation = Quick contact/address add
+QuickContactCreations = quick contact/address adds
+QuickTaskCreations = quick task adds
+QuickEventCreation = Quick event add
+QuickEventCreations = quick event adds
+QuickCreationFrontendSuccess = Opportunity quick add completed successfully
+
+# Commercial / sales
+CommercialFollowUp = Sales follow-up
+CommercialTask = Sales task
+CommercialRelaunching = Sales reminder
+CommercialsRelaunching = Sales reminders
+LastCommercialReminderDate = Last sales reminder date
+ActionCommCreation = Event created
+ReminderActionCommCreation = Reminder created on %s
+ErrorNoProjectAndThirdpartyInformations = Please provide a project name and a third-party name
+LastEvent = Last event
+
+# Project / opportunity fields
+ProjectPhone = Project phone
+ErrorInvalidProjectPhone = The phone number is not valid or is too long (max 20 characters)
+ContactInformations = Contact details
+Vocal = Voice
+OpportunityStatusDescription = Opportunity status selection <br> Default value: <b> Prospection </b>
+OpportunityAmountDescription = Opportunity amount selection <br> Default value: <b> 3000 € </b>
+ProspectCustomerDescription = Third-party nature selection <br> Default value: <b> Prospect </b>
+
+# Product kit
+ProductKitConf = Fill the quote line description with the kit composition
+ProductKitConfDesc = Independently of the product module setting on description filling. <br> When adding a product/service that has a kit on a quote line, the line description will be replaced with the label and description of the component products.
+ProductInactiveMonths = Number of months of inactivity for a product to be considered inactive
+ProductInactiveMonthsDescription = Number of months of inactivity (no sale or purchase) for a product to be considered inactive in selection lists. <br> Default value: <b> 6 </b>
+
+# Quick event reminder
+ReminderValue = Reminder delay
+ReminderValueDescription = Number of time units before the event to trigger the reminder
+ReminderUnit = Reminder unit
+ReminderUnitDescription = Time unit used for the reminder
+
+# API quick creation
+ApiQuickCreations = quick adds via the API
+ApiUser = API user
+ProjectAffectedUser = User assigned to the project
+ProjectAffectedTag = Tag assigned to the project
+
+# Billing contact management
+UpdateObjectContactManagement = Billing contact update management
+UpdateObjectContact = Billing contact for %s
+UpdateObjectContactDescription = Update of the "billing contacts" role for %d unpaid %s <br> Below is the list of third parties without a "billing contact" role, checked on
+SocietyObjectContactNotDefinedTitle = List of %d third parties without a "billing contact" role
+AddContactNotificationManagement = Contact notification add management
+AddContactNotification = Contact notification for %s
+AddContactNotificationDescription = Add a "validated customer invoice action" contact notification for third parties <br> Below is the list of third parties without a "validated customer invoice action" contact notification, checked on
+SocietyContactNotificationNotDefinedTitle = List of %d third parties without a "validated customer invoice action" contact notification
+
+# Event messages
+ObjectContactUpdated = Contact added on %s %s
+SocietyObjectContactNotDefined = No contact defined on the third party:
+AllObjectHaveContact = The %s have billing contacts
+ContactNotificationAdded = Notification added on:
+SocietyContactNotificationNotDefined = No contact notification defined on the third party:
+AllContactHaveNotification = All third parties have contact notifications
+
+# Addresses
+Addresses = Addresses
+AddAnAddress = Add an address
+ErrorCreateAddress = An error occurred while creating the address
+ErrorUpdateAddress = An error occurred while updating the address
+ErrorDeleteAddress = An error occurred while deleting the address
+CouldntFindDataOnOSM = The address was not found on OpenStreetMap
+DataSuccessfullyRetrieved = The address data was retrieved successfully
+NoAddresses = No address
+Map = Map
+FavoriteAddress = Favorite address
+NewAddress = New address
+EditAddress = Edit address
+AddressType = Address type
+Workplace = Workplace
+PrincipalResidence = Main residence
+SecondaryResidence = Secondary residence
+Office = Office
+BranchOffice = Branch office
+WorkSite = Work site
+Factory = Factory
+Headquarters = Headquarters
+DisplayAllAddress = Display a single address per object
+DisplayAllAddressDescription = Display the main address on the map instead of all addresses linked to the object
+AddressesList = Address list
+ProjectAddress = Project address
+AddressStatus = Address status
+Geolocated = Geolocated
+NotFound = Not geolocated
+
+# Geolocation
+GeolocationError = Possible error during geolocation: %s
+MyPosition = My position
+
+# Dashboard / projects
+LastProjects = The last %s projects
+Sent = Sent
+Reminder1 = Reminder 1
+Reminder2 = Reminder 2
+Reminder3 = Reminder 3
+Abandoned = Abandoned
+Unreachable = Unreachable
+ToCallBack = To call back
+TooHard = Too complicated
+TooCheap = Not expensive enough
+TooExpensive = Too expensive
+ToSignElsewhere = Will sign elsewhere
+NotAProjectAnymore = No longer a project
+GoesBackOnExcel = Going back to Excel
+DontWantToSay = Do not want to say
+Interface = Interface
+Other = Other
+
+# Commercial proposal status
+CommercialStatus = Commercial status
+CommercialStatusHelp = Commercial status of the commercial proposal
+RefusalReason = Refusal reason
+RefusalReasonHelp = Reason for refusing the commercial proposal
+PropalStatusCommRepartition = Distribution of open commercial proposal statuses
+PropalRefusalReasonRepartition = Distribution of commercial proposal refusal reasons
+
+# Billing contact notation
+NotationObjectContact = Billing contact
+NotationObjectContactHelp = Fill rate of the customer billing contact information <ul><li>Name / Label - 5 <li>First name - 5 </li><li>Work phone - 5 </li><li>Mobile phone - 5 </li><li>Email - 40 </li><li>Default contact / address - 40 </li></ul>
+SetNotationObjectContact = Update of the customer billing contact notation
+UpdateNotationObjectContactsJob = Update of billing contact notations on the %s
+UpdateNotationObjectContactsJobComment = Update of the extra attribute for customer billing contact notations on recurring invoices to indicate the fill rate of the customer billing contact information
+NotationObjectContactsUpdated = Customer billing contact notations updated on %d %s
+NoObject = No %s
+FactureMin = invoice
+FactureMins = invoices
+FactureRecMin = recurring invoice
+FactureRecMins = recurring invoices
+ThirdPartyMins = third parties
+ObjectAddContactTrigger = Contact added
+UpdateObjectContactTrigger = Update of the "billing contacts" role on invoices
+NoContact = No contact
+AddContactNotificationTrigger = Add a "validated customer invoice action" contact notification to third parties
+
+# Opportunity origin dictionary
+DictionarySource = Origin of opportunities/quotes/orders/invoices
+OpportunityOrigin = Opportunity origin
+SRC_INTE = Internet
+SRC_CAMP_MAIL = Mailing campaign
+SRC_CAMP_EMAIL = Emailing campaign
+SRC_CAMP_PHO = Phone campaign
+SRC_CAMP_FAX = Fax campaign
+SRC_COMM = Sales contact
+SRC_SHOP = In-store contact
+SRC_WOM = Word of mouth
+SRC_PARTNER = Partner
+SRC_EMPLOYEE = Employee
+SRC_SPONSORING = Referral/Sponsorship
+SRC_CUSTOMER = Inbound contact from a customer
+
+# Opportunity status assignment
+AddAssignOppStatus = Add an opportunity status
+SelectOppStatus = Select an opportunity status
+OppStatusAssignedTo = Opportunity status assigned to %s project(s)
+ReloadOppPercent = Compute undefined opportunity probabilities
+
+# Task label
+LabelLength = Label length
+LabelLengthDescription = Maximum size of the label field
+WarningTaskLabelCustom = Warning, you are getting close to the maximum allowed number of characters (%d)
+ProductLastSellList = Latest product sales (Order and Invoice)
+
+# Menu / lists
+Opportunities = Opportunities
+OpenedPropals = Open proposals
+RecurringInvoices = Recurring invoices
+
+# Call notifications widget
+ProjectOpportunitiesList = The last 5 project opportunities
+LatestCreatedOpportunities = Latest created opportunities
+OppPercent = Opportunity percentage
+ButtonActions = Actions
+ContentToBeAdded = Content to add
+CommercialProposalsInProgress = Commercial proposals in progress
+NoCommercialProposalsInProgress = No commercial proposal in progress
+AddEvent = Add an event
+ThirdParty = Third party
+Contact = Contact
+EventType = Event type
+Date = Date
+Project = Project
+SelectProject = Select a project
+NoProjectAvailable = No project available
+ProjectModuleDisabled = Project module disabled
+Type = Type
+ProjectLabel = Project label
+CustomerNotes = Customer notes
+SendMail = Send email
+Title = Title
+Note = Note
+Reminder = Reminder
+PopupBrowser = Browser popup
+EMailTemplate = Email template
+Duration = Duration
+AffectedTo = Assigned to
+Add = Add
+SelectEmailTemplate = Select an email template
+NoEmailTemplate = No email template
+EmailSubject = Email subject
+EmailContent = Email content
+EmailTo = Recipient
+CustomerNote = Customer note
+SendEmail = Send an email
+EventCreated = Event created successfully
+EmailFormReady = Email form ready
+NewThirdparty = New third party
+CreateThirdparty = Create third party
+
+# Opportunities import
+OpportunitiesImport = Opportunities import
+ImportedOpportunityList = List of imported opportunities
+
+# Keyyo tab
+UnknownContact = Unknown contact
+
+# Status objects
+ReedCRMObjectStatus = ReedCRM object status
+ProjectStatusDraft = Draft
+ProjectStatusValidated = Validated (Open)
+ProjectStatusClosed = Closed
+PropalStatusDraft = Draft (Provisional)
+PropalStatusValidated = Validated (Open)
+PropalStatusSigned = Signed / Accepted
+PropalStatusNotSigned = Not signed / Refused
+PropalStatusBilled = Billed
