@@ -1566,7 +1566,8 @@ while ($i < $imaxinloop) {
 			   SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
 			   FROM " . MAIN_DB_PREFIX . "element_element el
 			   JOIN " . MAIN_DB_PREFIX . "facture f ON el.fk_target = f.rowid AND el.targettype = 'facture'
-			   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid;
+			   WHERE el.sourcetype = 'shipping' AND el.fk_source = " . (int)$obj->rowid . "
+			   ORDER BY fk_statut DESC, rowid DESC";
 	$resInv = $db->query($sqlInv);
 	if ($resInv) {
 		$factureStatic = new Facture($db);
@@ -1577,7 +1578,7 @@ while ($i < $imaxinloop) {
 			
 			$inv_line = $factureStatic->getNomUrl(1) . ' - ' . price($rowInv->total_ht, 0, $langs, 1, -1, -1, $conf->currency);
 			if ($rowInv->fk_statut <= 0) {
-				$inv_line = '<span style="opacity: 0.6; filter: grayscale(100%); display: inline-block;">' . $inv_line . '</span>';
+				$inv_line = '<span style="opacity: 0.6; filter: grayscale(100%); font-size: 0.85em; display: inline-block;">' . $inv_line . '</span>';
 			}
 			$invoices_html .= $inv_line . '<br>';
 			
