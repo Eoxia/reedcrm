@@ -466,3 +466,7 @@ PropalStatusValidated = Validated (Open)
 PropalStatusSigned = Signed / Accepted
 PropalStatusNotSigned = Not signed / Refused
 PropalStatusBilled = Billed
+
+# Expedition
+ShippingDateEqualsCreationDate = Set shipping date equal to creation date
+ShippingDateEqualsCreationDateHelp = When a shipment is created, if no shipping date is entered, it automatically takes the creation date.

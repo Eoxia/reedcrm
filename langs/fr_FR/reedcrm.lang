@@ -474,3 +474,7 @@ PwaPieceStatus_facture_2 = Payée
 PwaPieceStatus_facture_3 = Abandonnée
 
 App-ReedCRM = App-ReedCRM
+
+# Expedition
+ShippingDateEqualsCreationDate = Aligner la date d'expédition sur la date de création
+ShippingDateEqualsCreationDateHelp = À la création d'une expédition, si aucune date d'expédition n'est saisie, elle prend automatiquement la date de création.
