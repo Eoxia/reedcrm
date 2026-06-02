@@ -586,6 +586,22 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
+            'titre'    => $langs->trans('Sendings'),
+            'prefix'   => '<i class="fas fa-truck pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'expeditions',
+            'url'      => '/custom/reedcrm/expedition_list.php',
+            'langs'    => 'sendings',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'expedition\')',
+            'perms'    => '$user->hasRight(\'expedition\', \'lire\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
             'titre'    => $langs->transnoentities('RecurringInvoices'),
             'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
