@@ -122,6 +122,9 @@ ReedCRMStatusAsBadge = Status: badge
 CallList = Call list
 CallLists = Call lists
 NewCallList = New call list
+# Derived keys auto-built by the generic saturne_list.php from the element name (call_list)
+Call_listList = Call lists
+NewCall_list = New call list
 CallListStatus0 = Draft
 CallListStatus1 = Active
 CallListStatus2 = Archived

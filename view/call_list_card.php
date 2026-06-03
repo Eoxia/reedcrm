@@ -156,7 +156,7 @@ if (empty($resHook)) {
     // Delete
     if ($action === 'confirm_delete' && GETPOST('confirm') === 'yes' && $permissiontodelete) {
         $object->delete($user);
-        header('Location: ' . dol_buildpath('/custom/reedcrm/view/call_list_list.php', 1));
+        header('Location: ' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list');
         exit;
     }
 
@@ -331,7 +331,7 @@ if ($show === 'notes' && $object->id > 0) {
     $head = call_list_prepare_head($object);
     print dol_get_fiche_head($head, 'notes', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
-    $morehtml = '<a href="' . dol_buildpath('/custom/reedcrm/view/call_list_list.php', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
     saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
 
     print '<div class="fichecenter">';
@@ -376,7 +376,7 @@ if ($object->id > 0) {
     $head = call_list_prepare_head($object);
     print dol_get_fiche_head($head, 'card', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
-    $morehtml = '<a href="' . dol_buildpath('/custom/reedcrm/view/call_list_list.php', 1) . '">' . $langs->trans('BackToList') . '</a>';
+    $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
     saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
 
     // Confirm dialogs

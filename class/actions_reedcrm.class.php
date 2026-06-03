@@ -1518,6 +1518,41 @@ class ActionsReedcrm
     }
 
     /**
+     * Overloading the saturneExtendGetObjectsMetadata hook : register ReedCRM objects in the
+     * generic saturne object registry so they can use saturne_list.php, the agenda, attendants, etc.
+     *
+     * @param  array $parameters Hook metadatas (objectsMetadata, objectType)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function saturneExtendGetObjectsMetadata(array $parameters): int
+    {
+        $this->results['call_list'] = [
+            'mainmenu'       => 'reedcrm',
+            'leftmenu'       => 'call_list',
+            'langs'          => 'CallList',
+            'langfile'       => 'reedcrm@reedcrm',
+            'picto'          => 'fontawesome_fa-phone_fas_#63ACC9',
+            'color'          => '#63ACC9',
+            'class_name'     => 'CallList',
+            'name_field'     => 'ref',
+            'post_name'      => 'fk_call_list',
+            'link_name'      => 'call_list',
+            'tab_type'       => 'call_list',
+            'table_element'  => 'reedcrm_call_list',
+            'hook_name_card' => 'call_listcard',
+            'hook_name_list' => 'call_list_list',
+            'create_url'     => 'custom/reedcrm/view/call_list_card.php',
+            'list_url'       => 'custom/reedcrm/view/call_list_list.php',
+            'defaultsort'    => 't.rowid',
+            'defaultorder'   => 'DESC',
+            'class_path'     => 'custom/reedcrm/class/calllist.class.php',
+            'lib_path'       => 'custom/reedcrm/lib/reedcrm_call_list.lib.php',
+        ];
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
      * Overloading the saturneListAddCustomFields hook : inject custom fields for propal list
      *
      * @param  array        $parameters Hook metadatas (objectType, excludeFields)
@@ -1925,6 +1960,12 @@ class ActionsReedcrm
                 $this->results     = [$key => $fn($parameters, $object)];
                 return 1;
             }
+        }
+
+        // Call list: render the ref as a clickable link to the card (generic loop prints it as plain text)
+        if (strpos($parameters['context'], 'call_list_list') !== false && $parameters['key'] === 'ref') {
+            $this->results = ['ref' => $object->getNomUrl(1)];
+            return 1;
         }
 
         return 0; // or return 1 to replace standard code

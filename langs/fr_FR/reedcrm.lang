@@ -375,6 +375,9 @@ ReedCRMStatusAsBadge = État : pastille
 CallList = Liste d'appel
 CallLists = Listes d'appel
 NewCallList = Nouvelle liste d'appel
+# Derived keys auto-built by the generic saturne_list.php from the element name (call_list)
+Call_listList = Listes d'appel
+NewCall_list = Nouvelle liste d'appel
 CallListStatus0 = Brouillon
 CallListStatus1 = Active
 CallListStatus2 = Archivée
