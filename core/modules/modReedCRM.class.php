@@ -543,7 +543,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-phone pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'call_list',
-            'url'      => '/reedcrm/view/call_list_list.php',
+            'url'      => '/custom/saturne/view/saturne_list.php?object_type=call_list',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
