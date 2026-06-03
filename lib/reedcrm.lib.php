@@ -76,12 +76,14 @@ function reedcrm_admin_prepare_head(): array
 }
 
 /**
- * Bulk fetch latest documents for a list of project IDs.
+ * Bulk fetch documents for a list of project IDs.
  *
- * @param array $projectIds Array of project IDs
- * @return array Multi-dimensional array: [project_id][doc_type] => ['ref' => ..., 'amount' => ..., 'url' => ...]
+ * @param  int[] $projectIds Array of project IDs.
+ * @param  bool  $includeAll When true, each piece key also carries an 'all' list of every document
+ *                           of that type (ordered by rowid); the top-level fields stay the latest one.
+ * @return array Multi-dimensional array: [project_id][doc_type] => ['ref' => ..., 'amount' => ..., 'url' => ..., 'all' => [...]].
  */
-function reedcrm_get_pwa_projects_documents(array $projectIds): array
+function reedcrm_get_pwa_projects_documents(array $projectIds, bool $includeAll = false): array
 {
     global $db, $conf;
 
@@ -113,41 +115,64 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
         $res = $db->query($sql);
         if ($res) {
             while ($row = $db->fetch_object($res)) {
-                $results[$row->fk_projet]['montant'] = [
-                    'ref' => $row->ref,
-                    'amount' => (float)$row->total_ht,
+                $entry = [
+                    'ref'    => $row->ref,
+                    'amount' => (float) $row->total_ht,
                     'status' => null,
-                    'url' => DOL_URL_ROOT . '/projet/card.php?id=' . $row->fk_projet
+                    'url'    => DOL_URL_ROOT . '/projet/card.php?id=' . $row->fk_projet
                 ];
+                $results[$row->fk_projet]['montant'] = $entry;
+                if ($includeAll) {
+                    $results[$row->fk_projet]['montant']['all'] = [$entry];
+                }
             }
         }
     }
 
     // Helper closure to query simple tables
-    $querySimpleTable = function ($constantName, $tableName, $key, $urlPath, $hasAmount = true) use ($db, $idListStr, &$results) {
+    $querySimpleTable = function ($constantName, $tableName, $key, $urlPath, $hasAmount = true) use ($db, $idListStr, $includeAll, &$results) {
         global $conf;
         if (empty($conf->global->$constantName)) {
             return;
         }
 
-        $sql = "SELECT t.fk_projet, t.rowid, t.ref, t.fk_statut AS status" . ($hasAmount ? ", t.total_ht" : "") . "
-                FROM " . MAIN_DB_PREFIX . $tableName . " t
-                INNER JOIN (
-                    SELECT fk_projet, MAX(rowid) as max_id
-                    FROM " . MAIN_DB_PREFIX . $tableName . "
-                    WHERE fk_projet IN (" . $idListStr . ")
-                    GROUP BY fk_projet
-                ) latest ON t.rowid = latest.max_id";
+        $cols = "t.fk_projet, t.rowid, t.ref, t.fk_statut AS status" . ($hasAmount ? ", t.total_ht" : "");
+        if ($includeAll) {
+            $sql = "SELECT " . $cols . " FROM " . MAIN_DB_PREFIX . $tableName . " t"
+                 . " WHERE t.fk_projet IN (" . $idListStr . ") ORDER BY t.fk_projet, t.rowid";
+        } else {
+            $sql = "SELECT " . $cols . "
+                    FROM " . MAIN_DB_PREFIX . $tableName . " t
+                    INNER JOIN (
+                        SELECT fk_projet, MAX(rowid) as max_id
+                        FROM " . MAIN_DB_PREFIX . $tableName . "
+                        WHERE fk_projet IN (" . $idListStr . ")
+                        GROUP BY fk_projet
+                    ) latest ON t.rowid = latest.max_id";
+        }
 
         $res = $db->query($sql);
         if ($res) {
             while ($row = $db->fetch_object($res)) {
-                $results[$row->fk_projet][$key] = [
-                    'ref' => $row->ref,
-                    'amount' => $hasAmount ? (float)$row->total_ht : null,
+                $entry = [
+                    'ref'    => $row->ref,
+                    'amount' => $hasAmount ? (float) $row->total_ht : null,
                     'status' => isset($row->status) ? (int) $row->status : null,
-                    'url' => DOL_URL_ROOT . $urlPath . $row->rowid
+                    'url'    => DOL_URL_ROOT . $urlPath . $row->rowid
                 ];
+                if ($includeAll) {
+                    if (!is_array($results[$row->fk_projet][$key])) {
+                        $results[$row->fk_projet][$key] = ['all' => []];
+                    }
+                    $results[$row->fk_projet][$key]['all'][] = $entry;
+                    // Rows are ordered by rowid ASC: the last iteration is the representative latest.
+                    $results[$row->fk_projet][$key]['ref']    = $entry['ref'];
+                    $results[$row->fk_projet][$key]['amount'] = $entry['amount'];
+                    $results[$row->fk_projet][$key]['status'] = $entry['status'];
+                    $results[$row->fk_projet][$key]['url']    = $entry['url'];
+                } else {
+                    $results[$row->fk_projet][$key] = $entry;
+                }
             }
         }
     };
@@ -175,28 +200,49 @@ function reedcrm_get_pwa_projects_documents(array $projectIds): array
 
     // 9. Payment (transitively linked via payments on invoices)
     if (!empty($conf->global->REEDCRM_PWA_SHOW_PAYMENT)) {
-        $sql = "SELECT f.fk_projet, p.ref, p.amount, p.rowid
-                FROM " . MAIN_DB_PREFIX . "paiement p
-                JOIN " . MAIN_DB_PREFIX . "paiement_facture pf ON pf.fk_paiement = p.rowid
-                JOIN " . MAIN_DB_PREFIX . "facture f ON f.rowid = pf.fk_facture
-                INNER JOIN (
-                    SELECT f2.fk_projet, MAX(p2.rowid) as max_id
-                    FROM " . MAIN_DB_PREFIX . "paiement p2
-                    JOIN " . MAIN_DB_PREFIX . "paiement_facture pf2 ON pf2.fk_paiement = p2.rowid
-                    JOIN " . MAIN_DB_PREFIX . "facture f2 ON f2.rowid = pf2.fk_facture
-                    WHERE f2.fk_projet IN (" . $idListStr . ")
-                    GROUP BY f2.fk_projet
-                ) latest ON p.rowid = latest.max_id AND f.fk_projet = latest.fk_projet";
+        if ($includeAll) {
+            $sql = "SELECT DISTINCT f.fk_projet, p.ref, p.amount, p.rowid
+                    FROM " . MAIN_DB_PREFIX . "paiement p
+                    JOIN " . MAIN_DB_PREFIX . "paiement_facture pf ON pf.fk_paiement = p.rowid
+                    JOIN " . MAIN_DB_PREFIX . "facture f ON f.rowid = pf.fk_facture
+                    WHERE f.fk_projet IN (" . $idListStr . ")
+                    ORDER BY f.fk_projet, p.rowid";
+        } else {
+            $sql = "SELECT f.fk_projet, p.ref, p.amount, p.rowid
+                    FROM " . MAIN_DB_PREFIX . "paiement p
+                    JOIN " . MAIN_DB_PREFIX . "paiement_facture pf ON pf.fk_paiement = p.rowid
+                    JOIN " . MAIN_DB_PREFIX . "facture f ON f.rowid = pf.fk_facture
+                    INNER JOIN (
+                        SELECT f2.fk_projet, MAX(p2.rowid) as max_id
+                        FROM " . MAIN_DB_PREFIX . "paiement p2
+                        JOIN " . MAIN_DB_PREFIX . "paiement_facture pf2 ON pf2.fk_paiement = p2.rowid
+                        JOIN " . MAIN_DB_PREFIX . "facture f2 ON f2.rowid = pf2.fk_facture
+                        WHERE f2.fk_projet IN (" . $idListStr . ")
+                        GROUP BY f2.fk_projet
+                    ) latest ON p.rowid = latest.max_id AND f.fk_projet = latest.fk_projet";
+        }
 
         $res = $db->query($sql);
         if ($res) {
             while ($row = $db->fetch_object($res)) {
-                $results[$row->fk_projet]['payment'] = [
-                    'ref' => $row->ref,
-                    'amount' => (float)$row->amount,
+                $entry = [
+                    'ref'    => $row->ref,
+                    'amount' => (float) $row->amount,
                     'status' => null,
-                    'url' => DOL_URL_ROOT . '/compta/paiement/card.php?id=' . $row->rowid
+                    'url'    => DOL_URL_ROOT . '/compta/paiement/card.php?id=' . $row->rowid
                 ];
+                if ($includeAll) {
+                    if (!is_array($results[$row->fk_projet]['payment'])) {
+                        $results[$row->fk_projet]['payment'] = ['all' => []];
+                    }
+                    $results[$row->fk_projet]['payment']['all'][] = $entry;
+                    $results[$row->fk_projet]['payment']['ref']    = $entry['ref'];
+                    $results[$row->fk_projet]['payment']['amount'] = $entry['amount'];
+                    $results[$row->fk_projet]['payment']['status'] = $entry['status'];
+                    $results[$row->fk_projet]['payment']['url']    = $entry['url'];
+                } else {
+                    $results[$row->fk_projet]['payment'] = $entry;
+                }
             }
         }
     }
@@ -341,5 +387,49 @@ function reedcrm_chain_bar_styles(): string
     .pwa-doc-bar.icons-only .pwa-doc-item { padding:0; width:34px; height:34px; justify-content:center; }
     .pwa-doc-bar.icons-only .pwa-doc-label, .pwa-doc-bar.icons-only .pwa-doc-item > span:not(.pwa-doc-badge), .pwa-doc-bar.icons-only .pwa-doc-item > a { display:none; }
     .pwa-doc-label { font-weight: 500; color: #64748b; }
+</style>';
+}
+
+/**
+ * Return the <style> block for the opportunity chain matrix, once per request only.
+ * Reuses the is-done/is-current/is-todo/has-warn/has-err semantics of reedcrm_chain_bar_styles().
+ *
+ * @return string The <style> block on the first call, '' afterwards.
+ */
+function reedcrm_chain_matrix_styles(): string
+{
+    static $emitted = false;
+    if ($emitted) {
+        return '';
+    }
+    $emitted = true;
+
+    return '<style>
+    .pwa-matrix-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; }
+    table.pwa-doc-matrix { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 0.82em; }
+    table.pwa-doc-matrix th, table.pwa-doc-matrix td { border-bottom: 1px solid #eef2f7; border-right: 1px solid #eef2f7; padding: 6px 8px; vertical-align: top; text-align: left; }
+    table.pwa-doc-matrix thead th { position: sticky; top: 0; z-index: 3; background: #f1f5f9; color: #334155; font-weight: 600; white-space: nowrap; box-shadow: inset 0 -1px 0 #cbd5e0; }
+    table.pwa-doc-matrix tbody th.pwa-matrix-rowhead, table.pwa-doc-matrix thead th.pwa-matrix-corner { position: sticky; left: 0; z-index: 2; background: #f8fafc; color: #475569; font-weight: 600; white-space: nowrap; box-shadow: inset -1px 0 0 #cbd5e0; }
+    table.pwa-doc-matrix thead th.pwa-matrix-corner { z-index: 4; }
+    table.pwa-doc-matrix th.pwa-matrix-rowhead i { width: 16px; text-align: center; margin-right: 6px; color: #64748b; }
+    .pwa-matrix-projhead a { color: #1e293b; font-weight: 600; text-decoration: none; }
+    .pwa-matrix-projhead .pwa-matrix-projtitle { display: block; font-weight: 400; color: #64748b; font-size: 0.85em; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pwa-matrix-cell { position: relative; }
+    .pwa-matrix-cell.is-done    { background: #e7f5ea; }
+    .pwa-matrix-cell.is-current { background: #e8f0fe; box-shadow: inset 0 0 0 2px rgba(59,118,232,.45); }
+    .pwa-matrix-cell.is-todo    { background: #fff; }
+    .pwa-matrix-cell.has-warn   { box-shadow: inset 0 0 0 2px rgba(232,146,59,.55); }
+    .pwa-matrix-cell.has-err    { box-shadow: inset 0 0 0 2px rgba(211,74,74,.6); }
+    .pwa-matrix-count { display: inline-block; min-width: 16px; height: 16px; line-height: 16px; text-align: center; font-size: 10px; font-weight: 700; color: #fff; background: #64748b; border-radius: 8px; padding: 0 4px; margin-bottom: 3px; }
+    .pwa-matrix-cell.is-done .pwa-matrix-count    { background: #1f8a3b; }
+    .pwa-matrix-cell.is-current .pwa-matrix-count { background: #1f57c3; }
+    .pwa-matrix-doc { display: block; white-space: nowrap; }
+    .pwa-matrix-doc a { color: #1d4ed8; text-decoration: none; }
+    .pwa-matrix-doc.is-bad a { color: #b91c1c; text-decoration: line-through; }
+    .pwa-matrix-doc .pwa-matrix-status { color: #64748b; }
+    .pwa-matrix-badge { position: absolute; top: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; color: #fff; font-size: 9px; line-height: 15px; text-align: center; background: #e8923b; }
+    .pwa-matrix-badge.err { background: #d34a4a; }
+    .pwa-matrix-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; background: #1e293b; color: #fff !important; text-decoration: none; font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .pwa-matrix-toggle:hover { background: #334155; }
 </style>';
 }
