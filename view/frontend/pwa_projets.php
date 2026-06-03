@@ -149,10 +149,18 @@ if ($totalPages > 1) {
     $paginationHtml .= '</div>';
 }
 
+require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/lib/reedcrm.lib.php';
+$selfMatrix = dol_buildpath('/custom/reedcrm/view/frontend/pwa_projets_overview.php', 1);
+$qsToggle   = (!empty($searchStr) ? '&s=' . urlencode($searchStr) : '') . ($page > 0 ? '&page=' . (int) $page : '');
+$toggleHtml = '<a href="' . $selfMatrix . '?source=pwa' . $qsToggle . '" class="pwa-matrix-toggle"><i class="fas fa-th"></i><span>' . $langs->trans('ViewAsMatrix') . '</span></a>';
+
 $pwaHeaderCenterHtml = '<div style="display: flex; align-items: center; width: 100%; justify-content: center; gap: 8px;">';
 $pwaHeaderCenterHtml .=    $searchHtml;
 $pwaHeaderCenterHtml .=    $paginationHtml;
+$pwaHeaderCenterHtml .=    $toggleHtml;
 $pwaHeaderCenterHtml .= '</div>';
+
+print reedcrm_chain_matrix_styles();
 
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
