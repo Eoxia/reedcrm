@@ -71,7 +71,7 @@
             <div>
                 <label for="project_id">
                     <?php echo img_picto('', 'project'); ?>
-                    <div class="select2-container"><?php echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id'); ?></div>
+                    <div class="select2-container"><?php echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id', 64); ?></div>
                 </label>
             </div>
             <?php if (!empty($object->usage_opportunity)) { ?>
