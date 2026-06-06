@@ -499,3 +499,4 @@ TicketTimeDefaultMinutes=Temps par défaut (minutes)
 TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le bloc de saisie rapide sur le ticket.
 
 PleaseLinkProjectFirst=Veuillez d'abord lier un projet au ticket
+ReedCRMLogTimeWithMessage=Enregistrer le temps passé avec ce message

@@ -340,6 +340,98 @@ class ActionsReedcrm
      */
     public function doActions(array $parameters, $object, string $action): int
     {
+        // Auto-log time when a ticket message is sent and the checkbox is checked
+        if (strpos($parameters['context'], 'ticketcard') !== false && $action == 'add_message') {
+            if (GETPOSTISSET('reedcrm_log_time') && GETPOSTINT('reedcrm_log_time') == 1) {
+                global $user, $db, $conf;
+
+                $ticketId     = $object->id;
+                $minutes      = GETPOSTINT('reedcrm_log_minutes');
+                $note         = GETPOST('message', 'restricthtml'); // the message body
+                // Strip HTML tags for the note
+                $note         = strip_tags($note);
+                if ($minutes <= 0) {
+                    $minutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
+                }
+
+                if ($ticketId > 0 && $object->fk_project > 0) {
+                    require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+                    require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+                    $prefix      = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_PREFIX', 'ticket_tps');
+                    $suffix_type = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref');
+
+                    $project = new Project($db);
+                    $project->fetch($object->fk_project);
+
+                    $suffix_str = '';
+                    if ($suffix_type === 'ticket_ref') {
+                        $suffix_str = ' ' . $object->ref;
+                    } elseif ($suffix_type === 'project_ref') {
+                        $suffix_str = ' ' . $project->ref;
+                    } elseif ($suffix_type === 'project_label') {
+                        $suffix_str = ' ' . $project->title;
+                    }
+                    $expected_label = trim($prefix . $suffix_str);
+
+                    // Find or create the task
+                    $sql    = 'SELECT t.rowid FROM ' . MAIN_DB_PREFIX . 'projet_task as t';
+                    $sql   .= ' WHERE t.fk_projet = ' . (int)$object->fk_project;
+                    $sql   .= " AND t.label = '" . $db->escape($expected_label) . "'";
+                    $resql  = $db->query($sql);
+                    $task   = new Task($db);
+                    if ($resql && ($obj = $db->fetch_object($resql)) && $obj) {
+                        $task->fetch($obj->rowid);
+                    } else {
+                        $task->fk_project  = $object->fk_project;
+                        $task->ref         = $object->ref;
+                        $task->label       = $expected_label;
+                        $task->description = 'Tâche générée automatiquement pour le ticket ' . $object->ref;
+                        $task->date_c      = dol_now();
+                        $task->date_start  = dol_now();
+                        $task->date_end    = dol_now();
+                        $task->progress    = 0;
+                        $resCreate = $task->create($user);
+                        if ($resCreate <= 0) {
+                            $task = null;
+                        }
+                    }
+
+                    if (!empty($task) && $task->id > 0) {
+                        $task->timespent_duration = $minutes * 60;
+                        $task->timespent_date     = dol_now();
+                        $task->timespent_datehour = dol_now();
+                        $task->timespent_fk_user  = $user->id;
+                        $task->timespent_note     = $note;
+                        $task->addTimeSpent($user);
+
+                        // Also create an ActionComm
+                        $titleMaxLength      = getDolGlobalInt('REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', 200);
+                        $clean_label         = dol_trunc(trim(preg_replace('/\s+/', ' ', $note)), $titleMaxLength);
+                        $actioncomm          = new ActionComm($db);
+                        $actioncomm->type_code = 'AC_OTH_AUTO';
+                        $actioncomm->code    = 'TICKET_TIMESPENT';
+                        $actioncomm->socid   = $object->socid;
+                        $actioncomm->fk_project = $object->fk_project;
+                        $actioncomm->fk_element = $ticketId;
+                        $actioncomm->elementtype = 'ticket';
+                        $actioncomm->label   = !empty($clean_label) ? $clean_label : 'Temps consigné (' . $minutes . ' min)';
+                        $desc = 'Temps : ' . $minutes . ' min';
+                        if (!empty($note)) {
+                            $desc .= '<br>Commentaire :<br>' . nl2br(dol_escape_htmltag($note));
+                        }
+                        $actioncomm->note_private = $desc;
+                        $actioncomm->datep        = dol_now();
+                        $actioncomm->datef        = dol_now();
+                        $actioncomm->userownerid  = $user->id;
+                        $actioncomm->percentage   = 100;
+                        $actioncomm->create($user);
+                    }
+                }
+            }
+        }
+
         if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
             if ($action == 'set_notation_object_contact') {
                 require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
@@ -2189,13 +2281,30 @@ class ActionsReedcrm
      */
     public function formObjectOptions(array $parameters, $object, $action): int
     {
-        global $extrafields, $langs;
+        global $extrafields, $langs, $conf;
 
         if (strpos($parameters['context'], 'projectcard') !== false && $object instanceof Project) {
             $picto            = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule"');
             $extraFieldsNames = ['opporigin'];
             foreach ($extraFieldsNames as $extraFieldsName) {
                 $extrafields->attributes['projet']['label'][$extraFieldsName] = $picto . $langs->transnoentities($extrafields->attributes['projet']['label'][$extraFieldsName]);
+            }
+        }
+
+        // Add time-logging checkbox below the message form on ticket card
+        if (strpos($parameters['context'], 'ticketcard') !== false && in_array($action, ['presend', 'presend_addmessage', 'add_message'])) {
+            $defaultMinutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
+            $hasProject     = !empty($object->fk_project) && $object->fk_project > 0;
+
+            if ($hasProject) {
+                print '<div style="margin: 8px 0 4px 0; padding: 6px 10px; background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 6px; display: flex; align-items: center; gap: 10px; font-size: 0.93em; color: #276749;">';
+                print '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0;">';
+                print '<input type="checkbox" name="reedcrm_log_time" id="reedcrm_log_time" value="1" style="cursor: pointer;">';
+                print ' <i class="fas fa-clock" style="color: #48bb78;"></i> ';
+                print $langs->trans('ReedCRMLogTimeWithMessage');
+                print '</label>';
+                print '&nbsp;&nbsp;<input type="number" name="reedcrm_log_minutes" id="reedcrm_log_minutes" value="' . $defaultMinutes . '" min="1" style="width: 55px; border: 1px solid #9ae6b4; border-radius: 4px; padding: 2px 5px; font-size: 0.93em; background: #fff;"> min';
+                print '</div>';
             }
         }
 
