@@ -755,7 +755,7 @@ class ActionsReedcrm
                     ' . $logoHtml . '
                     <input type="text" id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff;">
                     <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> Min
-                    <button type="button" id="reedcrm-ticket-time-save" class="button button-a" style="padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center;">
+                    <button type="button" id="reedcrm-ticket-time-save" class="button" style="padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s;">
                         <i class="fas fa-save"></i>
                     </button>
                 </div>
@@ -776,7 +776,17 @@ class ActionsReedcrm
                             }
                         }
 
-                        jQuery("#reedcrm-ticket-time-save").on("click", function() {
+                        // Change button color when typing
+                        var saveBtn = jQuery("#reedcrm-ticket-time-save");
+                        jQuery("#reedcrm-ticket-time-note, #reedcrm-ticket-time-minutes").on("input", function() {
+                            if (jQuery("#reedcrm-ticket-time-note").val().trim() !== "") {
+                                saveBtn.css({"background-color": "#48bb78", "color": "#fff", "border-color": "#48bb78", "opacity": "1"});
+                            } else {
+                                saveBtn.css({"background-color": "", "color": "", "border-color": "", "opacity": "0.6"});
+                            }
+                        });
+
+                        saveBtn.on("click", function() {
                             var note = jQuery("#reedcrm-ticket-time-note").val();
                             var minutes = jQuery("#reedcrm-ticket-time-minutes").val();
                             var btn = jQuery(this);
