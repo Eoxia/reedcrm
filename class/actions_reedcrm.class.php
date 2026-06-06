@@ -911,7 +911,11 @@ class ActionsReedcrm
                 $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
             }
             
-            $logoHtml = '<div style="position: relative; margin-right: 8px; padding-right: 8px; border-right: 1px solid #cbd5e0; display: inline-flex;">';
+            $logoSrc = dol_buildpath('/custom/reedcrm/img/reedcrm_color.png', 1);
+            $reedLogoHtml = '<img src="' . dol_escape_htmltag($logoSrc) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+            
+            $logoHtml = '<div style="position: relative; margin-right: 8px; padding-right: 8px; border-right: 1px solid #cbd5e0; display: inline-flex; align-items: center;">';
+            $logoHtml .= $reedLogoHtml;
             $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml) . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: help;">';
             $logoHtml .= '<i class="fas fa-tasks"></i>';
             if ($timeCount > 0) {
