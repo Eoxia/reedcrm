@@ -2300,11 +2300,24 @@ class ActionsReedcrm
                 // Construction du logo propre à partir du helper Dolibarr
                 $logoHtml = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule" style="width: 22px; height: auto;"');
                 
-                print '<div style="margin: 8px 0 4px 0; display: flex; align-items: center; gap: 8px; font-size: 0.95em; color: #4a5568;">';
+                print '<div id="reedcrm-ticket-time-inline" style="display: none; align-items: center; gap: 8px; font-size: 0.95em; color: #4a5568; margin-right: 15px;">';
                 print $logoHtml;
                 print '<input type="checkbox" name="reedcrm_log_time" id="reedcrm_log_time" value="1" checked style="cursor: pointer; margin:0;">';
                 print '<input type="number" name="reedcrm_log_minutes" id="reedcrm_log_minutes" value="' . $defaultMinutes . '" min="1" style="width: 50px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; background: #fff; text-align: center;"> Min';
                 print '</div>';
+
+                print '<script>';
+                print 'jQuery(document).ready(function() {';
+                print '    var timeBlock = jQuery("#reedcrm-ticket-time-inline");';
+                // Cherche le bouton submit du formmail (id addmessage ou name btn_add_message)
+                print '    var btn = jQuery("#addmessage");';
+                print '    if (btn.length === 0) btn = jQuery("input[name=\'btn_add_message\'], button[name=\'btn_add_message\']").first();';
+                print '    if (btn.length > 0) {';
+                print '        btn.before(timeBlock);'; // Place juste avant le bouton
+                print '        timeBlock.css("display", "inline-flex");'; // Affiche une fois placé
+                print '    }';
+                print '});';
+                print '</script>';
             }
         }
 
