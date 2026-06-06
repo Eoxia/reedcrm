@@ -916,12 +916,24 @@ class ActionsReedcrm
             
             $logoHtml = '<div style="position: relative; margin-right: 8px; padding-right: 8px; border-right: 1px solid #cbd5e0; display: inline-flex; align-items: center;">';
             $logoHtml .= $reedLogoHtml;
-            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml) . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: help;">';
-            $logoHtml .= '<i class="fas fa-tasks"></i>';
+            
+            // Link to the task if task_id exists
+            if ($task_id > 0) {
+                $taskUrl = DOL_URL_ROOT . '/projet/tasks/task.php?id=' . $task_id . '&withproject=1';
+                $logoHtml .= '<a href="' . $taskUrl . '">';
+            }
+            
+            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml) . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: pointer;">';
+            $logoHtml .= '<i class="fas fa-list"></i>';
             if ($timeCount > 0) {
                 $logoHtml .= '<span style="position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1;">' . $timeCount . '</span>';
             }
-            $logoHtml .= '</span></div>';
+            $logoHtml .= '</span>';
+            
+            if ($task_id > 0) {
+                $logoHtml .= '</a>';
+            }
+            $logoHtml .= '</div>';
 
             if (!empty($object->fk_project)) {
                 $html = '
