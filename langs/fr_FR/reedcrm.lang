@@ -500,3 +500,6 @@ TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le blo
 
 PleaseLinkProjectFirst=Veuillez d'abord lier un projet au ticket
 ReedCRMLogTimeWithMessage=Enregistrer le temps passé avec ce message
+ReedCRMTimeEntriesLatest=Derniers temps pointés (%s/%s) :
+ReedCRMNoTimeEntries=Aucun temps pointé sur cette tâche.
+

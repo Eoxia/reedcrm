@@ -837,10 +837,88 @@ class ActionsReedcrm
             }
         }
         if (strpos($parameters['context'], 'ticketcard') !== false && $object instanceof Ticket) {
+            global $db;
             $defaultMinutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
-            $logoSrc = dol_buildpath('/custom/reedcrm/img/reedcrm_color.png', 1);
-            $logoHtml = '<img src="' . dol_escape_htmltag($logoSrc) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
             
+            $task_id = 0;
+            $timeCount = 0;
+            $timeEntries = [];
+            if (!empty($object->fk_project)) {
+                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+                
+                $prefix      = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_PREFIX', 'ticket_tps');
+                $suffix_type = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref');
+                $project = new Project($db);
+                $project->fetch($object->fk_project);
+                
+                $suffix_str = '';
+                if ($suffix_type === 'ticket_ref') {
+                    $suffix_str = ' ' . $object->ref;
+                } elseif ($suffix_type === 'project_ref') {
+                    $suffix_str = ' ' . $project->ref;
+                } elseif ($suffix_type === 'project_label') {
+                    $suffix_str = ' ' . $project->title;
+                }
+                $expected_label = trim($prefix . $suffix_str);
+                
+                $sql    = 'SELECT t.rowid FROM ' . MAIN_DB_PREFIX . 'projet_task as t';
+                $sql   .= ' WHERE t.fk_projet = ' . (int)$object->fk_project;
+                $sql   .= " AND t.label = '" . $db->escape($expected_label) . "'";
+                $resql  = $db->query($sql);
+                if ($resql && ($objTask = $db->fetch_object($resql)) && $objTask) {
+                    $task_id = $objTask->rowid;
+                }
+                
+                if ($task_id > 0) {
+                    $sqlC = "SELECT COUNT(rowid) as nb FROM " . MAIN_DB_PREFIX . "projet_task_time WHERE fk_task = " . (int)$task_id;
+                    $resC = $db->query($sqlC);
+                    if ($resC && ($objC = $db->fetch_object($resC))) {
+                        $timeCount = $objC->nb;
+                    }
+                    
+                    $sqlE = "SELECT pt.task_datehour, pt.task_duration, pt.note, u.login FROM " . MAIN_DB_PREFIX . "projet_task_time as pt LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON u.rowid = pt.fk_user WHERE pt.fk_task = " . (int)$task_id . " ORDER BY pt.task_datehour DESC LIMIT 5";
+                    $resE = $db->query($sqlE);
+                    if ($resE) {
+                        while ($objE = $db->fetch_object($resE)) {
+                            $timeEntries[] = $objE;
+                        }
+                    }
+                }
+            }
+            
+            $tooltipHtml = '';
+            if ($timeCount > 0) {
+                $tooltipHtml .= '<b>' . $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount) . '</b><br>';
+                $tooltipHtml .= '<table class="noborder" style="width: 100%; font-size: 0.9em; margin-top: 5px;">';
+                $tooltipHtml .= '<tr class="liste_titre"><td style="padding: 2px 10px 2px 0;">' . $langs->trans('Date') . '</td><td style="padding: 2px 10px 2px 0;">' . $langs->trans('User') . '</td><td style="padding: 2px 10px 2px 0;">' . $langs->trans('Note') . '</td><td style="padding: 2px 0;">' . $langs->trans('Duration') . '</td></tr>';
+                foreach ($timeEntries as $te) {
+                    $dateTs   = $db->jdate($te->task_datehour);
+                    $dateStr  = dol_print_date($dateTs, 'dayhour');
+                    $userStr  = $te->login;
+                    $noteStr  = dol_trunc(strip_tags($te->note), 100);
+                    $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
+                    
+                    $tooltipHtml .= '<tr>';
+                    $tooltipHtml .= '<td style="padding: 2px 10px 2px 0;">' . $dateStr . '</td>';
+                    $tooltipHtml .= '<td style="padding: 2px 10px 2px 0;">' . $userStr . '</td>';
+                    $tooltipHtml .= '<td style="padding: 2px 10px 2px 0;">' . dol_escape_htmltag($noteStr) . '</td>';
+                    $tooltipHtml .= '<td style="padding: 2px 0;">' . $dureeStr . '</td>';
+                    $tooltipHtml .= '</tr>';
+                }
+                $tooltipHtml .= '</table>';
+            } else {
+                $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
+            }
+            
+            $logoHtml = '<div style="position: relative; margin-right: 8px; padding-right: 8px; border-right: 1px solid #cbd5e0; display: inline-flex;">';
+            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml) . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: help;">';
+            $logoHtml .= '<i class="fas fa-tasks"></i>';
+            if ($timeCount > 0) {
+                $logoHtml .= '<span style="position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1;">' . $timeCount . '</span>';
+            }
+            $logoHtml .= '</span></div>';
+
             if (!empty($object->fk_project)) {
                 $html = '
                 <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 5px;">
