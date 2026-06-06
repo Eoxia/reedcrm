@@ -493,6 +493,9 @@ TicketTimeTaskSuffixProjectRef=Référence du projet
 TicketTimeTaskSuffixProjectLabel=Libellé du projet
 TicketTimeTaskSuffixNone=Rien (préfixe uniquement)
 
+TicketTimeTitleMaxLength=Longueur max du titre de l'événement
+TicketTimeTitleMaxLengthDescription=Nombre maximum de caractères conservés pour le titre de l'événement dans l'agenda (tronqué automatiquement, max recommandé : 255).
+
 TicketTimeDefaultMinutes=Temps par défaut (minutes)
 TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le bloc de saisie rapide sur le ticket.
 

@@ -134,8 +134,9 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
             $actioncomm->code = 'TICKET_TIMESPENT';
             $actioncomm->socid = $ticket->socid;
             
+            $titleMaxLength = getDolGlobalInt('REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', 200);
             $clean_note_for_label = trim(preg_replace('/\s+/', ' ', $note));
-            $actioncomm->label = !empty($clean_note_for_label) ? dol_trunc($clean_note_for_label, 100) : 'Temps consigné (' . $minutes . ' min)';
+            $actioncomm->label = !empty($clean_note_for_label) ? dol_trunc($clean_note_for_label, $titleMaxLength) : 'Temps consigné (' . $minutes . ' min)';
             
             $desc = 'Temps : ' . $minutes . ' min';
             if (!empty($note)) {

@@ -71,6 +71,13 @@ if ($action == 'set_config') {
         dolibarr_set_const($db, 'REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref', 'chaine', 0, '', $conf->entity);
     }
 
+    $ticketTimeTitleMaxLength = GETPOSTINT('ticket_time_title_max_length');
+    if ($ticketTimeTitleMaxLength > 0) {
+        dolibarr_set_const($db, 'REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', $ticketTimeTitleMaxLength, 'integer', 0, '', $conf->entity);
+    } else {
+        dolibarr_del_const($db, 'REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', $conf->entity);
+    }
+
     if ($ticketTimeDefaultMinutes > 0) {
         dolibarr_set_const($db, 'REEDCRM_TICKET_TIME_DEFAULT_MINUTES', $ticketTimeDefaultMinutes, 'integer', 0, '', $conf->entity);
     } else {
@@ -138,6 +145,14 @@ $options = array(
 );
 print $form->selectarray('ticket_time_task_suffix', $options, getDolGlobalString('REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref'));
 print '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('TicketTimeTitleMaxLength');
+print '</td><td>';
+print $langs->transnoentities('TicketTimeTitleMaxLengthDescription');
+print '</td>';
+print '<td><input type="number" id="ticket_time_title_max_length" name="ticket_time_title_max_length" min="1" max="255" value="' . getDolGlobalInt('REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', 200) . '"></td>';
 print '</tr>';
 
 print '<tr class="oddeven"><td>';
