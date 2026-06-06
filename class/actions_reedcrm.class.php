@@ -744,6 +744,102 @@ class ActionsReedcrm
                 <?php
             }
         }
+        if (strpos($parameters['context'], 'ticketcard') !== false && $object instanceof Ticket) {
+            $defaultMinutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
+            $logoSrc = dol_buildpath('/custom/reedcrm/img/reedcrm_color.png', 1);
+            $logoHtml = '<img src="' . dol_escape_htmltag($logoSrc) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+            
+            if (!empty($object->fk_project)) {
+                $html = '
+                <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 5px;">
+                    ' . $logoHtml . '
+                    <input type="text" id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff;">
+                    <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> ' . dol_escape_htmltag($langs->trans('Minutes')) . '
+                    <button type="button" id="reedcrm-ticket-time-save" class="button button-a" style="padding: 2px 6px; margin: 0; line-height: 1; border-radius: 4px;">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+                <script>
+                    jQuery(document).ready(function() {
+                        var block = jQuery("#reedcrm-ticket-time-block");
+                        block.css("display", "inline-flex");
+                        var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
+                        if (flexContainer) {
+                            flexContainer.appendChild(block[0]);
+                        } else {
+                            var titreRight = jQuery("div.titre_right").first();
+                            if (titreRight.length) {
+                                var wrapper = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(block);
+                                titreRight.after(wrapper);
+                            } else {
+                                jQuery(".refidno").first().after(block);
+                            }
+                        }
+
+                        jQuery("#reedcrm-ticket-time-save").on("click", function() {
+                            var note = jQuery("#reedcrm-ticket-time-note").val();
+                            var minutes = jQuery("#reedcrm-ticket-time-minutes").val();
+                            var btn = jQuery(this);
+
+                            btn.prop("disabled", true).html("<i class=\'fas fa-spinner fa-spin\'></i>");
+
+                            jQuery.ajax({
+                                url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_time.php",
+                                method: "POST",
+                                data: {
+                                    action: "save_time",
+                                    ticket_id: ' . ((int)$object->id) . ',
+                                    note: note,
+                                    minutes: minutes,
+                                    token: "' . newToken() . '"
+                                },
+                                dataType: "json",
+                                success: function(response) {
+                                    btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                    if (response.success) {
+                                        $.jnotify("' . dol_escape_js($langs->trans("RecordSaved")) . '", "success");
+                                        jQuery("#reedcrm-ticket-time-note").val("");
+                                    } else {
+                                        $.jnotify(response.error, "error");
+                                    }
+                                },
+                                error: function() {
+                                    btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                    $.jnotify("Erreur réseau", "error");
+                                }
+                            });
+                        });
+                    });
+                </script>
+                ';
+            } else {
+                $html = '
+                <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #fffaf0; border: 1px solid #feebc8; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #c05621; gap: 5px;">
+                    ' . $logoHtml . '
+                    <span><i class="fas fa-exclamation-triangle"></i> ' . dol_escape_htmltag($langs->trans('PleaseLinkProjectFirst')) . '</span>
+                </div>
+                <script>
+                    jQuery(document).ready(function() {
+                        var block = jQuery("#reedcrm-ticket-time-block");
+                        block.css("display", "inline-flex");
+                        var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
+                        if (flexContainer) {
+                            flexContainer.appendChild(block[0]);
+                        } else {
+                            var titreRight = jQuery("div.titre_right").first();
+                            if (titreRight.length) {
+                                var wrapper = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(block);
+                                titreRight.after(wrapper);
+                            } else {
+                                jQuery(".refidno").first().after(block);
+                            }
+                        }
+                    });
+                </script>
+                ';
+            }
+            print $html;
+        }
 
         return 0; // or return 1 to replace standard code
     }
