@@ -119,12 +119,14 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
             $actioncomm->code = 'TICKET_TIMESPENT';
             $actioncomm->socid = $ticket->socid;
             
-            $labelTime = 'Temps consigné : ' . $minutes . ' min';
+            $actioncomm->label = !empty($note) ? $note : 'Temps consigné (' . $minutes . ' min)';
+            
+            $desc = 'Temps : ' . $minutes . ' min';
             if (!empty($note)) {
-                $labelTime .= ' (' . dol_trunc($note, 50) . ')';
+                $desc .= '<br>Commentaire : ' . dol_escape_htmltag($note);
             }
-            $actioncomm->label = $labelTime;
-            $actioncomm->note_private = $note;
+            $actioncomm->note_private = $desc;
+            
             $actioncomm->userassigned = array($user->id => array('id' => $user->id, 'transparency' => 0));
             $actioncomm->userownerid = $user->id;
             $actioncomm->datep = dol_now();
