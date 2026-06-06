@@ -14,10 +14,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #
-# GÃƒÂ©nÃƒÂ©rique
+# Générique
 #
 
-# Data - DonnÃƒÂ©e
+# Data - Donnée
 ModuleReedCRMName = ReedCRM
 ModuleReedCRMDesc = Simplification de la CRM
 ReedCRMDescription = Simplification de la CRM
@@ -26,95 +26,95 @@ ReedCRMDescription = Simplification de la CRM
 # Quick Creation - Ajout rapide
 #
 
-# Data - DonnÃƒÂ©e
+# Data - Donnée
 QuickCreation = Ajout rapide
 QuickCreations = ajouts rapides
 QuickThirdPartyCreation = Ajout rapide de tiers
 QuickThirdPartyCreations = ajouts rapides de tiers
-QuickProjectCreation = Ajout rapide d'opportunitÃƒÂ© ou de projet
-QuickProjectCreations = ajouts rapides d'opportunitÃƒÂ© ou de projet
+QuickProjectCreation = Ajout rapide d'opportunité ou de projet
+QuickProjectCreations = ajouts rapides d'opportunité ou de projet
 QuickContactCreation = Ajout rapide de contact/adresse
 QuickContactCreations = ajouts rapides de contact/adresse
-QuickTaskCreations = ajouts rapides de tÃƒÂ¢che
+QuickTaskCreations = ajouts rapides de tâche
 CommercialFollowUp = SC
-CommercialTask = TÃƒÂ¢che commerciale
-ProjectPhone = TÃƒÂ©lÃƒÂ©phone projet
-ErrorInvalidProjectPhone = Le numÃƒÂ©ro de tÃƒÂ©lÃƒÂ©phone n'est pas valide ou est trop long (max 20 caractÃƒÂ¨res)
-ContactInformations = CoordonnÃƒÂ©es
+CommercialTask = Tâche commerciale
+ProjectPhone = Téléphone projet
+ErrorInvalidProjectPhone = Le numéro de téléphone n'est pas valide ou est trop long (max 20 caractères)
+ContactInformations = Coordonnées
 Vocal = Vocal
 
 # Frontend - Frontend
-QuickCreationFrontendSuccess = Ajout rapide d'opportunitÃƒÂ© effectuÃƒÂ© avec succÃƒÂ¨s
+QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
 
 
 
 #
-# Quick Event - Ajout rapide d'ÃƒÂ©vÃƒÂ©nement
+# Quick Event - Ajout rapide d'événement
 #
 
-# Data - DonnÃƒÂ©e
-QuickEventCreation = Ajout rapide d'ÃƒÂ©vÃƒÂ©nement
-QuickEventCreations = ajouts rapides d'ÃƒÂ©vÃƒÂ©nements
+# Data - Donnée
+QuickEventCreation = Ajout rapide d'événement
+QuickEventCreations = ajouts rapides d'événements
 CommercialRelaunching = Relance commerciale
 CommercialsRelaunching = Relances commerciales
-LastCommercialReminderDate = Date derniÃƒÂ¨re relance commerciale
-ActionCommCreation = Ãƒâ€°vÃƒÂ©nement crÃƒÂ©ÃƒÂ©
-ReminderActionCommCreation = Rappel crÃƒÂ©e le %s
+LastCommercialReminderDate = Date dernière relance commerciale
+ActionCommCreation = Événement créé
+ReminderActionCommCreation = Rappel crée le %s
 ErrorNoProjectAndThirdpartyInformations = Veuillez renseigner un nom de projet et un nom de tiers
-LastEvent = Dernier ÃƒÂ©vÃƒÂ©nement
+LastEvent = Dernier événement
 
 #
 # Config page - Page d'administration
 #
 
-# Data - DonnÃƒÂ©e
-OpportunityStatusDescription = Selection du statut d'opportunitÃƒÂ© <br> Valeur par dÃƒÂ©faut : <b> Prospection </b>
-OpportunityAmountDescription = Selection du montant d'opportunitÃƒÂ© <br> Valeur par dÃƒÂ©faut : <b> 3000 Ã¢â€šÂ¬ </b>
-ProspectCustomerDescription = Selection de la nature des tiers <br> Valeur par dÃƒÂ©faut : <b> Prospect </b>
+# Data - Donnée
+OpportunityStatusDescription = Selection du statut d'opportunité <br> Valeur par défaut : <b> Prospection </b>
+OpportunityAmountDescription = Selection du montant d'opportunité <br> Valeur par défaut : <b> 3000 € </b>
+ProspectCustomerDescription = Selection de la nature des tiers <br> Valeur par défaut : <b> Prospect </b>
 
 # App
 App = App
-AppCloseProjectOpportunityZero = ClÃƒÂ´turer le projet
-AppCloseProjectOpportunityZeroDescription = ClÃƒÂ´turer le projet quand l'opportunitÃƒÂ© est ÃƒÂ  0
+AppCloseProjectOpportunityZero = Clôturer le projet
+AppCloseProjectOpportunityZeroDescription = Clôturer le projet quand l'opportunité est à 0
 
 # Product Kit - Produit Kit
-ProductKitConf = ComplÃƒÂ©ter la description d'une ligne de devis avec la composition du kit
-ProductKitConfDesc = IndÃƒÂ©pendemment du paramÃƒÂ¨tre du module produit sur la complÃƒÂ©tion de la description. <br> A l'ajout d'un produit/service, ayant un kit, sur une ligne de devis, la description de la ligne sera remplacÃƒÂ©e par le libellÃƒÂ© et la description des produits composants.
-ProductInactiveMonths = Nombre de mois d'inactivitÃƒÂ© pour qu'un produit soit considÃƒÂ©rÃƒÂ© comme inactif
-ProductInactiveMonthsDescription = Nombre de mois d'inactivitÃƒÂ© (pas de vente ni d'achat) pour qu'un produit soit considÃƒÂ©rÃƒÂ© comme inactif dans les listes de sÃƒÂ©lection. <br> Valeur par dÃƒÂ©faut : <b> 6 </b>
+ProductKitConf = Compléter la description d'une ligne de devis avec la composition du kit
+ProductKitConfDesc = Indépendemment du paramètre du module produit sur la complétion de la description. <br> A l'ajout d'un produit/service, ayant un kit, sur une ligne de devis, la description de la ligne sera remplacée par le libellé et la description des produits composants.
+ProductInactiveMonths = Nombre de mois d'inactivité pour qu'un produit soit considéré comme inactif
+ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni d'achat) pour qu'un produit soit considéré comme inactif dans les listes de sélection. <br> Valeur par défaut : <b> 6 </b>
 
 # QuickEvent
-ReminderValue = DÃƒÂ©lai du rappel
-ReminderValueDescription = Nombre dÃ¢â‚¬â„¢unitÃƒÂ©s de temps avant lÃ¢â‚¬â„¢ÃƒÂ©vÃƒÂ©nement pour dÃƒÂ©clencher le rappel
-ReminderUnit = UnitÃƒÂ© du rappel
-ReminderUnitDescription = nitÃƒÂ© de temps utilisÃƒÂ©e pour le rappel
+ReminderValue = Délai du rappel
+ReminderValueDescription = Nombre d’unités de temps avant l’événement pour déclencher le rappel
+ReminderUnit = Unité du rappel
+ReminderUnitDescription = nité de temps utilisée pour le rappel
 
 # ApiQuickCreation
 ApiQuickCreations = ajouts rapides via l'api
 ApiUser = Utilisateur API
-ProjectAffectedUser = Utilisateur affectÃƒÂ© au projet
-ProjectAffectedTag = Tag affectÃƒÂ© au projet
+ProjectAffectedUser = Utilisateur affecté au projet
+ProjectAffectedTag = Tag affecté au projet
 
 #
 # Tools - Outils
 #
 
-# Data - DonnÃƒÂ©e
-UpdateObjectContactManagement = Gestion des mises ÃƒÂ  jour de contact facturation
+# Data - Donnée
+UpdateObjectContactManagement = Gestion des mises à jour de contact facturation
 UpdateObjectContact = Contact facturation pour %s
-UpdateObjectContactDescription = Mise ÃƒÂ  jour du rÃƒÂ´le "contacts facturation" pour %d %s impayÃƒÂ©es <br> Vous trouverez ci-aprÃƒÂ¨s la liste des tiers sans rÃƒÂ´le "contact facturation" contrÃƒÂ´lÃƒÂ© le
-SocietyObjectContactNotDefinedTitle = Liste des %d tiers sans rÃƒÂ´le "contact facturation"
+UpdateObjectContactDescription = Mise à jour du rôle "contacts facturation" pour %d %s impayées <br> Vous trouverez ci-après la liste des tiers sans rôle "contact facturation" contrôlé le
+SocietyObjectContactNotDefinedTitle = Liste des %d tiers sans rôle "contact facturation"
 AddContactNotificationManagement = Gestion des ajouts de notification contact
 AddContactNotification = Notification contact pour %s
-AddContactNotificationDescription = Ajout d'une notification contact "action Facture client validÃƒÂ©e" pour les tiers <br> Vous trouverez ci-aprÃƒÂ¨s la liste des tiers sans notification contact "action Facture client validÃƒÂ©e" contrÃƒÂ´lÃƒÂ© le
-SocietyContactNotificationNotDefinedTitle = Liste des %d tiers sans notification contact "action Facture client validÃƒÂ©e"
+AddContactNotificationDescription = Ajout d'une notification contact "action Facture client validée" pour les tiers <br> Vous trouverez ci-après la liste des tiers sans notification contact "action Facture client validée" contrôlé le
+SocietyContactNotificationNotDefinedTitle = Liste des %d tiers sans notification contact "action Facture client validée"
 
 # SetEventMessage - Notice info
-ObjectContactUpdated = Contact ajoutÃƒÂ© sur %s %s
-SocietyObjectContactNotDefined = Aucun contact dÃƒÂ©fini sur le tiers :
+ObjectContactUpdated = Contact ajouté sur %s %s
+SocietyObjectContactNotDefined = Aucun contact défini sur le tiers :
 AllObjectHaveContact = Les %s ont des contacts facturation
-ContactNotificationAdded = Notification ajoutÃƒÂ© sur :
-SocietyContactNotificationNotDefined = Aucune notification contact dÃƒÂ©fini sur le tiers :
+ContactNotificationAdded = Notification ajouté sur :
+SocietyContactNotificationNotDefined = Aucune notification contact défini sur le tiers :
 AllContactHaveNotification = Tous les tiers ont des notifications contacts
 
 
@@ -123,14 +123,14 @@ AllContactHaveNotification = Tous les tiers ont des notifications contacts
 # Address - Adresse
 #
 
-# Data - DonnÃƒÂ©e
+# Data - Donnée
 Addresses = Adresses
 AddAnAddress = Ajouter une adresse
-ErrorCreateAddress = Une erreur est survenue lors de la crÃƒÂ©ation de l'adresse
-ErrorUpdateAddress = Une erreur est survenue lors de la mise ÃƒÂ  jour de l'adresse
+ErrorCreateAddress = Une erreur est survenue lors de la création de l'adresse
+ErrorUpdateAddress = Une erreur est survenue lors de la mise à jour de l'adresse
 ErrorDeleteAddress = Une erreur est survenue lors de la suppression de l'adresse
-CouldntFindDataOnOSM = L'adresse n'a pas ÃƒÂ©tÃƒÂ© trouvÃƒÂ©e sur OpenStreetMap
-DataSuccessfullyRetrieved = Les donnÃƒÂ©es de l'adresse ont ÃƒÂ©tÃƒÂ© rÃƒÂ©cupÃƒÂ©rÃƒÂ©es avec succÃƒÂ¨s
+CouldntFindDataOnOSM = L'adresse n'a pas été trouvée sur OpenStreetMap
+DataSuccessfullyRetrieved = Les données de l'adresse ont été récupérées avec succès
 NoAddresses = Aucune adresse
 Map = Carte
 FavoriteAddress = Adresse favorite
@@ -138,27 +138,27 @@ NewAddress = Nouvelle adresse
 EditAddress = Modifier l'adresse
 AddressType = Type d'adresse
 Workplace = Lieu de travail
-PrincipalResidence = RÃƒÂ©sidence principale
-SecondaryResidence = RÃƒÂ©sidence secondaire
+PrincipalResidence = Résidence principale
+SecondaryResidence = Résidence secondaire
 Office = Bureau
 BranchOffice = Succursale
 WorkSite = Chantier
 Factory = Usine
-Headquarters = SiÃƒÂ¨ge social
+Headquarters = Siège social
 DisplayAllAddress = Afficher une seule adresse par objet
-DisplayAllAddressDescription = Afficher l'adresse principale sur la carte au lieu de toutes les adresses liÃƒÂ©es ÃƒÂ  l'objet
+DisplayAllAddressDescription = Afficher l'adresse principale sur la carte au lieu de toutes les adresses liées à l'objet
 AddressesList = Liste des adresses
 ProjectAddress = Adresse du projet
 AddressStatus = Statut adresse
-Geolocated = GÃƒÂ©olocalisÃƒÂ©
-NotFound = Non gÃƒÂ©olocalisÃƒÂ©
+Geolocated = Géolocalisé
+NotFound = Non géolocalisé
 
 #
-# Geolocation - GÃƒÂ©olocalisation
+# Geolocation - Géolocalisation
 #
 
-# Data - DonnÃƒÂ©e
-GeolocationError = Erreur possible lors la gÃƒÂ©olocalisation : %s
+# Data - Donnée
+GeolocationError = Erreur possible lors la géolocalisation : %s
 MyPosition = Ma position
 ShowRoute = Afficher le trajet
 ThisWeek = Cette semaine
@@ -170,16 +170,16 @@ NearMe = Autour de moi
 # Other - Autre
 #
 
-# Data - DonnÃƒÂ©e
+# Data - Donnée
 LastProjects = Les %s derniers projets
-Sent = EnvoyÃƒÂ©
+Sent = Envoyé
 Reminder1 = Relance 1
 Reminder2 = Relance 2
 Reminder3 = Relance 3
-Abandoned = AbandonnÃƒÂ©
+Abandoned = Abandonné
 Unreachable = Injoignable
 ToCallBack = A rappeler
-TooHard = Trop compliquÃƒÂ©
+TooHard = Trop compliqué
 TooCheap = Pas assez cher
 TooExpensive = Trop cher
 ToSignElsewhere = A signer ailleurs
@@ -192,50 +192,50 @@ CommercialStatus = Statut commercial
 CommercialStatusHelp = Statut commercial de la proposition commerciale
 RefusalReason = Raison refus
 RefusalReasonHelp = Raison du refus de la proposition commerciale
-OpportunitySources = RÃƒÂ©partition des sources d'opportunitÃƒÂ©s
-PropalStatusCommRepartition = RÃƒÂ©partition du statut des propositions commerciale ouvertes
-PropalRefusalReasonRepartition = RÃƒÂ©partition des raisons de refus des propositions commerciale
+OpportunitySources = Répartition des sources d'opportunités
+PropalStatusCommRepartition = Répartition du statut des propositions commerciale ouvertes
+PropalRefusalReasonRepartition = Répartition des raisons de refus des propositions commerciale
 NotationObjectContact = Contact facturation
-NotationObjectContactHelp = Taux de remplissage des informations du contact client facturation <ul><li>Nom / LibellÃƒÂ© - 5 <li>PrÃƒÂ©nom - 5 </li><li>TÃƒÂ©l pro - 5 </li><li>TÃƒÂ©l portable - 5 </li><li>EMail - 40 </li><li>Contact / adresse par dÃƒÂ©faut - 40 </li></ul>
-SetNotationObjectContact = Mise ÃƒÂ  jour de la notation contact client facturation
+NotationObjectContactHelp = Taux de remplissage des informations du contact client facturation <ul><li>Nom / Libellé - 5 <li>Prénom - 5 </li><li>Tél pro - 5 </li><li>Tél portable - 5 </li><li>EMail - 40 </li><li>Contact / adresse par défaut - 40 </li></ul>
+SetNotationObjectContact = Mise à jour de la notation contact client facturation
 UpdateNotationObjectContactsJob = Maj des notations contact client facturation sur les %s
-UpdateNotationObjectContactsJobComment = Mise ÃƒÂ  jour de l'attribut suplÃƒÂ©mentaire des notations contact client facturation sur les factures rÃƒÂ©currentes pour indiquer le taux de remplissage des informations du contact client facturation
-NotationObjectContactsUpdated = Mise ÃƒÂ  jour des notations contact client facturation sur %d %s
+UpdateNotationObjectContactsJobComment = Mise à jour de l'attribut suplémentaire des notations contact client facturation sur les factures récurrentes pour indiquer le taux de remplissage des informations du contact client facturation
+NotationObjectContactsUpdated = Mise à jour des notations contact client facturation sur %d %s
 NoObject = Aucune %s
 FactureMin = facture
 FactureMins = factures
-FactureRecMin = facture rÃƒÂ©currente
-FactureRecMins = factures rÃƒÂ©currentes
+FactureRecMin = facture récurrente
+FactureRecMins = factures récurrentes
 ThirdPartyMins = tiers
-ObjectAddContactTrigger = Contact ajoutÃƒÂ©
-UpdateObjectContactTrigger = Mise ÃƒÂ  jour du rÃƒÂ´le "contacts facturation" des factures
+ObjectAddContactTrigger = Contact ajouté
+UpdateObjectContactTrigger = Mise à jour du rôle "contacts facturation" des factures
 NoContact = Aucun contact
-AddContactNotificationTrigger = Ajout d'une notification contact "action Facture client validÃƒÂ©e" des tiers
-DictionarySource = Origine des opportunitÃƒÂ©s/devis/commandes/factures
-OpportunityOrigin = Origine de l'opportunitÃƒÂ©e
+AddContactNotificationTrigger = Ajout d'une notification contact "action Facture client validée" des tiers
+DictionarySource = Origine des opportunités/devis/commandes/factures
+OpportunityOrigin = Origine de l'opportunitée
 SRC_INTE = Internet
 SRC_CAMP_MAIL = Campagne Publipostage
 SRC_CAMP_EMAIL = Campagne d'emailing
-SRC_CAMP_PHO = Campagne TÃƒÂ©lÃƒÂ©phonique
+SRC_CAMP_PHO = Campagne Téléphonique
 SRC_CAMP_FAX = Campagne Fax
 SRC_COMM = Contact commercial
 SRC_SHOP = Contact en boutique
-SRC_WOM = Bouche ÃƒÂ  oreille
+SRC_WOM = Bouche à oreille
 SRC_PARTNER = Partenaire
-SRC_EMPLOYEE = EmployÃƒÂ©
+SRC_EMPLOYEE = Employé
 SRC_SPONSORING = Parrainage/Sponsoring
 SRC_CUSTOMER = Contact entrant d'un client
-AddAssignOppStatus = Ajouter un statut d'opportunitÃƒÂ©
-SelectOppStatus = SÃƒÂ©lectionner un statut d'opportunitÃƒÂ©
-OppStatusAssignedTo = Statut d'opportunitÃƒÂ© assignÃƒÂ© ÃƒÂ  %s projet(s)
-ReloadOppPercent = Calculer les probabilitÃƒÂ©s d'opportunitÃƒÂ© non dÃƒÂ©finies
-LabelLength = Taille libellÃƒÂ©
-LabelLengthDescription = Taille maximum du champ libellÃƒÂ©
-WarningTaskLabelCustom = Attention, vous vous rapprochez du nombre de caractÃƒÂ¨res maximum autorisÃƒÂ© (%d)
-ProductLastSellList = DerniÃƒÂ¨res ventes du produit (Commande et Facture)
-Opportunities = OpportunitÃƒÂ©s
+AddAssignOppStatus = Ajouter un statut d'opportunité
+SelectOppStatus = Sélectionner un statut d'opportunité
+OppStatusAssignedTo = Statut d'opportunité assigné à %s projet(s)
+ReloadOppPercent = Calculer les probabilités d'opportunité non définies
+LabelLength = Taille libellé
+LabelLengthDescription = Taille maximum du champ libellé
+WarningTaskLabelCustom = Attention, vous vous rapprochez du nombre de caractères maximum autorisé (%d)
+ProductLastSellList = Dernières ventes du produit (Commande et Facture)
+Opportunities = Opportunités
 OpenedPropals = PR ouvertes
-RecurringInvoices = Factures rÃƒÂ©currentes
+RecurringInvoices = Factures récurrentes
 GravityFormLink                        = Lien GravityForm
 
 # Traductions pour ReedCRM - Notifications d'appel
@@ -244,86 +244,86 @@ ViewContact = Voir le contact
 CallNotifications = Notifications d'appel
 CallHistory = Historique des appels
 NewCall = Nouvel appel
-ProcessedCall = Appel traitÃƒÂ©
-CallEvent = Ãƒâ€°vÃƒÂ©nement d'appel
+ProcessedCall = Appel traité
+CallEvent = Événement d'appel
 Caller = Appelant
-Callee = AppelÃƒÂ©
+Callee = Appelé
 CallDate = Date d'appel
 CallStatus = Statut de l'appel
 AutoOpenContact = Ouverture automatique du contact
-CallNotificationsDisabled = Notifications d'appel dÃƒÂ©sactivÃƒÂ©es
-CallNotificationsDisabledDesc = DÃƒÂ©sactiver les notifications d'appel globalement pour tous les utilisateurs
-CallCheckFrequency = FrÃƒÂ©quence de vÃƒÂ©rification des appels (en secondes)
-CallCheckFrequencyDesc = FrÃƒÂ©quence de vÃƒÂ©rification des nouveaux appels (en secondes, min: 2, max: 60)
+CallNotificationsDisabled = Notifications d'appel désactivées
+CallNotificationsDisabledDesc = Désactiver les notifications d'appel globalement pour tous les utilisateurs
+CallCheckFrequency = Fréquence de vérification des appels (en secondes)
+CallCheckFrequencyDesc = Fréquence de vérification des nouveaux appels (en secondes, min: 2, max: 60)
 OpenInNewTab = Ouvrir dans un nouvel onglet
-OpenInNewTabDesc = Ouvrir la fiche contact dans un nouvel onglet au lieu de la fenÃƒÂªtre actuelle
-AutoOpenContactDesc = Ouvrir automatiquement la fiche contact lors de la rÃƒÂ©ception d'une notification d'appel
-KeyyoWebhookToken = Token de sÃƒÂ©curitÃƒÂ© Keyyo
+OpenInNewTabDesc = Ouvrir la fiche contact dans un nouvel onglet au lieu de la fenêtre actuelle
+AutoOpenContactDesc = Ouvrir automatiquement la fiche contact lors de la réception d'une notification d'appel
+KeyyoWebhookToken = Token de sécurité Keyyo
 WebhookConfiguration = Configuration du Webhook
 WebhookURL = URL du Webhook
-Method = MÃƒÂ©thode
-ReedCRMKeyyoSecurityToken = Token de sÃƒÂ©curitÃƒÂ© pour le webhook Keyyo (laisser vide pour dÃƒÂ©sactiver la vÃƒÂ©rification du token)
-ProjectOpportunitiesList = Les 5 derniÃƒÂ¨res opportunitÃƒÂ©s de projet
-LatestCreatedOpportunities = DerniÃƒÂ¨res opportunitÃƒÂ©s crÃƒÂ©ÃƒÂ©es
-OppPercent = Pourcentage d'opportunitÃƒÂ©
+Method = Méthode
+ReedCRMKeyyoSecurityToken = Token de sécurité pour le webhook Keyyo (laisser vide pour désactiver la vérification du token)
+ProjectOpportunitiesList = Les 5 dernières opportunités de projet
+LatestCreatedOpportunities = Dernières opportunités créées
+OppPercent = Pourcentage d'opportunité
 ButtonActions = Actions
-ContentToBeAdded = Contenu ÃƒÂ  ajouter
+ContentToBeAdded = Contenu à ajouter
 CommercialProposalsInProgress = Propositions commerciales en cours
 NoCommercialProposalsInProgress = Aucune proposition commerciale en cours
-AddEvent = Ajouter un ÃƒÂ©vÃƒÂ©nement
+AddEvent = Ajouter un événement
 ThirdParty = Tiers
 Contact = Contact
-EventType = Type d'ÃƒÂ©vÃƒÂ©nement
+EventType = Type d'événement
 Date = Date
 Project = Projet
-SelectProject = SÃƒÂ©lectionner un projet
+SelectProject = Sélectionner un projet
 NoContact = Aucun contact
 NoProjectAvailable = Aucun projet disponible
-ProjectModuleDisabled = Module projet dÃƒÂ©sactivÃƒÂ©
+ProjectModuleDisabled = Module projet désactivé
 Type = Type
-ProjectLabel = LibellÃƒÂ© projet
+ProjectLabel = Libellé projet
 CustomerNotes = Notes clients
 SendMail = Envoyer email
 Title = Titre
 Note = Note
 Reminder = Rappel
 PopupBrowser = Popup navigateur
-EMailTemplate = ModÃƒÂ¨le de mail
-Duration = DurÃƒÂ©e
-AffectedTo = AffectÃƒÂ© ÃƒÂ 
+EMailTemplate = Modèle de mail
+Duration = Durée
+AffectedTo = Affecté à
 Add = Ajouter
-SelectEmailTemplate = SÃƒÂ©lectionner un modÃƒÂ¨le d'email
-NoEmailTemplate = Aucun modÃƒÂ¨le d'email
+SelectEmailTemplate = Sélectionner un modèle d'email
+NoEmailTemplate = Aucun modèle d'email
 EmailSubject = Sujet de l'email
 EmailContent = Contenu de l'email
 EmailTo = Destinataire
 CustomerNote = Note client
 SendEmail = Envoyer un email
-EventCreated = Ãƒâ€°vÃƒÂ©nement crÃƒÂ©ÃƒÂ© avec succÃƒÂ¨s
-EmailFormReady = Formulaire d'email prÃƒÂªt
+EventCreated = Événement créé avec succès
+EmailFormReady = Formulaire d'email prêt
 NewThirdparty = Nouveau tiers
-CreateThirdparty = CrÃƒÂ©er tiers
+CreateThirdparty = Créer tiers
 
 # Import projets
 ImportProjectsFromCSV = Importer des projets depuis un CSV
-ImportProjectsDescription = SÃƒÂ©lectionnez un fichier CSV pour crÃƒÂ©er automatiquement des projets.
+ImportProjectsDescription = Sélectionnez un fichier CSV pour créer automatiquement des projets.
 CSVExpectedColumns = Le fichier doit contenir les colonnes : Prenom, Nom, Email, Tel, Note.
 UploadImport = Importer
 ConfirmImportProjectsTitle = Import de projets
-ConfirmImportProjectsQuestion = Saisissez le nom de la catÃƒÂ©gorie ÃƒÂ  attribuer aux projets importÃƒÂ©s.
-CategoryName = Nom de la catÃƒÂ©gorie
-NoFileUploaded = Aucun fichier sÃƒÂ©lectionnÃƒÂ©.
-ImportFileUploadError = Erreur lors du tÃƒÂ©lÃƒÂ©chargement du fichier.
+ConfirmImportProjectsQuestion = Saisissez le nom de la catégorie à attribuer aux projets importés.
+CategoryName = Nom de la catégorie
+NoFileUploaded = Aucun fichier sélectionné.
+ImportFileUploadError = Erreur lors du téléchargement du fichier.
 ImportFileInvalidColumns = Les colonnes du fichier ne correspondent pas au format attendu (Prenom, Nom, Email, Tel, Note).
 ImportFileNotFound = Fichier d'import introuvable.
 ImportFileNotReadable = Impossible de lire le fichier d'import.
-ImportParametersMissing = ParamÃƒÂ¨tres d'import manquants.
-CategoryCreationError = Erreur lors de la crÃƒÂ©ation de la catÃƒÂ©gorie.
-ProjectsImported = %s projets importÃƒÂ©s sur %s lignes.
-ProjectsImportErrors = %s lignes n'ont pas pu ÃƒÂªtre importÃƒÂ©es.
+ImportParametersMissing = Paramètres d'import manquants.
+CategoryCreationError = Erreur lors de la création de la catégorie.
+ProjectsImported = %s projets importés sur %s lignes.
+ProjectsImportErrors = %s lignes n'ont pas pu être importées.
 NbLines = Nombre de lignes
-OpportunitiesImport = Import d'opportunitÃƒÂ©s
-ImportedOpportunityList = Liste des opportunitÃƒÂ©s importÃƒÂ©s
+OpportunitiesImport = Import d'opportunités
+ImportedOpportunityList = Liste des opportunités importés
 
 # Onglet Keyyo pour tiers
 KeyyoCalls = Appels Keyyo
@@ -332,41 +332,41 @@ UnknownContact = Contact inconnu
 # Status Objects
 ReedCRMObjectStatus = Statut d'objet ReedCRM
 ProjectStatusDraft = Brouillon
-ProjectStatusValidated = ValidÃƒÂ© (Ouvert)
-ProjectStatusClosed = ClÃƒÂ´turÃƒÂ©
+ProjectStatusValidated = Validé (Ouvert)
+ProjectStatusClosed = Clôturé
 PropalStatusDraft = Brouillon (Provisoire)
-PropalStatusValidated = ValidÃƒÂ©e (Ouverte)
-PropalStatusSigned = SignÃƒÂ©e / AcceptÃƒÂ©e
-PropalStatusNotSigned = Non signÃƒÂ©e / RefusÃƒÂ©e
-PropalStatusBilled = FacturÃƒÂ©e
+PropalStatusValidated = Validée (Ouverte)
+PropalStatusSigned = Signée / Acceptée
+PropalStatusNotSigned = Non signée / Refusée
+PropalStatusBilled = Facturée
 
 # Geolocation PWA
-DetectingLocation = DÃƒÂ©tection de la position en cours
-GeolocationNotSupported = GÃƒÂ©olocalisation non supportÃƒÂ©e par ce navigateur
-GeolocationDenied = AccÃƒÂ¨s ÃƒÂ  la position refusÃƒÂ©
+DetectingLocation = Détection de la position en cours
+GeolocationNotSupported = Géolocalisation non supportée par ce navigateur
+GeolocationDenied = Accès à la position refusé
 
 # KPI cards - opportunity project list
-ReedCRMKpiNbOpportunities = OpportunitÃƒÂ©s
+ReedCRMKpiNbOpportunities = Opportunités
 ReedCRMKpiTotalAmount = Montant total
-ReedCRMKpiWeightedAmount = Pipeline pondÃƒÂ©rÃƒÂ©
-ReedCRMKpiAvgProbability = ProbabilitÃƒÂ© moyenne
+ReedCRMKpiWeightedAmount = Pipeline pondéré
+ReedCRMKpiAvgProbability = Probabilité moyenne
 
 # List presets - opportunity project list
-ReedCRMPresetMine = Mes opportunitÃƒÂ©s
+ReedCRMPresetMine = Mes opportunités
 ReedCRMPresetHot = Chaudes
 ReedCRMPresetOpen = Ouvertes
-ReedCRMPresetToRelaunch = Ãƒâ‚¬ relancer
+ReedCRMPresetToRelaunch = À relancer
 
 ReedCRMSaveView = Enregistrer la vue
 
 # KPI banner customization
 ReedCRMKpiCustomize = Personnaliser
-ReedCRMKpiReset = RÃƒÂ©initialiser
+ReedCRMKpiReset = Réinitialiser
 
-OpportunityDetails = OpportunitÃƒÂ©
+OpportunityDetails = Opportunité
 
-ReedCRMStatusAsDot = Ãƒâ€°tat : rond
-ReedCRMStatusAsBadge = Ãƒâ€°tat : pastille
+ReedCRMStatusAsDot = État : rond
+ReedCRMStatusAsBadge = État : pastille
 #
 # Call List - Liste d'appel
 #
@@ -380,106 +380,105 @@ Call_listList = Listes d'appel
 NewCall_list = Nouvelle liste d'appel
 CallListStatus0 = Brouillon
 CallListStatus1 = Active
-CallListStatus2 = ArchivÃƒÂ©e
+CallListStatus2 = Archivée
 CallListStatusShort0 = Brouillon
 CallListStatusShort1 = Active
-CallListStatusShort2 = ArchivÃƒÂ©e
+CallListStatusShort2 = Archivée
 
 # Lines
 CallListLine = Ligne de liste d'appel
-CallListLineStatus0 = Ãƒâ‚¬ appeler
-CallListLineStatus1 = AppelÃƒÂ©
-CallListLineStatus2 = Pas de rÃƒÂ©ponse
-CallListLineStatus3 = Ãƒâ‚¬ rappeler
-CallListLineStatusShort0 = Ãƒâ‚¬ appeler
-CallListLineStatusShort1 = AppelÃƒÂ©
-CallListLineStatusShort2 = Pas de rÃƒÂ©p.
-CallListLineStatusShort3 = Ãƒâ‚¬ rappeler
+CallListLineStatus0 = À appeler
+CallListLineStatus1 = Appelé
+CallListLineStatus2 = Pas de réponse
+CallListLineStatus3 = À rappeler
+CallListLineStatusShort0 = À appeler
+CallListLineStatusShort1 = Appelé
+CallListLineStatusShort2 = Pas de rép.
+CallListLineStatusShort3 = À rappeler
 
 # UI
 AddCallListLine = Ajouter un contact
 NoCallListLine = Aucun contact dans cette liste
-CallListLineDuplicate = Ce devis / cette opportunitÃƒÂ© est dÃƒÂ©jÃƒÂ  dans la liste
+CallListLineDuplicate = Ce devis / cette opportunité est déjà dans la liste
 SelectElementType = Type de source
 ElementTypePropal = Devis
-ElementTypeProject = OpportunitÃƒÂ©
-ContactToCall = Contact ÃƒÂ  appeler
-ContactNoPhone = Aucun numÃƒÂ©ro de tÃƒÂ©lÃƒÂ©phone
+ElementTypeProject = Opportunité
+ContactToCall = Contact à appeler
+ContactNoPhone = Aucun numéro de téléphone
 CallListLines = Lignes d'appel
 MobileView = Vue mobile
-CallListCreateActioncomm = CrÃƒÂ©er un ÃƒÂ©vÃƒÂ©nement ÃƒÂ  l'appel
-CallListCreateActioncommDesc = CrÃƒÂ©e automatiquement un ÃƒÂ©vÃƒÂ©nement tÃƒÂ©lÃƒÂ©phonique dans l'agenda lors du clic sur le bouton d'appel depuis la vue mobile
+CallListCreateActioncomm = Créer un événement à l'appel
+CallListCreateActioncommDesc = Crée automatiquement un événement téléphonique dans l'agenda lors du clic sur le bouton d'appel depuis la vue mobile
 CallFrom = Appel depuis
-AddToCallList = Ajouter ÃƒÂ  une liste d'appel
-SelectCallList = SÃƒÂ©lectionner une liste d'appel
+AddToCallList = Ajouter à une liste d'appel
+SelectCallList = Sélectionner une liste d'appel
 NoActiveCallList = Aucune liste d'appel active
-CallListAddedCount = %d ÃƒÂ©lÃƒÂ©ment(s) ajoutÃƒÂ©(s) ÃƒÂ  la liste d'appel
-CallListSkippedNoContactElement = L'ÃƒÂ©lÃƒÂ©ment %s a ÃƒÂ©tÃƒÂ© ignorÃƒÂ© car aucun contact ne lui est associÃƒÂ©
-CallListLineDuplicateElement = L'ÃƒÂ©lÃƒÂ©ment %s est dÃƒÂ©jÃƒÂ  prÃƒÂ©sent dans cette liste d'appel
-CallListNotFound = La liste d'appel sÃƒÂ©lectionnÃƒÂ©e est introuvable
-CallListCannotAddToArchivedList = Impossible d'ajouter des ÃƒÂ©lÃƒÂ©ments ÃƒÂ  une liste d'appel archivÃƒÂ©e
-AddToCallListWidget = Ajouter ÃƒÂ  une liste d'appel
-CallListWidgetSuccess = AjoutÃƒÂ© ÃƒÂ  la liste "%s"
-CallListWidgetNoContact = Aucun contact associÃƒÂ© ÃƒÂ  cet ÃƒÂ©lÃƒÂ©ment
-CallListWidgetNoPhone = Le contact n'a pas de numÃƒÂ©ro de tÃƒÂ©lÃƒÂ©phone
-CallListWidgetDuplicate = DÃƒÂ©jÃƒÂ  prÃƒÂ©sent dans cette liste
+CallListAddedCount = %d élément(s) ajouté(s) à la liste d'appel
+CallListSkippedNoContactElement = L'élément %s a été ignoré car aucun contact ne lui est associé
+CallListLineDuplicateElement = L'élément %s est déjà présent dans cette liste d'appel
+CallListNotFound = La liste d'appel sélectionnée est introuvable
+CallListCannotAddToArchivedList = Impossible d'ajouter des éléments à une liste d'appel archivée
+AddToCallListWidget = Ajouter à une liste d'appel
+CallListWidgetSuccess = Ajouté à la liste "%s"
+CallListWidgetNoContact = Aucun contact associé à cet élément
+CallListWidgetNoPhone = Le contact n'a pas de numéro de téléphone
+CallListWidgetDuplicate = Déjà présent dans cette liste
 CallListWidgetError = Erreur lors de l'ajout
-DefaultCallListLabel = Liste d'appel Ã¢â‚¬â€� %s
-AddToMyCallList = Ajouter ÃƒÂ  ma liste d'appel
-DefaultCallListNotFound = Aucune liste d'appel par dÃƒÂ©faut pour cet utilisateur
+DefaultCallListLabel = Liste d'appel �?? %s
+AddToMyCallList = Ajouter à ma liste d'appel
+DefaultCallListNotFound = Aucune liste d'appel par défaut pour cet utilisateur
 
 # PWA Documents Bar
-PwaShowPiecesTitle = Liste des piÃƒÂ¨ces ÃƒÂ  afficher dans le listing de la PWA
-PwaShowPiecesTitleDesc = SÃƒÂ©lectionnez les types de documents ÃƒÂ  afficher sous forme de barre d'avancement sur les fiches opportunitÃƒÂ©s de la PWA.
+PwaShowPiecesTitle = Liste des pièces à afficher dans le listing de la PWA
+PwaShowPiecesTitleDesc = Sélectionnez les types de documents à afficher sous forme de barre d'avancement sur les fiches opportunités de la PWA.
 
-REEDCRM_PWA_SHOW_OPP_AMOUNT = Afficher le montant de l'opportunitÃƒÂ©
-REEDCRM_PWA_SHOW_OPP_AMOUNT_Desc = Affiche le montant estimÃƒÂ© de l'opportunitÃƒÂ©.
+REEDCRM_PWA_SHOW_OPP_AMOUNT = Afficher le montant de l'opportunité
+REEDCRM_PWA_SHOW_OPP_AMOUNT_Desc = Affiche le montant estimé de l'opportunité.
 REEDCRM_PWA_SHOW_PROPAL = Afficher la proposition commerciale
-REEDCRM_PWA_SHOW_PROPAL_Desc = Affiche la derniÃƒÂ¨re proposition commerciale (devis) liÃƒÂ©e au projet.
+REEDCRM_PWA_SHOW_PROPAL_Desc = Affiche la dernière proposition commerciale (devis) liée au projet.
 REEDCRM_PWA_SHOW_COMMANDE = Afficher la commande client
-REEDCRM_PWA_SHOW_COMMANDE_Desc = Affiche la derniÃƒÂ¨re commande client liÃƒÂ©e au projet.
+REEDCRM_PWA_SHOW_COMMANDE_Desc = Affiche la dernière commande client liée au projet.
 REEDCRM_PWA_SHOW_COMMANDE_FOURN = Afficher la commande fournisseur
-REEDCRM_PWA_SHOW_COMMANDE_FOURN_Desc = Affiche la derniÃƒÂ¨re commande fournisseur liÃƒÂ©e au projet.
-REEDCRM_PWA_SHOW_RECEPTION = Afficher la rÃƒÂ©ception fournisseur
-REEDCRM_PWA_SHOW_RECEPTION_Desc = Affiche la derniÃƒÂ¨re rÃƒÂ©ception de commande fournisseur liÃƒÂ©e au projet.
+REEDCRM_PWA_SHOW_COMMANDE_FOURN_Desc = Affiche la dernière commande fournisseur liée au projet.
+REEDCRM_PWA_SHOW_RECEPTION = Afficher la réception fournisseur
+REEDCRM_PWA_SHOW_RECEPTION_Desc = Affiche la dernière réception de commande fournisseur liée au projet.
 REEDCRM_PWA_SHOW_FACTURE_FOURN = Afficher la facture fournisseur
-REEDCRM_PWA_SHOW_FACTURE_FOURN_Desc = Affiche la derniÃƒÂ¨re facture fournisseur liÃƒÂ©e au projet.
-REEDCRM_PWA_SHOW_EXPEDITION = Afficher l'expÃƒÂ©dition client
-REEDCRM_PWA_SHOW_EXPEDITION_Desc = Affiche la derniÃƒÂ¨re expÃƒÂ©dition client liÃƒÂ©e au projet.
+REEDCRM_PWA_SHOW_FACTURE_FOURN_Desc = Affiche la dernière facture fournisseur liée au projet.
+REEDCRM_PWA_SHOW_EXPEDITION = Afficher l'expédition client
+REEDCRM_PWA_SHOW_EXPEDITION_Desc = Affiche la dernière expédition client liée au projet.
 REEDCRM_PWA_SHOW_FACTURE = Afficher la facture client
-REEDCRM_PWA_SHOW_FACTURE_Desc = Affiche la derniÃƒÂ¨re facture client liÃƒÂ©e au projet.
+REEDCRM_PWA_SHOW_FACTURE_Desc = Affiche la dernière facture client liée au projet.
 REEDCRM_PWA_SHOW_PAYMENT = Afficher l'encaissement
-REEDCRM_PWA_SHOW_PAYMENT_Desc = Affiche le dernier encaissement (rÃƒÂ¨glement client) liÃƒÂ© aux factures du projet.
+REEDCRM_PWA_SHOW_PAYMENT_Desc = Affiche le dernier encaissement (règlement client) lié aux factures du projet.
 
-PwaPieceLabel_montant = OpportunitÃƒÂ©
+PwaPieceLabel_montant = Opportunité
 PwaPieceLabel_propal = Devis
 PwaPieceLabel_commande = Cmd client
 PwaPieceLabel_commande_fourn = Cmd fourn.
-PwaPieceLabel_reception = RÃƒÂ©ception
+PwaPieceLabel_reception = Réception
 PwaPieceLabel_facture_fourn = Fact fourn.
-PwaPieceLabel_expedition = ExpÃƒÂ©dition
+PwaPieceLabel_expedition = Expédition
 PwaPieceLabel_facture = Facture
-PwaPieceLabel_payment = RÃƒÂ¨glement
+PwaPieceLabel_payment = Règlement
 PwaCurrentStep = EN COURS
-REEDCRM_PWA_PIECES_ICONS_ONLY = Barre de piÃƒÂ¨ces en pictogrammes seuls
-REEDCRM_PWA_PIECES_ICONS_ONLY_Desc = Afficher uniquement les icÃƒÂ´nes colorÃƒÂ©es (le dÃƒÂ©tail apparaÃƒÂ®t au survol)
-PwaIssueAmountMismatch = Montant %s diffÃƒÂ©rent de la rÃƒÂ©fÃƒÂ©rence %s
-PwaIssueCancelled = Document annulÃƒÂ©/refusÃƒÂ©
-PwaIssueMissingStep = Ãƒâ€°tape manquante : %s existe sans cette ÃƒÂ©tape
+REEDCRM_PWA_PIECES_ICONS_ONLY = Barre de pièces en pictogrammes seuls
+REEDCRM_PWA_PIECES_ICONS_ONLY_Desc = Afficher uniquement les icônes colorées (le détail apparaît au survol)
+PwaIssueAmountMismatch = Montant %s différent de la référence %s
+PwaIssueCancelled = Document annulé/refusé
+PwaIssueMissingStep = Étape manquante : %s existe sans cette étape
 PwaIssuePaymentIncomplete = Encaissement incomplet : %s sur %s
-PwaPieceStatus_propal_1 = ValidÃƒÂ©
-PwaPieceStatus_propal_2 = SignÃƒÂ©
-PwaPieceStatus_propal_3 = RefusÃƒÂ©
-PwaPieceStatus_propal_4 = FacturÃƒÂ©
-PwaPieceStatus_commande_-1 = AnnulÃƒÂ©e
-PwaPieceStatus_commande_3 = LivrÃƒÂ©e
-PwaPieceStatus_facture_2 = PayÃƒÂ©e
-PwaPieceStatus_facture_3 = AbandonnÃƒÂ©e
+PwaPieceStatus_propal_1 = Validé
+PwaPieceStatus_propal_2 = Signé
+PwaPieceStatus_propal_3 = Refusé
+PwaPieceStatus_propal_4 = Facturé
+PwaPieceStatus_commande_-1 = Annulée
+PwaPieceStatus_commande_3 = Livrée
+PwaPieceStatus_facture_2 = Payée
+PwaPieceStatus_facture_3 = Abandonnée
 
 App-ReedCRM = App-ReedCRM
 
 # Expedition
-ShippingDateEqualsCreationDate = Aligner la date d'expÃ©dition sur la date de crÃ©ation
 ShippingDateEqualsCreationDate = Aligner la date d'expédition sur la date de création
 ShippingDateEqualsCreationDateHelp = À la création d'une expédition, si aucune date d'expédition n'est saisie, elle prend automatiquement la date de création.
 
