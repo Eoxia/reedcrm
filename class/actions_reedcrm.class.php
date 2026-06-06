@@ -913,9 +913,9 @@ class ActionsReedcrm
             $logoHtml = '<div style="position: relative; margin-right: 8px; padding-right: 8px; border-right: 1px solid #cbd5e0; display: inline-flex; align-items: center;">';
             $logoHtml .= $reedLogoHtml;
             
-            // Link to the task if task_id exists
+            // Link to the task timesheet if task_id exists
             if ($task_id > 0) {
-                $taskUrl = DOL_URL_ROOT . '/projet/tasks/task.php?id=' . $task_id . '&withproject=1';
+                $taskUrl = DOL_URL_ROOT . '/projet/tasks/time.php?id=' . $task_id . '&withproject=1';
                 $logoHtml .= '<a href="' . $taskUrl . '">';
             }
             
