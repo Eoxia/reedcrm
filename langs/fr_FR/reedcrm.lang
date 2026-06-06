@@ -483,8 +483,8 @@ ShippingDateEqualsCreationDate = Aligner la date d'expÃ©dition sur la date de 
 ShippingDateEqualsCreationDate = Aligner la date d'expédition sur la date de création
 ShippingDateEqualsCreationDateHelp = À la création d'une expédition, si aucune date d'expédition n'est saisie, elle prend automatiquement la date de création.
 
-TicketTimeTaskPrefix=Préfixe de la tâche pour le temps passé
-TicketTimeTaskPrefixDescription=Préfixe utilisé pour identifier automatiquement la tâche dans laquelle consigner le temps passé sur un ticket.
+TicketTimeTaskPrefix=Préfixe du libellé de la tâche
+TicketTimeTaskPrefixDescription=Préfixe utilisé pour identifier automatiquement la tâche dans laquelle consigner le temps passé sur un ticket (basé sur le libellé).
 
 TicketTimeDefaultMinutes=Temps par défaut (minutes)
 TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le bloc de saisie rapide sur le ticket.

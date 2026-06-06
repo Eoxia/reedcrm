@@ -69,10 +69,10 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
 
     $prefix = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_PREFIX', 'ticket_tps');
 
-    // Find the task in this project that starts with the prefix
+    // Find the task in this project that starts with the prefix in its label
     $sql = "SELECT t.rowid FROM " . MAIN_DB_PREFIX . "projet_task as t";
     $sql .= " WHERE t.fk_projet = " . (int)$ticket->fk_project;
-    $sql .= " AND (t.ref LIKE '" . $db->escape($prefix) . "%' OR t.label LIKE '" . $db->escape($prefix) . "%')";
+    $sql .= " AND t.label LIKE '" . $db->escape($prefix) . "%'";
     
     $resql = $db->query($sql);
     if ($resql) {
@@ -88,7 +88,7 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
         } else {
             // Task not found, create it automatically
             $task->fk_project = $ticket->fk_project;
-            $task->ref = $prefix . '_' . $ticket->ref;
+            $task->ref = $ticket->ref;
             $task->label = $prefix . ' ' . $ticket->ref;
             $task->description = 'Tâche générée automatiquement pour le ticket ' . $ticket->ref;
             $task->date_c = dol_now();
