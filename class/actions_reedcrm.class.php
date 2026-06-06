@@ -753,7 +753,7 @@ class ActionsReedcrm
                 $html = '
                 <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 5px;">
                     ' . $logoHtml . '
-                    <input type="text" id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff;">
+                    <textarea id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" rows="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff; height: 24px; resize: horizontal; overflow: hidden; line-height: 1.5; white-space: nowrap;"></textarea>
                     <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> Min
                     <button type="button" id="reedcrm-ticket-time-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
                         <i class="fas fa-save"></i>
