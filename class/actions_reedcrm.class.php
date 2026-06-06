@@ -807,9 +807,13 @@ class ActionsReedcrm
                                 success: function(response) {
                                     btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
                                     if (response.success) {
-                                        $.jnotify("' . dol_escape_js($langs->trans("RecordSaved")) . '", "success");
+                                        // Liseret vert discret sur le bouton, disparaît après 1.5s
+                                        btn.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78", "background": "#48bb78", "color": "#fff", "opacity": "1"});
                                         jQuery("#reedcrm-ticket-time-note").val("");
-                                        setTimeout(function(){ window.location.reload(); }, 1000);
+                                        setTimeout(function(){
+                                            btn.css({"box-shadow": "", "border-color": "#cbd5e0", "background": "#f8f9fa", "color": "#4a5568", "opacity": "0.6"});
+                                            window.location.reload();
+                                        }, 1500);
                                     } else {
                                         $.jnotify(response.error, "error");
                                     }
