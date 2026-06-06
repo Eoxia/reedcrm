@@ -889,7 +889,7 @@ class ActionsReedcrm
             
             $tooltipHtml = '';
             if ($timeCount > 0) {
-                $tooltipHtml .= $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount) . "\n\n";
+                $tooltipHtml .= '<b>' . $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount) . "</b><br><br>";
                 foreach ($timeEntries as $te) {
                     $dateTs   = $db->jdate($te->task_datehour);
                     $dateStr  = dol_print_date($dateTs, 'dayhour');
@@ -901,7 +901,7 @@ class ActionsReedcrm
                     if (!empty($noteStr)) {
                         $tooltipHtml .= " | " . $noteStr;
                     }
-                    $tooltipHtml .= " | " . $dureeStr . "\n";
+                    $tooltipHtml .= " | " . $dureeStr . "<br>";
                 }
             } else {
                 $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
@@ -919,7 +919,7 @@ class ActionsReedcrm
                 $logoHtml .= '<a href="' . $taskUrl . '">';
             }
             
-            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml) . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: pointer;">';
+            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml, 1, 1, 'br') . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: pointer;">';
             $logoHtml .= '<i class="fas fa-list"></i>';
             if ($timeCount > 0) {
                 $logoHtml .= '<span style="position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1;">' . $timeCount . '</span>';
