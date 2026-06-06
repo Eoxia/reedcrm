@@ -862,12 +862,15 @@ class ActionsReedcrm
                 }
                 $expected_label = trim($prefix . $suffix_str);
                 
-                $sql    = 'SELECT t.rowid FROM ' . MAIN_DB_PREFIX . 'projet_task as t';
+                $sql    = 'SELECT t.rowid, t.ref, t.duration_effective, t.planned_workload FROM ' . MAIN_DB_PREFIX . 'projet_task as t';
                 $sql   .= ' WHERE t.fk_projet = ' . (int)$object->fk_project;
                 $sql   .= " AND t.label = '" . $db->escape($expected_label) . "'";
                 $resql  = $db->query($sql);
                 if ($resql && ($objTask = $db->fetch_object($resql)) && $objTask) {
                     $task_id = $objTask->rowid;
+                    $task_ref = $objTask->ref;
+                    $task_duration_effective = (float)$objTask->duration_effective;
+                    $task_planned_workload = (float)$objTask->planned_workload;
                 }
                 
                 if ($task_id > 0) {
@@ -889,7 +892,15 @@ class ActionsReedcrm
             
             $tooltipHtml = '';
             if ($timeCount > 0) {
-                $tooltipHtml .= '<b>' . $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount) . "</b><br><br>";
+                $effectiveTimeStr = convertSecondToTime($task_duration_effective, 'allhourmin');
+                $plannedTimeStr = convertSecondToTime($task_planned_workload, 'allhourmin');
+                if (empty($effectiveTimeStr)) $effectiveTimeStr = '00:00';
+                if (empty($plannedTimeStr)) $plannedTimeStr = '00:00';
+                
+                $headerTitle = $task_ref . ' - ' . $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount);
+                $headerTitle .= ' <span style="float:right">' . $effectiveTimeStr . ' / ' . $plannedTimeStr . '</span>';
+                
+                $tooltipHtml .= '<b>' . $headerTitle . "</b><br><br>";
                 foreach ($timeEntries as $te) {
                     $dateTs   = $db->jdate($te->task_datehour);
                     $dateStr  = dol_print_date($dateTs, 'dayhour');
@@ -919,7 +930,7 @@ class ActionsReedcrm
                 $logoHtml .= '<a href="' . $taskUrl . '">';
             }
             
-            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml, 1, 1, 'br') . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: pointer;">';
+            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml, 1, 1, 'br,span') . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: pointer;">';
             $logoHtml .= '<i class="fas fa-list"></i>';
             if ($timeCount > 0) {
                 $logoHtml .= '<span style="position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1;">' . $timeCount . '</span>';
