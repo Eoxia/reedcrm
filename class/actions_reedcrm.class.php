@@ -898,7 +898,7 @@ class ActionsReedcrm
                 if (empty($plannedTimeStr)) $plannedTimeStr = '00:00';
                 
                 $headerTitle = $task_ref . ' - ' . $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount);
-                $headerTitle .= ' <span style="float:right">' . $effectiveTimeStr . ' / ' . $plannedTimeStr . '</span>';
+                $headerTitle .= ' <span style=\'float:right\'>' . $effectiveTimeStr . ' / ' . $plannedTimeStr . '</span>';
                 
                 $tooltipHtml .= '<b>' . $headerTitle . "</b><br><br>";
                 foreach ($timeEntries as $te) {
