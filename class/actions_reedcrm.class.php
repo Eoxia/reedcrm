@@ -2297,13 +2297,13 @@ class ActionsReedcrm
             $hasProject     = !empty($object->fk_project) && $object->fk_project > 0;
 
             if ($hasProject) {
-                print '<div style="margin: 8px 0 4px 0; padding: 6px 10px; background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 6px; display: flex; align-items: center; gap: 10px; font-size: 0.93em; color: #276749;">';
-                print '<label style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin: 0;">';
-                print '<input type="checkbox" name="reedcrm_log_time" id="reedcrm_log_time" value="1" style="cursor: pointer;">';
-                print ' <i class="fas fa-clock" style="color: #48bb78;"></i> ';
-                print $langs->trans('ReedCRMLogTimeWithMessage');
-                print '</label>';
-                print '&nbsp;&nbsp;<input type="number" name="reedcrm_log_minutes" id="reedcrm_log_minutes" value="' . $defaultMinutes . '" min="1" style="width: 55px; border: 1px solid #9ae6b4; border-radius: 4px; padding: 2px 5px; font-size: 0.93em; background: #fff;"> min';
+                // Construction du logo propre à partir du helper Dolibarr
+                $logoHtml = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule" style="width: 22px; height: auto;"');
+                
+                print '<div style="margin: 8px 0 4px 0; display: flex; align-items: center; gap: 8px; font-size: 0.95em; color: #4a5568;">';
+                print $logoHtml;
+                print '<input type="checkbox" name="reedcrm_log_time" id="reedcrm_log_time" value="1" checked style="cursor: pointer; margin:0;">';
+                print '<input type="number" name="reedcrm_log_minutes" id="reedcrm_log_minutes" value="' . $defaultMinutes . '" min="1" style="width: 50px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; background: #fff; text-align: center;"> Min';
                 print '</div>';
             }
         }
