@@ -134,11 +134,12 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
             $actioncomm->code = 'TICKET_TIMESPENT';
             $actioncomm->socid = $ticket->socid;
             
-            $actioncomm->label = !empty($note) ? $note : 'Temps consigné (' . $minutes . ' min)';
+            $clean_note_for_label = trim(preg_replace('/\s+/', ' ', $note));
+            $actioncomm->label = !empty($clean_note_for_label) ? dol_trunc($clean_note_for_label, 100) : 'Temps consigné (' . $minutes . ' min)';
             
             $desc = 'Temps : ' . $minutes . ' min';
             if (!empty($note)) {
-                $desc .= '<br>Commentaire : ' . dol_escape_htmltag($note);
+                $desc .= '<br>Commentaire :<br>' . nl2br(dol_escape_htmltag($note));
             }
             $actioncomm->note_private = $desc;
             
