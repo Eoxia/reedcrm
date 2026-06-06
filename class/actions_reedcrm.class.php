@@ -871,13 +871,13 @@ class ActionsReedcrm
                 }
                 
                 if ($task_id > 0) {
-                    $sqlC = "SELECT COUNT(rowid) as nb FROM " . MAIN_DB_PREFIX . "projet_task_time WHERE fk_task = " . (int)$task_id;
+                    $sqlC = "SELECT COUNT(rowid) as nb FROM " . MAIN_DB_PREFIX . "element_time WHERE elementtype = 'task' AND fk_element = " . (int)$task_id;
                     $resC = $db->query($sqlC);
                     if ($resC && ($objC = $db->fetch_object($resC))) {
                         $timeCount = $objC->nb;
                     }
                     
-                    $sqlE = "SELECT pt.task_datehour, pt.task_duration, pt.note, u.login FROM " . MAIN_DB_PREFIX . "projet_task_time as pt LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON u.rowid = pt.fk_user WHERE pt.fk_task = " . (int)$task_id . " ORDER BY pt.task_datehour DESC LIMIT 5";
+                    $sqlE = "SELECT pt.element_datehour as task_datehour, pt.element_duration as task_duration, pt.note, u.login FROM " . MAIN_DB_PREFIX . "element_time as pt LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON u.rowid = pt.fk_user WHERE pt.elementtype = 'task' AND pt.fk_element = " . (int)$task_id . " ORDER BY pt.element_datehour DESC LIMIT 5";
                     $resE = $db->query($sqlE);
                     if ($resE) {
                         while ($objE = $db->fetch_object($resE)) {
@@ -889,9 +889,7 @@ class ActionsReedcrm
             
             $tooltipHtml = '';
             if ($timeCount > 0) {
-                $tooltipHtml .= '<b>' . $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount) . '</b><br>';
-                $tooltipHtml .= '<table class="noborder" style="width: 100%; font-size: 0.9em; margin-top: 5px;">';
-                $tooltipHtml .= '<tr class="liste_titre"><td style="padding: 2px 10px 2px 0;">' . $langs->trans('Date') . '</td><td style="padding: 2px 10px 2px 0;">' . $langs->trans('User') . '</td><td style="padding: 2px 10px 2px 0;">' . $langs->trans('Note') . '</td><td style="padding: 2px 0;">' . $langs->trans('Duration') . '</td></tr>';
+                $tooltipHtml .= $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount) . "\n\n";
                 foreach ($timeEntries as $te) {
                     $dateTs   = $db->jdate($te->task_datehour);
                     $dateStr  = dol_print_date($dateTs, 'dayhour');
@@ -899,14 +897,12 @@ class ActionsReedcrm
                     $noteStr  = dol_trunc(strip_tags($te->note), 100);
                     $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
                     
-                    $tooltipHtml .= '<tr>';
-                    $tooltipHtml .= '<td style="padding: 2px 10px 2px 0;">' . $dateStr . '</td>';
-                    $tooltipHtml .= '<td style="padding: 2px 10px 2px 0;">' . $userStr . '</td>';
-                    $tooltipHtml .= '<td style="padding: 2px 10px 2px 0;">' . dol_escape_htmltag($noteStr) . '</td>';
-                    $tooltipHtml .= '<td style="padding: 2px 0;">' . $dureeStr . '</td>';
-                    $tooltipHtml .= '</tr>';
+                    $tooltipHtml .= $dateStr . " | " . $userStr . " | " . $dureeStr;
+                    if (!empty($noteStr)) {
+                        $tooltipHtml .= " | " . $noteStr;
+                    }
+                    $tooltipHtml .= "\n";
                 }
-                $tooltipHtml .= '</table>';
             } else {
                 $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
             }
