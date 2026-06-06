@@ -897,11 +897,11 @@ class ActionsReedcrm
                     $noteStr  = dol_trunc(strip_tags($te->note), 100);
                     $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
                     
-                    $tooltipHtml .= $dateStr . " | " . $userStr . " | " . $dureeStr;
+                    $tooltipHtml .= $dateStr . " | " . $userStr;
                     if (!empty($noteStr)) {
                         $tooltipHtml .= " | " . $noteStr;
                     }
-                    $tooltipHtml .= "\n";
+                    $tooltipHtml .= " | " . $dureeStr . "\n";
                 }
             } else {
                 $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
