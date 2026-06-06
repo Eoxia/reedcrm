@@ -111,7 +111,28 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
         $task->timespent_fk_user = $user->id;
         $task->timespent_note = $note;
         $resTime = $task->addTimeSpent($user);
+        
         if ($resTime > 0) {
+            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+            $actioncomm = new ActionComm($db);
+            $actioncomm->type_code = 'AC_OTH_AUTO';
+            $actioncomm->code = 'TICKET_TIMESPENT';
+            $actioncomm->socid = $ticket->socid;
+            
+            $labelTime = 'Temps consigné : ' . $minutes . ' min';
+            if (!empty($note)) {
+                $labelTime .= ' (' . dol_trunc($note, 50) . ')';
+            }
+            $actioncomm->label = $labelTime;
+            $actioncomm->note_private = $note;
+            $actioncomm->userassigned = array($user->id => array('id' => $user->id, 'transparency' => 0));
+            $actioncomm->userownerid = $user->id;
+            $actioncomm->datep = dol_now();
+            $actioncomm->percentage = 100;
+            $actioncomm->elementtype = 'ticket';
+            $actioncomm->fk_element = $ticket->id;
+            $actioncomm->create($user);
+            
             echo json_encode(['success' => true]);
         } else {
             echo json_encode(['success' => false, 'error' => 'Erreur lors de l\'ajout du temps: ' . $task->error]);
