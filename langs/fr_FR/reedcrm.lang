@@ -486,6 +486,13 @@ ShippingDateEqualsCreationDateHelp = À la création d'une expédition, si aucun
 TicketTimeTaskPrefix=Préfixe du libellé de la tâche
 TicketTimeTaskPrefixDescription=Préfixe utilisé pour identifier automatiquement la tâche dans laquelle consigner le temps passé sur un ticket (basé sur le libellé).
 
+TicketTimeTaskSuffix=Suffixe du libellé de la tâche
+TicketTimeTaskSuffixDescription=Choisissez ce qui doit être ajouté après le préfixe dans le libellé de la tâche.
+TicketTimeTaskSuffixTicketRef=Référence du ticket (ex: TS2606-0005)
+TicketTimeTaskSuffixProjectRef=Référence du projet
+TicketTimeTaskSuffixProjectLabel=Libellé du projet
+TicketTimeTaskSuffixNone=Rien (préfixe uniquement)
+
 TicketTimeDefaultMinutes=Temps par défaut (minutes)
 TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le bloc de saisie rapide sur le ticket.
 

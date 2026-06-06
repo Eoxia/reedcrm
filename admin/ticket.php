@@ -63,6 +63,13 @@ if ($action == 'set_config') {
     } else {
         dolibarr_del_const($db, 'REEDCRM_TICKET_TIME_TASK_PREFIX', $conf->entity);
     }
+    
+    $ticketTimeTaskSuffix = GETPOST('ticket_time_task_suffix', 'alpha');
+    if (!empty($ticketTimeTaskSuffix)) {
+        dolibarr_set_const($db, 'REEDCRM_TICKET_TIME_TASK_SUFFIX', $ticketTimeTaskSuffix, 'chaine', 0, '', $conf->entity);
+    } else {
+        dolibarr_set_const($db, 'REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref', 'chaine', 0, '', $conf->entity);
+    }
 
     if ($ticketTimeDefaultMinutes > 0) {
         dolibarr_set_const($db, 'REEDCRM_TICKET_TIME_DEFAULT_MINUTES', $ticketTimeDefaultMinutes, 'integer', 0, '', $conf->entity);
@@ -75,6 +82,9 @@ if ($action == 'set_config') {
     exit;
 }
 
+// Ensure Form object is available
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+$form = new Form($db);
 
 /*
  * View
@@ -112,6 +122,22 @@ print '</td><td>';
 print $langs->transnoentities('TicketTimeTaskPrefixDescription');
 print '</td>';
 print '<td><input type="text" id="ticket_time_task_prefix" name="ticket_time_task_prefix" value="' . getDolGlobalString('REEDCRM_TICKET_TIME_TASK_PREFIX', 'ticket_tps') . '"></td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('TicketTimeTaskSuffix');
+print '</td><td>';
+print $langs->transnoentities('TicketTimeTaskSuffixDescription');
+print '</td>';
+print '<td>';
+$options = array(
+    'ticket_ref' => $langs->trans('TicketTimeTaskSuffixTicketRef'),
+    'project_ref' => $langs->trans('TicketTimeTaskSuffixProjectRef'),
+    'project_label' => $langs->trans('TicketTimeTaskSuffixProjectLabel'),
+    'none' => $langs->trans('TicketTimeTaskSuffixNone')
+);
+print $form->selectarray('ticket_time_task_suffix', $options, getDolGlobalString('REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref'));
+print '</td>';
 print '</tr>';
 
 print '<tr class="oddeven"><td>';
