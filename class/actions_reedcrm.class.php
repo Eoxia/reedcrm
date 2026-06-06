@@ -799,6 +799,7 @@ class ActionsReedcrm
                                     if (response.success) {
                                         $.jnotify("' . dol_escape_js($langs->trans("RecordSaved")) . '", "success");
                                         jQuery("#reedcrm-ticket-time-note").val("");
+                                        setTimeout(function(){ window.location.reload(); }, 1000);
                                     } else {
                                         $.jnotify(response.error, "error");
                                     }
