@@ -113,7 +113,7 @@ print dol_get_fiche_head($head, 'call_list', $title, -1, 'reedcrm_color@reedcrm'
 print load_fiche_titre($langs->trans('Configs', $langs->trans('CallList')), '', '');
 
 // Numbering Module
-$documentPath = false;
+unset($documentPath);
 $objectModSubdir = ''; // so $dir becomes /custom/reedcrm/core/modules/reedcrm/call_list/
 $filelist = [];
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
