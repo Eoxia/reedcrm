@@ -76,23 +76,54 @@ $contacts    = array_filter(
     static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
 );
 
-if (empty($contacts)) {
-    echo json_encode(['success' => true, 'contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '']);
-    exit;
+$object->fetch_optionals();
+$contactId = 0;
+
+// Priority 1: First external contact (excluding PROJECTADDRESS code)
+if (!empty($contacts)) {
+    $firstContact = reset($contacts);
+    $contactId    = (int) $firstContact['id'];
+}
+// Priority 2: Project's extrafield 'projectaddress'
+elseif ($elementType === 'project' && !empty($object->array_options['options_projectaddress'])) {
+    $contactId = (int) $object->array_options['options_projectaddress'];
 }
 
-$firstContact = reset($contacts);
-$contactId    = (int) $firstContact['id'];
+if ($contactId > 0) {
+    $contact = new Contact($db);
+    $contact->fetch($contactId);
 
-$contact = new Contact($db);
-$contact->fetch($contactId);
-
-echo json_encode([
-    'success'    => true,
-    'contact_id' => $contactId,
-    'lastname'   => $contact->lastname,
-    'firstname'  => $contact->firstname,
-    'phone'      => $contact->phone_pro ?: $contact->phone_mobile ?: '',
-]);
-
+    echo json_encode([
+        'success'    => true,
+        'contact_id' => $contactId,
+        'lastname'   => $contact->lastname,
+        'firstname'  => $contact->firstname,
+        'phone'      => $contact->phone_pro ?: $contact->phone_mobile ?: '',
+    ]);
+} elseif ($elementType === 'project' && (!empty($object->array_options['options_reedcrm_lastname']) || !empty($object->array_options['options_projectphone']))) {
+    // Priority 3: Fallback to ReedCRM Lead Extrafields
+    echo json_encode([
+        'success'    => true,
+        'contact_id' => 0,
+        'lastname'   => $object->array_options['options_reedcrm_lastname'] ?? '',
+        'firstname'  => $object->array_options['options_reedcrm_firstname'] ?? '',
+        'phone'      => $object->array_options['options_projectphone'] ?? '',
+    ]);
+} else {
+    // Priority 4: Fallback to Thirdparty (Societe)
+    if ($object->socid > 0) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+        $soc = new Societe($db);
+        $soc->fetch($object->socid);
+        echo json_encode([
+            'success'    => true,
+            'contact_id' => 0,
+            'lastname'   => $soc->name,
+            'firstname'  => '',
+            'phone'      => $soc->phone,
+        ]);
+    } else {
+        echo json_encode(['success' => true, 'contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '']);
+    }
+}
 exit;
