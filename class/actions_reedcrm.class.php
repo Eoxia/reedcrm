@@ -1111,6 +1111,38 @@ class ActionsReedcrm
                 $sevOptions .= '<option value="' . dol_escape_htmltag($sev->code) . '"' . $selected . '>' . dol_escape_htmltag($label) . '</option>';
             }
 
+            // Fetch users for assign select
+            $sqlUsers = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "user WHERE statut = 1 ORDER BY lastname, firstname";
+            $resqlUsers = $db->query($sqlUsers);
+            $assignUsers = [];
+            if ($resqlUsers) {
+                while ($uObj = $db->fetch_object($resqlUsers)) {
+                    $assignUsers[] = [
+                        'id' => (int)$uObj->rowid,
+                        'name' => trim($uObj->firstname . ' ' . $uObj->lastname)
+                    ];
+                }
+            }
+
+            $assignUserId = (int)$object->fk_user_assign;
+            $assignName = '';
+            $assignOptions = '<option value="">' . dol_escape_htmltag($langs->trans('None')) . '</option>';
+            foreach ($assignUsers as $u) {
+                if ($assignUserId == $u['id']) {
+                    $assignName = $u['name'];
+                    $selected = ' selected';
+                } else {
+                    $selected = '';
+                }
+                $assignOptions .= '<option value="' . $u['id'] . '"' . $selected . '>' . dol_escape_htmltag($u['name']) . '</option>';
+            }
+
+            if (empty($assignName)) {
+                $assignLabel = '<span style="color:#cbd5e0; font-style:italic;">' . dol_escape_htmltag($langs->trans('AssignedTo')) . '</span>';
+            } else {
+                $assignLabel = dol_escape_htmltag($assignName);
+            }
+
             $logoSrcSev = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
 
             $html .= '
@@ -1124,40 +1156,91 @@ class ActionsReedcrm
                     </select>
                 </div>
             </div>
+            
+            <div id="reedcrm-ticket-assign-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">
+                <img src="' . dol_escape_htmltag($logoSrcSev) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />
+                <i class="fas fa-user-tie" style="color: #64748b; margin-right: 6px;"></i>
+                <a href="#" id="reedcrm-ticket-assign-badge" class="classlink" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $assignLabel . '</a>
+                <div id="reedcrm-ticket-assign-selector-wrap" style="display:none; margin-left:6px;">
+                    <select id="reedcrm-ticket-assign-select" class="flat" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; background: #fff; height: 24px; min-width: 100px;">
+                        ' . $assignOptions . '
+                    </select>
+                </div>
+            </div>
+            
             <script>
                 jQuery(document).ready(function() {
                     var blockSev = jQuery("#reedcrm-ticket-severity-block");
-                    blockSev.css("display", "inline-flex");
-                    var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
-                    if (flexContainer) {
-                        flexContainer.appendChild(blockSev[0]);
-                    } else {
-                        var titreRight = jQuery("div.titre_right").first();
-                        if (titreRight.length) {
-                            var divWrap = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(blockSev);
-                            titreRight.after(divWrap);
-                        } else {
-                            jQuery(".refidno").first().after(blockSev);
-                        }
+                    var blockAssign = jQuery("#reedcrm-ticket-assign-block");
+                    
+                    // Hide native assigned user row if found
+                    var trHidden = false;
+                    var assignInput = document.getElementById("fk_user_assign");
+                    if (assignInput) {
+                        var assignTr = assignInput.closest("tr");
+                        if (assignTr) { assignTr.style.display = "none"; trHidden = true; }
+                    }
+                    if (!trHidden) {
+                        // Search by label text (Dolibarr translates it)
+                        jQuery("td.tdtitle, td.titlefield").filter(function() {
+                            return jQuery(this).text().trim().indexOf("' . dol_escape_js($langs->trans('AssignedTo')) . '") === 0;
+                        }).closest("tr").hide();
+                        
+                        // Also try the ticket assigned class if it exists
+                        jQuery(".ticket_user_assign, .user_assign").closest("tr").hide();
                     }
 
-                    var badge = jQuery("#reedcrm-ticket-severity-badge");
-                    var wrap = jQuery("#reedcrm-ticket-severity-selector-wrap");
-                    var select = jQuery("#reedcrm-ticket-severity-select");
+                    // Create a flex container to group them together
+                    var container = jQuery("<div></div>").css({
+                        "display": "flex",
+                        "flex-direction": "column",
+                        "gap": "6px",
+                        "align-items": "flex-end",
+                        "margin-top": "6px",
+                        "float": "right",
+                        "clear": "both"
+                    });
+                    
+                    blockSev.css("display", "inline-flex");
+                    blockAssign.css("display", "inline-flex");
+                    container.append(blockAssign).append(blockSev);
 
-                    badge.on("click", function(e) {
+                    // Teleport to the right side (under the green Assign button)
+                    var titreRight = jQuery("div.titre_right").first();
+                    var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
+                    
+                    if (arearefonsamedir.length) {
+                        // This is usually where the top right buttons are
+                        arearefonsamedir.append(container);
+                        // Ensure it can wrap or align correctly
+                        arearefonsamedir.css({
+                            "display": "flex",
+                            "flex-direction": "column",
+                            "align-items": "flex-end"
+                        });
+                    } else if (titreRight.length) {
+                        titreRight.append(container);
+                    } else {
+                        // Fallback
+                        jQuery(".refidno").first().after(container);
+                    }
+
+                    // Handlers for Severity
+                    var badgeSev = jQuery("#reedcrm-ticket-severity-badge");
+                    var wrapSev = jQuery("#reedcrm-ticket-severity-selector-wrap");
+                    var selectSev = jQuery("#reedcrm-ticket-severity-select");
+
+                    badgeSev.on("click", function(e) {
                         e.preventDefault();
-                        badge.hide();
-                        wrap.show();
-                        select.focus();
+                        badgeSev.hide();
+                        wrapSev.show();
+                        selectSev.focus();
                     });
 
-                    select.on("change", function() {
-                        var severityCode = select.val();
-                        select.prop("disabled", true);
-                        
-                        // Add some visual feedback during saving
-                        wrap.css("opacity", "0.5");
+                    selectSev.on("change", function() {
+                        var severityCode = selectSev.val();
+                        selectSev.prop("disabled", true);
+                        wrapSev.css("opacity", "0.5");
 
                         jQuery.ajax({
                             url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_severity.php",
@@ -1170,46 +1253,111 @@ class ActionsReedcrm
                             },
                             dataType: "json",
                             success: function(response) {
-                                select.prop("disabled", false);
-                                wrap.css("opacity", "1");
+                                selectSev.prop("disabled", false);
+                                wrapSev.css("opacity", "1");
                                 if (response.success) {
-                                    var newText = select.find("option:selected").text();
+                                    var newText = selectSev.find("option:selected").text();
                                     if(severityCode === "") {
                                         newText = \'<span style="color:#cbd5e0; font-style:italic;">\' + "' . dol_escape_js($langs->trans('Severity')) . '" + \'</span>\';
-                                        badge.html(newText);
+                                        badgeSev.html(newText);
                                     } else {
-                                        badge.text(newText);
+                                        badgeSev.text(newText);
                                     }
                                     
-                                    wrap.hide();
-                                    badge.show();
+                                    wrapSev.hide();
+                                    badgeSev.show();
                                     
-                                    // Pulse green effect
                                     blockSev.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78"});
                                     setTimeout(function(){
                                         blockSev.css({"box-shadow": "", "border-color": "#e2e8f0"});
                                     }, 1500);
                                 } else {
                                     $.jnotify(response.error, "error");
-                                    wrap.hide();
-                                    badge.show();
+                                    wrapSev.hide();
+                                    badgeSev.show();
                                 }
                             },
                             error: function() {
-                                select.prop("disabled", false);
-                                wrap.css("opacity", "1");
+                                selectSev.prop("disabled", false);
+                                wrapSev.css("opacity", "1");
                                 $.jnotify("Erreur réseau", "error");
-                                wrap.hide();
-                                badge.show();
+                                wrapSev.hide();
+                                badgeSev.show();
                             }
                         });
                     });
                     
-                    // Close select if user clicks outside
+                    // Handlers for Assigned To
+                    var badgeAssign = jQuery("#reedcrm-ticket-assign-badge");
+                    var wrapAssign = jQuery("#reedcrm-ticket-assign-selector-wrap");
+                    var selectAssign = jQuery("#reedcrm-ticket-assign-select");
+
+                    badgeAssign.on("click", function(e) {
+                        e.preventDefault();
+                        badgeAssign.hide();
+                        wrapAssign.show();
+                        selectAssign.focus();
+                    });
+
+                    selectAssign.on("change", function() {
+                        var userAssign = selectAssign.val();
+                        selectAssign.prop("disabled", true);
+                        wrapAssign.css("opacity", "0.5");
+
+                        jQuery.ajax({
+                            url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_assign.php",
+                            method: "POST",
+                            data: {
+                                action: "save_assign",
+                                ticket_id: ' . ((int)$object->id) . ',
+                                user_assign: userAssign,
+                                token: "' . newToken() . '"
+                            },
+                            dataType: "json",
+                            success: function(response) {
+                                selectAssign.prop("disabled", false);
+                                wrapAssign.css("opacity", "1");
+                                if (response.success) {
+                                    var newText = selectAssign.find("option:selected").text();
+                                    if(userAssign === "") {
+                                        newText = \'<span style="color:#cbd5e0; font-style:italic;">\' + "' . dol_escape_js($langs->trans('AssignedTo')) . '" + \'</span>\';
+                                        badgeAssign.html(newText);
+                                    } else {
+                                        badgeAssign.text(newText);
+                                    }
+                                    
+                                    wrapAssign.hide();
+                                    badgeAssign.show();
+                                    
+                                    blockAssign.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78"});
+                                    setTimeout(function(){
+                                        blockAssign.css({"box-shadow": "", "border-color": "#e2e8f0"});
+                                    }, 1500);
+                                } else {
+                                    $.jnotify(response.error, "error");
+                                    wrapAssign.hide();
+                                    badgeAssign.show();
+                                }
+                            },
+                            error: function() {
+                                selectAssign.prop("disabled", false);
+                                wrapAssign.css("opacity", "1");
+                                $.jnotify("Erreur réseau", "error");
+                                wrapAssign.hide();
+                                badgeAssign.show();
+                            }
+                        });
+                    });
+                    
+                    // Close selects if user clicks outside
                     jQuery(document).on("click", function(e) {
-                        if (!blockSev.is(e.target) && blockSev.has(e.target).length === 0 && wrap.is(":visible")) {
-                            wrap.hide();
-                            badge.show();
+                        if (!blockSev.is(e.target) && blockSev.has(e.target).length === 0 && wrapSev.is(":visible")) {
+                            wrapSev.hide();
+                            badgeSev.show();
+                        }
+                        if (!blockAssign.is(e.target) && blockAssign.has(e.target).length === 0 && wrapAssign.is(":visible")) {
+                            wrapAssign.hide();
+                            badgeAssign.show();
                         }
                     });
                 });
