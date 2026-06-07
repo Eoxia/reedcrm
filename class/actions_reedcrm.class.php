@@ -340,6 +340,98 @@ class ActionsReedcrm
      */
     public function doActions(array $parameters, $object, string $action): int
     {
+        // Auto-log time when a ticket message is sent and the checkbox is checked
+        if (strpos($parameters['context'], 'ticketcard') !== false && $action == 'add_message') {
+            if (GETPOSTISSET('reedcrm_log_time') && GETPOSTINT('reedcrm_log_time') == 1) {
+                global $user, $db, $conf;
+
+                $ticketId     = $object->id;
+                $minutes      = GETPOSTINT('reedcrm_log_minutes');
+                $note         = GETPOST('message', 'restricthtml'); // the message body
+                // Strip HTML tags for the note
+                $note         = strip_tags($note);
+                if ($minutes <= 0) {
+                    $minutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
+                }
+
+                if ($ticketId > 0 && $object->fk_project > 0) {
+                    require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+                    require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+                    $prefix      = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_PREFIX', 'ticket_tps');
+                    $suffix_type = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref');
+
+                    $project = new Project($db);
+                    $project->fetch($object->fk_project);
+
+                    $suffix_str = '';
+                    if ($suffix_type === 'ticket_ref') {
+                        $suffix_str = ' ' . $object->ref;
+                    } elseif ($suffix_type === 'project_ref') {
+                        $suffix_str = ' ' . $project->ref;
+                    } elseif ($suffix_type === 'project_label') {
+                        $suffix_str = ' ' . $project->title;
+                    }
+                    $expected_label = trim($prefix . $suffix_str);
+
+                    // Find or create the task
+                    $sql    = 'SELECT t.rowid FROM ' . MAIN_DB_PREFIX . 'projet_task as t';
+                    $sql   .= ' WHERE t.fk_projet = ' . (int)$object->fk_project;
+                    $sql   .= " AND t.label = '" . $db->escape($expected_label) . "'";
+                    $resql  = $db->query($sql);
+                    $task   = new Task($db);
+                    if ($resql && ($obj = $db->fetch_object($resql)) && $obj) {
+                        $task->fetch($obj->rowid);
+                    } else {
+                        $task->fk_project  = $object->fk_project;
+                        $task->ref         = $object->ref;
+                        $task->label       = $expected_label;
+                        $task->description = 'Tâche générée automatiquement pour le ticket ' . $object->ref;
+                        $task->date_c      = dol_now();
+                        $task->date_start  = dol_now();
+                        $task->date_end    = dol_now();
+                        $task->progress    = 0;
+                        $resCreate = $task->create($user);
+                        if ($resCreate <= 0) {
+                            $task = null;
+                        }
+                    }
+
+                    if (!empty($task) && $task->id > 0) {
+                        $task->timespent_duration = $minutes * 60;
+                        $task->timespent_date     = dol_now();
+                        $task->timespent_datehour = dol_now();
+                        $task->timespent_fk_user  = $user->id;
+                        $task->timespent_note     = $note;
+                        $task->addTimeSpent($user);
+
+                        // Also create an ActionComm
+                        $titleMaxLength      = getDolGlobalInt('REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', 200);
+                        $clean_label         = dol_trunc(trim(preg_replace('/\s+/', ' ', $note)), $titleMaxLength);
+                        $actioncomm          = new ActionComm($db);
+                        $actioncomm->type_code = 'AC_OTH_AUTO';
+                        $actioncomm->code    = 'TICKET_TIMESPENT';
+                        $actioncomm->socid   = $object->socid;
+                        $actioncomm->fk_project = $object->fk_project;
+                        $actioncomm->fk_element = $ticketId;
+                        $actioncomm->elementtype = 'ticket';
+                        $actioncomm->label   = !empty($clean_label) ? $clean_label : 'Temps consigné (' . $minutes . ' min)';
+                        $desc = 'Temps : ' . $minutes . ' min';
+                        if (!empty($note)) {
+                            $desc .= '<br>Commentaire :<br>' . nl2br(dol_escape_htmltag($note));
+                        }
+                        $actioncomm->note_private = $desc;
+                        $actioncomm->datep        = dol_now();
+                        $actioncomm->datef        = dol_now();
+                        $actioncomm->userownerid  = $user->id;
+                        $actioncomm->percentage   = 100;
+                        $actioncomm->create($user);
+                    }
+                }
+            }
+        }
+
         if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
             if ($action == 'set_notation_object_contact') {
                 require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
@@ -744,7 +836,567 @@ class ActionsReedcrm
                 <?php
             }
         }
+        if (strpos($parameters['context'], 'ticketcard') !== false && $object instanceof Ticket) {
+            global $db;
+            $defaultMinutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
+            
+            $task_id = 0;
+            $timeCount = 0;
+            $timeEntries = [];
+            if (!empty($object->fk_project)) {
+                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+                
+                $prefix      = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_PREFIX', 'ticket_tps');
+                $suffix_type = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref');
+                $project = new Project($db);
+                $project->fetch($object->fk_project);
+                
+                $suffix_str = '';
+                if ($suffix_type === 'ticket_ref') {
+                    $suffix_str = ' ' . $object->ref;
+                } elseif ($suffix_type === 'project_ref') {
+                    $suffix_str = ' ' . $project->ref;
+                } elseif ($suffix_type === 'project_label') {
+                    $suffix_str = ' ' . $project->title;
+                }
+                $expected_label = trim($prefix . $suffix_str);
+                
+                $sql    = 'SELECT t.rowid, t.ref, t.duration_effective, t.planned_workload FROM ' . MAIN_DB_PREFIX . 'projet_task as t';
+                $sql   .= ' WHERE t.fk_projet = ' . (int)$object->fk_project;
+                $sql   .= " AND t.label = '" . $db->escape($expected_label) . "'";
+                $resql  = $db->query($sql);
+                if ($resql && ($objTask = $db->fetch_object($resql)) && $objTask) {
+                    $task_id = $objTask->rowid;
+                    $task_ref = $objTask->ref;
+                    $task_duration_effective = (float)$objTask->duration_effective;
+                    $task_planned_workload = (float)$objTask->planned_workload;
+                }
+                
+                if ($task_id > 0) {
+                    $sqlC = "SELECT COUNT(rowid) as nb FROM " . MAIN_DB_PREFIX . "element_time WHERE elementtype = 'task' AND fk_element = " . (int)$task_id;
+                    $resC = $db->query($sqlC);
+                    if ($resC && ($objC = $db->fetch_object($resC))) {
+                        $timeCount = $objC->nb;
+                    }
+                    
+                    $sqlE = "SELECT pt.element_datehour as task_datehour, pt.element_duration as task_duration, pt.note, u.login FROM " . MAIN_DB_PREFIX . "element_time as pt LEFT JOIN " . MAIN_DB_PREFIX . "user as u ON u.rowid = pt.fk_user WHERE pt.elementtype = 'task' AND pt.fk_element = " . (int)$task_id . " ORDER BY pt.element_datehour DESC LIMIT 5";
+                    $resE = $db->query($sqlE);
+                    if ($resE) {
+                        while ($objE = $db->fetch_object($resE)) {
+                            $timeEntries[] = $objE;
+                        }
+                    }
+                }
+            }
+            
+            $tooltipHtml = '';
+            if ($timeCount > 0) {
+                $effectiveTimeStr = convertSecondToTime($task_duration_effective, 'allhourmin');
+                $plannedTimeStr = convertSecondToTime($task_planned_workload, 'allhourmin');
+                if (empty($effectiveTimeStr)) $effectiveTimeStr = '00:00';
+                if (empty($plannedTimeStr)) $plannedTimeStr = '00:00';
+                
+                $headerTitle = $task_ref . ' - ' . $langs->trans('ReedCRMTimeEntriesLatest', count($timeEntries), $timeCount);
+                $headerTitle .= ' <span style=\'float:right\'>' . $effectiveTimeStr . ' / ' . $plannedTimeStr . '</span>';
+                
+                $tooltipHtml .= '<b>' . $headerTitle . "</b><br><br>";
+                foreach ($timeEntries as $te) {
+                    $dateTs   = $db->jdate($te->task_datehour);
+                    $dateStr  = dol_print_date($dateTs, '%d/%m/%y %H:%M');
+                    $userStr  = $te->login;
+                    $noteStr  = dol_trunc(strip_tags($te->note), 100);
+                    $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
+                    
+                    $tooltipHtml .= $dateStr . " | " . $userStr . " | " . $dureeStr;
+                    if (!empty($noteStr)) {
+                        $tooltipHtml .= " | " . $noteStr;
+                    }
+                    $tooltipHtml .= "<br>";
+                }
+            } else {
+                $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
+            }
+            
+            $logoSrc = dol_buildpath('/custom/reedcrm/img/reedcrm_color.png', 1);
+            $reedLogoHtml = '<img src="' . dol_escape_htmltag($logoSrc) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+            
+            $logoHtml = '<div style="position: relative; margin-right: 8px; padding-right: 8px; border-right: 1px solid #cbd5e0; display: inline-flex; align-items: center;">';
+            $logoHtml .= $reedLogoHtml;
+            
+            // Link to the task timesheet if task_id exists
+            if ($task_id > 0) {
+                $taskUrl = DOL_URL_ROOT . '/projet/tasks/time.php?id=' . $task_id . '&withproject=1';
+                $logoHtml .= '<a href="' . $taskUrl . '">';
+            }
+            
+            $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml, 1, 1, 'br,span') . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: pointer;">';
+            $logoHtml .= '<i class="fas fa-list"></i>';
+            if ($timeCount > 0) {
+                $logoHtml .= '<span id="reedcrm-ticket-time-count" style="position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1; transition: transform 0.2s;">' . $timeCount . '</span>';
+            } else {
+                $logoHtml .= '<span id="reedcrm-ticket-time-count" style="display: none; position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1; transition: transform 0.2s;">0</span>';
+            }
+            $logoHtml .= '</span>';
+            
+            if ($task_id > 0) {
+                $logoHtml .= '</a>';
+            }
+            $logoHtml .= '</div>';
 
+            $lastTimeHtml = '';
+            if (!empty($timeEntries)) {
+                $te = $timeEntries[0];
+                $dateTs   = $db->jdate($te->task_datehour);
+                $dateStr  = dol_print_date($dateTs, '%d/%m/%y %H:%M');
+                $userStr  = $te->login;
+                $noteStr  = dol_trunc(strip_tags($te->note), 100);
+                $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
+                
+                $initial = strtoupper(substr($userStr, 0, 1));
+                $colorHash = substr(md5($userStr), 0, 6);
+                $userHtml = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background-color: #'.$colorHash.'; color: white; font-size: 0.7em; font-weight: bold; margin: 0 4px;" title="'.dol_escape_htmltag($userStr).'">'.$initial.'</span>';
+
+                $lineStr = '<div style="display: flex; align-items: center; width: 100%;">';
+                $lineStr .= '<span style="color: #a0aec0; margin-right: 4px; white-space: nowrap;">' . dol_escape_htmltag($dateStr) . '</span>';
+                $lineStr .= $userHtml;
+                $lineStr .= '<span style="margin: 0 4px; white-space: nowrap;">| ' . dol_escape_htmltag($dureeStr) . '</span>';
+                if (!empty($noteStr)) {
+                    $lineStr .= '<span style="margin: 0 4px; white-space: nowrap;">|</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;" title="' . dol_escape_htmltag($noteStr) . '">' . dol_escape_htmltag($noteStr) . '</span>';
+                }
+                $lineStr .= '</div>';
+
+                $lastTimeHtml = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 4px; margin-top: 2px; max-width: 100%; overflow: hidden;">' . $lineStr . '</div>';
+            }
+
+            if (!empty($object->fk_project)) {
+                  $html = '
+                  <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; flex-direction: column; align-items: flex-start; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 4px; max-width: 400px;">
+                      <div style="display: flex; align-items: center; gap: 5px; width: 100%;">
+                          ' . $logoHtml . '
+                          <textarea id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" rows="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff; height: 24px; resize: horizontal; overflow: hidden; line-height: 1.5; white-space: nowrap;"></textarea>
+                          <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> Min
+                          <button type="button" id="reedcrm-ticket-time-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
+                              <i class="fas fa-save"></i>
+                          </button>
+                      </div>
+                      ' . $lastTimeHtml . '
+                  </div>
+                  <script>
+                      jQuery(document).ready(function() {
+                          var block = jQuery("#reedcrm-ticket-time-block");
+                          block.css("display", "inline-flex");
+                          var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
+                          if (flexContainer) {
+                              flexContainer.appendChild(block[0]);
+                          } else {
+                              var titreRight = jQuery("div.titre_right").first();
+                              if (titreRight.length) {
+                                  var divWrap = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(block);
+                                  titreRight.after(divWrap);
+                              } else {
+                                  jQuery(".refidno").first().after(block);
+                              }
+                          }
+
+                        // Change button color when typing
+                        var saveBtn = jQuery("#reedcrm-ticket-time-save");
+                        jQuery("#reedcrm-ticket-time-note, #reedcrm-ticket-time-minutes").on("input", function() {
+                            if (jQuery("#reedcrm-ticket-time-note").val().trim() !== "") {
+                                saveBtn.css({"background": "#48bb78", "color": "#fff", "border-color": "#48bb78", "opacity": "1"});
+                            } else {
+                                saveBtn.css({"background": "#f8f9fa", "color": "#4a5568", "border-color": "#cbd5e0", "opacity": "0.6"});
+                            }
+                        });
+
+                        saveBtn.on("click", function() {
+                            var note = jQuery("#reedcrm-ticket-time-note").val();
+                            var minutes = jQuery("#reedcrm-ticket-time-minutes").val();
+                            var btn = jQuery(this);
+
+                            btn.prop("disabled", true).html("<i class=\'fas fa-spinner fa-spin\'></i>");
+
+                            jQuery.ajax({
+                                url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_time.php",
+                                method: "POST",
+                                data: {
+                                    action: "save_time",
+                                    ticket_id: ' . ((int)$object->id) . ',
+                                    note: note,
+                                    minutes: minutes,
+                                    token: "' . newToken() . '"
+                                },
+                                dataType: "json",
+                                success: function(response) {
+                                    btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                    if (response.success) {
+                                        btn.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78", "background": "#48bb78", "color": "#fff", "opacity": "1"});
+                                        jQuery("#reedcrm-ticket-time-note").val("");
+                                        var counter = jQuery("#reedcrm-ticket-time-count");
+                                        if (counter.length) {
+                                            var currentCount = parseInt(counter.text()) || 0;
+                                            counter.text(currentCount + 1).show();
+                                            counter.css("transform", "scale(1.3)");
+                                            setTimeout(function() { counter.css("transform", "scale(1)"); }, 300);
+                                        }
+                                        if (response.new_line_html) {
+                                            var lastTimeDiv = jQuery("#reedcrm-ticket-last-time");
+                                            if (lastTimeDiv.length) {
+                                                lastTimeDiv.replaceWith(response.new_line_html);
+                                            } else {
+                                                jQuery("#reedcrm-ticket-time-block").append(response.new_line_html);
+                                            }
+                                        }
+                                        setTimeout(function(){
+                                            btn.css({"box-shadow": "", "border-color": "#cbd5e0", "background": "#f8f9fa", "color": "#4a5568", "opacity": "0.6"});
+                                        }, 1500);
+                                    } else {
+                                        $.jnotify(response.error, "error");
+                                    }
+                                },
+                                error: function() {
+                                    btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                    $.jnotify("Erreur réseau", "error");
+                                }
+                            });
+                        });
+                    });
+                </script>
+                ';
+            } else {
+                $html = '
+                <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #fffaf0; border: 1px solid #feebc8; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #c05621; gap: 5px;">
+                    ' . $logoHtml . '
+                    <span><i class="fas fa-exclamation-triangle"></i> ' . dol_escape_htmltag($langs->trans('PleaseLinkProjectFirst')) . '</span>
+                </div>
+                <script>
+                    jQuery(document).ready(function() {
+                        var block = jQuery("#reedcrm-ticket-time-block");
+                        block.css("display", "inline-flex");
+                        var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
+                        if (flexContainer) {
+                            flexContainer.appendChild(block[0]);
+                        } else {
+                            var titreRight = jQuery("div.titre_right").first();
+                            if (titreRight.length) {
+                                var wrapper = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(block);
+                                titreRight.after(wrapper);
+                            } else {
+                                jQuery(".refidno").first().after(block);
+                            }
+                        }
+                    });
+                </script>
+                ';
+            }
+
+            $sqlSev = "SELECT code, label FROM " . MAIN_DB_PREFIX . "c_ticket_severity WHERE active > 0 ORDER BY pos";
+            $resSev = $db->query($sqlSev);
+            $severities = [];
+            if ($resSev) {
+                while ($objSev = $db->fetch_object($resSev)) {
+                    $severities[] = $objSev;
+                }
+            }
+            $sevOptions = '';
+            $currentSevLabel = '<span style="color:#cbd5e0; font-style:italic;">' . dol_escape_htmltag($langs->trans('Severity')) . '</span>';
+            foreach ($severities as $sev) {
+                $label = ($langs->trans("TicketSeverityShort" . $sev->code) != "TicketSeverityShort" . $sev->code) ? $langs->trans("TicketSeverityShort" . $sev->code) : $sev->label;
+                if ($object->severity_code == $sev->code) {
+                    $selected = ' selected';
+                    $currentSevLabel = dol_escape_htmltag($label);
+                } else {
+                    $selected = '';
+                }
+                $sevOptions .= '<option value="' . dol_escape_htmltag($sev->code) . '"' . $selected . '>' . dol_escape_htmltag($label) . '</option>';
+            }
+
+            // Fetch users for assign select
+            $sqlUsers = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "user WHERE statut = 1 ORDER BY lastname, firstname";
+            $resqlUsers = $db->query($sqlUsers);
+            $assignUsers = [];
+            if ($resqlUsers) {
+                while ($uObj = $db->fetch_object($resqlUsers)) {
+                    $assignUsers[] = [
+                        'id' => (int)$uObj->rowid,
+                        'name' => trim($uObj->firstname . ' ' . $uObj->lastname)
+                    ];
+                }
+            }
+
+            $assignUserId = (int)$object->fk_user_assign;
+            $assignName = '';
+            $assignOptions = '<option value="">' . dol_escape_htmltag($langs->trans('None')) . '</option>';
+            foreach ($assignUsers as $u) {
+                if ($assignUserId == $u['id']) {
+                    $assignName = $u['name'];
+                    $selected = ' selected';
+                } else {
+                    $selected = '';
+                }
+                $assignOptions .= '<option value="' . $u['id'] . '"' . $selected . '>' . dol_escape_htmltag($u['name']) . '</option>';
+            }
+
+            if (empty($assignName)) {
+                $assignLabel = '<span style="color:#cbd5e0; font-style:italic;">' . dol_escape_htmltag($langs->trans('AssignedTo')) . '</span>';
+            } else {
+                $assignLabel = dol_escape_htmltag($assignName);
+            }
+
+            $logoSrcSev = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+
+            $html .= '
+            <div id="reedcrm-ticket-severity-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">
+                <img src="' . dol_escape_htmltag($logoSrcSev) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />
+                <i class="far fa-exclamation-triangle" style="color: #64748b; margin-right: 6px;"></i>
+                <a href="#" id="reedcrm-ticket-severity-badge" class="classlink" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $currentSevLabel . '</a>
+                <div id="reedcrm-ticket-severity-selector-wrap" style="display:none; margin-left:6px;">
+                    <select id="reedcrm-ticket-severity-select" class="reedcrm-select2" style="min-width: 120px;">
+                        ' . $sevOptions . '
+                    </select>
+                </div>
+            </div>
+            
+            <div id="reedcrm-ticket-assign-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">
+                <img src="' . dol_escape_htmltag($logoSrcSev) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />
+                <i class="fas fa-user-tie" style="color: #64748b; margin-right: 6px;"></i>
+                <a href="#" id="reedcrm-ticket-assign-badge" class="classlink" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $assignLabel . '</a>
+                <div id="reedcrm-ticket-assign-selector-wrap" style="display:none; margin-left:6px;">
+                    <select id="reedcrm-ticket-assign-select" class="reedcrm-select2" style="min-width: 150px;">
+                        ' . $assignOptions . '
+                    </select>
+                </div>
+            </div>
+            
+            <script>
+                jQuery(document).ready(function() {
+                    var blockSev = jQuery("#reedcrm-ticket-severity-block");
+                    var blockAssign = jQuery("#reedcrm-ticket-assign-block");
+                    
+                    // Hide native assigned user row if found
+                    var trHidden = false;
+                    var assignInput = document.getElementById("fk_user_assign");
+                    if (assignInput) {
+                        var assignTr = assignInput.closest("tr");
+                        if (assignTr) { assignTr.style.display = "none"; trHidden = true; }
+                    }
+                    if (!trHidden) {
+                        // Search by label text (Dolibarr translates it)
+                        jQuery("td.tdtitle, td.titlefield").filter(function() {
+                            return jQuery(this).text().trim().indexOf("' . dol_escape_js($langs->trans('AssignedTo')) . '") === 0;
+                        }).closest("tr").hide();
+                        
+                        // Also try the ticket assigned class if it exists
+                        jQuery(".ticket_user_assign, .user_assign").closest("tr").hide();
+                    }
+
+                    // Create a flex container to group them together
+                    var container = jQuery("<div></div>").css({
+                        "display": "flex",
+                        "flex-direction": "column",
+                        "gap": "6px",
+                        "align-items": "flex-end",
+                        "margin-top": "6px",
+                        "float": "right",
+                        "clear": "both"
+                    });
+                    
+                    blockSev.css("display", "inline-flex");
+                    blockAssign.css("display", "inline-flex");
+                    container.append(blockAssign).append(blockSev);
+
+                    // Teleport to the right side (under the green Assign button)
+                    // We look for common Dolibarr right-aligned containers
+                    var target = jQuery(".statusref, .statusrefbox").last();
+                    if (target.length) {
+                        target.after(container);
+                        container.css({
+                            "float": "right",
+                            "clear": "right",
+                            "margin-top": "12px",
+                            "margin-bottom": "8px"
+                        });
+                    } else {
+                        var titreRight = jQuery("div.titre_right").first();
+                        var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
+                        
+                        if (arearefonsamedir.length) {
+                            arearefonsamedir.append(container);
+                        } else if (titreRight.length) {
+                            titreRight.append(container);
+                        } else {
+                            // Try arearef banner container
+                            var arearef = jQuery("div.arearef").first();
+                            if (arearef.length) {
+                                arearef.append(container);
+                                container.css({
+                                    "float": "right",
+                                    "clear": "right",
+                                    "margin-top": "12px"
+                                });
+                            } else {
+                                // Fallback
+                                jQuery(".refidno").first().after(container);
+                            }
+                        }
+                    }
+
+                    // Handlers for Severity
+                    var badgeSev = jQuery("#reedcrm-ticket-severity-badge");
+                    var wrapSev = jQuery("#reedcrm-ticket-severity-selector-wrap");
+                    var selectSev = jQuery("#reedcrm-ticket-severity-select");
+
+                    if (jQuery.fn.select2) {
+                        selectSev.select2({ width: "resolve" });
+                    }
+
+                    badgeSev.on("click", function(e) {
+                        e.preventDefault();
+                        badgeSev.hide();
+                        wrapSev.show();
+                        if (jQuery.fn.select2) {
+                            selectSev.select2("open");
+                        } else {
+                            selectSev.focus();
+                        }
+                    });
+
+                    selectSev.on("select2:close", function() {
+                        wrapSev.hide();
+                        badgeSev.show();
+                    });
+
+                    selectSev.on("change", function() {
+                        var severityCode = selectSev.val();
+                        selectSev.prop("disabled", true);
+                        wrapSev.css("opacity", "0.5");
+
+                        jQuery.ajax({
+                            url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_severity.php",
+                            method: "POST",
+                            data: {
+                                action: "save_severity",
+                                ticket_id: ' . ((int)$object->id) . ',
+                                severity_code: severityCode,
+                                token: "' . newToken() . '"
+                            },
+                            dataType: "json",
+                            success: function(response) {
+                                selectSev.prop("disabled", false);
+                                wrapSev.css("opacity", "1");
+                                if (response.success) {
+                                    var newText = selectSev.find("option:selected").text();
+                                    if(severityCode === "") {
+                                        newText = \'<span style="color:#cbd5e0; font-style:italic;">\' + "' . dol_escape_js($langs->trans('Severity')) . '" + \'</span>\';
+                                        badgeSev.html(newText);
+                                    } else {
+                                        badgeSev.text(newText);
+                                    }
+                                    
+                                    wrapSev.hide();
+                                    badgeSev.show();
+                                    
+                                    blockSev.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78"});
+                                    setTimeout(function(){
+                                        blockSev.css({"box-shadow": "", "border-color": "#e2e8f0"});
+                                    }, 1500);
+                                } else {
+                                    $.jnotify(response.error, "error");
+                                    wrapSev.hide();
+                                    badgeSev.show();
+                                }
+                            },
+                            error: function() {
+                                selectSev.prop("disabled", false);
+                                wrapSev.css("opacity", "1");
+                                $.jnotify("Erreur réseau", "error");
+                                wrapSev.hide();
+                                badgeSev.show();
+                            }
+                        });
+                    });
+                    
+                    // Handlers for Assigned To
+                    var badgeAssign = jQuery("#reedcrm-ticket-assign-badge");
+                    var wrapAssign = jQuery("#reedcrm-ticket-assign-selector-wrap");
+                    var selectAssign = jQuery("#reedcrm-ticket-assign-select");
+
+                    if (jQuery.fn.select2) {
+                        selectAssign.select2({ width: "resolve" });
+                    }
+
+                    badgeAssign.on("click", function(e) {
+                        e.preventDefault();
+                        badgeAssign.hide();
+                        wrapAssign.show();
+                        if (jQuery.fn.select2) {
+                            selectAssign.select2("open");
+                        } else {
+                            selectAssign.focus();
+                        }
+                    });
+
+                    selectAssign.on("select2:close", function() {
+                        wrapAssign.hide();
+                        badgeAssign.show();
+                    });
+
+                    selectAssign.on("change", function() {
+                        var userAssign = selectAssign.val();
+                        selectAssign.prop("disabled", true);
+                        wrapAssign.css("opacity", "0.5");
+
+                        jQuery.ajax({
+                            url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_assign.php",
+                            method: "POST",
+                            data: {
+                                action: "save_assign",
+                                ticket_id: ' . ((int)$object->id) . ',
+                                user_assign: userAssign,
+                                token: "' . newToken() . '"
+                            },
+                            dataType: "json",
+                            success: function(response) {
+                                selectAssign.prop("disabled", false);
+                                wrapAssign.css("opacity", "1");
+                                if (response.success) {
+                                    var newText = selectAssign.find("option:selected").text();
+                                    if(userAssign === "") {
+                                        newText = \'<span style="color:#cbd5e0; font-style:italic;">\' + "' . dol_escape_js($langs->trans('AssignedTo')) . '" + \'</span>\';
+                                        badgeAssign.html(newText);
+                                    } else {
+                                        badgeAssign.text(newText);
+                                    }
+                                    
+                                    wrapAssign.hide();
+                                    badgeAssign.show();
+                                    
+                                    blockAssign.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78"});
+                                    setTimeout(function(){
+                                        blockAssign.css({"box-shadow": "", "border-color": "#e2e8f0"});
+                                    }, 1500);
+                                } else {
+                                    $.jnotify(response.error, "error");
+                                    wrapAssign.hide();
+                                    badgeAssign.show();
+                                }
+                            },
+                            error: function() {
+                                selectAssign.prop("disabled", false);
+                                wrapAssign.css("opacity", "1");
+                                $.jnotify("Erreur réseau", "error");
+                                wrapAssign.hide();
+                                badgeAssign.show();
+                            }
+                        });
+                    });
+                });
+            </script>
+            ';
+
+
+            print $html;
+        }
         return 0; // or return 1 to replace standard code
     }
 
@@ -2078,13 +2730,43 @@ class ActionsReedcrm
      */
     public function formObjectOptions(array $parameters, $object, $action): int
     {
-        global $extrafields, $langs;
+        global $extrafields, $langs, $conf;
 
         if (strpos($parameters['context'], 'projectcard') !== false && $object instanceof Project) {
             $picto            = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule"');
             $extraFieldsNames = ['opporigin'];
             foreach ($extraFieldsNames as $extraFieldsName) {
                 $extrafields->attributes['projet']['label'][$extraFieldsName] = $picto . $langs->transnoentities($extrafields->attributes['projet']['label'][$extraFieldsName]);
+            }
+        }
+
+        // Add time-logging checkbox below the message form on ticket card
+        if (strpos($parameters['context'], 'ticketcard') !== false && in_array($action, ['presend', 'presend_addmessage', 'add_message'])) {
+            $defaultMinutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
+            $hasProject     = !empty($object->fk_project) && $object->fk_project > 0;
+
+            if ($hasProject) {
+                // Construction du logo propre à partir du helper Dolibarr
+                $logoHtml = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule" style="width: 22px; height: auto;"');
+                
+                print '<div id="reedcrm-ticket-time-inline" style="display: none; align-items: center; gap: 8px; font-size: 0.95em; color: #4a5568; margin-right: 15px;">';
+                print $logoHtml;
+                print '<input type="checkbox" name="reedcrm_log_time" id="reedcrm_log_time" value="1" checked style="cursor: pointer; margin:0;">';
+                print '<input type="number" name="reedcrm_log_minutes" id="reedcrm_log_minutes" value="' . $defaultMinutes . '" min="1" style="width: 50px; border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; background: #fff; text-align: center;"> Min';
+                print '</div>';
+
+                print '<script>';
+                print 'jQuery(document).ready(function() {';
+                print '    var timeBlock = jQuery("#reedcrm-ticket-time-inline");';
+                // Cherche le bouton submit du formmail (id addmessage ou name btn_add_message)
+                print '    var btn = jQuery("#addmessage");';
+                print '    if (btn.length === 0) btn = jQuery("input[name=\'btn_add_message\'], button[name=\'btn_add_message\']").first();';
+                print '    if (btn.length > 0) {';
+                print '        btn.before(timeBlock);'; // Place juste avant le bouton
+                print '        timeBlock.css("display", "inline-flex");'; // Affiche une fois placé
+                print '    }';
+                print '});';
+                print '</script>';
             }
         }
 
