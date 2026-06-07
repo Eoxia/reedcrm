@@ -53,7 +53,7 @@ saturne_check_access($permissiontoread);
 $moduleName = 'ReedCRM';
 $moduleNameLowerCase = 'reedcrm';
 $documentParentType = 'calllist';
-$documentType = 'call_list';
+$documentType = 'calllist';
 $objectModSubdir = 'call_list';
 
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
