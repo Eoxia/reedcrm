@@ -1012,7 +1012,6 @@ class ActionsReedcrm
                                             counter.css("transform", "scale(1.3)");
                                             setTimeout(function() { counter.css("transform", "scale(1)"); }, 300);
                                         }
-                                        $.jnotify("Temps ajouté avec succès", "success");
                                         setTimeout(function(){
                                             btn.css({"box-shadow": "", "border-color": "#cbd5e0", "background": "#f8f9fa", "color": "#4a5568", "opacity": "0.6"});
                                         }, 1500);
