@@ -21,7 +21,7 @@
  * \brief   Abstract class for CallList numbering modules.
  */
 
-require_once __DIR__ . '/../../../../saturne/core/modules/saturne/modules_saturne.php';
+require_once __DIR__ . '/../../../../../saturne/core/modules/saturne/modules_saturne.php';
 
 /**
  * Abstract class for CallList numbering modules.
