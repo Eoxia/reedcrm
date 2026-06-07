@@ -953,11 +953,20 @@ class ActionsReedcrm
                 $noteStr  = dol_trunc(strip_tags($te->note), 100);
                 $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
                 
-                $lineStr = '<span style="font-size: 0.8em; color: #a0aec0; margin-right: 4px;">' . dol_escape_htmltag($dateStr) . '</span> | ' . dol_escape_htmltag($userStr) . ' | ' . dol_escape_htmltag($dureeStr);
+                $initial = strtoupper(substr($userStr, 0, 1));
+                $colorHash = substr(md5($userStr), 0, 6);
+                $userHtml = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background-color: #'.$colorHash.'; color: white; font-size: 0.7em; font-weight: bold; margin: 0 4px;" title="'.dol_escape_htmltag($userStr).'">'.$initial.'</span>';
+
+                $lineStr = '<div style="display: flex; align-items: center; width: 100%;">';
+                $lineStr .= '<span style="font-size: 0.75em; color: #a0aec0; margin-right: 4px; white-space: nowrap;">' . dol_escape_htmltag($dateStr) . '</span>';
+                $lineStr .= $userHtml;
+                $lineStr .= '<span style="margin: 0 4px; white-space: nowrap; font-size: 0.85em;">| ' . dol_escape_htmltag($dureeStr) . '</span>';
                 if (!empty($noteStr)) {
-                    $lineStr .= " | " . dol_escape_htmltag($noteStr);
+                    $lineStr .= '<span style="margin: 0 4px; white-space: nowrap; font-size: 0.85em;">|</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85em; flex-grow: 1;" title="' . dol_escape_htmltag($noteStr) . '">' . dol_escape_htmltag($noteStr) . '</span>';
                 }
-                $lastTimeHtml = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 38px; margin-top: 4px;">' . $lineStr . '</div>';
+                $lineStr .= '</div>';
+
+                $lastTimeHtml = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 4px; margin-top: 2px; max-width: 260px; overflow: hidden;">' . $lineStr . '</div>';
             }
 
             if (!empty($object->fk_project)) {
