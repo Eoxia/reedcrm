@@ -958,26 +958,28 @@ class ActionsReedcrm
                 $userHtml = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background-color: #'.$colorHash.'; color: white; font-size: 0.7em; font-weight: bold; margin: 0 4px;" title="'.dol_escape_htmltag($userStr).'">'.$initial.'</span>';
 
                 $lineStr = '<div style="display: flex; align-items: center; width: 100%;">';
-                $lineStr .= '<span style="font-size: 0.75em; color: #a0aec0; margin-right: 4px; white-space: nowrap;">' . dol_escape_htmltag($dateStr) . '</span>';
+                $lineStr .= '<span style="color: #a0aec0; margin-right: 4px; white-space: nowrap;">' . dol_escape_htmltag($dateStr) . '</span>';
                 $lineStr .= $userHtml;
-                $lineStr .= '<span style="margin: 0 4px; white-space: nowrap; font-size: 0.85em;">| ' . dol_escape_htmltag($dureeStr) . '</span>';
+                $lineStr .= '<span style="margin: 0 4px; white-space: nowrap;">| ' . dol_escape_htmltag($dureeStr) . '</span>';
                 if (!empty($noteStr)) {
-                    $lineStr .= '<span style="margin: 0 4px; white-space: nowrap; font-size: 0.85em;">|</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85em; flex-grow: 1;" title="' . dol_escape_htmltag($noteStr) . '">' . dol_escape_htmltag($noteStr) . '</span>';
+                    $lineStr .= '<span style="margin: 0 4px; white-space: nowrap;">|</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;" title="' . dol_escape_htmltag($noteStr) . '">' . dol_escape_htmltag($noteStr) . '</span>';
                 }
                 $lineStr .= '</div>';
 
-                $lastTimeHtml = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 4px; margin-top: 2px; max-width: 260px; overflow: hidden;">' . $lineStr . '</div>';
+                $lastTimeHtml = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 4px; margin-top: 2px; max-width: 100%; overflow: hidden;">' . $lineStr . '</div>';
             }
 
             if (!empty($object->fk_project)) {
                   $html = '
-                  <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; flex-wrap: wrap; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 5px;">
-                      ' . $logoHtml . '
-                      <textarea id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" rows="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff; height: 24px; resize: horizontal; overflow: hidden; line-height: 1.5; white-space: nowrap;"></textarea>
-                      <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> Min
-                      <button type="button" id="reedcrm-ticket-time-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
-                          <i class="fas fa-save"></i>
-                      </button>
+                  <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; flex-direction: column; align-items: flex-start; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 4px; max-width: 310px;">
+                      <div style="display: flex; align-items: center; gap: 5px; width: 100%;">
+                          ' . $logoHtml . '
+                          <textarea id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" rows="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff; height: 24px; resize: horizontal; overflow: hidden; line-height: 1.5; white-space: nowrap;"></textarea>
+                          <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> Min
+                          <button type="button" id="reedcrm-ticket-time-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
+                              <i class="fas fa-save"></i>
+                          </button>
+                      </div>
                       ' . $lastTimeHtml . '
                   </div>
                   <script>

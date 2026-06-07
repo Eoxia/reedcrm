@@ -164,15 +164,15 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
             $userHtml = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background-color: #'.$colorHash.'; color: white; font-size: 0.7em; font-weight: bold; margin: 0 4px;" title="'.dol_escape_htmltag($userStr).'">'.$initial.'</span>';
 
             $lineStr = '<div style="display: flex; align-items: center; width: 100%;">';
-            $lineStr .= '<span style="font-size: 0.75em; color: #a0aec0; margin-right: 4px; white-space: nowrap;">' . dol_escape_htmltag($dateStr) . '</span>';
+            $lineStr .= '<span style="color: #a0aec0; margin-right: 4px; white-space: nowrap;">' . dol_escape_htmltag($dateStr) . '</span>';
             $lineStr .= $userHtml;
-            $lineStr .= '<span style="margin: 0 4px; white-space: nowrap; font-size: 0.85em;">| ' . dol_escape_htmltag($dureeStr) . '</span>';
+            $lineStr .= '<span style="margin: 0 4px; white-space: nowrap;">| ' . dol_escape_htmltag($dureeStr) . '</span>';
             if (!empty($noteStr)) {
-                $lineStr .= '<span style="margin: 0 4px; white-space: nowrap; font-size: 0.85em;">|</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85em; flex-grow: 1;" title="' . dol_escape_htmltag($noteStr) . '">' . dol_escape_htmltag($noteStr) . '</span>';
+                $lineStr .= '<span style="margin: 0 4px; white-space: nowrap;">|</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1;" title="' . dol_escape_htmltag($noteStr) . '">' . dol_escape_htmltag($noteStr) . '</span>';
             }
             $lineStr .= '</div>';
 
-            $htmlLine = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 4px; margin-top: 2px; max-width: 260px; overflow: hidden;">' . $lineStr . '</div>';
+            $htmlLine = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 4px; margin-top: 2px; max-width: 100%; overflow: hidden;">' . $lineStr . '</div>';
             
             echo json_encode(['success' => true, 'new_line_html' => $htmlLine]);
         } else {
