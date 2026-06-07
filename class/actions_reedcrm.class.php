@@ -903,16 +903,16 @@ class ActionsReedcrm
                 $tooltipHtml .= '<b>' . $headerTitle . "</b><br><br>";
                 foreach ($timeEntries as $te) {
                     $dateTs   = $db->jdate($te->task_datehour);
-                    $dateStr  = dol_print_date($dateTs, 'dayhour');
+                    $dateStr  = dol_print_date($dateTs, '%d/%m/%y %H:%M');
                     $userStr  = $te->login;
                     $noteStr  = dol_trunc(strip_tags($te->note), 100);
                     $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
                     
-                    $tooltipHtml .= $dateStr . " | " . $userStr;
+                    $tooltipHtml .= $dateStr . " | " . $userStr . " | " . $dureeStr;
                     if (!empty($noteStr)) {
                         $tooltipHtml .= " | " . $noteStr;
                     }
-                    $tooltipHtml .= " | " . $dureeStr . "<br>";
+                    $tooltipHtml .= "<br>";
                 }
             } else {
                 $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
