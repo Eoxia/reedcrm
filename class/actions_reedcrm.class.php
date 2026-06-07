@@ -1099,25 +1099,30 @@ class ActionsReedcrm
                 }
             }
             $sevOptions = '';
+            $currentSevLabel = '<span style="color:#cbd5e0; font-style:italic;">' . dol_escape_htmltag($langs->trans('Severity')) . '</span>';
             foreach ($severities as $sev) {
                 $label = ($langs->trans("TicketSeverityShort" . $sev->code) != "TicketSeverityShort" . $sev->code) ? $langs->trans("TicketSeverityShort" . $sev->code) : $sev->label;
-                $selected = ($object->severity_code == $sev->code) ? ' selected' : '';
+                if ($object->severity_code == $sev->code) {
+                    $selected = ' selected';
+                    $currentSevLabel = dol_escape_htmltag($label);
+                } else {
+                    $selected = '';
+                }
                 $sevOptions .= '<option value="' . dol_escape_htmltag($sev->code) . '"' . $selected . '>' . dol_escape_htmltag($label) . '</option>';
             }
 
-            $logoSrcSev = dol_buildpath('/custom/reedcrm/img/reedcrm_color.png', 1);
-            $logoHtmlSev = '<img src="' . dol_escape_htmltag($logoSrcSev) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+            $logoSrcSev = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
 
             $html .= '
-            <div id="reedcrm-ticket-severity-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 5px;">
-                ' . $logoHtmlSev . '
-                <span style="color: #a0aec0; margin-right: 4px;">' . dol_escape_htmltag($langs->trans('Severity')) . '</span>
-                <select id="reedcrm-ticket-severity-select" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; background: #fff; height: 24px; min-width: 100px;">
-                    ' . $sevOptions . '
-                </select>
-                <button type="button" id="reedcrm-ticket-severity-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
-                    <i class="fas fa-save"></i>
-                </button>
+            <div id="reedcrm-ticket-severity-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">
+                <img src="' . dol_escape_htmltag($logoSrcSev) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />
+                <i class="far fa-exclamation-triangle" style="color: #64748b; margin-right: 6px;"></i>
+                <a href="#" id="reedcrm-ticket-severity-badge" class="classlink" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $currentSevLabel . '</a>
+                <div id="reedcrm-ticket-severity-selector-wrap" style="display:none; margin-left:6px;">
+                    <select id="reedcrm-ticket-severity-select" class="flat" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; background: #fff; height: 24px; min-width: 100px;">
+                        ' . $sevOptions . '
+                    </select>
+                </div>
             </div>
             <script>
                 jQuery(document).ready(function() {
@@ -1136,16 +1141,23 @@ class ActionsReedcrm
                         }
                     }
 
-                    var saveBtnSev = jQuery("#reedcrm-ticket-severity-save");
-                    jQuery("#reedcrm-ticket-severity-select").on("change", function() {
-                        saveBtnSev.css({"background": "#48bb78", "color": "#fff", "border-color": "#48bb78", "opacity": "1"});
+                    var badge = jQuery("#reedcrm-ticket-severity-badge");
+                    var wrap = jQuery("#reedcrm-ticket-severity-selector-wrap");
+                    var select = jQuery("#reedcrm-ticket-severity-select");
+
+                    badge.on("click", function(e) {
+                        e.preventDefault();
+                        badge.hide();
+                        wrap.show();
+                        select.focus();
                     });
 
-                    saveBtnSev.on("click", function() {
-                        var severityCode = jQuery("#reedcrm-ticket-severity-select").val();
-                        var btn = jQuery(this);
-
-                        btn.prop("disabled", true).html("<i class=\'fas fa-spinner fa-spin\'></i>");
+                    select.on("change", function() {
+                        var severityCode = select.val();
+                        select.prop("disabled", true);
+                        
+                        // Add some visual feedback during saving
+                        wrap.css("opacity", "0.5");
 
                         jQuery.ajax({
                             url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_severity.php",
@@ -1158,25 +1170,52 @@ class ActionsReedcrm
                             },
                             dataType: "json",
                             success: function(response) {
-                                btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                select.prop("disabled", false);
+                                wrap.css("opacity", "1");
                                 if (response.success) {
-                                    btn.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78", "background": "#48bb78", "color": "#fff", "opacity": "1"});
+                                    var newText = select.find("option:selected").text();
+                                    if(severityCode === "") {
+                                        newText = \'<span style="color:#cbd5e0; font-style:italic;">\' + "' . dol_escape_js($langs->trans('Severity')) . '" + \'</span>\';
+                                        badge.html(newText);
+                                    } else {
+                                        badge.text(newText);
+                                    }
+                                    
+                                    wrap.hide();
+                                    badge.show();
+                                    
+                                    // Pulse green effect
+                                    blockSev.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78"});
                                     setTimeout(function(){
-                                        btn.css({"box-shadow": "", "border-color": "#cbd5e0", "background": "#f8f9fa", "color": "#4a5568", "opacity": "0.6"});
+                                        blockSev.css({"box-shadow": "", "border-color": "#e2e8f0"});
                                     }, 1500);
                                 } else {
                                     $.jnotify(response.error, "error");
+                                    wrap.hide();
+                                    badge.show();
                                 }
                             },
                             error: function() {
-                                btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                select.prop("disabled", false);
+                                wrap.css("opacity", "1");
                                 $.jnotify("Erreur réseau", "error");
+                                wrap.hide();
+                                badge.show();
                             }
                         });
+                    });
+                    
+                    // Close select if user clicks outside
+                    jQuery(document).on("click", function(e) {
+                        if (!blockSev.is(e.target) && blockSev.has(e.target).length === 0 && wrap.is(":visible")) {
+                            wrap.hide();
+                            badge.show();
+                        }
                     });
                 });
             </script>
             ';
+
 
             print $html;
         }
