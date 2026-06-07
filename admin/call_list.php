@@ -114,7 +114,7 @@ print load_fiche_titre($langs->trans('Configs', $langs->trans('CallList')), '', 
 
 // Numbering Module
 unset($documentPath);
-$objectModSubdir = ''; // so $dir becomes /custom/reedcrm/core/modules/reedcrm/call_list/
+unset($objectModSubdir);
 $filelist = [];
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
 
