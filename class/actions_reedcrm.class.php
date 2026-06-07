@@ -952,40 +952,39 @@ class ActionsReedcrm
                 $userStr  = $te->login;
                 $noteStr  = dol_trunc(strip_tags($te->note), 100);
                 $dureeStr = convertSecondToTime($te->task_duration, 'allhourmin');
-                $lineStr = $dateStr . " | " . $userStr . " | " . $dureeStr;
+                
+                $lineStr = '<span style="font-size: 0.8em; color: #a0aec0; margin-right: 4px;">' . dol_escape_htmltag($dateStr) . '</span> | ' . dol_escape_htmltag($userStr) . ' | ' . dol_escape_htmltag($dureeStr);
                 if (!empty($noteStr)) {
-                    $lineStr .= " | " . $noteStr;
+                    $lineStr .= " | " . dol_escape_htmltag($noteStr);
                 }
-                $lastTimeHtml = '<div id="reedcrm-ticket-last-time" style="font-size: 0.85em; color: #718096; padding-left: 6px; padding-top: 2px;">' . dol_escape_htmltag($lineStr) . '</div>';
+                $lastTimeHtml = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 38px; margin-top: 4px;">' . $lineStr . '</div>';
             }
 
             if (!empty($object->fk_project)) {
                   $html = '
-                  <div id="reedcrm-ticket-time-wrapper" style="display:none; flex-direction: column; margin-bottom: 2px;">
-                      <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; color: #4a5568; gap: 5px;">
-                          ' . $logoHtml . '
-                          <textarea id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" rows="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff; height: 24px; resize: horizontal; overflow: hidden; line-height: 1.5; white-space: nowrap;"></textarea>
-                          <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> Min
-                          <button type="button" id="reedcrm-ticket-time-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
-                              <i class="fas fa-save"></i>
-                          </button>
-                      </div>
+                  <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; flex-wrap: wrap; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 5px;">
+                      ' . $logoHtml . '
+                      <textarea id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" rows="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff; height: 24px; resize: horizontal; overflow: hidden; line-height: 1.5; white-space: nowrap;"></textarea>
+                      <input type="number" id="reedcrm-ticket-time-minutes" value="' . $defaultMinutes . '" min="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 50px; background: #fff;"> Min
+                      <button type="button" id="reedcrm-ticket-time-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
+                          <i class="fas fa-save"></i>
+                      </button>
                       ' . $lastTimeHtml . '
                   </div>
                   <script>
                       jQuery(document).ready(function() {
-                          var wrapper = jQuery("#reedcrm-ticket-time-wrapper");
-                          wrapper.css("display", "inline-flex");
+                          var block = jQuery("#reedcrm-ticket-time-block");
+                          block.css("display", "inline-flex");
                           var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
                           if (flexContainer) {
-                              flexContainer.appendChild(wrapper[0]);
+                              flexContainer.appendChild(block[0]);
                           } else {
                               var titreRight = jQuery("div.titre_right").first();
                               if (titreRight.length) {
-                                  var divWrap = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(wrapper);
+                                  var divWrap = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(block);
                                   titreRight.after(divWrap);
                               } else {
-                                  jQuery(".refidno").first().after(wrapper);
+                                  jQuery(".refidno").first().after(block);
                               }
                           }
 
@@ -1020,7 +1019,6 @@ class ActionsReedcrm
                                 success: function(response) {
                                     btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
                                     if (response.success) {
-                                        // Liseret vert discret sur le bouton, disparaît après 1.5s
                                         btn.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78", "background": "#48bb78", "color": "#fff", "opacity": "1"});
                                         jQuery("#reedcrm-ticket-time-note").val("");
                                         var counter = jQuery("#reedcrm-ticket-time-count");
@@ -1029,6 +1027,14 @@ class ActionsReedcrm
                                             counter.text(currentCount + 1).show();
                                             counter.css("transform", "scale(1.3)");
                                             setTimeout(function() { counter.css("transform", "scale(1)"); }, 300);
+                                        }
+                                        if (response.new_line_html) {
+                                            var lastTimeDiv = jQuery("#reedcrm-ticket-last-time");
+                                            if (lastTimeDiv.length) {
+                                                lastTimeDiv.replaceWith(response.new_line_html);
+                                            } else {
+                                                jQuery("#reedcrm-ticket-time-block").append(response.new_line_html);
+                                            }
                                         }
                                         setTimeout(function(){
                                             btn.css({"box-shadow": "", "border-color": "#cbd5e0", "background": "#f8f9fa", "color": "#4a5568", "opacity": "0.6"});

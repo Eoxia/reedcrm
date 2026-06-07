@@ -152,7 +152,20 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
             $actioncomm->fk_element = $ticket->id;
             $actioncomm->create($user);
             
-            echo json_encode(['success' => true]);
+            require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+            $dateTs   = dol_now();
+            $dateStr  = dol_print_date($dateTs, '%d/%m/%y %H:%M');
+            $userStr  = $user->login;
+            $noteStr  = dol_trunc(strip_tags($note), 100);
+            $dureeStr = convertSecondToTime($minutes * 60, 'allhourmin');
+            
+            $lineStr = '<span style="font-size: 0.8em; color: #a0aec0; margin-right: 4px;">' . dol_escape_htmltag($dateStr) . '</span> | ' . dol_escape_htmltag($userStr) . ' | ' . dol_escape_htmltag($dureeStr);
+            if (!empty($noteStr)) {
+                $lineStr .= " | " . dol_escape_htmltag($noteStr);
+            }
+            $htmlLine = '<div id="reedcrm-ticket-last-time" style="flex-basis: 100%; font-weight: normal; font-size: 0.85em; color: #718096; padding-left: 38px; margin-top: 4px;">' . $lineStr . '</div>';
+            
+            echo json_encode(['success' => true, 'new_line_html' => $htmlLine]);
         } else {
             echo json_encode(['success' => false, 'error' => 'Erreur lors de l\'ajout du temps: ' . $task->error]);
         }
