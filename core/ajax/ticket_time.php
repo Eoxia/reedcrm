@@ -38,6 +38,8 @@ if (file_exists('../../reedcrm.main.inc.php')) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/ticket/class/ticket.class.php';
+require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
 
 header('Content-Type: application/json');
 
@@ -60,55 +62,102 @@ if ($action === 'save_time' && $ticket_id > 0 && $minutes > 0) {
         exit;
     }
 
-    $db->begin();
+    if (empty($ticket->fk_project)) {
+        echo json_encode(['success' => false, 'error' => 'Le ticket n\'est lié à aucun projet. Veuillez lier un projet au ticket pour consigner du temps.']);
+        exit;
+    }
 
-    // Insert time directly into element_time using native ticket elementtype
-    $sql = "INSERT INTO " . MAIN_DB_PREFIX . "element_time (";
-    $sql .= " fk_element, elementtype, element_date, element_datehour, element_date_withhour,";
-    $sql .= " element_duration, fk_user, datec, note";
-    $sql .= ") VALUES (";
-    $sql .= " " . (int)$ticket->id . ",";
-    $sql .= " 'ticket',";
-    $sql .= " '" . $db->idate(dol_now()) . "',";
-    $sql .= " '" . $db->idate(dol_now()) . "',";
-    $sql .= " 1,"; // element_date_withhour
-    $sql .= " " . (int)($minutes * 60) . ","; // duration in seconds
-    $sql .= " " . (int)$user->id . ",";
-    $sql .= " '" . $db->idate(dol_now()) . "',";
-    $sql .= " '" . $db->escape($note) . "'";
-    $sql .= ")";
+    $prefix = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_PREFIX', 'ticket_tps');
+    $suffix_type = getDolGlobalString('REEDCRM_TICKET_TIME_TASK_SUFFIX', 'ticket_ref');
+    
+    $project = new Project($db);
+    $project->fetch($ticket->fk_project);
+    
+    $suffix_str = '';
+    if ($suffix_type === 'ticket_ref') {
+        $suffix_str = ' ' . $ticket->ref;
+    } elseif ($suffix_type === 'project_ref') {
+        $suffix_str = ' ' . $project->ref;
+    } elseif ($suffix_type === 'project_label') {
+        $suffix_str = ' ' . $project->title;
+    }
+    
+    $expected_label = trim($prefix . $suffix_str);
 
+    // Find the task in this project that matches the expected label
+    $sql = "SELECT t.rowid FROM " . MAIN_DB_PREFIX . "projet_task as t";
+    $sql .= " WHERE t.fk_projet = " . (int)$ticket->fk_project;
+    $sql .= " AND t.label = '" . $db->escape($expected_label) . "'";
+    
     $resql = $db->query($sql);
     if ($resql) {
-        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-        $actioncomm = new ActionComm($db);
-        $actioncomm->type_code = 'AC_OTH_AUTO';
-        $actioncomm->code = 'TICKET_TIMESPENT';
-        $actioncomm->socid = $ticket->socid;
+        $obj = $db->fetch_object($resql);
         
-        $titleMaxLength = getDolGlobalInt('REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', 200);
-        $clean_note_for_label = trim(preg_replace('/\s+/', ' ', $note));
-        $actioncomm->label = !empty($clean_note_for_label) ? dol_trunc($clean_note_for_label, $titleMaxLength) : 'Temps consigné (' . $minutes . ' min)';
-        
-        $desc = 'Temps : ' . $minutes . ' min';
-        if (!empty($note)) {
-            $desc .= '<br>Commentaire :<br>' . nl2br(dol_escape_htmltag($note));
+        $task = new Task($db);
+        if ($obj) {
+            $resTask = $task->fetch($obj->rowid);
+            if ($resTask <= 0) {
+                echo json_encode(['success' => false, 'error' => 'Erreur lors du chargement de la tâche: ' . $task->error]);
+                exit;
+            }
+        } else {
+            // Task not found, create it automatically
+            $task->fk_project = $ticket->fk_project;
+            $task->ref = $ticket->ref;
+            $task->label = $expected_label;
+            $task->description = 'Tâche générée automatiquement pour le ticket ' . $ticket->ref;
+            $task->date_c = dol_now();
+            $task->date_start = dol_now();
+            $task->date_end = dol_now();
+            $task->progress = 0;
+            $task->status = 1; // Open
+            
+            $resCreate = $task->create($user);
+            if ($resCreate <= 0) {
+                echo json_encode(['success' => false, 'error' => 'Erreur lors de la création de la tâche: ' . $task->error]);
+                exit;
+            }
         }
-        $actioncomm->note_private = $desc;
         
-        $actioncomm->userassigned = array($user->id => array('id' => $user->id, 'transparency' => 0));
-        $actioncomm->userownerid = $user->id;
-        $actioncomm->datep = dol_now();
-        $actioncomm->percentage = 100;
-        $actioncomm->elementtype = 'ticket';
-        $actioncomm->fk_element = $ticket->id;
-        $actioncomm->create($user);
+        // Add time spent
+        $task->timespent_duration = $minutes * 60;
+        $task->timespent_date = dol_now();
+        $task->timespent_datehour = dol_now();
+        $task->timespent_fk_user = $user->id;
+        $task->timespent_note = $note;
+        $resTime = $task->addTimeSpent($user);
         
-        $db->commit();
-        echo json_encode(['success' => true]);
+        if ($resTime > 0) {
+            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+            $actioncomm = new ActionComm($db);
+            $actioncomm->type_code = 'AC_OTH_AUTO';
+            $actioncomm->code = 'TICKET_TIMESPENT';
+            $actioncomm->socid = $ticket->socid;
+            
+            $titleMaxLength = getDolGlobalInt('REEDCRM_TICKET_TIME_TITLE_MAXLENGTH', 200);
+            $clean_note_for_label = trim(preg_replace('/\s+/', ' ', $note));
+            $actioncomm->label = !empty($clean_note_for_label) ? dol_trunc($clean_note_for_label, $titleMaxLength) : 'Temps consigné (' . $minutes . ' min)';
+            
+            $desc = 'Temps : ' . $minutes . ' min';
+            if (!empty($note)) {
+                $desc .= '<br>Commentaire :<br>' . nl2br(dol_escape_htmltag($note));
+            }
+            $actioncomm->note_private = $desc;
+            
+            $actioncomm->userassigned = array($user->id => array('id' => $user->id, 'transparency' => 0));
+            $actioncomm->userownerid = $user->id;
+            $actioncomm->datep = dol_now();
+            $actioncomm->percentage = 100;
+            $actioncomm->elementtype = 'ticket';
+            $actioncomm->fk_element = $ticket->id;
+            $actioncomm->create($user);
+            
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Erreur lors de l\'ajout du temps: ' . $task->error]);
+        }
     } else {
-        $db->rollback();
-        echo json_encode(['success' => false, 'error' => 'Erreur lors de l\'ajout du temps: ' . $db->lasterror()]);
+        echo json_encode(['success' => false, 'error' => $db->lasterror()]);
     }
 } else {
     echo json_encode(['success' => false, 'error' => 'Paramètres invalides. Veuillez fournir un temps > 0.']);
