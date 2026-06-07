@@ -933,7 +933,9 @@ class ActionsReedcrm
             $logoHtml .= '<span class="classfortooltip" title="' . dol_escape_htmltag($tooltipHtml, 1, 1, 'br,span') . '" style="display: inline-flex; align-items: center; justify-content: center; background: #edf2f7; color: #2b6cb0; border-radius: 50%; width: 26px; height: 26px; font-size: 0.9em; cursor: pointer;">';
             $logoHtml .= '<i class="fas fa-list"></i>';
             if ($timeCount > 0) {
-                $logoHtml .= '<span style="position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1;">' . $timeCount . '</span>';
+                $logoHtml .= '<span id="reedcrm-ticket-time-count" style="position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1; transition: transform 0.2s;">' . $timeCount . '</span>';
+            } else {
+                $logoHtml .= '<span id="reedcrm-ticket-time-count" style="display: none; position: absolute; top: -6px; right: -2px; background: #e53e3e; color: white; border-radius: 10px; font-size: 0.65em; padding: 2px 5px; font-weight: bold; border: 1px solid #fff; line-height: 1; transition: transform 0.2s;">0</span>';
             }
             $logoHtml .= '</span>';
             
@@ -1003,9 +1005,16 @@ class ActionsReedcrm
                                         // Liseret vert discret sur le bouton, disparaît après 1.5s
                                         btn.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78", "background": "#48bb78", "color": "#fff", "opacity": "1"});
                                         jQuery("#reedcrm-ticket-time-note").val("");
+                                        var counter = jQuery("#reedcrm-ticket-time-count");
+                                        if (counter.length) {
+                                            var currentCount = parseInt(counter.text()) || 0;
+                                            counter.text(currentCount + 1).show();
+                                            counter.css("transform", "scale(1.3)");
+                                            setTimeout(function() { counter.css("transform", "scale(1)"); }, 300);
+                                        }
+                                        $.jnotify("Temps ajouté avec succès", "success");
                                         setTimeout(function(){
                                             btn.css({"box-shadow": "", "border-color": "#cbd5e0", "background": "#f8f9fa", "color": "#4a5568", "opacity": "0.6"});
-                                            window.location.reload();
                                         }, 1500);
                                     } else {
                                         $.jnotify(response.error, "error");
