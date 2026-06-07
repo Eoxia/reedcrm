@@ -76,7 +76,32 @@ $contacts    = array_filter(
     static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
 );
 
-if (empty($contacts)) {
+$object->fetch_optionals();
+$contactId = 0;
+
+// Priority 1: First external contact (excluding PROJECTADDRESS code)
+if (!empty($contacts)) {
+    $firstContact = reset($contacts);
+    $contactId    = (int) $firstContact['id'];
+}
+// Priority 2: Project's extrafield 'projectaddress'
+elseif ($elementType === 'project' && !empty($object->array_options['options_projectaddress'])) {
+    $contactId = (int) $object->array_options['options_projectaddress'];
+}
+
+if ($contactId > 0) {
+    $contact = new Contact($db);
+    $contact->fetch($contactId);
+
+    echo json_encode([
+        'success'    => true,
+        'contact_id' => $contactId,
+        'lastname'   => $contact->lastname,
+        'firstname'  => $contact->firstname,
+        'phone'      => $contact->phone_pro ?: $contact->phone_mobile ?: '',
+    ]);
+} else {
+    // Priority 3: Fallback to Thirdparty (Societe)
     if ($object->socid > 0) {
         require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
         $soc = new Societe($db);
@@ -91,21 +116,5 @@ if (empty($contacts)) {
     } else {
         echo json_encode(['success' => true, 'contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '']);
     }
-    exit;
 }
-
-$firstContact = reset($contacts);
-$contactId    = (int) $firstContact['id'];
-
-$contact = new Contact($db);
-$contact->fetch($contactId);
-
-echo json_encode([
-    'success'    => true,
-    'contact_id' => $contactId,
-    'lastname'   => $contact->lastname,
-    'firstname'  => $contact->firstname,
-    'phone'      => $contact->phone_pro ?: $contact->phone_mobile ?: '',
-]);
-
 exit;

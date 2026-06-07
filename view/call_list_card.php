@@ -515,12 +515,20 @@ if ($object->id > 0) {
                 $project = new Project($db);
                 if ($project->fetch($line->element_id) > 0) {
                     $sourceLink = $project->getNomUrl(1);
-                    if (empty($line->fk_contact) && $project->socid > 0) {
-                        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-                        $soc = new Societe($db);
-                        $soc->fetch($project->socid);
-                        $lastname = dol_escape_htmltag($soc->name);
-                        $phone    = dol_escape_htmltag($soc->phone);
+                    if (empty($line->fk_contact)) {
+                        $project->fetch_optionals();
+                        if (!empty($project->array_options['options_projectaddress'])) {
+                            $contact->fetch($project->array_options['options_projectaddress']);
+                            $lastname  = dol_escape_htmltag($contact->lastname);
+                            $firstname = dol_escape_htmltag($contact->firstname);
+                            $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
+                        } elseif ($project->socid > 0) {
+                            require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+                            $soc = new Societe($db);
+                            $soc->fetch($project->socid);
+                            $lastname = dol_escape_htmltag($soc->name);
+                            $phone    = dol_escape_htmltag($soc->phone);
+                        }
                     }
                 }
             }
