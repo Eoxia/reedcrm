@@ -522,6 +522,10 @@ if ($object->id > 0) {
                             $lastname  = dol_escape_htmltag($contact->lastname);
                             $firstname = dol_escape_htmltag($contact->firstname);
                             $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
+                        } elseif (!empty($project->array_options['options_reedcrm_lastname']) || !empty($project->array_options['options_projectphone'])) {
+                            $lastname  = dol_escape_htmltag($project->array_options['options_reedcrm_lastname'] ?? '');
+                            $firstname = dol_escape_htmltag($project->array_options['options_reedcrm_firstname'] ?? '');
+                            $phone     = dol_escape_htmltag($project->array_options['options_projectphone'] ?? '');
                         } elseif ($project->socid > 0) {
                             require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
                             $soc = new Societe($db);

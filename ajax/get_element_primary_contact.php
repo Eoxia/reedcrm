@@ -100,8 +100,17 @@ if ($contactId > 0) {
         'firstname'  => $contact->firstname,
         'phone'      => $contact->phone_pro ?: $contact->phone_mobile ?: '',
     ]);
+} elseif ($elementType === 'project' && (!empty($object->array_options['options_reedcrm_lastname']) || !empty($object->array_options['options_projectphone']))) {
+    // Priority 3: Fallback to ReedCRM Lead Extrafields
+    echo json_encode([
+        'success'    => true,
+        'contact_id' => 0,
+        'lastname'   => $object->array_options['options_reedcrm_lastname'] ?? '',
+        'firstname'  => $object->array_options['options_reedcrm_firstname'] ?? '',
+        'phone'      => $object->array_options['options_projectphone'] ?? '',
+    ]);
 } else {
-    // Priority 3: Fallback to Thirdparty (Societe)
+    // Priority 4: Fallback to Thirdparty (Societe)
     if ($object->socid > 0) {
         require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
         $soc = new Societe($db);
