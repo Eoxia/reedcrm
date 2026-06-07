@@ -3649,4 +3649,51 @@ EOT;
 
         return $html;
     }
+
+    /**
+     * Overwrites the PDF target company or target contact to inject ReedCRM extrafields
+     * (e.g. phone, email) from the project when they are missing.
+     *
+     * @param array             $parameters Hook parameters
+     * @param CommonObject|null $object     Current object
+     * @param string            $action     Current action
+     * @return int                          0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function pdf_build_address(array $parameters, ?CommonObject $object, string &$action): int
+    {
+        global $db;
+
+        if (!is_object($object) || empty($object->fk_project)) {
+            return 0;
+        }
+
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+        $project = new Project($db);
+        if ($project->fetch($object->fk_project) > 0) {
+            $project->fetch_optionals();
+
+            $projectPhone = $project->array_options['options_projectphone'] ?? '';
+            $projectEmail = $project->array_options['options_reedcrm_email'] ?? '';
+
+            if (isset($parameters['targetcompany']) && is_object($parameters['targetcompany'])) {
+                if (empty($parameters['targetcompany']->phone) && !empty($projectPhone)) {
+                    $parameters['targetcompany']->phone = $projectPhone;
+                }
+                if (empty($parameters['targetcompany']->email) && !empty($projectEmail)) {
+                    $parameters['targetcompany']->email = $projectEmail;
+                }
+            }
+
+            if (isset($parameters['targetcontact']) && is_object($parameters['targetcontact'])) {
+                if (empty($parameters['targetcontact']->phone_pro) && !empty($projectPhone)) {
+                    $parameters['targetcontact']->phone_pro = $projectPhone;
+                }
+                if (empty($parameters['targetcontact']->email) && !empty($projectEmail)) {
+                    $parameters['targetcontact']->email = $projectEmail;
+                }
+            }
+        }
+
+        return 0;
+    }
 }

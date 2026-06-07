@@ -138,6 +138,14 @@ class pdf_calllist_standard extends ModelePDFCallList
                 if ($p->fetch($line->element_id) > 0) {
                     $sourceRef = $p->ref;
                     $amount    = !empty($p->total_ht) ? price($p->total_ht) . ' ' . $outputlangs->transnoentities('HT') : '';
+
+                    if (empty($line->fk_contact) || (empty($lastname) && empty($phone))) {
+                        $p->fetch_thirdparty();
+                        if (is_object($p->thirdparty)) {
+                            $lastname = $p->thirdparty->name;
+                            $phone    = $p->thirdparty->phone;
+                        }
+                    }
                 }
             } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
@@ -145,6 +153,26 @@ class pdf_calllist_standard extends ModelePDFCallList
                 if ($p->fetch($line->element_id) > 0) {
                     $sourceRef = $p->ref;
                     $amount    = !empty($p->opp_amount) ? price($p->opp_amount) : '';
+
+                    if (empty($line->fk_contact) || (empty($lastname) && empty($phone))) {
+                        $p->fetch_optionals();
+                        if (!empty($p->array_options['options_projectaddress'])) {
+                            $contact->fetch($p->array_options['options_projectaddress']);
+                            $lastname  = $contact->lastname;
+                            $firstname = $contact->firstname;
+                            $phone     = $contact->phone_pro ?: $contact->phone_mobile ?: '';
+                        } elseif (!empty($p->array_options['options_reedcrm_lastname']) || !empty($p->array_options['options_projectphone'])) {
+                            $lastname  = $p->array_options['options_reedcrm_lastname'] ?? '';
+                            $firstname = $p->array_options['options_reedcrm_firstname'] ?? '';
+                            $phone     = $p->array_options['options_projectphone'] ?? '';
+                        } elseif ($p->socid > 0) {
+                            require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+                            $soc = new Societe($this->db);
+                            $soc->fetch($p->socid);
+                            $lastname = $soc->name;
+                            $phone    = $soc->phone;
+                        }
+                    }
                 }
             }
 
