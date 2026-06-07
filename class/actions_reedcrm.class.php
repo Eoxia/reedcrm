@@ -1151,7 +1151,7 @@ class ActionsReedcrm
                 <i class="far fa-exclamation-triangle" style="color: #64748b; margin-right: 6px;"></i>
                 <a href="#" id="reedcrm-ticket-severity-badge" class="classlink" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $currentSevLabel . '</a>
                 <div id="reedcrm-ticket-severity-selector-wrap" style="display:none; margin-left:6px;">
-                    <select id="reedcrm-ticket-severity-select" class="flat" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; background: #fff; height: 24px; min-width: 100px;">
+                    <select id="reedcrm-ticket-severity-select" class="reedcrm-select2" style="min-width: 120px;">
                         ' . $sevOptions . '
                     </select>
                 </div>
@@ -1162,7 +1162,7 @@ class ActionsReedcrm
                 <i class="fas fa-user-tie" style="color: #64748b; margin-right: 6px;"></i>
                 <a href="#" id="reedcrm-ticket-assign-badge" class="classlink" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $assignLabel . '</a>
                 <div id="reedcrm-ticket-assign-selector-wrap" style="display:none; margin-left:6px;">
-                    <select id="reedcrm-ticket-assign-select" class="flat" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; background: #fff; height: 24px; min-width: 100px;">
+                    <select id="reedcrm-ticket-assign-select" class="reedcrm-select2" style="min-width: 150px;">
                         ' . $assignOptions . '
                     </select>
                 </div>
@@ -1230,11 +1230,24 @@ class ActionsReedcrm
                     var wrapSev = jQuery("#reedcrm-ticket-severity-selector-wrap");
                     var selectSev = jQuery("#reedcrm-ticket-severity-select");
 
+                    if (jQuery.fn.select2) {
+                        selectSev.select2({ width: "resolve" });
+                    }
+
                     badgeSev.on("click", function(e) {
                         e.preventDefault();
                         badgeSev.hide();
                         wrapSev.show();
-                        selectSev.focus();
+                        if (jQuery.fn.select2) {
+                            selectSev.select2("open");
+                        } else {
+                            selectSev.focus();
+                        }
+                    });
+
+                    selectSev.on("select2:close", function() {
+                        wrapSev.hide();
+                        badgeSev.show();
                     });
 
                     selectSev.on("change", function() {
@@ -1292,11 +1305,24 @@ class ActionsReedcrm
                     var wrapAssign = jQuery("#reedcrm-ticket-assign-selector-wrap");
                     var selectAssign = jQuery("#reedcrm-ticket-assign-select");
 
+                    if (jQuery.fn.select2) {
+                        selectAssign.select2({ width: "resolve" });
+                    }
+
                     badgeAssign.on("click", function(e) {
                         e.preventDefault();
                         badgeAssign.hide();
                         wrapAssign.show();
-                        selectAssign.focus();
+                        if (jQuery.fn.select2) {
+                            selectAssign.select2("open");
+                        } else {
+                            selectAssign.focus();
+                        }
+                    });
+
+                    selectAssign.on("select2:close", function() {
+                        wrapAssign.hide();
+                        badgeAssign.show();
                     });
 
                     selectAssign.on("change", function() {
@@ -1347,18 +1373,6 @@ class ActionsReedcrm
                                 badgeAssign.show();
                             }
                         });
-                    });
-                    
-                    // Close selects if user clicks outside
-                    jQuery(document).on("click", function(e) {
-                        if (!blockSev.is(e.target) && blockSev.has(e.target).length === 0 && wrapSev.is(":visible")) {
-                            wrapSev.hide();
-                            badgeSev.show();
-                        }
-                        if (!blockAssign.is(e.target) && blockAssign.has(e.target).length === 0 && wrapAssign.is(":visible")) {
-                            wrapAssign.hide();
-                            badgeAssign.show();
-                        }
                     });
                 });
             </script>
