@@ -1089,9 +1089,97 @@ class ActionsReedcrm
                 </script>
                 ';
             }
+
+            $sqlSev = "SELECT code, label FROM " . MAIN_DB_PREFIX . "c_ticket_severity WHERE active > 0 ORDER BY pos";
+            $resSev = $db->query($sqlSev);
+            $severities = [];
+            if ($resSev) {
+                while ($objSev = $db->fetch_object($resSev)) {
+                    $severities[] = $objSev;
+                }
+            }
+            $sevOptions = '';
+            foreach ($severities as $sev) {
+                $label = ($langs->trans("TicketSeverityShort" . $sev->code) != "TicketSeverityShort" . $sev->code) ? $langs->trans("TicketSeverityShort" . $sev->code) : $sev->label;
+                $selected = ($object->severity_code == $sev->code) ? ' selected' : '';
+                $sevOptions .= '<option value="' . dol_escape_htmltag($sev->code) . '"' . $selected . '>' . dol_escape_htmltag($label) . '</option>';
+            }
+
+            $logoSrcSev = dol_buildpath('/custom/reedcrm/img/reedcrm_color.png', 1);
+            $logoHtmlSev = '<img src="' . dol_escape_htmltag($logoSrcSev) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+
+            $html .= '
+            <div id="reedcrm-ticket-severity-block" class="contact-inline-wrapper" style="display:none; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 5px;">
+                ' . $logoHtmlSev . '
+                <span style="color: #a0aec0; margin-right: 4px;">' . dol_escape_htmltag($langs->trans('Severity')) . '</span>
+                <select id="reedcrm-ticket-severity-select" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; background: #fff; height: 24px; min-width: 100px;">
+                    ' . $sevOptions . '
+                </select>
+                <button type="button" id="reedcrm-ticket-severity-save" style="background: #f8f9fa; border: 1px solid #cbd5e0; color: #4a5568; padding: 0; margin: 0; border-radius: 4px; font-size: 0.9em; height: 24px; width: 24px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; opacity: 0.6; transition: all 0.2s; cursor: pointer;">
+                    <i class="fas fa-save"></i>
+                </button>
+            </div>
+            <script>
+                jQuery(document).ready(function() {
+                    var blockSev = jQuery("#reedcrm-ticket-severity-block");
+                    blockSev.css("display", "inline-flex");
+                    var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
+                    if (flexContainer) {
+                        flexContainer.appendChild(blockSev[0]);
+                    } else {
+                        var titreRight = jQuery("div.titre_right").first();
+                        if (titreRight.length) {
+                            var divWrap = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(blockSev);
+                            titreRight.after(divWrap);
+                        } else {
+                            jQuery(".refidno").first().after(blockSev);
+                        }
+                    }
+
+                    var saveBtnSev = jQuery("#reedcrm-ticket-severity-save");
+                    jQuery("#reedcrm-ticket-severity-select").on("change", function() {
+                        saveBtnSev.css({"background": "#48bb78", "color": "#fff", "border-color": "#48bb78", "opacity": "1"});
+                    });
+
+                    saveBtnSev.on("click", function() {
+                        var severityCode = jQuery("#reedcrm-ticket-severity-select").val();
+                        var btn = jQuery(this);
+
+                        btn.prop("disabled", true).html("<i class=\'fas fa-spinner fa-spin\'></i>");
+
+                        jQuery.ajax({
+                            url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_severity.php",
+                            method: "POST",
+                            data: {
+                                action: "save_severity",
+                                ticket_id: ' . ((int)$object->id) . ',
+                                severity_code: severityCode,
+                                token: "' . newToken() . '"
+                            },
+                            dataType: "json",
+                            success: function(response) {
+                                btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                if (response.success) {
+                                    btn.css({"box-shadow": "0 0 0 2px #48bb78", "border-color": "#48bb78", "background": "#48bb78", "color": "#fff", "opacity": "1"});
+                                    setTimeout(function(){
+                                        btn.css({"box-shadow": "", "border-color": "#cbd5e0", "background": "#f8f9fa", "color": "#4a5568", "opacity": "0.6"});
+                                    }, 1500);
+                                } else {
+                                    $.jnotify(response.error, "error");
+                                }
+                            },
+                            error: function() {
+                                btn.prop("disabled", false).html("<i class=\'fas fa-save\'></i>");
+                                $.jnotify("Erreur réseau", "error");
+                            }
+                        });
+                    });
+                });
+            </script>
+            ';
+
             print $html;
         }
-
         return 0; // or return 1 to replace standard code
     }
 
