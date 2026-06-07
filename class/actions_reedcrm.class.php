@@ -1206,23 +1206,39 @@ class ActionsReedcrm
                     container.append(blockAssign).append(blockSev);
 
                     // Teleport to the right side (under the green Assign button)
-                    var titreRight = jQuery("div.titre_right").first();
-                    var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
-                    
-                    if (arearefonsamedir.length) {
-                        // This is usually where the top right buttons are
-                        arearefonsamedir.append(container);
-                        // Ensure it can wrap or align correctly
-                        arearefonsamedir.css({
-                            "display": "flex",
-                            "flex-direction": "column",
-                            "align-items": "flex-end"
+                    // We look for common Dolibarr right-aligned containers
+                    var target = jQuery(".statusref, .statusrefbox").last();
+                    if (target.length) {
+                        target.after(container);
+                        container.css({
+                            "float": "right",
+                            "clear": "right",
+                            "margin-top": "12px",
+                            "margin-bottom": "8px"
                         });
-                    } else if (titreRight.length) {
-                        titreRight.append(container);
                     } else {
-                        // Fallback
-                        jQuery(".refidno").first().after(container);
+                        var titreRight = jQuery("div.titre_right").first();
+                        var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
+                        
+                        if (arearefonsamedir.length) {
+                            arearefonsamedir.append(container);
+                        } else if (titreRight.length) {
+                            titreRight.append(container);
+                        } else {
+                            // Try arearef banner container
+                            var arearef = jQuery("div.arearef").first();
+                            if (arearef.length) {
+                                arearef.append(container);
+                                container.css({
+                                    "float": "right",
+                                    "clear": "right",
+                                    "margin-top": "12px"
+                                });
+                            } else {
+                                // Fallback
+                                jQuery(".refidno").first().after(container);
+                            }
+                        }
                     }
 
                     // Handlers for Severity
