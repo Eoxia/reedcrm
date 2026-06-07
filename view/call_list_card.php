@@ -502,12 +502,26 @@ if ($object->id > 0) {
                 $propal = new Propal($db);
                 if ($propal->fetch($line->element_id) > 0) {
                     $sourceLink = $propal->getNomUrl(1);
+                    if (empty($line->fk_contact) && $propal->socid > 0) {
+                        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+                        $soc = new Societe($db);
+                        $soc->fetch($propal->socid);
+                        $lastname = dol_escape_htmltag($soc->name);
+                        $phone    = dol_escape_htmltag($soc->phone);
+                    }
                 }
             } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
                 $project = new Project($db);
                 if ($project->fetch($line->element_id) > 0) {
                     $sourceLink = $project->getNomUrl(1);
+                    if (empty($line->fk_contact) && $project->socid > 0) {
+                        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+                        $soc = new Societe($db);
+                        $soc->fetch($project->socid);
+                        $lastname = dol_escape_htmltag($soc->name);
+                        $phone    = dol_escape_htmltag($soc->phone);
+                    }
                 }
             }
 

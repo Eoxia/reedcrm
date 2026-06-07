@@ -77,7 +77,20 @@ $contacts    = array_filter(
 );
 
 if (empty($contacts)) {
-    echo json_encode(['success' => true, 'contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '']);
+    if ($object->socid > 0) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+        $soc = new Societe($db);
+        $soc->fetch($object->socid);
+        echo json_encode([
+            'success'    => true,
+            'contact_id' => 0,
+            'lastname'   => $soc->name,
+            'firstname'  => '',
+            'phone'      => $soc->phone,
+        ]);
+    } else {
+        echo json_encode(['success' => true, 'contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '']);
+    }
     exit;
 }
 
