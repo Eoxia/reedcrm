@@ -50,13 +50,40 @@ $permissiontoread = $user->hasRight('reedcrm','adminpage','read');
 
 saturne_check_access($permissiontoread);
 
-/*
- * Actions
- */
+$moduleName = 'ReedCRM';
+$moduleNameLowerCase = 'reedcrm';
+$documentParentType = 'calllist';
+$documentType = 'call_list';
+$objectModSubdir = 'call_list';
+
+require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+require_once __DIR__ . '/../class/calllist.class.php';
+$object = new CallList($db);
+
+require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+
+$modelName = GETPOST('model_name', 'alpha');
+$type      = GETPOST('type', 'alpha');
+$label     = GETPOST('label', 'alpha');
+$const     = GETPOST('const', 'alpha');
+
+if ($action == 'set' && $permissiontoread) {
+    addDocumentModel($modelName, $type, $label, $const);
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+} elseif ($action == 'del' && $permissiontoread) {
+    delDocumentModel($modelName, $type);
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+} elseif ($action == 'setdoc' && $permissiontoread) {
+    $confName = dol_strtoupper($moduleName . '_' . $documentParentType) . '_DEFAULT_MODEL';
+    dolibarr_set_const($db, $confName, $modelName, 'chaine', 0, '', $conf->entity);
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
 
 if ($action == 'set_config') {
-    // Save settings will go here
-    
+    // Other settings if needed
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
@@ -85,22 +112,8 @@ print dol_get_fiche_head($head, 'call_list', $title, -1, 'reedcrm_color@reedcrm'
 
 print load_fiche_titre($langs->trans('Configs', $langs->trans('CallList')), '', '');
 
-print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
-print '<input type="hidden" name="token" value="' . newToken() . '">';
-print '<input type="hidden" name="action" value="set_config">';
+// Numbering Module
+require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
 
-print '<table class="noborder centpercent">';
-print '<tr class="liste_titre">';
-print '<td>' . $langs->trans('Name') . '</td>';
-print '<td>' . $langs->trans('Description') . '</td>';
-print '<td>' . $langs->trans('Value') . '</td>';
-print '</tr>';
-
-// Placeholder empty table as requested: "on livrera tout à la fin que je te dirais"
-print '<tr class="oddeven"><td colspan="3" class="opacitymedium">';
-print $langs->trans('FeatureUnderConstruction');
-print '</td></tr>';
-
-print '</table>';
-print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '" disabled></div>';
-print '</form>';
+// Document Model
+require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_document_model_view.tpl.php';
