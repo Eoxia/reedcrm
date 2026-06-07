@@ -971,7 +971,7 @@ class ActionsReedcrm
 
             if (!empty($object->fk_project)) {
                   $html = '
-                  <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; flex-direction: column; align-items: flex-start; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 4px; max-width: 350px;">
+                  <div id="reedcrm-ticket-time-block" class="contact-inline-wrapper" style="display:none; flex-direction: column; align-items: flex-start; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568; gap: 4px; max-width: 400px;">
                       <div style="display: flex; align-items: center; gap: 5px; width: 100%;">
                           ' . $logoHtml . '
                           <textarea id="reedcrm-ticket-time-note" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '" rows="1" style="border: 1px solid #cbd5e0; border-radius: 4px; padding: 2px 6px; font-size: 0.95em; width: 150px; background: #fff; height: 24px; resize: horizontal; overflow: hidden; line-height: 1.5; white-space: nowrap;"></textarea>
