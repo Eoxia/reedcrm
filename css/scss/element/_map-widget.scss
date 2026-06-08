@@ -1,13 +1,99 @@
 // ol is from ol library open layers
+// Styles for the ReedCRM map (view/map.php): filter bar, floating controls and marker popup.
+// Palette aligned with the rest of the ReedCRM theme (slate surfaces, blue accent).
 
+$reedcrm-map-accent:  #2c7be5;
+$reedcrm-map-border:   #e2e8f0;
+$reedcrm-map-ink:      #2b2b2b;
+$reedcrm-map-muted:    #64748b;
+$reedcrm-map-surface:  #ffffff;
+$reedcrm-map-shadow:   0 2px 8px rgba(15, 23, 42, 0.12);
+
+/* -------------------------------------------------------------------------- *
+ * Filter bar                                                                  *
+ * -------------------------------------------------------------------------- */
+.reedcrm-map-filters {
+  box-sizing: border-box; // keep padding + border inside the 100% width (centpercent) to avoid right overflow
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 0.9em;
+  background: #f8fbff;
+  border: 1px solid $reedcrm-map-border;
+  border-radius: 8px;
+
+  .divsearchfield {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    float: none;
+    color: $reedcrm-map-muted;
+  }
+
+  input.flat,
+  select.flat {
+    min-height: 30px;
+    border: 1px solid $reedcrm-map-border;
+    border-radius: 6px;
+
+    &:focus {
+      border-color: $reedcrm-map-accent;
+      outline: none;
+    }
+  }
+
+  .reedcrm-map-preset-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  // .button is a Dolibarr theme class (gradient/shadow via CSS vars with !important),
+  // so the flat themed look needs both higher specificity and !important to win.
+  .map-preset-btn.button {
+    background: #fff !important;
+    background-image: none !important;
+    border: 1px solid $reedcrm-map-border !important;
+    border-radius: 6px !important;
+    color: $reedcrm-map-muted !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    text-transform: none;
+    font-weight: 500;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+
+    &:hover,
+    &:focus {
+      background: $reedcrm-map-accent !important;
+      border-color: $reedcrm-map-accent !important;
+      color: #fff !important;
+    }
+
+    // Preset matching the currently applied date range stays filled blue
+    &.is-active {
+      background: $reedcrm-map-accent !important;
+      border-color: $reedcrm-map-accent !important;
+      color: #fff !important;
+      font-weight: 600;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- *
+ * Marker popup                                                                *
+ * -------------------------------------------------------------------------- */
 .ol-popup {
   position: absolute;
   background-color: white;
-  -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-  padding: 15px;
+  -webkit-filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.18));
+  filter: drop-shadow(0 2px 8px rgba(15, 23, 42, 0.18));
+  padding: 14px 16px;
   border-radius: 10px;
-  border: 1px solid #cccccc;
+  border: 1px solid $reedcrm-map-border;
   bottom: 12px;
   left: -50px;
   min-width: 280px;
@@ -30,7 +116,7 @@
   }
 
   &:before {
-    border-top-color: #cccccc;
+    border-top-color: $reedcrm-map-border;
     border-width: 11px;
     margin-left: -11px;
   }
@@ -39,43 +125,120 @@
 .ol-popup-closer {
   text-decoration: none;
   position: absolute;
-  top: 2px;
+  top: 4px;
   right: 8px;
+  color: $reedcrm-map-muted;
 
   &:after {
     content: "✖";
   }
+
+  &:hover {
+    color: $reedcrm-map-ink;
+  }
+}
+
+// Popup content (built in view/map.php) — replaces the former inline styles.
+.reedcrm-map-popup {
+  min-width: 230px;
+  font-family: inherit;
+  color: $reedcrm-map-ink;
+
+  &-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  &-ref {
+    font-weight: 700;
+  }
+
+  &-percent {
+    margin-left: 12px;
+    color: $reedcrm-map-muted;
+    white-space: nowrap;
+  }
+
+  &-title {
+    color: #333;
+  }
+
+  &-link {
+    margin-left: 8px;
+    line-height: 1;
+  }
+
+  &-meta {
+    color: $reedcrm-map-muted;
+    font-size: 0.9em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-actions {
+    margin-top: 6px;
+    padding-top: 6px;
+    text-align: right;
+    border-top: 1px solid #eef2f7;
+  }
+
+  &-add {
+    cursor: pointer;
+    color: $reedcrm-map-accent;
+    font-size: 1.15em;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: #1b5fc4;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- *
+ * Floating controls (locate me / toggle route)                               *
+ * -------------------------------------------------------------------------- */
+.geolocate-button,
+.route-toggle-button {
+  position: absolute;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  background: $reedcrm-map-surface;
+  border: 1px solid $reedcrm-map-border;
+  border-radius: 50%;
+  box-shadow: $reedcrm-map-shadow;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+
+  .fa, .fas, i {
+    margin: 0;
+    font-size: 1.05em;
+  }
+
+  &:hover {
+    border-color: $reedcrm-map-accent;
+    transform: translateY(-1px);
+  }
 }
 
 .geolocate-button {
-  position: absolute;
   bottom: 180px;
-  right: 20px;
-  padding: 8px 10px;
-  border: solid #007BFF;
-  color: white;
-  border-radius: 100px;
-  cursor: pointer;
-  z-index: 1000;
-  background: #D3D3D3;
 }
 
 .route-toggle-button {
-  position: absolute;
   bottom: 130px;
-  right: 20px;
-  padding: 8px 10px;
-  border: solid #007BFF;
-  color: white;
-  border-radius: 100px;
-  cursor: pointer;
-  z-index: 1000;
-  background: #D3D3D3;
-  transition: background 0.2s ease, border-color 0.2s ease;
 
   &.route-active {
-    background: #fff;
-    border-width: 3px;
-    border-color: #007BFF;
+    background: #eaf2fe;
+    border-color: $reedcrm-map-accent;
+    border-width: 2px;
   }
 }
