@@ -122,7 +122,24 @@ class modReedCRM extends DolibarrModules
             // Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all')
             /* BEGIN MODULEBUILDER HOOKSCONTEXTS */
             'hooks' => [
-                'all'
+                'thirdpartycomm',
+                'projectcard',
+                'projectOverview',
+                'projectlist',
+                'projectdao',
+                'propalcard',
+                'propallist',
+                'invoicereccard',
+                'invoicereccontact',
+                'invoicereclist',
+                'invoicelist',
+                'invoicecard',
+                'receptioncard',
+                'contactcard',
+                'thirdpartycard',
+                'thirdpartylist',
+                'main',
+                'pwaadmin'
             ],
             /* END MODULEBUILDER HOOKSCONTEXTS */
             // Set this to 1 if features of module are opened to external users
