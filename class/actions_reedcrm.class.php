@@ -1077,28 +1077,28 @@ class ActionsReedcrm
                         if (flexContainer) {
                             flexContainer.appendChild(block[0]);
                         } else {
-                            // Robust injection similar to Assign and Severity
-                            var target = jQuery(".statusref, .statusrefbox").last();
-                            if (target.length) {
-                                target.after(block);
-                                block.css({"float": "right", "clear": "right", "margin-top": "12px", "margin-bottom": "8px"});
+                            var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
+                            if (arearefonsamedir.length) {
+                                arearefonsamedir.append(block);
                             } else {
-                                var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
-                                if (arearefonsamedir.length) {
-                                    arearefonsamedir.append(block);
-                                } else {
-                                    var titreRight = jQuery("div.titre_right").first();
-                                    if (titreRight.length) {
-                                        titreRight.append(block);
-                                    } else {
-                                        var arearef = jQuery("div.arearef").first();
-                                        if (arearef.length) {
-                                            arearef.append(block);
-                                            block.css({"float": "right", "clear": "right", "margin-top": "12px"});
-                                        } else {
-                                            jQuery(".refidno").first().after(block);
-                                        }
+                                var arearef = jQuery("div.arearef").first();
+                                if (arearef.length) {
+                                    var wrap = jQuery("#reedcrm-ticket-blocks-wrap");
+                                    if (!wrap.length) {
+                                        wrap = jQuery("<div id=\'reedcrm-ticket-blocks-wrap\'></div>").css({
+                                            "display": "flex",
+                                            "justify-content": "flex-end",
+                                            "width": "100%",
+                                            "clear": "both",
+                                            "margin-top": "8px",
+                                            "gap": "10px",
+                                            "flex-wrap": "wrap"
+                                        });
+                                        arearef.append(wrap);
                                     }
+                                    wrap.append(block);
+                                } else {
+                                    jQuery(".refidno").first().after(block);
                                 }
                             }
                         }
@@ -1234,25 +1234,27 @@ class ActionsReedcrm
                             "margin-bottom": "8px"
                         });
                     } else {
-                        var titreRight = jQuery("div.titre_right").first();
                         var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
-                        
                         if (arearefonsamedir.length) {
                             arearefonsamedir.append(container);
-                        } else if (titreRight.length) {
-                            titreRight.append(container);
                         } else {
-                            // Try arearef banner container
                             var arearef = jQuery("div.arearef").first();
                             if (arearef.length) {
-                                arearef.append(container);
-                                container.css({
-                                    "float": "right",
-                                    "clear": "right",
-                                    "margin-top": "12px"
-                                });
+                                var wrap = jQuery("#reedcrm-ticket-blocks-wrap");
+                                if (!wrap.length) {
+                                    wrap = jQuery("<div id=\'reedcrm-ticket-blocks-wrap\'></div>").css({
+                                        "display": "flex",
+                                        "justify-content": "flex-end",
+                                        "width": "100%",
+                                        "clear": "both",
+                                        "margin-top": "8px",
+                                        "gap": "10px",
+                                        "flex-wrap": "wrap"
+                                    });
+                                    arearef.append(wrap);
+                                }
+                                wrap.append(container);
                             } else {
-                                // Fallback
                                 jQuery(".refidno").first().after(container);
                             }
                         }
