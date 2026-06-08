@@ -838,6 +838,7 @@ class ActionsReedcrm
         }
         if (strpos($parameters['context'], 'ticketcard') !== false && $object instanceof Ticket) {
             global $db;
+            $html = '';
             $defaultMinutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
             
             $task_id = 0;
@@ -1424,8 +1425,7 @@ class ActionsReedcrm
             </script>
             ';
 
-
-            print $html;
+            $this->resprints .= $html;
         }
         return 0; // or return 1 to replace standard code
     }
