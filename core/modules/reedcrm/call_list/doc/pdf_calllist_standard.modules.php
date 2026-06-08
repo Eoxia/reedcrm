@@ -72,7 +72,7 @@ class pdf_calllist_standard extends ModelePDFCallList
             return 0;
         }
 
-        $outputlangs->loadLangs(['reedcrm@reedcrm', 'dict']);
+        $outputlangs->loadLangs(['reedcrm@reedcrm', 'dict', 'main']);
 
         $dir  = $conf->reedcrm->multidir_output[$conf->entity] . '/call_list';
         $file = $dir . '/' . dol_sanitizeFileName($object->ref) . '.pdf';
@@ -188,6 +188,8 @@ class pdf_calllist_standard extends ModelePDFCallList
             $pdf->SetXY($this->mLeft, $y);
             $pdf->Cell($this->pWidth, 12, $outputlangs->transnoentities('NoCallListLine'), 0, 1, 'C', true);
         }
+
+        $y = $this->drawPublicNote($pdf, $object, $outputlangs, $y, $pageNum);
 
         $this->drawFooter($pdf, $outputlangs, $pageNum);
         $pdf->Output($file, 'F');
@@ -352,6 +354,37 @@ class pdf_calllist_standard extends ModelePDFCallList
             $pdf->SetXY($col['x'], $y);
             $pdf->Cell($col['w'], $this->rowH, $value, 0, 0, $col['align'], true);
         }
+    }
+
+    private function drawPublicNote($pdf, $object, $outputlangs, $y, &$pageNum)
+    {
+        if (empty($object->note_public)) {
+            return $y;
+        }
+
+        $pad  = 3;
+        $note = dol_htmlentitiesbr($object->note_public);
+        $y   += 5;  // gap after the table
+
+        // Rough render-height estimate to decide whether a page break is needed.
+        $pdf->SetFont('', '', 9);
+        $noteH  = $pdf->getStringHeight($this->pWidth - 2 * $pad, dol_string_nohtmltag($object->note_public, 0));
+        $blockH = 11 + $noteH + $pad;  // banner + text + bottom padding
+
+        if ($y + $blockH > $this->footerY - 4) {
+            $this->drawFooter($pdf, $outputlangs, $pageNum);
+            $pdf->AddPage('P', 'A4');
+            $pageNum++;
+            $y = $this->mTop;
+        }
+
+        $y = $this->drawSectionBanner($pdf, $outputlangs->transnoentities('NotePublic'), $y);
+
+        $this->text($pdf, $this->cBlack);
+        $pdf->SetFont('', '', 9);
+        $pdf->writeHTMLCell($this->pWidth, 0, $this->mLeft, $y, $note, 0, 1, false, true, 'L');
+
+        return $pdf->GetY() + $pad;
     }
 
     private function drawFooter($pdf, $outputlangs, $pageNum)
