@@ -52,7 +52,6 @@ global $conf, $db, $hookmanager, $langs, $user;
 saturne_load_langs(['categories']);
 
 // Get map filters parameters
-$filterType    = GETPOST('filter_type','aZ');
 $fromId        = GETPOST('from_id');
 $objectType    = GETPOST('from_type', 'alpha');
 $filterId      = GETPOST('filter_id');
@@ -111,7 +110,6 @@ if (empty($resHook)) {
         $filterRegion     = 0;
         $filterState      = 0;
         $filterTown       = '';
-        $filterType       = '';
         $filterDateStart  = '';
         $filterDateEnd    = '';
         $filterNearRadius = 0;
@@ -136,29 +134,48 @@ saturne_header(0, '', $title, $helpUrl);
  * Build geoJSON datas
  */
 
-// Filter on address
-$filterId      = $fromId > 0 ? $fromId : $filterId;
-$IdFilter      = ($filterId > 0 ? 'element_id = "' . $filterId . '" AND ' : '');
-$townFilter    = (dol_strlen($filterTown) > 0 ? 'town = "' . $filterTown . '" AND ' : '');
-$countryFilter = ($filterCountry > 0 ? 'fk_country = ' . $filterCountry . ' AND ' : '');
-$regionFilter  = ($filterRegion > 0 ? 'fk_region = ' . $filterRegion . ' AND ' : '');
-$stateFilter   = ($filterState > 0 ? 'fk_department = ' . $filterState . ' AND ' : '');
-// @TODO zip filter
+// Resolve the object/project filter (a from_id locks the map on a single project)
+$filterId = $fromId > 0 ? $fromId : $filterId;
 
-$allCat = '';
-foreach($filterCat as $catId) {
-    $allCat .= $catId . ',';
+$icon         = dol_buildpath('/reedcrm/img/dot.png', 1);
+$objectList   = [];
+$features     = [];
+$geolocations = [];
+$num          = 0;
+$allObjects   = saturne_fetch_all_object_type($objectInfos['class_name']);
+
+// Markers are PROJECTADDRESS contacts (t = socpeople) linked to a project (p).
+// Every filter is applied on this single query so the map stays in sync with the filter bar.
+$contactJoins  = ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople';
+$contactJoins .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid';
+$contactJoins .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON ec.element_id = p.rowid';
+
+$contactSQL  = 'ct.code = "PROJECTADDRESS"';
+$contactSQL .= $filterId > 0               ? ' AND ec.element_id = ' . ((int) $filterId)             : '';
+$contactSQL .= dol_strlen($filterTown) > 0 ? " AND t.town LIKE '%" . $db->escape($filterTown) . "%'" : '';
+$contactSQL .= $filterCountry > 0          ? ' AND t.fk_pays = ' . ((int) $filterCountry)            : '';
+$contactSQL .= $filterState > 0            ? ' AND t.fk_departement = ' . ((int) $filterState)       : '';
+
+// Region is derived from the contact department (c_departements.fk_region)
+if ($filterRegion > 0) {
+    $contactJoins .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_departements as cd ON t.fk_departement = cd.rowid';
+    $contactSQL   .= ' AND cd.fk_region = ' . ((int) $filterRegion);
 }
-$allCat        = rtrim($allCat, ',');
-$catFilter     = (dol_strlen($allCat) > 0 ? 'cp.fk_categorie IN (' . $allCat . ') AND ' : '');
 
-$filter        = ['customsql' => $IdFilter . $townFilter . $countryFilter . $regionFilter . $stateFilter . $catFilter . 'element_type = "'. $objectType .'" AND status >= 0'];
+// Category filter on the linked project
+$allCat = implode(',', array_map('intval', (array) $filterCat));
+if (dol_strlen($allCat) > 0) {
+    $contactJoins .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'categorie_project as cp ON p.rowid = cp.fk_project';
+    $contactSQL   .= ' AND cp.fk_categorie IN (' . $db->sanitize($allCat) . ')';
+}
 
-$icon          = dol_buildpath('/reedcrm/img/dot.png', 1);
-$objectList    = [];
-$features      = [];
-$num           = 0;
-$allObjects    = saturne_fetch_all_object_type($objectInfos['class_name']);
+// Date range on the project creation date
+$contactSQL .= !empty($filterDateStart) ? " AND p.datec >= '" . $db->idate($filterDateStart) . "'" : '';
+$contactSQL .= !empty($filterDateEnd)   ? " AND p.datec <= '" . $db->idate($filterDateEnd)   . "'" : '';
+
+// Whether any user filter is active — drives the empty-result behaviour below
+$hasActiveFilter = ($filterId > 0 || dol_strlen($filterTown) > 0 || $filterCountry > 0 || $filterRegion > 0
+    || $filterState > 0 || dol_strlen($allCat) > 0 || !empty($filterDateStart) || !empty($filterDateEnd));
 
 //if ($conf->global->REEDCRM_DISPLAY_MAIN_ADDRESS) {
 //	if (is_array($allObjects) && !empty($allObjects)) {
@@ -209,25 +226,7 @@ $allObjects    = saturne_fetch_all_object_type($objectInfos['class_name']);
 //		}
 //	}
 //} else {
-$filterSQL  = 't.element_type = ' . "'" . GETPOST('from_type') . "'";
-$filterSQL .= ($filterId > 0 ? ' AND t.fk_element = ' . $filterId : '');
-
-// Build date SQL conditions for project creation date
-$dateStartSQL = (!empty($filterDateStart) ? " AND p.datec >= '" . date('Y-m-d H:i:s', $filterDateStart) . "'" : '');
-$dateEndSQL   = (!empty($filterDateEnd)   ? " AND p.datec <= '" . date('Y-m-d H:i:s', $filterDateEnd)   . "'" : '');
-
-if ($filterId > 0) {
-    $project->fetch($filterId);
-    // Apply date filter on the single fetched project
-    $projectDateC = (int) $project->date_creation;
-    if ((!empty($filterDateStart) && $projectDateC < $filterDateStart) || (!empty($filterDateEnd) && $projectDateC > $filterDateEnd)) {
-        $contacts = [];
-    } else {
-        $contacts = $project->liste_contact();
-    }
-} else {
-    $contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => 'ct.code = "PROJECTADDRESS"' . $dateStartSQL . $dateEndSQL], 'AND', 0, 0, 0, ' LEFT JOIN ' . MAIN_DB_PREFIX . 'element_contact as ec ON t.rowid = ec.fk_socpeople LEFT JOIN ' . MAIN_DB_PREFIX . 'c_type_contact as ct ON ec.fk_c_type_contact = ct.rowid LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON ec.element_id = p.rowid');
-}
+$contacts = saturne_fetch_all_object_type('contact', '', '', 0, 0, ['customsql' => $contactSQL], 'AND', 0, 0, 0, $contactJoins);
 
 if (is_array($contacts) && !empty($contacts)) {
     foreach($contacts as $contactSingle) {
@@ -256,9 +255,13 @@ if (is_array($contacts) && !empty($contacts)) {
             $geolocations[]            = $geolocation;
         }
     }
-} else {
+} elseif (!$hasActiveFilter) {
+    // No project addresses and no active filter: fall back to every stored geolocation (legacy behaviour)
     $geolocation  = new Geolocation($db);
     $geolocations = $geolocation->fetchAll();
+} else {
+    // A filter is active but nothing matched: keep the map empty instead of showing everything
+    $geolocations = [];
 }
 
 if (is_array($geolocations) && !empty($geolocations)) {
@@ -278,29 +281,29 @@ if (is_array($geolocations) && !empty($geolocations)) {
         }
 
         $oppPercent = (float) $objectLinked->opp_percent;
-        $objectLinkedInfo  = '<div style="min-width:230px;font-family:inherit">';
-        $objectLinkedInfo .= '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">';
-        $objectLinkedInfo .=   '<span style="font-weight:bold">' . $objectLinked->getNomUrl(1) . '</span>';
-        $objectLinkedInfo .=   '<span style="color:#555;white-space:nowrap;margin-left:12px">' . number_format($oppPercent, 2) . ' %</span>';
+        $objectLinkedInfo  = '<div class="reedcrm-map-popup">';
+        $objectLinkedInfo .= '<div class="reedcrm-map-popup-row">';
+        $objectLinkedInfo .=   '<span class="reedcrm-map-popup-ref">' . $objectLinked->getNomUrl(1) . '</span>';
+        $objectLinkedInfo .=   '<span class="reedcrm-map-popup-percent">' . number_format($oppPercent, 2) . ' %</span>';
         $objectLinkedInfo .= '</div>';
-        $objectLinkedInfo .= '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
-        $objectLinkedInfo .=   '<span style="color:#333">' . dol_escape_htmltag($objectLinked->title) . '</span>';
-        $objectLinkedInfo .=   '<a href="' . dol_buildpath('/projet/card.php', 1) . '?id=' . $objectLinked->id . '" target="_blank" style="margin-left:8px">' . img_picto('', 'fontawesome_external-link-alt_fas_#28a745') . '</a>';
+        $objectLinkedInfo .= '<div class="reedcrm-map-popup-row">';
+        $objectLinkedInfo .=   '<span class="reedcrm-map-popup-title">' . dol_escape_htmltag($objectLinked->title) . '</span>';
+        $objectLinkedInfo .=   '<a class="reedcrm-map-popup-link" href="' . dol_buildpath('/projet/card.php', 1) . '?id=' . $objectLinked->id . '" target="_blank">' . img_picto('', 'fontawesome_external-link-alt_fas_#28a745') . '</a>';
         $objectLinkedInfo .= '</div>';
         if (!empty($geolocation->address_name) || !empty($geolocation->tmp_phone)) {
             $contactLine = dol_escape_htmltag(trim($geolocation->address_name));
             if (!empty($geolocation->tmp_phone)) {
                 $contactLine .= ' - ' . dol_escape_htmltag($geolocation->tmp_phone);
             }
-            $objectLinkedInfo .= '<div style="color:#555;font-size:0.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' . $contactLine . '</div>';
+            $objectLinkedInfo .= '<div class="reedcrm-map-popup-meta">' . $contactLine . '</div>';
         }
         if (!empty($geolocation->tmp_email)) {
-            $objectLinkedInfo .= '<div style="color:#555;font-size:0.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' . dol_escape_htmltag($geolocation->tmp_email) . '</div>';
+            $objectLinkedInfo .= '<div class="reedcrm-map-popup-meta">' . dol_escape_htmltag($geolocation->tmp_email) . '</div>';
         }
         if ($user->hasRight('agenda', 'myactions', 'create')) {
             $cardProUrl        = dol_buildpath('/custom/reedcrm/view/procard.php', 1) . '?from_id=' . $objectLinked->id . '&from_type=project&modal=1';
-            $objectLinkedInfo .= '<div style="margin-top:6px;border-top:1px solid #eee;padding-top:6px;text-align:right">';
-            $objectLinkedInfo .= '<span class="fa fa-plus-circle reedcrm-card-modal-open" style="cursor:pointer;color:#1e3a5f;font-size:1.1em;" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objectLinked->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
+            $objectLinkedInfo .= '<div class="reedcrm-map-popup-actions">';
+            $objectLinkedInfo .= '<span class="fa fa-plus-circle reedcrm-card-modal-open reedcrm-map-popup-add" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objectLinked->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
             $objectLinkedInfo .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
             $objectLinkedInfo .= '</span>';
             $objectLinkedInfo .= '</div>';
@@ -356,8 +359,8 @@ if ($source != 'pwa') {
     print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
     print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
 
-    // Filter box
-    print '<div class="liste_titre liste_titre_bydiv centpercent">';
+    // Filter box (Dolibarr's liste_titre* classes are intentionally dropped: the bar is fully restyled by .reedcrm-map-filters)
+    print '<div class="centpercent reedcrm-map-filters">';
 
     $selectArray = [];
     foreach ($allObjects as $singleObject) {
@@ -366,10 +369,6 @@ if ($source != 'pwa') {
     // Object
     print '<div class="divsearchfield">' . img_picto('', $objectInfos['picto']) . ' ' . $langs->trans($objectInfos['langs']). ': ';
     print $form->selectarray('filter_id', $selectArray, $filterId, 1, 0, 0, '', 0, 0, $fromId > 0) . '</div>';
-
-    // Type
-    print '<div class="divsearchfield">' . $langs->trans('Type'). ': ';
-    print saturne_select_dictionary('filter_type', 'c_address_type', 'ref', 'label', $filterType, 1) . '</div>';
 
     // Country
     print '<div class="divsearchfield">' . $langs->trans('Country'). ': ';
@@ -391,17 +390,39 @@ if ($source != 'pwa') {
     print '<div class="divsearchfield">' . $langs->trans('DateStart') . ': ';
     print $form->selectDate($filterDateStart, 'filter_date_start', 0, 0, 1, 'formfilter', 1, 0) . '</div>';
 
+    // Detect which quick preset matches the currently applied date range (mirrors the JS presets below)
+    $presetActive = '';
+    if (!empty($filterDateStart) && !empty($filterDateEnd)) {
+        $now          = dol_now();
+        $nowParts     = dol_getdate($now);
+        $mondayOffset = ($nowParts['wday'] == 0 ? 6 : $nowParts['wday'] - 1); // wday: 0=Sun..6=Sat
+        $todayYmd     = dol_print_date($now, '%Y-%m-%d');
+        $weekStart    = dol_print_date($now - $mondayOffset * 86400, '%Y-%m-%d');
+        $monthStart   = dol_print_date($now, '%Y-%m') . '-01';
+        $startYmd     = dol_print_date($filterDateStart, '%Y-%m-%d');
+        $endYmd       = dol_print_date($filterDateEnd, '%Y-%m-%d');
+        if ($endYmd === $todayYmd) {
+            if ($startYmd === $todayYmd) {
+                $presetActive = 'day';
+            } elseif ($startYmd === $weekStart) {
+                $presetActive = 'week';
+            } elseif ($startYmd === $monthStart) {
+                $presetActive = 'month';
+            }
+        }
+    }
+
     // Date end + quick presets inline
     print '<div class="divsearchfield">' . $langs->trans('DateEnd') . ': ';
     print $form->selectDate($filterDateEnd, 'filter_date_end', 0, 0, 1, 'formfilter', 1, 0);
-    print '<span style="margin-left:6px">';
-    print '<button type="button" class="button smallpaddingimp map-preset-btn" data-preset="day">'   . $langs->trans('Today')    . '</button> ';
-    print '<button type="button" class="button smallpaddingimp map-preset-btn" data-preset="week">'  . $langs->trans('ThisWeek')  . '</button> ';
-    print '<button type="button" class="button smallpaddingimp map-preset-btn" data-preset="month">' . $langs->trans('ThisMonth') . '</button>';
+    print '<span class="reedcrm-map-preset-group">';
+    print '<button type="button" class="button smallpaddingimp map-preset-btn' . ($presetActive === 'day'   ? ' is-active' : '') . '" data-preset="day">'   . $langs->trans('Today')    . '</button> ';
+    print '<button type="button" class="button smallpaddingimp map-preset-btn' . ($presetActive === 'week'  ? ' is-active' : '') . '" data-preset="week">'  . $langs->trans('ThisWeek')  . '</button> ';
+    print '<button type="button" class="button smallpaddingimp map-preset-btn' . ($presetActive === 'month' ? ' is-active' : '') . '" data-preset="month">' . $langs->trans('ThisMonth') . '</button>';
     print '</span></div>';
 
     // Around-me radius filter — client-side, consistent with other geo selects (Country/Region/State/Town)
-    print '<div class="divsearchfield">' . img_picto('', 'fontawesome_search-location_fas_#007BFF') . ' ' . $langs->trans('NearMe') . ': ';
+    print '<div class="divsearchfield">' . $langs->trans('NearMe') . ': ';
     print '<select name="filter_near_radius" id="filter_near_radius" class="flat" onchange="onNearMeChange(parseInt(this.value))">';
     print '<option value="0">—</option>';
     foreach ([1, 5, 10, 25, 50] as $km) {
@@ -410,13 +431,13 @@ if ($source != 'pwa') {
     }
     print '</select></div>';
 
-//    //Categories project
-//    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
-//        if (in_array($objectType, Categorie::$MAP_ID_TO_CODE)) {
-//            print '<div class="divsearchfield">';
-//            print $langs->trans(ucfirst($objectInfos['langfile']) . 'CategoriesShort') . '</br>' . $formCategory->getFilterBox($objectType, $filterCat) . '</div>';
-//        }
-//    }
+    // Categories of the linked project
+    if (isModEnabled('categorie') && $user->rights->categorie->lire && $fromId <= 0) {
+        $category = new Categorie($db);
+        if (array_key_exists($objectType, $category->MAP_ID)) {
+            print $formCategory->getFilterBox($objectType, $filterCat);
+        }
+    }
 
     // Morefilter buttons
     print '<div class="divsearchfield">';
@@ -425,9 +446,9 @@ if ($source != 'pwa') {
     print '</form>';
 }
 
-$picto = img_picto($langs->trans('MyPosition'), 'fontawesome_search-location_fas_#007BFF');
+$picto = img_picto($langs->trans('MyPosition'), 'fontawesome_search-location_fas_#2c7be5');
 print '<div id="geolocate-button" class="geolocate-button">' . $picto . '</div>';
-$pictoRoute = img_picto($langs->trans('ShowRoute'), 'fontawesome_route_fas_#007BFF');
+$pictoRoute = img_picto($langs->trans('ShowRoute'), 'fontawesome_route_fas_#2c7be5');
 print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute . '</div>';
 
 ?>
