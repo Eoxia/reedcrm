@@ -1077,12 +1077,29 @@ class ActionsReedcrm
                         if (flexContainer) {
                             flexContainer.appendChild(block[0]);
                         } else {
-                            var titreRight = jQuery("div.titre_right").first();
-                            if (titreRight.length) {
-                                var wrapper = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(block);
-                                titreRight.after(wrapper);
+                            // Robust injection similar to Assign and Severity
+                            var target = jQuery(".statusref, .statusrefbox").last();
+                            if (target.length) {
+                                target.after(block);
+                                block.css({"float": "right", "clear": "right", "margin-top": "12px", "margin-bottom": "8px"});
                             } else {
-                                jQuery(".refidno").first().after(block);
+                                var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
+                                if (arearefonsamedir.length) {
+                                    arearefonsamedir.append(block);
+                                } else {
+                                    var titreRight = jQuery("div.titre_right").first();
+                                    if (titreRight.length) {
+                                        titreRight.append(block);
+                                    } else {
+                                        var arearef = jQuery("div.arearef").first();
+                                        if (arearef.length) {
+                                            arearef.append(block);
+                                            block.css({"float": "right", "clear": "right", "margin-top": "12px"});
+                                        } else {
+                                            jQuery(".refidno").first().after(block);
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
