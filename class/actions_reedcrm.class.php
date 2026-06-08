@@ -993,7 +993,7 @@ class ActionsReedcrm
                           } else {
                               var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
                               if (arearefonsamedir.length) {
-                                  arearefonsamedir.append(block);
+                                  arearefonsamedir.prepend(block);
                               } else {
                                   var arearef = jQuery("div.arearef").first();
                                   if (arearef.length) {
@@ -1001,7 +1001,7 @@ class ActionsReedcrm
                                       if (!wrap.length) {
                                           wrap = jQuery("<div id=\'reedcrm-ticket-blocks-wrap\'></div>").css({
                                               "display": "flex",
-                                              "justify-content": "flex-end",
+                                              "justify-content": "space-between",
                                               "width": "100%",
                                               "clear": "both",
                                               "margin-top": "8px",
@@ -1035,7 +1035,7 @@ class ActionsReedcrm
                             btn.prop("disabled", true).html("<i class=\'fas fa-spinner fa-spin\'></i>");
 
                             jQuery.ajax({
-                                url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_time.php",
+                                url: "' . dol_buildpath('/custom/reedcrm/core/ajax/ticket_time.php', 1) . '",
                                 method: "POST",
                                 data: {
                                     action: "save_time",
@@ -1097,7 +1097,7 @@ class ActionsReedcrm
                         } else {
                             var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
                             if (arearefonsamedir.length) {
-                                arearefonsamedir.append(block);
+                                arearefonsamedir.prepend(block);
                             } else {
                                 var arearef = jQuery("div.arearef").first();
                                 if (arearef.length) {
@@ -1105,7 +1105,7 @@ class ActionsReedcrm
                                     if (!wrap.length) {
                                         wrap = jQuery("<div id=\'reedcrm-ticket-blocks-wrap\'></div>").css({
                                             "display": "flex",
-                                            "justify-content": "flex-end",
+                                            "justify-content": "space-between",
                                             "width": "100%",
                                             "clear": "both",
                                             "margin-top": "8px",
@@ -1231,17 +1231,14 @@ class ActionsReedcrm
                         "flex-direction": "column",
                         "gap": "6px",
                         "align-items": "flex-end",
-                        "margin-top": "6px",
-                        "float": "right",
-                        "clear": "both"
+                        "margin-top": "6px"
                     });
                     
                     blockSev.css("display", "inline-flex");
                     blockAssign.css("display", "inline-flex");
                     container.append(blockAssign).append(blockSev);
 
-                    // Teleport to the right side (under the green Assign button)
-                    // We look for common Dolibarr right-aligned containers
+                    // Teleport to the right side (near the Assigné button)
                     var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
                     if (flexContainer) {
                         flexContainer.appendChild(container[0]);
@@ -1256,7 +1253,7 @@ class ActionsReedcrm
                                 if (!wrap.length) {
                                     wrap = jQuery("<div id=\'reedcrm-ticket-blocks-wrap\'></div>").css({
                                         "display": "flex",
-                                        "justify-content": "flex-end",
+                                        "justify-content": "space-between",
                                         "width": "100%",
                                         "clear": "both",
                                         "margin-top": "8px",
@@ -1303,7 +1300,7 @@ class ActionsReedcrm
                         wrapSev.css("opacity", "0.5");
 
                         jQuery.ajax({
-                            url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_severity.php",
+                            url: "' . dol_buildpath('/custom/reedcrm/core/ajax/ticket_severity.php', 1) . '",
                             method: "POST",
                             data: {
                                 action: "save_severity",
@@ -1378,7 +1375,7 @@ class ActionsReedcrm
                         wrapAssign.css("opacity", "0.5");
 
                         jQuery.ajax({
-                            url: "' . DOL_URL_ROOT . '/custom/reedcrm/core/ajax/ticket_assign.php",
+                            url: "' . dol_buildpath('/custom/reedcrm/core/ajax/ticket_assign.php', 1) . '",
                             method: "POST",
                             data: {
                                 action: "save_assign",
@@ -1425,7 +1422,7 @@ class ActionsReedcrm
             </script>
             ';
 
-            $this->resprints .= $html;
+            print $html;
         }
         return 0; // or return 1 to replace standard code
     }
