@@ -990,12 +990,29 @@ class ActionsReedcrm
                           if (flexContainer) {
                               flexContainer.appendChild(block[0]);
                           } else {
-                              var titreRight = jQuery("div.titre_right").first();
-                              if (titreRight.length) {
-                                  var divWrap = jQuery("<div></div>").css({"clear": "both", "margin-top": "6px", "float": "right"}).append(block);
-                                  titreRight.after(divWrap);
+                              var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
+                              if (arearefonsamedir.length) {
+                                  arearefonsamedir.append(block);
                               } else {
-                                  jQuery(".refidno").first().after(block);
+                                  var arearef = jQuery("div.arearef").first();
+                                  if (arearef.length) {
+                                      var wrap = jQuery("#reedcrm-ticket-blocks-wrap");
+                                      if (!wrap.length) {
+                                          wrap = jQuery("<div id=\'reedcrm-ticket-blocks-wrap\'></div>").css({
+                                              "display": "flex",
+                                              "justify-content": "flex-end",
+                                              "width": "100%",
+                                              "clear": "both",
+                                              "margin-top": "8px",
+                                              "gap": "10px",
+                                              "flex-wrap": "wrap"
+                                          });
+                                          arearef.append(wrap);
+                                      }
+                                      wrap.append(block);
+                                  } else {
+                                      jQuery(".refidno").first().after(block);
+                                  }
                               }
                           }
 
@@ -1224,15 +1241,9 @@ class ActionsReedcrm
 
                     // Teleport to the right side (under the green Assign button)
                     // We look for common Dolibarr right-aligned containers
-                    var target = jQuery(".statusref, .statusrefbox").last();
-                    if (target.length) {
-                        target.after(container);
-                        container.css({
-                            "float": "right",
-                            "clear": "right",
-                            "margin-top": "12px",
-                            "margin-bottom": "8px"
-                        });
+                    var flexContainer = document.querySelector(".reedcrm-card-header-blocks");
+                    if (flexContainer) {
+                        flexContainer.appendChild(container[0]);
                     } else {
                         var arearefonsamedir = jQuery("div.arearefonsamedir > div:first-child");
                         if (arearefonsamedir.length) {
