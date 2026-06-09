@@ -21,6 +21,8 @@
  * \brief   Mobile-optimized PWA view for a CallList — card per contact, direct call button, AJAX status update.
  */
 
+// Removed NOCSRFCHECK to keep security intact
+
 if (file_exists('../reedcrm.main.inc.php')) {
     require_once __DIR__ . '/../reedcrm.main.inc.php';
 } elseif (file_exists('../../reedcrm.main.inc.php')) {
@@ -39,9 +41,17 @@ global $conf, $db, $langs, $user;
 saturne_load_langs();
 
 $id     = GETPOSTINT('id');
-$action = GETPOST('action', 'alpha');
+$action = GETPOST('action', 'nohtml');
 
-if (!$user->hasRight('reedcrm', 'call_list', 'read')) {
+// LOG ALL REQUESTS TO DEBUG
+$debugFile = $conf->ecm->dir_output . '/debug_upload_top.log';
+file_put_contents($debugFile, "===== REQ to pwa_call_list =====\n", FILE_APPEND);
+file_put_contents($debugFile, "GET: " . print_r($_GET, true) . "\n", FILE_APPEND);
+file_put_contents($debugFile, "POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
+file_put_contents($debugFile, "ACTION: " . $action . "\n", FILE_APPEND);
+
+
+if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcrm', 'call_list', 'read_subordinates') && !$user->hasRight('reedcrm', 'call_list', 'read_all')) {
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);
     exit;
 }
@@ -58,25 +68,57 @@ if (empty($object->id)) {
     exit;
 }
 
-// Handle audio upload — JS posts to current URL with action=add_audio
-if ($action === 'add_audio' && !empty($_FILES['audio']['tmp_name'])) {
-    $audioModule   = GETPOST('module_name', 'alpha');
-    $audioSubDir   = GETPOST('sub_dir', 'alpha');
-    $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
-
-    $uploadDir = !empty($conf->$audioModLower->dir_output)
-        ? $conf->$audioModLower->dir_output
-        : $conf->ecm->dir_output . '/' . $audioModLower;
-    if (!empty($audioSubDir)) {
-        $uploadDir .= '/' . $audioSubDir;
+$canRead = false;
+if ($user->hasRight('reedcrm', 'call_list', 'read_all')) {
+    $canRead = true;
+} elseif ($user->hasRight('reedcrm', 'call_list', 'read_subordinates')) {
+    $childIds = $user->getAllChildIds(1);
+    if (isset($childIds[$object->fk_user_assign])) {
+        $canRead = true;
     }
-    if (!dol_is_dir($uploadDir)) {
-        dol_mkdir($uploadDir);
+} elseif ($user->hasRight('reedcrm', 'call_list', 'read')) {
+    if ($object->fk_user_assign == $user->id) {
+        $canRead = true;
     }
-    $destFile = $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
-    move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
-    // Fall through — page renders normally so JS can parse the updated audio block
 }
+
+if (!$canRead) {
+    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    exit;
+}
+
+
+// Handle audio upload — JS posts to current URL with action=add_audio
+if ($action === 'add_audio') {
+    $debugFile = $conf->ecm->dir_output . '/debug_upload.log';
+    file_put_contents($debugFile, "add_audio triggered\n", FILE_APPEND);
+    file_put_contents($debugFile, "POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
+    file_put_contents($debugFile, "FILES: " . print_r($_FILES, true) . "\n", FILE_APPEND);
+    
+    if (!empty($_FILES['audio']['tmp_name'])) {
+        $audioModule   = GETPOST('module_name', 'alpha');
+        $audioSubDir   = GETPOST('sub_dir', 'nohtml'); // Allow hyphens/slashes
+        file_put_contents($debugFile, "module=$audioModule subdir=$audioSubDir\n", FILE_APPEND);
+        $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
+
+        $uploadDir = !empty($conf->$audioModLower->dir_output)
+            ? $conf->$audioModLower->dir_output
+            : $conf->ecm->dir_output . '/' . $audioModLower;
+        if (!empty($audioSubDir)) {
+            $uploadDir .= '/' . $audioSubDir;
+        }
+        if (!dol_is_dir($uploadDir)) {
+            $mkres = dol_mkdir($uploadDir);
+            file_put_contents($debugFile, "mkdir $uploadDir res=$mkres\n", FILE_APPEND);
+        }
+        $destFile = $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
+        $res = move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
+        file_put_contents($debugFile, "move_uploaded_file to $destFile res=$res\n", FILE_APPEND);
+    } else {
+        file_put_contents($debugFile, "FAILED: tmp_name is empty\n", FILE_APPEND);
+    }
+}
+
 
 // Handle audio delete — JS posts to current URL with action=delete_audio
 if ($action === 'delete_audio') {
@@ -137,31 +179,33 @@ $statusColors = [
 ];
 
 print '<style>
+.pwa-call-list-select{width:100%;padding:10px 40px 10px 14px;font-size:1.1rem;font-weight:bold;color:#1e293b;background-color:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23475569" viewBox="0 0 16 16"><path d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>\');background-repeat:no-repeat;background-position:right 14px center;margin-bottom:4px;cursor:pointer;text-overflow:ellipsis;}
+.pwa-call-list-select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.2);}
 .pwa-call-list-container{padding:15px;padding-bottom:80px;}
 .pwa-call-list-header{margin-bottom:20px;}
-.pwa-call-list-header h2{font-size:1.4rem;margin:0 0 4px;color:#1e293b;}
 .pwa-call-list-header p{margin:0;color:#64748b;font-size:.9rem;}
 .pwa-call-list-empty{text-align:center;padding:60px 20px;color:#94a3b8;font-size:1.1rem;}
 .pwa-call-list-empty i{font-size:3rem;display:block;margin-bottom:12px;}
 .pwa-call-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:16px;margin-bottom:16px;}
-.pwa-call-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;}
-.pwa-call-name{font-size:1.3rem;font-weight:bold;color:#1e293b;}
-.pwa-call-name--empty{color:#94a3b8;font-style:italic;}
-.pwa-call-badge{font-size:.75rem;font-weight:600;color:#fff;padding:3px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
-.pwa-call-source{font-size:.85rem;color:#64748b;margin-bottom:12px;}
-.pwa-call-actions{display:flex;align-items:stretch;gap:8px;margin:12px 0;}
-.pwa-call-btn-call{flex:1;padding:14px;text-align:center;background:#22c55e;color:#fff !important;font-size:1.2rem;font-weight:bold;border-radius:10px;text-decoration:none !important;box-sizing:border-box;display:flex;align-items:center;justify-content:center;}
-.pwa-call-btn-copy{flex-shrink:0;width:52px;padding:0;text-align:center;background:#3b82f6;color:#fff !important;font-size:1rem;font-weight:bold;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.pwa-call-btn-copy--ok{background:#22c55e;}
-.pwa-call-phone--empty{color:#94a3b8;font-size:1rem;margin:12px 0;}
+.pwa-call-card-header{display:flex;justify-content:space-between;align-items:center;}
+    .pwa-call-name { font-weight: 700; font-size: 34px; color: #1e293b; }
+    .pwa-call-name--empty { color: #94a3b8; font-style: italic; font-size: 28px; }
+    .pwa-call-phone { display: inline-flex; align-items: center; gap: 10px; font-size: 34px; font-weight: 600; color: #3b82f6; text-decoration: none; margin: 10px 0; }
+    .pwa-call-phone i { font-size: 30px; }
+    .pwa-call-ref { font-size: 22px; color: #475569; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .pwa-call-ref strong { font-size: 34px; color: #1e293b; }
+    .pwa-call-title { font-size: 30px; color: #64748b; font-weight: 500; margin-bottom: 16px; line-height: 1.2; }
+.pwa-call-badge{font-size:.85rem;font-weight:bold;color:#1e293b;background:#f1f5f9;padding:4px 8px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+.pwa-call-actions{display:flex;align-items:stretch;gap:8px;}
 .pwa-call-actions [id$="master-media-row-container-audio"]{padding:0;display:flex;align-items:stretch;}
 .pwa-call-actions .saturne-audio-controls{margin-top:0;gap:8px;align-items:stretch;}
 .pwa-call-actions .saturne-play-recording-wrapper{display:flex;align-items:stretch;}
-.pwa-call-actions .saturne-media-btn{width:52px;min-width:52px;height:auto;min-height:0;border-radius:10px;}
-.pwa-call-status-btns{display:flex;gap:8px;flex-wrap:wrap;}
-.pwa-status-btn{flex:1;min-width:70px;padding:8px 4px;font-size:.75rem;border-radius:8px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;font-weight:600;transition:background .15s,color .15s;}
+.pwa-call-actions .saturne-media-btn{width:48px;min-width:48px;height:auto;min-height:0;border-radius:10px;}
+.pwa-call-status-btns{display:flex;gap:8px;flex:1;}
+.pwa-status-btn{flex:1;padding:10px;font-size:1.2rem;border-radius:10px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
 .pwa-status-btn--active{background:var(--status-color);color:#fff;}
 .pwa-call-error{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px;margin-top:8px;color:#dc2626;font-size:.85rem;}
+.pwa-call-actions .saturne-recording-indicator{display:none !important;}
 </style>';
 
 $ajaxUrl          = dol_buildpath('/custom/reedcrm/ajax/update_call_list_line_status.php', 1);
@@ -175,11 +219,59 @@ print '<div class="pwa-call-list-container"'
     . ' data-create-actioncomm="' . (int) $createActioncomm . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
 
+// Saturne expects an input named "token" in the DOM for AJAX uploads
+print '<input type="hidden" name="token" value="' . dol_escape_htmltag($token) . '">';
+
 $dateStart = $object->date_start ? dol_print_date($object->date_start, 'day') : '—';
 $dateEnd   = $object->date_end   ? dol_print_date($object->date_end,   'day') : '—';
 print '<div class="pwa-call-list-header">';
-print '<h2>' . dol_escape_htmltag($object->label) . '</h2>';
-print '<p>' . $dateStart . ' → ' . $dateEnd . '</p>';
+
+$sqlLists = "SELECT rowid, label, fk_user_assign FROM " . MAIN_DB_PREFIX . "reedcrm_call_list";
+$sqlLists .= " WHERE entity IN (" . getEntity('call_list') . ")";
+$sqlLists .= " AND status = " . CallList::STATUS_ACTIVE;
+$sqlLists .= " ORDER BY date_creation DESC";
+$resqlLists = $db->query($sqlLists);
+
+$myLists = [];
+$otherLists = [];
+if ($resqlLists) {
+    $childIds = $user->getAllChildIds(1);
+    while ($objList = $db->fetch_object($resqlLists)) {
+        $allowed = false;
+        $isMine = ($objList->fk_user_assign == $user->id);
+        
+        if ($user->hasRight('reedcrm', 'call_list', 'read_all')) {
+            $allowed = true;
+        } elseif ($user->hasRight('reedcrm', 'call_list', 'read_subordinates') && isset($childIds[$objList->fk_user_assign])) {
+            $allowed = true;
+        } elseif ($user->hasRight('reedcrm', 'call_list', 'read') && $isMine) {
+            $allowed = true;
+        }
+        
+        if ($allowed) {
+            if ($isMine) {
+                $myLists[] = $objList;
+            } else {
+                $otherLists[] = $objList;
+            }
+        }
+    }
+}
+
+print '<select class="pwa-call-list-select" onchange="if(this.value) window.location.href=\'?id=\'+this.value">';
+foreach ($myLists as $lst) {
+    $sel = ($lst->rowid == $object->id) ? ' selected' : '';
+    print '<option value="' . $lst->rowid . '"' . $sel . '>' . dol_escape_htmltag($lst->label) . '</option>';
+}
+if (!empty($otherLists)) {
+    if (!empty($myLists)) print '<option disabled>---------------</option>';
+    foreach ($otherLists as $lst) {
+        $sel = ($lst->rowid == $object->id) ? ' selected' : '';
+        print '<option value="' . $lst->rowid . '"' . $sel . '>' . dol_escape_htmltag($lst->label) . '</option>';
+    }
+}
+print '</select>';
+
 print '</div>';
 
 if (empty($lines)) {
@@ -200,55 +292,110 @@ if (empty($lines)) {
             $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
         }
 
+        $sourceRefHtml = '';
+        $sourceTitleHtml = '';
+        $oppPercent = null;
+        $oppAmount  = null;
+        $saturneModule = 'reedcrm';
+        $saturneSubdir = 'calllistline/' . (int) $line->id;
+
         if ($line->element_type === 'propal' && isModEnabled('propale')) {
             require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
             $propal = new Propal($db);
             if ($propal->fetch($line->element_id) > 0) {
-                $sourceHtml = $propal->getNomUrl(1);
+                $sourceRefHtml = $propal->getNomUrl(1);
+                $saturneModule = 'propal';
+                $saturneSubdir = dol_sanitizeFileName($propal->ref);
+                if ($propal->fk_project > 0) {
+                    require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                    $project = new Project($db);
+                    if ($project->fetch($propal->fk_project) > 0) {
+                        $sourceTitleHtml = $project->title;
+                        $oppPercent = $project->opp_percent;
+                    }
+                }
+                $oppAmount = $propal->total_ttc;
             }
         } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
             $project = new Project($db);
             if ($project->fetch($line->element_id) > 0) {
-                $sourceHtml = $project->getNomUrl(1);
+                $sourceRefHtml = $project->getNomUrl(1);
+                $saturneModule = 'projet';
+                $saturneSubdir = dol_sanitizeFileName($project->ref);
+                $sourceTitleHtml = $project->title;
+                $oppPercent = $project->opp_percent;
+                $oppAmount  = $project->opp_amount;
+                
+                // Fetch contact info from extrafields if not linked directly
+                $project->fetch_optionals();
+                if (empty($lastname) && empty($firstname)) {
+                    $firstname = $project->array_options['options_reedcrm_firstname'] ?? '';
+                    $lastname  = $project->array_options['options_reedcrm_lastname'] ?? '';
+                }
+                if (empty($phone)) {
+                    $phone = $project->array_options['options_projectphone'] ?? '';
+                }
             }
         }
 
         $currentStatus = (int) $line->status;
-        $badgeColor    = $statusColors[$currentStatus] ?? '#94a3b8';
-        $badgeLabel    = $statusLabels[$currentStatus] ?? '?';
 
         print '<div class="pwa-call-card" data-line-id="' . (int) $line->id . '" data-status="' . $currentStatus . '">';
 
+        // Ligne 1 : Nom et % opp
         print '<div class="pwa-call-card-header">';
         if ($lastname || $firstname) {
             print '<span class="pwa-call-name">' . $lastname . ' ' . $firstname . '</span>';
         } else {
             print '<span class="pwa-call-name pwa-call-name--empty">Contact non renseigné</span>';
         }
-        print '<span class="pwa-call-badge" style="background:' . dol_escape_htmltag($badgeColor) . '">● ' . dol_escape_htmltag($badgeLabel) . '</span>';
+        if ($oppPercent !== null) {
+            print '<span class="pwa-call-badge"><i class="fas fa-chart-pie" style="color:#64748b;margin-right:4px;"></i>' . round($oppPercent) . ' %</span>';
+        }
         print '</div>';
 
-        if ($sourceHtml) {
-            print '<div class="pwa-call-source">' . $sourceHtml . '</div>';
-        }
-
+        // Ligne 2 : Numéro cliquable
         if ($phone) {
-            print '<div class="pwa-call-actions">';
-            print '<a class="pwa-call-btn-call" href="tel:' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a>';
-            print '<button class="pwa-call-btn-copy" data-phone="' . dol_escape_htmltag($phone) . '" title="Copier le numéro"><i class="fas fa-copy"></i></button>';
-            print saturne_render_media_block('reedcrm', 'calllistline/' . (int) $line->id, 'cll_' . (int) $line->id, '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => true]);
-            print '</div>';
+            print '<div><a class="pwa-call-phone pwa-call-btn-call" href="tel:' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a></div>';
         } else {
-            print '<div class="pwa-call-phone--empty"><i class="fas fa-phone-slash"></i> Pas de téléphone</div>';
+            print '<div><span class="pwa-call-phone" style="color:#94a3b8;"><i class="fas fa-phone-slash" style="color:#94a3b8;"></i> Pas de téléphone</span></div>';
         }
 
-        print '<div class="pwa-call-status-btns">';
-        foreach ($statusLabels as $val => $lbl) {
-            $isActive = ($val === $currentStatus) ? ' pwa-status-btn--active' : '';
-            $color    = $statusColors[$val];
-            print '<button class="pwa-status-btn' . $isActive . '" data-status="' . (int) $val . '" style="--status-color:' . dol_escape_htmltag($color) . '">' . dol_escape_htmltag($lbl) . '</button>';
+        // Ligne 3 : Picto + Objet + Montant
+        if ($sourceRefHtml) {
+            $amountStr = ($oppAmount !== null) ? price($oppAmount, 0, $langs, 0, 0, -1, $conf->currency) : '';
+            print '<div class="pwa-call-ref">' . $sourceRefHtml;
+            if ($amountStr) {
+                print ' <span style="margin:0 6px;">|</span> <strong style="color:#1e293b;">' . $amountStr . '</strong>';
+            }
+            print '</div>';
+            
+            if ($sourceTitleHtml) {
+                print '<div class="pwa-call-title">' . dol_escape_htmltag($sourceTitleHtml) . '</div>';
+            } else {
+                print '<div style="margin-bottom:12px;"></div>';
+            }
         }
+
+        // Ligne 4 : Actions
+        print '<div class="pwa-call-actions">';
+        print '<div class="pwa-call-status-btns">';
+        
+        $statusIcons = [
+            CallListLine::STATUS_CALLED    => 'fas fa-check',
+            CallListLine::STATUS_NO_ANSWER => 'fas fa-times',
+            CallListLine::STATUS_CALLBACK  => 'fas fa-voicemail',
+        ];
+        
+        foreach ($statusIcons as $val => $iconClass) {
+            $isActive = ($val === $currentStatus) ? ' pwa-status-btn--active' : '';
+            $color    = $statusColors[$val] ?? '#94a3b8';
+            print '<button class="pwa-status-btn' . $isActive . '" data-status="' . (int) $val . '" style="--status-color:' . dol_escape_htmltag($color) . '" title="' . dol_escape_htmltag($statusLabels[$val]) . '"><i class="' . $iconClass . '"></i></button>';
+        }
+        print '</div>';
+
+        print saturne_render_media_block($saturneModule, $saturneSubdir, 'cll_' . (int) $line->id, '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => false]);
         print '</div>';
 
         print '<div class="pwa-call-error" style="display:none;"></div>';
@@ -270,6 +417,12 @@ print '<script>
     var statusLabels = ' . json_encode($statusLabels) . ';
     var statusColors = ' . json_encode($statusColors) . ';
 
+    window.saturne = window.saturne || {};
+    window.saturne.toolbox = window.saturne.toolbox || {};
+    window.saturne.toolbox.getToken = function() {
+        return token;
+    };
+
     document.querySelectorAll(".pwa-call-btn-call").forEach(function (link) {
         link.addEventListener("click", function () {
             if (!createActioncomm) return;
@@ -282,24 +435,15 @@ print '<script>
         });
     });
 
-    document.querySelectorAll(".pwa-call-btn-copy").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            navigator.clipboard.writeText(btn.dataset.phone).then(function () {
-                btn.classList.add("pwa-call-btn-copy--ok");
-                btn.innerHTML = "<i class=\"fas fa-check\"></i>";
-                setTimeout(function () {
-                    btn.classList.remove("pwa-call-btn-copy--ok");
-                    btn.innerHTML = "<i class=\"fas fa-copy\"></i>";
-                }, 1500);
-            });
-        });
-    });
-
     document.querySelectorAll(".pwa-status-btn").forEach(function (btn) {
         btn.addEventListener("click", function () {
             var card      = btn.closest(".pwa-call-card");
             var lineId    = card.dataset.lineId;
             var newStatus = parseInt(btn.dataset.status, 10);
+            var currentSt = parseInt(card.dataset.status, 10);
+            if (currentSt === newStatus) {
+                newStatus = 0; // Toggle off if clicking the already active button
+            }
             var errorEl   = card.querySelector(".pwa-call-error");
 
             var body = new URLSearchParams();
@@ -310,13 +454,10 @@ print '<script>
             fetch(ajaxUrl, { method: "POST", body: body })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                    if (data.success) {
-                        var badge = card.querySelector(".pwa-call-badge");
-                        badge.textContent      = "● " + statusLabels[newStatus];
-                        badge.style.background = statusColors[newStatus];
-                        card.querySelectorAll(".pwa-status-btn").forEach(function (b) {
-                            b.classList.toggle("pwa-status-btn--active", parseInt(b.dataset.status, 10) === newStatus);
-                        });
+                        if (data.success) {
+                            card.querySelectorAll(".pwa-status-btn").forEach(function (b) {
+                                b.classList.toggle("pwa-status-btn--active", parseInt(b.dataset.status, 10) === newStatus);
+                            });
                         card.dataset.status   = newStatus;
                         errorEl.style.display = "none";
                         if (newStatus !== 0) {

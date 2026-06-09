@@ -503,3 +503,7 @@ ReedCRMLogTimeWithMessage=Enregistrer le temps passé avec ce message
 ReedCRMTimeEntriesLatest=Derniers temps pointés (%s/%s) :
 ReedCRMNoTimeEntries=Aucun temps pointé sur cette tâche.
 
+
+ReadMyCallLists=Voir mes listes d'appel
+ReadSubordinatesCallLists=Voir les listes d'appel de mes subordonnés
+ReadAllCallLists=Voir toutes les listes d'appel

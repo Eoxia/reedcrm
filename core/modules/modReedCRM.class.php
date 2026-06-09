@@ -243,7 +243,10 @@ class modReedCRM extends DolibarrModules
         $this->overwrite_translation = [
             'fr_FR:ActionAC_EMAIL_IN' => 'Email entrant',
             'fr_FR:ActionAC_EMAIL'    => 'Email sortant',
-            'fr_FR:ActionAC_RDV'      => 'Rendez-vous physique ou visioconférence'
+            'fr_FR:ActionAC_RDV'      => 'Rendez-vous physique ou visioconférence',
+            'fr_FR:ReadMyCallLists'   => 'Voir mes listes d\'appel',
+            'fr_FR:ReadSubordinatesCallLists' => 'Voir les listes d\'appel de mes subordonnés',
+            'fr_FR:ReadAllCallLists'  => 'Voir toutes les listes d\'appel'
         ];
 
         if (!isModEnabled('reedcrm')) {
@@ -425,9 +428,19 @@ class modReedCRM extends DolibarrModules
 
         /* CALL LIST PERMISSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
-        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('CallList'));
+        $this->rights[$r][1] = $langs->transnoentities('ReadMyCallLists');
         $this->rights[$r][4] = 'call_list';
         $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadSubordinatesCallLists');
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'read_subordinates';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadAllCallLists');
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'read_all';
         $r++;
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
         $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('CallList'));
