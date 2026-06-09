@@ -503,3 +503,5 @@ ReedCRMLogTimeWithMessage=Enregistrer le temps passé avec ce message
 ReedCRMTimeEntriesLatest=Derniers temps pointés (%s/%s) :
 ReedCRMNoTimeEntries=Aucun temps pointé sur cette tâche.
 
+
+ReedCRMEmailPreviewParseError = Impossible de lire le contenu de cet e-mail

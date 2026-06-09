@@ -1,0 +1,130 @@
+// Email (.msg/.eml) attachment preview — icon + modal
+
+.reedcrm-email-preview-btn {
+    cursor: pointer;
+    color: #1a2d40;
+
+    &:hover {
+        color: #009daa;
+    }
+}
+
+.reedcrm-email-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(15, 23, 42, 0.6);
+    align-items: center;
+    justify-content: center;
+
+    &.is-open {
+        display: flex;
+    }
+}
+
+.reedcrm-email-modal-card {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    max-width: 900px;
+    height: 88vh;
+    max-height: 88vh;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.reedcrm-email-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #1a2d40;
+    color: #fff;
+}
+
+.reedcrm-email-modal-title {
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.reedcrm-email-modal-close {
+    padding-left: 12px;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.reedcrm-email-modal-meta {
+    padding: 10px 16px;
+    font-size: 13px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+
+    div {
+        padding: 1px 0;
+    }
+
+    .lbl {
+        display: inline-block;
+        min-width: 38px;
+        color: #64748b;
+    }
+}
+
+.reedcrm-email-modal-error {
+    padding: 8px 0;
+    color: #dc3545;
+}
+
+.reedcrm-email-modal-bodywrap {
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.reedcrm-email-modal-body {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.reedcrm-email-modal-attach {
+    max-height: 120px;
+    padding: 8px 16px;
+    overflow: auto;
+    font-size: 13px;
+    border-top: 1px solid #e2e8f0;
+
+    .reedcrm-email-attach-title {
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    ul {
+        margin: 0;
+        padding-left: 4px;
+        list-style: none;
+    }
+
+    li {
+        padding: 2px 0;
+    }
+
+    a {
+        color: #009daa;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .sz {
+        color: #94a3b8;
+    }
+}
