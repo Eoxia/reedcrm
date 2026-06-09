@@ -188,14 +188,14 @@ print '<style>
 .pwa-call-list-empty i{font-size:3rem;display:block;margin-bottom:12px;}
 .pwa-call-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:16px;margin-bottom:16px;}
 .pwa-call-card-header{display:flex;justify-content:space-between;align-items:center;}
-    .pwa-call-name { font-weight: 700; font-size: 34px; color: #1e293b; }
+    .pwa-call-name { font-weight: 700; font-size: 34px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
     .pwa-call-name--empty { color: #94a3b8; font-style: italic; font-size: 28px; }
     .pwa-call-phone { display: inline-flex; align-items: center; gap: 10px; font-size: 34px; font-weight: 600; color: #3b82f6; text-decoration: none; margin: 10px 0; }
     .pwa-call-phone i { font-size: 30px; }
-    .pwa-call-ref { font-size: 22px; color: #475569; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .pwa-call-ref strong { font-size: 34px; color: #1e293b; }
+    .pwa-call-ref { font-size: 30px; color: #475569; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .pwa-call-ref strong { font-size: 30px; color: #1e293b; }
     .pwa-call-title { font-size: 30px; color: #64748b; font-weight: 500; margin-bottom: 16px; line-height: 1.2; }
-.pwa-call-badge{font-size:.85rem;font-weight:bold;color:#1e293b;background:#f1f5f9;padding:4px 8px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+    .pwa-call-badge { font-size: 24px; font-weight: bold; color: #1e293b; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
 .pwa-call-actions{display:flex;align-items:stretch;gap:8px;}
 .pwa-call-actions [id$="master-media-row-container-audio"]{padding:0;display:flex;align-items:stretch;}
 .pwa-call-actions .saturne-audio-controls{margin-top:0;gap:8px;align-items:stretch;}
@@ -346,9 +346,9 @@ if (empty($lines)) {
         // Ligne 1 : Nom et % opp
         print '<div class="pwa-call-card-header">';
         if ($lastname || $firstname) {
-            print '<span class="pwa-call-name">' . $lastname . ' ' . $firstname . '</span>';
+            print '<span class="pwa-call-name"><i class="fas fa-user" style="color:#94a3b8;"></i> ' . $lastname . ' ' . $firstname . '</span>';
         } else {
-            print '<span class="pwa-call-name pwa-call-name--empty">Contact non renseigné</span>';
+            print '<span class="pwa-call-name pwa-call-name--empty"><i class="fas fa-user-slash" style="color:#cbd5e1;"></i> Contact non renseigné</span>';
         }
         if ($oppPercent !== null) {
             print '<span class="pwa-call-badge"><i class="fas fa-chart-pie" style="color:#64748b;margin-right:4px;"></i>' . round($oppPercent) . ' %</span>';
