@@ -473,3 +473,5 @@ PropalStatusBilled = Billed
 # Expedition
 ShippingDateEqualsCreationDate = Set shipping date equal to creation date
 ShippingDateEqualsCreationDateHelp = When a shipment is created, if no shipping date is entered, it automatically takes the creation date.
+
+ReedCRMEmailPreviewParseError = Unable to read this e-mail content
