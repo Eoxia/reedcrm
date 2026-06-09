@@ -1422,7 +1422,7 @@ class ActionsReedcrm
             </script>
             ';
 
-            print $html;
+            $this->resprints .= $html;
         }
         return 0; // or return 1 to replace standard code
     }

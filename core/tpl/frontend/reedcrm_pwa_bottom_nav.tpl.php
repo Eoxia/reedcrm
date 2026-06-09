@@ -20,6 +20,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <i class="fas fa-project-diagram"></i>
             <span>Opp</span>
         </a>
+        <a href="<?= $urlBase ?>pwa_call_list.php?id=1" class="pwa-nav-item <?= ($currentPage == 'pwa_call_list.php') ? 'active' : '' ?>">
+            <i class="fas fa-headset"></i>
+            <span>Appel</span>
+        </a>
         <a href="<?= $urlBase ?>pwa_devis.php?source=pwa" class="pwa-nav-item <?= ($currentPage == 'pwa_devis.php') ? 'active' : '' ?>">
             <i class="fas fa-file-invoice-dollar"></i>
             <span>Devis</span>
