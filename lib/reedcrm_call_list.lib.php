@@ -167,6 +167,28 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
     );
 
     if (empty($contacts)) {
+        // No linked Dolibarr contact: for a project, fall back to its own coordinates
+        // (ReedCRM extrafields). The line is created without fk_contact and the name/phone
+        // are resolved from the project at display time (see call_list_card / pwa_call_list).
+        if ($elementType === 'project') {
+            $element->fetch_optionals();
+            $projectPhone = trim((string) ($element->array_options['options_projectphone'] ?? ''));
+            if ($projectPhone !== '') {
+                $newLine               = new CallListLine($db);
+                $newLine->fk_call_list = $callListId;
+                $newLine->element_type = $elementType;
+                $newLine->element_id   = $elementId;
+                $newLine->fk_contact   = 0;
+                $newLine->status       = CallListLine::STATUS_TO_CALL;
+
+                if ($newLine->create($user) <= 0) {
+                    return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')];
+                }
+
+                return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1))];
+            }
+        }
+
         return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoContact')];
     }
 

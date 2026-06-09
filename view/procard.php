@@ -195,6 +195,7 @@ if (empty($resHook)) {
             $date_reminder = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
 
             $actionComm->type_code    = 'AC_OTH';
+            $actionComm->percentage   = 0; // Reminder is a future "to do", not the completed event reused above
 
             $actionComm->datep        = $date_reminder;
 
