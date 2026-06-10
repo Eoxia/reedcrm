@@ -1,0 +1,255 @@
+/* PWA call list view (view/frontend/pwa_call_list.php) */
+
+.pwa-call-list-select {
+    width: 100%;
+    padding: 10px 40px 10px 14px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #1e293b;
+    background-color: #f8fafc;
+    border: 2px solid #cbd5e1;
+    border-radius: 12px;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23475569" viewBox="0 0 16 16"><path d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    margin-bottom: 4px;
+    cursor: pointer;
+    text-overflow: ellipsis;
+
+    &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+}
+
+.pwa-call-list-container {
+    padding: 15px;
+    padding-bottom: 80px;
+}
+
+.pwa-call-list-header {
+    margin-bottom: 20px;
+
+    p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+}
+
+.pwa-call-list-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+    font-size: 1.1rem;
+
+    i {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 12px;
+    }
+}
+
+.pwa-call-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.pwa-call-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pwa-call-name {
+    font-weight: 700;
+    font-size: 34px;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    &--empty {
+        color: #94a3b8;
+        font-style: italic;
+        font-size: 28px;
+    }
+}
+
+/* Empty state "Pas de téléphone" */
+.pwa-call-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 34px;
+    font-weight: 600;
+    color: #3b82f6;
+    text-decoration: none;
+    margin: 10px 0;
+
+    i {
+        font-size: 30px;
+    }
+}
+
+/* Big green call button + copy button, easy to hit while driving */
+.pwa-call-phone-row {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    margin: 12px 0 16px 0;
+}
+
+.pwa-call-btn-call {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: #22c55e !important;
+    color: #ffffff !important;
+    font-size: 24px;
+    font-weight: 700;
+    padding: 12px 10px;
+    border-radius: 14px;
+    text-decoration: none !important;
+
+    i {
+        font-size: 20px;
+        color: #ffffff;
+    }
+
+    &:active {
+        background: #16a34a !important;
+    }
+}
+
+.pwa-call-btn-copy {
+    flex-shrink: 0;
+    width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    border-radius: 14px;
+    color: #475569;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &.is-copied {
+        background: #dcfce7;
+        border-color: #22c55e;
+        color: #16a34a;
+    }
+}
+
+.pwa-call-ref {
+    font-size: 18px;
+    color: #475569;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+
+    strong {
+        font-size: 24px;
+        color: #1e293b;
+    }
+}
+
+.pwa-call-sep {
+    color: #94a3b8;
+}
+
+.pwa-call-percent {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.pwa-call-title {
+    font-size: 22px;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 16px;
+    line-height: 1.2;
+}
+
+.pwa-call-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+
+    [id$="master-media-row-container-audio"] {
+        padding: 0;
+        display: flex;
+        align-items: stretch;
+    }
+
+    .saturne-audio-controls {
+        margin-top: 0;
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    .saturne-play-recording-wrapper {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .saturne-media-btn {
+        width: 48px;
+        min-width: 48px;
+        height: auto;
+        min-height: 0;
+        border-radius: 10px;
+    }
+
+    .saturne-recording-indicator {
+        display: none !important;
+    }
+}
+
+.pwa-call-status-btns {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.pwa-status-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    border: 2px solid var(--status-color);
+    background: transparent;
+    color: var(--status-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+
+    &--active {
+        background: var(--status-color);
+        color: #fff;
+    }
+}
+
+.pwa-call-error {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    color: #dc2626;
+    font-size: 0.85rem;
+}

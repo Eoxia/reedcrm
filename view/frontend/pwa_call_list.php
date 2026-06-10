@@ -178,35 +178,7 @@ $statusColors = [
     CallListLine::STATUS_CALLBACK  => '#f97316',
 ];
 
-print '<style>
-.pwa-call-list-select{width:100%;padding:10px 40px 10px 14px;font-size:1.1rem;font-weight:bold;color:#1e293b;background-color:#f8fafc;border:2px solid #cbd5e1;border-radius:12px;appearance:none;background-image:url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23475569" viewBox="0 0 16 16"><path d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>\');background-repeat:no-repeat;background-position:right 14px center;margin-bottom:4px;cursor:pointer;text-overflow:ellipsis;}
-.pwa-call-list-select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.2);}
-.pwa-call-list-container{padding:15px;padding-bottom:80px;}
-.pwa-call-list-header{margin-bottom:20px;}
-.pwa-call-list-header p{margin:0;color:#64748b;font-size:.9rem;}
-.pwa-call-list-empty{text-align:center;padding:60px 20px;color:#94a3b8;font-size:1.1rem;}
-.pwa-call-list-empty i{font-size:3rem;display:block;margin-bottom:12px;}
-.pwa-call-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:16px;margin-bottom:16px;}
-.pwa-call-card-header{display:flex;justify-content:space-between;align-items:center;}
-    .pwa-call-name { font-weight: 700; font-size: 34px; color: #1e293b; display: flex; align-items: center; gap: 10px; }
-    .pwa-call-name--empty { color: #94a3b8; font-style: italic; font-size: 28px; }
-    .pwa-call-phone { display: inline-flex; align-items: center; gap: 10px; font-size: 34px; font-weight: 600; color: #3b82f6; text-decoration: none; margin: 10px 0; }
-    .pwa-call-phone i { font-size: 30px; }
-    .pwa-call-ref { font-size: 30px; color: #475569; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .pwa-call-ref strong { font-size: 30px; color: #1e293b; }
-    .pwa-call-title { font-size: 30px; color: #64748b; font-weight: 500; margin-bottom: 16px; line-height: 1.2; }
-    .pwa-call-badge { font-size: 24px; font-weight: bold; color: #1e293b; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; white-space: nowrap; flex-shrink: 0; }
-.pwa-call-actions{display:flex;align-items:stretch;gap:8px;}
-.pwa-call-actions [id$="master-media-row-container-audio"]{padding:0;display:flex;align-items:stretch;}
-.pwa-call-actions .saturne-audio-controls{margin-top:0;gap:8px;align-items:stretch;}
-.pwa-call-actions .saturne-play-recording-wrapper{display:flex;align-items:stretch;}
-.pwa-call-actions .saturne-media-btn{width:48px;min-width:48px;height:auto;min-height:0;border-radius:10px;}
-.pwa-call-status-btns{display:flex;gap:8px;flex:1;}
-.pwa-status-btn{flex:1;padding:10px;font-size:1.2rem;border-radius:10px;border:2px solid var(--status-color);background:transparent;color:var(--status-color);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
-.pwa-status-btn--active{background:var(--status-color);color:#fff;}
-.pwa-call-error{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:8px 12px;margin-top:8px;color:#dc2626;font-size:.85rem;}
-.pwa-call-actions .saturne-recording-indicator{display:none !important;}
-</style>';
+// Page styles live in css/scss/pages/_pwa-call-list.scss (compiled into reedcrm.min.css)
 
 $ajaxUrl          = dol_buildpath('/custom/reedcrm/ajax/update_call_list_line_status.php', 1);
 $actioncommAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/create_call_actioncomm.php', 1);
@@ -360,14 +332,14 @@ if (empty($lines)) {
         } else {
             print '<span class="pwa-call-name pwa-call-name--empty"><i class="fas fa-user-slash" style="color:#cbd5e1;"></i> Contact non renseigné</span>';
         }
-        if ($oppPercent !== null) {
-            print '<span class="pwa-call-badge"><i class="fas fa-chart-pie" style="color:#64748b;margin-right:4px;"></i>' . round($oppPercent) . ' %</span>';
-        }
         print '</div>';
 
-        // Ligne 2 : Numéro cliquable
+        // Ligne 2 : Gros bouton d'appel vert + bouton copier le numéro
         if ($phone) {
-            print '<div><a class="pwa-call-phone pwa-call-btn-call" href="tel:' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a></div>';
+            print '<div class="pwa-call-phone-row">';
+            print '<a class="pwa-call-btn-call" href="tel:' . dol_escape_htmltag($phone) . '"><i class="fas fa-phone"></i> ' . $phone . '</a>';
+            print '<button type="button" class="pwa-call-btn-copy" data-action="copy-phone" data-phone="' . dol_escape_htmltag($phone) . '" title="Copier le numéro" aria-label="Copier le numéro"><i class="fas fa-copy"></i></button>';
+            print '</div>';
         } else {
             print '<div><span class="pwa-call-phone" style="color:#94a3b8;"><i class="fas fa-phone-slash" style="color:#94a3b8;"></i> Pas de téléphone</span></div>';
         }
@@ -377,7 +349,10 @@ if (empty($lines)) {
             $amountStr = ($oppAmount !== null) ? price($oppAmount, 0, $langs, 0, 0, -1, $conf->currency) : '';
             print '<div class="pwa-call-ref">' . $sourceRefHtml;
             if ($amountStr) {
-                print ' <span style="margin:0 6px;">|</span> <strong style="color:#1e293b;">' . $amountStr . '</strong>';
+                print '<span class="pwa-call-sep">|</span><strong>' . $amountStr . '</strong>';
+            }
+            if ($oppPercent !== null) {
+                print '<span class="pwa-call-sep">|</span><span class="pwa-call-percent">' . round($oppPercent) . ' %</span>';
             }
             print '</div>';
             
