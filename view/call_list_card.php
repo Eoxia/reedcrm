@@ -371,6 +371,41 @@ if ($show === 'notes' && $object->id > 0) {
     exit;
 }
 
+// Agenda tab - events linked to the call list (elementtype call_list@reedcrm)
+if ($show === 'agenda' && $object->id > 0) {
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
+
+    $head = call_list_prepare_head($object);
+    print dol_get_fiche_head($head, 'agenda', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
+
+    $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
+    saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
+
+    print dol_get_fiche_end();
+
+    if (isModEnabled('agenda')) {
+        $newCardButton = '';
+        if ($user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create')) {
+            $out  = '&origin=' . urlencode('call_list@reedcrm') . '&originid=' . $object->id;
+            $out .= '&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?id=' . $object->id . '&show=agenda');
+            $newCardButton = dolGetButtonTitle($langs->trans('AddAction'), '', 'fa fa-plus-circle', DOL_URL_ROOT . '/comm/action/card.php?action=create' . $out);
+        }
+
+        if ($user->hasRight('agenda', 'myactions', 'read') || $user->hasRight('agenda', 'allactions', 'read')) {
+            print '<br>';
+            print load_fiche_titre($langs->trans('Events'), $newCardButton, '');
+
+            $filters = ['search_agenda_label' => GETPOST('search_agenda_label')];
+
+            show_actions_done($conf, $langs, $db, $object, null, 0, GETPOST('actioncode', 'alpha'), '', $filters, 'a.datep,a.id', 'DESC,DESC', $object->module);
+        }
+    }
+
+    llxFooter();
+    $db->close();
+    exit;
+}
+
 // View card
 if ($object->id > 0) {
     $head = call_list_prepare_head($object);

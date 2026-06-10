@@ -74,5 +74,13 @@ if ($result < 0) {
     exit;
 }
 
-echo json_encode(['success' => true]);
+// Follow-up records (agenda event / commercial task), driven by the PWA admin toggles.
+// Skipped when the status goes back to "to call" (toggle off on the active button).
+$warnings = [];
+if ($status !== CallListLine::STATUS_TO_CALL) {
+    require_once __DIR__ . '/../lib/reedcrm_call_list.lib.php';
+    $warnings = reedcrm_call_list_line_record_status_change($db, $user, $line, $status);
+}
+
+echo json_encode(['success' => true, 'warnings' => $warnings]);
 exit;
