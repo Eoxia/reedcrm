@@ -69,7 +69,7 @@ if (empty($object->id)) {
 }
 
 $canRead = false;
-if ($user->hasRight('reedcrm', 'call_list', 'read_all')) {
+if ($user->hasRight('reedcrm', 'call_list', 'read_all') || $user->admin) {
     $canRead = true;
 } elseif ($user->hasRight('reedcrm', 'call_list', 'read_subordinates')) {
     $childIds = $user->getAllChildIds(1);
