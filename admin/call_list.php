@@ -131,3 +131,33 @@ if (is_dir($dir)) {
     }
 }
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_document_model_view.tpl.php';
+
+// Automations on call list line status change (PWA status buttons)
+print load_fiche_titre($langs->trans('Config'), '', '');
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('Parameters') . '</td>';
+print '<td>' . $langs->trans('Description') . '</td>';
+print '<td class="center">' . $langs->trans('Status') . '</td>';
+print '</tr>';
+
+// Create ActionComm on call list status button click
+print '<tr class="oddeven"><td>';
+print $langs->transnoentities('CallListStatusCreateActioncomm');
+print '</td><td>';
+print $langs->transnoentities('CallListStatusCreateActioncommDesc');
+print '</td><td class="center">';
+print ajax_constantonoff('REEDCRM_CALL_LIST_STATUS_CREATE_ACTIONCOMM');
+print '</td></tr>';
+
+// Create commercial task on call list status button click
+print '<tr class="oddeven"><td>';
+print $langs->transnoentities('CallListStatusCreateTask');
+print '</td><td>';
+print $langs->transnoentities('CallListStatusCreateTaskDesc');
+print '</td><td class="center">';
+print ajax_constantonoff('REEDCRM_CALL_LIST_STATUS_CREATE_TASK');
+print '</td></tr>';
+
+print '</table>';

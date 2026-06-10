@@ -29,7 +29,7 @@
  */
 function call_list_prepare_head(CallList $object): array
 {
-    global $conf, $langs;
+    global $conf, $langs, $user;
 
     saturne_load_langs();
 
@@ -45,6 +45,13 @@ function call_list_prepare_head(CallList $object): array
     $head[$h][1] = $langs->trans('Notes');
     $head[$h][2] = 'notes';
     $h++;
+
+    if (isModEnabled('agenda') && ($user->hasRight('agenda', 'myactions', 'read') || $user->hasRight('agenda', 'allactions', 'read'))) {
+        $head[$h][0] = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id . '&show=agenda';
+        $head[$h][1] = $langs->trans('Events');
+        $head[$h][2] = 'agenda';
+        $h++;
+    }
 
     complete_head_from_modules($conf, $langs, $object, $head, $h, 'call_list@reedcrm');
 
@@ -214,4 +221,169 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
     }
 
     return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1))];
+}
+
+/**
+ * Create follow-up records after a call list line status change (PWA status buttons).
+ *
+ * Behaviors are driven by the ReedCRM PWA admin toggles:
+ * - REEDCRM_CALL_LIST_STATUS_CREATE_ACTIONCOMM: creates a phone event in the agenda, linked to the
+ *   line contact / element (propal or project)
+ * - REEDCRM_CALL_LIST_STATUS_CREATE_TASK: creates the commercial follow-up task on the related project
+ *   if missing (commtask extrafield pattern) and adds the configured time spent (REEDCRM_TASK_TIMESPENT_VALUE)
+ *
+ * @param  DoliDB       $db     Database handler
+ * @param  User         $user   Acting user
+ * @param  CallListLine $line   Call list line (already updated with the new status)
+ * @param  int          $status New status (STATUS_CALLED | STATUS_NO_ANSWER | STATUS_CALLBACK)
+ * @return array                Warning messages (empty on full success)
+ */
+function reedcrm_call_list_line_record_status_change(DoliDB $db, User $user, CallListLine $line, int $status): array
+{
+    global $langs;
+
+    $warnings = [];
+
+    $createActioncomm = getDolGlobalInt('REEDCRM_CALL_LIST_STATUS_CREATE_ACTIONCOMM') && isModEnabled('agenda');
+    $createTask       = getDolGlobalInt('REEDCRM_CALL_LIST_STATUS_CREATE_TASK') && isModEnabled('project');
+
+    if (!$createActioncomm && !$createTask) {
+        return $warnings;
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllistline.class.php';
+
+    $langs->load('reedcrm@reedcrm');
+
+    $callList = new CallList($db);
+    $callList->fetch($line->fk_call_list);
+
+    // Resolve the related propal / project of the line (project either directly or through the propal)
+    $propal = null;
+    if ($line->element_type === 'propal' && !empty($line->element_id) && isModEnabled('propale')) {
+        require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+        $propal = new Propal($db);
+        if ($propal->fetch($line->element_id) <= 0) {
+            $propal = null;
+        }
+    }
+
+    $projectId = 0;
+    if ($line->element_type === 'project' && !empty($line->element_id)) {
+        $projectId = (int) $line->element_id;
+    } elseif ($propal !== null && $propal->fk_project > 0) {
+        $projectId = (int) $propal->fk_project;
+    }
+
+    $project = null;
+    if ($projectId > 0 && isModEnabled('project')) {
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+        $project = new Project($db);
+        if ($project->fetch($projectId) <= 0) {
+            $project = null;
+        }
+    }
+
+    $eventLabel = $langs->transnoentities('CallFrom') . ' ' . $callList->label . ' - ' . $langs->transnoentities('CallListLineStatus' . $status);
+
+    // Phone event in the agenda
+    if ($createActioncomm) {
+        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+        $actioncomm                 = new ActionComm($db);
+        $actioncomm->type_code      = 'AC_TEL';
+        $actioncomm->label          = $eventLabel;
+        $actioncomm->datep          = dol_now();
+        $actioncomm->datef          = dol_now();
+        $actioncomm->percentage     = 100;
+        $actioncomm->userownerid    = $user->id;
+        $actioncomm->fk_user_author = $user->id;
+
+        if (!empty($line->fk_contact)) {
+            $contact = new Contact($db);
+            if ($contact->fetch($line->fk_contact) > 0) {
+                $actioncomm->socpeopleassigned[$contact->id] = ['id' => $contact->id, 'mandatory' => 0];
+                if ($contact->socid > 0) {
+                    $actioncomm->socid = $contact->socid;
+                }
+            }
+        }
+        if (empty($actioncomm->socid)) {
+            if ($propal !== null && $propal->socid > 0) {
+                $actioncomm->socid = $propal->socid;
+            } elseif ($project !== null && $project->socid > 0) {
+                $actioncomm->socid = $project->socid;
+            }
+        }
+
+        // Attach the event to the call list (Agenda tab on the call list card) and to the
+        // related project so it stays visible on the object side too
+        $actioncomm->fk_element  = $callList->id;
+        $actioncomm->elementtype = 'call_list@reedcrm';
+        if ($project !== null) {
+            $actioncomm->fk_project = $project->id;
+        }
+
+        if ($actioncomm->create($user) <= 0) {
+            $warnings[] = $actioncomm->error ?: 'ActionComm creation failed';
+        }
+    }
+
+    // Commercial follow-up task on the related project + time spent
+    if ($createTask && $project !== null) {
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
+
+        $project->fetch_optionals();
+        $commTaskId = (int) ($project->array_options['options_commtask'] ?? 0);
+
+        $task = new Task($db);
+        if ($commTaskId > 0 && $task->fetch($commTaskId) <= 0) {
+            $commTaskId = 0;
+        }
+
+        if ($commTaskId <= 0) {
+            $defaultRef  = '';
+            $modTaskName = getDolGlobalString('PROJECT_TASK_ADDON', 'mod_task_simple');
+            if (is_readable(DOL_DOCUMENT_ROOT . '/core/modules/project/task/' . $modTaskName . '.php')) {
+                require_once DOL_DOCUMENT_ROOT . '/core/modules/project/task/' . $modTaskName . '.php';
+                $modTask    = new $modTaskName();
+                $defaultRef = $modTask->getNextValue(null, $task);
+            }
+
+            $task->fk_project = $project->id;
+            $task->ref        = $defaultRef;
+            $task->label      = (getDolGlobalString('REEDCRM_TASK_LABEL_VALUE') ?: $langs->transnoentities('CommercialFollowUp')) . ' - ' . $project->title;
+            $task->date_c     = dol_now();
+
+            $commTaskId = $task->create($user);
+            if ($commTaskId > 0) {
+                $internalUserIds = $project->liste_contact(-1, 'internal', 1);
+                if (!is_array($internalUserIds) || !in_array($user->id, $internalUserIds)) {
+                    $project->add_contact($user->id, 'PROJECTLEADER', 'internal');
+                }
+                $task->add_contact($user->id, 'TASKEXECUTIVE', 'internal');
+                $project->array_options['options_commtask'] = $commTaskId;
+                $project->updateExtraField('commtask');
+            } else {
+                $warnings[] = $task->error ?: 'Task creation failed';
+            }
+        }
+
+        if ($commTaskId > 0) {
+            $timeSpent = getDolGlobalInt('REEDCRM_TASK_TIMESPENT_VALUE');
+            if ($timeSpent > 0) {
+                $task->timespent_date     = dol_now();
+                $task->timespent_note     = $eventLabel;
+                $task->timespent_duration = $timeSpent * 60;
+                $task->timespent_fk_user  = $user->id;
+                if ($task->addTimeSpent($user, 1) <= 0) {
+                    $warnings[] = $task->error ?: 'Time spent creation failed';
+                }
+            }
+        }
+    }
+
+    return $warnings;
 }
