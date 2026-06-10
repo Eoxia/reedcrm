@@ -91,7 +91,7 @@ function reedcrm_get_or_create_user_default_call_list(DoliDB $db, User $targetUs
     // Create a new default call list assigned to the user
     $callList                 = new CallList($db);
     $callList->label          = $langs->transnoentitiesnoconv('DefaultCallListLabel', dolGetFirstLastname($targetUser->firstname, $targetUser->lastname));
-    $callList->status         = CallList::STATUS_ACTIVE;
+    $callList->status         = CallList::STATUS_DRAFT;
     $callList->fk_user_assign = $targetUser->id;
     $callList->entity         = $entity;
 
@@ -99,6 +99,9 @@ function reedcrm_get_or_create_user_default_call_list(DoliDB $db, User $targetUs
     if ($newId <= 0) {
         return -1;
     }
+
+    // Validate right away: assigns the definitive ref (LA…) and the active status, no (PROV…) step
+    $callList->validate($targetUser);
 
     // dol_set_user_param writes the param and keeps $targetUser->conf in sync
     if (dol_set_user_param($db, $conf, $targetUser, ['REEDCRM_DEFAULT_CALL_LIST' => (string) $newId], $entity) < 0) {
