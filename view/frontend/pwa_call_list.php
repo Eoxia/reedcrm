@@ -332,9 +332,6 @@ if (empty($lines)) {
         } else {
             print '<span class="pwa-call-name pwa-call-name--empty"><i class="fas fa-user-slash" style="color:#cbd5e1;"></i> Contact non renseigné</span>';
         }
-        if ($oppPercent !== null) {
-            print '<span class="pwa-call-badge"><i class="fas fa-chart-pie" style="color:#64748b;margin-right:4px;"></i>' . round($oppPercent) . ' %</span>';
-        }
         print '</div>';
 
         // Ligne 2 : Gros bouton d'appel vert + bouton copier le numéro
@@ -352,7 +349,10 @@ if (empty($lines)) {
             $amountStr = ($oppAmount !== null) ? price($oppAmount, 0, $langs, 0, 0, -1, $conf->currency) : '';
             print '<div class="pwa-call-ref">' . $sourceRefHtml;
             if ($amountStr) {
-                print ' <span style="margin:0 6px;">|</span> <strong style="color:#1e293b;">' . $amountStr . '</strong>';
+                print '<span class="pwa-call-sep">|</span><strong>' . $amountStr . '</strong>';
+            }
+            if ($oppPercent !== null) {
+                print '<span class="pwa-call-sep">|</span><span class="pwa-call-percent">' . round($oppPercent) . ' %</span>';
             }
             print '</div>';
             

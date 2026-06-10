@@ -151,10 +151,10 @@
 }
 
 .pwa-call-ref {
-    font-size: 24px;
+    font-size: 18px;
     color: #475569;
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 8px;
     margin-bottom: 6px;
 
@@ -164,23 +164,23 @@
     }
 }
 
+.pwa-call-sep {
+    color: #94a3b8;
+}
+
+.pwa-call-percent {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
 .pwa-call-title {
     font-size: 22px;
     color: #64748b;
     font-weight: 500;
     margin-bottom: 16px;
     line-height: 1.2;
-}
-
-.pwa-call-badge {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1e293b;
-    background: #f1f5f9;
-    padding: 6px 12px;
-    border-radius: 8px;
-    white-space: nowrap;
-    flex-shrink: 0;
 }
 
 .pwa-call-actions {
