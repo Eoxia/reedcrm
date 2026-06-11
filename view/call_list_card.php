@@ -98,6 +98,8 @@ if (empty($resHook)) {
         $result = $object->create($user);
 
         if ($result > 0) {
+            // Validate right away: call lists are active by default with a definitive ref (LA…), no (PROV…) step
+            $object->validate($user);
             header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
             exit;
         } else {
@@ -137,12 +139,16 @@ if (empty($resHook)) {
         }
     }
 
-    // Validate (draft → active)
+    // Validate (draft → active) : assigns the definitive ref (LA…) through the numbering module
     if ($action === 'confirm_validate' && GETPOST('confirm') === 'yes' && $permissiontoadd) {
-        $object->status = CallList::STATUS_ACTIVE;
-        $object->update($user);
-        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
-        exit;
+        $result = $object->validate($user);
+
+        if ($result > 0) {
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+            exit;
+        } else {
+            setEventMessages($object->error, $object->errors, 'errors');
+        }
     }
 
     // Archive (active → archived)

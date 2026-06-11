@@ -908,6 +908,27 @@ class modReedCRM extends DolibarrModules
         delDocumentModel('pdf_calllist_standard', 'calllist');
         addDocumentModel('pdf_calllist_standard', 'calllist', $langs->transnoentities('CallListPDF'));
 
+        // Backward compatibility: validate all call lists still having a provisional ref (PROV…)
+        if (getDolGlobalInt('REEDCRM_CALL_LIST_PROV_REF_MIGRATED') == 0) {
+            require_once __DIR__ . '/../../class/calllist.class.php';
+
+            $callList  = new CallList($this->db);
+            $callLists = $callList->fetchAll('', '', 0, 0, ['customsql' => "ref LIKE '(PROV%'"]);
+
+            if (is_array($callLists) && !empty($callLists)) {
+                foreach ($callLists as $objCallList) {
+                    // validate() aborts when status is already validated: lists activated by the legacy
+                    // code kept their (PROV…) ref with an active status, reset it in memory first
+                    if ($objCallList->status != CallList::STATUS_DRAFT) {
+                        $objCallList->status = CallList::STATUS_DRAFT;
+                    }
+                    $objCallList->validate($user, 1);
+                }
+            }
+
+            dolibarr_set_const($this->db, 'REEDCRM_CALL_LIST_PROV_REF_MIGRATED', 1, 'integer', 0, '', $conf->entity);
+        }
+
         // Ensure every active user owns a default call list
         require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
         require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
