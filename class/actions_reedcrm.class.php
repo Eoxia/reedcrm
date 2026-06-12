@@ -3253,7 +3253,7 @@ class ActionsReedcrm
                                             <button type="button" id="rcrm-btn-won" style="background:none; border:2px solid transparent; border-radius:4px; padding:2px; font-size:20px; cursor:pointer; opacity:1; transition:all 0.2s; line-height:1;" title="Gagné">🤩</button>
                                         </div>
                                         <div id="rcrm-comment-row" style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                                            <input type="text" id="rcrm-close-comment" placeholder="La raison du refus..." style="flex-grow:1; border:1px solid #ced4da; border-radius:4px; font-size:12px; padding:4px; outline:none;" />
+                                            <input type="text" id="rcrm-close-comment" placeholder="Précision manuscrite (optionnel)..." style="flex-grow:1; border:1px solid #ced4da; border-radius:4px; font-size:12px; padding:4px; outline:none;" />
                                             <button type="button" id="rcrm-btn-save" disabled title="Enregistrer et clôturer" style="background:#f8f9fa; border:2px solid #ced4da; color:#adb5bd; border-radius:4px; padding:2px 6px; cursor:not-allowed; font-size:14px; transition:all 0.2s;"><i class="fas fa-save"></i></button>
                                         </div>
                                     </div>
@@ -3279,7 +3279,7 @@ class ActionsReedcrm
                                     
                                     if (selectedStatus === "WON") {
                                         isValid = true;
-                                    } else if (selectedStatus === "LOST" && reason && comment) {
+                                    } else if (selectedStatus === "LOST" && reason) {
                                         isValid = true;
                                     }
                                     
@@ -3300,7 +3300,7 @@ class ActionsReedcrm
                                     $("#rcrm-btn-won").css("border-color", "transparent");
                                     $("#rcrm-close-reason").show();
                                     $("#rcrm-won-date, #rcrm-won-budget, #rcrm-won-currency").hide();
-                                    $("#rcrm-close-comment").attr("placeholder", "La raison du refus...");
+                                    $("#rcrm-close-comment").attr("placeholder", "Précision manuscrite (optionnel)...");
                                     checkSaveEnabled();
                                 });
                                 $("#rcrm-btn-won").on("click", function(e) {
