@@ -550,7 +550,9 @@ class ActionsReedcrm
                 $out .= '<div class="contact-inline-wrapper reedcrm-header-relaunch-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
                 $out .= '<img src="' . $pictoPath . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
 
-                $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons" style="display: inline-flex; align-items: center; gap: 4px;">';
+                // socid is required by the hover tooltip when there is no project context (propal/thirdparty cards)
+                $socidAttr = !$isProjectContext ? ' data-socid="' . (int) $socid . '"' : '';
+                $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons"' . $socidAttr . ' style="display: inline-flex; align-items: center; gap: 4px;">';
                 $relaunchAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
 
                 foreach ($actonComsByType as $actionCommType => $actonComByType) {
@@ -562,6 +564,7 @@ class ActionsReedcrm
                     $out .= ' data-dialog-url="' . dol_escape_htmltag($relaunchAjaxUrl) . '"';
                     $out .= ' data-dialog-footer="none"';
                     $out .= ' data-project-id="' . $projectId . '"';
+                    $out .= ' data-relaunch-type="' . $actionCommType . '"'; // consumed by the hover tooltip (initRelaunchTooltips)
                     $out .= ' data-action-comm-type="' . $actonComByType['actioncode'] . '">';
 
                     $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
