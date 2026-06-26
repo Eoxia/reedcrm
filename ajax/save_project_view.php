@@ -22,7 +22,15 @@
  * \brief   AJAX endpoint to save/delete per-user saved views (stored in llx_user_param)
  */
 
-require '../../../main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
+} else {
+    die('Include of reedcrm main fails');
+}
+
 require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
 
 header('Content-Type: application/json');

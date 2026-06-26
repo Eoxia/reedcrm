@@ -32,8 +32,15 @@
  *      \brief      Page to list all shipments
  */
 
-// Load Dolibarr environment
-require '../../main.inc.php';
+// Load ReedCRM environment
+if (file_exists('reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/reedcrm.main.inc.php';
+} elseif (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} else {
+    die('Include of reedcrm main fails');
+}
+
 require_once DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
