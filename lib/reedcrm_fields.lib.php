@@ -94,7 +94,7 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
     $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
 
     foreach ($actonComsByType as $actionCommType => $actonComByType) {
-        $dialogUrl = dol_buildpath('custom/reedcrm/core/ajax/get_relaunches_list.php', 1);
+        $dialogUrl = dol_buildpath('custom/reedcrm/ajax/get_relaunches_list.php', 1);
 
         $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $projectId . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
         $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '" data-action-comm-type="' . $actonComByType['actioncode'] . '">';

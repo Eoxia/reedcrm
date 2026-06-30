@@ -10,18 +10,41 @@
     <input type="hidden" name="tab" value="<?php echo $currentTab; ?>">
 
     <div id="id-container" class="template-pwa">
+        <div id="reedcrm-modal-title-data" style="display:none;"><?= img_picto('', $object->picto, 'class="pictofixedwidth"') ?><?= dol_escape_htmltag($langs->trans('Opportunities')) ?>&nbsp;&nbsp;<?= dol_escape_htmltag($object->ref) ?></div>
+        <?php if ($object->element === 'project' && !empty($object->usage_opportunity)) {
+            $oppAmount  = (float) $object->opp_amount;
+            $oppPercent = (float) $object->opp_percent;
+            $imgPath    = dol_buildpath('/custom/reedcrm/img/reedcrm.png', 1);
+        ?>
+        <div class="reedcrm-header-stats" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; margin-bottom: 4px; vertical-align: middle; font-weight: 600; font-size: 0.95em;">
+            <img src="<?= dol_escape_htmltag($imgPath) ?>" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM">
+            <span><?= dol_escape_htmltag($langs->trans('Label')) ?> : <strong><?= dol_escape_htmltag($object->title) ?></strong></span>
+        </div>
+        <br>
+        <div class="reedcrm-header-stats" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; margin-bottom: 6px; vertical-align: middle; font-weight: 600; font-size: 0.95em;">
+            <img src="<?= dol_escape_htmltag($imgPath) ?>" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM">
+            <span class="inline-edit-proj-percent" data-project-id="<?= (int)$object->id ?>" data-val="<?= $oppPercent ?>" style="color: #0f172a; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="<?= dol_escape_htmltag($langs->trans('OpportunityProbability')) ?>"><?= price2num($oppPercent, 1) ?> %</span>
+            <span style="color: #cbd5e0; margin: 0 6px;">-</span>
+            <span class="inline-edit-proj-amount" data-project-id="<?= (int)$object->id ?>" data-val="<?= $oppAmount ?>" style="color: #3b82f6; cursor: pointer; border-bottom: 1px dashed #cbd5e0; padding-bottom: 1px; transition: color 0.3s; display: inline-flex; align-items: center; white-space: nowrap; line-height: 1;" title="<?= dol_escape_htmltag($langs->trans('OpportunityAmount')) ?>"><?= price($oppAmount, 0, $langs, 1, -1, -1, $conf->currency) ?></span>
+        </div>
+        <?php } ?>
+        <?php if (!empty($object->usage_opportunity)) { ?>
+        <input type="hidden" name="new_opportunity_amount" value="<?= (float)$object->opp_amount ?>">
+        <input type="hidden" name="new_opportunity_percent" value="<?= (float)$object->opp_percent ?>">
+        <input type="hidden" name="new_opportunity_status" value="<?= (int)$object->opp_status ?>">
+        <?php } ?>
         <div class="wpeo-grid grid-3">
             <div>
                 <label for="socid">
                     <?php echo img_picto('', 'company'); ?>
-                    <div class="select2-container"><?php echo $form->select_company($object->thirdparty->id, 'socid', '', 1, 0, 0, [], 0, ''); ?></div>
+                    <div class="select2-container"><?php echo $form->select_company(!empty($object->thirdparty) ? $object->thirdparty->id : 0, 'socid', '', 1, 0, 0, [], 0, ''); ?></div>
                 </label>
             </div>
             <div>
                 <div class="reedcrm-contact-field-wrapper">
                     <label for="contactid">
                         <?php echo img_picto('', 'contact'); ?>
-                        <div class="select2-container"><?php echo $form->selectcontacts($object->thirdparty->id, '', 'contactid', 1, '', '', 0, ''); ?></div>
+                        <div class="select2-container"><?php echo $form->selectcontacts(!empty($object->thirdparty) ? $object->thirdparty->id : 0, '', 'contactid', 1, '', '', 0, ''); ?></div>
                     </label>
                     <button type="button" class="reedcrm-add-contact-btn" title="<?php echo $langs->trans('AddContact'); ?>">
                         <i class="fas fa-plus"></i>
@@ -71,16 +94,9 @@
             <div>
                 <label for="project_id">
                     <?php echo img_picto('', 'project'); ?>
-                    <div class="select2-container"><?php echo $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id', 64); ?></div>
+                    <div class="select2-container"><?php echo $formProject->select_projects(!empty($object->thirdparty) ? $object->thirdparty->id : 0, $object->id, 'project_id', 64); ?></div>
                 </label>
             </div>
-            <?php if (!empty($object->usage_opportunity)) { ?>
-            <div style="display:flex; align-items:center; gap:8px;">
-		    	<?= $formProject->selectOpportunityStatus('new_opportunity_status', (string) $object->opp_status, 1, 0, 0, 0, 'minwidth150 inline-block valignmiddle', 1, 1); ?>
-	    		<input class="width50 right" type="text" id="new_opportunity_percent" name="new_opportunity_percent" title="<?= dol_escape_htmltag($langs->trans("OpportunityProbability")); ?>" value="<?= $object->opp_percent ?>">
-    			<span id="oldopppercent" class="opacitymedium">%</span>
-			</div>
-            <?php } ?>
         </div>
 
         <?php

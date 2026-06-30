@@ -643,20 +643,15 @@ class ActionsReedcrm
                     </div>
                 </div>
                 <script>
-                    // Only load eventpro.js if not already loaded (avoid double loading saturne.min.js)
-                    if (typeof window.reedcrm === 'undefined' || typeof window.reedcrm.eventpro === 'undefined') {
-                        var script = document.createElement('script');
-                        script.src = '<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>';
-                        script.onload = function() {
-                            if (window.reedcrm && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
-                                window.reedcrm.eventpro.init();
-                            }
-                        };
-                        document.body.appendChild(script);
-                    } else {
-                        // Already loaded, just re-init
-                        window.reedcrm.eventpro.init();
-                    }
+                    // Always load eventpro.js module (overrides minified version with latest changes)
+                    var script = document.createElement('script');
+                    script.src = '<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>';
+                    script.onload = function() {
+                        if (window.reedcrm && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
+                            window.reedcrm.eventpro.init();
+                        }
+                    };
+                    document.body.appendChild(script);
                 </script>
                 <?php
             }
@@ -741,14 +736,17 @@ class ActionsReedcrm
                         </div>
                     </div>
                 </div>
-                <script type="text/javascript" src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>"></script>
-                <script type="text/javascript"
-                        src="<?php echo dol_buildpath('/custom/reedcrm/js/modules/vocal-player.js', 1); ?>"></script>
                 <script>
                     jQuery(document).ready(function () {
-                        if (typeof window.reedcrm !== 'undefined' && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
-                            window.reedcrm.eventpro.init();
-                        }
+                        // Load eventpro.js after DOM ready to ensure it overrides reedcrm.min.js definitions
+                        var epScript = document.createElement('script');
+                        epScript.src = '<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>';
+                        epScript.onload = function() {
+                            if (window.reedcrm && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
+                                window.reedcrm.eventpro.init();
+                            }
+                        };
+                        document.body.appendChild(epScript);
                     });
                 </script>
                 <?php
