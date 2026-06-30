@@ -183,7 +183,7 @@ print '</tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('UpdateObjectContact', $langs->trans('FactureMin'));
 print '</td><td>';
-print $langs->trans('UpdateObjectContactDescription', $conf->global->REEDCRM_OBJECT_CONTACT_UPDATED, $langs->trans('FactureMins'));
+print $langs->trans('UpdateObjectContactDescription', getDolGlobalString('REEDCRM_OBJECT_CONTACT_UPDATED'), $langs->trans('FactureMins'));
 $actionComms = $actioncomm->getActions(0, 0,'', " AND code = 'AC_USER_UPDATE_OBJECT_CONTACT'", 'id','DESC', 1);
 if (is_array($actionComms) && !empty($actionComms)) {
     print ' : ' . dol_print_date($actionComms[0]->datec, 'dayhour', 'tzuser');
@@ -203,9 +203,9 @@ print '</form>'; ?>
 
     <div class="wpeo-notice notice-info">
         <div class="notice-content">
-            <div class="notice-title"><strong><?php echo $langs->trans('SocietyObjectContactNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_OBJECT_CONTACT); ?></strong></div>
+            <div class="notice-title"><strong><?php echo $langs->trans('SocietyObjectContactNotDefinedTitle', getDolGlobalString('REEDCRM_ALREADY_CHECK_OBJECT_CONTACT')); ?></strong></div>
             <div class="notice-subtitle">
-                <?php $societyObjectContactNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED;
+                <?php $societyObjectContactNotDefinedIDs = getDolGlobalString('REEDCRM_SOCIETY_OBJECT_CONTACT_NOT_DEFINED');
                 $societyObjectContactNotDefinedIDs = json_decode($societyObjectContactNotDefinedIDs);
                 if (is_array($societyObjectContactNotDefinedIDs) && !empty($societyObjectContactNotDefinedIDs)) {
                     foreach ($societyObjectContactNotDefinedIDs as $societyObjectContactNotDefinedID) {
@@ -233,7 +233,7 @@ print '</tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('AddContactNotification', $langs->trans('FactureMin'));
 print '</td><td>';
-print $langs->trans('AddContactNotificationDescription', $conf->global->REEDCRM_CONTACT_NOTIFICATION_ADDED);
+print $langs->trans('AddContactNotificationDescription', getDolGlobalString('REEDCRM_CONTACT_NOTIFICATION_ADDED'));
 $actionComms = $actioncomm->getActions(0, 0,'', " AND code = 'AC_USER_ADD_CONTACT_NOTIFICATION'", 'id','DESC', 1);
 if (is_array($actionComms) && !empty($actionComms)) {
     print ' : ' . dol_print_date($actionComms[0]->datec, 'dayhour', 'tzuser');
@@ -249,9 +249,9 @@ print '</form>'; ?>
 
     <div class="wpeo-notice notice-info">
         <div class="notice-content">
-            <div class="notice-title"><strong><?php echo $langs->trans('SocietyContactNotificationNotDefinedTitle', $conf->global->REEDCRM_ALREADY_CHECK_CONTACT_NOTIFICATION); ?></strong></div>
+            <div class="notice-title"><strong><?php echo $langs->trans('SocietyContactNotificationNotDefinedTitle', getDolGlobalString('REEDCRM_ALREADY_CHECK_CONTACT_NOTIFICATION')); ?></strong></div>
             <div class="notice-subtitle">
-                <?php $societyContactNotificationNotDefinedIDs = $conf->global->REEDCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED;
+                <?php $societyContactNotificationNotDefinedIDs = getDolGlobalString('REEDCRM_SOCIETY_CONTACT_NOTIFICATION_NOT_DEFINED');
                 $societyContactNotificationNotDefinedIDs = json_decode($societyContactNotificationNotDefinedIDs);
                 if (is_array($societyContactNotificationNotDefinedIDs) && !empty($societyContactNotificationNotDefinedIDs)) {
                     foreach ($societyContactNotificationNotDefinedIDs as $societyContactNotificationNotDefinedID) {
