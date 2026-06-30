@@ -511,3 +511,8 @@ ReedCRMNoTimeEntries=Aucun temps pointé sur cette tâche.
 ReadMyCallLists=Voir mes listes d'appel
 ReadSubordinatesCallLists=Voir les listes d'appel de mes subordonnés
 ReadAllCallLists=Voir toutes les listes d'appel
+
+# Propositions - Colonnes liste
+PropalList=Liste des propositions
+RelauchCommercial=Relance commerciale
+ContactDetails=Coordonnées du contact
