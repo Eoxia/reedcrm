@@ -378,8 +378,6 @@ if (empty($resHook)) {
 if ($isModal) {
     // Modal mode: output only the form template without header/banner/footer
     if (empty($action)) {
-        // Opportunity summary header (project context only)
-        print reedcrm_project_summary_header($object);
         require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
     }
     $db->close();

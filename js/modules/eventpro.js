@@ -143,6 +143,96 @@ window.reedcrm.eventpro.loadModalContent = function (url) {
 window.reedcrm.eventpro.bindModalContentEvents = function () {
   var $content = $('#' + window.reedcrm.eventpro.modalId + '-content');
 
+  // Update modal title with project picto + ref if available
+  var $titleData = $content.find('#reedcrm-modal-title-data');
+  if ($titleData.length) {
+    var $modal = $('#' + window.reedcrm.eventpro.modalId);
+    $modal.find('.modal-title').html($titleData.html());
+  }
+
+  // Re-initialize Select2 on AJAX-loaded selects (skip date/time selects)
+  $content.find('select').each(function () {
+    var $sel = $(this);
+    var selName = ($sel.attr('name') || '').toLowerCase();
+    if ($sel.hasClass('select2-hidden-accessible')) {
+      return;
+    }
+    if (/hour|min|sec|month|day|year/i.test(selName)) {
+      return;
+    }
+    if (typeof $.fn.select2 !== 'undefined') {
+      $sel.select2({
+        width: '100%',
+        dropdownParent: $content
+      });
+    }
+  });
+
+  // Re-initialize inline-edit for percent and amount inside modal
+  $content.find('.inline-edit-proj-percent, .inline-edit-proj-amount').off('click.reedcrm-modal').on('click.reedcrm-modal', function () {
+    var $span = $(this);
+    if ($span.find('input').length) {
+      return;
+    }
+    var currentVal = $span.data('val');
+    var projectId = $span.data('project-id');
+    var isPercent = $span.hasClass('inline-edit-proj-percent');
+    var $input = $('<input type="text" style="width:60px; text-align:right; border:1px solid #3b82f6; border-radius:4px; padding:2px 4px; font-size:inherit; font-weight:inherit; outline:none;">');
+    $input.val(currentVal);
+    var originalHtml = $span.html();
+    $span.empty().append($input);
+    $input.focus().select();
+
+    var save = function () {
+      var newVal = parseFloat($input.val()) || 0;
+      $input.off();
+      if (newVal === parseFloat(currentVal)) {
+        $span.html(originalHtml);
+        return;
+      }
+      var action = isPercent ? 'updateopppercent' : 'updateoppamount';
+      var dataKey = isPercent ? 'opp_percent' : 'opp_amount';
+      var postData = {
+        action: action,
+        token: $('meta[name=anti-csrf-currenttoken]').attr('content') || $('input[name=token]').first().val() || '',
+        project_id: projectId
+      };
+      postData[dataKey] = newVal;
+      $.ajax({
+        url: $('meta[name=reedcrm-quickcreation-url]').attr('content') || '/custom/reedcrm/ajax/quickcreation.php',
+        type: 'POST',
+        data: postData,
+        dataType: 'json',
+        success: function (resp) {
+          if (resp && resp.success) {
+            $span.data('val', newVal);
+            if (isPercent) {
+              $span.html(newVal + ' %');
+            } else {
+              $span.html(resp.formatted_amount || (newVal.toLocaleString('fr-FR') + ' €'));
+            }
+          } else {
+            $span.html(originalHtml);
+          }
+        },
+        error: function () {
+          $span.html(originalHtml);
+        }
+      });
+    };
+
+    $input.on('blur', save);
+    $input.on('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        save();
+      }
+      if (e.key === 'Escape') {
+        $span.html(originalHtml);
+      }
+    });
+  });
+
   $content.find('form').off('submit.reedcrm').on('submit.reedcrm', function (e) {
     e.preventDefault();
     var $form = $(this);
@@ -187,6 +277,11 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
     e.preventDefault();
     var url = $(this).attr('href');
     window.reedcrm.eventpro.loadModalContent(url);
+  });
+
+  // Toggle reminder fields visibility
+  $content.find('#toggle_reminder').on('change', function () {
+    $content.find('#reminder_fields').slideToggle(200);
   });
 };
 
