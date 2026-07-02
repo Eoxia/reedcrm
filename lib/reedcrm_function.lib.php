@@ -469,38 +469,3 @@ function reedcrm_count_csv_lines(string $filePath): ?int
 
     return $count;
 }
-
-/**
- * Get (and lazily create) the actioncomm category used to tag automatic call reminders.
- *
- * The reminder events created from the ProCard/EventPro checkbox must NOT reuse the commercial
- * relaunch tag, otherwise they would inflate relaunch counts. They get their own dedicated tag,
- * stored in the REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG constant and created on demand if missing.
- *
- * @param  DoliDB $db   Database handler
- * @param  User   $user User creating the category when it does not exist yet
- * @return int          Category id (> 0), or 0 on failure
- */
-function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
-{
-    global $conf, $langs;
-
-    $categoryID = getDolGlobalInt('REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG');
-    if ($categoryID > 0) {
-        return $categoryID;
-    }
-
-    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
-
-    $category        = new Categorie($db);
-    $category->label = $langs->transnoentities('CallReminderCategory');
-    $category->type  = 'actioncomm';
-
-    $categoryID = $category->create($user);
-    if ($categoryID > 0) {
-        dolibarr_set_const($db, 'REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', $categoryID, 'integer', 0, '', $conf->entity);
-        return $categoryID;
-    }
-
-    return 0;
-}

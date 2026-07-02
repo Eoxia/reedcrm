@@ -481,8 +481,3 @@ ShippingDateEqualsCreationDateHelp = When a shipment is created, if no shipping 
 ReadMyCallLists=Read my call lists
 ReadSubordinatesCallLists=Read subordinates call lists
 ReadAllCallLists=Read all call lists
-
-# Dashboard - Upcoming reminders
-UpcomingCallReminders = Upcoming reminders
-NoUpcomingCallReminder = No upcoming reminder
-CallReminderCategory = ReedCRM call reminders

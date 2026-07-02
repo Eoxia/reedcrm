@@ -236,8 +236,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_VERSION','chaine', $this->version, '', 0, 'current'],
             $i++ => ['REEDCRM_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
             $i++ => ['REEDCRM_SHOW_PATCH_NOTE', 'integer', 1, '', 0, 'current'],
-            $i++ => ['REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current'],
-            $i   => ['REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', 'integer', 0, '', 0, 'current']
+            $i   => ['REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current']
         ];
 
         // Some keys to add into the overwriting translation tables
@@ -805,18 +804,6 @@ class modReedCRM extends DolibarrModules
             $categoryID      = $category->create($user);
 
             dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
-        }
-
-        if (getDolGlobalInt('REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG') == 0) {
-            require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
-
-            $category = new Categorie($this->db);
-
-            $category->label = $langs->transnoentities('CallReminderCategory');
-            $category->type  = 'actioncomm';
-            $categoryID      = $category->create($user);
-
-            dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', $categoryID, 'integer', 0, '', $conf->entity);
         }
 
         if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') < 2) {
