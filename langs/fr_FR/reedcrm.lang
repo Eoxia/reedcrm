@@ -525,3 +525,8 @@ RelauchCommercial=Relance commerciale
 ContactDetails=Coordonnées du contact
 
 ProjectList=Liste des projets
+
+# Dashboard - Prochains rappels
+UpcomingCallReminders = Prochains rappels
+NoUpcomingCallReminder = Aucun rappel à venir
+CallReminderCategory = Rappels de relance ReedCRM

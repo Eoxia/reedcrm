@@ -66,11 +66,9 @@ class ReedcrmDashboard
         } else {
             $array['propal']['disabledGraphs']['PropalStatusCommRepartition'] = $langs->transnoentities('PropalStatusCommRepartition');
         }
-        if (empty($dashboardConfig->graphs->PropalRefusalReasonRepartition->hide)) {
-            $array['propal']['graphs'][] = self::getDataFromExtrafieldsAndDictionary('PropalRefusalReasonRepartition', 'c_refusal_reason', 'commrefusal');
-        } else {
-            $array['propal']['disabledGraphs']['PropalRefusalReasonRepartition'] = $langs->transnoentities('PropalRefusalReasonRepartition');
-        }
+        // PropalRefusalReasonRepartition graph intentionally removed: its top-right slot is now used
+        // by the upcoming call reminders card (rendered in ActionsReedcrm::saturneIndex and moved into
+        // the graph grid by js/modules/dashboard_reminders.js).
 
         $array['project'] = ['lists' => [], 'disabledGraphs' => []];
         if (empty($dashboardConfig->graphs->ProjectOpportunitiesList->hide)) {
@@ -204,6 +202,53 @@ class ReedcrmDashboard
         }
 
         return $array;
+    }
+
+    /**
+     * Get the upcoming automatic call reminders of the current user.
+     *
+     * Reminders are the future to-do events created from the ProCard/EventPro
+     * "Créer une notification de rappel automatique" checkbox. They are identified by their
+     * dedicated category (REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG) and their linked actioncomm_reminder row.
+     *
+     * @param  int   $limit Maximum number of reminders to return
+     * @return array        List of reminder objects (id, label, datep, fk_soc, thirdparty_name)
+     */
+    public function getUpcomingCallReminders(int $limit = 5): array
+    {
+        global $user;
+
+        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncommreminder.class.php';
+
+        $reminders = [];
+
+        $reminderTag = getDolGlobalInt('REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG');
+        if ($reminderTag <= 0) {
+            return $reminders;
+        }
+
+        $sql  = 'SELECT a.id, a.label, a.datep, a.fk_soc, s.nom AS thirdparty_name';
+        $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm AS a';
+        $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'actioncomm_reminder AS r ON r.fk_actioncomm = a.id';
+        $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'categorie_actioncomm AS c ON c.fk_actioncomm = a.id';
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe AS s ON s.rowid = a.fk_soc';
+        $sql .= ' WHERE c.fk_categorie = ' . ((int) $reminderTag);
+        $sql .= ' AND r.fk_user = ' . ((int) $user->id);
+        $sql .= ' AND r.status = ' . ActionCommReminder::STATUS_TODO;
+        $sql .= " AND a.datep >= '" . $this->db->idate(dol_now()) . "'";
+        $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
+        $sql .= ' ORDER BY a.datep ASC';
+        $sql .= $this->db->plimit($limit);
+
+        $resql = $this->db->query($sql);
+        if ($resql) {
+            while ($obj = $this->db->fetch_object($resql)) {
+                $reminders[] = $obj;
+            }
+            $this->db->free($resql);
+        }
+
+        return $reminders;
     }
 
 	/**

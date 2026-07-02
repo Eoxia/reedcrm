@@ -3724,4 +3724,35 @@ EOT;
 
         return 0;
     }
+
+    /**
+     * Overloading the saturneIndex function : adds the "upcoming call reminders" panel
+     * at the top right of the ReedCRM dashboard.
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 on success
+     * @throws Exception
+     */
+    public function saturneIndex(array $parameters): int
+    {
+        global $db, $langs, $user;
+
+        if (strpos($parameters['context'], 'reedcrmindex') === false) {
+            return 0;
+        }
+        if (empty($user->rights->reedcrm->read)) {
+            return 0;
+        }
+
+        require_once __DIR__ . '/reedcrmdashboard.class.php';
+
+        $dashboard = new ReedcrmDashboard($db);
+        $reminders = $dashboard->getUpcomingCallReminders(getDolGlobalInt('REEDCRM_DASHBOARD_UPCOMING_REMINDERS_LIMIT', 5));
+
+        ob_start();
+        require __DIR__ . '/../core/tpl/index/reedcrm_upcoming_reminders.tpl.php';
+        $this->resprints = ob_get_clean();
+
+        return 0;
+    }
 }

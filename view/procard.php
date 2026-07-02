@@ -55,6 +55,7 @@ if (isModEnabled('fckeditor')) {
 
 // Load ReedCRM libraries
 require_once __DIR__ . '/../lib/reedcrm_eventpro.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -203,6 +204,17 @@ if (empty($resHook)) {
             $actionComm->note_private = '';
 
             $result = $actionComm->create($user);
+
+            // Tag the reminder event with its own category so it can be listed on the dashboard
+            // (dedicated tag, not the commercial relaunch one, to avoid inflating relaunch counts)
+            if ($result > 0) {
+                $reminderCategoryID = reedcrm_get_call_reminder_category_id($db, $user);
+                if ($reminderCategoryID > 0) {
+                    $reminderCategory = new Categorie($db);
+                    $reminderCategory->fetch($reminderCategoryID);
+                    $reminderCategory->add_type($actionComm, 'actioncomm');
+                }
+            }
 
             $actionCommReminder = new ActionCommReminder($db);
 
