@@ -75,8 +75,8 @@ if (isModEnabled('project')) {
 $hookmanager->initHooks(['reedcrm_quickcreation_frontend']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissionToRead       = $user->rights->reedcrm->read;
-$permissionToAddProject = $user->rights->projet->creer;
+$permissionToRead       = $user->hasRight('reedcrm', 'read');
+$permissionToAddProject = $user->hasRight('projet', 'creer');
 saturne_check_access($permissionToRead);
 
 /*

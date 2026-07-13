@@ -39,7 +39,7 @@ if (!empty($action)) {
     $task    = new Task($db);
     $extraFields = new ExtraFields($db);
     $extraFields->fetch_name_optionals_label($project->table_element);
-    $permissionToAddProject = $user->rights->projet->creer;
+    $permissionToAddProject = $user->hasRight('projet', 'creer');
     require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_quickcreation_actions_frontend.tpl.php';
 }
 
@@ -69,7 +69,7 @@ print '<style>
 }
 </style>';
 
-if (!$user->rights->projet->lire) {
+if (!$user->hasRight('projet', 'lire')) {
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);
     exit;
 }
