@@ -88,10 +88,10 @@ $hookmanager->initHooks(['reedcrm_quickcreation']); // Note that conf->hooks_mod
 $date_start = dol_mktime(0, 0, 0, GETPOST('projectstartmonth', 'int'), GETPOST('projectstartday', 'int'), GETPOST('projectstartyear', 'int'));
 
 // Security check - Protection if external user
-$permissiontoread          = $user->rights->reedcrm->read;
-$permissiontoaddproject    = $user->rights->projet->creer;
-$permissiontoaddthirdparty = $user->rights->societe->creer;
-$permissiontoaddcontact    = $user->rights->societe->contact->creer;
+$permissiontoread          = $user->hasRight('reedcrm', 'read');
+$permissiontoaddproject    = $user->hasRight('projet', 'creer');
+$permissiontoaddthirdparty = $user->hasRight('societe', 'creer');
+$permissiontoaddcontact    = $user->hasRight('societe', 'contact', 'creer');
 saturne_check_access($permissiontoread);
 
 /*
