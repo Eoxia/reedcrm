@@ -89,7 +89,7 @@ if ($resHook < 0) {
     setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 }
 
-if (empty($resHook)) {
+if (empty($resHook) && !empty($permissionToAddProject)) {
     $error = 0;
 
     // Actions add_img, add

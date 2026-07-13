@@ -30,8 +30,8 @@
  */
 
 // Protection to avoid direct call of template
-if (!$permissionToAddProject) {
-    exit;
+if (empty($permissionToAddProject)) {
+    accessforbidden();
 }
 
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
