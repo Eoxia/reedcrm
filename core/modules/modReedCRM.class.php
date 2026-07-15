@@ -228,6 +228,10 @@ class modReedCRM extends DolibarrModules
             //$i++ => ['REEDCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
             $i++ => ['REEDCRM_ADDRESS_ADDON', 'chaine', 'mod_address_standard', '', 0, 'current'],
 
+            // CONST RECURRING INVOICE FOLLOW-UP
+            $i++ => ['REEDCRM_RECURRINGINVOICEFOLLOWUP_ADDON', 'chaine', 'mod_recurringinvoicefollowup_standard', '', 0, 'current'],
+            $i++ => ['REEDCRM_DU_ALERT_OFFSET_MONTHS', 'integer', 1, '', 0, 'current'],
+
             // CONST CALL LIST
             $i++ => ['REEDCRM_CALL_LIST_ADDON', 'chaine', 'mod_call_list_standard', '', 0, 'current'],
             $i++ => ['REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'chaine', 'pdf_calllist_standard', '', 0, 'current'],
@@ -378,6 +382,62 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',
                 'priority'      => 50
+            ],
+            3 => [
+                'label'         => $langs->transnoentities('FollowupCronGenerateLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'generateMonthlyFollowups',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronGenerateComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
+                'priority'      => 51
+            ],
+            4 => [
+                'label'         => $langs->transnoentities('FollowupCronSyncLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'syncInvoiceStatus',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronSyncComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
+                'priority'      => 52
+            ],
+            5 => [
+                'label'         => $langs->transnoentities('FollowupCronRemindersLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'createReminders',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronRemindersComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+                'priority'      => 53
+            ],
+            6 => [
+                'label'         => $langs->transnoentities('FollowupCronAuditSyncLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'syncDuAudits',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronAuditSyncComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
+                'priority'      => 54
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -451,6 +511,23 @@ class modReedCRM extends DolibarrModules
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
         $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('CallList'));
         $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* RECURRING INVOICE FOLLOW-UP PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('RecurringInvoiceFollowup'));
+        $this->rights[$r][4] = 'followup';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('RecurringInvoiceFollowup'));
+        $this->rights[$r][4] = 'followup';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('RecurringInvoiceFollowup'));
+        $this->rights[$r][4] = 'followup';
         $this->rights[$r][5] = 'delete';
         $r++;
 
@@ -609,6 +686,38 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('RecurringInvoiceFollowupMenu'),
+            'prefix'   => '<i class="fas fa-clipboard-list pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'recurringinvoicefollowup',
+            'url'      => '/reedcrm/view/recurringinvoicefollowup_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('DuFollowupMenu'),
+            'prefix'   => '<i class="fas fa-shield-alt pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'duaudit',
+            'url'      => '/reedcrm/view/duaudit_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
