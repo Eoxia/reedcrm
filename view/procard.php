@@ -78,7 +78,7 @@ $category   = new Categorie($db);
 $form        = new Form($db);
 $formProject = new FormProjets($db);
 $formActions = new FormActions($db);
-$formTicket  = new FormTicket($db);
+$formTicket  = isModEnabled('ticket') ? new FormTicket($db) : null; // FormTicket class is only loaded when the Ticket module is enabled (see require above)
 
 $hookmanager->initHooks([$object->element . 'eventpro', 'globalcard']); // Note that conf->hooks_modules contains array
 
