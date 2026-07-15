@@ -36,13 +36,16 @@ window.reedcrm.agendaTodayLine = {};
  * @returns {void}
  */
 window.reedcrm.agendaTodayLine.init = function () {
-  // A Dolibarr "showactions" events list is recognizable by its sortable Date
-  // column header, which sorts on 'a.datep'. Use it to locate agenda tables
-  // without depending on any server-side marker.
+  // In a Dolibarr "showactions" events list, each row links its reference to the
+  // actioncomm card (comm/action/card.php). Use those links to locate agenda /
+  // linked-events tables, independent of any server-side marker. (The Date column
+  // header cannot be used: showactions renders it with disablesortlink=1, so it
+  // has no sort link to key off of.)
   var tables = [];
-  $('tr.liste_titre a[href*="a.datep"]').each(function () {
-    var table = $(this).closest('table').get(0);
-    if (table && tables.indexOf(table) === -1) {
+  $('a[href*="comm/action/card.php"]').each(function () {
+    var $table = $(this).closest('table');
+    var table  = $table.get(0);
+    if (table && $table.find('tr.liste_titre').length && tables.indexOf(table) === -1) {
       tables.push(table);
     }
   });
