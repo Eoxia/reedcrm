@@ -525,19 +525,25 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     }
     print '</td>';
     print '<td class="center nowraponall">';
-    // State with a distinct colour per situation (a signed quote is progress and wins over overdue).
+    // Auto-derived state following the real quote AND invoice: Paid > Invoiced > Quote signed >
+    // Quote sent > Overdue > To prepare. Nothing is lost after the audit is billed.
+    $stateTitle = '';
     if ($isDone) {
-        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditDone');
+        $stateColor = '#6c757d'; $stateLabel = $langs->trans('FollowupAuditDone');
+    } elseif (!empty($audit['facture_id']) && !empty($audit['facture_paye'])) {
+        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditPaid');       $stateTitle = (string) $audit['facture_ref'];
+    } elseif (!empty($audit['facture_id'])) {
+        $stateColor = '#17a2b8'; $stateLabel = $langs->trans('FollowupAuditInvoiced');   $stateTitle = (string) $audit['facture_ref'];
     } elseif (!empty($audit['propal_id']) && (int) $audit['propal_statut'] === 2) {
-        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditPrSigned');
+        $stateColor = '#6f42c1'; $stateLabel = $langs->trans('FollowupAuditPrSigned');   $stateTitle = (string) $audit['propal_ref'];
     } elseif (!empty($audit['propal_id'])) {
-        $stateColor = '#2f6f9f'; $stateLabel = $langs->trans('FollowupProposalSent');
+        $stateColor = '#2f6f9f'; $stateLabel = $langs->trans('FollowupProposalSent');    $stateTitle = (string) $audit['propal_ref'];
     } elseif ($audit['next_audit'] < dol_now()) {
         $stateColor = '#cf4257'; $stateLabel = $langs->trans('FollowupAuditOverdue');
     } else {
         $stateColor = '#c8871a'; $stateLabel = $langs->trans('FollowupAuditToPrepare');
     }
-    print '<span class="rcf-statedot" style="background:' . $stateColor . '"></span> ' . $stateLabel;
+    print '<span class="rcf-statedot" style="background:' . $stateColor . '"' . ($stateTitle !== '' ? ' title="' . dol_escape_htmltag($stateTitle) . '"' : '') . '></span> ' . $stateLabel;
     if ($audit['source'] === 'manual') {
         print ' <span class="badge badge-secondary" title="' . dol_escape_htmltag($langs->trans('FollowupAuditManual')) . '">M</span>';
     }

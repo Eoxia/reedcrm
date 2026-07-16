@@ -118,6 +118,7 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
 
     $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_user_assign,';
     $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
+    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -129,6 +130,14 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     $sql .= '   WHERE p2.fk_soc = a.fk_soc AND p2.entity IN (' . getEntity('propal') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR p2.datep > a.last_audit_date)';
     $sql .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1)';
+    // Derive the renewal invoice: the client's latest DU_AU invoice dated after the last audit.
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (';
+    $sql .= '   SELECT f2.rowid FROM ' . MAIN_DB_PREFIX . 'facture f2';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd2 ON fd2.fk_facture = f2.rowid';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_AU%'";
+    $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
+    $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
+    $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1)';
     $sql .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ')';
     $sql .= " AND a.next_audit_date >= '" . $db->idate($lowerBound) . "'";
     $sql .= " AND a.next_audit_date <= '" . $db->idate($periodEnd) . "'";
@@ -155,6 +164,11 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
                 'propal_ttc'   => $obj->propal_ttc !== null ? (float) $obj->propal_ttc : null,
                 'propal_statut' => $obj->propal_statut !== null ? (int) $obj->propal_statut : null,
                 'propal_date'  => !empty($obj->propal_date) ? $db->jdate($obj->propal_date) : 0,
+                'facture_id'   => (int) $obj->facture_rowid,
+                'facture_ref'  => $obj->facture_ref,
+                'facture_ttc'  => $obj->facture_ttc !== null ? (float) $obj->facture_ttc : null,
+                'facture_paye' => (int) $obj->facture_paye,
+                'facture_date' => !empty($obj->facture_date) ? $db->jdate($obj->facture_date) : 0,
                 'assigned'     => (int) $obj->fk_user_assign,
                 'overdue'      => $nextAudit < $periodStart,
                 'location'     => $location,
@@ -179,6 +193,7 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
 
     $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_user_assign,';
     $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
+    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -190,6 +205,14 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $sql .= '   WHERE p2.fk_soc = a.fk_soc AND p2.entity IN (' . getEntity('propal') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR p2.datep > a.last_audit_date)';
     $sql .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1)';
+    // Derive the renewal invoice: the client's latest DU_AU invoice dated after the last audit.
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (';
+    $sql .= '   SELECT f2.rowid FROM ' . MAIN_DB_PREFIX . 'facture f2';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd2 ON fd2.fk_facture = f2.rowid';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_AU%'";
+    $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
+    $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
+    $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1)';
     $sql .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ')';
     $sql .= ' AND a.status <> 2'; // 2 = done
     $sql .= " AND a.next_audit_date < '" . $db->idate($now) . "'";
@@ -220,6 +243,11 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
                 'propal_ttc' => $obj->propal_ttc !== null ? (float) $obj->propal_ttc : null,
                 'propal_statut' => $obj->propal_statut !== null ? (int) $obj->propal_statut : null,
                 'propal_date' => !empty($obj->propal_date) ? $db->jdate($obj->propal_date) : 0,
+                'facture_id'  => (int) $obj->facture_rowid,
+                'facture_ref' => $obj->facture_ref,
+                'facture_ttc' => $obj->facture_ttc !== null ? (float) $obj->facture_ttc : null,
+                'facture_paye' => (int) $obj->facture_paye,
+                'facture_date' => !empty($obj->facture_date) ? $db->jdate($obj->facture_date) : 0,
                 'assigned'   => (int) $obj->fk_user_assign,
                 'overdue'    => true,
                 'location'   => $location,
