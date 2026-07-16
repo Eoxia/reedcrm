@@ -417,6 +417,7 @@ $auditToPrepare   = 0;
 $auditOverdueM    = 0;
 $auditDone        = 0;
 $auditPrSent      = 0;
+$auditPrTotal     = 0;
 $auditTotMontant  = 0;
 $auditDoneMontant = 0;
 $nowStat          = dol_now();
@@ -431,9 +432,21 @@ foreach ($audits as $auditStat) {
     }
     if (!empty($auditStat['propal_id'])) {
         $auditPrSent++;
+        $auditPrTotal += (float) $auditStat['propal_ttc'];
     }
     $auditTotMontant += (float) $auditStat['montant'];
 }
+// Lost DU: audits not updated for 3 years or more, globally (year-independent so it is always visible).
+$lostGlobal = 0;
+$sqlLost  = 'SELECT COUNT(*) as n FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
+$sqlLost .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
+$sqlLost .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ') AND s.status = 1';
+$sqlLost .= ' AND a.status <> 2 AND a.last_audit_date <= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+$resLost  = $db->query($sqlLost);
+if ($resLost && $oLost = $db->fetch_object($resLost)) {
+    $lostGlobal = (int) $oLost->n;
+}
+
 print '<div class="rcf-dash"><div class="rcf-tiles">';
 printf('<div class="rcf-tile warn"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditToPrepareCount'), $auditToPrepare);
 printf('<div class="rcf-tile crit"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditOverdueCount'), $auditOverdueM);
@@ -441,6 +454,7 @@ printf('<div class="rcf-tile good"><div class="k">%s</div><div class="v">%d</div
 printf('<div class="rcf-tile"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupProposalSentCount'), $auditPrSent);
 printf('<div class="rcf-tile good"><div class="k">%s</div><div class="v">%s</div></div>', $langs->trans('FollowupAuditInvoicedAmount'), price($auditDoneMontant, 0, $langs, 1, -1, 0, $conf->currency));
 printf('<div class="rcf-tile"><div class="k">%s</div><div class="v">%s</div></div>', $langs->trans('FollowupAuditTotalAmount'), price($auditTotMontant, 0, $langs, 1, -1, 0, $conf->currency));
+printf('<div class="rcf-tile crit"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupDuLostCount'), $lostGlobal);
 print '</div></div>';
 
 $thirdpartyStatic = new Societe($db);
@@ -498,8 +512,12 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         if ($audit['propal_ttc'] !== null) {
             print ' <span class="opacitymedium">(' . price($audit['propal_ttc'], 0, $langs, 1, -1, 0, $conf->currency) . ')</span>';
         }
+        print '<br>';
+        if (!empty($audit['propal_date'])) {
+            print '<span class="opacitymedium">' . dol_print_date($audit['propal_date'], 'day') . '</span> ';
+        }
         if ($audit['propal_statut'] !== null) {
-            print '<br>' . $propalStatic->LibStatut((int) $audit['propal_statut'], 5);
+            print $propalStatic->LibStatut((int) $audit['propal_statut'], 5);
         }
     } else {
         print '<span class="opacitymedium">-</span>';
@@ -508,6 +526,11 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     print '<td class="center">';
     if ($isDone) {
         print dolGetStatus($langs->trans('FollowupAuditDone'), $langs->trans('FollowupAuditDone'), '', 'status4', 3) . ' ' . $langs->trans('FollowupAuditDone');
+    } elseif (!empty($audit['propal_id']) && (int) $audit['propal_statut'] === 2) {
+        // A signed proposal is real progress: surface it in the state, even if the audit is overdue.
+        print dolGetStatus($langs->trans('FollowupAuditPrSigned'), $langs->trans('FollowupAuditPrSigned'), '', 'status4', 3) . ' ' . $langs->trans('FollowupAuditPrSigned');
+    } elseif (!empty($audit['propal_id'])) {
+        print dolGetStatus($langs->trans('FollowupProposalSent'), $langs->trans('FollowupProposalSent'), '', 'status1', 3) . ' ' . $langs->trans('FollowupProposalSent');
     } elseif ($audit['next_audit'] < dol_now()) {
         print dolGetStatus($langs->trans('FollowupAuditOverdue'), $langs->trans('FollowupAuditOverdue'), '', 'status8', 3) . ' ' . $langs->trans('FollowupAuditOverdue');
     } else {
@@ -555,7 +578,7 @@ if (empty($audits)) {
     foreach ($audits as $audit) {
         $printAuditRow($audit, false);
     }
-    print '<tr class="liste_total"><td colspan="5">' . $langs->trans('Total') . '</td><td class="right">' . price($auditTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td colspan="4"></td></tr>';
+    print '<tr class="liste_total"><td colspan="5">' . $langs->trans('Total') . '</td><td class="right">' . price($auditTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td></td><td class="center nowraponall">' . ($auditPrTotal > 0 ? price($auditPrTotal, 0, $langs, 1, -1, 0, $conf->currency) : '') . '</td><td colspan="2"></td></tr>';
 }
 if ($permissiontoadd) {
     print '<tr class="oddeven">';

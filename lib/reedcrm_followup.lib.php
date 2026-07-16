@@ -117,7 +117,7 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     $lowerBound = $includeOverdue ? dol_time_plus_duree($periodStart, -12, 'm') : $periodStart;
 
     $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_user_assign,';
-    $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut,';
+    $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -154,6 +154,7 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
                 'propal_ref'   => $obj->propal_ref,
                 'propal_ttc'   => $obj->propal_ttc !== null ? (float) $obj->propal_ttc : null,
                 'propal_statut' => $obj->propal_statut !== null ? (int) $obj->propal_statut : null,
+                'propal_date'  => !empty($obj->propal_date) ? $db->jdate($obj->propal_date) : 0,
                 'assigned'     => (int) $obj->fk_user_assign,
                 'overdue'      => $nextAudit < $periodStart,
                 'location'     => $location,
@@ -177,7 +178,7 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $audits = [];
 
     $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_user_assign,';
-    $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut,';
+    $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -218,6 +219,7 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
                 'propal_ref' => $obj->propal_ref,
                 'propal_ttc' => $obj->propal_ttc !== null ? (float) $obj->propal_ttc : null,
                 'propal_statut' => $obj->propal_statut !== null ? (int) $obj->propal_statut : null,
+                'propal_date' => !empty($obj->propal_date) ? $db->jdate($obj->propal_date) : 0,
                 'assigned'   => (int) $obj->fk_user_assign,
                 'overdue'    => true,
                 'location'   => $location,
