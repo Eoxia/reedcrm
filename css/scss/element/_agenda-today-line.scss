@@ -1,0 +1,51 @@
+// =============================================================================
+// Agenda "today" line
+// Red separator inserted (by js/modules/agenda_today_line.js) into agenda /
+// linked-events lists to materialize the current day between future events and
+// today-or-past events.
+// =============================================================================
+
+$reedcrm-today-line-color: #e11d2b;
+
+tr.reedcrm-today-line {
+  height: 0 !important;
+
+  // The theme sizes list cells with `table.noborder > tbody > tr > td { padding: 8px 10px;
+  // height: 32px }`, whose specificity beats ours: force the row to collapse onto the line.
+  > td {
+    position: relative;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+    background: transparent !important;
+  }
+
+  // The line itself, spanning the full table width.
+  > td::after {
+    content: "";
+    display: block;
+    width: 100%;
+    border-top: 2px solid $reedcrm-today-line-color;
+  }
+
+  // Small pill label, vertically centered on the line.
+  .reedcrm-today-line__label {
+    position: absolute;
+    top: 0;
+    left: 12px;
+    z-index: 1;
+    transform: translateY(-50%);
+    padding: 0 6px;
+    background: $reedcrm-today-line-color;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.65;
+    letter-spacing: 0.02em;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+}
