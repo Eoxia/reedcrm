@@ -278,6 +278,7 @@ print '<style>
 .rcf-prcheck input{cursor:pointer;width:16px;height:16px;accent-color:#2e9e6c;vertical-align:middle}
 .rcf-assignform{display:inline-flex;align-items:center;gap:3px}
 .rcf-assignsel{min-width:110px}
+.rcf-statedot{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:middle;margin-right:5px}
 @media (max-width:900px){.rcf-charts{grid-template-columns:1fr}}
 </style>';
 
@@ -523,19 +524,20 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         print '<span class="opacitymedium">-</span>';
     }
     print '</td>';
-    print '<td class="center">';
+    print '<td class="center nowraponall">';
+    // State with a distinct colour per situation (a signed quote is progress and wins over overdue).
     if ($isDone) {
-        print dolGetStatus($langs->trans('FollowupAuditDone'), $langs->trans('FollowupAuditDone'), '', 'status4', 3) . ' ' . $langs->trans('FollowupAuditDone');
+        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditDone');
     } elseif (!empty($audit['propal_id']) && (int) $audit['propal_statut'] === 2) {
-        // A signed proposal is real progress: surface it in the state, even if the audit is overdue.
-        print dolGetStatus($langs->trans('FollowupAuditPrSigned'), $langs->trans('FollowupAuditPrSigned'), '', 'status4', 3) . ' ' . $langs->trans('FollowupAuditPrSigned');
+        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditPrSigned');
     } elseif (!empty($audit['propal_id'])) {
-        print dolGetStatus($langs->trans('FollowupProposalSent'), $langs->trans('FollowupProposalSent'), '', 'status1', 3) . ' ' . $langs->trans('FollowupProposalSent');
+        $stateColor = '#2f6f9f'; $stateLabel = $langs->trans('FollowupProposalSent');
     } elseif ($audit['next_audit'] < dol_now()) {
-        print dolGetStatus($langs->trans('FollowupAuditOverdue'), $langs->trans('FollowupAuditOverdue'), '', 'status8', 3) . ' ' . $langs->trans('FollowupAuditOverdue');
+        $stateColor = '#cf4257'; $stateLabel = $langs->trans('FollowupAuditOverdue');
     } else {
-        print dolGetStatus($langs->trans('FollowupAuditToPrepare'), $langs->trans('FollowupAuditToPrepare'), '', 'status1', 3) . ' ' . $langs->trans('FollowupAuditToPrepare');
+        $stateColor = '#c8871a'; $stateLabel = $langs->trans('FollowupAuditToPrepare');
     }
+    print '<span class="rcf-statedot" style="background:' . $stateColor . '"></span> ' . $stateLabel;
     if ($audit['source'] === 'manual') {
         print ' <span class="badge badge-secondary" title="' . dol_escape_htmltag($langs->trans('FollowupAuditManual')) . '">M</span>';
     }
