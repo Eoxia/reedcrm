@@ -8,14 +8,18 @@
 $reedcrm-today-line-color: #e11d2b;
 
 tr.reedcrm-today-line {
-  height: 0;
+  height: 0 !important;
 
+  // The theme sizes list cells with `table.noborder > tbody > tr > td { padding: 8px 10px;
+  // height: 32px }`, whose specificity beats ours: force the row to collapse onto the line.
   > td {
     position: relative;
-    height: 0;
-    padding: 0;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
     border: 0 !important;
-    line-height: 0;
+    line-height: 0 !important;
+    font-size: 0 !important;
     background: transparent !important;
   }
 
