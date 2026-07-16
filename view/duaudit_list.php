@@ -178,24 +178,19 @@ if (($action === 'auditdone' || $action === 'auditdelete') && $permissiontoadd) 
     $audit   = new DuAudit($db);
     if ($auditId > 0 && $audit->fetch($auditId) > 0) {
         if ($action === 'auditdone') {
-            // Capture the latest DU audit invoice of this client to record the real invoiced amount/date.
-            $sqlInv  = 'SELECT f.datef, SUM(fd.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture as f';
-            $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet as fd ON fd.fk_facture = f.rowid';
-            $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = fd.fk_product';
-            $sqlInv .= " WHERE p.ref LIKE 'DU\_AU%' AND f.type <> 2 AND f.fk_soc = " . ((int) $audit->fk_soc);
-            $sqlInv .= ' AND f.datef IS NOT NULL AND f.entity IN (' . getEntity('facture') . ')';
-            $sqlInv .= ' GROUP BY f.rowid, f.datef ORDER BY f.datef DESC' . $db->plimit(1);
-            $resqlInv = $db->query($sqlInv);
-            if ($resqlInv && $inv = $db->fetch_object($resqlInv)) {
-                $invDate = $db->jdate($inv->datef);
-                $curLast = !empty($audit->last_audit_date) ? (int) $audit->last_audit_date : 0;
-                if ($invDate >= $curLast) {
-                    $audit->last_audit_date = $invDate;
-                    $audit->montant         = (float) $inv->tot;
-                }
+            // Record the REAL audit completion date (physical audit, not the billing date) and anchor
+            // the next cycle on it: next audit = real date + 1 year. The line then rolls forward.
+            $doneInput = GETPOST('audit_done_date', 'alpha');
+            $doneDate  = $doneInput ? dol_stringtotime($doneInput) : dol_now();
+            $audit->date_done       = $doneDate;
+            $audit->last_audit_date = $doneDate;
+            $audit->next_audit_date = dol_time_plus_duree($doneDate, 1, 'y');
+            $audit->status          = DuAudit::STATUS_TODO;
+            if ($audit->update($user) > 0) {
+                setEventMessages($langs->trans('FollowupAuditDoneRolled', dol_print_date($doneDate, 'day'), dol_print_date($audit->next_audit_date, 'day')), []);
+            } else {
+                setEventMessages($audit->error, $audit->errors, 'errors');
             }
-            $audit->status = DuAudit::STATUS_DONE;
-            $audit->update($user);
         } elseif ($permissiontodelete) {
             $audit->delete($user);
         }
@@ -559,8 +554,9 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('FollowupAuditRenewConfirm')) . '\');">';
         print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditrenew"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
         print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRenew')) . '"><i class="fas fa-redo"></i></button></form> ';
-        print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
+        print '<form method="POST" action="' . $selfMonth . '" class="inline-block" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRealDate')) . '">';
         print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditdone"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
+        print '<input type="date" name="audit_done_date" value="' . dol_print_date(dol_now(), '%Y-%m-%d') . '" class="maxwidth130">';
         print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMarkDone')) . '"><i class="fas fa-check"></i></button></form> ';
     }
     if ($permissiontodelete) {
