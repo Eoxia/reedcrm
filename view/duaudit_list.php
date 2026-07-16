@@ -527,16 +527,19 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     print '<td class="center nowraponall">';
     // Auto-derived state following the real quote AND invoice: Paid > Invoiced > Quote signed >
     // Quote sent > Overdue > To prepare. Nothing is lost after the audit is billed.
+    // In the overdue table only, a quote/invoice older than 6 months is stale and no longer counts
+    // as progress (an old proposal on a long-overdue audit is dead) -> show "En retard".
     $stateTitle = '';
+    $staleDocs  = $showDaysLate && (max((int) $audit['facture_date'], (int) $audit['propal_date']) < dol_time_plus_duree(dol_now(), -6, 'm'));
     if ($isDone) {
         $stateColor = '#6c757d'; $stateLabel = $langs->trans('FollowupAuditDone');
-    } elseif (!empty($audit['facture_id']) && !empty($audit['facture_paye'])) {
+    } elseif (!$staleDocs && !empty($audit['facture_id']) && !empty($audit['facture_paye'])) {
         $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditPaid');       $stateTitle = (string) $audit['facture_ref'];
-    } elseif (!empty($audit['facture_id'])) {
+    } elseif (!$staleDocs && !empty($audit['facture_id'])) {
         $stateColor = '#17a2b8'; $stateLabel = $langs->trans('FollowupAuditInvoiced');   $stateTitle = (string) $audit['facture_ref'];
-    } elseif (!empty($audit['propal_id']) && (int) $audit['propal_statut'] === 2) {
+    } elseif (!$staleDocs && !empty($audit['propal_id']) && (int) $audit['propal_statut'] === 2) {
         $stateColor = '#6f42c1'; $stateLabel = $langs->trans('FollowupAuditPrSigned');   $stateTitle = (string) $audit['propal_ref'];
-    } elseif (!empty($audit['propal_id'])) {
+    } elseif (!$staleDocs && !empty($audit['propal_id'])) {
         $stateColor = '#2f6f9f'; $stateLabel = $langs->trans('FollowupProposalSent');    $stateTitle = (string) $audit['propal_ref'];
     } elseif ($audit['next_audit'] < dol_now()) {
         $stateColor = '#cf4257'; $stateLabel = $langs->trans('FollowupAuditOverdue');
