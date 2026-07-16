@@ -51,7 +51,10 @@ class RecurringInvoiceFollowupCron
     }
 
     /**
-     * Job: create a follow-up record for each active recurring invoice due in the current month.
+     * Job: project one follow-up per active recurring invoice, placed on the month of its next
+     * generation date (date_when). This spreads the board across the coming months instead of only
+     * the current one, so upcoming renewals are visible ahead of time. Idempotent: one follow-up per
+     * recurring invoice and period.
      *
      * @return int 0 if OK, < 0 if KO.
      */
@@ -61,20 +64,13 @@ class RecurringInvoiceFollowupCron
 
         $langs->loadLangs(['reedcrm@reedcrm']);
 
-        $now         = dol_now();
-        $year        = (int) dol_print_date($now, '%Y');
-        $month       = (int) dol_print_date($now, '%m');
-        $periodStart = dol_get_first_day($year, $month);
-        $periodEnd   = dol_get_last_day($year, $month);
-
         $created = 0;
         $skipped = 0;
 
-        $sql  = 'SELECT fr.rowid, fr.titre, fr.fk_soc, fr.total_ttc';
+        $sql  = 'SELECT fr.rowid, fr.titre, fr.fk_soc, fr.total_ttc, fr.date_when';
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
         $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ')';
         $sql .= ' AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
-        $sql .= " AND (fr.date_when IS NULL OR fr.date_when <= '" . $this->db->idate($periodEnd) . "')";
 
         $resql = $this->db->query($sql);
         if (!$resql) {
@@ -83,6 +79,11 @@ class RecurringInvoiceFollowupCron
         }
 
         while ($fr = $this->db->fetch_object($resql)) {
+            // Place the follow-up on the month of the invoice's next due date (fallback: current month).
+            $when        = !empty($fr->date_when) ? $this->db->jdate($fr->date_when) : dol_now();
+            $periodStart = dol_get_first_day((int) dol_print_date($when, '%Y'), (int) dol_print_date($when, '%m'));
+            $periodEnd   = dol_get_last_day((int) dol_print_date($when, '%Y'), (int) dol_print_date($when, '%m'));
+
             $sqlCheck  = 'SELECT rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup';
             $sqlCheck .= ' WHERE fk_facture_rec = ' . ((int) $fr->rowid);
             $sqlCheck .= " AND period >= '" . $this->db->idate($periodStart) . "' AND period <= '" . $this->db->idate($periodEnd) . "'";

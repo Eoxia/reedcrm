@@ -178,24 +178,19 @@ if (($action === 'auditdone' || $action === 'auditdelete') && $permissiontoadd) 
     $audit   = new DuAudit($db);
     if ($auditId > 0 && $audit->fetch($auditId) > 0) {
         if ($action === 'auditdone') {
-            // Capture the latest DU audit invoice of this client to record the real invoiced amount/date.
-            $sqlInv  = 'SELECT f.datef, SUM(fd.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture as f';
-            $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet as fd ON fd.fk_facture = f.rowid';
-            $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = fd.fk_product';
-            $sqlInv .= " WHERE p.ref LIKE 'DU\_AU%' AND f.type <> 2 AND f.fk_soc = " . ((int) $audit->fk_soc);
-            $sqlInv .= ' AND f.datef IS NOT NULL AND f.entity IN (' . getEntity('facture') . ')';
-            $sqlInv .= ' GROUP BY f.rowid, f.datef ORDER BY f.datef DESC' . $db->plimit(1);
-            $resqlInv = $db->query($sqlInv);
-            if ($resqlInv && $inv = $db->fetch_object($resqlInv)) {
-                $invDate = $db->jdate($inv->datef);
-                $curLast = !empty($audit->last_audit_date) ? (int) $audit->last_audit_date : 0;
-                if ($invDate >= $curLast) {
-                    $audit->last_audit_date = $invDate;
-                    $audit->montant         = (float) $inv->tot;
-                }
+            // Record the REAL audit completion date (physical audit, not the billing date) and anchor
+            // the next cycle on it: next audit = real date + 1 year. The line then rolls forward.
+            $doneInput = GETPOST('audit_done_date', 'alpha');
+            $doneDate  = $doneInput ? dol_stringtotime($doneInput) : dol_now();
+            $audit->date_done       = $doneDate;
+            $audit->last_audit_date = $doneDate;
+            $audit->next_audit_date = dol_time_plus_duree($doneDate, 1, 'y');
+            $audit->status          = DuAudit::STATUS_TODO;
+            if ($audit->update($user) > 0) {
+                setEventMessages($langs->trans('FollowupAuditDoneRolled', dol_print_date($doneDate, 'day'), dol_print_date($audit->next_audit_date, 'day')), []);
+            } else {
+                setEventMessages($audit->error, $audit->errors, 'errors');
             }
-            $audit->status = DuAudit::STATUS_DONE;
-            $audit->update($user);
         } elseif ($permissiontodelete) {
             $audit->delete($user);
         }
@@ -278,6 +273,7 @@ print '<style>
 .rcf-prcheck input{cursor:pointer;width:16px;height:16px;accent-color:#2e9e6c;vertical-align:middle}
 .rcf-assignform{display:inline-flex;align-items:center;gap:3px}
 .rcf-assignsel{min-width:110px}
+.rcf-statedot{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:middle;margin-right:5px}
 @media (max-width:900px){.rcf-charts{grid-template-columns:1fr}}
 </style>';
 
@@ -417,6 +413,7 @@ $auditToPrepare   = 0;
 $auditOverdueM    = 0;
 $auditDone        = 0;
 $auditPrSent      = 0;
+$auditPrTotal     = 0;
 $auditTotMontant  = 0;
 $auditDoneMontant = 0;
 $nowStat          = dol_now();
@@ -431,9 +428,21 @@ foreach ($audits as $auditStat) {
     }
     if (!empty($auditStat['propal_id'])) {
         $auditPrSent++;
+        $auditPrTotal += (float) $auditStat['propal_ttc'];
     }
     $auditTotMontant += (float) $auditStat['montant'];
 }
+// Lost DU: audits not updated for 3 years or more, globally (year-independent so it is always visible).
+$lostGlobal = 0;
+$sqlLost  = 'SELECT COUNT(*) as n FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
+$sqlLost .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
+$sqlLost .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ') AND s.status = 1';
+$sqlLost .= ' AND a.status <> 2 AND a.last_audit_date <= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+$resLost  = $db->query($sqlLost);
+if ($resLost && $oLost = $db->fetch_object($resLost)) {
+    $lostGlobal = (int) $oLost->n;
+}
+
 print '<div class="rcf-dash"><div class="rcf-tiles">';
 printf('<div class="rcf-tile warn"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditToPrepareCount'), $auditToPrepare);
 printf('<div class="rcf-tile crit"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditOverdueCount'), $auditOverdueM);
@@ -441,6 +450,7 @@ printf('<div class="rcf-tile good"><div class="k">%s</div><div class="v">%d</div
 printf('<div class="rcf-tile"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupProposalSentCount'), $auditPrSent);
 printf('<div class="rcf-tile good"><div class="k">%s</div><div class="v">%s</div></div>', $langs->trans('FollowupAuditInvoicedAmount'), price($auditDoneMontant, 0, $langs, 1, -1, 0, $conf->currency));
 printf('<div class="rcf-tile"><div class="k">%s</div><div class="v">%s</div></div>', $langs->trans('FollowupAuditTotalAmount'), price($auditTotMontant, 0, $langs, 1, -1, 0, $conf->currency));
+printf('<div class="rcf-tile crit"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupDuLostCount'), $lostGlobal);
 print '</div></div>';
 
 $thirdpartyStatic = new Societe($db);
@@ -498,21 +508,40 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         if ($audit['propal_ttc'] !== null) {
             print ' <span class="opacitymedium">(' . price($audit['propal_ttc'], 0, $langs, 1, -1, 0, $conf->currency) . ')</span>';
         }
+        print '<br>';
+        if (!empty($audit['propal_date'])) {
+            print '<span class="opacitymedium">' . dol_print_date($audit['propal_date'], 'day') . '</span> ';
+        }
         if ($audit['propal_statut'] !== null) {
-            print '<br>' . $propalStatic->LibStatut((int) $audit['propal_statut'], 5);
+            print $propalStatic->LibStatut((int) $audit['propal_statut'], 5);
         }
     } else {
         print '<span class="opacitymedium">-</span>';
     }
     print '</td>';
-    print '<td class="center">';
+    print '<td class="center nowraponall">';
+    // Auto-derived state following the real quote AND invoice: Paid > Invoiced > Quote signed >
+    // Quote sent > Overdue > To prepare. Nothing is lost after the audit is billed.
+    // In the overdue table only, a quote/invoice older than 6 months is stale and no longer counts
+    // as progress (an old proposal on a long-overdue audit is dead) -> show "En retard".
+    $stateTitle = '';
+    $staleDocs  = $showDaysLate && (max((int) $audit['facture_date'], (int) $audit['propal_date']) < dol_time_plus_duree(dol_now(), -6, 'm'));
     if ($isDone) {
-        print dolGetStatus($langs->trans('FollowupAuditDone'), $langs->trans('FollowupAuditDone'), '', 'status4', 3) . ' ' . $langs->trans('FollowupAuditDone');
+        $stateColor = '#6c757d'; $stateLabel = $langs->trans('FollowupAuditDone');
+    } elseif (!$staleDocs && !empty($audit['facture_id']) && !empty($audit['facture_paye'])) {
+        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditPaid');       $stateTitle = (string) $audit['facture_ref'];
+    } elseif (!$staleDocs && !empty($audit['facture_id'])) {
+        $stateColor = '#17a2b8'; $stateLabel = $langs->trans('FollowupAuditInvoiced');   $stateTitle = (string) $audit['facture_ref'];
+    } elseif (!$staleDocs && !empty($audit['propal_id']) && (int) $audit['propal_statut'] === 2) {
+        $stateColor = '#6f42c1'; $stateLabel = $langs->trans('FollowupAuditPrSigned');   $stateTitle = (string) $audit['propal_ref'];
+    } elseif (!$staleDocs && !empty($audit['propal_id'])) {
+        $stateColor = '#2f6f9f'; $stateLabel = $langs->trans('FollowupProposalSent');    $stateTitle = (string) $audit['propal_ref'];
     } elseif ($audit['next_audit'] < dol_now()) {
-        print dolGetStatus($langs->trans('FollowupAuditOverdue'), $langs->trans('FollowupAuditOverdue'), '', 'status8', 3) . ' ' . $langs->trans('FollowupAuditOverdue');
+        $stateColor = '#cf4257'; $stateLabel = $langs->trans('FollowupAuditOverdue');
     } else {
-        print dolGetStatus($langs->trans('FollowupAuditToPrepare'), $langs->trans('FollowupAuditToPrepare'), '', 'status1', 3) . ' ' . $langs->trans('FollowupAuditToPrepare');
+        $stateColor = '#c8871a'; $stateLabel = $langs->trans('FollowupAuditToPrepare');
     }
+    print '<span class="rcf-statedot" style="background:' . $stateColor . '"' . ($stateTitle !== '' ? ' title="' . dol_escape_htmltag($stateTitle) . '"' : '') . '></span> ' . $stateLabel;
     if ($audit['source'] === 'manual') {
         print ' <span class="badge badge-secondary" title="' . dol_escape_htmltag($langs->trans('FollowupAuditManual')) . '">M</span>';
     }
@@ -525,8 +554,9 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('FollowupAuditRenewConfirm')) . '\');">';
         print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditrenew"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
         print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRenew')) . '"><i class="fas fa-redo"></i></button></form> ';
-        print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
+        print '<form method="POST" action="' . $selfMonth . '" class="inline-block" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRealDate')) . '">';
         print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditdone"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
+        print '<input type="date" name="audit_done_date" value="' . dol_print_date(dol_now(), '%Y-%m-%d') . '" class="maxwidth130">';
         print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMarkDone')) . '"><i class="fas fa-check"></i></button></form> ';
     }
     if ($permissiontodelete) {
@@ -555,7 +585,7 @@ if (empty($audits)) {
     foreach ($audits as $audit) {
         $printAuditRow($audit, false);
     }
-    print '<tr class="liste_total"><td colspan="5">' . $langs->trans('Total') . '</td><td class="right">' . price($auditTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td colspan="4"></td></tr>';
+    print '<tr class="liste_total"><td colspan="5">' . $langs->trans('Total') . '</td><td class="right">' . price($auditTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td></td><td class="center nowraponall">' . ($auditPrTotal > 0 ? price($auditPrTotal, 0, $langs, 1, -1, 0, $conf->currency) : '') . '</td><td colspan="2"></td></tr>';
 }
 if ($permissiontoadd) {
     print '<tr class="oddeven">';

@@ -81,6 +81,7 @@ class DuAudit extends SaturneObject
         'fk_soc'            => ['type' => 'integer:Societe:societe/class/societe.class.php', 'label' => 'ThirdParty', 'picto' => 'company', 'enabled' => 1, 'position' => 80, 'notnull' => 1, 'visible' => 1, 'index' => 1],
         'last_audit_date'   => ['type' => 'date',         'label' => 'FollowupLastDuAudit', 'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 1],
         'next_audit_date'   => ['type' => 'date',         'label' => 'FollowupNextAudit',   'enabled' => 1, 'position' => 100, 'notnull' => 1, 'visible' => 1, 'index' => 1],
+        'date_done'         => ['type' => 'date',         'label' => 'FollowupAuditRealDate', 'enabled' => 1, 'position' => 105, 'notnull' => 0, 'visible' => 1],
         'fk_facture_source' => ['type' => 'integer',      'label' => 'SourceInvoice', 'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 0],
         'source'            => ['type' => 'varchar(16)',  'label' => 'Source',        'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => 0, 'default' => 'manual'],
         'proposal_sent_date' => ['type' => 'date',        'label' => 'FollowupProposalSent', 'enabled' => 1, 'position' => 125, 'notnull' => 0, 'visible' => 1],

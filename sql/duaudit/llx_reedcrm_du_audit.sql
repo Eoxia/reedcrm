@@ -25,6 +25,7 @@ CREATE TABLE llx_reedcrm_du_audit(
   fk_soc            integer NOT NULL,
   last_audit_date   date,
   next_audit_date   date NOT NULL,
+  date_done         date DEFAULT NULL,
   fk_facture_source integer,
   source            varchar(16) DEFAULT 'manual',
   proposal_sent_date date DEFAULT NULL,
