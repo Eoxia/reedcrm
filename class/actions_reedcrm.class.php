@@ -2019,7 +2019,7 @@ class ActionsReedcrm
             || strpos($parameters['context'], 'propallist') !== false;
 
         if ($isTargetContext && $user->hasRight('reedcrm', 'call_list', 'write') && $massAction == 'addToCallList') {
-            require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
+            dol_include_once('/reedcrm/class/calllist.class.php');
 
             $callList  = new CallList($this->db);
             $callLists = $callList->fetchAll('ASC', 'label', 0, 0, ['customsql' => 't.status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')']);
@@ -2115,8 +2115,8 @@ class ActionsReedcrm
             || strpos($parameters['context'], 'propallist') !== false;
 
         if ($isTargetContext && $user->hasRight('reedcrm', 'call_list', 'write') && $massActionConfirm == 'addToCallList') {
-            require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
-            require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllistline.class.php';
+            dol_include_once('/reedcrm/class/calllist.class.php');
+            dol_include_once('/reedcrm/class/calllistline.class.php');
 
             $fkCallList = GETPOSTINT('fk_call_list');
             $toSelect   = $parameters['toselect'];
@@ -3641,7 +3641,7 @@ EOT;
 
         $langs->load('reedcrm@reedcrm');
 
-        require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
+        dol_include_once('/reedcrm/class/calllist.class.php');
 
         $callListObj = new CallList($this->db);
         $callLists   = $callListObj->fetchAll('', '', 0, 0, [

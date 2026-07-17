@@ -75,7 +75,7 @@ function reedcrm_get_or_create_user_default_call_list(DoliDB $db, User $targetUs
     global $conf, $langs;
 
     require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
-    require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
+    dol_include_once('/reedcrm/class/calllist.class.php');
 
     $langs->load('reedcrm@reedcrm');
 
@@ -137,8 +137,8 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
     global $langs;
 
     require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-    require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
-    require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllistline.class.php';
+    dol_include_once('/reedcrm/class/calllist.class.php');
+    dol_include_once('/reedcrm/class/calllistline.class.php');
 
     $langs->load('reedcrm@reedcrm');
 
@@ -255,8 +255,8 @@ function reedcrm_call_list_line_record_status_change(DoliDB $db, User $user, Cal
     }
 
     require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-    require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllist.class.php';
-    require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/class/calllistline.class.php';
+    dol_include_once('/reedcrm/class/calllist.class.php');
+    dol_include_once('/reedcrm/class/calllistline.class.php');
 
     $langs->load('reedcrm@reedcrm');
 
