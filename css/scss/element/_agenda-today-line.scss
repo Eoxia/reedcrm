@@ -1,11 +1,13 @@
 // =============================================================================
 // Agenda "today" line
-// Red separator inserted (by js/modules/agenda_today_line.js) into agenda /
+// Separator inserted (by js/modules/agenda_today_line.js) into agenda /
 // linked-events lists to materialize the current day between future events and
 // today-or-past events.
 // =============================================================================
 
-$reedcrm-today-line-color: #e11d2b;
+// ReedCRM brand color (the logo disc). This line is a landmark, not a warning:
+// a red would read as an alert. Dark enough to keep the label text white.
+$reedcrm-today-line-color: #014751;
 
 tr.reedcrm-today-line {
   height: 0 !important;

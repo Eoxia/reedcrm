@@ -20,7 +20,7 @@
  * \file    js/modules/agenda_today_line.js
  * \ingroup reedcrm
  * \brief   Materialize the current day in agenda / linked-events lists (Dolibarr
- *          showactions tables) by inserting a red "today" separator line between
+ *          showactions tables) by inserting a "today" separator line between
  *          future events and today-or-past events.
  */
 
