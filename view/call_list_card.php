@@ -418,7 +418,13 @@ if ($object->id > 0) {
     print dol_get_fiche_head($head, 'card', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
     $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
-    saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
+    // "My favorite call list" star, toggled without reloading the page
+    $morehtmlref = '';
+    if ($object->status != CallList::STATUS_ARCHIVED) {
+        $morehtmlref = reedcrm_default_call_list_star((int) $object->id, reedcrm_get_user_default_call_list($user) === (int) $object->id);
+    }
+
+    saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', $morehtmlref, false);
 
     // Confirm dialogs
     if ($action === 'delete') {

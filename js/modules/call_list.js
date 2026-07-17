@@ -10,6 +10,46 @@ window.saturne.call_list.event = function() {
     $(document).on('change', '#propal_id', window.saturne.call_list.onElementChange);
     $(document).on('change', '#project_id', window.saturne.call_list.onElementChange);
     $(document).on('submit', '#add-call-line-form', window.saturne.call_list.onSubmit);
+    $(document).on('click', '.reedcrm-default-call-list-star', window.saturne.call_list.onDefaultStarClick);
+};
+
+/**
+ * Set the current call list as my favorite, without reloading the page.
+ * A star already on is inert: a favorite must always be set, the widget of element cards adds into it.
+ */
+window.saturne.call_list.onDefaultStarClick = function(event) {
+    event.preventDefault();
+
+    var $star = $(this);
+    if ($star.hasClass('reedcrm-default-call-list-star-on') || $star.prop('disabled')) {
+        return;
+    }
+
+    $star.prop('disabled', true);
+
+    var formData = new FormData();
+    formData.append('call_list_id', $star.data('call-list-id'));
+    formData.append('token', $('input[name="token"]').val() || '');
+
+    fetch($star.data('ajax-url'), { method: 'POST', body: formData })
+        .then(function(response) { return response.json(); })
+        .then(function(result) {
+            $star.prop('disabled', false);
+
+            if (!result.success) {
+                $.jnotify(result.message, 'error');
+                return;
+            }
+
+            $star.addClass('reedcrm-default-call-list-star-on');
+            $star.find('i').attr('class', 'fas fa-star');
+            $star.find('.reedcrm-default-call-list-star-label').text($star.data('label-on'));
+            $.jnotify(result.message);
+        })
+        .catch(function() {
+            $star.prop('disabled', false);
+            $.jnotify('Erreur réseau', 'error');
+        });
 };
 
 window.saturne.call_list.onTypeChange = function() {

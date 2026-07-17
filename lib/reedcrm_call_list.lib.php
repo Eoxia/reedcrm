@@ -59,6 +59,40 @@ function call_list_prepare_head(CallList $object): array
 }
 
 /**
+ * Return the entity the REEDCRM_DEFAULT_CALL_LIST param of a user lives in.
+ *
+ * Single source of truth so reads and writes always target the same row:
+ * a user bound to an entity keeps the param there, a shared user (entity 0)
+ * keeps it in the current entity.
+ *
+ * @param  User $targetUser User to resolve the entity of
+ * @return int              Entity the param is stored in
+ */
+function reedcrm_default_call_list_entity(User $targetUser): int
+{
+    global $conf;
+
+    return !empty($targetUser->entity) ? (int) $targetUser->entity : (int) $conf->entity;
+}
+
+/**
+ * Return the id of the default call list of a user, 0 when none is set.
+ *
+ * Loads the user personal conf so the answer is reliable whatever the way the
+ * user object was fetched (User::fetchAll does not load it, User::fetch only
+ * loads it on demand and for the current entity).
+ *
+ * @param  User $targetUser User the default call list belongs to
+ * @return int              Call list id, 0 when none is set
+ */
+function reedcrm_get_user_default_call_list(User $targetUser): int
+{
+    $targetUser->loadPersonalConf(reedcrm_default_call_list_entity($targetUser));
+
+    return isset($targetUser->conf->REEDCRM_DEFAULT_CALL_LIST) ? (int) $targetUser->conf->REEDCRM_DEFAULT_CALL_LIST : 0;
+}
+
+/**
  * Return the id of the user's default call list, creating it if missing.
  *
  * The link user -> default call list is stored in the user personal conf
@@ -79,13 +113,9 @@ function reedcrm_get_or_create_user_default_call_list(DoliDB $db, User $targetUs
 
     $langs->load('reedcrm@reedcrm');
 
-    $entity = !empty($targetUser->entity) ? (int) $targetUser->entity : (int) $conf->entity;
+    $entity = reedcrm_default_call_list_entity($targetUser);
 
-    // Load the user personal conf so the existence check is reliable whatever
-    // the way the user object was fetched (User::fetchAll does not load it)
-    $targetUser->loadPersonalConf($entity);
-
-    $existingListId = isset($targetUser->conf->REEDCRM_DEFAULT_CALL_LIST) ? (int) $targetUser->conf->REEDCRM_DEFAULT_CALL_LIST : 0;
+    $existingListId = reedcrm_get_user_default_call_list($targetUser);
 
     // Already linked and still existing -> reuse
     if ($existingListId > 0) {
@@ -116,6 +146,62 @@ function reedcrm_get_or_create_user_default_call_list(DoliDB $db, User $targetUs
     }
 
     return $newId;
+}
+
+/**
+ * Set an existing call list as the default (favorite) call list of a user.
+ *
+ * Counterpart of reedcrm_get_or_create_user_default_call_list: only rewrites the
+ * REEDCRM_DEFAULT_CALL_LIST user param, never creates a list.
+ *
+ * @param  DoliDB $db         Database handler
+ * @param  User   $targetUser User the call list becomes the favorite of
+ * @param  int    $callListId Call list id to make favorite
+ * @return int                > 0 if OK, < 0 if KO
+ */
+function reedcrm_set_user_default_call_list(DoliDB $db, User $targetUser, int $callListId): int
+{
+    global $conf;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
+
+    if ($targetUser->id <= 0 || $callListId <= 0) {
+        return -1;
+    }
+
+    // dol_set_user_param writes the param and keeps $targetUser->conf in sync
+    return dol_set_user_param($db, $conf, $targetUser, ['REEDCRM_DEFAULT_CALL_LIST' => (string) $callListId], reedcrm_default_call_list_entity($targetUser));
+}
+
+/**
+ * Render the "my favorite call list" star button, toggled client side by js/modules/call_list.js.
+ *
+ * A star that is already on stays inert: a favorite must always be set, since the star widget
+ * of project / propal / facture cards adds into it.
+ *
+ * @param  int  $callListId Call list the star acts on
+ * @param  bool $isDefault  Whether the list already is the favorite of the current user
+ * @return string           HTML of the button
+ */
+function reedcrm_default_call_list_star(int $callListId, bool $isDefault): string
+{
+    global $langs;
+
+    $langs->load('reedcrm@reedcrm');
+
+    $labelSet = $langs->trans('SetAsDefaultCallList');
+    $labelOn  = $langs->trans('MyDefaultCallList');
+
+    $out  = '<button type="button" class="reedcrm-default-call-list-star' . ($isDefault ? ' reedcrm-default-call-list-star-on' : '') . '"';
+    $out .= ' data-call-list-id="' . $callListId . '"';
+    $out .= ' data-ajax-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/set_default_call_list.php', 1)) . '"';
+    $out .= ' data-label-on="' . dol_escape_htmltag($labelOn) . '"';
+    $out .= '>';
+    $out .= '<i class="' . ($isDefault ? 'fas' : 'far') . ' fa-star"></i>';
+    $out .= '<span class="reedcrm-default-call-list-star-label">' . dol_escape_htmltag($isDefault ? $labelOn : $labelSet) . '</span>';
+    $out .= '</button>';
+
+    return $out;
 }
 
 /**

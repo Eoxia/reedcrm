@@ -178,6 +178,10 @@ CallListWidgetError = Error while adding
 DefaultCallListLabel = Call list — %s
 AddToMyCallList = Add to my call list
 DefaultCallListNotFound = No default call list for this user
+SetAsDefaultCallList = Set as my favorite list
+MyDefaultCallList = My favorite list
+DefaultCallListSet = "%s" is now your favorite call list
+DefaultCallListSetError = Unable to set the favorite call list
 
 # PWA Documents Bar
 PwaShowPiecesTitle = List of documents to display in the PWA listing
