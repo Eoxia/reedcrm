@@ -40,16 +40,28 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
 
     // In the saturne list loop the record id is $object->id (rowid is 0); the raw row
     // (carrying the real project id and socid) is passed via the hook param 'obj'.
+    // The row holds DB column names: both llx_projet and llx_propal expose fk_soc, never socid.
     $row       = !empty($parameters['obj']) ? $parameters['obj'] : $object;
-    $projectId = (int) (!empty($row->id) ? $row->id : $object->id);
-    $socid     = (int) ($row->socid ?? 0);
+    $isPropal  = ($object->element === 'propal');
+    $socid     = (int) ($row->fk_soc ?? $row->socid ?? 0);
+
+    // A relance is only ever attached to a project (fk_project) or a thirdparty (fk_soc), never to
+    // a propal. Passing the propal id as a project id showed the relances of whichever project
+    // happened to share that id. Use the propal's own project, and fall back to its thirdparty when
+    // it has none, which is what the propal card banner already does.
+    $projectId = $isPropal ? (int) ($row->fk_projet ?? 0) : (int) (!empty($row->id) ? $row->id : $object->id);
 
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
     $actionComm = new ActionComm($db);
 
     $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
-    $actionComms = $actionComm->getActions($socid, $projectId, 'project', $filter, 'a.datec');
+    // getActions() ANDs socid with the element, so passing both would drop the relances whose
+    // fk_soc is null or differs from the project's. The project id alone is already precise:
+    // the socid is only needed for the thirdparty fallback, where there is no project to key on.
+    $actionComms = $projectId > 0
+        ? $actionComm->getActions(0, $projectId, 'project', $filter, 'a.datec')
+        : $actionComm->getActions($socid, '', '', $filter, 'a.datec');
 
     $actonComsByType = [
         'call' => [
@@ -88,10 +100,16 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
         }
     }
 
-    $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId;
+    // Quick add: hang the new relance on the project when there is one, else on the thirdparty.
+    // Same two cases as the card banner; without this a propal without project posted project_id=0.
+    $cardProUrl = $projectId > 0
+        ? '/custom/reedcrm/view/procard.php?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId
+        : '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe';
 
     $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
-    $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
+    // The hover tooltip needs the socid to scope itself when there is no project to key on
+    $socidAttr = $projectId > 0 ? '' : ' data-socid="' . $socid . '"';
+    $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons"' . $socidAttr . '>';
 
     foreach ($actonComsByType as $actionCommType => $actonComByType) {
         $dialogUrl = dol_buildpath('custom/reedcrm/ajax/get_relaunches_list.php', 1);
