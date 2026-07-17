@@ -72,6 +72,10 @@ ProjectsImported = %s projects imported out of %s rows.
 ProjectsImportErrors = %s rows could not be imported.
 NbLines = Number of lines
 
+# Relaunch table headers (Date and Status come from main.lang)
+RelaunchWho = Who
+RelaunchWhat = What
+
 # Dashboard graphs
 OpportunitySources = Distribution of opportunity sources
 

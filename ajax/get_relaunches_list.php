@@ -103,6 +103,14 @@ if (is_array($actionComms) && !empty($actionComms)) {
     print '<div class="reedcrm-relaunch-tooltip-content">';
     print '<table class="noborder centpercent">';
 
+    // Column order follows what a relance carries: when, who, what, where it stands
+    print '<tr class="liste_titre">';
+    print '<td>' . $langs->trans('Date') . '</td>';
+    print '<td>' . $langs->trans('RelaunchWho') . '</td>';
+    print '<td>' . $langs->trans('RelaunchWhat') . '</td>';
+    print '<td class="center">' . $langs->trans('Status') . '</td>';
+    print '</tr>';
+
     foreach ($actionComms as $ac) {
         // When type is 'all', show every action without filtering
         if ($actionType !== 'all') {
@@ -145,16 +153,13 @@ if (is_array($actionComms) && !empty($actionComms)) {
         }
 
         print '<tr class="oddeven">';
+
+        // Date
         print '<td class="nowrap" style="min-width: 150px;">';
         print dol_print_date($ac->datep, 'dayhour', 'tzuser');
         print '</td>';
-        print '<td class="tdoverflowmax200">';
-        print '<strong>' . dol_escape_htmltag($ac->label) . '</strong>';
-        if (!empty($ac->note_private)) {
-            $note = dolGetFirstLineOfText(dol_string_nohtmltag($ac->note_private, 1));
-            print '<br><span class="opacitymedium">' . dol_escape_htmltag(dol_trunc($note, 80)) . '</span>';
-        }
-        print '</td>';
+
+        // Who
         print '<td class="nowrap">';
         if ($contactName) {
             print '<span class="opacitymedium">' . img_picto('', 'contact', 'class="pictofixedwidth"') . ' ' . dol_escape_htmltag($contactName) . '</span>';
@@ -164,17 +169,33 @@ if (is_array($actionComms) && !empty($actionComms)) {
             print '<span class="opacitymedium">' . img_picto('', 'user', 'class="pictofixedwidth"') . ' ' . dol_escape_htmltag($userName) . '</span>';
         }
         print '</td>';
-        if (isset($ac->percentage) && $ac->percentage >= 100) {
-            print '<td class="center">';
-            print '<span class="badge badge-status4">' . $langs->trans('Done') . '</span>';
-            print '</td>';
-        } elseif (isset($ac->percentage) && $ac->percentage > 0) {
-            print '<td class="center">';
-            print '<span class="badge">' . $ac->percentage . '%</span>';
-            print '</td>';
-        } else {
-            print '<td></td>';
+
+        // What
+        print '<td class="tdoverflowmax200">';
+        if (dol_strlen($ac->label)) {
+            print '<strong>' . dol_escape_htmltag($ac->label) . '</strong>';
         }
+        if (!empty($ac->note_private)) {
+            $note = dolGetFirstLineOfText(dol_string_nohtmltag($ac->note_private, 1));
+            print (dol_strlen($ac->label) ? '<br>' : '') . '<span class="opacitymedium">' . dol_escape_htmltag(dol_trunc($note, 80)) . '</span>';
+        }
+        print '</td>';
+
+        // Status. Always rendered now that the column is named: an empty cell under a "Statut"
+        // header reads as missing data, where it actually means the relance is still to do.
+        print '<td class="center">';
+        if (!isset($ac->percentage) || $ac->percentage < 0) {
+            // -1 is the Dolibarr value for an event that does not track progress at all
+            print '<span class="opacitymedium">' . $langs->trans('ActionNotApplicable') . '</span>';
+        } elseif ($ac->percentage >= 100) {
+            print '<span class="badge badge-status4">' . $langs->trans('Done') . '</span>';
+        } elseif ($ac->percentage > 0) {
+            print '<span class="badge">' . $ac->percentage . '%</span>';
+        } else {
+            print '<span class="badge badge-status1">' . $langs->trans('ToDo') . '</span>';
+        }
+        print '</td>';
+
         print '</tr>';
     }
 
