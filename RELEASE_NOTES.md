@@ -1,6 +1,6 @@
-# [ReedCRM] [23.1.0] - Listes d'appel - Suivi de temps sur tickets - Chaîne d'opportunités
+# [ReedCRM] [23.1.1] - Listes d'appel - Suivi de temps sur tickets - Chaîne d'opportunités
 
-Description : Cette version introduit un système complet de **listes d'appel** (vue PWA mobile, PDF, widgets sur projets / propositions / factures, actions de masse, enregistrement audio, création automatique d'événements), un **suivi de temps natif sur les tickets**, l'analyse de la **chaîne d'opportunités** sur la fiche et l'onglet Vue d'ensemble du projet, une refonte de la **liste des projets** (cartes KPI, vues enregistrées, densité, édition inline), ainsi que de nombreuses améliorations PWA, expéditions et suivis récurrents.
+Description : Version corrective de la 23.1.0 (conformité de l'empaquetage Dolistore : chargement des classes du module via `dol_include_once`). Elle introduit un système complet de **listes d'appel** (vue PWA mobile, PDF, widgets sur projets / propositions / factures, actions de masse, enregistrement audio, création automatique d'événements), un **suivi de temps natif sur les tickets**, l'analyse de la **chaîne d'opportunités** sur la fiche et l'onglet Vue d'ensemble du projet, une refonte de la **liste des projets** (cartes KPI, vues enregistrées, densité, édition inline), ainsi que de nombreuses améliorations PWA, expéditions et suivis récurrents.
 
 ## Nouvelles fonctionnalités et innovations
 
@@ -82,6 +82,11 @@ Description : Cette version introduit un système complet de **listes d'appel** 
 
 ## Améliorations & corrections
 
+### Packaging / Dolistore
+
+* Chargement des classes et librairies du module via `dol_include_once` au lieu de `DOL_DOCUMENT_ROOT` (le module réside dans `/custom`) — `actions_reedcrm`, `reedcrm_call_list.lib`, endpoints AJAX des listes d'appel et template frontend des opportunités.
+* `test_hooks.php` : chargement de l'environnement via `reedcrm.main.inc.php` (pattern à 2 tentatives) au lieu d'un `require` direct de `main.inc.php`.
+
 ### Menu & navigation
 
 * Préfixe `/custom` ajouté aux URLs du menu Saturne.
@@ -112,8 +117,9 @@ Description : Cette version introduit un système complet de **listes d'appel** 
 * Bloc de relance : infobulle au survol restaurée.
 * PDF : téléphone et e-mail du projet injectés dans le bloc adressé.
 
-## Comparaison des versions [23.0.0](https://github.com/Eoxia/easycrm/compare/23.0.0...23.1.0) et 23.1.0
+## Comparaison des versions [23.0.0](https://github.com/Eoxia/easycrm/compare/23.0.0...23.1.1) et 23.1.1
 
+* [Mod] fix: `dol_include_once` pour les includes du module + bootstrap 2 tentatives dans test_hooks (conformité Dolistore) [`64d0335`](https://github.com/Eoxia/easycrm/commit/64d0335)
 * [#796] [DU] feat: suivi des factures récurrentes et de l'audit DU [`74cee58`](https://github.com/Eoxia/easycrm/commit/74cee58) [`dd85810`](https://github.com/Eoxia/easycrm/commit/dd85810) [`1966cc4`](https://github.com/Eoxia/easycrm/commit/1966cc4) [`7f834ce`](https://github.com/Eoxia/easycrm/commit/7f834ce)
 * [#790] [Agenda] feat: ligne du jour (rouge) dans les listes d'événements + rebuild css [`f8c5269`](https://github.com/Eoxia/easycrm/commit/f8c5269) [`9404f5a`](https://github.com/Eoxia/easycrm/commit/9404f5a) [`6c1e0c9`](https://github.com/Eoxia/easycrm/commit/6c1e0c9)
 * [#791] [ProCard] fix: éviter « Class FormTicket not found » sans le module Ticket [`c568fb3`](https://github.com/Eoxia/easycrm/commit/c568fb3)
