@@ -504,3 +504,68 @@ function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
 
     return 0;
 }
+
+/**
+ * Link a follow-up reminder event to the relaunch event it was created from.
+ *
+ * Stored in llx_actioncomm.fk_parent: the column exists on every install and no Dolibarr feature
+ * writes it, so there is nothing to collide with and no schema change to ship. It has to go through
+ * a direct query though: fk_parent is only declared in ActionComm::$fields for the generic ORM, and
+ * the class overrides create(), update() and fetch() without ever touching it — assigning
+ * $actionComm->fk_parent before create() is silently dropped.
+ *
+ * @param  DoliDB $db         Database handler
+ * @param  int    $reminderId Reminder event (the relaunch to come)
+ * @param  int    $relaunchId Relaunch event it follows up (the one that was done)
+ * @return int                1 if OK, -1 if KO
+ */
+function reedcrm_link_reminder_to_relaunch(DoliDB $db, int $reminderId, int $relaunchId): int
+{
+    if ($reminderId <= 0 || $relaunchId <= 0 || $reminderId === $relaunchId) {
+        return -1;
+    }
+
+    $sql  = 'UPDATE ' . MAIN_DB_PREFIX . 'actioncomm';
+    $sql .= ' SET fk_parent = ' . ((int) $relaunchId);
+    $sql .= ' WHERE id = ' . ((int) $reminderId);
+
+    return $db->query($sql) ? 1 : -1;
+}
+
+/**
+ * Return the follow-up reminders of a set of relaunch events, keyed by relaunch id.
+ *
+ * One query for the whole list: the tooltip renders several relaunches at once and must not fire a
+ * lookup per row. fk_parent is read here because ActionComm::fetch() does not load it either.
+ *
+ * @param  DoliDB $db          Database handler
+ * @param  int[]  $relaunchIds Relaunch event ids
+ * @return array               [relaunch id => reminder object (id, datep, label)]
+ */
+function reedcrm_get_reminders_by_relaunch(DoliDB $db, array $relaunchIds): array
+{
+    $reminders   = [];
+    $relaunchIds = array_filter(array_map('intval', $relaunchIds));
+
+    if (empty($relaunchIds)) {
+        return $reminders;
+    }
+
+    $sql  = 'SELECT id, fk_parent, datep, label FROM ' . MAIN_DB_PREFIX . 'actioncomm';
+    $sql .= ' WHERE fk_parent IN (' . implode(',', $relaunchIds) . ')';
+    $sql .= ' AND entity IN (' . getEntity('agenda') . ')';
+    $sql .= ' ORDER BY datep ASC';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            // First one wins: a relaunch is created with a single follow-up reminder
+            if (!isset($reminders[(int) $obj->fk_parent])) {
+                $reminders[(int) $obj->fk_parent] = $obj;
+            }
+        }
+        $db->free($resql);
+    }
+
+    return $reminders;
+}

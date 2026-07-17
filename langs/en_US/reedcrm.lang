@@ -75,6 +75,7 @@ NbLines = Number of lines
 # Relaunch table headers (Date and Status come from main.lang)
 RelaunchWho = Who
 RelaunchWhat = What
+RelaunchFollowUpOn = Reminder on %s
 
 # Dashboard graphs
 OpportunitySources = Distribution of opportunity sources

@@ -189,6 +189,10 @@ if (empty($resHook)) {
 
         $result = $actionComm->create($user);
 
+        // Keep the relaunch id: the same $actionComm object is reused to create the reminder below,
+        // and $result is overwritten by that second create()
+        $relaunchId = (int) $result;
+
         $category->fetch(getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG'));
         $category->add_type($actionComm, 'actioncomm');
 
@@ -214,6 +218,9 @@ if (empty($resHook)) {
                     $reminderCategory->fetch($reminderCategoryID);
                     $reminderCategory->add_type($actionComm, 'actioncomm');
                 }
+
+                // Keep track of which relaunch this reminder follows up
+                reedcrm_link_reminder_to_relaunch($db, (int) $result, $relaunchId);
             }
 
             $actionCommReminder = new ActionCommReminder($db);

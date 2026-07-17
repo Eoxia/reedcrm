@@ -47,6 +47,7 @@ global $conf, $db, $langs, $user;
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+dol_include_once('/reedcrm/lib/reedcrm_function.lib.php');
 
 // This endpoint boots on the core main.inc.php, which only brings main.lang. Without this the
 // module keys of the table header render as raw keys, while Date / Status / Done / ToDo work
@@ -104,6 +105,13 @@ if (is_array($actionComms) && !empty($actionComms)) {
     if ($limit > 0) {
         $actionComms = array_slice($actionComms, 0, $limit);
     }
+
+    // Follow-up reminders of every listed relaunch, resolved in one query rather than per row
+    $relaunchIds  = [];
+    foreach ($actionComms as $ac) {
+        $relaunchIds[] = (int) $ac->id;
+    }
+    $remindersByRelaunch = reedcrm_get_reminders_by_relaunch($db, $relaunchIds);
 
     print '<div class="reedcrm-relaunch-tooltip-content">';
     print '<table class="noborder centpercent">';
@@ -175,14 +183,26 @@ if (is_array($actionComms) && !empty($actionComms)) {
         }
         print '</td>';
 
-        // What
+        // What, then the relaunch to come this one led to
         print '<td class="tdoverflowmax200">';
+        $hasText = false;
         if (dol_strlen($ac->label)) {
             print '<strong>' . dol_escape_htmltag($ac->label) . '</strong>';
+            $hasText = true;
         }
         if (!empty($ac->note_private)) {
             $note = dolGetFirstLineOfText(dol_string_nohtmltag($ac->note_private, 1));
-            print (dol_strlen($ac->label) ? '<br>' : '') . '<span class="opacitymedium">' . dol_escape_htmltag(dol_trunc($note, 80)) . '</span>';
+            print ($hasText ? '<br>' : '') . '<span class="opacitymedium">' . dol_escape_htmltag(dol_trunc($note, 80)) . '</span>';
+            $hasText = true;
+        }
+
+        $reminder = $remindersByRelaunch[(int) $ac->id] ?? null;
+        if ($reminder !== null) {
+            print ($hasText ? '<br>' : '');
+            print '<a class="reedcrm-relaunch-followup" href="' . dol_buildpath('/comm/action/card.php', 1) . '?id=' . ((int) $reminder->id) . '">';
+            print '<i class="fas fa-bell"></i> ';
+            print dol_escape_htmltag($langs->trans('RelaunchFollowUpOn', dol_print_date($db->jdate($reminder->datep), 'dayhour', 'tzuser')));
+            print '</a>';
         }
         print '</td>';
 

@@ -61,6 +61,7 @@ LastCommercialReminderDate = Date dernière relance commerciale
 # En-tetes du tableau des relances (Date et Statut viennent de main.lang)
 RelaunchWho = Qui
 RelaunchWhat = Quoi
+RelaunchFollowUpOn = Rappel le %s
 ActionCommCreation = Événement créé
 ReminderActionCommCreation = Rappel crée le %s
 ErrorNoProjectAndThirdpartyInformations = Veuillez renseigner un nom de projet et un nom de tiers
