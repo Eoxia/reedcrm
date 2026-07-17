@@ -14,12 +14,13 @@
         </label>
     </div>
 
-    <label>
+    <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;">
+        <input type="checkbox" id="toggle_reminder" name="add_reminder" value="1" style="margin: 0;">
         <i class="far fa-bell"></i>
         <?= $langs->trans('AddReminder'); ?>
     </label>
 
-    <div id="reminder_fields" class="reminder-fields">
+    <div id="reminder_fields" class="reminder-fields" style="display: none;">
         <div>
             <label for="reminder_title">
                 <input type="text" id="reminder_title" name="reminder_title" maxlength="255" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('reminder_title') ? GETPOST('reminder_title') : '')); ?>">

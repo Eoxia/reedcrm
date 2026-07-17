@@ -59,6 +59,7 @@ window.reedcrm.quickcreation.longitude = null;
  * @returns {void}
  */
 window.reedcrm.quickcreation.init = function() {
+  window.reedcrm.quickcreation.setAddressBlockState('searching', 'Détection de la position en cours...');
   window.reedcrm.quickcreation.event();
 };
 
@@ -71,12 +72,6 @@ window.reedcrm.quickcreation.init = function() {
  * @returns {void}
  */
 window.reedcrm.quickcreation.event = function() {
-  // Upload image and display on canvas with signature pad
-  // Image manipulation (uploadImage, drawOnImage, rotation, undo, erase) features from saturne/js/modules/media.js
-  if (typeof window.saturne !== 'undefined' && window.saturne.media && typeof window.saturne.media.uploadImage === 'function') {
-      $(document).on('change', '#upload-image', window.saturne.media.uploadImage);
-  }
-  $(document).on('click', '.image-validate', window.reedcrm.quickcreation.createImg);
 
   // Get current GPS position of navigator user
   window.reedcrm.quickcreation.getCurrentPosition();
@@ -88,37 +83,6 @@ window.reedcrm.quickcreation.event = function() {
   $(document).on('input', '#opp_percent', window.reedcrm.quickcreation.showOppPercentValue);
 };
 
-/**
- * create img action
- *
- * @since   1.3.0
- * @version 1.3.0
- *
- * @return {void}
- */
-window.reedcrm.quickcreation.createImg = function() {
-  let canvas = $(this).closest('.wpeo-modal').find('canvas')[0];
-  let img    = canvas.toDataURL('image/jpeg');
-
-  let token          = window.saturne.toolbox.getToken();
-  let querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
-
-  let url = document.URL + querySeparator + 'action=add_img&token=' + token;
-  $.ajax({
-    url: url,
-    type: 'POST',
-    processData: false,
-    contentType: 'application/octet-stream',
-    data: JSON.stringify({
-      img: img,
-    }),
-    success: function(resp) {
-      $('.wpeo-modal').removeClass('modal-active');
-      $('#id-container .linked-medias-list').replaceWith($(resp).find('#id-container .linked-medias-list'));
-    },
-    error: function () {}
-  });
-};
 
 /**
  * Get current GPS position of navigator user
@@ -135,8 +99,22 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
     return;
   }
 
+  // Safety fallback: if browser silently ignores permission (no popup shown),
+  // the native timeout may never fire. Force error state after 12s.
+  var _geolocResolved = false;
+  var _safetyTimer = setTimeout(function() {
+    if (!_geolocResolved) {
+      _geolocResolved = true;
+      $('#id-container #geolocation-error').val('Timeout');
+      window.reedcrm.quickcreation.setAddressBlockState('error', 'Délai dépassé. Autorisez la localisation dans votre navigateur.');
+    }
+  }, 12000);
+
   navigator.geolocation.getCurrentPosition(
     function (position) {
+      _geolocResolved = true;
+      clearTimeout(_safetyTimer);
+      $('#id-container #geolocation-error').val('');
       window.reedcrm.quickcreation.latitude  = position.coords.latitude;
       window.reedcrm.quickcreation.longitude = position.coords.longitude;
       $('#id-container #latitude').val(window.reedcrm.quickcreation.latitude);
@@ -147,14 +125,18 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
       );
     },
     function (error) {
+      if (_geolocResolved) return; // safety timer already fired
+      _geolocResolved = true;
+      clearTimeout(_safetyTimer);
       var messages = {
-        1: 'User denied the request for geolocation.',
-        2: 'Location information is unavailable.',
-        3: 'The request to get user location timed out.'
+        1: 'Accès à la position refusé.',
+        2: 'Position indisponible.',
+        3: 'Délai de géolocalisation dépassé.'
       };
-      $('#id-container #geolocation-error').val(messages[error.code] || 'An unknown error occurred.');
-      window.reedcrm.quickcreation.setAddressBlockState('error', 'Accès à la position refusé.');
-    }
+      $('#id-container #geolocation-error').val(error.message || '');
+      window.reedcrm.quickcreation.setAddressBlockState('error', messages[error.code] || 'Erreur de géolocalisation.');
+    },
+    { timeout: 10000, maximumAge: 300000 }
   );
 };
 
@@ -171,6 +153,7 @@ window.reedcrm.quickcreation.getCurrentPosition = function() {
  */
 window.reedcrm.quickcreation.resolveCurrentAddress = function(lat, lon) {
   $('#current-address-coords').text(lat.toFixed(6) + ' / ' + lon.toFixed(6));
+  $('#current-address-block').attr('href', 'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lon).attr('target', '_blank');
 
   $.getJSON(
     'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&addressdetails=1',
@@ -210,23 +193,26 @@ window.reedcrm.quickcreation.resolveCurrentAddress = function(lat, lon) {
 window.reedcrm.quickcreation.setAddressBlockState = function(state, message) {
   var $icon = $('#current-address-icon');
   var $text = $('#current-address-text');
+  var $ko   = $('#current-address-ko');
 
   $icon.removeClass('fa-circle-notch fa-spin fa-map-marker-alt fa-exclamation-triangle');
+  $ko.hide();
 
   var $block = $('#current-address-block');
 
   if (state === 'success') {
-    $icon.addClass('fa-map-marker-alt').css('color', '#3498db');
+    $icon.addClass('fa-map-marker-alt').css('color', '#2ecc71');
     $text.css('color', '#34495e');
-    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
+    $block.addClass('is-visible');
   } else if (state === 'error') {
-    $icon.addClass('fa-exclamation-triangle').css('color', '#e74c3c');
+    $icon.addClass('fa-map-marker-alt').css('color', '#e74c3c');
+    $ko.show();
     $text.css('color', '#e74c3c');
-    $block.css({ background: '#fef2f2', 'border-color': '#fecaca' });
+    $block.addClass('is-visible');
   } else {
     $icon.addClass('fa-circle-notch fa-spin').css('color', '#3498db');
     $text.css('color', '#94a3b8');
-    $block.css({ background: '#f1f5f9', 'border-color': '#e2e8f0' });
+    $block.removeClass('is-visible');
   }
 
   $text.text(message);
@@ -283,3 +269,6 @@ window.reedcrm.quickcreation.showOppPercentValue = function() {
   $('.opp_percent-value').text(val + '%');
   $('#opp_percent').parent().get(0).style.setProperty('--val', val);
 };
+
+// Initialisation assurée par reedcrm.load_list_script() dans reedcrm.min.js
+// qui itère window.reedcrm et appelle .init() sur chaque module au document.ready.

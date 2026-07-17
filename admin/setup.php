@@ -585,6 +585,20 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_EVENT_CATEGORIES_VISIBLE');
 print '</td></td><td></td></tr>';
 
+// EXPEDITION
+print '<tr class="oddeven"><td colspan="4" class="center"><div class="titre inline-block">' . $langs->trans('Configs', $langs->transnoentities('Shipments')) . '</div></td></tr>';
+
+// ShippingDateEqualsCreationDate
+print '<tr class="oddeven"><td>';
+print $langs->trans('ShippingDateEqualsCreationDate');
+print '</td><td>';
+print $langs->trans('ShippingDateEqualsCreationDateHelp');
+print '</td>';
+
+print '<td class="center">';
+print ajax_constantonoff('REEDCRM_EXPEDITION_SHIPPING_DATE_AS_CREATION_DATE');
+print '</td><td></td></tr>';
+
 print '</table>';
 print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
 print '</form>';

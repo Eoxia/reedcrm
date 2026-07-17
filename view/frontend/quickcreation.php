@@ -75,8 +75,8 @@ if (isModEnabled('project')) {
 $hookmanager->initHooks(['reedcrm_quickcreation_frontend']); // Note that conf->hooks_modules contains array
 
 // Security check - Protection if external user
-$permissionToRead       = $user->rights->reedcrm->read;
-$permissionToAddProject = $user->rights->projet->creer;
+$permissionToRead       = $user->hasRight('reedcrm', 'read');
+$permissionToAddProject = $user->hasRight('projet', 'creer');
 saturne_check_access($permissionToRead);
 
 /*
@@ -89,7 +89,7 @@ if ($resHook < 0) {
     setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 }
 
-if (empty($resHook)) {
+if (empty($resHook) && !empty($permissionToAddProject)) {
     $error = 0;
 
     // Actions add_img, add
@@ -102,8 +102,15 @@ if (empty($resHook)) {
 
 $title    = $langs->trans('QuickCreation');
 $help_url = 'FR:Module_ReedCRM';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/saturne/js/includes/signature-pad.min.js', '/custom/saturne/js/includes/hammer.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS  = ['/custom/reedcrm/css/reedcrm.min.css'];
+$moreJS   = [
+    '/custom/saturne/js/saturne.min.js',
+    '/custom/saturne/js/includes/signature-pad.min.js',
+    '/custom/saturne/js/includes/hammer.min.js',
+    '/custom/reedcrm/js/intl-tel-input/js/intlTelInput.min.js',
+    '/custom/reedcrm/js/reedcrm.min.js',
+    '/custom/reedcrm/js/modules/quickcreation.js'
+];
+$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -140,6 +147,9 @@ if ($nbLatestOpportunities > 0) {
 
 // Include the Bottom Navigation Bar for App
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
+
+// Include Saturne Photo Editor Modal (Required for photo uploads)
+include dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 // End of page
 llxFooter();

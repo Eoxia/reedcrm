@@ -55,6 +55,7 @@ if (isModEnabled('fckeditor')) {
 
 // Load ReedCRM libraries
 require_once __DIR__ . '/../lib/reedcrm_eventpro.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -77,7 +78,7 @@ $category   = new Categorie($db);
 $form        = new Form($db);
 $formProject = new FormProjets($db);
 $formActions = new FormActions($db);
-$formTicket  = new FormTicket($db);
+$formTicket  = isModEnabled('ticket') ? new FormTicket($db) : null; // FormTicket class is only loaded when the Ticket module is enabled (see require above)
 
 $hookmanager->initHooks([$object->element . 'eventpro', 'globalcard']); // Note that conf->hooks_modules contains array
 
@@ -195,6 +196,7 @@ if (empty($resHook)) {
             $date_reminder = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
 
             $actionComm->type_code    = 'AC_OTH';
+            $actionComm->percentage   = 0; // Reminder is a future "to do", not the completed event reused above
 
             $actionComm->datep        = $date_reminder;
 
@@ -202,6 +204,17 @@ if (empty($resHook)) {
             $actionComm->note_private = '';
 
             $result = $actionComm->create($user);
+
+            // Tag the reminder event with its own category so it can be listed on the dashboard
+            // (dedicated tag, not the commercial relaunch one, to avoid inflating relaunch counts)
+            if ($result > 0) {
+                $reminderCategoryID = reedcrm_get_call_reminder_category_id($db, $user);
+                if ($reminderCategoryID > 0) {
+                    $reminderCategory = new Categorie($db);
+                    $reminderCategory->fetch($reminderCategoryID);
+                    $reminderCategory->add_type($actionComm, 'actioncomm');
+                }
+            }
 
             $actionCommReminder = new ActionCommReminder($db);
 
@@ -395,6 +408,15 @@ saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm
 if (empty($action)) {
     saturne_get_fiche_head($object, 'event', $title);
     saturne_banner_tab($object);
+
+    // ReedCRM: opportunity chain bar (projects only)
+    if ($object->element === 'project') {
+        require_once __DIR__ . '/../lib/reedcrm.lib.php';
+        $reedcrmChainDocs = reedcrm_get_pwa_projects_documents([$object->id]);
+        $chainBarDocs     = $reedcrmChainDocs[$object->id] ?? [];
+        print reedcrm_chain_bar_styles();
+        include __DIR__ . '/../core/tpl/frontend/reedcrm_opportunity_chain_bar.tpl.php';
+    }
 
     print '<div class="fichecenter">';
 

@@ -81,12 +81,124 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         object-fit: contain !important; /* Contain handles both true JPG ratios and the tiny fallback PNG natively */
         border: none !important;
     }
+
+    /* Liseret (Border) manquant pour les composants natifs de Dolibarr (Select2 et Autocomplete) dans la PWA */
+    .quickcreation-form-container .select2-container {
+        width: 100% !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        background: #fff !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal !important;
+        padding-left: 8px !important;
+    }
+    .quickcreation-form-container .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+    }
+    .quickcreation-form-container input.ui-autocomplete-input,
+    .quickcreation-form-container select {
+        padding: 8px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 4px !important;
+        background: #fff !important;
+        box-sizing: border-box !important;
+        height: 38px !important;
+    }
+    .geoloc-address-link {
+        display: none;
+        flex-direction: column;
+        text-align: right;
+        max-width: 250px;
+        background: #f8fafc;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        border: 1px solid #e2e8f0;
+        transition: background 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .geoloc-address-link.is-visible {
+        display: flex !important;
+    }
+    .geoloc-address-link:hover {
+        background: #e2e8f0 !important;
+    }
+    /* Style custom pour Categories */
+    .category-wrapper {
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        background: #fff;
+        padding: 4px 8px;
+        display: flex;
+        align-items: center;
+        min-height: 38px;
+        box-sizing: border-box;
+    }
+    .category-select-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 8px;
+    }
+    .category-select-container > span.fa-tag {
+        color: #0f172a;
+        font-size: 16px;
+    }
+    .category-select-container > span.multiselectarraycategories {
+        flex: 1;
+        min-width: 0;
+        display: block;
+    }
+    .category-select-container .select2-container {
+        width: 100% !important;
+    }
+    .category-select-container .select2-container--default .select2-selection--multiple,
+    .category-select-container .select2-container--default .select2-selection--single {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+    .category-select-container .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border: none !important;
+    }
+    .category-select-container > a {
+        margin-left: auto;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+    .category-select-container > a span.fa-plus-circle {
+        font-size: 18px;
+        color: #0f172a;
+    }
 </style>
 
 <div id="id-container" class="page-content">
     <?php print saturne_show_notice('', '', 'error', 'notice-infos', false, true, '', ['Error' => $langs->transnoentities('Error')]); ?>
 
-    <div class="quickcreation-form-container">
+    <div class="quickcreation-form-container" style="position: relative;">
+        <!-- Geoloc Wrapper (Will be moved to PWA header left of avatar via JS) -->
+        <div id="geoloc-header-wrapper" style="display: none; align-items: center; gap: 10px; margin-right: 15px;">
+            <a id="current-address-block" class="geoloc-address-link" href="javascript:void(0);">
+                <div id="current-address-text" style="font-size: 11px; color: #34495e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; font-weight: 500;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
+                <div id="current-address-coords" style="font-size: 9px; color: #94a3b8; line-height: 1.2;"></div>
+            </a>
+            <div id="geoloc-top-right-icon" style="cursor: pointer; display: flex; align-items: center; gap: 5px;" title="Cliquez pour afficher/masquer l'adresse" data-action="toggle-geoloc-address">
+                <span id="current-address-ko" style="display: none; color: #e74c3c; font-weight: bold; font-size: 14px;">KO</span>
+                <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size: 20px; color: #3498db;"></i>
+            </div>
+        </div>
+
+
         <!-- Project label -->
         <div class="form-group">
             <input type="text" id="title" name="title" placeholder="<?php echo $langs->trans('ProjectLabel'); ?> (ex: Projet Refonte Web...)" value="<?php echo dol_escape_htmltag((GETPOSTISSET('title') ? GETPOST('title') : '')); ?>" required>
@@ -98,6 +210,21 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
             </div>
         <?php endif; ?>
+
+        <!-- Thirdparty -->
+        <div class="form-group">
+            <?php
+            $events = array(array('method'=>'getContacts', 'url'=>dol_buildpath('/core/ajax/contacts.php', 1), 'htmlname'=>'contactid', 'params'=>array('add-customer-contact'=>'disabled')));
+            print $form->select_company(GETPOST('socid', 'int'), 'socid', '', 'SelectThirdParty', 0, 0, $events, 0, 'widthcentpercent');
+            ?>
+        </div>
+
+        <!-- Contact -->
+        <div class="form-group" id="contact-wrapper" style="display: none;">
+            <select name="contactid" id="contactid" class="flat widthcentpercent" data-placeholder="Contact/Adresse">
+                <option value="-1"></option>
+            </select>
+        </div>
 
         <!-- ExtraFields -->
         <div class="form-row-grid">
@@ -154,9 +281,9 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 
                 <!-- Opportunity option -->
         <?php if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) : ?>
-            <div class="opp-row" style="display: flex; gap: 15px; align-items: center; margin-top: 0; margin-bottom: 0;">
-                <!-- 70% -->
-                <div class="form-group" style="flex: 7; margin-bottom: 0;">
+            <div class="opp-row" style="display: flex; flex-direction: column; gap: 15px; margin-top: 0; margin-bottom: 0;">
+                <!-- 100% Slider -->
+                <div class="form-group" style="width: 100%; margin-bottom: 0;">
                     <div class="opp-percent" style="display: flex; align-items: center;">
                         <span style="font-size: 22px; margin-right: 8px;">🥵</span>
                         <div style="position: relative; flex: 1; display: flex; align-items: center; --val: <?php echo empty($project->opp_percent) ? '0' : $project->opp_percent; ?>;">
@@ -167,15 +294,15 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                     </div>
                 </div>
 
-                <!-- 30% -->
-                <div class="form-group" style="flex: 3; margin-bottom: 0;">
-                    <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
-                        <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
-                            <span class="input-icon">€</span>
-                            <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="Montant" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>" style="width: 100%;">
-                        </div>
-                    <?php endif; ?>
+                <!-- 100% Amount -->
+                <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+                <div class="form-group" style="width: 100%; margin-bottom: 0;">
+                    <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
+                        <span class="input-icon">€</span>
+                        <input type="text" inputmode="decimal" name="opp_amount" id="opp_amount" placeholder="Montant" value="<?php echo dol_escape_htmltag((GETPOSTISSET('opp_amount') ? GETPOST('opp_amount', 'int') : '')); ?>" style="width: 100%;">
+                    </div>
                 </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
@@ -183,8 +310,12 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 
         <!-- Tags / Categories -->
         <?php if (isModEnabled('categorie')) : ?>
-            <div class="form-group" style="margin-top: 8px;">
-                <?php print $form->selectCategories(Categorie::TYPE_PROJECT, 'categories'); ?>
+            <div class="form-group" style="margin-top: 15px;">
+                <div class="category-wrapper">
+                    <div style="flex: 1; min-width: 0;" class="category-select-container">
+                        <?php print $form->selectCategories(Categorie::TYPE_PROJECT, 'categories'); ?>
+                    </div>
+                </div>
             </div>
         <?php endif; ?>
 
@@ -198,14 +329,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <input type="hidden" id="longitude" name="longitude" value="">
         <input type="hidden" id="geolocation-error" name="geolocation-error" value="">
 
-        <!-- Current address display -->
-        <div id="current-address-block" style="display:flex; align-items:center; gap:10px; margin-top:10px; margin-bottom:20px; padding:12px 14px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; overflow:hidden;">
-            <i id="current-address-icon" class="fas fa-circle-notch fa-spin" style="font-size:16px; color:#3498db; flex-shrink:0;"></i>
-            <div style="flex:1; min-width:0;">
-                <div id="current-address-text" style="font-size:13px; color:#34495e; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?php echo $langs->trans('DetectingLocation'); ?>…</div>
-                <div id="current-address-coords" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
-            </div>
-        </div>
+        <!-- Current address display removed from here (moved to header) -->
 
     </div>
 </div>
@@ -236,276 +360,13 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
     }
 </style>
-<script src="<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js', 1); ?>"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // --- Phone Validation (Local libphonenumber) ---
-    const phoneInput = document.getElementById('projectphone');
-    if (phoneInput) {
-        const iti = window.intlTelInput(phoneInput, {
-            initialCountry: "fr",
-            utilsScript: "<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/js/utils.js', 1); ?>",
-            formatOnDisplay: true,
-            nationalMode: true,
-            autoPlaceholder: "aggressive",
-            preferredCountries: ["fr", "be", "ch", "lu", "mc"]
-        });
-
-        // Saisie au fur et à mesure et Validation dynamique
-        phoneInput.addEventListener('input', function() {
-            let val = phoneInput.value;
-            
-            // Correction automatique du +33 06 -> +33 6 (Erreur classique)
-            let correctedVal = val.replace(/^(?:\+33|0033)[\s\-.]*0([1-9])/, '+33 $1');
-            if (correctedVal !== val) {
-                val = correctedVal;
-                phoneInput.value = val;
-            }
-
-            // Mettre à jour "au fur et à mesure"
-            if (window.intlTelInputUtils) {
-                let currentPos = phoneInput.selectionStart;
-                let isAtEnd = (currentPos === phoneInput.value.length);
-                
-                let formatType = val.startsWith('+') ? window.intlTelInputUtils.numberFormat.INTERNATIONAL : window.intlTelInputUtils.numberFormat.NATIONAL;
-                let formatted = window.intlTelInputUtils.formatNumber(val, iti.getSelectedCountryData().iso2, formatType);
-                
-                if (formatted && formatted !== val) {
-                    phoneInput.value = formatted;
-                    // Empêcher le saut de curseur
-                    if (!isAtEnd && phoneInput.setSelectionRange) {
-                        phoneInput.setSelectionRange(currentPos, currentPos); 
-                    }
-                }
-            }
-
-            if (phoneInput.value.trim() !== '') {
-                if (!iti.isValidNumber()) {
-                    phoneInput.classList.add('input-invalid-material');
-                    phoneInput.setCustomValidity('Numéro de téléphone invalide.');
-                } else {
-                    phoneInput.classList.remove('input-invalid-material');
-                    phoneInput.setCustomValidity('');
-                }
-            } else {
-                phoneInput.classList.remove('input-invalid-material');
-                phoneInput.setCustomValidity('');
-            }
-        });
-
-        // Ensure we send a validly formatted E.164 number on submit if present
-        const form = phoneInput.closest('form');
-        if (form) {
-            form.addEventListener('submit', function() {
-                if (phoneInput.value.trim() && iti.isValidNumber()) {
-                    phoneInput.value = iti.getNumber();
-                }
-            });
-        }
-    }
-
-    // --- Email Validation (Material Design) ---
-    const emailInputs = document.querySelectorAll('input[type="email"]');
-    // La regex la plus proche du standard HTML5 préconisée par Google
-    const materialEmailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-
-    emailInputs.forEach(function(emailInput) {
-        // Validation dynamique
-        emailInput.addEventListener('input', function() {
-            const emailValue = this.value.trim();
-            if (emailValue !== '' && !materialEmailRegex.test(emailValue)) {
-                this.classList.add('input-invalid-material');
-                this.setCustomValidity('Format de l\'adresse e-mail invalide.');
-            } else {
-                this.classList.remove('input-invalid-material');
-                this.setCustomValidity('');
-            }
-        });
-    });
-
-    // --- URL Validation (Website Split Input) ---
-    const websiteGroups = document.querySelectorAll('.website-input-group');
-    const domainRegex = /^([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
-
-    websiteGroups.forEach(function(group) {
-        const protocolSelect = group.querySelector('.url-protocol');
-        const domainInput = group.querySelector('.url-domain');
-        const hiddenInput = group.querySelector('.url-hidden');
-
-        function updateHiddenAndValidate() {
-            let domainVal = domainInput.value.trim();
-            
-            // Clean up if user pasted the full URL including protocol into the domain part
-            if (/^https?:\/\//i.test(domainVal)) {
-                if (domainVal.toLowerCase().startsWith('http://')) {
-                    protocolSelect.value = 'http://';
-                    domainVal = domainVal.substring(7);
-                } else if (domainVal.toLowerCase().startsWith('https://')) {
-                    protocolSelect.value = 'https://';
-                    domainVal = domainVal.substring(8);
-                }
-                domainInput.value = domainVal;
-            }
-            
-            // Allow empty string to pass validation natively (it's not required)
-            if (domainVal === '') {
-                hiddenInput.value = '';
-                group.classList.remove('input-invalid-material');
-                domainInput.setCustomValidity('');
-                return false;
-            }
-            
-            hiddenInput.value = protocolSelect.value + domainVal;
-
-            if (!domainRegex.test(domainVal)) {
-                group.classList.add('input-invalid-material');
-                domainInput.setCustomValidity('Format du nom de domaine invalide.');
-                return true; // has format error
-            } else {
-                group.classList.remove('input-invalid-material');
-                domainInput.setCustomValidity('');
-                return false; // no error
-            }
-        }
-
-        protocolSelect.addEventListener('change', updateHiddenAndValidate);
-        domainInput.addEventListener('input', updateHiddenAndValidate);
-    });
-
-    // --- AJAX Form Submission (Prevent media loss on validation error) ---
-    const mainForm = document.querySelector('.quickcreation-form');
-    if (mainForm) {
-        mainForm.addEventListener('submit', function(e) {
-            // Only intercept if native HTML5 validation passes
-            if (!this.checkValidity()) return;
-            
-            // Check custom material email regex
-            let hasFormatError = false;
-            const formEmailInputs = this.querySelectorAll('input[type="email"]');
-            formEmailInputs.forEach(function(emailInput) {
-                const emailValue = emailInput.value.trim();
-                if (emailValue !== '' && !materialEmailRegex.test(emailValue)) {
-                    hasFormatError = true;
-                    emailInput.classList.add('input-invalid-material');
-                    emailInput.reportValidity();
-                    emailInput.focus();
-                }
-            });
-            
-            // Check custom material url split regex
-            const formWebsiteGroups = this.querySelectorAll('.website-input-group');
-            formWebsiteGroups.forEach(function(group) {
-                const domainInput = group.querySelector('.url-domain');
-                let domainVal = domainInput.value.trim();
-                
-                if (domainVal !== '' && !domainRegex.test(domainVal)) {
-                    hasFormatError = true;
-                    group.classList.add('input-invalid-material');
-                    domainInput.reportValidity();
-                    domainInput.focus();
-                }
-            });
-            
-            if (hasFormatError) {
-                e.preventDefault();
-                return;
-            }
-
-            e.preventDefault();
-            
-            const submitBtn = mainForm.querySelector('button[type="submit"]');
-            if (!submitBtn) return;
-            
-            const originalBtnContent = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 20px; color: #fff;"></i>';
-            submitBtn.disabled = true;
-            
-            const formData = new FormData(mainForm);
-            formData.append('ajax_submission', '1');
-            
-            fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                // If standard dolibarr redirect fires or JSON is returned depending on backend
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    return response.json();
-                } else {
-                    return response.text();
-                }
-            })
-            .then(data => {
-                if (typeof data === 'object' && data.success) {
-                    if (data.redirect_url) {
-                        window.location.href = data.redirect_url;
-                    } else {
-                        window.location.reload();
-                    }
-                } else if (typeof data === 'string') {
-                    // It's probably an HTML error page or standard Dolibarr notice rendering
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data, 'text/html');
-                    
-                    const errorDivs = doc.querySelectorAll('.error, .theme-error, .jnotify-container, .alert-danger, .warning, .theme-warning');
-                    if (errorDivs.length > 0) {
-                        // Clear old errors
-                        let oldNotices = document.querySelectorAll('.error, .theme-error, .jnotify-container, .alert-danger, .warning, .theme-warning');
-                        oldNotices.forEach(n => n.remove());
-                        
-                        const container = document.getElementById('id-container') || mainForm;
-                        if (container) {
-                            errorDivs.forEach(errNode => {
-                                container.insertBefore(errNode, container.firstChild);
-                            });
-                            // Scroll to top to see error
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                    } else if (doc.querySelector('.ok, .theme-success, .theme-statut-ok')) {
-                        // Success messages detected in HTML reload
-                        window.location.reload();
-                    } else {
-                        // Fallback reload if we somehow get HTML without recognizable states
-                        document.open();
-                        document.write(data);
-                        document.close();
-                    }
-                }
-            })
-            .catch(err => {
-                console.error("Erreur de soumission", err);
-                alert("Une erreur technique s'est produite lors de la soumission.");
-            })
-            .finally(() => {
-                submitBtn.innerHTML = originalBtnContent;
-                submitBtn.disabled = false;
-            });
-        });
-    }
-
-    // --- Slider Opportunity Percent Sync ---
-    const oppSlider = document.getElementById('opp_percent');
-    const oppValueEl = document.querySelector('.opp_percent-value');
-    if (oppSlider && oppValueEl) {
-        
-        function updateSlider() {
-            let val = parseInt(oppSlider.value) || 0;
-            oppValueEl.textContent = val + '%';
-            
-            // Calc exact left position directly via JS to override any broken CSS calc() on mobile
-            // Assume track is 100%, thumb is 45px width.
-            // At 0%, center is 22.5px. At 100%, center is calc(100% - 22.5px).
-            let percentage = val / 100;
-            oppValueEl.style.left = 'calc(' + (percentage * 100) + '% - ' + (percentage * 45) + 'px + 22.5px)';
-        }
-        // Init
-        updateSlider();
-        
-        // Update on drag
-        oppSlider.addEventListener('input', updateSlider);
-    }
-});
-</script>
-
+<?php
+// Data attributes for JS — lang is passed via HTML, no inline script needed
+$defaultLang = substr($langs->defaultlang, 0, 2);
+$utilsPath   = dol_buildpath('/reedcrm/js/intl-tel-input/js/utils.js', 1);
+?>
+<div id="reedcrm-quickcreation-data"
+     data-lang="<?php echo dol_escape_htmltag($defaultLang); ?>"
+     data-utils-path="<?php echo dol_escape_htmltag($utilsPath); ?>"
+     style="display:none;"></div>
 <?php

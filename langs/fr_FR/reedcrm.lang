@@ -211,6 +211,7 @@ ObjectAddContactTrigger = Contact ajouté
 UpdateObjectContactTrigger = Mise à jour du rôle "contacts facturation" des factures
 NoContact = Aucun contact
 AddContactNotificationTrigger = Ajout d'une notification contact "action Facture client validée" des tiers
+DictionarySource = Origine des opportunités/devis/commandes/factures
 OpportunityOrigin = Origine de l'opportunitée
 SRC_INTE = Internet
 SRC_CAMP_MAIL = Campagne Publipostage
@@ -308,8 +309,16 @@ ImportProjectsFromCSV = Importer des projets depuis un CSV
 ImportProjectsDescription = Sélectionnez un fichier CSV pour créer automatiquement des projets.
 CSVExpectedColumns = Le fichier doit contenir les colonnes : Prenom, Nom, Email, Tel, Note.
 UploadImport = Importer
+ViewImportHistory = Historique des imports
+ImportHistory = Historique des imports
+NbLines = Nombre de lignes
+ChooseExistingTag = Choisir un tag existant
+OrCreateNewTag = Ou créer un nouveau tag
+SelectOrCreate = -- Sélectionner un tag --
+TagAlreadyExistsTitle = Tag déjà existant
+TagAlreadyExistsQuestion = Le tag « %s » existe déjà. Voulez-vous l'utiliser pour cet import ?
 ConfirmImportProjectsTitle = Import de projets
-ConfirmImportProjectsQuestion = Saisissez le nom de la catégorie à attribuer aux projets importés.
+ConfirmImportProjectsQuestion = Choisissez un tag existant ou saisissez un nouveau nom de catégorie.
 CategoryName = Nom de la catégorie
 NoFileUploaded = Aucun fichier sélectionné.
 ImportFileUploadError = Erreur lors du téléchargement du fichier.
@@ -320,7 +329,6 @@ ImportParametersMissing = Paramètres d'import manquants.
 CategoryCreationError = Erreur lors de la création de la catégorie.
 ProjectsImported = %s projets importés sur %s lignes.
 ProjectsImportErrors = %s lignes n'ont pas pu être importées.
-NbLines = Nombre de lignes
 OpportunitiesImport = Import d'opportunités
 ImportedOpportunityList = Liste des opportunités importés
 
@@ -343,3 +351,312 @@ PropalStatusBilled = Facturée
 DetectingLocation = Détection de la position en cours
 GeolocationNotSupported = Géolocalisation non supportée par ce navigateur
 GeolocationDenied = Accès à la position refusé
+
+# KPI cards - opportunity project list
+ReedCRMKpiNbOpportunities = Opportunités
+ReedCRMKpiTotalAmount = Montant total
+ReedCRMKpiWeightedAmount = Pipeline pondéré
+ReedCRMKpiAvgProbability = Probabilité moyenne
+
+# List presets - opportunity project list
+ReedCRMPresetMine = Mes opportunités
+ReedCRMPresetHot = Chaudes
+ReedCRMPresetOpen = Ouvertes
+ReedCRMPresetToRelaunch = À relancer
+
+ReedCRMSaveView = Enregistrer la vue
+
+# KPI banner customization
+ReedCRMKpiCustomize = Personnaliser
+ReedCRMKpiReset = Réinitialiser
+
+OpportunityDetails = Opportunité
+
+ReedCRMStatusAsDot = État : rond
+ReedCRMStatusAsBadge = État : pastille
+#
+# Call List - Liste d'appel
+#
+
+# Data
+CallList = Liste d'appel
+CallLists = Listes d'appel
+NewCallList = Nouvelle liste d'appel
+# Derived keys auto-built by the generic saturne_list.php from the element name (call_list)
+Call_listList = Listes d'appel
+NewCall_list = Nouvelle liste d'appel
+CallListStatus0 = Brouillon
+CallListStatus1 = Active
+CallListStatus2 = Archivée
+CallListStatusShort0 = Brouillon
+CallListStatusShort1 = Active
+CallListStatusShort2 = Archivée
+
+# Lines
+CallListLine = Ligne de liste d'appel
+CallListLineStatus0 = À appeler
+CallListLineStatus1 = Appelé
+CallListLineStatus2 = Pas de réponse
+CallListLineStatus3 = À rappeler
+CallListLineStatusShort0 = À appeler
+CallListLineStatusShort1 = Appelé
+CallListLineStatusShort2 = Pas de rép.
+CallListLineStatusShort3 = À rappeler
+
+# UI
+AddCallListLine = Ajouter un contact
+NoCallListLine = Aucun contact dans cette liste
+CallListLineDuplicate = Ce devis / cette opportunité est déjà dans la liste
+SelectElementType = Type de source
+ElementTypePropal = Devis
+ElementTypeProject = Opportunité
+ContactToCall = Contact à appeler
+ContactNoPhone = Aucun numéro de téléphone
+CallListLines = Lignes d'appel
+MobileView = Vue mobile
+CallListCreateActioncomm = Créer un événement à l'appel
+CallListCreateActioncommDesc = Crée automatiquement un événement téléphonique dans l'agenda lors du clic sur le bouton d'appel depuis la vue mobile
+CallListStatusCreateActioncomm = Créer un événement au changement de statut
+CallListStatusCreateActioncommDesc = Crée automatiquement un événement téléphonique dans l'agenda (lié à la liste d'appel, au projet, au tiers et au contact de la ligne) lors du clic sur un bouton de statut (Appelé, Pas de réponse, À rappeler) depuis la vue mobile de la liste d'appels
+CallListStatusCreateTask = Créer une tâche commerciale au changement de statut
+CallListStatusCreateTaskDesc = Crée la tâche de suivi commercial sur le projet lié (si elle n'existe pas) et y ajoute le temps passé configuré lors du clic sur un bouton de statut depuis la vue mobile de la liste d'appels
+CallFrom = Appel depuis
+AddToCallList = Ajouter à une liste d'appel
+SelectCallList = Sélectionner une liste d'appel
+NoActiveCallList = Aucune liste d'appel active
+CallListAddedCount = %d élément(s) ajouté(s) à la liste d'appel
+CallListSkippedNoContactElement = L'élément %s a été ignoré car aucun contact ne lui est associé
+CallListLineDuplicateElement = L'élément %s est déjà présent dans cette liste d'appel
+CallListNotFound = La liste d'appel sélectionnée est introuvable
+CallListCannotAddToArchivedList = Impossible d'ajouter des éléments à une liste d'appel archivée
+AddToCallListWidget = Ajouter à une liste d'appel
+CallListWidgetSuccess = Ajouté à la liste "%s"
+CallListWidgetNoContact = Aucun contact associé à cet élément
+CallListWidgetNoPhone = Le contact n'a pas de numéro de téléphone
+CallListWidgetDuplicate = Déjà présent dans cette liste
+CallListWidgetError = Erreur lors de l'ajout
+DefaultCallListLabel = Liste d'appel �?? %s
+AddToMyCallList = Ajouter à ma liste d'appel
+DefaultCallListNotFound = Aucune liste d'appel par défaut pour cet utilisateur
+
+# PWA Documents Bar
+PwaShowPiecesTitle = Liste des pièces à afficher dans le listing de la PWA
+PwaShowPiecesTitleDesc = Sélectionnez les types de documents à afficher sous forme de barre d'avancement sur les fiches opportunités de la PWA.
+
+REEDCRM_PWA_SHOW_OPP_AMOUNT = Afficher le montant de l'opportunité
+REEDCRM_PWA_SHOW_OPP_AMOUNT_Desc = Affiche le montant estimé de l'opportunité.
+REEDCRM_PWA_SHOW_PROPAL = Afficher la proposition commerciale
+REEDCRM_PWA_SHOW_PROPAL_Desc = Affiche la dernière proposition commerciale (devis) liée au projet.
+REEDCRM_PWA_SHOW_COMMANDE = Afficher la commande client
+REEDCRM_PWA_SHOW_COMMANDE_Desc = Affiche la dernière commande client liée au projet.
+REEDCRM_PWA_SHOW_COMMANDE_FOURN = Afficher la commande fournisseur
+REEDCRM_PWA_SHOW_COMMANDE_FOURN_Desc = Affiche la dernière commande fournisseur liée au projet.
+REEDCRM_PWA_SHOW_RECEPTION = Afficher la réception fournisseur
+REEDCRM_PWA_SHOW_RECEPTION_Desc = Affiche la dernière réception de commande fournisseur liée au projet.
+REEDCRM_PWA_SHOW_FACTURE_FOURN = Afficher la facture fournisseur
+REEDCRM_PWA_SHOW_FACTURE_FOURN_Desc = Affiche la dernière facture fournisseur liée au projet.
+REEDCRM_PWA_SHOW_EXPEDITION = Afficher l'expédition client
+REEDCRM_PWA_SHOW_EXPEDITION_Desc = Affiche la dernière expédition client liée au projet.
+REEDCRM_PWA_SHOW_FACTURE = Afficher la facture client
+REEDCRM_PWA_SHOW_FACTURE_Desc = Affiche la dernière facture client liée au projet.
+REEDCRM_PWA_SHOW_PAYMENT = Afficher l'encaissement
+REEDCRM_PWA_SHOW_PAYMENT_Desc = Affiche le dernier encaissement (règlement client) lié aux factures du projet.
+
+PwaPieceLabel_montant = Opportunité
+PwaPieceLabel_propal = Devis
+PwaPieceLabel_commande = Cmd client
+PwaPieceLabel_commande_fourn = Cmd fourn.
+PwaPieceLabel_reception = Réception
+PwaPieceLabel_facture_fourn = Fact fourn.
+PwaPieceLabel_expedition = Expédition
+PwaPieceLabel_facture = Facture
+PwaPieceLabel_payment = Règlement
+PwaCurrentStep = EN COURS
+REEDCRM_PWA_PIECES_ICONS_ONLY = Barre de pièces en pictogrammes seuls
+REEDCRM_PWA_PIECES_ICONS_ONLY_Desc = Afficher uniquement les icônes colorées (le détail apparaît au survol)
+PwaIssueAmountMismatch = Montant %s différent de la référence %s
+PwaIssueCancelled = Document annulé/refusé
+PwaIssueMissingStep = Étape manquante : %s existe sans cette étape
+PwaIssuePaymentIncomplete = Encaissement incomplet : %s sur %s
+PwaPieceStatus_propal_1 = Validé
+PwaPieceStatus_propal_2 = Signé
+PwaPieceStatus_propal_3 = Refusé
+PwaPieceStatus_propal_4 = Facturé
+PwaPieceStatus_commande_-1 = Annulée
+PwaPieceStatus_commande_3 = Livrée
+PwaPieceStatus_facture_2 = Payée
+PwaPieceStatus_facture_3 = Abandonnée
+
+App-ReedCRM = App-ReedCRM
+
+# Expedition
+ShippingDateEqualsCreationDate = Aligner la date d'expédition sur la date de création
+ShippingDateEqualsCreationDateHelp = À la création d'une expédition, si aucune date d'expédition n'est saisie, elle prend automatiquement la date de création.
+
+TicketTimeTaskPrefix=Préfixe du libellé de la tâche
+TicketTimeTaskPrefixDescription=Préfixe utilisé pour identifier automatiquement la tâche dans laquelle consigner le temps passé sur un ticket (basé sur le libellé).
+
+TicketTimeTaskSuffix=Suffixe du libellé de la tâche
+TicketTimeTaskSuffixDescription=Choisissez ce qui doit être ajouté après le préfixe dans le libellé de la tâche.
+TicketTimeTaskSuffixTicketRef=Référence du ticket (ex: TS2606-0005)
+TicketTimeTaskSuffixProjectRef=Référence du projet
+TicketTimeTaskSuffixProjectLabel=Libellé du projet
+TicketTimeTaskSuffixNone=Rien (préfixe uniquement)
+
+TicketTimeTitleMaxLength=Longueur max du titre de l'événement
+TicketTimeTitleMaxLengthDescription=Nombre maximum de caractères conservés pour le titre de l'événement dans l'agenda (tronqué automatiquement, max recommandé : 255).
+
+TicketTimeDefaultMinutes=Temps par défaut (minutes)
+TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le bloc de saisie rapide sur le ticket.
+
+PleaseLinkProjectFirst=Veuillez d'abord lier un projet au ticket
+ReedCRMLogTimeWithMessage=Enregistrer le temps passé avec ce message
+ReedCRMTimeEntriesLatest=Derniers temps pointés (%s/%s) :
+ReedCRMNoTimeEntries=Aucun temps pointé sur cette tâche.
+
+
+ReadMyCallLists=Voir mes listes d'appel
+ReadSubordinatesCallLists=Voir les listes d'appel de mes subordonnés
+ReadAllCallLists=Voir toutes les listes d'appel
+
+# Propositions - Colonnes liste
+PropalList=Liste des propositions
+RelauchCommercial=Relance commerciale
+ContactDetails=Coordonnées du contact
+
+ProjectList=Liste des projets
+
+# Dashboard - Prochains rappels
+UpcomingCallReminders = Prochains rappels
+NoUpcomingCallReminder = Aucun rappel à venir
+CallReminderCategory = Rappels de relance ReedCRM
+
+
+# Recurring invoice follow-up
+RecurringInvoiceFollowup = Suivi facture récurrente
+RecurringInvoiceFollowupMenu = Suivi FA récurrentes
+RecurringInvoiceTemplate = Facture récurrente
+FollowupSubscription = Prestation récurrente
+FollowupAmountTTC = Montant TTC
+FollowupLastBillingDate = Date dernière facturation
+FollowupInvoiceCreated = Facture récurrente créée
+FollowupInvoiceSent = Facture récurrente envoyée
+FollowupInvoicePaid = Facture payée
+FollowupPaymentOk = Paiement OK / pas d'impayé
+FollowupRelanceDate = Date de relance
+FollowupRelanceCount = Nombre de relances
+FollowupClientContacted = Client contacté
+FollowupContactDate = Date du contact
+FollowupSavTime = Temps de SAV
+FollowupDigiriskExists = DigiRisk existant
+FollowupDigiriskUpToDate = DigiRisk à jour
+FollowupClientAccessOk = Accès client DigiRisk fonctionnel
+FollowupDolibarrVersion = Version de Dolibarr
+FollowupDigiriskVersion = Version de DigiRisk
+FollowupDuUpdateBilledDate = MAJ du DU facturée le
+FollowupDuUpdateBilledDateHelp = Date de facturation de la dernière mise à jour du Document Unique. Sert de référence au cycle annuel de renouvellement.
+FollowupDuNextUpdate = Prochaine MAJ du DU
+FollowupDuNextUpdateHelp = Calculée automatiquement : date de MAJ facturée + 1 an. L'alerte de préparation se déclenche 1 mois avant (configurable).
+FollowupLastDuAudit = Dernier audit DU
+FollowupNeed = Besoin identifié
+FollowupProposal = Proposition faite
+FollowupClientReaction = Réaction du client
+FollowupSalesAmount = Montant PR / ventes du mois
+FollowupStatusToBill = À facturer
+FollowupStatusToSend = À envoyer
+FollowupStatusAwaiting = En attente de paiement
+FollowupStatusPaid = Payée
+FollowupStatusLate = Impayé / relance
+FollowupGroupIdentity = Identité
+FollowupGroupBilling = Facturation & paiement
+FollowupGroupRelance = Relance & contact
+FollowupGroupDigirisk = Santé DigiRisk
+FollowupGroupCommercial = Commercial
+FollowupGroupDu = Document Unique — cycle annuel
+FollowupDuPrepareFrom = Préparer à partir de
+FollowupDuToPrepare = À préparer
+FollowupSeeList = Voir le suivi
+RecordStatus = État
+FollowupDuAlertBanner = %s DU à préparer
+
+# Recurring invoice follow-up - cron & reminders
+FollowupCronGenerateLabel = Suivi FA récurrentes - Génération mensuelle
+FollowupCronGenerateComment = Crée une fiche de suivi pour chaque facture récurrente active échéant ce mois-ci.
+FollowupCronSyncLabel = Suivi FA récurrentes - Synchronisation des factures
+FollowupCronSyncComment = Met à jour les cases créée/envoyée/payée et le montant depuis les factures Dolibarr générées.
+FollowupCronRemindersLabel = Suivi FA récurrentes - Rappels DU & relances
+FollowupCronRemindersComment = Crée les événements agenda pour les MAJ de DU à préparer et les relances de paiement.
+FollowupCronGenerated = %s fiche(s) de suivi créée(s), %s déjà existante(s).
+FollowupCronSynced = %s fiche(s) de suivi synchronisée(s) avec les factures.
+FollowupCronReminders = %s rappel(s) agenda créé(s).
+FollowupDuReminderLabel = Préparer la MAJ du Document Unique - %s
+FollowupRelanceReminderLabel = Relancer le paiement - %s
+FollowupAuditsOfMonth = Audits du mois
+FollowupNextAudit = Prochain audit dû
+FollowupNoAuditThisMonth = Aucun audit DU à préparer ce mois-ci.
+FollowupAuditOverdue = En retard
+FollowupAuditToPrepare = À préparer
+FollowupAuditAdded = Audit ajouté
+FollowupAuditAdd = Ajouter l'audit
+FollowupAuditMove = Déplacer la date de l'audit
+FollowupAuditMarkDone = Marquer l'audit réalisé à cette date (le cycle passe à l'année suivante)
+FollowupAuditRealDate = Date réelle de réalisation de l'audit
+FollowupAuditDoneRolled = Audit réalisé le %s — prochain audit le %s
+FollowupProposalSent = PR envoyée
+FollowupAuditPrSigned = PR signée
+FollowupAuditInvoiced = Facturé
+FollowupAuditPaid = Payé
+FollowupDuLostCount = DU perdus (>3 ans)
+FollowupLinkedQuote = Devis lié
+FollowupProposalAmount = Montant PR
+FollowupProposalSentCount = PR envoyées
+FollowupMarkProposalSent = Cocher : proposition (devis) envoyée aujourd'hui
+FollowupProposalSentOn = Proposition envoyée le %s (cliquer pour annuler)
+FollowupAssignedTo = Assigné à
+FollowupAssign = Assigner l'audit à cette personne
+FollowupAmountPerPerson = Montant DU par personne
+FollowupAuditCount = Nb d'audits
+FollowupUnassigned = Non assigné
+FollowupAuditManual = Audit planifié manuellement
+FollowupAuditPrepared = Préparé
+FollowupAuditDone = Fait
+FollowupLocation = Localisation
+FollowupCronAuditSyncLabel = Suivi FA récurrentes - Synchronisation des audits DU
+FollowupCronAuditSyncComment = Crée / actualise les audits DU depuis les services d'audit facturés (produits DU_AU).
+FollowupCronAuditsSynced = %s audit(s) DU créé(s), %s mis à jour.
+FollowupTierTpe = TPE
+FollowupTierSmall = Small Company
+FollowupTierCompany = Company
+FollowupTierCompanyPlus = Company Plus
+FollowupTierUnlimited = Unlimited
+FollowupAuditToPrepareCount = À préparer
+FollowupAuditOverdueCount = En retard
+FollowupAuditTotalMonth = Audits du mois
+FollowupAuditDoneCount = Faits
+FollowupAuditTotalAmount = Total
+FollowupAuditsOverdue = Audits en retard
+FollowupFaOverdue = FA récurrentes en retard
+FollowupLate = Retard
+FollowupDaysLate = j de retard
+FollowupNoOverdue = Aucun retard 🎉
+FollowupDaysLateShort = j
+FollowupLastDuInvoice = Dernière facture DU
+SelectMonth = Choisir le mois
+FollowupGenerateInvoice = Générer / envoyer la facture récurrente
+FollowupAuditInvoicedAmount = Montant facturé
+ExportCsv = Exporter CSV
+FollowupYearlyOverview = Vue annuelle
+FollowupChartFaAmount = Montant FA récurrentes
+FollowupChartDu = DU à faire / perdus
+FollowupChartToDo = DU à faire
+FollowupChartLost = DU perdus
+FollowupAmount = Montant
+DuFollowupMenu = Suivi client DU
+FollowupChartDuAmount = Montant DU (proposé / facturé / perdu)
+FollowupChartProposed = PR proposé
+FollowupCreateProposal = Créer le devis pour ce client
+FollowupAuditRenew = Renouveler : passer la ligne au cycle suivant (une fois la nouvelle facture DU créée)
+FollowupAuditRenewedOn = Ligne renouvelée : prochain audit en %s
+FollowupAuditRenewNoInvoice = Aucune nouvelle facture DU pour ce client. Crée d'abord la facture du renouvellement : la ligne passera alors au cycle suivant (ou automatiquement via le cron).
+FollowupAuditRenewConfirm = Renouveler cet audit ? La ligne passera au cycle suivant (prochain audit dans un an) si une nouvelle facture DU existe.
+FollowupChartInvoiced = Facturé

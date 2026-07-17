@@ -30,114 +30,115 @@
  */
 
 // Protection to avoid direct call of template
-if (!$permissionToAddProject) {
-    exit;
+if (empty($permissionToAddProject)) {
+    accessforbidden();
 }
 
+require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 
-if ($action == 'add_audio') {
-    $uploadDir  = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
-    $uploadFile = $uploadDir . basename($_FILES['audio']['name']);
+// --- Début des actions de la brique média Saturne ---
+$saturneModule = GETPOST('module_name', 'alpha');
+$saturneSubDir = GETPOST('sub_dir', 'alphanohtml');
+
+if ($action == 'uploadPhoto' && !empty($saturneModule)) {
+
+    $moduleNameLowerCase = dol_strtolower($saturneModule);
+    $uploadDir           = !empty($conf->$moduleNameLowerCase->dir_output)
+        ? $conf->$moduleNameLowerCase->dir_output
+        : $conf->ecm->dir_output . '/' . $moduleNameLowerCase;
+    if (!empty($saturneSubDir)) {
+        $uploadDir .= '/' . $saturneSubDir;
+    }
+
     if (!dol_is_dir($uploadDir)) {
         dol_mkdir($uploadDir);
     }
-    move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
-}
 
-if ($action == 'add_audio_existing') {
-    $projectId = GETPOST('projectid', 'int');
-    if ($projectId > 0) {
-        $proj = new Project($db);
-        if ($proj->fetch($projectId) > 0) {
-            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
+    // Validate that every uploaded file is a real image via MIME type
+    $uploadedFiles = isset($_FILES['userfile']) ? $_FILES['userfile'] : [];
+    $invalidFile   = false;
+    if (!empty($uploadedFiles['tmp_name'])) {
+        $tmpNames = is_array($uploadedFiles['tmp_name']) ? $uploadedFiles['tmp_name'] : [$uploadedFiles['tmp_name']];
+        foreach ($tmpNames as $tmpName) {
+            if (empty($tmpName)) {
+                continue;
             }
-            $filename = 'audio_' . time() . '.wav';
-            $uploadFile = $uploadDir . '/' . $filename;
-            move_uploaded_file($_FILES['audio']['tmp_name'], $uploadFile);
-        }
-    }
-    exit;
-}
-
-if ($action == 'add_photo_existing') {
-    $projectId = GETPOST('projectid', 'int');
-    if ($projectId > 0) {
-        $proj = new Project($db);
-        if ($proj->fetch($projectId) > 0) {
-            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
-            }
-            if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
-                $filename = 'photo_' . time() . '.jpg';
-                $uploadFile = $uploadDir . '/' . $filename;
-                if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadFile)) {
-                    if (function_exists('vignette')) {
-                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
-                        vignette($uploadFile, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
-                    }
-                    
-                    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-                    $actionComm = new ActionComm($db);
-                    $actionComm->label = $proj->ref . "-Ajout-Photo";
-                    $actionComm->note_private = "L'utilisateur " . $user->login . " a ajouté une nouvelle photo depuis le listing.";
-                    $actionComm->fk_project = $proj->id;
-                    $actionComm->elementtype = 'project';
-                    $actionComm->datep = dol_now();
-                    $actionComm->datef = dol_now();
-                    $actionComm->type_id = 0;
-                    $actionComm->percentage = -1;
-                    $actionComm->create($user);
-                }
+            $finfo    = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($tmpName);
+            if (strpos($mimeType, 'image/') !== 0) {
+                $invalidFile = true;
+                break;
             }
         }
     }
-    exit;
-}
 
-if ($action == 'add_file_existing') {
-    $projectId = GETPOST('projectid', 'int');
-    if ($projectId > 0) {
-        $proj = new Project($db);
-        if ($proj->fetch($projectId) > 0) {
-            $uploadDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($proj->ref);
-            if (!dol_is_dir($uploadDir)) {
-                dol_mkdir($uploadDir);
-            }
-            if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
-                $nbFiles = count($_FILES['userfile']['name']);
-                for ($i = 0; $i < $nbFiles; $i++) {
-                    if ($_FILES['userfile']['error'][$i] == 0) {
-                        $fileName = dol_sanitizeFileName($_FILES['userfile']['name'][$i]);
-                        $fullPath = $uploadDir . '/' . $fileName;
-                        
-                        if (dol_move_uploaded_file($_FILES['userfile']['tmp_name'][$i], $fullPath, 1, 0, $_FILES['userfile']['error'][$i])) {
-                            if (function_exists('vignette')) {
-                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
-                                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
-                            }
-                            
-                            require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-                            $actionComm = new ActionComm($db);
-                            $actionComm->label = $proj->ref . "-Ajout-Document";
-                            $actionComm->note_private = "L'utilisateur " . $user->login . " a joint le document '" . $fileName . "' depuis le listing.";
-                            $actionComm->fk_project = $proj->id;
-                            $actionComm->elementtype = 'project';
-                            $actionComm->datep = dol_now();
-                            $actionComm->datef = dol_now();
-                            $actionComm->type_id = 0;
-                            $actionComm->percentage = -1;
-                            $actionComm->create($user);
-                        }
-                    }
-                }
-            }
+    if ($invalidFile) {
+        setEventMessages($langs->trans('ErrorFileNotAnImage'), null, 'errors');
+    } else {
+        $allowOverwrite = GETPOSTINT('overwrite') ? 1 : 0;
+        if (!dol_is_dir($uploadDir)) {
+            dol_mkdir($uploadDir);
+        }
+
+        $res = dol_add_file_process($uploadDir, $allowOverwrite, 1, 'userfile', '', null, '', 1);
+
+        if ($res > 0) {
+            setEventMessages($langs->trans('PhotoWellSent'), null, 'mesgs');
+        } else {
+            setEventMessages($langs->trans('PhotoNotSent'), null, 'errors');
+        }
+
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+            require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+            print saturne_render_media_block($saturneModule, $saturneSubDir);
+            exit;
         }
     }
-    exit;
 }
+
+if ($action == 'delete_audio' && !empty($saturneModule)) {
+    $audioFilename  = GETPOST('filename', 'alpha');
+    $audioModLower  = dol_strtolower($saturneModule);
+
+    $uploadDir = !empty($conf->$audioModLower->dir_output)
+        ? $conf->$audioModLower->dir_output
+        : $conf->ecm->dir_output . '/' . $audioModLower;
+    if (!empty($saturneSubDir)) {
+        $uploadDir .= '/' . $saturneSubDir;
+    }
+
+    $filePath = $uploadDir . '/' . basename($audioFilename);
+    if (!empty($audioFilename) && file_exists($filePath) && dol_delete_file($filePath)) {
+        setEventMessages($langs->trans('FileDeleted'), null, 'mesgs');
+    } else {
+        setEventMessages($langs->trans('ErrorFileNotDeleted'), null, 'errors');
+    }
+}
+
+if ($action == 'add_audio' && !empty($saturneModule) && !empty($_FILES['audio']['tmp_name'])) {
+    $audioModLower  = dol_strtolower($saturneModule);
+
+    $uploadDir = !empty($conf->$audioModLower->dir_output)
+        ? $conf->$audioModLower->dir_output
+        : $conf->ecm->dir_output . '/' . $audioModLower;
+    if (!empty($saturneSubDir)) {
+        $uploadDir .= '/' . $saturneSubDir;
+    }
+
+    if (!dol_is_dir($uploadDir)) {
+        dol_mkdir($uploadDir);
+    }
+
+    $fileName = dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
+    $destFile = $uploadDir . '/' . $fileName;
+
+    if (move_uploaded_file($_FILES['audio']['tmp_name'], $destFile)) {
+        setEventMessages($langs->trans('PhotoWellSent'), null, 'mesgs');
+    } else {
+        setEventMessages($langs->trans('PhotoNotSent'), null, 'errors');
+    }
+}
+// --- Fin des actions de la brique média Saturne ---
 
 if ($action == 'updateopppercent') {
     $projectId = GETPOST('projectid', 'int');
@@ -215,6 +216,57 @@ if ($action == 'updateopporigin') {
     exit;
 }
 
+if ($action == 'updateoppsalesrep') {
+    $projectId = GETPOST('projectid', 'int');
+    $salesrepId = GETPOST('salesrepid', 'int');
+    $res = array('success' => false);
+
+    if ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            $db->begin();
+            
+            // Delete existing internal SALESREPINTERNAL contacts for the project
+            $sqlDelete = "DELETE ec FROM " . MAIN_DB_PREFIX . "element_contact ec
+                          JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
+                          WHERE ec.element_id = " . (int)$projectId . "
+                            AND ctc.element = 'project'
+                            AND ctc.code = 'SALESREPINTERNAL'
+                            AND ctc.source = 'internal'";
+            $resDelete = $db->query($sqlDelete);
+            
+            $resAdd = 1;
+            if ($salesrepId > 0) {
+                // Add new internal SALESREPINTERNAL contact
+                $resAdd = $proj->add_contact($salesrepId, 'SALESREPINTERNAL', 'internal');
+            }
+
+            if ($resDelete !== false && $resAdd > 0) {
+                $db->commit();
+                $res['success'] = true;
+                if ($salesrepId > 0) {
+                    require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+                    $u = new User($db);
+                    if ($u->fetch($salesrepId) > 0) {
+                        $res['new_salesrep_name'] = trim($u->firstname . ' ' . $u->lastname);
+                    } else {
+                        $res['new_salesrep_name'] = '';
+                    }
+                } else {
+                    $res['new_salesrep_name'] = '';
+                }
+            } else {
+                $db->rollback();
+                $res['error'] = 'Could not update sales representative link';
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+
 if ($action == 'updateopptitle') {
     $projectId = GETPOST('projectid', 'int');
     $newTitle = trim(GETPOST('title'));
@@ -257,6 +309,167 @@ if ($action == 'updateopptitle') {
     exit;
 }
 
+if ($action == 'search_tiers_ajax') {
+    $q   = GETPOST('q', 'alpha');
+    $res = ['results' => []];
+
+    if (strlen($q) === 0) {
+        // No search term: return the 20 most recently modified companies
+        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
+                WHERE entity IN (" . getEntity('societe') . ")
+                  AND client IN (1, 2, 3)
+                ORDER BY tms DESC
+                LIMIT 20";
+    } else {
+        // Search by name (clients/prospects only)
+        $sql = "SELECT rowid, nom FROM " . MAIN_DB_PREFIX . "societe
+                WHERE nom LIKE '%" . $db->escape($q) . "%'
+                  AND entity IN (" . getEntity('societe') . ")
+                  AND client IN (1, 2, 3)
+                ORDER BY nom
+                LIMIT 50";
+    }
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $res['results'][] = ['id' => $obj->rowid, 'text' => $obj->nom];
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'search_contact_ajax') {
+    $q         = GETPOST('q', 'alpha');
+    $projectId = GETPOST('projectid', 'int');
+    $socidDirect = GETPOST('socid', 'int');
+    $res       = ['results' => []];
+
+    // Resolve the socid: either passed directly or via projectid
+    $targetSocId = 0;
+    if ($socidDirect > 0) {
+        $targetSocId = $socidDirect;
+    } elseif ($projectId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0 && $proj->socid > 0) {
+            $targetSocId = (int)$proj->socid;
+        }
+    }
+
+    // Require minimum 2 chars only when q is provided and socid was resolved via projectid search
+    // When called with socid directly (preload mode), q can be empty → returns all contacts
+    if ($targetSocId > 0 && ($socidDirect > 0 || strlen($q) >= 2)) {
+        $whereQ = '';
+        if (strlen($q) >= 1) {
+            $whereQ = " AND (firstname LIKE '%" . $db->escape($q) . "%' OR lastname LIKE '%" . $db->escape($q) . "%')";
+        }
+        $sql   = "SELECT rowid, firstname, lastname FROM " . MAIN_DB_PREFIX . "socpeople WHERE fk_soc = " . $targetSocId . $whereQ . " ORDER BY lastname, firstname LIMIT 100";
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $res['results'][] = ['id' => $obj->rowid, 'text' => trim($obj->firstname . ' ' . $obj->lastname)];
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+
+if ($action == 'addoppcontact') {
+    $projectId = GETPOST('projectid', 'int');
+    $contactId = GETPOST('contactid', 'int');
+    $res = ['success' => false];
+
+    if ($projectId > 0 && $contactId > 0) {
+        $proj = new Project($db);
+        if ($proj->fetch($projectId) > 0) {
+            // Add contact as PROJECTCONTRIBUTOR (Option A: fixed role)
+            $resAdd = $proj->add_contact($contactId, 'PROJECTCONTRIBUTOR', 'external');
+            if ($resAdd > 0) {
+                $res['success']  = true;
+                $res['link_id']  = (int)$resAdd;
+                $res['contact_url'] = DOL_URL_ROOT . '/contact/card.php?id=' . $contactId;
+
+                // Update project extrafields with latest contact (optional — keeps row2 in sync)
+                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+                $contact = new Contact($db);
+                if ($contact->fetch($contactId) > 0) {
+                    $proj->fetch_optionals();
+                    $proj->array_options['options_reedcrm_firstname'] = $contact->firstname;
+                    $proj->array_options['options_reedcrm_lastname']  = $contact->lastname;
+                    $proj->array_options['options_projectphone']      = !empty($contact->phone_pro) ? $contact->phone_pro : $contact->phone_perso;
+                    $proj->array_options['options_reedcrm_email']     = $contact->email;
+                    $proj->updateExtraField('reedcrm_firstname');
+                    $proj->updateExtraField('reedcrm_lastname');
+                    $proj->updateExtraField('projectphone');
+                    $proj->updateExtraField('reedcrm_email');
+                }
+
+                // Log action event
+                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+                $autoEvent = new ActionComm($db);
+                $autoEvent->type_code    = 'AC_OTH';
+                $autoEvent->label        = "Ajout d'un contact au projet";
+                $autoEvent->datep        = dol_now();
+                $autoEvent->datef        = dol_now();
+                $autoEvent->percentage   = 100;
+                $autoEvent->fk_project   = $projectId;
+                $autoEvent->note_private = "Le contact ID $contactId a été ajouté au projet depuis l'application ReedCRM.";
+                $autoEvent->userownerid  = $user->id;
+                $autoEvent->create($user);
+            } elseif ($resAdd == -4) {
+                // Already linked — return the existing link_id
+                $sqlLinkId = "SELECT ec.rowid FROM " . MAIN_DB_PREFIX . "element_contact ec
+                              JOIN " . MAIN_DB_PREFIX . "c_type_contact ctc ON ctc.rowid = ec.fk_c_type_contact
+                             WHERE ec.element_id = " . (int)$projectId . "
+                               AND ec.fk_socpeople = " . (int)$contactId . "
+                               AND ctc.code = 'PROJECTCONTRIBUTOR'
+                             LIMIT 1";
+                $rLinkId = $db->query($sqlLinkId);
+                $oLinkId = $rLinkId ? $db->fetch_object($rLinkId) : null;
+                $res['success']     = true;
+                $res['link_id']     = $oLinkId ? (int)$oLinkId->rowid : 0;
+                $res['contact_url'] = DOL_URL_ROOT . '/contact/card.php?id=' . $contactId;
+            } else {
+                $res['error'] = $proj->error . ' (code: ' . $resAdd . ')';
+            }
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+if ($action == 'removeoppcontact') {
+    $linkId = GETPOST('link_id', 'int');
+    $res = ['success' => false];
+    if ($linkId > 0) {
+        $sql   = "DELETE FROM " . MAIN_DB_PREFIX . "element_contact WHERE rowid = " . (int)$linkId;
+        $resql = $db->query($sql);
+        if ($resql) {
+            // Dolibarr affected_rows() takes no parameter
+            $affected = $db->affected_rows($resql);
+            // Consider success even if 0 rows (idempotent — already deleted)
+            $res['success'] = true;
+            if ($affected === 0) {
+                $res['warning'] = 'Link already removed (link_id=' . $linkId . ')';
+            }
+        } else {
+            $res['error'] = $db->lasterror();
+        }
+    } else {
+        $res['error'] = 'Invalid link_id';
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
+
 if ($action == 'updateoppsocid') {
     $projectId = GETPOST('projectid', 'int');
     $newSocid = GETPOST('socid', 'int');
@@ -286,9 +499,11 @@ if ($action == 'updateoppsocid') {
                     $newCompanyUrl = $newSoc->getNomUrl(1); // Standard dolibarr company HTML Link
                 }
                 
-                $res['new_socid'] = $newSocid;
-                $res['new_company_name'] = $newCompanyName;
-                $res['new_company_url'] = $newCompanyUrl;
+                $res['new_socid']           = $newSocid;
+                $res['new_company_name']     = $newCompanyName;
+                $res['new_company_url']      = $newCompanyUrl;
+                $res['new_company_badge']    = ($newSocid > 0 && method_exists($newSoc, 'getLibStatut')) ? $newSoc->getLibStatut(3) : '';
+                $res['new_company_card_url'] = ($newSocid > 0) ? DOL_URL_ROOT . '/societe/card.php?socid=' . (int)$newSocid : '';
                 
                 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
                 $autoEvent = new ActionComm($db);
@@ -434,6 +649,27 @@ if ($action == 'updateoppcontact') {
     exit;
 }
 
+if ($action == 'get_contact_details') {
+    $contactid = GETPOST('contactid', 'int');
+    $res = array();
+    if ($contactid > 0) {
+        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+        $contact = new Contact($db);
+        if ($contact->fetch($contactid) > 0) {
+            $res = array(
+                'id' => $contact->id,
+                'firstname' => $contact->firstname,
+                'lastname' => $contact->lastname,
+                'phone' => $contact->phone_pro,
+                'email' => $contact->email
+            );
+        }
+    }
+    header('Content-Type: application/json');
+    echo json_encode($res);
+    exit;
+}
+
 if ($action == 'add') {
     $numberingModules = [
         'project'      => $conf->global->PROJECT_ADDON,
@@ -444,6 +680,7 @@ if ($action == 'add') {
 
     $project->ref         = $refProjectMod->getNextValue(null, $project);
     $project->title       = GETPOST('title');
+    $project->socid       = GETPOST('socid', 'int');
     $project->description = GETPOST('description', 'restricthtml');
     $project->opp_percent = GETPOST('opp_percent','int');
     switch ($project->opp_percent) {
@@ -505,58 +742,25 @@ if ($action == 'add') {
             dol_mkdir($pathToProjectDir);
         }
 
-        // Standard File Upload processing
-        $hasFilesToUpload = false;
-        if (isset($_FILES['userfile']['name']) && is_array($_FILES['userfile']['name'])) {
-            foreach ($_FILES['userfile']['name'] as $fileName) {
-                if (!empty($fileName)) {
-                    $hasFilesToUpload = true;
-                    break;
-                }
-            }
-        }
-        
-        if ($hasFilesToUpload) {
-            $nbFiles = count($_FILES['userfile']['name']);
-            for ($i = 0; $i < $nbFiles; $i++) {
-                if ($_FILES['userfile']['error'][$i] == 0) {
-                    $fileName = dol_sanitizeFileName($_FILES['userfile']['name'][$i]);
-                    $fullPath = $pathToProjectDir . '/' . $fileName;
-                    
-                    if (dol_move_uploaded_file($_FILES['userfile']['tmp_name'][$i], $fullPath, 1, 0, $_FILES['userfile']['error'][$i])) {
-                        if (function_exists('vignette')) {
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI, '_mini');
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL);
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM, '_medium');
-                            vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE, '_large');
-                        }
-                    } else {
-                        setEventMessages($langs->transnoentities('ErrorFileNotUploaded').' (dol_move_uploaded_file failed)', null, 'errors');
-                        $error++;
-                    }
-                } else if ($_FILES['userfile']['error'][$i] == UPLOAD_ERR_INI_SIZE || $_FILES['userfile']['error'][$i] == UPLOAD_ERR_FORM_SIZE) {
-                    setEventMessages('La taille du fichier dépasse la limite autorisée par le serveur (upload_max_filesize).', null, 'errors');
-                    $error++;
-                } else if ($_FILES['userfile']['error'][$i] != UPLOAD_ERR_NO_FILE) {
-                    setEventMessages('Erreur technique lors du téléversement du fichier (Code: '.$_FILES['userfile']['error'][$i].').', null, 'errors');
-                    $error++;
-                }
-            }
-        }
+        // Saturne Media Module Migration
+        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+        $uploadContext = 'reedcrm_quickcreation_' . $user->id;
+        $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
 
-        $pathToTmpAudio = $conf->reedcrm->multidir_output[$conf->entity] . '/project/tmp/0/project_audio/';
-        $audioList      = dol_dir_list($pathToTmpAudio, 'files');
-        if (!empty($audioList)) {
-            foreach ($audioList as $audio) {
-                if (!dol_is_dir($pathToProjectDir)) {
-                    dol_mkdir($pathToProjectDir);
-                }
-
-                $fullPath = $pathToProjectDir . '/' . $audio['name'];
-                dol_copy($audio['fullname'], $fullPath);
-                unlink($audio['fullname']);
+        $uploadedFiles = saturne_get_media_files('project', $subDir);
+        foreach ($uploadedFiles as $file) {
+            $fullPath = $pathToProjectDir . '/' . $file['name'];
+            dol_copy($file['fullname'], $fullPath);
+            
+            // Thumbnail generation for images
+            if ($file['type'] === 'image' && function_exists('vignette')) {
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM ?? 500, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM ?? 500, '_medium');
+                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE ?? 800, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE ?? 800, '_large');
             }
         }
+        saturne_invalidate_upload_token($uploadContext, 'project', 'tmp');
 
         $project->add_contact($user->id, 'PROJECTLEADER', 'internal');
 
@@ -581,37 +785,57 @@ if ($action == 'add') {
             $error++;
         }
 
-        // Create a contact if firstname and lastname are provided
-        $contactFirstname = trim($project->array_options['options_reedcrm_firstname'] ?? '');
-        $contactLastname  = trim($project->array_options['options_reedcrm_lastname'] ?? '');
-        if (empty($contactFirstname) && !empty($contactLastname)) {
-            $contactFirstname = 'Address';
-            $contactLastname  = $project->ref;
-        }
-        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-        $contact            = new Contact($db);
-        $contact->firstname = $contactFirstname;
-        $contact->lastname  = $contactLastname;
-        $contact->socid     = $project->socid > 0 ? $project->socid : 0;
-        $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
-        $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
-        $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
-        $contact->address   = $geolocation->getAddressFromLatLon($lat, $lon)['display_name'] ?? '';
-        $contact->status    = 1;
-        $contactID = $contact->create($user);
-        if ($contactID > 0) {
-            $project->add_contact($contactID, 'PROJECTADDRESS', 'external');
+        $contactid = GETPOST('contactid', 'int');
+        if ($contactid > 0) {
+            $project->add_contact($contactid, 'PROJECTADDRESS', 'external');
 
-            // Link geolocation to the contact instead of the project
+            // Link geolocation to this existing contact instead of the project
             if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
-                $geolocation->latitude    = (float)$lat;
-                $geolocation->longitude   = (float)$lon;
-                $geolocation->element_type = $contact->element;
-                $geolocation->fk_element  = $contactID;
-                $geolocation->create($user);
+                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+                $existingContact = new Contact($db);
+                if ($existingContact->fetch($contactid) > 0) {
+                    $geolocation->latitude    = (float)$lat;
+                    $geolocation->longitude   = (float)$lon;
+                    $geolocation->element_type = $existingContact->element;
+                    $geolocation->fk_element  = $contactid;
+                    $geolocation->create($user);
+                }
             }
         } else {
-            setEventMessages($contact->error, $contact->errors, 'errors');
+            // Create a contact if firstname and lastname are provided
+            $contactFirstname = trim($project->array_options['options_reedcrm_firstname'] ?? '');
+            $contactLastname  = trim($project->array_options['options_reedcrm_lastname'] ?? '');
+            if (empty($contactFirstname) && !empty($contactLastname)) {
+                $contactFirstname = 'Address';
+                $contactLastname  = $project->ref;
+            }
+            require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+            $contact            = new Contact($db);
+            $contact->firstname = $contactFirstname;
+            $contact->lastname  = $contactLastname;
+            $contact->socid     = $project->socid > 0 ? $project->socid : 0;
+            $contact->phone_pro = $project->array_options['options_projectphone'] ?? '';
+            $contact->email     = $project->array_options['options_reedcrm_email'] ?? '';
+            $contact->url       = $project->array_options['options_reedcrm_website'] ?? '';
+            $contact->address   = (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '')
+                                  ? ($geolocation->getAddressFromLatLon((float)$lat, (float)$lon)['display_name'] ?? '')
+                                  : '';
+            $contact->status    = 1;
+            $contactID = $contact->create($user);
+            if ($contactID > 0) {
+                $project->add_contact($contactID, 'PROJECTADDRESS', 'external');
+
+                // Link geolocation to the contact instead of the project
+                if (empty(GETPOST('geolocation-error')) && $lat !== '' && $lon !== '') {
+                    $geolocation->latitude    = (float)$lat;
+                    $geolocation->longitude   = (float)$lon;
+                    $geolocation->element_type = $contact->element;
+                    $geolocation->fk_element  = $contactID;
+                    $geolocation->create($user);
+                }
+            } else {
+                setEventMessages($contact->error, $contact->errors, 'errors');
+            }
         }
     } else {
         $langs->load('errors');

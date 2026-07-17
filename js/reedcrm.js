@@ -912,11 +912,569 @@ window.saturne.contact_inline.editAmount = function(e) {
 // Initialize module on ready
 $(document).ready(function() {
     if (typeof window.saturne !== 'undefined' && window.saturne.contact_inline) {
-        // Mount the UI elements into the banner (Title, Percentage, Amount)
         window.saturne.contact_inline.mountCardUi();
-        
-        // Bind all click delegates
-        // (Delegates are mostly handled in init -> event(), keeping document bounds clean)
         $(document).on('click', '.reedcrm-copy-text', window.saturne.contact_inline.copyToClipboard);
     }
+
+    // --- Data-action event delegation (replaces all inline onclick attributes) ---
+    $(document).on('click', '[data-action="open-vcard-modal"]', function() {
+        var m = document.getElementById('vcard-modal');
+        if (m) m.style.display = 'flex';
+    });
+    $(document).on('click', '[data-action="close-vcard-modal"]', function() {
+        var m = document.getElementById('vcard-modal');
+        if (m) m.style.display = 'none';
+    });
+    $(document).on('click', '[data-action="toggle-geoloc-address"]', function() {
+        $('#current-address-block').toggleClass('is-visible');
+    });
+
+    // --- CSS hover for .reedcrm-hover-bg (replaces inline onmouseover/onmouseout) ---
+    $(document).on('mouseenter', '.reedcrm-hover-bg', function() {
+        $(this).css({ 'background': '#f1f5f9', 'border-color': '#e2e8f0' });
+    }).on('mouseleave', '.reedcrm-hover-bg', function() {
+        $(this).css({ 'background': 'transparent', 'border-color': 'transparent' });
+    });
+    // Close vcard modal on overlay click
+    $(document).on('click', '#vcard-modal', function(e) {
+        if ($(e.target).is('#vcard-modal')) { this.style.display = 'none'; }
+    });
 });
+
+/**
+ * PWA Project Card - Client & Contact Selector (inline, no modal)
+ * Opens a Select2 dropdown directly under each button.
+ */
+window.saturne.pwa_selectors = {};
+
+window.saturne.pwa_selectors.init = function() {
+    window.saturne.pwa_selectors.event();
+};
+
+window.saturne.pwa_selectors.getBaseUrl = function() {
+    var url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
+    if (!url) {
+        if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
+    }
+    return url + '/custom/reedcrm/view/frontend/quickcreation.php';
+};
+
+window.saturne.pwa_selectors.event = function() {
+    // Close all inline selectors when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.pwa-selector-wrap').length) {
+            $('.pwa-inline-select-wrap').hide();
+        }
+    });
+
+    // Client selector : open inline AJAX Select2
+    $(document).on('click', '.pwa-client-selector', function(e) {
+        e.stopPropagation();
+        var btn       = $(this);
+        var projectId = btn.data('project-id');
+        var wrap      = $('#pwa-client-wrap-' + projectId);
+        var $select   = $('#pwa-client-select-' + projectId);
+        var baseUrl   = window.saturne.pwa_selectors.getBaseUrl();
+        var token     = $('input[name="token"]').val() || '';
+
+        // Toggle: close if already open
+        if (wrap.is(':visible')) { wrap.hide(); return; }
+
+        // Hide all other open selectors
+        $('.pwa-inline-select-wrap').hide();
+        wrap.show();
+
+        // Init Select2 once (AJAX — shows 10 recent companies on open, search on typing)
+        if (!$select.data('select2')) {
+            $select.select2({
+                placeholder: 'Clients récents ou tapez pour chercher...',
+                minimumInputLength: 0,
+                language: {
+                    searching: function() { return 'Chargement...'; },
+                    noResults: function() { return 'Aucun résultat'; }
+                },
+                ajax: {
+                    url:      baseUrl,
+                    dataType: 'json',
+                    delay:    200,
+                    cache:    true,
+                    data:     function(p) { return { action: 'search_tiers_ajax', q: p.term || '' }; },
+                    processResults: function(d) { return { results: d.results || [] }; }
+                }
+            });
+
+            // On selection → save & update DOM (no page reload)
+            $select.on('select2:select', function(ev) {
+                var newSocid    = ev.params.data.id;
+                var newSocName  = ev.params.data.text;
+                wrap.hide();
+                var $btn       = $('.pwa-client-selector[data-project-id="' + projectId + '"]');
+                var origHtml   = $btn.html();
+                $btn.html('<i class="fas fa-spinner fa-spin" style="color:#9b59b6;"></i>');
+                $.post(baseUrl + '?action=updateoppsocid&token=' + token, { projectid: projectId, socid: newSocid }, function(res) {
+                    if (res && res.success) {
+                        var badge = (res.new_company_badge && res.new_company_badge.trim()) ? res.new_company_badge + ' ' : '<i class="far fa-building" style="color:#64748b;"></i> ';
+                        $btn.html(
+                            badge +
+                            '<span style="font-weight:500;">' + $('<span>').text(newSocName).html() + '</span>' +
+                            '<i class="fas fa-chevron-down" style="color:#94a3b8;font-size:0.8em;"></i>'
+                        );
+                        $btn.removeClass('empty').attr('title', 'Changer le tiers');
+
+                        // ── Inject / update the clickable building icon link (absent when project had no client) ──
+                        var cardUrl = res.new_company_card_url || '';
+                        if (cardUrl) {
+                            var $selectorWrap = $btn.closest('.pwa-selector-wrap');
+                            var $existingIcon = $selectorWrap.find('a[title="Voir la fiche client"]');
+                            if ($existingIcon.length) {
+                                // Update existing link
+                                $existingIcon.attr('href', cardUrl);
+                            } else {
+                                // Project had no client before → inject the icon link before the button
+                                $btn.before(
+                                    '<a href="' + cardUrl + '" class="prevent-edit-click" title="Voir la fiche client" ' +
+                                    'style="display:inline-flex;align-items:center;color:#64748b;font-size:1.15em;flex-shrink:0;">' +
+                                    '<i class="fas fa-building"></i></a>'
+                                );
+                            }
+                        }
+
+                        // Reset the client Select2 field (clear search term so next open is clean)
+                        $select.val(null).trigger('change');
+
+                        // Reset contact preload flag since company changed (old contact selector)
+                        var $cSelect = $('#pwa-contact-select-' + projectId);
+                        $cSelect.removeData('contacts-loaded').empty();
+                        if ($cSelect.data('select2')) { $cSelect.select2('destroy'); }
+
+                        // ── New chip system: update data-tiers-id on the contact tags wrap ──
+                        var $tagsWrap = $('.pwa-contact-tags-wrap[data-project-id="' + projectId + '"]');
+                        $tagsWrap.data('tiers-id', newSocid);
+                        $tagsWrap.attr('data-tiers-id', newSocid);
+
+                        // Update tiers-id on old contact button (legacy, harmless)
+                        $('.pwa-contact-selector[data-project-id="' + projectId + '"]').data('tiers-id', newSocid);
+                        $('#pwa-contact-wrap-' + projectId).hide();
+                    } else {
+                        $btn.html(origHtml);
+                        $btn.css({ border: '1px solid #e74c3c' });
+                        setTimeout(function() { $btn.css({ border: '' }); }, 2000);
+                    }
+                }, 'json').fail(function() {
+                    $btn.html(origHtml);
+                    $btn.css({ border: '1px solid #e74c3c' });
+                    setTimeout(function() { $btn.css({ border: '' }); }, 2000);
+                });
+            });
+
+            // Close on clear / close event
+            $select.on('select2:close', function() {
+                setTimeout(function() { wrap.hide(); }, 100);
+            });
+        }
+
+        $select.select2('open');
+    });
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Multi-contact tag system : [+] add button → native dropdown (no Select2)
+    // ─────────────────────────────────────────────────────────────────────────
+    $(document).on('click', '.pwa-add-contact-btn', function(e) {
+        e.stopPropagation();
+        var $btn      = $(this);
+        var $wrap     = $btn.closest('.pwa-contact-tags-wrap');
+        var $panel    = $wrap.find('.pwa-contact-add-panel');
+        var projectId = $wrap.data('project-id');
+        var tiersId   = $wrap.data('tiers-id') || 0;
+        var baseUrl   = window.saturne.pwa_selectors.getBaseUrl();
+
+        // Toggle
+        if ($panel.is(':visible')) { $panel.hide(); return; }
+
+        // Close other open panels
+        $('.pwa-contact-add-panel').hide();
+        $panel.show();
+
+        // No company → warn
+        if (tiersId <= 0) {
+            $panel.html('<div class="pwa-contact-loading-inline"><i class="fas fa-exclamation-triangle" style="color:#d97706;"></i> Associez d\'abord un client</div>');
+            return;
+        }
+
+        // Collect already linked contact IDs
+        var linkedIds = [];
+        $wrap.find('.pwa-contact-chip').each(function() {
+            linkedIds.push(parseInt($(this).data('contact-id'), 10));
+        });
+
+        // Show spinner while loading
+        $panel.html('<div class="pwa-contact-loading-inline"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>');
+
+        // Fetch contacts and build native <ul> — no Select2, no "Searching...", list appears immediately
+        $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
+            var results = (data && data.results) ? data.results : [];
+            var $ul = $('<ul class="pwa-contact-list">');
+            if (results.length === 0) {
+                $ul.append('<li class="pwa-contact-list-empty">Aucun contact pour ce client</li>');
+            } else {
+                $.each(results, function(i, item) {
+                    var isLinked = linkedIds.indexOf(parseInt(item.id, 10)) !== -1;
+                    var $li = $('<li>').attr('data-contact-id', item.id).attr('data-contact-name', item.text);
+                    if (isLinked) {
+                        $li.addClass('pwa-contact-list-linked').html($('<span>').text(item.text).prop('outerHTML') + '<i class="fas fa-check pwa-linked-check"></i>');
+                    } else {
+                        $li.text(item.text);
+                    }
+                    $ul.append($li);
+                });
+            }
+            $panel.html($ul); // render immediately — no intermediate state
+        }).fail(function() {
+            $panel.html('<div class="pwa-contact-loading-inline" style="color:#e74c3c;"><i class="fas fa-exclamation-circle"></i> Impossible de charger les contacts</div>');
+        });
+    });
+
+    // Click on a contact row → addoppcontact
+    $(document).on('click', '.pwa-contact-list li:not(.pwa-contact-list-empty):not(.pwa-contact-list-linked)', function(e) {
+        e.stopPropagation();
+        var $li            = $(this);
+        var $panel         = $li.closest('.pwa-contact-add-panel');
+        var $wrap          = $panel.closest('.pwa-contact-tags-wrap');
+        var $btn           = $wrap.find('.pwa-add-contact-btn');
+        var newContactId   = parseInt($li.data('contact-id'), 10);
+        var newContactName = $li.data('contact-name') || $li.text().trim();
+        var projectId      = $wrap.data('project-id');
+        var baseUrl        = window.saturne.pwa_selectors.getBaseUrl();
+        var token          = $('input[name="token"]').val() || '';
+
+        if (!newContactId) return;
+        $panel.hide();
+        $btn.html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.post(baseUrl + '?action=addoppcontact&token=' + token,
+            { projectid: projectId, contactid: newContactId },
+            function(res) {
+                $btn.html('<i class="fas fa-plus"></i>');
+                if (res && res.success && res.link_id) {
+                    var chipHtml =
+                        '<span class="pwa-contact-chip" data-link-id="' + res.link_id + '" data-contact-id="' + newContactId + '">' +
+                            '<a href="' + res.contact_url + '" class="prevent-edit-click" title="Voir la fiche contact">' +
+                                $('<span>').text(newContactName).html() +
+                            '</a>' +
+                            '<span class="pwa-chip-role">- Intervenant</span>' +
+                            '<span class="pwa-chip-remove prevent-edit-click" data-link-id="' + res.link_id + '" title="Retirer ce contact"><i class="fas fa-unlink" style="font-size:0.75em;"></i></span>' +
+                        '</span>';
+                    $btn.before(chipHtml);
+                    $wrap.find('.pwa-contact-icon-nolink').replaceWith(
+                        '<a href="' + res.contact_url + '" class="pwa-contact-icon-link prevent-edit-click" title="Voir la fiche contact"><i class="fas fa-address-book"></i></a>'
+                    );
+                } else {
+                    var errMsg = (res && res.error) ? ' (' + res.error + ')' : '';
+                    $btn.attr('title', 'Erreur' + errMsg).css({ outline: '2px solid #e74c3c' });
+                    setTimeout(function() { $btn.css({ outline: '' }).removeAttr('title'); }, 3000);
+                }
+            }, 'json').fail(function() {
+                $btn.html('<i class="fas fa-plus"></i>');
+                $btn.css({ outline: '2px solid #e74c3c' });
+                setTimeout(function() { $btn.css({ outline: '' }); }, 2000);
+            });
+    });
+
+    // Close add-panel on click outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.pwa-contact-tags-wrap').length) {
+            $('.pwa-contact-add-panel').hide();
+        }
+    });
+
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Remove a contact chip → unlink via removeoppcontact
+    // ─────────────────────────────────────────────────────────────────────────
+    $(document).on('click', '.pwa-chip-remove', function(e) {
+        e.stopPropagation();
+        var $removeBtn = $(this);
+        var linkId     = parseInt($removeBtn.data('link-id'), 10);
+        var $chip      = $removeBtn.closest('.pwa-contact-chip');
+        var $wrap      = $chip.closest('.pwa-contact-tags-wrap');
+        var baseUrl    = window.saturne.pwa_selectors.getBaseUrl();
+        var token      = $('input[name="token"]').val() || '';
+
+        $removeBtn.html('<i class="fas fa-spinner fa-spin" style="font-size:0.75em;"></i>');
+
+        $.post(baseUrl + '?action=removeoppcontact&token=' + token, { link_id: linkId }, function(res) {
+            if (res && res.success) {
+                // Green flash confirmation before fade-out
+                $chip.css({ outline: '2px solid #38a169', transition: 'outline 0.2s' });
+                setTimeout(function() {
+                    $chip.fadeOut(250, function() {
+                        $(this).remove();
+                        // If no chips left, revert icon to greyed-out
+                        if ($wrap.find('.pwa-contact-chip').length === 0) {
+                            $wrap.find('.pwa-contact-icon-link').replaceWith(
+                                '<i class="fas fa-address-book pwa-contact-icon-nolink" title="Ajouter un contact"></i>'
+                            );
+                        }
+                    });
+                }, 300);
+            } else {
+                $removeBtn.html('<i class="fas fa-unlink" style="font-size:0.75em;"></i>');
+                $chip.css({ outline: '2px solid #e74c3c' });
+                setTimeout(function() { $chip.css({ outline: '' }); }, 2000);
+            }
+        }, 'json').fail(function() {
+            $removeBtn.html('<i class="fas fa-unlink" style="font-size:0.75em;"></i>');
+        });
+    });
+};
+
+
+
+
+/**
+ * PWA Quickcreation Form — Geoloc, Phone, Email, URL, Slider, Contact Select
+ * Replaces the inline scripts removed from reedcrm_project_quickcreation_frontend.tpl.php
+ */
+window.saturne.quickcreation_form = {};
+
+window.saturne.quickcreation_form.init = function() {
+    if (!document.querySelector('.quickcreation-form') && !document.getElementById('geoloc-header-wrapper')) return;
+    window.saturne.quickcreation_form.moveGeolocIcon();
+    window.saturne.quickcreation_form.initPhoneValidation();
+    window.saturne.quickcreation_form.initEmailValidation();
+    window.saturne.quickcreation_form.initWebsiteValidation();
+    window.saturne.quickcreation_form.initFormSubmit();
+    window.saturne.quickcreation_form.initOppSlider();
+    window.saturne.quickcreation_form.initContactSelect();
+};
+
+window.saturne.quickcreation_form.moveGeolocIcon = function() {
+    setTimeout(function() {
+        var $pwaHeader = $('#id-top');
+        if ($pwaHeader.length) {
+            var $userWidget = $pwaHeader.find('.user-profile-widget');
+            if ($userWidget.length) {
+                $('#geoloc-header-wrapper').css('display', 'flex').insertBefore($userWidget);
+            } else {
+                $pwaHeader.append($('#geoloc-header-wrapper').css('display', 'flex'));
+            }
+            return;
+        }
+        var $headerRight = $('.login_block, .header-pwa-right, .saturne-header-right').first();
+        if ($headerRight.length) {
+            $('#geoloc-header-wrapper').css('display', 'flex').prependTo($headerRight);
+        } else {
+            $('#geoloc-header-wrapper').css({'display':'flex','position':'fixed','top':'12px','right':'80px','z-index':'9999','background':'rgba(255,255,255,0.9)','padding':'4px 8px','border-radius':'4px'}).appendTo('body');
+        }
+    }, 500);
+};
+
+window.saturne.quickcreation_form.initPhoneValidation = function() {
+    var dataDiv = document.getElementById('reedcrm-quickcreation-data');
+    if (!dataDiv) return;
+    var utilsPath = dataDiv.getAttribute('data-utils-path') || '';
+    var phoneInput = document.getElementById('projectphone');
+    if (!phoneInput || typeof window.intlTelInput === 'undefined') return;
+    var iti = window.intlTelInput(phoneInput, {initialCountry:'fr', utilsScript:utilsPath, formatOnDisplay:true, nationalMode:true, autoPlaceholder:'aggressive', preferredCountries:['fr','be','ch','lu','mc']});
+    phoneInput.addEventListener('input', function() {
+        var val = phoneInput.value;
+        var correctedVal = val.replace(/^(?:\+33|0033)[\s\-.]*0([1-9])/, '+33 $1');
+        if (correctedVal !== val) { phoneInput.value = val = correctedVal; }
+        if (window.intlTelInputUtils) {
+            var cp = phoneInput.selectionStart, isEnd = (cp === phoneInput.value.length);
+            var ft = val.startsWith('+') ? window.intlTelInputUtils.numberFormat.INTERNATIONAL : window.intlTelInputUtils.numberFormat.NATIONAL;
+            var formatted = window.intlTelInputUtils.formatNumber(val, iti.getSelectedCountryData().iso2, ft);
+            if (formatted && formatted !== val) { phoneInput.value = formatted; if (!isEnd && phoneInput.setSelectionRange) phoneInput.setSelectionRange(cp, cp); }
+        }
+        if (phoneInput.value.trim()) {
+            if (!iti.isValidNumber()) { phoneInput.classList.add('input-invalid-material'); phoneInput.setCustomValidity('Numéro de téléphone invalide.'); }
+            else { phoneInput.classList.remove('input-invalid-material'); phoneInput.setCustomValidity(''); }
+        } else { phoneInput.classList.remove('input-invalid-material'); phoneInput.setCustomValidity(''); }
+    });
+    var form = phoneInput.closest('form');
+    if (form) form.addEventListener('submit', function() { if (phoneInput.value.trim() && iti.isValidNumber()) phoneInput.value = iti.getNumber(); });
+};
+
+window.saturne.quickcreation_form.initEmailValidation = function() {
+    var re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    document.querySelectorAll('input[type="email"]').forEach(function(el) {
+        el.addEventListener('input', function() {
+            var v = this.value.trim();
+            if (v && !re.test(v)) { this.classList.add('input-invalid-material'); this.setCustomValidity("Format de l'adresse e-mail invalide."); }
+            else { this.classList.remove('input-invalid-material'); this.setCustomValidity(''); }
+        });
+    });
+};
+
+window.saturne.quickcreation_form.initWebsiteValidation = function() {
+    var dr = /^([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+    document.querySelectorAll('.website-input-group').forEach(function(group) {
+        var ps = group.querySelector('.url-protocol'), di = group.querySelector('.url-domain'), hi = group.querySelector('.url-hidden');
+        function validate() {
+            var v = di.value.trim();
+            if (/^https?:\/\//i.test(v)) { if (v.toLowerCase().startsWith('http://')) { ps.value='http://'; v=v.substring(7); } else { ps.value='https://'; v=v.substring(8); } di.value=v; }
+            if (!v) { hi.value=''; group.classList.remove('input-invalid-material'); di.setCustomValidity(''); return; }
+            hi.value = ps.value + v;
+            if (!dr.test(v)) { group.classList.add('input-invalid-material'); di.setCustomValidity('Format du nom de domaine invalide.'); }
+            else { group.classList.remove('input-invalid-material'); di.setCustomValidity(''); }
+        }
+        ps.addEventListener('change', validate);
+        di.addEventListener('input', validate);
+    });
+};
+
+window.saturne.quickcreation_form.initFormSubmit = function() {
+    var er = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    var dr = /^([\w\-]+(\.[\w\-]+)+)([\/?#].*)?$/i;
+    var mainForm = document.querySelector('.quickcreation-form');
+    if (!mainForm) return;
+    mainForm.addEventListener('submit', function(e) {
+        if (!this.checkValidity()) return;
+        var hasError = false;
+        this.querySelectorAll('input[type="email"]').forEach(function(el) { if (el.value.trim() && !er.test(el.value.trim())) { hasError=true; el.classList.add('input-invalid-material'); el.reportValidity(); el.focus(); } });
+        this.querySelectorAll('.website-input-group').forEach(function(g) { var di=g.querySelector('.url-domain'); if (di.value.trim() && !dr.test(di.value.trim())) { hasError=true; g.classList.add('input-invalid-material'); di.reportValidity(); di.focus(); } });
+        if (hasError) { e.preventDefault(); return; }
+        e.preventDefault();
+        var btn = mainForm.querySelector('button[type="submit"]');
+        if (!btn) return;
+        var orig = btn.innerHTML;
+        btn.innerHTML='<i class="fas fa-spinner fa-spin" style="font-size:20px;color:#fff;"></i>'; btn.disabled=true;
+        var fd = new FormData(mainForm); fd.append('ajax_submission','1');
+        fetch(window.location.href,{method:'POST',body:fd})
+            .then(function(r) { var ct=r.headers.get('content-type'); return ct&&ct.indexOf('application/json')!==-1?r.json():r.text(); })
+            .then(function(data) {
+                if (typeof data==='object'&&data.success) { window.location.href=data.redirect_url||window.location.href; }
+                else if (typeof data==='string') {
+                    var doc=(new DOMParser()).parseFromString(data,'text/html');
+                    var errs=doc.querySelectorAll('.error,.theme-error,.jnotify-container,.alert-danger,.warning,.theme-warning');
+                    if (errs.length) { document.querySelectorAll('.error,.theme-error,.jnotify-container,.alert-danger,.warning,.theme-warning').forEach(function(n){n.remove();}); var cont=document.getElementById('id-container')||mainForm; errs.forEach(function(n){cont.insertBefore(n,cont.firstChild);}); window.scrollTo({top:0,behavior:'smooth'}); }
+                    else if (doc.querySelector('.ok,.theme-success,.theme-statut-ok')) { window.location.reload(); }
+                    else { document.open(); document.write(data); document.close(); }
+                }
+            })
+            .catch(function(err) { console.error('Erreur de soumission',err); alert("Une erreur technique s'est produite."); })
+            .finally(function() { btn.innerHTML=orig; btn.disabled=false; });
+    });
+};
+
+window.saturne.quickcreation_form.initOppSlider = function() {
+    var s=document.getElementById('opp_percent'), v=document.querySelector('.opp_percent-value');
+    if (!s||!v) return;
+    function upd() { var val=parseInt(s.value)||0; v.textContent=val+'%'; var p=val/100; v.style.left='calc('+(p*100)+'% - '+(p*45)+'px + 22.5px)'; }
+    upd(); s.addEventListener('input', upd);
+};
+
+window.saturne.quickcreation_form.initContactSelect = function() {
+    if (typeof jQuery === 'undefined') return;
+    var dataDiv = document.getElementById('reedcrm-quickcreation-data');
+    var lang = dataDiv ? (dataDiv.getAttribute('data-lang') || 'fr') : 'fr';
+    function initS2() { if (!jQuery.fn.select2) return; var s=$('#contactid'); if (s.hasClass('select2-hidden-accessible')) s.select2('destroy'); s.select2({width:'100%',language:lang,placeholder:'Contact/Adresse'}); }
+    function toggleCW() { var sid=$('#socid').val()||($('#search_socid').length?$('#search_socid').val():null); if (sid&&parseInt(sid)>0) $('#contact-wrapper').slideDown(200); else $('#contact-wrapper').slideUp(200); }
+    initS2(); toggleCW();
+    $(document).ajaxComplete(function(ev,xhr,s) { if (s.url&&s.url.indexOf('contacts.php')!==-1) { initS2(); toggleCW(); } });
+    $(document).on('change','#socid, #search_socid', toggleCW);
+    $(document).on('change','#contactid', function() {
+        var cid=$(this).val(); if (!cid||cid<=0) return;
+        var fd=new FormData(); fd.append('action','get_contact_details'); fd.append('contactid',cid);
+        fetch(window.location.href,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(c) {
+            if (!c||!c.id) return;
+            var pi=document.getElementById('projectphone'); if (pi&&c.phone) { pi.value=c.phone; pi.dispatchEvent(new Event('input',{bubbles:true})); }
+            document.querySelectorAll('input[type="email"]').forEach(function(i) { if (i.name==='options_reedcrm_email'&&c.email) { i.value=c.email; i.dispatchEvent(new Event('input',{bubbles:true})); } });
+            var fi=document.getElementById('reedcrm_firstname'); if (fi&&c.firstname) { fi.value=c.firstname; fi.dispatchEvent(new Event('input')); }
+            var li=document.getElementById('reedcrm_lastname'); if (li&&c.lastname) { li.value=c.lastname; li.dispatchEvent(new Event('input')); }
+        }).catch(function(err){console.error('Error fetching contact details',err);});
+    });
+};
+
+window.reedcrm.call_list_widget = {};
+
+window.reedcrm.call_list_widget.init = function() {
+    window.reedcrm.call_list_widget.event();
+    window.reedcrm.call_list_widget.initSelect2();
+};
+
+window.reedcrm.call_list_widget.initSelect2 = function() {
+    if (typeof jQuery === 'undefined' || !jQuery.fn.select2) return;
+    $('.reedcrm-call-list-select').each(function() {
+        if (!$(this).hasClass('select2-hidden-accessible')) {
+            $(this).select2({ width: '200px', minimumResultsForSearch: Infinity });
+            // Prevent Dolibarr's select2:open handler from throwing a SyntaxError
+            // when id and name are both empty (querySelector receives invalid selector)
+            $(this).on('select2:open', function(e) { e.stopPropagation(); });
+        }
+    });
+};
+
+window.reedcrm.call_list_widget.event = function() {
+    $(document).off('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd)
+               .on('click', '.reedcrm-call-list-add-btn', window.reedcrm.call_list_widget.handleAdd);
+    $(document).off('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange)
+               .on('change', '.reedcrm-call-list-select', window.reedcrm.call_list_widget.onSelectChange);
+    $(document).off('click', '.reedcrm-call-list-default-btn', window.reedcrm.call_list_widget.handleAddDefault)
+               .on('click', '.reedcrm-call-list-default-btn', window.reedcrm.call_list_widget.handleAddDefault);
+};
+
+window.reedcrm.call_list_widget.onSelectChange = function() {
+    var btn = $(this).closest('.reedcrm-add-to-call-list-wrapper').find('.reedcrm-call-list-add-btn');
+    btn.prop('disabled', !$(this).val());
+};
+
+window.reedcrm.call_list_widget.handleAdd = function() {
+    if ($(this).prop('disabled')) return;
+
+    var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+    var elementType = wrapper.data('element-type');
+    var elementId   = wrapper.data('element-id');
+    var ajaxUrl     = wrapper.data('ajax-url');
+    var callListId  = wrapper.find('.reedcrm-call-list-select').val();
+    var token       = $('input[name="token"]').val() || '';
+
+    if (!callListId) return;
+
+    var fd = new FormData();
+    fd.append('element_type', elementType);
+    fd.append('element_id', elementId);
+    fd.append('call_list_id', callListId);
+    fd.append('token', token);
+
+    fetch(ajaxUrl, { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                $.jnotify(res.message);
+            } else {
+                $.jnotify(res.message, 'error');
+            }
+        })
+        .catch(function() {
+            $.jnotify('Erreur réseau', 'error');
+        });
+};
+
+window.reedcrm.call_list_widget.handleAddDefault = function() {
+    var star        = $(this);
+    var wrapper     = star.closest('.reedcrm-add-to-call-list-wrapper');
+    var elementType = wrapper.data('element-type');
+    var elementId   = wrapper.data('element-id');
+    var ajaxUrl     = wrapper.data('default-ajax-url');
+    var token       = $('input[name="token"]').val() || '';
+
+    var fd = new FormData();
+    fd.append('element_type', elementType);
+    fd.append('element_id', elementId);
+    fd.append('token', token);
+
+    fetch(ajaxUrl, { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                star.addClass('is-active');
+                $.jnotify(res.message);
+            } else {
+                $.jnotify(res.message, 'error');
+            }
+        })
+        .catch(function() {
+            $.jnotify('Erreur réseau', 'error');
+        });
+};
