@@ -83,6 +83,13 @@ if ($permissiontoaddproject) {
     if ($conf->global->REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE > 0) {
         $object = $project;
         $extrafields->fetch_name_optionals_label($object->table_element);
+
+        // The GravityForm link is filled in by the incoming form itself, never typed here.
+        // Dropping the key from 'label' takes it out of the showOptionals() loop for this form only,
+        // leaving the extrafield untouched everywhere else (project card button, API).
+        // Same exclusion as the frontend form, see core/tpl/frontend/reedcrm_project_quickcreation_frontend.tpl.php.
+        unset($extrafields->attributes[$object->table_element]['label']['reedcrm_gravityform']);
+
         include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_add.tpl.php';
         $object = '';
     }
