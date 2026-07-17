@@ -1,126 +1,162 @@
-# [ReedCRM] [23.0.0] - PWA enrichie - Carte interactive - Suivi des opportunités
+# [ReedCRM] [23.1.0] - Listes d'appel - Suivi de temps sur tickets - Chaîne d'opportunités
 
-Description : Cette version enrichit la PWA (filtre par personne, sélecteur de semaine via Flatpickr, géolocalisation dans la création rapide, sélecteur de catégories), ajoute la carte aux opportunités avec routes et badges, refond l'analyse des opportunités avec graphes et widget hebdomadaire, et étend le bloc de relance aux fiches tiers et propositions.
+Description : Cette version introduit un système complet de **listes d'appel** (vue PWA mobile, PDF, widgets sur projets / propositions / factures, actions de masse, enregistrement audio, création automatique d'événements), un **suivi de temps natif sur les tickets**, l'analyse de la **chaîne d'opportunités** sur la fiche et l'onglet Vue d'ensemble du projet, une refonte de la **liste des projets** (cartes KPI, vues enregistrées, densité, édition inline), ainsi que de nombreuses améliorations PWA, expéditions et suivis récurrents.
 
 ## Nouvelles fonctionnalités et innovations
 
-### PWA — gestion des semaines et filtres
+### Listes d'appel (Call List)
 
-* Sélecteur de semaine **Flatpickr** en remplacement du picker natif (UX cohérente cross-browser).
-* Navigation par `week_start` absolu au lieu d'un offset relatif → URL partageable.
-* Filtre par **personne** disponible sur toute l'application.
-* Position GPS courante affichée dans la création rapide (avec fallback gracieux si pas de nom/prénom).
-* Sélecteur de **catégories** dans la création rapide ; champ Gravityform retiré du formulaire.
-* Colonnes `lat` / `lon` ajoutées à la vue d'adresse pour faciliter la géolocalisation.
-
-<!-- 📸 Ajouter une screenshot ici -->
-
-### Carte interactive
-
-* Carte ajoutée à la PWA avec pré-filtres en boutons.
-* Affichage des **routes entre points**.
-* Badge avec compteur sur les épingles qui se chevauchent.
-* Corrections sur le rendu des points (point sur point, JS).
+* Nouvel objet « liste d'appel » complet : tables SQL, classes, permissions, menu, numérotation, modèle PDF et endpoints AJAX.
+* Vue **PWA mobile** dédiée avec mise à jour du statut en AJAX (à appeler / appelé / sans réponse / à rappeler) ; la carte passe en fin de liste au changement de statut.
+* Gros **bouton d'appel vert** avec copie du numéro (clic = appel, appui long = copie), séparation appel / copie.
+* **Enregistrement audio** Saturne sur chaque fiche d'appel.
+* Widget « ajouter à une liste d'appel » injecté sur les fiches projet / proposition / facture, plus **action de masse** sur les listes.
+* Liste d'appel **par défaut** provisionnée pour chaque utilisateur, étoile en un clic sur le widget.
+* Routage via la **liste générique Saturne**, note publique et contacts en bas du PDF.
+* Création automatique d'un **événement + tâche commerciale** au changement de statut depuis la PWA.
+* Refus d'ajout d'un contact sans numéro de téléphone ; repli sur les coordonnées ReedCRM du projet si aucun contact n'est lié.
 
 <!-- 📸 Ajouter une screenshot ici -->
 
-### Statistiques opportunités
+### Suivi de temps sur les tickets
 
-* Nouveau widget « Infos globales de la semaine » sur la home.
-* Graphes opportunités sur la home (origine, % de probabilité, etc.).
-* Logo d'origine d'opportunité affiché sur la fiche projet.
-* Total compté correctement comme opportunités avec probabilité ≤ 50.
-* Bornes des plages d'opportunités fixées entre 50-80 et 80+.
-* Nouveau champ extra `reedcrm_field_opp_percent` sur les projets.
-* Samedi et dimanche retirés des graphes home (semaine de travail uniquement).
+* Bloc de **suivi de temps rapide** natif sur la fiche ticket + page de configuration.
+* Case « enregistrement automatique du temps » sur le formulaire d'envoi de message ; création d'un `actioncomm` au log du temps.
+* Dernière saisie de temps affichée sous le bloc et mise à jour dynamiquement à l'enregistrement.
+* En-tête avec référence de tâche, temps passé / prévu en infobulle, compteur d'entrées, icône tâche cliquable vers `time.php`.
+* Blocs **gravité** et **assignation** en édition inline (Select2) sur la fiche ticket ; zone de note redimensionnable.
+* Réglages : longueur max du titre d'événement, suffixe du libellé de tâche.
 
 <!-- 📸 Ajouter une screenshot ici -->
 
-### Bloc de relance
+### Chaîne d'opportunités
 
-* Bloc de relance étendu à `thirdpartycard` et `propalcard` (avant : seulement la liste).
-* Pop-up d'historique au survol du badge de relance commerciale.
-* Couleurs des boutons de relance refondues en colorblind-friendly.
+* Barre de **chaîne d'opportunités** sur la fiche projet (`procard.php`) et sur l'onglet Vue d'ensemble (hook `projectOverview`).
+* `reedcrm_compute_opportunity_chain` : état de progression + 4 règles d'incohérence, progression colorée, badges d'incohérence, mode icônes seules.
+* Exposition des statuts de pièces et des totaux facturé / payé du projet pour l'analyse.
 
-### Liste des propositions et tiers
+<!-- 📸 Ajouter une screenshot ici -->
 
-* Nouvelle liste de propositions générique (basée sur la liste Saturne).
-* Lien direct pour rechercher un tiers par SIRET à la création de tiers.
+### Refonte de la liste des projets
 
-### EventPro
+* **Cartes KPI** d'opportunités en tête de liste.
+* **Vues enregistrées** (presets) par filtres, avec mise en avant de la vue active.
+* Bascule de **densité** compacte / confortable par utilisateur.
+* Édition inline enrichie : contact, téléphone (recherche pays type-ahead), `opp_percent`, statut avec infobulle native.
 
-* Assignation utilisateur pour les rappels (reminder).
-* Case à cocher « Reminder » retirée des EventPro (gérée différemment maintenant).
+<!-- 📸 Ajouter une screenshot ici -->
+
+### PWA
+
+* **Menu burger** et **favoris personnels** dans la barre de navigation basse.
+* **Kanban** des tickets avec filtre par assigné, recherche et glisser-déposer.
+* Barre de **statut des documents** + page de configuration.
+* Ajout d'un **tiers** directement depuis la PWA.
+* Pourcentage d'opportunité repositionné près du montant, référence réduite.
+
+<!-- 📸 Ajouter une screenshot ici -->
+
+### Expéditions
+
+* Nouvelle **liste des expéditions** avec colonne des factures liées et montant total.
+* Colonne de **contrôle OK/KO** (expédition vs factures) ; factures brouillon ignorées, PROV réintégrées à l'affichage mais exclues du contrôle.
+* Marquage « facturé » réversible en AJAX + `actioncomm`.
+* Option **date d'expédition = date de création** (déclencheur `SHIPPING_CREATE`, bascule admin `REEDCRM_EXPEDITION_SHIPPING_DATE_AS_CREATION_DATE`).
+* Entrée de menu « Expéditions ».
+
+### Suivis récurrents & audit DU
+
+* **Suivi des factures récurrentes** et **audit DU** : nouvelles tables, listes et fiche.
+* État automatique suivant le devis et la facture, date d'audit réelle capturée au passage « Fait », ancrage du cycle suivant.
+
+### Divers
+
+* **Colonnes de tableau redimensionnables** avec persistance serveur + colonne message.
+* **Ligne du jour** (rouge) matérialisée dans les listes d'événements de l'agenda.
+* Carte « **rappels d'appel à venir** » sur le tableau de bord.
+* Description produit injectée sous les lignes de réception.
+* Sélecteur inline `SALESREPINTERNAL` dans l'en-tête de la fiche projet.
+* Documentation agent IA & architecture.
 
 ---
 
 ## Améliorations & corrections
 
-### Menu
+### Menu & navigation
 
-* Réorganisation du menu gauche (noms, ordre, refonte complète).
-* Ordre des entrées « opportunités importées » corrigé.
-* Filtre `search_status` corrigé pour les propals ouvertes.
-* Redirection du menu « facture récurrente » vers la bonne page.
+* Préfixe `/custom` ajouté aux URLs du menu Saturne.
+* Logos des modules externes affichés dans le menu « Plus », icône PNG ReedCRM restaurée, alignement des entrées de la barre supérieure.
 
-### Extrafields
+### Compatibilité modules
 
-* Suppression des extrafields obsolètes (`vocal`, `contact_informations`, `description`).
-* Nettoyage rétro-compatible des extrafields obsolètes à l'init du module (avec garde via conf).
-* Nouveau champ extra `reedcrm_gravityform` (URL Gravityform) + exposition dans l'API.
+* Pages fonctionnelles sans le module **Projet** (`hasRight()`), page blanche de la création rapide corrigée.
+* « Class FormTicket not found » évitée quand le module **Ticket** est désactivé.
 
-### Cartes / SQL
+### PWA & carte
 
-* `SALESREPINTERNAL` ajouté pour tous les modules.
-* Mises à jour SQL déplacées dans `update.sql`.
-* JS de la carte corrigé.
+* Filtres de la carte réparés, preset actif, retrait Type / icône.
+* Modale vCard et double scrollbar corrigés, chevauchement de la navigation basse sur la pagination.
+* Positionnement de l'en-tête PWA et geoloc, spinner infini corrigé.
+* Double init du module Saturne causant une création d'opportunité en double corrigé.
 
-### Module / configuration
+### Traductions & outils
 
-* Renommage cohérent « PWA » → « App » dans les traductions.
-* Backward compatibility pour les projets sans nom/prénom.
-* Trad manquante `call_notifications` ajoutée.
+* Traductions manquantes ajoutées (PropalList, RelauchCommercial, ContactDetails, parité en_US).
+* Accès `conf->global` déprécié remplacé par `getDolGlobalString` dans `reedcrmtools.php`.
+* Import : BOM UTF-8, multiselect natif des tags, confirmation de tag en double.
+* Include `reedcrm.main.inc.php` en 2 tentatives pour Dolistore.
 
-### Actions / hooks
+### Divers
 
-* `printFieldListWhere` corrigé.
-* JS qui disparaissait dans la pop-up de liste — corrigé.
+* EventPro : rappel créé « à faire » et non « fait », titre de projet complet dans le select.
+* Bloc de relance : infobulle au survol restaurée.
+* PDF : téléphone et e-mail du projet injectés dans le bloc adressé.
 
-### Build / CI
+## Comparaison des versions [23.0.0](https://github.com/Eoxia/easycrm/compare/23.0.0...23.1.0) et 23.1.0
 
-* `cross-env` requis dans `package.json` (compat Windows).
-* Dart SCSS v3 supporté.
-* Recompilation des assets min CSS/JS.
-* Migration vers `saturne_list` au lieu de la liste Dolibarr.
-* `.gitattributes` corrigé pour le build des assets.
-
-## Comparaison des versions [22.1.0](https://github.com/Eoxia/easycrm/compare/22.1.0...23.0.0) et 23.0.0
-
-* [#642] [RelaunchBlock] feat: extend header relaunch block to thirdpartycard and propalcard [`8b79eee`](https://github.com/Eoxia/easycrm/commit/8b79eee)
-* [#629] [PWA] feat: categories selector and remove gravityform field in quickcreation [`c027a80`](https://github.com/Eoxia/easycrm/commit/c027a80)
-* [#625] [PWA/Address] feat: current location display in quickcreation, lat/lon columns [`eb58f7a`](https://github.com/Eoxia/easycrm/commit/eb58f7a) [`aca3ad3`](https://github.com/Eoxia/easycrm/commit/aca3ad3)
-* [#622] [Menu] fix: reorder imported opportunities left menu entries [`a152961`](https://github.com/Eoxia/easycrm/commit/a152961)
-* [#621] [PWA] feat: replace week picker with Flatpickr, person filter, week_start [`5ec1dcf`](https://github.com/Eoxia/easycrm/commit/5ec1dcf) [`2eaff6f`](https://github.com/Eoxia/easycrm/commit/2eaff6f) [`789d04b`](https://github.com/Eoxia/easycrm/commit/789d04b)
-* [#619] [PWA] fix: opportunity ranges, total count [`59dc974`](https://github.com/Eoxia/easycrm/commit/59dc974) [`5ec5f2a`](https://github.com/Eoxia/easycrm/commit/5ec5f2a)
-* [#616] [Extrafields] remove: deprecated extrafields with conf guard [`bcc4dfb`](https://github.com/Eoxia/easycrm/commit/bcc4dfb) [`50a0489`](https://github.com/Eoxia/easycrm/commit/50a0489)
-* [#614] [Menu] fix: search_status filter not working for opened propals [`14b0d51`](https://github.com/Eoxia/easycrm/commit/14b0d51)
-* [#610] [PWA] remove: saturday from home stats graphs [`dbba031`](https://github.com/Eoxia/easycrm/commit/dbba031)
-* [#606] [EventPro] remove: checkbox for reminder from eventpro [`e812807`](https://github.com/Eoxia/easycrm/commit/e812807)
-* [#604] [PWA] fix: no geoloc when no name and lastname [`36e7a12`](https://github.com/Eoxia/easycrm/commit/36e7a12)
-* [#602] [Mod] fix: backward for project without name and lastname [`71e794a`](https://github.com/Eoxia/easycrm/commit/71e794a)
-* [#596] [PWA] add: widget for week global infos, graphs for opportunities [`bc6ba86`](https://github.com/Eoxia/easycrm/commit/bc6ba86) [`1a00e43`](https://github.com/Eoxia/easycrm/commit/1a00e43)
-* [#595] [EventPro] add: user assign for reminder [`d846a36`](https://github.com/Eoxia/easycrm/commit/d846a36)
-* [#592] [Map] add: badge count pin [`856f4ab`](https://github.com/Eoxia/easycrm/commit/856f4ab)
-* [#590] [PWA] add: map to pwa [`dc19efb`](https://github.com/Eoxia/easycrm/commit/dc19efb)
-* [#586] [SQL] add: SALESREPINTERNAL, update.sql refactor [`a7336a4`](https://github.com/Eoxia/easycrm/commit/a7336a4)
-* [#531] [Map] add: pre filter buttons, routes between points [`33cb9a7`](https://github.com/Eoxia/easycrm/commit/33cb9a7) [`7be912c`](https://github.com/Eoxia/easycrm/commit/7be912c)
-* [#514] [Graph] add: opportunity origin graph and logo [`eccfd3c`](https://github.com/Eoxia/easycrm/commit/eccfd3c)
-* [#509] [Mod/Actions] fix: PWA → App, link search thirdparty siret [`84ffd98`](https://github.com/Eoxia/easycrm/commit/84ffd98) [`1179a9c`](https://github.com/Eoxia/easycrm/commit/1179a9c)
-* [#508] [Project/Propal] add: reedcrm_field_opp_percent, propal list [`98a3dbb`](https://github.com/Eoxia/easycrm/commit/98a3dbb) [`6a46fe8`](https://github.com/Eoxia/easycrm/commit/6a46fe8)
-* [#498] [front] rework: colorblind-friendly relaunch buttons [`633e37a`](https://github.com/Eoxia/easycrm/commit/633e37a)
-* [#490] [Extrafield/API] add: reedcrm_gravityform [`d542932`](https://github.com/Eoxia/easycrm/commit/d542932) [`aaed41d`](https://github.com/Eoxia/easycrm/commit/aaed41d) [`de19f7d`](https://github.com/Eoxia/easycrm/commit/de19f7d)
-* [#481] [menu] fix: redirect recurring invoice menu to correct page [`bf00705`](https://github.com/Eoxia/easycrm/commit/bf00705)
-* [#556] [Mod] fix: rework left menu, names of menu [`94f3ab4`](https://github.com/Eoxia/easycrm/commit/94f3ab4) [`64040f6`](https://github.com/Eoxia/easycrm/commit/64040f6)
-* [#552/550/546] various commit-only fixes [`b65cacc`](https://github.com/Eoxia/easycrm/commit/b65cacc) [`b35e8f0`](https://github.com/Eoxia/easycrm/commit/b35e8f0) [`7027d46`](https://github.com/Eoxia/easycrm/commit/7027d46)
-* [#540] [JS/Actions] fix: list popup, hover history popup on relaunch badge [`3f7e493`](https://github.com/Eoxia/easycrm/commit/3f7e493) [`cbaa90c`](https://github.com/Eoxia/easycrm/commit/cbaa90c)
-* [Mod/CI] fix: cross-env, dart scss v3, build assets min, saturne_list migration [`b94ad63`](https://github.com/Eoxia/easycrm/commit/b94ad63) [`9a757d0`](https://github.com/Eoxia/easycrm/commit/9a757d0) [`b86d96b`](https://github.com/Eoxia/easycrm/commit/b86d96b) [`c954e03`](https://github.com/Eoxia/easycrm/commit/c954e03)
+* [#796] [DU] feat: suivi des factures récurrentes et de l'audit DU [`74cee58`](https://github.com/Eoxia/easycrm/commit/74cee58) [`dd85810`](https://github.com/Eoxia/easycrm/commit/dd85810) [`1966cc4`](https://github.com/Eoxia/easycrm/commit/1966cc4) [`7f834ce`](https://github.com/Eoxia/easycrm/commit/7f834ce)
+* [#790] [Agenda] feat: ligne du jour (rouge) dans les listes d'événements + rebuild css [`f8c5269`](https://github.com/Eoxia/easycrm/commit/f8c5269) [`9404f5a`](https://github.com/Eoxia/easycrm/commit/9404f5a) [`6c1e0c9`](https://github.com/Eoxia/easycrm/commit/6c1e0c9)
+* [#791] [ProCard] fix: éviter « Class FormTicket not found » sans le module Ticket [`c568fb3`](https://github.com/Eoxia/easycrm/commit/c568fb3)
+* [#788] [Frontend] fix: page blanche de la création rapide sans le module Projet [`82e6546`](https://github.com/Eoxia/easycrm/commit/82e6546)
+* [#786] [Frontend] fix: `hasRight()` pour fonctionner sans le module Projet [`fc2a180`](https://github.com/Eoxia/easycrm/commit/fc2a180)
+* [#782] [Dashboard] feat: carte des rappels d'appel à venir [`023658b`](https://github.com/Eoxia/easycrm/commit/023658b)
+* [#779] [Import] fix: BOM UTF-8, historique inline, multiselect natif des tags, confirmation de doublon [`9351598`](https://github.com/Eoxia/easycrm/commit/9351598)
+* [#777] [Tools] fix: `getDolGlobalString` dans `reedcrmtools.php` [`5086272`](https://github.com/Eoxia/easycrm/commit/5086272)
+* [#775] [ProCard] feat: en-tête d'édition inline compact + titre dynamique + Select2 [`76e7330`](https://github.com/Eoxia/easycrm/commit/76e7330)
+* [#773] [Traductions] fix: traductions manquantes PropalList, RelauchCommercial, ContactDetails [`873a855`](https://github.com/Eoxia/easycrm/commit/873a855)
+* [#769] [Dolistore] fix: include `reedcrm.main.inc.php` en 2 tentatives [`1d4acb7`](https://github.com/Eoxia/easycrm/commit/1d4acb7)
+* [#762] [CallList] feat: création auto d'événement et de tâche commerciale au changement de statut PWA [`4f52693`](https://github.com/Eoxia/easycrm/commit/4f52693)
+* [#759] [PWA] fix: visibilité de la modale vCard et double scrollbar [`8010efb`](https://github.com/Eoxia/easycrm/commit/8010efb)
+* [#757] [PWA] feat: gros bouton d'appel vert avec copie [`0becb06`](https://github.com/Eoxia/easycrm/commit/0becb06) [`c2a7763`](https://github.com/Eoxia/easycrm/commit/c2a7763)
+* [#755] [CallList] fix: lecture des listes d'appel par les admins dans la PWA [`71f6519`](https://github.com/Eoxia/easycrm/commit/71f6519)
+* [#753] [PWA] feat: menu burger et favoris perso dans la bottom nav [`9cf415f`](https://github.com/Eoxia/easycrm/commit/9cf415f)
+* [#750] [PWA] feat: UX et audio de la liste d'appel PWA [`28a591e`](https://github.com/Eoxia/easycrm/commit/28a591e)
+* [#748] [CallList] fix: valider les listes avec une ref définitive au lieu de PROV [`5090b7e`](https://github.com/Eoxia/easycrm/commit/5090b7e)
+* [#745] [Ticket] feat: suivi de temps natif (bloc rapide, actioncomm, gravité/assignation inline) [`d0e01aa`](https://github.com/Eoxia/easycrm/commit/d0e01aa) [`cd03e63`](https://github.com/Eoxia/easycrm/commit/cd03e63) [`cfcd8db`](https://github.com/Eoxia/easycrm/commit/cfcd8db)
+* [#729] [EventPro] fix: rappel créé « à faire » et non « fait » [`79cd567`](https://github.com/Eoxia/easycrm/commit/79cd567)
+* [#728] [EventPro] fix: titre de projet complet dans le select (16 → 64) [`b6631a4`](https://github.com/Eoxia/easycrm/commit/b6631a4)
+* [#726] [CallList] feat: routage de la liste d'appel via la liste générique Saturne [`e6d7285`](https://github.com/Eoxia/easycrm/commit/e6d7285)
+* [#724] [CallList] fix: repli sur les coordonnées ReedCRM du projet sans contact [`5154746`](https://github.com/Eoxia/easycrm/commit/5154746)
+* [#722] [Expedition] feat: option date d'expédition = date de création (`SHIPPING_CREATE`) [`63e77f3`](https://github.com/Eoxia/easycrm/commit/63e77f3) [`a062638`](https://github.com/Eoxia/easycrm/commit/a062638) [`2957965`](https://github.com/Eoxia/easycrm/commit/2957965)
+* [#716] [ReedCRM] feat: barre de chaîne d'opportunités sur la fiche projet et l'onglet Vue d'ensemble [`e3717e6`](https://github.com/Eoxia/easycrm/commit/e3717e6) [`620211c`](https://github.com/Eoxia/easycrm/commit/620211c) [`54ec112`](https://github.com/Eoxia/easycrm/commit/54ec112)
+* [#711] [ReedCRM] feat: description produit injectée sous les lignes de réception [`77ac840`](https://github.com/Eoxia/easycrm/commit/77ac840) [`d8d7dcd`](https://github.com/Eoxia/easycrm/commit/d8d7dcd) [`057bf8b`](https://github.com/Eoxia/easycrm/commit/057bf8b)
+* [#710] [Project] feat: sélecteur inline `SALESREPINTERNAL` dans l'en-tête de la fiche projet [`c349561`](https://github.com/Eoxia/easycrm/commit/c349561) [`d87933f`](https://github.com/Eoxia/easycrm/commit/d87933f)
+* [#709] [RelaunchBlock] fix: infobulle au survol restaurée sur les boutons de relance [`3f5abf2`](https://github.com/Eoxia/easycrm/commit/3f5abf2)
+* [#707] [CallList] add: note publique en bas du PDF [`b1d88aa`](https://github.com/Eoxia/easycrm/commit/b1d88aa)
+* [#700] [ReedCRM/PWA] feat: calcul de la chaîne d'opportunités + barre de statut des documents [`b54561f`](https://github.com/Eoxia/easycrm/commit/b54561f) [`e0f95cc`](https://github.com/Eoxia/easycrm/commit/e0f95cc) [`42a4b5c`](https://github.com/Eoxia/easycrm/commit/42a4b5c)
+* [#696] [CallList] feat: système complet de listes d'appel (widgets, actions de masse, PDF, PWA) [`1382915`](https://github.com/Eoxia/easycrm/commit/1382915) [`3cd2346`](https://github.com/Eoxia/easycrm/commit/3cd2346) [`717baf7`](https://github.com/Eoxia/easycrm/commit/717baf7)
+* [#693] [JS] fix: double init de Saturne provoquant une création d'opportunité en double [`baee3d7`](https://github.com/Eoxia/easycrm/commit/baee3d7)
+* [#687] [Project] feat: cartes KPI, vues enregistrées, densité et édition inline sur la liste [`ae2ee38`](https://github.com/Eoxia/easycrm/commit/ae2ee38) [`2f43d53`](https://github.com/Eoxia/easycrm/commit/2f43d53) [`1a1e261`](https://github.com/Eoxia/easycrm/commit/1a1e261)
+* [#686] [Map] fix: réparation des filtres + preset actif [`f947669`](https://github.com/Eoxia/easycrm/commit/f947669) [`782bba8`](https://github.com/Eoxia/easycrm/commit/782bba8) [`1d9cd75`](https://github.com/Eoxia/easycrm/commit/1d9cd75)
+* [#683] [Project] feat: colonnes redimensionnables avec persistance serveur + colonne message [`5fa02aa`](https://github.com/Eoxia/easycrm/commit/5fa02aa)
+* [#682] [PWA] feat: Kanban des tickets avec filtre par assigné et glisser-déposer [`a62ac34`](https://github.com/Eoxia/easycrm/commit/a62ac34) [`06a8625`](https://github.com/Eoxia/easycrm/commit/06a8625) [`8c91f7c`](https://github.com/Eoxia/easycrm/commit/8c91f7c)
+* [#679] [JS] fix: positionnement de l'en-tête geoloc PWA + spinner infini [`33475f7`](https://github.com/Eoxia/easycrm/commit/33475f7) [`76fe0c5`](https://github.com/Eoxia/easycrm/commit/76fe0c5) [`6e4a5cc`](https://github.com/Eoxia/easycrm/commit/6e4a5cc)
+* [#676] [PWA] fix: exclure le PROJECTLEADER interne des chips de contact [`ef041a4`](https://github.com/Eoxia/easycrm/commit/ef041a4)
+* [#674] [Projet] rework: bloc de relance d'en-tête remplacé par des boutons typés [`669334f`](https://github.com/Eoxia/easycrm/commit/669334f)
+* [#671] [PWA] rework: UI/UX des cartes projet [`11172d2`](https://github.com/Eoxia/easycrm/commit/11172d2)
+* [#669] [Projet] fix: ajout de l'opportunité au dictionnaire de sources [`a48d584`](https://github.com/Eoxia/easycrm/commit/a48d584)
+* [#667] [Docs] feat: guidelines agent IA et docs d'architecture [`d607998`](https://github.com/Eoxia/easycrm/commit/d607998) [`f09c10c`](https://github.com/Eoxia/easycrm/commit/f09c10c)
+* [#665] [QuickCreation] fix: intégration du module media Saturne pour l'upload de photos [`03f1ae2`](https://github.com/Eoxia/easycrm/commit/03f1ae2)
+* [#659] [PWA] feat: ajouter un tiers depuis la PWA [`8d14b5d`](https://github.com/Eoxia/easycrm/commit/8d14b5d)
+* [#633] [Menu] fix: préfixe `/custom` sur les URLs du menu Saturne [`e6982da`](https://github.com/Eoxia/easycrm/commit/e6982da)
+* [#597] [PDF] fix: injection du téléphone et de l'e-mail du projet dans le bloc adressé [`8a9406a`](https://github.com/Eoxia/easycrm/commit/8a9406a)
