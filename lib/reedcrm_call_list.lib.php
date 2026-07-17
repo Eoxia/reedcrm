@@ -289,7 +289,12 @@ function reedcrm_call_list_line_record_status_change(DoliDB $db, User $user, Cal
         }
     }
 
-    $eventLabel = $langs->transnoentities('CallFrom') . ' ' . $callList->label . ' - ' . $langs->transnoentities('CallListLineStatus' . $status);
+    // Wording of the status part of the event title, configurable per status in the call list setup
+    // (admin/call_list.php) so teams can log their own standard codes (Repondeur, RLM, RPM...).
+    // Left empty, it falls back to the plain status label: no change for an existing setup.
+    $statusLabel = getDolGlobalString('REEDCRM_CALL_LIST_EVENT_LABEL_' . $status) ?: $langs->transnoentities('CallListLineStatus' . $status);
+
+    $eventLabel = $langs->transnoentities('CallFrom') . ' ' . $callList->label . ' - ' . $statusLabel;
 
     // Phone event in the agenda
     if ($createActioncomm) {
