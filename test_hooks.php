@@ -1,6 +1,13 @@
 <?php
-require "../../main.inc.php";
-require_once DOL_DOCUMENT_ROOT."/ticket/class/ticket.class.php";
+// Load ReedCRM environment
+if (file_exists('reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/reedcrm.main.inc.php';
+} elseif (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} else {
+    die('Include of reedcrm main fails');
+}
+dol_include_once('/ticket/class/ticket.class.php');
 global $hookmanager, $conf;
 $hookmanager->initHooks(array("ticketcard"));
 echo "<pre>";

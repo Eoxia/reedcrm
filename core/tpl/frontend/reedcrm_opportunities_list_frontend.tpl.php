@@ -24,7 +24,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/lib/reedcrm.lib.php';
+dol_include_once('/reedcrm/lib/reedcrm.lib.php');
 
 $pwaProjectIds = [];
 if (!empty($latestProjects)) {

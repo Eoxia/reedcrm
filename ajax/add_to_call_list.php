@@ -29,7 +29,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
     die('Include of reedcrm main fails');
 }
 
-require_once DOL_DOCUMENT_ROOT . '/custom/reedcrm/lib/reedcrm_call_list.lib.php';
+dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
 
 global $db, $user, $langs;
 
