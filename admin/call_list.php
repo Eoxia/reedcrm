@@ -35,6 +35,9 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
 
+// CallListLine::STATUS_* drive the per status event label settings below
+dol_include_once('/reedcrm/class/calllistline.class.php');
+
 // Global variables definitions
 global $conf, $db, $langs, $user;
 
@@ -83,7 +86,12 @@ if ($action == 'set' && $permissiontoread) {
 }
 
 if ($action == 'set_config') {
-    // Other settings if needed
+    // Wording of the event title, one per line status. Set unconditionally: an empty value is
+    // meaningful, it clears the setting and brings the default status label back.
+    foreach ([CallListLine::STATUS_CALLED, CallListLine::STATUS_NO_ANSWER, CallListLine::STATUS_CALLBACK] as $lineStatus) {
+        dolibarr_set_const($db, 'REEDCRM_CALL_LIST_EVENT_LABEL_' . $lineStatus, GETPOST('event_label_' . $lineStatus, 'alphanohtml'), 'chaine', 0, '', $conf->entity);
+    }
+
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
@@ -161,3 +169,41 @@ print ajax_constantonoff('REEDCRM_CALL_LIST_STATUS_CREATE_TASK');
 print '</td></tr>';
 
 print '</table>';
+
+// Wording of the event title, one per line status
+print load_fiche_titre($langs->trans('CallListEventLabels'), '', '');
+
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="call_list_event_labels">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="set_config">';
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('Parameters') . '</td>';
+print '<td>' . $langs->trans('Description') . '</td>';
+print '<td>' . $langs->trans('Value') . '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td colspan="3">';
+print '<span class="opacitymedium">' . $langs->transnoentities('CallListEventLabelsDesc') . '</span>';
+print '</td></tr>';
+
+foreach ([CallListLine::STATUS_CALLED, CallListLine::STATUS_NO_ANSWER, CallListLine::STATUS_CALLBACK] as $lineStatus) {
+    $defaultLabel = $langs->transnoentities('CallListLineStatus' . $lineStatus);
+
+    print '<tr class="oddeven"><td>';
+    print $langs->transnoentities('CallListEventLabelFor', $defaultLabel);
+    print '</td><td>';
+    print $langs->transnoentities('CallListEventLabelForDesc', $defaultLabel);
+    print '</td><td>';
+    // Empty field = fall back to the status label, shown as the placeholder
+    print '<input type="text" name="event_label_' . $lineStatus . '" class="minwidth200"';
+    print ' value="' . dol_escape_htmltag(getDolGlobalString('REEDCRM_CALL_LIST_EVENT_LABEL_' . $lineStatus)) . '"';
+    print ' placeholder="' . dol_escape_htmltag($defaultLabel) . '">';
+    print '</td></tr>';
+}
+
+print '</table>';
+
+print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print '</form>';
