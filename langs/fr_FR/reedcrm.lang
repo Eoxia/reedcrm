@@ -58,6 +58,9 @@ QuickEventCreations = ajouts rapides d'événements
 CommercialRelaunching = Relance commerciale
 CommercialsRelaunching = Relances commerciales
 LastCommercialReminderDate = Date dernière relance commerciale
+# En-tetes du tableau des relances (Date et Statut viennent de main.lang)
+RelaunchWho = Qui
+RelaunchWhat = Quoi
 ActionCommCreation = Événement créé
 ReminderActionCommCreation = Rappel crée le %s
 ErrorNoProjectAndThirdpartyInformations = Veuillez renseigner un nom de projet et un nom de tiers
