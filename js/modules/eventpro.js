@@ -548,7 +548,9 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
     var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
-    var projectId = $wrapper.find('.reedcrm-modal-open').first().data('project-id');
+    // The button always carries the project id. The "+" span it was read from before only exists
+    // for users allowed to create events, so the tooltip stayed empty for read-only ones.
+    var projectId = $button.data('project-id') || $wrapper.find('.reedcrm-modal-open').first().data('project-id');
     var socid = $wrapper.data('socid') || '';
 
     if ((!projectId && !socid) || !type) {
@@ -630,7 +632,16 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
 
     tooltipTimeout = setTimeout(function () {
       $currentTooltip.fadeIn(200);
-      const ajaxUrl = $wrapper.find('.reedcrm-modal-open').first().data('ajax-url') || '/custom/reedcrm/ajax/get_relaunches_list.php';
+      // Take the URL off the button: it is built by dol_buildpath, so it carries DOL_URL_ROOT.
+      // The previous value was read from a data attribute that is never rendered, so it always
+      // fell back to a root-absolute path, which 404s whenever Dolibarr is served from a
+      // subdirectory (e.g. /dolibarr/htdocs).
+      const ajaxUrl = $button.data('dialog-url');
+      if (!ajaxUrl) {
+        loadingTooltip = false;
+        $currentTooltip.find('.reedcrm-relaunch-tooltip-content').html('<div class="reedcrm-relaunch-tooltip-empty">Erreur lors du chargement</div>');
+        return;
+      }
 
       $.ajax({
         url: ajaxUrl,

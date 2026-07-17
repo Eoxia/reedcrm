@@ -97,7 +97,10 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
         $dialogUrl = dol_buildpath('custom/reedcrm/ajax/get_relaunches_list.php', 1);
 
         $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $projectId . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
-        $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '" data-action-comm-type="' . $actonComByType['actioncode'] . '">';
+        $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '"';
+        // Required by the hover tooltip (eventpro.js): without it the tooltip bails out and never opens
+        $out .= ' data-relaunch-type="' . $actionCommType . '"';
+        $out .= ' data-action-comm-type="' . $actonComByType['actioncode'] . '">';
 
         $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
         $out .= '<i class="fas fa-' . $actonComByType['picto'] . '"></i>';
