@@ -383,3 +383,44 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
 
     return $data;
 }
+
+/**
+ * List active thirdparties that were invoiced for a Digirisk subscription tier (products D1..D5/D41)
+ * but that currently have NO active recurring invoice (subscription). Helps spot Digirisk users to
+ * put on a recurring subscription.
+ *
+ * @param  DoliDB $db Database handler.
+ * @return array<int,array<string,mixed>> Rows: fk_soc, thirdparty, location, last_tier, last_date.
+ */
+function reedcrmFollowupGetDigiriskWithoutSubscription(DoliDB $db): array
+{
+    $rows  = [];
+    $tiers = "'D1','D2','D3','D4','D41','D5'";
+
+    $sql  = 'SELECT s.rowid as fk_soc, s.nom as thirdparty_name, s.zip, s.town, MAX(f.datef) as last_date,';
+    $sql .= "  SUBSTRING_INDEX(GROUP_CONCAT(p.label ORDER BY f.datef DESC, fd.rowid DESC SEPARATOR '\n'), '\n', 1) as last_tier";
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture as f';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet as fd ON fd.fk_facture = f.rowid';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = fd.fk_product AND p.ref IN (' . $tiers . ')';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = f.fk_soc AND s.status = 1';
+    $sql .= ' LEFT JOIN (SELECT DISTINCT fk_soc FROM ' . MAIN_DB_PREFIX . 'facture_rec WHERE suspended = 0) fr ON fr.fk_soc = f.fk_soc';
+    $sql .= ' WHERE f.type <> 2 AND f.entity IN (' . getEntity('facture') . ') AND fr.fk_soc IS NULL';
+    $sql .= ' GROUP BY s.rowid, s.nom, s.zip, s.town';
+    $sql .= ' ORDER BY last_date DESC';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $location = trim(($obj->zip ? $obj->zip . ' ' : '') . ($obj->town ?? ''));
+            $rows[]   = [
+                'fk_soc'     => (int) $obj->fk_soc,
+                'thirdparty' => $obj->thirdparty_name,
+                'location'   => $location,
+                'last_tier'  => $obj->last_tier,
+                'last_date'  => !empty($obj->last_date) ? $db->jdate($obj->last_date) : 0,
+            ];
+        }
+    }
+
+    return $rows;
+}

@@ -372,6 +372,35 @@ print '</table>';
 print '</div>';
 print '</form>';
 
+// --- Digirisk users without an active recurring subscription ---
+$digiNoSub = reedcrmFollowupGetDigiriskWithoutSubscription($db);
+print '<br>';
+print load_fiche_titre('<i class="fas fa-exclamation-triangle paddingright" style="color:#c8871a"></i>' . $langs->trans('FollowupDigiriskNoSub') . ' <span class="badge">' . count($digiNoSub) . '</span>', '', '');
+print '<div class="div-table-responsive"><table class="tagtable liste">';
+print '<tr class="liste_titre">';
+print '<th>' . $langs->trans('ThirdParty') . '</th><th>' . $langs->trans('FollowupLocation') . '</th>';
+print '<th>' . $langs->trans('FollowupDigiriskLastTier') . '</th><th class="center">' . $langs->trans('FollowupDigiriskLastInvoice') . '</th>';
+print '<th class="center maxwidthsearch"></th>';
+print '</tr>';
+if (empty($digiNoSub)) {
+    print '<tr class="oddeven"><td colspan="5" class="center opacitymedium">' . $langs->trans('FollowupDigiriskNoSubEmpty') . '</td></tr>';
+} else {
+    $socStatic = new Societe($db);
+    foreach ($digiNoSub as $c) {
+        $socStatic->id     = $c['fk_soc'];
+        $socStatic->name   = $c['thirdparty'];
+        $socStatic->status = 1;
+        print '<tr class="oddeven">';
+        print '<td class="tdoverflowmax200">' . $socStatic->getNomUrl(1) . '</td>';
+        print '<td class="tdoverflowmax150">' . ($c['location'] !== '' ? '<i class="fas fa-map-marker-alt paddingright opacitymedium"></i>' . dol_escape_htmltag($c['location']) : '<span class="opacitymedium">-</span>') . '</td>';
+        print '<td class="tdoverflowmax300" title="' . dol_escape_htmltag($c['last_tier']) . '">' . dol_escape_htmltag($c['last_tier']) . '</td>';
+        print '<td class="center nowraponall">' . (!empty($c['last_date']) ? dol_print_date($c['last_date'], 'day') : '') . '</td>';
+        print '<td class="center"><a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/compta/facture/card-rec.php?action=create&socid=' . ((int) $c['fk_soc']) . '" title="' . dol_escape_htmltag($langs->trans('FollowupDigiriskCreateSub')) . '"><i class="fas fa-sync-alt paddingright"></i>' . $langs->trans('FollowupDigiriskCreateSub') . '</a></td>';
+        print '</tr>';
+    }
+}
+print '</table></div>';
+
 // End of page.
 llxFooter();
 $db->close();
