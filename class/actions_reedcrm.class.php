@@ -2252,9 +2252,11 @@ class ActionsReedcrm
                 if (isset($object->fields[$oppField])) {
                     $object->fields[$oppField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
                 }
-            }
             if (isset($object->fields['fk_opp_status'])) {
                 $object->fields['fk_opp_status']['label'] = 'Status opp.';
+            }
+            if (isset($object->fields['opp_amount'])) {
+                $object->fields['opp_amount']['label'] = 'Montant opp.';
             }
 
             // Merge the start/end dates into one "Dates" column, using dateo as the base to get native date filtering
