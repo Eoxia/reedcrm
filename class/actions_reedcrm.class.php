@@ -1957,7 +1957,7 @@ class ActionsReedcrm
             if (GETPOST('massaction') == 'assignOppStatus') {
                 $selected = ' selected="selected" ';
             }
-            $ret .= '<option value="assignOppStatus"' . $selected . '>Statut</option>';
+            $ret .= '<option value="assignOppStatus"' . $selected . '>% Statut Opp.</option>';
 
             $selectedVal = '';
             if (GETPOST('massaction') == 'validateProject') {
@@ -2003,7 +2003,7 @@ class ActionsReedcrm
 
             $out  = '<div style="padding: 10px 0 20px 0;">';
             $out .= '<fieldset>';
-            $out .= '<legend>Statut</legend>';
+            $out .= '<legend>% Statut Opp.</legend>';
             $out .= '<table>';
 
             $out .= '<tr>';
@@ -2334,7 +2334,7 @@ class ActionsReedcrm
                 }
             }
             if (isset($object->fields['fk_opp_status'])) {
-                $object->fields['fk_opp_status']['label'] = 'Statut';
+                $object->fields['fk_opp_status']['label'] = 'Statut Opp.';
             }
             if (isset($object->fields['opp_percent'])) {
                 $object->fields['opp_percent']['label'] = '% Opp.';
