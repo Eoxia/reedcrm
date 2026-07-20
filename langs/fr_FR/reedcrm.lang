@@ -617,6 +617,7 @@ FollowupAssign = Assigner l'audit à cette personne
 FollowupAmountPerPerson = Montant DU par personne
 FollowupDigiriskNoSub = Clients Digirisk sans abonnement récurrent
 FollowupDigiriskNoSubEmpty = Tous les clients Digirisk ont un abonnement récurrent
+FollowupDigiriskInstance = Instance Digirisk (projet actif)
 FollowupDigiriskLastTier = Dernier palier Digirisk facturé
 FollowupDigiriskLastInvoice = Dernière facture
 FollowupDigiriskCreateSub = Créer l'abonnement
