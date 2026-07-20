@@ -359,14 +359,7 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
 
     $refHtml = $object->showOutputField($parameters['val'], $parameters['key'], $object->ref);
 
-    // Quick preview (call/email now live in the merged "Coordonnées" column)
-    $id         = (int) $object->id;
-    $previewUrl = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $id . '&from_type=project&project_id=' . $id;
-    $actions    = '<span class="reedcrm-row-actions">';
-    $actions   .= '<button type="button" class="reedcrm-row-action reedcrm-card-modal-open" title="' . dol_escape_htmltag($langs->trans('Preview')) . '" data-project-id="' . $id . '" data-modal-url="' . dol_escape_htmltag($previewUrl) . '"><i class="fas fa-eye"></i></button>';
-    $actions   .= '</span>';
-
-    return '<div class="reedcrm-ref-cell">' . $refHtml . $actions . '</div>';
+    return '<div class="reedcrm-ref-cell">' . $refHtml . '</div>';
 }
 
 /**

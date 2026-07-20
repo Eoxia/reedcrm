@@ -2254,12 +2254,16 @@ class ActionsReedcrm
                 }
             }
 
-            // Merge the start/end dates into one "Dates" column
-            $object->fields['date_details'] = ['label' => 'Dates', 'enabled' => 1, 'position' => 50, 'visible' => 1, 'csslist' => 'nowraponall minwidth150', 'disablesort' => 1];
-            foreach (['dateo', 'datee'] as $dateField) {
-                if (isset($object->fields[$dateField])) {
-                    $object->fields[$dateField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
-                }
+            // Merge the start/end dates into one "Dates" column, using dateo as the base to get native date filtering
+            if (isset($object->fields['dateo'])) {
+                $object->fields['dateo']['label'] = 'Dates';
+                $object->fields['dateo']['type'] = 'date';
+                $object->fields['dateo']['csslist'] = 'nowraponall minwidth150';
+                $object->fields['dateo']['disablesort'] = 1;
+                $object->fields['dateo']['visible'] = 1;
+            }
+            if (isset($object->fields['datee'])) {
+                $object->fields['datee']['visible'] = 0; // hidden as standalone column
             }
 
             // Center the status (État) column header + cells
@@ -2299,7 +2303,7 @@ class ActionsReedcrm
             $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
 
             // Virtual columns (not real DB columns)
-            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details', 'relauch_commercial', 'date_details']);
+            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details', 'relauch_commercial']);
 
             return 1;
         }
@@ -2326,244 +2330,7 @@ class ActionsReedcrm
         return 1;
     }
 
-    /**
-     * Overloading the saturneListTopBanner hook : display opportunity KPI cards + view presets above the project list
-     * (rendered above the title bar, outside the list header)
-     *
-     * @param  array $parameters Hook metadatas (context, ...)
-     * @return int               0 < on error, 0 on success, 1 to replace standard code
-     */
-    public function saturneListTopBanner(array $parameters): int
-    {
-        global $conf, $db, $langs, $user;
 
-        // Only on the saturne project list, when the opportunity feature is enabled
-        if (strpos($parameters['context'], 'projectlist') === false || strpos($parameters['context'], 'saturnelist') === false) {
-            return 0;
-        }
-        if (!getDolGlobalString('PROJECT_USE_OPPORTUNITIES')) {
-            return 0;
-        }
-
-        require_once __DIR__ . '/../../saturne/lib/saturne_functions.lib.php';
-
-        // Predefined view presets (one-click filtered views)
-        $presetsBar = $this->reedcrmRenderProjectPresets();
-
-        // Snapshot of the current filtered query, exposed by the generic list before sort/pagination
-        $baseSql = $GLOBALS['sqlForList'] ?? '';
-        if (empty($baseSql)) {
-            $this->resprints = $presetsBar;
-            return 0;
-        }
-
-        // Aggregates computed over the whole filtered set
-        $aggregates = saturne_get_list_aggregates($db, $baseSql, [
-            'nb'       => 'COUNT(*)',
-            'total'    => 'COALESCE(SUM(opp_amount), 0)',
-            'weighted' => 'COALESCE(SUM(opp_amount * opp_percent / 100), 0)',
-            'avgproba' => 'AVG(NULLIF(opp_percent, 0))',
-        ]);
-        if ($aggregates === null) {
-            $this->resprints = $presetsBar;
-            return 0;
-        }
-
-        $cards = [
-            'nb' => [
-                'id'    => 'nb',
-                'label' => $langs->trans('ReedCRMKpiNbOpportunities'),
-                'value' => (string) ((int) $aggregates->nb),
-                'icon'  => 'fas fa-bullseye',
-                'color' => 'blue',
-            ],
-            'total' => [
-                'id'    => 'total',
-                'label' => $langs->trans('ReedCRMKpiTotalAmount'),
-                'value' => price((float) $aggregates->total, 0, $langs, 1, -1, -1, $conf->currency),
-                'icon'  => 'fas fa-coins',
-                'color' => 'grey',
-            ],
-            'weighted' => [
-                'id'    => 'weighted',
-                'label' => $langs->trans('ReedCRMKpiWeightedAmount'),
-                'value' => price((float) $aggregates->weighted, 0, $langs, 1, -1, -1, $conf->currency),
-                'icon'  => 'fas fa-balance-scale',
-                'color' => 'green',
-            ],
-            'avgproba' => [
-                'id'    => 'avgproba',
-                'label' => $langs->trans('ReedCRMKpiAvgProbability'),
-                'value' => price2num((float) $aggregates->avgproba, 1) . ' %',
-                'icon'  => 'fas fa-percent',
-                'color' => 'yellow',
-            ],
-        ];
-
-        // Per-user params (REEDCRM_*) are not yet loaded into $user->conf when this banner hook
-        // runs (the per-row hooks fire later, once it is), so load them explicitly here — needed
-        // by the KPI layout, the status-display toggle and the density toggle below.
-        $user->loadPersonalConf();
-
-        // Apply the per-user saved layout (order + hidden cards), stored in llx_user_param
-        $cards = $this->reedcrmApplyKpiLayout($cards);
-
-        // Customize controls (edit-mode toggle + reset)
-        $statusDisplay = (isset($user->conf->REEDCRM_STATUS_DISPLAY) && $user->conf->REEDCRM_STATUS_DISPLAY === 'dot') ? 'dot' : 'badge';
-        $statusTarget  = $statusDisplay === 'dot' ? 'badge' : 'dot';
-        $statusLabel   = $statusDisplay === 'dot' ? $langs->trans('ReedCRMStatusAsBadge') : $langs->trans('ReedCRMStatusAsDot');
-
-        // Row density (per-user): 'compact' (default) packs more rows, 'comfortable' is airier
-        $density       = (isset($user->conf->REEDCRM_LIST_DENSITY) && $user->conf->REEDCRM_LIST_DENSITY === 'comfortable') ? 'comfortable' : 'compact';
-        $densityTarget = $density === 'compact' ? 'comfortable' : 'compact';
-        $densityLabel  = $density === 'compact' ? 'Affichage aéré' : 'Affichage compact';
-        $densityIcon   = $density === 'compact' ? 'fa-expand-alt' : 'fa-compress-alt';
-
-        $customizeBar  = '<div class="reedcrm-kpi-customize-bar" data-density="' . $density . '">';
-        $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-toggle" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '"><i class="fas fa-sliders-h"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiCustomize')) . '</button>';
-        $customizeBar .= '<button type="button" class="reedcrm-status-display-toggle' . ($statusDisplay === 'dot' ? ' active' : '') . '" data-mode="' . $statusTarget . '" title="' . dol_escape_htmltag($statusLabel) . '"><i class="fas fa-circle"></i> ' . dol_escape_htmltag($statusLabel) . '</button>';
-        $customizeBar .= '<button type="button" class="reedcrm-list-density-toggle' . ($density === 'compact' ? ' active' : '') . '" data-mode="' . $densityTarget . '" title="' . dol_escape_htmltag($densityLabel) . '"><i class="fas ' . $densityIcon . '"></i> ' . dol_escape_htmltag($densityLabel) . '</button>';
-        $customizeBar .= '<button type="button" class="reedcrm-kpi-customize-reset" title="' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '"><i class="fas fa-undo"></i> ' . dol_escape_htmltag($langs->trans('ReedCRMKpiReset')) . '</button>';
-        $customizeBar .= '</div>';
-
-        $this->resprints = $presetsBar . $customizeBar . saturne_render_kpi_cards(array_values($cards));
-
-        return 0;
-    }
-
-    /**
-     * Apply the per-user KPI banner layout (order + hidden cards) read from llx_user_param.
-     *
-     * @param  array<string,array> $cards KPI cards keyed by id
-     * @return array<string,array>        Reordered cards with hidden ones flagged
-     */
-    protected function reedcrmApplyKpiLayout(array $cards): array
-    {
-        global $user;
-
-        $raw = isset($user->conf->REEDCRM_KPI_LAYOUT) ? $user->conf->REEDCRM_KPI_LAYOUT : '';
-        if (empty($raw)) {
-            return $cards;
-        }
-        $layout = json_decode($raw, true);
-        if (!is_array($layout)) {
-            return $cards;
-        }
-
-        if (!empty($layout['hidden']) && is_array($layout['hidden'])) {
-            foreach ($layout['hidden'] as $id) {
-                if (isset($cards[$id])) {
-                    $cards[$id]['hidden'] = true;
-                }
-            }
-        }
-
-        if (!empty($layout['order']) && is_array($layout['order'])) {
-            $ordered = [];
-            foreach ($layout['order'] as $id) {
-                if (isset($cards[$id])) {
-                    $ordered[$id] = $cards[$id];
-                }
-            }
-            // Keep any card not present in the saved order (e.g. newly added) at the end
-            foreach ($cards as $id => $card) {
-                if (!isset($ordered[$id])) {
-                    $ordered[$id] = $card;
-                }
-            }
-            $cards = $ordered;
-        }
-
-        return $cards;
-    }
-
-    /**
-     * Build the predefined view presets bar for the opportunity project list.
-     *
-     * @return string HTML presets bar (uses the generic saturne_render_list_presets renderer)
-     */
-    protected function reedcrmRenderProjectPresets(): string
-    {
-        global $langs;
-
-        $activePreset = GETPOST('search_preset', 'aZ09');
-        $activeView   = GETPOST('reedcrm_view', 'alphanohtml');
-        // Keep the opportunity scope on every preset link
-        $baseUrl      = $_SERVER['PHP_SELF'] . '?object_type=project&search_usage_opportunity=1';
-
-        $presetDefs = [
-            'mine'       => ['label' => $langs->trans('ReedCRMPresetMine'),       'icon' => 'fas fa-user'],
-            'hot'        => ['label' => $langs->trans('ReedCRMPresetHot'),        'icon' => 'fas fa-fire'],
-            'open'       => ['label' => $langs->trans('ReedCRMPresetOpen'),       'icon' => 'fas fa-folder-open'],
-            'torelaunch' => ['label' => $langs->trans('ReedCRMPresetToRelaunch'), 'icon' => 'fas fa-bell'],
-        ];
-
-        $presets = [[
-            'label'  => $langs->trans('All'),
-            'icon'   => 'fas fa-list',
-            'url'    => $baseUrl,
-            'active' => empty($activePreset) && empty($activeView),
-        ]];
-        foreach ($presetDefs as $key => $def) {
-            $presets[] = [
-                'label'  => $def['label'],
-                'icon'   => $def['icon'],
-                'url'    => $baseUrl . '&search_preset=' . $key,
-                'active' => ($activePreset === $key),
-            ];
-        }
-
-        // Per-user saved views (stored in llx_user_param)
-        global $user;
-        foreach (get_object_vars($user->conf) as $paramKey => $paramVal) {
-            if (strpos($paramKey, 'REEDCRM_VIEW_PROJECT_') !== 0) {
-                continue;
-            }
-            $decoded = json_decode($paramVal, true);
-            if (empty($decoded['label'])) {
-                continue;
-            }
-            $viewQuery  = !empty($decoded['query']) ? $decoded['query'] : '';
-            $presets[]  = [
-                'label'       => $decoded['label'],
-                'icon'        => 'fas fa-star',
-                'url'         => $baseUrl . ($viewQuery !== '' ? '&' . $viewQuery : '') . '&reedcrm_view=' . urlencode($paramKey),
-                'active'      => ($activeView === $paramKey),
-                'removeKey'   => $paramKey,
-                'removeTitle' => $langs->trans('Delete'),
-            ];
-        }
-
-        // "Save current view" button (raw caller-built chip)
-        $saveLabel = dol_escape_htmltag($langs->trans('ReedCRMSaveView'));
-        $presets[] = ['raw' => '<button type="button" class="saturne-list-preset reedcrm-save-view" title="' . $saveLabel . '"><i class="fas fa-save"></i> ' . $saveLabel . '</button>'];
-
-        return saturne_render_list_presets($presets);
-    }
-
-    /**
-     * Overloading the printFieldListSearchParam hook : keep the active preset across sort/pagination links.
-     *
-     * @param  array $parameters Hook metadatas (context, ...)
-     * @return int               0 < on error, 0 on success, 1 to replace standard code
-     */
-    public function printFieldListSearchParam(array $parameters): int
-    {
-        if (strpos($parameters['context'], 'projectlist') !== false) {
-            $param  = '';
-            $preset = GETPOST('search_preset', 'aZ09');
-            if (!empty($preset)) {
-                $param .= '&search_preset=' . urlencode($preset);
-            }
-            $view = GETPOST('reedcrm_view', 'alphanohtml');
-            if (!empty($view)) {
-                $param .= '&reedcrm_view=' . urlencode($view);
-            }
-            $this->resprints = $param;
-        }
-
-        return 0;
-    }
 
     /**
      * Overloading the printFieldListWhere hook : add WHERE conditions for propal list
@@ -2579,41 +2346,6 @@ class ActionsReedcrm
             $this->resprints = ' AND t.fk_statut >= 0';
         }
 
-        if (strpos($parameters['context'], 'projectlist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
-            global $db, $user;
-
-            $preset    = GETPOST('search_preset', 'aZ09');
-            $notClosed = ' (t.fk_opp_status IS NULL OR t.fk_opp_status NOT IN (SELECT rowid FROM ' . MAIN_DB_PREFIX . "c_lead_status WHERE code IN ('WON', 'LOST')))";
-            $sql       = '';
-
-            switch ($preset) {
-                case 'mine':
-                    $sql = ' AND EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'element_contact ec'
-                         . ' INNER JOIN ' . MAIN_DB_PREFIX . 'c_type_contact tc ON tc.rowid = ec.fk_c_type_contact'
-                         . " AND tc.element = 'project' AND tc.source = 'internal'"
-                         . ' WHERE ec.element_id = t.rowid AND ec.fk_socpeople = ' . (int) $user->id . ')';
-                    break;
-                case 'hot':
-                    $sql = ' AND t.opp_percent >= 60';
-                    break;
-                case 'open':
-                    $sql = ' AND' . $notClosed;
-                    break;
-                case 'torelaunch':
-                    $relaunchTag = getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG');
-                    $sql  = ' AND' . $notClosed;
-                    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'actioncomm a'
-                          . ' WHERE a.fk_project = t.rowid AND a.datep >= ' . "'" . $db->idate(dol_now() - 30 * 24 * 3600) . "'";
-                    if ($relaunchTag > 0) {
-                        $sql .= ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm c WHERE c.fk_categorie = ' . $relaunchTag . ')';
-                    }
-                    $sql .= ')';
-                    break;
-            }
-
-            $this->resprints = $sql;
-        }
-
         return 0;
     }
 
@@ -2625,7 +2357,7 @@ class ActionsReedcrm
             $fieldMap = [
                 'ref'                 => 'reedcrm_field_ref_with_actions',
                 'opportunity_details' => 'reedcrm_field_opportunity_details',
-                'date_details'        => 'reedcrm_field_date_details',
+                'dateo'               => 'reedcrm_field_date_details',
                 'relauch_commercial'  => 'reedcrm_field_relaunch_commercial',
                 'contact_details'     => 'reedcrm_field_contact_details',
                 'photo'              => 'reedcrm_field_photo',
