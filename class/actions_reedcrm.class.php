@@ -2247,11 +2247,14 @@ class ActionsReedcrm
             global $extrafields;
 
             // Merge the opportunity fields (status, probability, amount) into one column
-            $object->fields['opportunity_details'] = ['label' => 'OpportunityDetails', 'enabled' => 1, 'position' => 75, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1];
+            $object->fields['opportunity_details'] = ['label' => 'Status opp.', 'enabled' => 1, 'position' => 75, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1];
             foreach (['fk_opp_status', 'opp_percent', 'opp_amount'] as $oppField) {
                 if (isset($object->fields[$oppField])) {
                     $object->fields[$oppField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
                 }
+            }
+            if (isset($object->fields['fk_opp_status'])) {
+                $object->fields['fk_opp_status']['label'] = 'Status opp.';
             }
 
             // Merge the start/end dates into one "Dates" column, using dateo as the base to get native date filtering
