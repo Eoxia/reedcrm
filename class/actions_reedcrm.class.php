@@ -2013,8 +2013,13 @@ class ActionsReedcrm
 
             $out .= '</table>';
 
+            $referer    = $_SERVER['HTTP_REFERER'] ?? '';
+            $parsed     = parse_url($referer);
+            $returnUrl  = ($parsed['path'] ?? $_SERVER['PHP_SELF']) . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
+
             $out .= '<input type="hidden" name="oppStatus" value="projet" />';
             $out .= '<input type="hidden" name="massaction" value="assignOppStatus" />';
+            $out .= '<input type="hidden" name="return_url" value="' . dol_htmlentities($returnUrl) . '" />';
 
             $out .= '<div style="margin-top: 20px;">';
             $out .= '<button class="button" type="submit" name="massaction_confirm" value="assignOppStatus">' . $langs->trans('Apply') . '</button>';
@@ -2033,7 +2038,12 @@ class ActionsReedcrm
             $out .= '<legend>' . ($langs->trans('Validate') !== 'Validate' ? $langs->trans('Validate') : 'Validé') . '</legend>';
             $out .= '<p>' . ($langs->trans('ConfirmMassValidate') !== 'ConfirmMassValidate' ? $langs->trans('ConfirmMassValidate') : 'Êtes-vous sûr de vouloir valider les projets sélectionnés ?') . '</p>';
 
+            $referer    = $_SERVER['HTTP_REFERER'] ?? '';
+            $parsed     = parse_url($referer);
+            $returnUrl  = ($parsed['path'] ?? $_SERVER['PHP_SELF']) . (isset($parsed['query']) ? '?' . $parsed['query'] : '');
+
             $out .= '<input type="hidden" name="massaction" value="validateProject" />';
+            $out .= '<input type="hidden" name="return_url" value="' . dol_htmlentities($returnUrl) . '" />';
 
             $out .= '<div style="margin-top: 20px;">';
             $out .= '<button class="button" type="submit" name="massaction_confirm" value="validateProject">' . $langs->trans('Confirm') . '</button>';
@@ -2137,7 +2147,8 @@ class ActionsReedcrm
 
                 if ($res > 0) {
                     setEventMessages($langs->trans('OppStatusAssignedTo', $count), []);
-                    $redirectUrl = $_SERVER['PHP_SELF'] . (empty($_SERVER['QUERY_STRING']) ? '' : '?' . $_SERVER['QUERY_STRING']);
+                    $returnUrl = GETPOST('return_url', 'alpha');
+                    $redirectUrl = !empty($returnUrl) ? $returnUrl : $_SERVER['PHP_SELF'] . (empty($_SERVER['QUERY_STRING']) ? '' : '?' . $_SERVER['QUERY_STRING']);
                     header('Location: ' . $redirectUrl);
                     exit;
                 }
@@ -2174,7 +2185,8 @@ class ActionsReedcrm
                     setEventMessage($this->errors, 'errors');
                 }
 
-                $redirectUrl = $_SERVER['PHP_SELF'] . (empty($_SERVER['QUERY_STRING']) ? '' : '?' . $_SERVER['QUERY_STRING']);
+                $returnUrl = GETPOST('return_url', 'alpha');
+                $redirectUrl = !empty($returnUrl) ? $returnUrl : $_SERVER['PHP_SELF'] . (empty($_SERVER['QUERY_STRING']) ? '' : '?' . $_SERVER['QUERY_STRING']);
                 header('Location: ' . $redirectUrl);
                 exit;
             }
