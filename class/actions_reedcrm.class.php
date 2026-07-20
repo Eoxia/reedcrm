@@ -1963,7 +1963,10 @@ class ActionsReedcrm
             if (GETPOST('massaction') == 'validateProject') {
                 $selectedVal = ' selected="selected" ';
             }
-            $ret .= '<option value="validateProject"' . $selectedVal . '>' . ($langs->trans('MassValidate') !== 'MassValidate' ? $langs->trans('MassValidate') : 'Valider en masse') . '</option>';
+            $iconValide = '<span class="fas fa-check fa-fw paddingright"></span> ';
+            $labelValide = $langs->trans('Validate');
+            if ($labelValide == 'Validate') $labelValide = 'Validé';
+            $ret .= '<option value="validateProject"' . $selectedVal . ' data-html="' . dol_escape_htmltag($iconValide . $labelValide) . '">' . $labelValide . '</option>';
 
             $this->resprints .= $ret;
         }
@@ -2025,7 +2028,7 @@ class ActionsReedcrm
         if (strpos($parameters['context'], 'projectlist') !== false && $user->hasRight('projet', 'creer') && $massAction == 'validateProject') {
             $out  = '<div style="padding: 10px 0 20px 0;">';
             $out .= '<fieldset>';
-            $out .= '<legend>' . ($langs->trans('MassValidate') !== 'MassValidate' ? $langs->trans('MassValidate') : 'Valider en masse') . '</legend>';
+            $out .= '<legend>' . ($langs->trans('Validate') !== 'Validate' ? $langs->trans('Validate') : 'Validé') . '</legend>';
             $out .= '<p>' . ($langs->trans('ConfirmMassValidate') !== 'ConfirmMassValidate' ? $langs->trans('ConfirmMassValidate') : 'Êtes-vous sûr de vouloir valider les projets sélectionnés ?') . '</p>';
 
             $out .= '<input type="hidden" name="massaction" value="validateProject" />';
