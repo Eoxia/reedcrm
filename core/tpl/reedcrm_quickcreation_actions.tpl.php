@@ -122,6 +122,23 @@ if ($action == 'add') {
 
 				$project->add_contact($user->id, 'PROJECTLEADER', 'internal');
 
+				// Add commercial to project as SALESREPINTERNAL
+				$salesRepsProject = GETPOST('commercial_project', 'array');
+				$salesRepsThirdParty = GETPOST('commercial', 'array');
+
+				// Héritage: si l'option est cochée, on prend les commerciaux du tiers. Sinon, ceux du projet.
+				if (!empty($conf->global->REEDCRM_PROJECT_COMMERCIAL_INHERIT)) {
+					$salesRepsToAssign = $salesRepsThirdParty;
+				} else {
+					$salesRepsToAssign = $salesRepsProject;
+				}
+
+				if (!empty($salesRepsToAssign) && is_array($salesRepsToAssign) && count($salesRepsToAssign) > 0) {
+					foreach ($salesRepsToAssign as $salesrepId) {
+						$project->add_contact($salesrepId, 'SALESREPINTERNAL', 'internal');
+					}
+				}
+
 				$defaultref = '';
 				$obj        = empty($conf->global->PROJECT_TASK_ADDON) ? 'mod_task_simple' : $conf->global->PROJECT_TASK_ADDON;
 

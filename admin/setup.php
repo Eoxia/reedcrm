@@ -109,6 +109,9 @@ if ($action == 'set_config') {
     }
     dolibarr_set_const($db, 'REEDCRM_EVENT_STATUS_VALUE', $statusEvent, 'integer', 0, '', $conf->entity);
 
+    $projectCommercialInherit = GETPOST('project_commercial_inherit', 'int');
+    dolibarr_set_const($db, 'REEDCRM_PROJECT_COMMERCIAL_INHERIT', $projectCommercialInherit, 'integer', 0, '', $conf->entity);
+
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
@@ -390,6 +393,18 @@ if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) {
 }
 print '</tr>';
 
+// Commercial
+print '<tr class="oddeven"><td>';
+print $langs->trans('AllocateCommercial');
+print '</td><td>';
+print $langs->trans('ObjectVisibleDescription', $langs->trans('AllocateCommercial'));
+print '</td>';
+
+print '<td class="center">';
+print ajax_constantonoff('REEDCRM_PROJECT_COMMERCIAL_VISIBLE');
+print '</td>';
+print '<td><input type="checkbox" name="project_commercial_inherit" value="1" ' . (!empty($conf->global->REEDCRM_PROJECT_COMMERCIAL_INHERIT) ? 'checked="checked"' : '') . '> Hériter l\'assignation des commerciaux du tiers</td></tr>';
+
 // DateStart
 print '<tr class="oddeven"><td>';
 print $langs->trans('DateStart');
@@ -602,6 +617,24 @@ print '</td><td></td></tr>';
 print '</table>';
 print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
 print '</form>';
+
+print '<script>
+$(document).ready(function() {
+    var $checkbox = $("input[name=\'project_commercial_inherit\']");
+    var $toggleContainer = $checkbox.closest("tr").find("td.center");
+
+    function updateToggleState() {
+        if ($checkbox.is(":checked")) {
+            $toggleContainer.css({ "pointer-events": "none", "opacity": "0.5" });
+        } else {
+            $toggleContainer.css({ "pointer-events": "auto", "opacity": "1" });
+        }
+    }
+
+    $checkbox.on("change", updateToggleState);
+    updateToggleState();
+});
+</script>';
 
 // Quick events
 print load_fiche_titre($langs->trans('Configs', $langs->transnoentities('QuickEventCreation')), '', '');

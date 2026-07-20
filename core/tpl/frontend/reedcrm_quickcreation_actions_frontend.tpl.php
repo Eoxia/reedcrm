@@ -764,6 +764,13 @@ if ($action == 'add') {
 
         $project->add_contact($user->id, 'PROJECTLEADER', 'internal');
 
+        $salesRepsProject = GETPOST('commercial_project', 'array');
+        if (!empty($salesRepsProject) && is_array($salesRepsProject) && count($salesRepsProject) > 0) {
+            foreach ($salesRepsProject as $salesrepId) {
+                $project->add_contact($salesrepId, 'SALESREPINTERNAL', 'internal');
+            }
+        }
+
         $lat = GETPOST('latitude');
         $lon = GETPOST('longitude');
         if (!empty(GETPOST('geolocation-error'))) {
