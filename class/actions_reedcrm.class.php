@@ -2167,8 +2167,8 @@ class ActionsReedcrm
                     setEventMessage($this->errors, 'errors');
                 }
 
-                $this->results['redirect'] = $_SERVER['PHP_SELF'];
-                return 1;
+                header('Location: ' . $_SERVER['PHP_SELF']);
+                exit;
             }
         }
 
