@@ -1957,7 +1957,9 @@ class ActionsReedcrm
             if (GETPOST('massaction') == 'assignOppStatus') {
                 $selected = ' selected="selected" ';
             }
-            $ret .= '<option value="assignOppStatus"' . $selected . '>' . $langs->trans('AddAssignOppStatus') . '</option>';
+            $iconOppStatus = '<span class="fas fa-percent fa-fw paddingright"></span> ';
+            $labelOppStatus = '% Statut Opp.';
+            $ret .= '<option value="assignOppStatus"' . $selected . ' data-html="' . dol_escape_htmltag($iconOppStatus . $labelOppStatus) . '">' . $labelOppStatus . '</option>';
 
             $selectedVal = '';
             if (GETPOST('massaction') == 'validateProject') {
@@ -2003,7 +2005,7 @@ class ActionsReedcrm
 
             $out  = '<div style="padding: 10px 0 20px 0;">';
             $out .= '<fieldset>';
-            $out .= '<legend>' . $langs->trans('SelectOppStatus') . '</legend>';
+            $out .= '<legend>% Statut Opp.</legend>';
             $out .= '<table>';
 
             $out .= '<tr>';
