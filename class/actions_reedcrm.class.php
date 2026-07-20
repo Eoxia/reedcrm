@@ -1976,7 +1976,9 @@ class ActionsReedcrm
 
         if ($isTargetContext && $user->hasRight('reedcrm', 'call_list', 'write')) {
             $selected = GETPOST('massaction') == 'addToCallList' ? ' selected="selected"' : '';
-            $this->resprints .= '<option value="addToCallList"' . $selected . '>' . $langs->trans('AddToCallList') . '</option>';
+            $iconCallList = '<span class="fas fa-headset fa-fw paddingright"></span> ';
+            $labelCallList = $langs->trans('AddToCallList');
+            $this->resprints .= '<option value="addToCallList"' . $selected . ' data-html="' . dol_escape_htmltag($iconCallList . $labelCallList) . '">' . $labelCallList . '</option>';
         }
 
         return 0; // or return 1 to replace standard code
@@ -2321,6 +2323,9 @@ class ActionsReedcrm
             }
             if (isset($object->fields['fk_opp_status'])) {
                 $object->fields['fk_opp_status']['label'] = 'Status opp.';
+            }
+            if (isset($object->fields['opp_percent'])) {
+                $object->fields['opp_percent']['label'] = '% Status Opp.';
             }
             if (isset($object->fields['opp_amount'])) {
                 $object->fields['opp_amount']['label'] = 'Montant opp.';
