@@ -1887,7 +1887,7 @@ class ActionsReedcrm
     {
         global $langs;
 
-        if (preg_match('/invoicereccard|invoicereccontact/', $parameters['context'])) {
+        if (preg_match('/invoicereccard|invoicereccontact/', $parameters['context']) && ($parameters['mode'] ?? '') === 'add') {
             $nbContact = 0;
             // Enable caching of thirdrparty count Contacts
             require_once DOL_DOCUMENT_ROOT . '/core/lib/memory.lib.php';
@@ -1908,14 +1908,14 @@ class ActionsReedcrm
 
                 dol_setcache($cacheKey, $nbContact, 120); // If setting cache fails, this is not a problem, so we do not test result
             }
-            $parameters['head'][1][0] = DOL_URL_ROOT . '/custom/reedcrm/view/contact.php?id=' . $parameters['object']->id;
-            $parameters['head'][1][1] = $langs->trans('ContactsAddresses');
+            // Append the tab instead of overwriting index 1, which is the native "InvoicesGeneratedFromRec" tab on recurring invoices.
+            $rank = count($parameters['head']);
+            $parameters['head'][$rank][0] = DOL_URL_ROOT . '/custom/reedcrm/view/contact.php?id=' . $parameters['object']->id;
+            $parameters['head'][$rank][1] = $langs->trans('ContactsAddresses');
             if ($nbContact > 0) {
-                $parameters['head'][1][1] .= '<span class="badge marginleftonlyshort">' . $nbContact . '</span>';
+                $parameters['head'][$rank][1] .= '<span class="badge marginleftonlyshort">' . $nbContact . '</span>';
             }
-            $parameters['head'][1][2] = 'contact';
-
-            $this->results = $parameters;
+            $parameters['head'][$rank][2] = 'contact';
         }
 
         if (strpos($parameters['context'], 'main') !== false) {
