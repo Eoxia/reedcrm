@@ -71,3 +71,8 @@ CREATE TABLE IF NOT EXISTS llx_reedcrm_call_list_line(
     fk_user_creat  integer NOT NULL,
     fk_user_modif  integer
 ) ENGINE=innodb;
+-- 23.0.1 - Recurring invoice & DU audit follow-up: proposal link, assignee, real audit date
+ALTER TABLE `llx_reedcrm_du_audit` ADD `proposal_sent_date` date DEFAULT NULL AFTER `source`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_propal` integer DEFAULT NULL AFTER `proposal_sent_date`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_user_assign` integer DEFAULT NULL AFTER `fk_propal`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `date_done` date DEFAULT NULL AFTER `next_audit_date`;
