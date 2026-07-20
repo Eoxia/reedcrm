@@ -413,7 +413,9 @@ function reedcrmFollowupGetDigiriskWithoutSubscription(DoliDB $db): array
     $sql .= ' (SELECT pj3.title FROM ' . MAIN_DB_PREFIX . "projet pj3 WHERE pj3.fk_soc = s.rowid AND pj3.fk_statut = 1 AND pj3.entity IN (" . $entProj . ") AND (pj3.title LIKE '%digirisk.com%' OR pj3.note_public LIKE '%digirisk.com%' OR pj3.note_private LIKE '%digirisk.com%') ORDER BY pj3.rowid DESC LIMIT 1) as instance";
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'societe as s';
     $sql .= ' WHERE s.status = 1';
-    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture_rec fr WHERE fr.fk_soc = s.rowid AND fr.suspended = 0)';
+    // Exclude any client that already has a recurring invoice, even a deactivated (suspended) one:
+    // a paused subscription is a deliberate choice, not a "no subscription" gap.
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture_rec fr WHERE fr.fk_soc = s.rowid)';
     $sql .= ' AND (' . $tierExists . ' OR ' . $projExists . ')';
     $sql .= ' ORDER BY last_date DESC';
 
