@@ -403,7 +403,7 @@ if (empty($digiNoSub)) {
         print '</td>';
         print '<td class="tdoverflowmax300" title="' . dol_escape_htmltag((string) $c['last_tier']) . '">' . ($c['last_tier'] !== null && $c['last_tier'] !== '' ? dol_escape_htmltag($c['last_tier']) : '<span class="opacitymedium">-</span>') . '</td>';
         print '<td class="center nowraponall">' . (!empty($c['last_date']) ? dol_print_date($c['last_date'], 'day') : '') . '</td>';
-        print '<td class="center"><a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/compta/facture/card-rec.php?action=create&socid=' . ((int) $c['fk_soc']) . '" title="' . dol_escape_htmltag($langs->trans('FollowupDigiriskCreateSub')) . '"><i class="fas fa-sync-alt paddingright"></i>' . $langs->trans('FollowupDigiriskCreateSub') . '</a></td>';
+        print '<td class="center"><a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/compta/facture/list.php?socid=' . ((int) $c['fk_soc']) . '" title="' . dol_escape_htmltag($langs->trans('FollowupDigiriskCreateSubHelp')) . '"><i class="fas fa-sync-alt paddingright"></i>' . $langs->trans('FollowupDigiriskCreateSub') . '</a></td>';
         print '</tr>';
     }
 }

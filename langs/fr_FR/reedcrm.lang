@@ -621,6 +621,7 @@ FollowupDigiriskInstance = Instance Digirisk (projet actif)
 FollowupDigiriskLastTier = Dernier palier Digirisk facturé
 FollowupDigiriskLastInvoice = Dernière facture
 FollowupDigiriskCreateSub = Créer l'abonnement
+FollowupDigiriskCreateSubHelp = Ouvrir les factures du client, puis sur une facture « Convertir en facture modèle » pour créer l'abonnement récurrent
 FollowupAuditCount = Nb d'audits
 FollowupUnassigned = Non assigné
 FollowupAuditManual = Audit planifié manuellement
