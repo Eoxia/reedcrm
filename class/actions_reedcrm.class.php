@@ -2135,7 +2135,9 @@ class ActionsReedcrm
 
                 if ($res > 0) {
                     setEventMessages($langs->trans('OppStatusAssignedTo', $count), []);
-                    header('Location:' . $_SERVER['PHP_SELF']);
+                    $redirectUrl = $_SERVER['PHP_SELF'] . (empty($_SERVER['QUERY_STRING']) ? '' : '?' . $_SERVER['QUERY_STRING']);
+                    header('Location: ' . $redirectUrl);
+                    exit;
                 }
             }
         }
@@ -2170,7 +2172,8 @@ class ActionsReedcrm
                     setEventMessage($this->errors, 'errors');
                 }
 
-                header('Location: ' . $_SERVER['PHP_SELF']);
+                $redirectUrl = $_SERVER['PHP_SELF'] . (empty($_SERVER['QUERY_STRING']) ? '' : '?' . $_SERVER['QUERY_STRING']);
+                header('Location: ' . $redirectUrl);
                 exit;
             }
         }
