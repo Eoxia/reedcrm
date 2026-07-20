@@ -306,6 +306,23 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
             </div>
         <?php endif; ?>
 
+        <!-- Commercial -->
+        <?php if ($conf->global->REEDCRM_PROJECT_COMMERCIAL_VISIBLE > 0 && empty($conf->global->REEDCRM_PROJECT_COMMERCIAL_INHERIT)) : ?>
+            <div class="form-group" style="margin-top: 15px;">
+                <div class="category-wrapper">
+                    <div style="flex: 1; min-width: 0;" class="category-select-container">
+                        <?php
+                        require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+                        if (!isset($userList) || empty($userList)) {
+                            $userList = $form->select_dolusers('', '', 0, null, 0, '', '', 0, 0, 0, '((u.statut:=:1) AND (u.employee:=:1))', 0, '', '', 0, 1);
+                        }
+                        print $form->multiselectarray('commercial_project', $userList, GETPOST('commercial_project', 'array'), '', 0, 'widthcentpercent', 0, 0, 'widthcentpercent');
+                        ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- Visual Section Divider Removed & Relocated Below -->
 
         <!-- Tags / Categories -->

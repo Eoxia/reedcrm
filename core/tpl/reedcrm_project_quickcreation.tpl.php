@@ -63,6 +63,17 @@ if ($permissiontoaddproject) {
 		}
 	}
 
+	// Commercial
+	if ($conf->global->REEDCRM_PROJECT_COMMERCIAL_VISIBLE > 0 && empty($conf->global->REEDCRM_PROJECT_COMMERCIAL_INHERIT)) {
+		require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+		if (!isset($userList) || empty($userList)) {
+			$userList = $form->select_dolusers('', '', 0, null, 0, '', '', 0, 0, 0, '((u.statut:=:1) AND (u.employee:=:1))', 0, '', '', 0, 1);
+		}
+		print '<tr><td><label for="commercial_project">' . $langs->trans('AllocateCommercial') . '</label></td>';
+		print '<td>' . img_picto('', 'user', 'class="pictofixedwidth"') . $form->multiselectarray('commercial_project', $userList, GETPOST('commercial_project', 'array'), '', 0, 'quatrevingtpercent widthcentpercentminusx') . '</td>';
+		print '</tr>';
+	}
+
 	// Date start
 	if ($conf->global->REEDCRM_PROJECT_DATE_START_VISIBLE > 0) {
 		print '<tr><td><label for="projectstart">' . $langs->trans('DateStart') . '</label></td>';
