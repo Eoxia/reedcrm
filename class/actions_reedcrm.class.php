@@ -1959,6 +1959,12 @@ class ActionsReedcrm
             }
             $ret .= '<option value="assignOppStatus"' . $selected . '>' . $langs->trans('AddAssignOppStatus') . '</option>';
 
+            $selectedVal = '';
+            if (GETPOST('massaction') == 'validateProject') {
+                $selectedVal = ' selected="selected" ';
+            }
+            $ret .= '<option value="validateProject"' . $selectedVal . '>' . ($langs->trans('MassValidate') !== 'MassValidate' ? $langs->trans('MassValidate') : 'Valider en masse') . '</option>';
+
             $this->resprints .= $ret;
         }
 
@@ -2007,6 +2013,25 @@ class ActionsReedcrm
 
             $out .= '<div style="margin-top: 20px;">';
             $out .= '<button class="button" type="submit" name="massaction_confirm" value="assignOppStatus">' . $langs->trans('Apply') . '</button>';
+            $out .= '<button class="button" type="submit" name="massaction" value="">' . $langs->trans('Cancel') . '</button>';
+            $out .= '</div>';
+
+            $out .= '</fieldset>';
+            $out .= '</div>';
+
+            $this->resprints = $out;
+        }
+
+        if (strpos($parameters['context'], 'projectlist') !== false && $user->hasRight('projet', 'creer') && $massAction == 'validateProject') {
+            $out  = '<div style="padding: 10px 0 20px 0;">';
+            $out .= '<fieldset>';
+            $out .= '<legend>' . ($langs->trans('MassValidate') !== 'MassValidate' ? $langs->trans('MassValidate') : 'Valider en masse') . '</legend>';
+            $out .= '<p>' . ($langs->trans('ConfirmMassValidate') !== 'ConfirmMassValidate' ? $langs->trans('ConfirmMassValidate') : 'Êtes-vous sûr de vouloir valider les projets sélectionnés ?') . '</p>';
+
+            $out .= '<input type="hidden" name="massaction" value="validateProject" />';
+
+            $out .= '<div style="margin-top: 20px;">';
+            $out .= '<button class="button" type="submit" name="massaction_confirm" value="validateProject">' . $langs->trans('Confirm') . '</button>';
             $out .= '<button class="button" type="submit" name="massaction" value="">' . $langs->trans('Cancel') . '</button>';
             $out .= '</div>';
 
@@ -2109,6 +2134,41 @@ class ActionsReedcrm
                     setEventMessages($langs->trans('OppStatusAssignedTo', $count), []);
                     header('Location:' . $_SERVER['PHP_SELF']);
                 }
+            }
+        }
+
+        if (strpos($parameters['context'], 'projectlist') !== false && $user->hasRight('projet', 'creer') && $massActionConfirm == 'validateProject') {
+            $toSelect = $parameters['toselect'];
+
+            if (empty($toSelect)) {
+                $this->error = $langs->trans('ErrorSelectAtLeastOne');
+                return 0;
+            }
+
+            if ($toSelect > 0) {
+                $count = 0;
+                $res   = 0;
+
+                foreach ($toSelect as $selectedId) {
+                    $resFetch = $object->fetch($selectedId);
+                    if ($resFetch > 0 && $object->statut == 0) {
+                        $res = $object->setValid($user);
+                        if ($res <= 0) {
+                            $this->errors[] = $object->errorsToString();
+                        } else {
+                            $count++;
+                        }
+                    }
+                }
+
+                if (empty($this->errors)) {
+                    setEventMessage($langs->trans('RecordSaved'), 'mesgs');
+                } else {
+                    setEventMessage($this->errors, 'errors');
+                }
+
+                $this->results['redirect'] = $_SERVER['PHP_SELF'];
+                return 1;
             }
         }
 
@@ -2252,6 +2312,7 @@ class ActionsReedcrm
                 if (isset($object->fields[$oppField])) {
                     $object->fields[$oppField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
                 }
+            }
             if (isset($object->fields['fk_opp_status'])) {
                 $object->fields['fk_opp_status']['label'] = 'Status opp.';
             }
