@@ -774,8 +774,9 @@ class ActionsReedcrm
             $picto         = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
 
             $out  = $picto;
-            $out .= '<div class="wpeo-button button-strong ' . (($object->array_options['options_notation_' . $object->element . '_contact'] >= 80) ? 'button-green' : 'button-red') . '" style="padding: 0; line-height: 1;">';
-            $out .= '<span>' . $object->array_options['options_notation_' . $object->element . '_contact'] . '</span>';
+            $notation_value = isset($object->array_options['options_notation_' . $object->element . '_contact']) ? $object->array_options['options_notation_' . $object->element . '_contact'] : 0;
+            $out .= '<div class="wpeo-button button-strong ' . (($notation_value >= 80) ? 'button-green' : 'button-red') . '" style="padding: 0; line-height: 1;">';
+            $out .= '<span>' . $notation_value . '</span>';
             $out .= '</div>';
             $out .= '<a class="reposition editfielda" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=set_notation_object_contact&token=' . newToken() . '">';
             $out .= img_picto($langs->trans('SetNotationObjectContact'), 'fontawesome_fa-redo_fas_#444', 'class="paddingleft"') . '</a>'; ?>
