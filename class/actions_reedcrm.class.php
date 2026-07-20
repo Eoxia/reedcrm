@@ -1957,9 +1957,7 @@ class ActionsReedcrm
             if (GETPOST('massaction') == 'assignOppStatus') {
                 $selected = ' selected="selected" ';
             }
-            $iconOppStatus = '<span class="fas fa-percent fa-fw paddingright"></span> ';
-            $labelOppStatus = '% Statut Opp.';
-            $ret .= '<option value="assignOppStatus"' . $selected . ' data-html="' . dol_escape_htmltag($iconOppStatus . $labelOppStatus) . '">' . $labelOppStatus . '</option>';
+            $ret .= '<option value="assignOppStatus"' . $selected . '>Statut</option>';
 
             $selectedVal = '';
             if (GETPOST('massaction') == 'validateProject') {
@@ -2005,7 +2003,7 @@ class ActionsReedcrm
 
             $out  = '<div style="padding: 10px 0 20px 0;">';
             $out .= '<fieldset>';
-            $out .= '<legend>% Statut Opp.</legend>';
+            $out .= '<legend>Statut</legend>';
             $out .= '<table>';
 
             $out .= '<tr>';
@@ -2329,14 +2327,14 @@ class ActionsReedcrm
             global $extrafields;
 
             // Merge the opportunity fields (status, probability, amount) into one column
-            $object->fields['opportunity_details'] = ['label' => 'Status opp.', 'enabled' => 1, 'position' => 75, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1];
+            $object->fields['opportunity_details'] = ['label' => 'Statut', 'enabled' => 1, 'position' => 75, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1];
             foreach (['fk_opp_status', 'opp_percent', 'opp_amount'] as $oppField) {
                 if (isset($object->fields[$oppField])) {
                     $object->fields[$oppField]['visible'] = 0; // hidden as standalone columns, still selected + read by the combined renderer
                 }
             }
             if (isset($object->fields['fk_opp_status'])) {
-                $object->fields['fk_opp_status']['label'] = 'Status opp.';
+                $object->fields['fk_opp_status']['label'] = 'Statut';
             }
             if (isset($object->fields['opp_percent'])) {
                 $object->fields['opp_percent']['label'] = '% Status Opp.';
