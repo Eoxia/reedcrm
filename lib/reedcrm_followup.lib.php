@@ -383,3 +383,60 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
 
     return $data;
 }
+
+/**
+ * List active thirdparties that use Digirisk but have NO active recurring invoice (subscription).
+ * "Uses Digirisk" = invoiced for a Digirisk tier (products D1..D5/D41) OR has an active project whose
+ * title/notes reference a *.digirisk.com instance. Helps spot subscription gaps.
+ *
+ * @param  DoliDB $db Database handler.
+ * @return array<int,array<string,mixed>> Rows: fk_soc, thirdparty, location, last_tier, last_date, instance, project_id.
+ */
+function reedcrmFollowupGetDigiriskWithoutSubscription(DoliDB $db): array
+{
+    $rows    = [];
+    $tiers   = "'D1','D2','D3','D4','D41','D5'";
+    $entSoc  = getEntity('facture');
+    $entProj = getEntity('project');
+    $projGrp = "(pj.title LIKE '%digirisk.com%' OR pj.note_public LIKE '%digirisk.com%' OR pj.note_private LIKE '%digirisk.com%')";
+
+    // A client "uses Digirisk" if invoiced for a tier product OR has an active digirisk.com project.
+    $tierExists = 'EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture f INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd ON fd.fk_facture = f.rowid'
+        . ' INNER JOIN ' . MAIN_DB_PREFIX . 'product p ON p.rowid = fd.fk_product AND p.ref IN (' . $tiers . ')'
+        . ' WHERE f.fk_soc = s.rowid AND f.type <> 2 AND f.entity IN (' . $entSoc . '))';
+    $projExists = 'EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'projet pj WHERE pj.fk_soc = s.rowid AND pj.fk_statut = 1 AND pj.entity IN (' . $entProj . ') AND ' . $projGrp . ')';
+
+    $sql  = 'SELECT s.rowid as fk_soc, s.nom as thirdparty_name, s.zip, s.town,';
+    $sql .= ' (SELECT p2.label FROM ' . MAIN_DB_PREFIX . 'facture f2 INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd2 ON fd2.fk_facture = f2.rowid INNER JOIN ' . MAIN_DB_PREFIX . 'product p2 ON p2.rowid = fd2.fk_product AND p2.ref IN (' . $tiers . ') WHERE f2.fk_soc = s.rowid AND f2.type <> 2 AND f2.entity IN (' . $entSoc . ') ORDER BY f2.datef DESC, fd2.rowid DESC LIMIT 1) as last_tier,';
+    $sql .= ' (SELECT MAX(f3.datef) FROM ' . MAIN_DB_PREFIX . 'facture f3 INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd3 ON fd3.fk_facture = f3.rowid INNER JOIN ' . MAIN_DB_PREFIX . 'product p3 ON p3.rowid = fd3.fk_product AND p3.ref IN (' . $tiers . ') WHERE f3.fk_soc = s.rowid AND f3.type <> 2 AND f3.entity IN (' . $entSoc . ')) as last_date,';
+    $sql .= ' (SELECT pj2.rowid FROM ' . MAIN_DB_PREFIX . "projet pj2 WHERE pj2.fk_soc = s.rowid AND pj2.fk_statut = 1 AND pj2.entity IN (" . $entProj . ") AND (pj2.title LIKE '%digirisk.com%' OR pj2.note_public LIKE '%digirisk.com%' OR pj2.note_private LIKE '%digirisk.com%') ORDER BY pj2.rowid DESC LIMIT 1) as project_id,";
+    $sql .= ' (SELECT pj3.title FROM ' . MAIN_DB_PREFIX . "projet pj3 WHERE pj3.fk_soc = s.rowid AND pj3.fk_statut = 1 AND pj3.entity IN (" . $entProj . ") AND (pj3.title LIKE '%digirisk.com%' OR pj3.note_public LIKE '%digirisk.com%' OR pj3.note_private LIKE '%digirisk.com%') ORDER BY pj3.rowid DESC LIMIT 1) as instance";
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'societe as s';
+    // Real customers only: flagged as customer (client 1/3) OR already invoiced at least once
+    // (a prospect that has invoices is a de facto customer whose flag was never updated).
+    $sql .= ' WHERE s.status = 1';
+    $sql .= ' AND (s.client IN (1, 3) OR EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture fbill WHERE fbill.fk_soc = s.rowid AND fbill.entity IN (' . $entSoc . ')))';
+    // Exclude any client that already has a recurring invoice, even a deactivated (suspended) one:
+    // a paused subscription is a deliberate choice, not a "no subscription" gap.
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture_rec fr WHERE fr.fk_soc = s.rowid)';
+    $sql .= ' AND (' . $tierExists . ' OR ' . $projExists . ')';
+    $sql .= ' ORDER BY last_date DESC';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $location = trim(($obj->zip ? $obj->zip . ' ' : '') . ($obj->town ?? ''));
+            $rows[]   = [
+                'fk_soc'     => (int) $obj->fk_soc,
+                'thirdparty' => $obj->thirdparty_name,
+                'location'   => $location,
+                'last_tier'  => $obj->last_tier,
+                'last_date'  => !empty($obj->last_date) ? $db->jdate($obj->last_date) : 0,
+                'instance'   => $obj->instance,
+                'project_id' => (int) $obj->project_id,
+            ];
+        }
+    }
+
+    return $rows;
+}

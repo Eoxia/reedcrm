@@ -601,34 +601,36 @@ if ($permissiontoadd) {
 }
 print '</table></div>';
 
-// --- Proposal amount per assignee: only audits that have a derived DU renewal quote, summed by its real total ---
-$sqlByUser  = 'SELECT a.fk_user_assign, COUNT(*) as nb, SUM(pr.total_ttc) as tot';
-$sqlByUser .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
-$sqlByUser .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
-$sqlByUser .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'propal as pr ON pr.rowid = (';
-$sqlByUser .= '   SELECT p2.rowid FROM ' . MAIN_DB_PREFIX . 'propal p2';
-$sqlByUser .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'propaldet pd ON pd.fk_propal = p2.rowid';
-$sqlByUser .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_AU%'";
-$sqlByUser .= '   WHERE p2.fk_soc = a.fk_soc AND p2.entity IN (' . getEntity('propal') . ')';
-$sqlByUser .= '   AND (a.last_audit_date IS NULL OR p2.datep > a.last_audit_date)';
-$sqlByUser .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1)';
-$sqlByUser .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ') AND s.status = 1 AND a.fk_user_assign > 0';
-$sqlByUser .= ' GROUP BY a.fk_user_assign ORDER BY tot DESC';
-$resByUser  = $db->query($sqlByUser);
-if ($resByUser && $db->num_rows($resByUser) > 0) {
+// --- Proposal amount per assignee for the BROWSED MONTH (from the month's audits that have a DU quote) ---
+$byUser = [];
+foreach ($audits as $auditRow) {
+    if (empty($auditRow['assigned']) || empty($auditRow['propal_id'])) {
+        continue;
+    }
+    $uid = (int) $auditRow['assigned'];
+    if (!isset($byUser[$uid])) {
+        $byUser[$uid] = ['nb' => 0, 'tot' => 0.0];
+    }
+    $byUser[$uid]['nb']++;
+    $byUser[$uid]['tot'] += (float) $auditRow['propal_ttc'];
+}
+uasort($byUser, function ($x, $y) {
+    return $y['tot'] <=> $x['tot'];
+});
+if (!empty($byUser)) {
     print '<br>';
     print load_fiche_titre('<i class="fas fa-user-tag paddingright"></i>' . $langs->trans('FollowupAmountPerPerson'), '', '');
     print '<div class="div-table-responsive"><table class="tagtable liste">';
     print '<tr class="liste_titre"><th>' . $langs->trans('FollowupAssignedTo') . '</th><th class="center">' . $langs->trans('FollowupProposalSentCount') . '</th><th class="right">' . $langs->trans('FollowupProposalAmount') . '</th></tr>';
-    while ($ou = $db->fetch_object($resByUser)) {
-        if (!isset($assignUserCache[$ou->fk_user_assign])) {
+    foreach ($byUser as $uid => $agg) {
+        if (!isset($assignUserCache[$uid])) {
             $u = new User($db);
-            $u->fetch($ou->fk_user_assign);
-            $assignUserCache[$ou->fk_user_assign] = $u;
+            $u->fetch($uid);
+            $assignUserCache[$uid] = $u;
         }
-        print '<tr class="oddeven"><td>' . $assignUserCache[$ou->fk_user_assign]->getNomUrl(-1) . '</td>';
-        print '<td class="center">' . (int) $ou->nb . '</td>';
-        print '<td class="right nowraponall">' . ($ou->tot !== null ? price((float) $ou->tot, 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td></tr>';
+        print '<tr class="oddeven"><td>' . $assignUserCache[$uid]->getNomUrl(-1) . '</td>';
+        print '<td class="center">' . (int) $agg['nb'] . '</td>';
+        print '<td class="right nowraponall">' . price((float) $agg['tot'], 0, $langs, 1, -1, -1, $conf->currency) . '</td></tr>';
     }
     print '</table></div>';
 }
