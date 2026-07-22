@@ -142,7 +142,7 @@ if ($action === 'auditrenew' && $permissiontoadd) {
         $sqlInv  = 'SELECT f.rowid, f.datef, SUM(fd.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture as f';
         $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet as fd ON fd.fk_facture = f.rowid';
         $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = fd.fk_product';
-        $sqlInv .= " WHERE p.ref LIKE 'DU\_AU%' AND f.type <> 2 AND f.fk_soc = " . ((int) $audit->fk_soc);
+        $sqlInv .= " WHERE p.ref LIKE 'DU\_A%' AND f.type <> 2 AND f.fk_soc = " . ((int) $audit->fk_soc);
         $sqlInv .= ' AND f.datef IS NOT NULL AND f.entity IN (' . getEntity('facture') . ')';
         $sqlInv .= ' GROUP BY f.rowid, f.datef ORDER BY f.datef DESC' . $db->plimit(1);
         $resqlInv = $db->query($sqlInv);
@@ -320,7 +320,7 @@ $sqlChart .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a INNER JOIN ' . M
 $sqlChart .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'propal as prc ON prc.rowid = (';
 $sqlChart .= '   SELECT p2.rowid FROM ' . MAIN_DB_PREFIX . 'propal p2';
 $sqlChart .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'propaldet pd ON pd.fk_propal = p2.rowid';
-$sqlChart .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_AU%'";
+$sqlChart .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_A%'";
 $sqlChart .= '   WHERE p2.fk_soc = a.fk_soc AND p2.entity IN (' . getEntity('propal') . ')';
 $sqlChart .= '   AND (a.last_audit_date IS NULL OR p2.datep > a.last_audit_date)';
 $sqlChart .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1)';

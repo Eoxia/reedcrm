@@ -255,7 +255,8 @@ class RecurringInvoiceFollowupCron
     }
 
     /**
-     * Job: create or refresh DU audits from the invoiced audit services (product ref "DU_AU%").
+     * Job: create or refresh DU audits from the invoiced Document Unique services (product ref
+     * "DU_A%": DU_AU audits + DU_AC/DU_Accompagnement setup, which also start the yearly cycle).
      * One audit per client (the latest audit invoice). A newer audit invoice refreshes the cycle;
      * manual date moves for the current cycle are preserved (only a strictly newer invoice updates them).
      *
@@ -278,7 +279,7 @@ class RecurringInvoiceFollowupCron
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture as f';
         $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet as fd ON fd.fk_facture = f.rowid';
         $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = fd.fk_product';
-        $sql .= " WHERE p.ref LIKE 'DU\_AU%'";
+        $sql .= " WHERE p.ref LIKE 'DU\_A%'"; // DU_AU (audit) + DU_AC/DU_Accompagnement (mise en place)
         $sql .= ' AND f.type <> 2'; // exclude credit notes (avoirs)
         $sql .= ' AND f.datef IS NOT NULL AND f.fk_soc > 0 AND f.entity IN (' . getEntity('facture') . ')';
         $sql .= ' GROUP BY f.fk_soc, f.rowid, f.datef';

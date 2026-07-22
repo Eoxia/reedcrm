@@ -126,7 +126,7 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'propal as pr ON pr.rowid = (';
     $sql .= '   SELECT p2.rowid FROM ' . MAIN_DB_PREFIX . 'propal p2';
     $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'propaldet pd ON pd.fk_propal = p2.rowid';
-    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_AU%'";
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_A%'";
     $sql .= '   WHERE p2.fk_soc = a.fk_soc AND p2.entity IN (' . getEntity('propal') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR p2.datep > a.last_audit_date)';
     $sql .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1)';
@@ -134,7 +134,7 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (';
     $sql .= '   SELECT f2.rowid FROM ' . MAIN_DB_PREFIX . 'facture f2';
     $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd2 ON fd2.fk_facture = f2.rowid';
-    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_AU%'";
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_A%'";
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
     $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1)';
@@ -201,7 +201,7 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'propal as pr ON pr.rowid = (';
     $sql .= '   SELECT p2.rowid FROM ' . MAIN_DB_PREFIX . 'propal p2';
     $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'propaldet pd ON pd.fk_propal = p2.rowid';
-    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_AU%'";
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_A%'";
     $sql .= '   WHERE p2.fk_soc = a.fk_soc AND p2.entity IN (' . getEntity('propal') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR p2.datep > a.last_audit_date)';
     $sql .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1)';
@@ -209,7 +209,7 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (';
     $sql .= '   SELECT f2.rowid FROM ' . MAIN_DB_PREFIX . 'facture f2';
     $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd2 ON fd2.fk_facture = f2.rowid';
-    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_AU%'";
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_A%'";
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
     $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1)';
