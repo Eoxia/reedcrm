@@ -99,6 +99,17 @@ $permissiontoadd  = $user->hasRight('reedcrm', 'followup', 'write');
 
 saturne_check_access($permissiontoread);
 
+// Dismiss (hide) a client from the "Digirisk without subscription" list.
+if ($action === 'digidismiss' && $permissiontoadd) {
+    $hideSocid = GETPOSTINT('hide_socid');
+    if ($hideSocid > 0) {
+        $db->query('INSERT IGNORE INTO ' . MAIN_DB_PREFIX . 'reedcrm_digirisk_dismissed (entity, fk_soc, date_creation, fk_user_creat) VALUES (' . ((int) $conf->entity) . ', ' . $hideSocid . ", '" . $db->idate(dol_now()) . "', " . ((int) $user->id) . ')');
+        setEventMessages($langs->trans('FollowupDigiriskDismissed'), []);
+    }
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?search_month=' . urlencode(GETPOST('search_month', 'alpha')));
+    exit;
+}
+
 // Purge search criteria.
 if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x', 'alpha') || GETPOST('button_removefilter', 'alpha')) {
     $search_ref        = '';
@@ -403,7 +414,15 @@ if (empty($digiNoSub)) {
         print '</td>';
         print '<td class="tdoverflowmax300" title="' . dol_escape_htmltag((string) $c['last_tier']) . '">' . ($c['last_tier'] !== null && $c['last_tier'] !== '' ? dol_escape_htmltag($c['last_tier']) : '<span class="opacitymedium">-</span>') . '</td>';
         print '<td class="center nowraponall">' . (!empty($c['last_date']) ? dol_print_date($c['last_date'], 'day') : '') . '</td>';
-        print '<td class="center"><a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/compta/facture/list.php?socid=' . ((int) $c['fk_soc']) . '" title="' . dol_escape_htmltag($langs->trans('FollowupDigiriskCreateSubHelp')) . '"><i class="fas fa-sync-alt paddingright"></i>' . $langs->trans('FollowupDigiriskCreateSub') . '</a></td>';
+        print '<td class="center nowraponall">';
+        print '<a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/compta/facture/list.php?socid=' . ((int) $c['fk_soc']) . '" title="' . dol_escape_htmltag($langs->trans('FollowupDigiriskCreateSubHelp')) . '"><i class="fas fa-sync-alt paddingright"></i>' . $langs->trans('FollowupDigiriskCreateSub') . '</a> ';
+        if ($permissiontoadd) {
+            print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('FollowupDigiriskDismissConfirm')) . '\');">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="digidismiss"><input type="hidden" name="hide_socid" value="' . ((int) $c['fk_soc']) . '"><input type="hidden" name="search_month" value="' . dol_escape_htmltag($search_month) . '">';
+            print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupDigiriskDismiss')) . '"><i class="fas fa-trash"></i></button>';
+            print '</form>';
+        }
+        print '</td>';
         print '</tr>';
     }
 }

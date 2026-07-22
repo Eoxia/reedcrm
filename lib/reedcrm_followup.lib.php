@@ -422,6 +422,8 @@ function reedcrmFollowupGetDigiriskWithoutSubscription(DoliDB $db): array
     // Exclude any client that already has a recurring invoice, even a deactivated (suspended) one:
     // a paused subscription is a deliberate choice, not a "no subscription" gap.
     $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture_rec fr WHERE fr.fk_soc = s.rowid)';
+    // Exclude clients manually dismissed from this list.
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'reedcrm_digirisk_dismissed d WHERE d.fk_soc = s.rowid AND d.entity IN (' . getEntity('reedcrm_du_audit') . '))';
     $sql .= ' AND (' . $tierExists . ' OR ' . $projExists . ')';
     $sql .= ' ORDER BY last_date DESC';
 
