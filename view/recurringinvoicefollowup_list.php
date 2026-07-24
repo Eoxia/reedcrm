@@ -140,9 +140,9 @@ $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity
 $sql .= '   AND MONTH(f9.datef) = ' . ((int) $monthMonth) . ' AND YEAR(f9.datef) = ' . ((int) $monthYear) . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
 $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
-// Recurring calendar: a subscription bills in the same month every year, so filter on the month of
-// its next generation date, regardless of the year (avoids the 12-month rolling-window gaps).
-$sql .= ' AND MONTH(fr.date_when) = ' . ((int) $monthMonth);
+// Reality for the browsed month+year: subscriptions actually billed that month (fa) OR whose next
+// generation falls that month+year (upcoming). Avoids showing a subscription in a year it did not bill.
+$sql .= ' AND (fa.rowid IS NOT NULL OR (MONTH(fr.date_when) = ' . ((int) $monthMonth) . ' AND YEAR(fr.date_when) = ' . ((int) $monthYear) . '))';
 if (dol_strlen($search_ref)) {
     $sql .= natural_search('fr.titre', $search_ref);
 }
