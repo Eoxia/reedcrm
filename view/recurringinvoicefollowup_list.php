@@ -74,7 +74,7 @@ $sortfield = GETPOST('sortfield', 'aZ09comma');
 $sortorder = GETPOST('sortorder', 'aZ09comma');
 $page      = GETPOSTISSET('pageplusone') ? (GETPOSTINT('pageplusone') - 1) : GETPOSTINT('page');
 if (empty($sortfield)) {
-    $sortfield = 't.period';
+    $sortfield = 'fr.date_when';
 }
 if (empty($sortorder)) {
     $sortorder = 'DESC';
@@ -122,21 +122,25 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x'
  */
 $title = $langs->trans('RecurringInvoiceFollowupMenu');
 
-// Build the SQL request.
-$sql  = 'SELECT t.rowid, t.ref, t.status, t.fk_soc, t.fk_facture_rec, t.period, t.prestation, t.montant_ttc,';
-$sql .= ' t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, t.date_maj_du, t.next_maj_du,';
-$sql .= ' t.besoin, s.nom as thirdparty_name, fr.titre as frec_titre';
-$sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture_rec as fr ON fr.rowid = t.fk_facture_rec';
-$sql .= ' WHERE t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
-$sql .= " AND ((t.period >= '" . $db->idate($periodStart) . "' AND t.period <= '" . $db->idate($periodEnd) . "')";
-$sql .= " OR (t.period < '" . $db->idate($todayMonthStart) . "' AND t.facture_payee = 0 AND t.status = 1))";
+// Build the SQL request. Source = active recurring templates (factures modèles), read live so the
+// list is always up to date; the stored follow-up (t) only carries manual annotations + billing sync.
+if (!in_array($sortfield, ['fr.date_when', 'fr.titre', 'fr.fk_soc', 'fr.total_ttc', 't.prestation', 't.facture_creee', 't.facture_payee', 't.date_relance', 't.date_maj_du', 't.next_maj_du'], true)) {
+    $sortfield = 'fr.date_when';
+}
+$sql  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.total_ttc as montant_ttc, fr.date_when as period, fr.fk_soc,';
+$sql .= ' t.rowid as followup_id, t.prestation, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, t.date_maj_du, t.next_maj_du, t.besoin,';
+$sql .= ' s.nom as thirdparty_name';
+$sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+$sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
+$sql .= " AND ((fr.date_when >= '" . $db->idate($periodStart) . "' AND fr.date_when <= '" . $db->idate($periodEnd) . "')";
+$sql .= " OR (fr.date_when < '" . $db->idate($todayMonthStart) . "' AND (t.facture_payee IS NULL OR t.facture_payee = 0)))";
 if (dol_strlen($search_ref)) {
-    $sql .= natural_search('t.ref', $search_ref);
+    $sql .= natural_search('fr.titre', $search_ref);
 }
 if ($search_fk_soc > 0) {
-    $sql .= ' AND t.fk_soc = ' . ((int) $search_fk_soc);
+    $sql .= ' AND fr.fk_soc = ' . ((int) $search_fk_soc);
 }
 if (dol_strlen($search_prestation)) {
     $sql .= natural_search('t.prestation', $search_prestation);
@@ -219,8 +223,8 @@ print '</div>';
  */
 $chartYear = $monthYear;
 $faByMonth = array_fill(1, 12, 0.0);
-$sqlChartFa  = 'SELECT MONTH(period) as m, SUM(montant_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup';
-$sqlChartFa .= ' WHERE entity IN (' . getEntity('reedcrm_facturerec_followup') . ') AND status = 1 AND YEAR(period) = ' . $chartYear . ' GROUP BY m';
+$sqlChartFa  = 'SELECT MONTH(fr.date_when) as m, SUM(fr.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+$sqlChartFa .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0 AND YEAR(fr.date_when) = ' . $chartYear . ' GROUP BY m';
 $resChartFa  = $db->query($sqlChartFa);
 if ($resChartFa) {
     while ($o = $db->fetch_object($resChartFa)) {
@@ -310,11 +314,11 @@ print '</tr>';
 
 // Title row.
 print '<tr class="liste_titre">';
-print getTitleFieldOfList($langs->trans('Ref'), 0, $_SERVER['PHP_SELF'], 't.ref', '', $param, '', $sortfield, $sortorder);
-print getTitleFieldOfList($langs->trans('ThirdParty'), 0, $_SERVER['PHP_SELF'], 't.fk_soc', '', $param, '', $sortfield, $sortorder);
+print getTitleFieldOfList($langs->trans('Ref'), 0, $_SERVER['PHP_SELF'], 'fr.titre', '', $param, '', $sortfield, $sortorder);
+print getTitleFieldOfList($langs->trans('ThirdParty'), 0, $_SERVER['PHP_SELF'], 'fr.fk_soc', '', $param, '', $sortfield, $sortorder);
 print getTitleFieldOfList($langs->trans('FollowupSubscription'), 0, $_SERVER['PHP_SELF'], 't.prestation', '', $param, '', $sortfield, $sortorder);
-print getTitleFieldOfList($langs->trans('FollowupAmountTTC'), 0, $_SERVER['PHP_SELF'], 't.montant_ttc', '', $param, 'class="right"', $sortfield, $sortorder);
-print getTitleFieldOfList($langs->trans('Period'), 0, $_SERVER['PHP_SELF'], 't.period', '', $param, 'class="center"', $sortfield, $sortorder);
+print getTitleFieldOfList($langs->trans('FollowupAmountTTC'), 0, $_SERVER['PHP_SELF'], 'fr.total_ttc', '', $param, 'class="right"', $sortfield, $sortorder);
+print getTitleFieldOfList($langs->trans('Period'), 0, $_SERVER['PHP_SELF'], 'fr.date_when', '', $param, 'class="center"', $sortfield, $sortorder);
 print getTitleFieldOfList($langs->trans('FollowupInvoiceCreated'), 0, $_SERVER['PHP_SELF'], 't.facture_creee', '', $param, 'class="center"', $sortfield, $sortorder);
 print getTitleFieldOfList($langs->trans('FollowupInvoicePaid'), 0, $_SERVER['PHP_SELF'], 't.facture_payee', '', $param, 'class="center"', $sortfield, $sortorder);
 print getTitleFieldOfList($langs->trans('FollowupRelanceDate'), 0, $_SERVER['PHP_SELF'], 't.date_relance', '', $param, 'class="center"', $sortfield, $sortorder);
@@ -333,17 +337,17 @@ while ($i < min($num, $limit)) {
     if (!$obj) {
         break;
     }
+    // Fill missing (unseeded) annotation defaults so the object helpers work on live rows.
+    if (empty($obj->prestation)) {
+        $obj->prestation = reedcrmFollowupGuessPrestation((string) $obj->frec_titre);
+    }
     $object->setVarsFromFetchObj($obj);
     $followupStatus = $object->getFollowupStatus();
     $totalTtc      += (float) $obj->montant_ttc;
-    $cardUrl        = $cardUrlBase . '?id=' . $obj->rowid;
+    $cardUrl        = $cardUrlBase . '?frec=' . ((int) $obj->frec_id);
 
     print '<tr class="oddeven">';
-    if (!empty($obj->fk_facture_rec) && dol_strlen($obj->frec_titre) > 0) {
-        print '<td class="tdoverflowmax200"><a href="' . DOL_URL_ROOT . '/compta/facture/card-rec.php?id=' . ((int) $obj->fk_facture_rec) . '" title="' . dol_escape_htmltag($obj->frec_titre) . '">' . img_object('', 'bill') . ' ' . dol_escape_htmltag($obj->frec_titre) . '</a></td>';
-    } else {
-        print '<td><a href="' . $cardUrl . '">' . dol_escape_htmltag($obj->ref) . '</a></td>';
-    }
+    print '<td class="tdoverflowmax200"><a href="' . DOL_URL_ROOT . '/compta/facture/card-rec.php?id=' . ((int) $obj->frec_id) . '" title="' . dol_escape_htmltag($obj->frec_titre) . '">' . img_object('', 'bill') . ' ' . dol_escape_htmltag($obj->frec_titre) . '</a></td>';
     print '<td class="tdoverflowmax150">' . dol_escape_htmltag($obj->thirdparty_name) . '</td>';
     print '<td>' . dol_escape_htmltag(isset($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) ? $langs->trans($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) : $obj->prestation) . '</td>';
     print '<td class="right">' . (dol_strlen($obj->montant_ttc) ? price($obj->montant_ttc, 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td>';
@@ -361,9 +365,7 @@ while ($i < min($num, $limit)) {
     print '<td class="center">' . (!empty($obj->next_maj_du) ? dol_print_date($db->jdate($obj->next_maj_du), 'day') : '') . '</td>';
     print '<td class="center">' . dolGetStatus($followupStatus['label'], $followupStatus['label'], '', $followupStatus['badge'], 3) . '</td>';
     print '<td class="center nowraponall">';
-    if (!empty($obj->fk_facture_rec)) {
-        print '<a class="paddingright" href="' . DOL_URL_ROOT . '/compta/facture/card-rec.php?id=' . ((int) $obj->fk_facture_rec) . '" title="' . dol_escape_htmltag($langs->trans('FollowupGenerateInvoice')) . '"><i class="fas fa-file-invoice-dollar" style="color:#2f6f9f"></i></a>';
-    }
+    print '<a class="paddingright" href="' . DOL_URL_ROOT . '/compta/facture/card-rec.php?id=' . ((int) $obj->frec_id) . '" title="' . dol_escape_htmltag($langs->trans('FollowupGenerateInvoice')) . '"><i class="fas fa-file-invoice-dollar" style="color:#2f6f9f"></i></a>';
     print '<a class="editfielda" href="' . $cardUrl . '&action=edit&token=' . newToken() . '">' . img_edit() . '</a>';
     print '</td>';
     print '</tr>';

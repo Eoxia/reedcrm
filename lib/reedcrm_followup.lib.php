@@ -323,33 +323,37 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
         'to_process'  => [],
     ];
 
-    // Current month follow-ups.
-    $sql  = 'SELECT t.rowid, t.ref, t.fk_soc, t.prestation, t.montant_ttc, t.montant_pr, t.temps_sav,';
-    $sql .= ' t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, s.nom as thirdparty_name';
-    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
-    $sql .= ' WHERE t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
-    $sql .= " AND t.status = 1";
-    $sql .= " AND t.period >= '" . $db->idate($periodStart) . "'";
-    $sql .= " AND t.period <= '" . $db->idate($periodEnd) . "'";
-    $sql .= ' ORDER BY t.montant_ttc DESC';
+    // Current month = active recurring templates (factures modèles) due this month, read live.
+    // Manual annotations + billing sync come from the stored follow-up (t) when it exists.
+    $sql  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.fk_soc, fr.total_ttc as montant_ttc,';
+    $sql .= ' t.prestation, t.montant_pr, t.temps_sav, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance,';
+    $sql .= ' s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+    $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
+    $sql .= " AND fr.date_when >= '" . $db->idate($periodStart) . "'";
+    $sql .= " AND fr.date_when <= '" . $db->idate($periodEnd) . "'";
+    $sql .= ' ORDER BY fr.total_ttc DESC';
 
     $resql = $db->query($sql);
     if ($resql) {
         while ($obj = $db->fetch_object($resql)) {
-            $code = reedcrmFollowupStatusCode($obj, $now);
+            $prestation = !empty($obj->prestation) ? $obj->prestation : reedcrmFollowupGuessPrestation((string) $obj->frec_titre);
+            $tempsSav   = $obj->temps_sav !== null ? (int) $obj->temps_sav : reedcrmFollowupSavSecondsForPrestation($prestation);
+            $code       = reedcrmFollowupStatusCode($obj, $now);
             $data['counts'][$code]++;
             $data['counts']['total']++;
             $data['montant_ttc'] += (float) $obj->montant_ttc;
             $data['montant_pr']  += (float) $obj->montant_pr;
-            $data['temps_sav']   += (int) $obj->temps_sav;
+            $data['temps_sav']   += $tempsSav;
 
             if (in_array($code, ['tobill', 'tosend', 'late'])) {
                 $data['to_process'][] = [
-                    'id'          => (int) $obj->rowid,
-                    'ref'         => $obj->ref,
+                    'id'          => (int) $obj->frec_id,
+                    'ref'         => $obj->frec_titre,
                     'thirdparty'  => $obj->thirdparty_name,
-                    'prestation'  => $obj->prestation,
+                    'prestation'  => $prestation,
                     'montant_ttc' => (float) $obj->montant_ttc,
                     'code'        => $code,
                 ];
@@ -364,6 +368,7 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sqlDu  = 'SELECT t.rowid, t.ref, t.fk_soc, t.next_maj_du, s.nom as thirdparty_name';
     $sqlDu .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
     $sqlDu .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
+    $sqlDu .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facture_rec as fr ON fr.rowid = t.fk_facture_rec AND fr.suspended = 0';
     $sqlDu .= ' WHERE t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
     $sqlDu .= ' AND t.status = 1 AND t.next_maj_du IS NOT NULL';
     $sqlDu .= " AND t.next_maj_du <= '" . $db->idate($windowEnd) . "'";
