@@ -661,5 +661,39 @@ if (empty($overdueAudits)) {
 }
 print '</table></div>';
 
+// --- DU proposals signed but not invoiced (signed revenue still to bill) ---
+$signedUnbilled = reedcrmFollowupGetSignedUnbilledDuProposals($db);
+print '<br>';
+$signedTot = 0;
+foreach ($signedUnbilled as $sp) {
+    $signedTot += (float) $sp['total_ttc'];
+}
+print load_fiche_titre('<i class="fas fa-file-signature paddingright" style="color:#6f42c1"></i>' . $langs->trans('FollowupSignedUnbilled') . ' <span class="badge">' . count($signedUnbilled) . '</span>', '', '');
+print '<div class="div-table-responsive"><table class="tagtable liste">';
+print '<tr class="liste_titre">';
+print '<th>' . $langs->trans('ThirdParty') . '</th><th>' . $langs->trans('FollowupLocation') . '</th>';
+print '<th>' . $langs->trans('FollowupProposal') . '</th><th class="center">' . $langs->trans('Date') . '</th>';
+print '<th class="right">' . $langs->trans('AmountTTC') . '</th><th class="center maxwidthsearch"></th>';
+print '</tr>';
+if (empty($signedUnbilled)) {
+    print '<tr class="oddeven"><td colspan="6" class="center opacitymedium">' . $langs->trans('FollowupSignedUnbilledEmpty') . '</td></tr>';
+} else {
+    foreach ($signedUnbilled as $sp) {
+        $thirdpartyStatic->id     = $sp['fk_soc'];
+        $thirdpartyStatic->name   = $sp['thirdparty'];
+        $thirdpartyStatic->status = 1;
+        print '<tr class="oddeven">';
+        print '<td class="tdoverflowmax200">' . $thirdpartyStatic->getNomUrl(1) . '</td>';
+        print '<td class="tdoverflowmax150">' . ($sp['location'] !== '' ? '<i class="fas fa-map-marker-alt paddingright opacitymedium"></i>' . dol_escape_htmltag($sp['location']) : '<span class="opacitymedium">-</span>') . '</td>';
+        print '<td class="nowraponall"><a href="' . DOL_URL_ROOT . '/comm/propal/card.php?id=' . ((int) $sp['propal_id']) . '" target="_blank" rel="noopener"><i class="fas fa-file-invoice paddingright opacitymedium"></i>' . dol_escape_htmltag($sp['ref']) . '</a></td>';
+        print '<td class="center nowraponall">' . (!empty($sp['date']) ? dol_print_date($sp['date'], 'day') : '') . '</td>';
+        print '<td class="right nowraponall">' . ($sp['total_ttc'] !== null ? price($sp['total_ttc'], 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td>';
+        print '<td class="center"><a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/compta/facture/card.php?action=create&origin=propal&originid=' . ((int) $sp['propal_id']) . '&socid=' . ((int) $sp['fk_soc']) . '" title="' . dol_escape_htmltag($langs->trans('FollowupSignedUnbilledInvoice')) . '"><i class="fas fa-file-invoice-dollar paddingright"></i>' . $langs->trans('FollowupSignedUnbilledInvoice') . '</a></td>';
+        print '</tr>';
+    }
+    print '<tr class="liste_total"><td colspan="4">' . $langs->trans('Total') . '</td><td class="right">' . price($signedTot, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td></td></tr>';
+}
+print '</table></div>';
+
 llxFooter();
 $db->close();
