@@ -316,8 +316,6 @@ print '<td class="liste_titre center"></td>';
 print '<td class="liste_titre center"></td>';
 print '<td class="liste_titre center"></td>';
 print '<td class="liste_titre center"></td>';
-print '<td class="liste_titre center"></td>';
-print '<td class="liste_titre center"></td>';
 print '<td class="liste_titre center maxwidthsearch">';
 print $form->showFilterButtons();
 print '</td>';
@@ -333,8 +331,6 @@ print getTitleFieldOfList($langs->trans('Period'), 0, $_SERVER['PHP_SELF'], 'fr.
 print getTitleFieldOfList($langs->trans('FollowupInvoiceCreated'), 0, $_SERVER['PHP_SELF'], 't.facture_creee', '', $param, 'class="center"', $sortfield, $sortorder);
 print getTitleFieldOfList($langs->trans('FollowupInvoicePaid'), 0, $_SERVER['PHP_SELF'], 't.facture_payee', '', $param, 'class="center"', $sortfield, $sortorder);
 print getTitleFieldOfList($langs->trans('FollowupRelanceDate'), 0, $_SERVER['PHP_SELF'], 't.date_relance', '', $param, 'class="center"', $sortfield, $sortorder);
-print getTitleFieldOfList($langs->trans('FollowupDuUpdateBilledDate'), 0, $_SERVER['PHP_SELF'], 't.date_maj_du', '', $param, 'class="center"', $sortfield, $sortorder);
-print getTitleFieldOfList($langs->trans('FollowupDuNextUpdate'), 0, $_SERVER['PHP_SELF'], 't.next_maj_du', '', $param, 'class="center"', $sortfield, $sortorder);
 print getTitleFieldOfList($langs->trans('Status'), 0, $_SERVER['PHP_SELF'], '', '', $param, 'class="center"', $sortfield, $sortorder);
 print getTitleFieldOfList('', 0, $_SERVER['PHP_SELF'], '', '', $param, 'class="center maxwidthsearch"', $sortfield, $sortorder);
 print '</tr>';
@@ -387,8 +383,6 @@ while ($i < min($num, $limit)) {
     print '<td class="center">' . yn($obj->facture_creee) . '</td>';
     print '<td class="center">' . yn($obj->facture_payee) . '</td>';
     print '<td class="center">' . (!empty($obj->date_relance) ? dol_print_date($db->jdate($obj->date_relance), 'day') : '') . '</td>';
-    print '<td class="center">' . (!empty($obj->date_maj_du) ? dol_print_date($db->jdate($obj->date_maj_du), 'day') : '') . '</td>';
-    print '<td class="center">' . (!empty($obj->next_maj_du) ? dol_print_date($db->jdate($obj->next_maj_du), 'day') : '') . '</td>';
     print '<td class="center">' . dolGetStatus($followupStatus['label'], $followupStatus['label'], '', $followupStatus['badge'], 3) . '</td>';
     print '<td class="center nowraponall">';
     print '<a class="paddingright" href="' . DOL_URL_ROOT . '/compta/facture/card-rec.php?id=' . ((int) $obj->frec_id) . '" title="' . dol_escape_htmltag($langs->trans('FollowupGenerateInvoice')) . '"><i class="fas fa-file-invoice-dollar" style="color:#2f6f9f"></i></a>';
@@ -403,7 +397,7 @@ if ($num > 0) {
     print '<td>' . $langs->trans('Total') . '</td>';
     print '<td></td><td></td>';
     print '<td class="right">' . price($totalTtc, 0, $langs, 1, -1, -1, $conf->currency) . '</td>';
-    print '<td colspan="8"></td>';
+    print '<td colspan="6"></td>';
     print '</tr>';
 }
 
