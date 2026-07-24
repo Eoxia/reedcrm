@@ -445,3 +445,50 @@ function reedcrmFollowupGetDigiriskWithoutSubscription(DoliDB $db): array
 
     return $rows;
 }
+
+/**
+ * List Document Unique proposals that are SIGNED but were never invoiced (no linked invoice),
+ * i.e. signed revenue still to bill. A DU proposal = a proposal with a "DU_A%" product line.
+ *
+ * @param  DoliDB $db Database handler.
+ * @return array<int,array<string,mixed>> Rows: propal_id, ref, fk_soc, thirdparty, location, date, total_ttc.
+ */
+function reedcrmFollowupGetSignedUnbilledDuProposals(DoliDB $db): array
+{
+    $rows = [];
+
+    $sql  = 'SELECT pr.rowid as propal_id, pr.ref, pr.datep, pr.total_ttc, s.rowid as fk_soc, s.nom as thirdparty_name, s.zip, s.town';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propal as pr';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = pr.fk_soc';
+    // A Digirisk/DU product = a DU service (DU_A%) or a Digirisk SaaS tier (D1..D5/D41).
+    $prodProp = "(p.ref LIKE 'DU\_A%' OR p.ref IN ('D1','D2','D3','D4','D41','D5'))";
+    $prodFact = "(pf.ref LIKE 'DU\_A%' OR pf.ref IN ('D1','D2','D3','D4','D41','D5'))";
+
+    $sql .= ' WHERE pr.entity IN (' . getEntity('propal') . ') AND pr.fk_statut = 2'; // 2 = signed
+    // Only the last 3 years: older signed quotes cannot realistically be invoiced anymore.
+    $sql .= ' AND pr.datep >= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+    $sql .= ' AND EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'propaldet pd INNER JOIN ' . MAIN_DB_PREFIX . 'product p ON p.rowid = pd.fk_product AND ' . $prodProp . ' WHERE pd.fk_propal = pr.rowid)';
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = pr.rowid AND ee.sourcetype = 'propal' AND ee.targettype = 'facture')";
+    // Not billed for real: no Digirisk/DU invoice on/after the quote date (catches billing via a
+    // recurring template or an independent invoice, where no propal->facture link exists).
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture f INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd ON fd.fk_facture = f.rowid INNER JOIN ' . MAIN_DB_PREFIX . 'product pf ON pf.rowid = fd.fk_product AND ' . $prodFact . ' WHERE f.fk_soc = pr.fk_soc AND f.type <> 2 AND f.entity IN (' . getEntity('facture') . ') AND f.datef >= pr.datep)';
+    $sql .= ' ORDER BY pr.datep DESC, pr.rowid DESC';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $location = trim(($obj->zip ? $obj->zip . ' ' : '') . ($obj->town ?? ''));
+            $rows[]   = [
+                'propal_id'  => (int) $obj->propal_id,
+                'ref'        => $obj->ref,
+                'fk_soc'     => (int) $obj->fk_soc,
+                'thirdparty' => $obj->thirdparty_name,
+                'location'   => $location,
+                'date'       => !empty($obj->datep) ? $db->jdate($obj->datep) : 0,
+                'total_ttc'  => $obj->total_ttc !== null ? (float) $obj->total_ttc : null,
+            ];
+        }
+    }
+
+    return $rows;
+}
