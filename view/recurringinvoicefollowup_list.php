@@ -132,7 +132,9 @@ $sql .= ' t.rowid as followup_id, t.prestation, t.facture_creee, t.facture_envoy
 $sql .= ' fa.rowid as gen_facture_id, fa.ref as gen_facture_ref, fa.datef as gen_date, fa.paye as gen_paye,';
 $sql .= ' s.nom as thirdparty_name';
 $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+// At most ONE annotation per template (old data may hold several rows per template) — avoids row duplication.
+$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = (SELECT t9.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup t9';
+$sql .= '   WHERE t9.fk_facture_rec = fr.rowid AND t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ORDER BY t9.rowid DESC' . $db->plimit(1) . ')';
 // The invoice actually generated from this template within the browsed month+year (if any) — to show
 // when it was really billed on past/current months.
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';

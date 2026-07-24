@@ -332,7 +332,9 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sql .= ' fa.datef as gen_date, fa.paye as gen_paye,';
     $sql .= ' s.nom as thirdparty_name';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+    // At most ONE annotation per template (old data may hold several rows per template) — avoids row duplication.
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = (SELECT t9.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup t9';
+    $sql .= '   WHERE t9.fk_facture_rec = fr.rowid AND t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ORDER BY t9.rowid DESC' . $db->plimit(1) . ')';
     // The invoice actually generated from this template in the browsed month+year (done or not).
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
     $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
@@ -506,6 +508,76 @@ function reedcrmFollowupGetSignedUnbilledDuProposals(DoliDB $db): array
             ];
         }
     }
+    return $rows;
+}
 
+/**
+ * Billing gap: signed proposals (any product) from the last 3 years with no invoice linked.
+ *
+ * @param  DoliDB $db    Database handler.
+ * @param  int    $limit Max rows.
+ * @return array<int,array<string,mixed>> Rows: id, ref, fk_soc, thirdparty, date, total_ttc.
+ */
+function reedcrmBillingGetSignedUnbilledProposals(DoliDB $db, int $limit = 500): array
+{
+    $rows = [];
+    $sql  = 'SELECT pr.rowid as id, pr.ref, pr.datep, pr.total_ttc, s.rowid as fk_soc, s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propal as pr INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = pr.fk_soc';
+    $sql .= ' WHERE pr.entity IN (' . getEntity('propal') . ') AND pr.fk_statut = 2 AND pr.datep >= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = pr.rowid AND ee.sourcetype = 'propal' AND ee.targettype = 'facture')";
+    $sql .= ' ORDER BY pr.datep DESC' . $db->plimit($limit);
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($o = $db->fetch_object($resql)) {
+            $rows[] = ['id' => (int) $o->id, 'ref' => $o->ref, 'fk_soc' => (int) $o->fk_soc, 'thirdparty' => $o->thirdparty_name, 'date' => !empty($o->datep) ? $db->jdate($o->datep) : 0, 'total_ttc' => (float) $o->total_ttc];
+        }
+    }
+    return $rows;
+}
+
+/**
+ * Billing gap: validated/ongoing customer orders from the last 3 years with no invoice linked.
+ *
+ * @param  DoliDB $db    Database handler.
+ * @param  int    $limit Max rows.
+ * @return array<int,array<string,mixed>> Rows: id, ref, fk_soc, thirdparty, date, total_ttc.
+ */
+function reedcrmBillingGetUnbilledOrders(DoliDB $db, int $limit = 500): array
+{
+    $rows = [];
+    $sql  = 'SELECT c.rowid as id, c.ref, c.date_commande, c.total_ttc, s.rowid as fk_soc, s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'commande as c INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = c.fk_soc';
+    $sql .= ' WHERE c.entity IN (' . getEntity('commande') . ') AND c.fk_statut IN (1, 2) AND c.date_commande >= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = c.rowid AND ee.sourcetype = 'commande' AND ee.targettype = 'facture')";
+    $sql .= ' ORDER BY c.date_commande DESC' . $db->plimit($limit);
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($o = $db->fetch_object($resql)) {
+            $rows[] = ['id' => (int) $o->id, 'ref' => $o->ref, 'fk_soc' => (int) $o->fk_soc, 'thirdparty' => $o->thirdparty_name, 'date' => !empty($o->date_commande) ? $db->jdate($o->date_commande) : 0, 'total_ttc' => (float) $o->total_ttc];
+        }
+    }
+    return $rows;
+}
+
+/**
+ * Billing gap: active recurring invoice templates whose next generation date is already past
+ * (an invoice should have been generated but was not).
+ *
+ * @param  DoliDB $db Database handler.
+ * @return array<int,array<string,mixed>> Rows: id, ref, fk_soc, thirdparty, date_when, total_ttc.
+ */
+function reedcrmBillingGetOverdueRecurring(DoliDB $db): array
+{
+    $rows = [];
+    $sql  = 'SELECT fr.rowid as id, fr.titre, fr.total_ttc, fr.date_when, s.rowid as fk_soc, s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+    $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.date_when IS NOT NULL AND fr.date_when < NOW()';
+    $sql .= ' ORDER BY fr.date_when ASC';
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($o = $db->fetch_object($resql)) {
+            $rows[] = ['id' => (int) $o->id, 'titre' => $o->titre, 'fk_soc' => (int) $o->fk_soc, 'thirdparty' => $o->thirdparty_name, 'date_when' => !empty($o->date_when) ? $db->jdate($o->date_when) : 0, 'total_ttc' => (float) $o->total_ttc];
+        }
+    }
     return $rows;
 }

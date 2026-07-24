@@ -725,6 +725,22 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
+            'titre'    => $langs->transnoentities('BillingGapsMenu'),
+            'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'billinggaps',
+            'url'      => '/reedcrm/view/billinggaps_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
             'titre'    => $langs->trans('Tools'),
             'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
