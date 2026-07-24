@@ -235,7 +235,7 @@ if ($resChartFa) {
 }
 $monthLabels = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
-print '<div class="rcf-chartbox"><div class="rcf-charttitle">' . $langs->trans('FollowupChartFaAmount') . '</div><div class="rcf-canvaswrap"><canvas id="rcfChartFa"></canvas></div></div>';
+print '<div class="rcf-chartbox"><div class="rcf-charttitle">' . $langs->trans('FollowupChartFaAmount') . ' — ' . $chartYear . '</div><div class="rcf-canvaswrap"><canvas id="rcfChartFa"></canvas></div></div>';
 print '<script src="' . DOL_URL_ROOT . '/includes/nnnick/chartjs/dist/chart.min.js"></script>';
 print '<script>
 (function() {
@@ -353,9 +353,10 @@ while ($i < min($num, $limit)) {
     print '<td class="tdoverflowmax150">' . dol_escape_htmltag($obj->thirdparty_name) . '</td>';
     print '<td>' . dol_escape_htmltag(isset($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) ? $langs->trans($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) : $obj->prestation) . '</td>';
     print '<td class="right">' . (dol_strlen($obj->montant_ttc) ? price($obj->montant_ttc, 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td>';
+    // Show the real next-generation date (kept as-is: it may shift from one year to the next).
     $periodTs    = !empty($obj->period) ? $db->jdate($obj->period) : 0;
     $isFaOverdue = ($periodTs && $periodTs < $todayMonthStart && empty($obj->facture_payee));
-    print '<td class="center nowraponall">' . ($periodTs ? dol_print_date($periodTs, '%m/%Y') : '');
+    print '<td class="center nowraponall">' . ($periodTs ? dol_print_date($periodTs, 'day') : '');
     if ($isFaOverdue) {
         print ' <span style="color:#cf4257;font-weight:bold" title="' . dol_escape_htmltag($langs->trans('FollowupLate')) . '"><i class="fas fa-exclamation-triangle"></i> ' . ((int) floor((dol_now() - $periodTs) / 86400)) . $langs->trans('FollowupDaysLateShort') . '</span>';
     }
