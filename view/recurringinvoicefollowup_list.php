@@ -129,9 +129,15 @@ if (!in_array($sortfield, ['fr.date_when', 'fr.titre', 'fr.fk_soc', 'fr.total_tt
 }
 $sql  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.total_ttc as montant_ttc, fr.date_when as period, fr.fk_soc,';
 $sql .= ' t.rowid as followup_id, t.prestation, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, t.date_maj_du, t.next_maj_du, t.besoin,';
+$sql .= ' fa.rowid as gen_facture_id, fa.ref as gen_facture_ref, fa.datef as gen_date, fa.paye as gen_paye,';
 $sql .= ' s.nom as thirdparty_name';
 $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+// The invoice actually generated from this template within the browsed month+year (if any) — to show
+// when it was really billed on past/current months.
+$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
+$sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
+$sql .= '   AND MONTH(f9.datef) = ' . ((int) $monthMonth) . ' AND YEAR(f9.datef) = ' . ((int) $monthYear) . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
 $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
 // Recurring calendar: a subscription bills in the same month every year, so filter on the month of
@@ -342,6 +348,12 @@ while ($i < min($num, $limit)) {
     // Fill missing (unseeded) annotation defaults so the object helpers work on live rows.
     if (empty($obj->prestation)) {
         $obj->prestation = reedcrmFollowupGuessPrestation((string) $obj->frec_titre);
+    }
+    // When the invoice for the browsed month was really generated, derive billing status from it.
+    $genTs = !empty($obj->gen_date) ? $db->jdate($obj->gen_date) : 0;
+    if ($genTs) {
+        $obj->facture_creee = 1;
+        $obj->facture_payee = (int) $obj->gen_paye;
     }
     $object->setVarsFromFetchObj($obj);
     $followupStatus = $object->getFollowupStatus();

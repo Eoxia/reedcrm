@@ -325,15 +325,22 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
 
     // Current month = active recurring templates (factures modèles) due this month, read live.
     // Manual annotations + billing sync come from the stored follow-up (t) when it exists.
+    $browsedMonth = (int) dol_print_date($periodStart, '%m');
+    $browsedYear  = (int) dol_print_date($periodStart, '%Y');
     $sql  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.fk_soc, fr.total_ttc as montant_ttc,';
     $sql .= ' t.prestation, t.montant_pr, t.temps_sav, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance,';
+    $sql .= ' fa.datef as gen_date, fa.paye as gen_paye,';
     $sql .= ' s.nom as thirdparty_name';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+    // The invoice actually generated from this template in the browsed month+year (done or not).
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
+    $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
+    $sql .= '   AND MONTH(f9.datef) = ' . $browsedMonth . ' AND YEAR(f9.datef) = ' . $browsedYear . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
     $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
     // Recurring calendar: match the billing month, regardless of the year.
-    $sql .= ' AND MONTH(fr.date_when) = ' . ((int) dol_print_date($periodStart, '%m'));
+    $sql .= ' AND MONTH(fr.date_when) = ' . $browsedMonth;
     $sql .= ' ORDER BY fr.total_ttc DESC';
 
     $resql = $db->query($sql);
@@ -341,6 +348,11 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
         while ($obj = $db->fetch_object($resql)) {
             $prestation = !empty($obj->prestation) ? $obj->prestation : reedcrmFollowupGuessPrestation((string) $obj->frec_titre);
             $tempsSav   = $obj->temps_sav !== null ? (int) $obj->temps_sav : reedcrmFollowupSavSecondsForPrestation($prestation);
+            // Billing status from the invoice really generated this month (done), else the annotation.
+            if (!empty($obj->gen_date)) {
+                $obj->facture_creee = 1;
+                $obj->facture_payee = (int) $obj->gen_paye;
+            }
             $code       = reedcrmFollowupStatusCode($obj, $now);
             $data['counts'][$code]++;
             $data['counts']['total']++;
