@@ -445,3 +445,74 @@ function reedcrmFollowupGetDigiriskWithoutSubscription(DoliDB $db): array
 
     return $rows;
 }
+
+/**
+ * Billing gap: signed proposals (any product) from the last 3 years with no invoice linked.
+ *
+ * @param  DoliDB $db    Database handler.
+ * @param  int    $limit Max rows.
+ * @return array<int,array<string,mixed>> Rows: id, ref, fk_soc, thirdparty, date, total_ttc.
+ */
+function reedcrmBillingGetSignedUnbilledProposals(DoliDB $db, int $limit = 500): array
+{
+    $rows = [];
+    $sql  = 'SELECT pr.rowid as id, pr.ref, pr.datep, pr.total_ttc, s.rowid as fk_soc, s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propal as pr INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = pr.fk_soc';
+    $sql .= ' WHERE pr.entity IN (' . getEntity('propal') . ') AND pr.fk_statut = 2 AND pr.datep >= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = pr.rowid AND ee.sourcetype = 'propal' AND ee.targettype = 'facture')";
+    $sql .= ' ORDER BY pr.datep DESC' . $db->plimit($limit);
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($o = $db->fetch_object($resql)) {
+            $rows[] = ['id' => (int) $o->id, 'ref' => $o->ref, 'fk_soc' => (int) $o->fk_soc, 'thirdparty' => $o->thirdparty_name, 'date' => !empty($o->datep) ? $db->jdate($o->datep) : 0, 'total_ttc' => (float) $o->total_ttc];
+        }
+    }
+    return $rows;
+}
+
+/**
+ * Billing gap: validated/ongoing customer orders from the last 3 years with no invoice linked.
+ *
+ * @param  DoliDB $db    Database handler.
+ * @param  int    $limit Max rows.
+ * @return array<int,array<string,mixed>> Rows: id, ref, fk_soc, thirdparty, date, total_ttc.
+ */
+function reedcrmBillingGetUnbilledOrders(DoliDB $db, int $limit = 500): array
+{
+    $rows = [];
+    $sql  = 'SELECT c.rowid as id, c.ref, c.date_commande, c.total_ttc, s.rowid as fk_soc, s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'commande as c INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = c.fk_soc';
+    $sql .= ' WHERE c.entity IN (' . getEntity('commande') . ') AND c.fk_statut IN (1, 2) AND c.date_commande >= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = c.rowid AND ee.sourcetype = 'commande' AND ee.targettype = 'facture')";
+    $sql .= ' ORDER BY c.date_commande DESC' . $db->plimit($limit);
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($o = $db->fetch_object($resql)) {
+            $rows[] = ['id' => (int) $o->id, 'ref' => $o->ref, 'fk_soc' => (int) $o->fk_soc, 'thirdparty' => $o->thirdparty_name, 'date' => !empty($o->date_commande) ? $db->jdate($o->date_commande) : 0, 'total_ttc' => (float) $o->total_ttc];
+        }
+    }
+    return $rows;
+}
+
+/**
+ * Billing gap: active recurring invoice templates whose next generation date is already past
+ * (an invoice should have been generated but was not).
+ *
+ * @param  DoliDB $db Database handler.
+ * @return array<int,array<string,mixed>> Rows: id, ref, fk_soc, thirdparty, date_when, total_ttc.
+ */
+function reedcrmBillingGetOverdueRecurring(DoliDB $db): array
+{
+    $rows = [];
+    $sql  = 'SELECT fr.rowid as id, fr.titre, fr.total_ttc, fr.date_when, s.rowid as fk_soc, s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+    $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.date_when IS NOT NULL AND fr.date_when < NOW()';
+    $sql .= ' ORDER BY fr.date_when ASC';
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($o = $db->fetch_object($resql)) {
+            $rows[] = ['id' => (int) $o->id, 'titre' => $o->titre, 'fk_soc' => (int) $o->fk_soc, 'thirdparty' => $o->thirdparty_name, 'date_when' => !empty($o->date_when) ? $db->jdate($o->date_when) : 0, 'total_ttc' => (float) $o->total_ttc];
+        }
+    }
+    return $rows;
+}
