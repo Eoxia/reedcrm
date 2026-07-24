@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 
 // Load ReedCRM libraries.
 require_once __DIR__ . '/../class/recurringinvoicefollowup.class.php';
+require_once __DIR__ . '/../lib/reedcrm_followup.lib.php';
 
 global $conf, $db, $hookmanager, $langs, $moduleNameLowerCase, $user;
 
@@ -66,6 +67,30 @@ $object->fetch($id, $ref);
 // Load numbering module.
 $numberingModules = [$object->element => getDolGlobalString('REEDCRM_RECURRINGINVOICEFOLLOWUP_ADDON')];
 list($refReedcrmMod) = saturne_require_objects_mod($numberingModules, $moduleNameLowerCase);
+
+// Opened from a recurring template (frec): find its annotation follow-up, or create it on the fly
+// (the follow-up is now an annotation store keyed by the active recurring template).
+$frec = GETPOSTINT('frec');
+if ($id <= 0 && $ref === '' && $frec > 0) {
+    $resFrec = $db->query('SELECT rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup WHERE fk_facture_rec = ' . $frec . ' AND entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ' . $db->plimit(1));
+    if ($resFrec && $rowFrec = $db->fetch_object($resFrec)) {
+        $object->fetch((int) $rowFrec->rowid);
+    } else {
+        $resTpl = $db->query('SELECT fk_soc, titre, total_ttc, date_when FROM ' . MAIN_DB_PREFIX . 'facture_rec WHERE rowid = ' . $frec . ' AND entity IN (' . getEntity('facturerec') . ')');
+        if ($resTpl && $tpl = $db->fetch_object($resTpl)) {
+            $object->fk_soc         = (int) $tpl->fk_soc;
+            $object->fk_facture_rec = $frec;
+            $object->period         = !empty($tpl->date_when) ? $db->jdate($tpl->date_when) : dol_now();
+            $object->montant_ttc    = (float) $tpl->total_ttc;
+            $object->prestation     = reedcrmFollowupGuessPrestation((string) $tpl->titre);
+            $object->temps_sav      = reedcrmFollowupSavSecondsForPrestation($object->prestation);
+            $object->status         = $object::STATUS_ACTIVE;
+            if ($object->create($user) > 0) {
+                $id = $object->id;
+            }
+        }
+    }
+}
 
 // Security check.
 $permissiontoread   = $user->hasRight('reedcrm', 'followup', 'read');

@@ -323,33 +323,49 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
         'to_process'  => [],
     ];
 
-    // Current month follow-ups.
-    $sql  = 'SELECT t.rowid, t.ref, t.fk_soc, t.prestation, t.montant_ttc, t.montant_pr, t.temps_sav,';
-    $sql .= ' t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, s.nom as thirdparty_name';
-    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
-    $sql .= ' WHERE t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
-    $sql .= " AND t.status = 1";
-    $sql .= " AND t.period >= '" . $db->idate($periodStart) . "'";
-    $sql .= " AND t.period <= '" . $db->idate($periodEnd) . "'";
-    $sql .= ' ORDER BY t.montant_ttc DESC';
+    // Current month = active recurring templates (factures modèles) due this month, read live.
+    // Manual annotations + billing sync come from the stored follow-up (t) when it exists.
+    $browsedMonth = (int) dol_print_date($periodStart, '%m');
+    $browsedYear  = (int) dol_print_date($periodStart, '%Y');
+    $sql  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.fk_soc, fr.total_ttc as montant_ttc,';
+    $sql .= ' t.prestation, t.montant_pr, t.temps_sav, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance,';
+    $sql .= ' fa.datef as gen_date, fa.paye as gen_paye,';
+    $sql .= ' s.nom as thirdparty_name';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+    // The invoice actually generated from this template in the browsed month+year (done or not).
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
+    $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
+    $sql .= '   AND MONTH(f9.datef) = ' . $browsedMonth . ' AND YEAR(f9.datef) = ' . $browsedYear . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+    $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
+    // Reality for the browsed month+year: billed that month (fa) OR next generation falls that month+year.
+    $sql .= ' AND (fa.rowid IS NOT NULL OR (MONTH(fr.date_when) = ' . $browsedMonth . ' AND YEAR(fr.date_when) = ' . $browsedYear . '))';
+    $sql .= ' ORDER BY fr.total_ttc DESC';
 
     $resql = $db->query($sql);
     if ($resql) {
         while ($obj = $db->fetch_object($resql)) {
-            $code = reedcrmFollowupStatusCode($obj, $now);
+            $prestation = !empty($obj->prestation) ? $obj->prestation : reedcrmFollowupGuessPrestation((string) $obj->frec_titre);
+            $tempsSav   = $obj->temps_sav !== null ? (int) $obj->temps_sav : reedcrmFollowupSavSecondsForPrestation($prestation);
+            // Billing status from the invoice really generated this month (done), else the annotation.
+            if (!empty($obj->gen_date)) {
+                $obj->facture_creee = 1;
+                $obj->facture_payee = (int) $obj->gen_paye;
+            }
+            $code       = reedcrmFollowupStatusCode($obj, $now);
             $data['counts'][$code]++;
             $data['counts']['total']++;
             $data['montant_ttc'] += (float) $obj->montant_ttc;
             $data['montant_pr']  += (float) $obj->montant_pr;
-            $data['temps_sav']   += (int) $obj->temps_sav;
+            $data['temps_sav']   += $tempsSav;
 
             if (in_array($code, ['tobill', 'tosend', 'late'])) {
                 $data['to_process'][] = [
-                    'id'          => (int) $obj->rowid,
-                    'ref'         => $obj->ref,
+                    'id'          => (int) $obj->frec_id,
+                    'ref'         => $obj->frec_titre,
                     'thirdparty'  => $obj->thirdparty_name,
-                    'prestation'  => $obj->prestation,
+                    'prestation'  => $prestation,
                     'montant_ttc' => (float) $obj->montant_ttc,
                     'code'        => $code,
                 ];
@@ -364,6 +380,7 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sqlDu  = 'SELECT t.rowid, t.ref, t.fk_soc, t.next_maj_du, s.nom as thirdparty_name';
     $sqlDu .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
     $sqlDu .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
+    $sqlDu .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facture_rec as fr ON fr.rowid = t.fk_facture_rec AND fr.suspended = 0';
     $sqlDu .= ' WHERE t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
     $sqlDu .= ' AND t.status = 1 AND t.next_maj_du IS NOT NULL';
     $sqlDu .= " AND t.next_maj_du <= '" . $db->idate($windowEnd) . "'";
@@ -439,6 +456,53 @@ function reedcrmFollowupGetDigiriskWithoutSubscription(DoliDB $db): array
                 'last_date'  => !empty($obj->last_date) ? $db->jdate($obj->last_date) : 0,
                 'instance'   => $obj->instance,
                 'project_id' => (int) $obj->project_id,
+            ];
+        }
+    }
+
+    return $rows;
+}
+
+/**
+ * List Document Unique proposals that are SIGNED but were never invoiced (no linked invoice),
+ * i.e. signed revenue still to bill. A DU proposal = a proposal with a "DU_A%" product line.
+ *
+ * @param  DoliDB $db Database handler.
+ * @return array<int,array<string,mixed>> Rows: propal_id, ref, fk_soc, thirdparty, location, date, total_ttc.
+ */
+function reedcrmFollowupGetSignedUnbilledDuProposals(DoliDB $db): array
+{
+    $rows = [];
+
+    $sql  = 'SELECT pr.rowid as propal_id, pr.ref, pr.datep, pr.total_ttc, s.rowid as fk_soc, s.nom as thirdparty_name, s.zip, s.town';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propal as pr';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = pr.fk_soc';
+    // A Digirisk/DU product = a DU service (DU_A%) or a Digirisk SaaS tier (D1..D5/D41).
+    $prodProp = "(p.ref LIKE 'DU\_A%' OR p.ref IN ('D1','D2','D3','D4','D41','D5'))";
+    $prodFact = "(pf.ref LIKE 'DU\_A%' OR pf.ref IN ('D1','D2','D3','D4','D41','D5'))";
+
+    $sql .= ' WHERE pr.entity IN (' . getEntity('propal') . ') AND pr.fk_statut = 2'; // 2 = signed
+    // Only the last 3 years: older signed quotes cannot realistically be invoiced anymore.
+    $sql .= ' AND pr.datep >= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
+    $sql .= ' AND EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'propaldet pd INNER JOIN ' . MAIN_DB_PREFIX . 'product p ON p.rowid = pd.fk_product AND ' . $prodProp . ' WHERE pd.fk_propal = pr.rowid)';
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = pr.rowid AND ee.sourcetype = 'propal' AND ee.targettype = 'facture')";
+    // Not billed for real: no Digirisk/DU invoice on/after the quote date (catches billing via a
+    // recurring template or an independent invoice, where no propal->facture link exists).
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture f INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd ON fd.fk_facture = f.rowid INNER JOIN ' . MAIN_DB_PREFIX . 'product pf ON pf.rowid = fd.fk_product AND ' . $prodFact . ' WHERE f.fk_soc = pr.fk_soc AND f.type <> 2 AND f.entity IN (' . getEntity('facture') . ') AND f.datef >= pr.datep)';
+    $sql .= ' ORDER BY pr.datep DESC, pr.rowid DESC';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $location = trim(($obj->zip ? $obj->zip . ' ' : '') . ($obj->town ?? ''));
+            $rows[]   = [
+                'propal_id'  => (int) $obj->propal_id,
+                'ref'        => $obj->ref,
+                'fk_soc'     => (int) $obj->fk_soc,
+                'thirdparty' => $obj->thirdparty_name,
+                'location'   => $location,
+                'date'       => !empty($obj->datep) ? $db->jdate($obj->datep) : 0,
+                'total_ttc'  => $obj->total_ttc !== null ? (float) $obj->total_ttc : null,
             ];
         }
     }
