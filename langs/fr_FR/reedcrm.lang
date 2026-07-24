@@ -215,7 +215,7 @@ UpdateObjectContactTrigger = Mise à jour du rôle "contacts facturation" des fa
 NoContact = Aucun contact
 AddContactNotificationTrigger = Ajout d'une notification contact "action Facture client validée" des tiers
 DictionarySource = Origine des opportunités/devis/commandes/factures
-OpportunityOrigin = Origine de l'opportunitée
+OpportunityOrigin = Origine de l'opportunité
 SRC_INTE = Internet
 SRC_CAMP_MAIL = Campagne Publipostage
 SRC_CAMP_EMAIL = Campagne d'emailing
@@ -240,6 +240,15 @@ Opportunities = Opportunités
 OpenedPropals = PR ouvertes
 RecurringInvoices = Factures récurrentes
 GravityFormLink                        = Lien GravityForm
+
+# Libellés des extrafields projet du module (llx_extrafields.label sert de clé de traduction,
+# et showOptionals() ne charge que le langfile de l'extrafield, ici reedcrm@reedcrm).
+# LastName / FirstName vivent dans users.lang, non chargé sur ces écrans ; le noyau écrit "WebSite"
+# et non "Website" : sans ces clés, l'Ajout rapide affiche les clés brutes.
+LastName                               = Nom
+FirstName                              = Prénom
+Website                                = Site web
+ReedCRMGravityForm                     = Lien GravityForm
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall = Appel entrant
