@@ -130,6 +130,8 @@ $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture_rec as fr ON fr.rowid = t.fk_facture_rec';
 $sql .= ' WHERE t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+// Only follow-ups of an active recurring template (exclude deactivated/suspended or deleted ones).
+$sql .= ' AND fr.suspended = 0';
 $sql .= " AND ((t.period >= '" . $db->idate($periodStart) . "' AND t.period <= '" . $db->idate($periodEnd) . "')";
 $sql .= " OR (t.period < '" . $db->idate($todayMonthStart) . "' AND t.facture_payee = 0 AND t.status = 1))";
 if (dol_strlen($search_ref)) {
@@ -219,8 +221,9 @@ print '</div>';
  */
 $chartYear = $monthYear;
 $faByMonth = array_fill(1, 12, 0.0);
-$sqlChartFa  = 'SELECT MONTH(period) as m, SUM(montant_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup';
-$sqlChartFa .= ' WHERE entity IN (' . getEntity('reedcrm_facturerec_followup') . ') AND status = 1 AND YEAR(period) = ' . $chartYear . ' GROUP BY m';
+$sqlChartFa  = 'SELECT MONTH(t.period) as m, SUM(t.montant_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
+$sqlChartFa .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facture_rec as fr ON fr.rowid = t.fk_facture_rec AND fr.suspended = 0';
+$sqlChartFa .= ' WHERE t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') AND t.status = 1 AND YEAR(t.period) = ' . $chartYear . ' GROUP BY m';
 $resChartFa  = $db->query($sqlChartFa);
 if ($resChartFa) {
     while ($o = $db->fetch_object($resChartFa)) {
