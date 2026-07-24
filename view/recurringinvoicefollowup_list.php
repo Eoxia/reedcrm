@@ -365,12 +365,20 @@ while ($i < min($num, $limit)) {
     print '<td class="tdoverflowmax150">' . dol_escape_htmltag($obj->thirdparty_name) . '</td>';
     print '<td>' . dol_escape_htmltag(isset($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) ? $langs->trans($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) : $obj->prestation) . '</td>';
     print '<td class="right">' . (dol_strlen($obj->montant_ttc) ? price($obj->montant_ttc, 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td>';
-    // Show the real next-generation date (kept as-is: it may shift from one year to the next).
-    $periodTs    = !empty($obj->period) ? $db->jdate($obj->period) : 0;
-    $isFaOverdue = ($periodTs && $periodTs < $todayMonthStart && empty($obj->facture_payee));
-    print '<td class="center nowraponall">' . ($periodTs ? dol_print_date($periodTs, 'day') : '');
+    // Date shown for the BROWSED year: real generation date if the invoice was billed that month
+    // (past), otherwise the next date projected onto the browsed year (same day/month every year).
+    $periodTs = !empty($obj->period) ? $db->jdate($obj->period) : 0;
+    if ($genTs) {
+        $displayTs = $genTs;
+    } elseif ($periodTs) {
+        $displayTs = dol_mktime(0, 0, 0, (int) $monthMonth, (int) dol_print_date($periodTs, '%d'), (int) $monthYear);
+    } else {
+        $displayTs = 0;
+    }
+    $isFaOverdue = (!$genTs && $displayTs && $displayTs < $todayMonthStart && empty($obj->facture_payee));
+    print '<td class="center nowraponall">' . ($displayTs ? dol_print_date($displayTs, 'day') : '');
     if ($isFaOverdue) {
-        print ' <span style="color:#cf4257;font-weight:bold" title="' . dol_escape_htmltag($langs->trans('FollowupLate')) . '"><i class="fas fa-exclamation-triangle"></i> ' . ((int) floor((dol_now() - $periodTs) / 86400)) . $langs->trans('FollowupDaysLateShort') . '</span>';
+        print ' <span style="color:#cf4257;font-weight:bold" title="' . dol_escape_htmltag($langs->trans('FollowupLate')) . '"><i class="fas fa-exclamation-triangle"></i> ' . ((int) floor((dol_now() - $displayTs) / 86400)) . $langs->trans('FollowupDaysLateShort') . '</span>';
     }
     print '</td>';
     print '<td class="center">' . yn($obj->facture_creee) . '</td>';
