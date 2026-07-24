@@ -461,8 +461,13 @@ function reedcrmFollowupGetSignedUnbilledDuProposals(DoliDB $db): array
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propal as pr';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = pr.fk_soc';
     $sql .= ' WHERE pr.entity IN (' . getEntity('propal') . ') AND pr.fk_statut = 2'; // 2 = signed
+    // Only the last 3 years: older signed quotes cannot realistically be invoiced anymore.
+    $sql .= ' AND pr.datep >= DATE_SUB(NOW(), INTERVAL 3 YEAR)';
     $sql .= ' AND EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'propaldet pd INNER JOIN ' . MAIN_DB_PREFIX . "product p ON p.rowid = pd.fk_product AND p.ref LIKE 'DU\_A%' WHERE pd.fk_propal = pr.rowid)";
     $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = pr.rowid AND ee.sourcetype = 'propal' AND ee.targettype = 'facture')";
+    // Not billed for real: no DU invoice on/after the quote date (catches billing via a recurring
+    // template or an independent invoice, where no propal->facture link exists).
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'facture f INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd ON fd.fk_facture = f.rowid INNER JOIN ' . MAIN_DB_PREFIX . "product pf ON pf.rowid = fd.fk_product AND pf.ref LIKE 'DU\_A%' WHERE f.fk_soc = pr.fk_soc AND f.type <> 2 AND f.entity IN (" . getEntity('facture') . ') AND f.datef >= pr.datep)';
     $sql .= ' ORDER BY pr.datep DESC, pr.rowid DESC';
 
     $resql = $db->query($sql);
