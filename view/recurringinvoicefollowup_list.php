@@ -142,9 +142,9 @@ $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity
 $sql .= '   AND MONTH(f9.datef) = ' . ((int) $monthMonth) . ' AND YEAR(f9.datef) = ' . ((int) $monthYear) . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
 $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
-// Reality for the browsed month+year: subscriptions actually billed that month (fa) OR whose next
-// generation falls that month+year (upcoming). Avoids showing a subscription in a year it did not bill.
-$sql .= ' AND (fa.rowid IS NOT NULL OR (MONTH(fr.date_when) = ' . ((int) $monthMonth) . ' AND YEAR(fr.date_when) = ' . ((int) $monthYear) . '))';
+// Browsed month AND year only: the list shows the templates due to generate that specific month/year
+// (same as the native "Factures modèles" next-generation filter). The cross-year calendar stays in the chart.
+$sql .= ' AND MONTH(fr.date_when) = ' . ((int) $monthMonth) . ' AND YEAR(fr.date_when) = ' . ((int) $monthYear);
 if (dol_strlen($search_ref)) {
     $sql .= natural_search('fr.titre', $search_ref);
 }
@@ -367,16 +367,10 @@ while ($i < min($num, $limit)) {
     print '<td class="tdoverflowmax150">' . dol_escape_htmltag($obj->thirdparty_name) . '</td>';
     print '<td>' . dol_escape_htmltag(isset($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) ? $langs->trans($object->fields['prestation']['arrayofkeyval'][$obj->prestation]) : $obj->prestation) . '</td>';
     print '<td class="right">' . (dol_strlen($obj->montant_ttc) ? price($obj->montant_ttc, 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td>';
-    // Date shown for the BROWSED year: real generation date if the invoice was billed that month
-    // (past), otherwise the next date projected onto the browsed year (same day/month every year).
-    $periodTs = !empty($obj->period) ? $db->jdate($obj->period) : 0;
-    if ($genTs) {
-        $displayTs = $genTs;
-    } elseif ($periodTs) {
-        $displayTs = dol_mktime(0, 0, 0, (int) $monthMonth, (int) dol_print_date($periodTs, '%d'), (int) $monthYear);
-    } else {
-        $displayTs = 0;
-    }
+    // date_when is filtered to the browsed month+year, so it is already the real date to show:
+    // real generation date if the invoice was billed, otherwise the next generation date itself.
+    $periodTs  = !empty($obj->period) ? $db->jdate($obj->period) : 0;
+    $displayTs = $genTs ? $genTs : $periodTs;
     $isFaOverdue = (!$genTs && $displayTs && $displayTs < $todayMonthStart && empty($obj->facture_payee));
     print '<td class="center nowraponall">' . ($displayTs ? dol_print_date($displayTs, 'day') : '');
     if ($isFaOverdue) {

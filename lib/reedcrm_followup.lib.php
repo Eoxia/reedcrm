@@ -341,8 +341,8 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sql .= '   AND MONTH(f9.datef) = ' . $browsedMonth . ' AND YEAR(f9.datef) = ' . $browsedYear . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
     $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
-    // Reality for the browsed month+year: billed that month (fa) OR next generation falls that month+year.
-    $sql .= ' AND (fa.rowid IS NOT NULL OR (MONTH(fr.date_when) = ' . $browsedMonth . ' AND YEAR(fr.date_when) = ' . $browsedYear . '))';
+    // Browsed month AND year only (same as the native "Factures modèles" next-generation filter).
+    $sql .= ' AND MONTH(fr.date_when) = ' . $browsedMonth . ' AND YEAR(fr.date_when) = ' . $browsedYear;
     $sql .= ' ORDER BY fr.total_ttc DESC';
 
     $resql = $db->query($sql);
