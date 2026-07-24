@@ -332,7 +332,9 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sql .= ' fa.datef as gen_date, fa.paye as gen_paye,';
     $sql .= ' s.nom as thirdparty_name';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
+    // At most ONE annotation per template (old data may hold several rows per template) — avoids row duplication.
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = (SELECT t9.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup t9';
+    $sql .= '   WHERE t9.fk_facture_rec = fr.rowid AND t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ORDER BY t9.rowid DESC' . $db->plimit(1) . ')';
     // The invoice actually generated from this template in the browsed month+year (done or not).
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
     $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
