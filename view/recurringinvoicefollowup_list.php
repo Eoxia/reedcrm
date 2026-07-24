@@ -134,8 +134,9 @@ $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
 $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
 $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
-$sql .= " AND ((fr.date_when >= '" . $db->idate($periodStart) . "' AND fr.date_when <= '" . $db->idate($periodEnd) . "')";
-$sql .= " OR (fr.date_when < '" . $db->idate($todayMonthStart) . "' AND (t.facture_payee IS NULL OR t.facture_payee = 0)))";
+// Recurring calendar: a subscription bills in the same month every year, so filter on the month of
+// its next generation date, regardless of the year (avoids the 12-month rolling-window gaps).
+$sql .= ' AND MONTH(fr.date_when) = ' . ((int) $monthMonth);
 if (dol_strlen($search_ref)) {
     $sql .= natural_search('fr.titre', $search_ref);
 }
@@ -223,8 +224,9 @@ print '</div>';
  */
 $chartYear = $monthYear;
 $faByMonth = array_fill(1, 12, 0.0);
+// Annual recurring calendar: amount per billing month across all active templates (same every year).
 $sqlChartFa  = 'SELECT MONTH(fr.date_when) as m, SUM(fr.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-$sqlChartFa .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0 AND YEAR(fr.date_when) = ' . $chartYear . ' GROUP BY m';
+$sqlChartFa .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0 GROUP BY m';
 $resChartFa  = $db->query($sqlChartFa);
 if ($resChartFa) {
     while ($o = $db->fetch_object($resChartFa)) {
@@ -233,7 +235,7 @@ if ($resChartFa) {
 }
 $monthLabels = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
 
-print '<div class="rcf-chartbox"><div class="rcf-charttitle">' . $langs->trans('FollowupChartFaAmount') . ' — ' . $chartYear . '</div><div class="rcf-canvaswrap"><canvas id="rcfChartFa"></canvas></div></div>';
+print '<div class="rcf-chartbox"><div class="rcf-charttitle">' . $langs->trans('FollowupChartFaAmount') . '</div><div class="rcf-canvaswrap"><canvas id="rcfChartFa"></canvas></div></div>';
 print '<script src="' . DOL_URL_ROOT . '/includes/nnnick/chartjs/dist/chart.min.js"></script>';
 print '<script>
 (function() {

@@ -332,8 +332,8 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.fk_facture_rec = fr.rowid AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
     $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
-    $sql .= " AND fr.date_when >= '" . $db->idate($periodStart) . "'";
-    $sql .= " AND fr.date_when <= '" . $db->idate($periodEnd) . "'";
+    // Recurring calendar: match the billing month, regardless of the year.
+    $sql .= ' AND MONTH(fr.date_when) = ' . ((int) dol_print_date($periodStart, '%m'));
     $sql .= ' ORDER BY fr.total_ttc DESC';
 
     $resql = $db->query($sql);
