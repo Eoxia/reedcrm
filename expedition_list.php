@@ -95,6 +95,7 @@ $search_user = GETPOST('search_user', 'intcomma');
 $search_sale = GETPOST('search_sale', 'intcomma');
 $search_categ_cus = GETPOST("search_categ_cus", 'intcomma');
 $search_product_category = GETPOST('search_product_category', 'intcomma');
+$search_commandes_liees = GETPOST('search_commandes_liees', 'alpha');
 $search_factures_liees = GETPOST('search_factures_liees', 'alpha');
 $search_okko = GETPOST('search_okko', 'alpha');
 
@@ -236,6 +237,7 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x'
 	$search_array_options = array();
 	$search_categ_cus = 0;
 	$search_all = '';
+	$search_commandes_liees = '';
 	$search_factures_liees = '';
 	$search_okko = '';
 }
@@ -549,6 +551,9 @@ if (empty($reshook)) {
 			if ($search_all) {
 				$param .= "&search_all=".urlencode($search_all);
 			}
+			if ($search_commandes_liees) {
+				$param .= "&search_commandes_liees=".urlencode($search_commandes_liees);
+			}
 			if ($search_factures_liees) {
 				$param .= "&search_factures_liees=".urlencode($search_factures_liees);
 			}
@@ -814,6 +819,13 @@ if ($search_datedelivery_end) {
 if (getDolGlobalInt('MAIN_SUBMODULE_DELIVERY')) {
 	if ($search_ref_liv) {
 		$sql .= natural_search('l.ref', $search_ref_liv);
+	}
+	if ($search_commandes_liees) {
+		$sql .= " AND e.rowid IN (
+			SELECT el.fk_target FROM ".MAIN_DB_PREFIX."element_element el
+			JOIN ".MAIN_DB_PREFIX."commande c ON el.fk_source = c.rowid AND el.sourcetype = 'commande'
+			WHERE el.targettype = 'shipping' AND c.ref LIKE '%".$db->escape($search_commandes_liees)."%'
+		)";
 	}
 	if ($search_factures_liees) {
 		$sql .= " AND e.rowid IN (
@@ -1264,6 +1276,10 @@ if (!empty($arrayfields['e.ref_customer']['checked'])) {
 	print '<input class="flat" size="6" type="text" name="search_ref_customer" value="'.$search_ref_customer.'">';
 	print '</td>';
 }
+// Commandes liées
+print '<td class="liste_titre center">';
+print '<input class="flat searchstring" type="text" size="4" name="search_commandes_liees" value="'.dol_escape_htmltag($search_commandes_liees).'">';
+print '</td>';
 // Factures liées
 print '<td class="liste_titre center">';
 print '<input class="flat searchstring" type="text" size="4" name="search_factures_liees" value="'.dol_escape_htmltag($search_factures_liees).'">';
@@ -1446,6 +1462,8 @@ if (!empty($arrayfields['e.ref_customer']['checked'])) {
 	print_liste_field_titre($arrayfields['e.ref_customer']['label'], $_SERVER["PHP_SELF"], "e.ref_customer", "", $param, '', $sortfield, $sortorder);
 	$totalarray['nbfield']++;
 }
+print_liste_field_titre('Commandes liées', $_SERVER["PHP_SELF"], "", "", $param, '', $sortfield, $sortorder, 'center ');
+$totalarray['nbfield']++;
 print_liste_field_titre('Factures liées', $_SERVER["PHP_SELF"], "", "", $param, '', $sortfield, $sortorder, 'center ');
 $totalarray['nbfield']++;
 print_liste_field_titre('Contrôle', $_SERVER["PHP_SELF"], "", "", $param, '', $sortfield, $sortorder, 'center ');
@@ -1566,6 +1584,34 @@ while ($i < $imaxinloop) {
 	$object = new Expedition($db);
 	$object->fetch($obj->rowid);
 
+	$orders_html = '';
+	$total_orders_ht = 0;
+	$sqlOrder = "SELECT c.rowid, c.ref, c.total_ht, c.fk_statut
+			   FROM " . MAIN_DB_PREFIX . "element_element el
+			   JOIN " . MAIN_DB_PREFIX . "commande c ON el.fk_source = c.rowid AND el.sourcetype = 'commande'
+			   WHERE el.targettype = 'shipping' AND el.fk_target = " . (int)$obj->rowid . "
+			   ORDER BY c.rowid DESC";
+	$resOrder = $db->query($sqlOrder);
+	if ($resOrder) {
+		$commandeStatic = new Commande($db);
+		while ($rowOrder = $db->fetch_object($resOrder)) {
+			$commandeStatic->id = $rowOrder->rowid;
+			$commandeStatic->ref = $rowOrder->ref;
+			$commandeStatic->statut = $rowOrder->fk_statut;
+			
+			$ord_line = $commandeStatic->getNomUrl(1) . ' - ' . price($rowOrder->total_ht, 0, $langs, 1, -1, -1, $conf->currency);
+			if ($rowOrder->fk_statut <= 0) {
+				$ord_line = '<span style="opacity: 0.6; filter: grayscale(100%); font-size: 0.85em; display: inline-block;">' . $ord_line . '</span>';
+			}
+			$orders_html .= $ord_line . '<br>';
+			$total_orders_ht += $rowOrder->total_ht;
+		}
+	}
+
+	if ((float)$obj->expedition_amount_ht <= 0 && $total_orders_ht > 0) {
+		$obj->expedition_amount_ht = $total_orders_ht;
+	}
+
 	$invoices_html = '';
 	$total_invoices_ht = 0;
 	$sqlInv = "SELECT f.rowid, f.ref, f.total_ht, f.fk_statut
@@ -1643,7 +1689,7 @@ while ($i < $imaxinloop) {
 			$filename = dol_sanitizeFileName($object->ref);
 			print $formfile->getDocumentsLink('expedition', $filename, $filedir);
 			if ((float)$obj->expedition_amount_ht > 0) {
-				print ' &nbsp; <span class="amount" style="color: #666; font-weight: normal;">' . price($obj->expedition_amount_ht, 0, $langs, 1, -1, -1, $conf->currency) . '</span>';
+				print ' &nbsp; <span class="amount" style="color: #666; font-weight: normal;"> - ' . price($obj->expedition_amount_ht, 0, $langs, 1, -1, -1, $conf->currency) . '</span>';
 			}
 			print "</td>\n";
 			if (!$i) {
@@ -1659,6 +1705,14 @@ while ($i < $imaxinloop) {
 			if (!$i) {
 				$totalarray['nbfield']++;
 			}
+		}
+
+		// Commandes liées
+		print '<td class="nowrap center" style="line-height: 1.6;">';
+		print $orders_html;
+		print '</td>';
+		if (!$i) {
+			$totalarray['nbfield']++;
 		}
 
 		// Factures liées
