@@ -1585,6 +1585,7 @@ while ($i < $imaxinloop) {
 	$object->fetch($obj->rowid);
 
 	$orders_html = '';
+	$total_orders_ht = 0;
 	$sqlOrder = "SELECT c.rowid, c.ref, c.total_ht, c.fk_statut
 			   FROM " . MAIN_DB_PREFIX . "element_element el
 			   JOIN " . MAIN_DB_PREFIX . "commande c ON el.fk_source = c.rowid AND el.sourcetype = 'commande'
@@ -1603,7 +1604,12 @@ while ($i < $imaxinloop) {
 				$ord_line = '<span style="opacity: 0.6; filter: grayscale(100%); font-size: 0.85em; display: inline-block;">' . $ord_line . '</span>';
 			}
 			$orders_html .= $ord_line . '<br>';
+			$total_orders_ht += $rowOrder->total_ht;
 		}
+	}
+
+	if ((float)$obj->expedition_amount_ht <= 0 && $total_orders_ht > 0) {
+		$obj->expedition_amount_ht = $total_orders_ht;
 	}
 
 	$invoices_html = '';
@@ -1683,7 +1689,7 @@ while ($i < $imaxinloop) {
 			$filename = dol_sanitizeFileName($object->ref);
 			print $formfile->getDocumentsLink('expedition', $filename, $filedir);
 			if ((float)$obj->expedition_amount_ht > 0) {
-				print ' &nbsp; <span class="amount" style="color: #666; font-weight: normal;">' . price($obj->expedition_amount_ht, 0, $langs, 1, -1, -1, $conf->currency) . '</span>';
+				print ' &nbsp; <span class="amount" style="color: #666; font-weight: normal;"> - ' . price($obj->expedition_amount_ht, 0, $langs, 1, -1, -1, $conf->currency) . '</span>';
 			}
 			print "</td>\n";
 			if (!$i) {
