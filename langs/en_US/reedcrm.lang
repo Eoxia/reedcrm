@@ -647,3 +647,4 @@ FollowupAuditRenewedOn = Line renewed: next audit in %s
 FollowupAuditRenewNoInvoice = No new DU invoice for this client. Create the renewal invoice first: the line will then move to the next cycle (or automatically via the cron).
 FollowupAuditRenewConfirm = Renew this audit? The line will move to the next cycle (next audit in a year) if a new DU invoice exists.
 FollowupChartInvoiced = Invoiced
+PleaseLinkProjectFirst=Please first link a project to the ticket
