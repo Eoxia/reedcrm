@@ -68,6 +68,11 @@ function reedcrm_admin_prepare_head(): array
     $head[$h][2] = 'product';
     $h++;
 
+    $head[$h][0] = dol_buildpath('/reedcrm/admin/propal.php', 1);
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-file-contract pictofixedwidth"></i>' . 'Propositions' : '<i class="fas fa-file-contract"></i>';
+    $head[$h][2] = 'propal';
+    $h++;
+
     $head[$h][0] = dol_buildpath('/reedcrm/admin/ticket.php', 1);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-ticket-alt pictofixedwidth"></i>' . $langs->trans('Ticket') : '<i class="fas fa-ticket-alt"></i>';
     $head[$h][2] = 'ticket';

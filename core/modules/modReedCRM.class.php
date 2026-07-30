@@ -812,6 +812,22 @@ class modReedCRM extends DolibarrModules
             'target'   => '',
             'user'     => 0,
         ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=commercial,fk_leftmenu=propals',
+            'type'     => 'left',
+            'titre'    => 'Modèle de proposition',
+            'prefix'   => '',
+            'mainmenu' => 'commercial',
+            'leftmenu' => 'propals_model',
+            'url'      => '/custom/reedcrm/view/propal_model_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 11,
+            'enabled'  => 'isModEnabled(\'propal\')',
+            'perms'    => '$user->hasRight(\'propal\', \'lire\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
     }
 
     /**
@@ -862,6 +878,7 @@ class modReedCRM extends DolibarrModules
             'opprefusal'           => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 85, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
             'commrefusal'          => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['propal'], 'position' => $this->numero . 90, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
 
+            'reedcrm_propal_label' => ['Label' => 'ReedCRMPropalLabel',     'type' => 'varchar', 'length' => 255, 'elementtype' => ['propal'], 'position' => $this->numero . 95, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1],
 
             'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],

@@ -62,6 +62,69 @@ class ActionsReedcrm
     }
 
     /**
+     * Overload the menuLeftMenuItems hook to inject our custom menu entries
+     *
+     * @param array $parameters
+     * @param CommonObject $object
+     * @param string $action
+     * @param HookManager $hookmanager
+     * @return int
+     */
+    public function menuLeftMenuItems(array $parameters, &$object, string &$action, $hookmanager)
+    {
+        global $langs, $user;
+
+        // Check if we are building the commercial menu (which includes proposals)
+        if (isset($parameters['mainmenu']) && $parameters['mainmenu'] == 'commercial') {
+            if (isModEnabled('category') && getDolGlobalString('CATEGORY_EDIT_IN_MENU_NOT_IN_POPUP')) {
+                require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
+                $tmpcat = new Categorie($this->db);
+                $type_id = isset($tmpcat->MAP_ID[Categorie::TYPE_PROPOSAL]) ? $tmpcat->MAP_ID[Categorie::TYPE_PROPOSAL] : 23;
+                
+                $langs->load('categories');
+                
+                // $object contains the $menu_array because it is passed as the 3rd argument in executeHooks
+                if (is_array($object)) {
+                    // Find the position of the last 'propals' menu item to insert after it
+                    $insert_idx = -1;
+                    $i = 0;
+                    foreach ($object as $idx => $m) {
+                        if (isset($m['leftmenu']) && $m['leftmenu'] == 'propals') {
+                            $insert_idx = $i;
+                        }
+                        $i++;
+                    }
+                    
+                    $new_item = array(
+                        'url' => '/categories/categorie_list.php?mainmenu=commercial&leftmenu=propals_tags&type='.$type_id,
+                        'titre' => $langs->trans('Categories'),
+                        'level' => 1,
+                        'enabled' => $user->hasRight('categorie', 'lire'),
+                        'perms' => '1',
+                        'target' => '',
+                        'mainmenu' => 'commercial',
+                        'leftmenu' => 'propals_tags',
+                        'position' => 101,
+                        'prefix' => ''
+                    );
+                    
+                    if ($insert_idx >= 0) {
+                        // Insert after the last propals item
+                        array_splice($object, $insert_idx + 1, 0, array($new_item));
+                    } else {
+                        // Append if not found
+                        $object[] = $new_item;
+                    }
+                    
+                    $this->results = $object;
+                    return 1; // Return 1 to replace the menu array
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
      *  Overloading the addMoreBoxStatsCustomer function : replacing the parent's function with the one below
      *
      * @param  array        $parameters Hook metadatas (context, etc...)
@@ -2588,6 +2651,16 @@ class ActionsReedcrm
             $extraFieldsNames = ['opporigin'];
             foreach ($extraFieldsNames as $extraFieldsName) {
                 $extrafields->attributes['projet']['label'][$extraFieldsName] = $picto . $langs->transnoentities($extrafields->attributes['projet']['label'][$extraFieldsName]);
+            }
+        }
+
+        if (strpos($parameters['context'], 'propalcard') !== false && $object instanceof Propal) {
+            $picto            = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule"');
+            $extraFieldsNames = ['reedcrm_propal_label', 'commrefusal'];
+            foreach ($extraFieldsNames as $extraFieldsName) {
+                if (!empty($extrafields->attributes['propal']['label'][$extraFieldsName])) {
+                    $extrafields->attributes['propal']['label'][$extraFieldsName] = $picto . $langs->transnoentities($extrafields->attributes['propal']['label'][$extraFieldsName]);
+                }
             }
         }
 
