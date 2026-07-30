@@ -75,6 +75,9 @@ OpportunityStatusDescription = Selection du statut d'opportunité <br> Valeur pa
 OpportunityAmountDescription = Selection du montant d'opportunité <br> Valeur par défaut : <b> 3000 € </b>
 ProspectCustomerDescription = Selection de la nature des tiers <br> Valeur par défaut : <b> Prospect </b>
 
+# Propal Extrafield
+ReedCRMPropalLabel = Libellé
+
 # App
 App = App
 AppCloseProjectOpportunityZero = Clôturer le projet

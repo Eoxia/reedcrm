@@ -89,11 +89,6 @@ print load_fiche_titre($title, $linkback, 'reedcrm_color@reedcrm');
 $head = reedcrm_admin_prepare_head();
 print dol_get_fiche_head($head, 'notifications', $title, -1, 'reedcrm_color@reedcrm');
 
-// Subheader
-$linkback = '<a href="' . ($backtopage ?: DOL_URL_ROOT . '/admin/modules.php?restore_lastsearch_values=1') . '">' . $langs->trans("BackToModuleList") . '</a>';
-
-print load_fiche_titre($page_name, $linkback, 'title_setup');
-
 // Configuration form
 print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';
