@@ -839,7 +839,8 @@ class ActionsReedcrm
             }
         }
         if (strpos($parameters['context'], 'ticketcard') !== false && $object instanceof Ticket) {
-            global $db;
+            global $db, $langs;
+            $langs->load('reedcrm@reedcrm');
             $html = '';
             $defaultMinutes = getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15);
             
