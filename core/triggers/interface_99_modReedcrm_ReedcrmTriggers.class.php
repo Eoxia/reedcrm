@@ -179,7 +179,8 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
 
             case 'USER_CREATE':
                 require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
-                if ($object instanceof User && $object->id > 0) {
+                // Employees only: an external user (client contact with a login) gets no call list
+                if ($object instanceof User && $object->id > 0 && !empty($object->employee)) {
                     reedcrm_get_or_create_user_default_call_list($this->db, $object);
                 }
                 break;

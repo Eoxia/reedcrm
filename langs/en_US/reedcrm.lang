@@ -651,3 +651,5 @@ PleaseLinkProjectFirst=Please first link a project to the ticket
 
 # PWA nav
 BackToDolibarr = Back to Dolibarr
+MyCallLists = My call lists
+OtherCallLists = Other call lists

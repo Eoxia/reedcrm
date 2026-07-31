@@ -697,3 +697,5 @@ FollowupChartInvoiced = Facturé
 
 # PWA nav
 BackToDolibarr = Retour sur Dolibarr
+MyCallLists = Mes listes d'appel
+OtherCallLists = Autres listes d'appel
