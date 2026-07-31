@@ -104,7 +104,9 @@ $manifest->start_url        = dol_buildpath('/custom/reedcrm/view/frontend/quick
 $manifest->background_color = '#ffffff';
 $manifest->display          = 'standalone';
 $manifest->display_override = ['window-controls-overlay'];
-$manifest->scope            = dol_buildpath('/custom/reedcrm/view/frontend/', 1);
+// Scope covers the whole Dolibarr install, not only the App pages: leaving the App would
+// otherwise be an out-of-scope navigation, opening in the browser (and losing the session on iOS)
+$manifest->scope            = DOL_URL_ROOT . '/';
 $manifest->theme_color      = '#ffffff';
 $manifest->description      = 'ReedCRMDescription';
 

@@ -694,3 +694,6 @@ FollowupAuditRenewedOn = Ligne renouvelée : prochain audit en %s
 FollowupAuditRenewNoInvoice = Aucune nouvelle facture DU pour ce client. Crée d'abord la facture du renouvellement : la ligne passera alors au cycle suivant (ou automatiquement via le cron).
 FollowupAuditRenewConfirm = Renouveler cet audit ? La ligne passera au cycle suivant (prochain audit dans un an) si une nouvelle facture DU existe.
 FollowupChartInvoiced = Facturé
+
+# PWA nav
+BackToDolibarr = Retour sur Dolibarr
