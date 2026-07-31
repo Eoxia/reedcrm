@@ -7,13 +7,18 @@
 
 require_once __DIR__ . '/../../../lib/reedcrm_pwa_nav.lib.php';
 
-global $user;
+global $langs, $user;
 
 $navItems     = reedcrm_pwa_nav_get_items();
 $navFavorites = reedcrm_pwa_nav_get_favorites($user);
 
 // Find active tab based on the current page
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+// Dolibarr entry point to leave the App. Dolibarr only applies MAIN_LANDING_PAGE at login,
+// so reproduce it here to land on the page the user is used to instead of a raw index.php
+$landingPage = getDolUserString('MAIN_LANDING_PAGE', getDolGlobalString('MAIN_LANDING_PAGE'));
+$dolibarrUrl = !empty($landingPage) ? dol_buildpath($landingPage, 1) : DOL_URL_ROOT . '/index.php';
 ?>
 <nav class="pwa-bottom-nav">
     <div class="nav-group nav-favorites">
@@ -51,5 +56,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </button>
         </div>
         <?php } ?>
+    </div>
+
+    <div class="pwa-nav-drawer-footer">
+        <a href="<?= dol_escape_htmltag($dolibarrUrl) ?>" class="pwa-nav-drawer-exit">
+            <i class="fas fa-sign-out-alt"></i>
+            <span><?= $langs->trans('BackToDolibarr') ?></span>
+        </a>
     </div>
 </div>

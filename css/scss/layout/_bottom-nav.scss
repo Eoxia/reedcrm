@@ -209,6 +209,37 @@
     }
 }
 
+.pwa-nav-drawer-footer {
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.pwa-nav-drawer-exit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #64748b;
+    text-decoration: none !important;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.2s ease, color 0.2s ease;
+
+    i {
+        font-size: 15px;
+    }
+
+    &:hover,
+    &:focus {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+}
+
 @keyframes pwa-nav-shake {
     0%,
     100% {

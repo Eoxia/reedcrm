@@ -648,3 +648,6 @@ FollowupAuditRenewNoInvoice = No new DU invoice for this client. Create the rene
 FollowupAuditRenewConfirm = Renew this audit? The line will move to the next cycle (next audit in a year) if a new DU invoice exists.
 FollowupChartInvoiced = Invoiced
 PleaseLinkProjectFirst=Please first link a project to the ticket
+
+# PWA nav
+BackToDolibarr = Back to Dolibarr
