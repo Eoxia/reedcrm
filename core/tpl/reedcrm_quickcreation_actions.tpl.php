@@ -102,7 +102,7 @@ if ($action == 'add') {
 			$project->opp_amount        = price2num(GETPOST('opp_amount'));
 			$project->date_c            = dol_now();
 			$project->date_start        = $date_start;
-			$project->statut            = 1;
+			$project->status            = getDolGlobalString('PROJECT_CREATE_NO_DRAFT') ? Project::STATUS_VALIDATED : Project::STATUS_DRAFT;
 			$project->usage_opportunity = 1;
 			$project->usage_task        = 1;
 
