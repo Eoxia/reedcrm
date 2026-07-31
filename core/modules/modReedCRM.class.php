@@ -1084,12 +1084,13 @@ class modReedCRM extends DolibarrModules
             dolibarr_set_const($this->db, 'REEDCRM_CALL_LIST_PROV_REF_MIGRATED', 1, 'integer', 0, '', $conf->entity);
         }
 
-        // Ensure every active user owns a default call list
+        // Ensure every active employee owns a default call list. External users (client contacts
+        // holding a login) are skipped: nobody calls their list and they flood the PWA selector
         require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
         require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
 
         $userStatic = new User($this->db);
-        $userStatic->fetchAll('', '', 0, 0, '(statut:=:1)', 'AND', true);
+        $userStatic->fetchAll('', '', 0, 0, '(statut:=:1) AND (employee:=:1)', 'AND', true);
         if (!empty($userStatic->users)) {
             foreach ($userStatic->users as $targetUser) {
                 reedcrm_get_or_create_user_default_call_list($this->db, $targetUser);

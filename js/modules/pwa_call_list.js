@@ -44,6 +44,19 @@ window.reedcrm.pwaCallList.init = function () {
  */
 window.reedcrm.pwaCallList.event = function () {
   $(document).on('click', '[data-action="copy-phone"]', window.reedcrm.pwaCallList.copyPhone);
+  $(document).on('change', '#pwa-call-list-select', window.reedcrm.pwaCallList.switchList);
+};
+
+/**
+ * Navigate to the call list picked in the selector.
+ *
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.switchList = function () {
+  var listId = $(this).val();
+  if (listId) {
+    window.location.href = '?id=' + listId;
+  }
 };
 
 /**

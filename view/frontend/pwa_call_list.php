@@ -198,10 +198,15 @@ $dateStart = $object->date_start ? dol_print_date($object->date_start, 'day') : 
 $dateEnd   = $object->date_end   ? dol_print_date($object->date_end,   'day') : '—';
 print '<div class="pwa-call-list-header">';
 
-$sqlLists = "SELECT rowid, label, fk_user_assign FROM " . MAIN_DB_PREFIX . "reedcrm_call_list";
-$sqlLists .= " WHERE entity IN (" . getEntity('call_list') . ")";
-$sqlLists .= " AND status = " . CallList::STATUS_ACTIVE;
-$sqlLists .= " ORDER BY date_creation DESC";
+// Only employees' lists are offered: a default call list is created for every user, external
+// users (client contacts with a login) included, which floods the selector with lists nobody calls.
+// The current user's own lists and the list being displayed always stay reachable.
+$sqlLists = "SELECT cl.rowid, cl.label, cl.fk_user_assign FROM " . MAIN_DB_PREFIX . "reedcrm_call_list cl";
+$sqlLists .= " LEFT JOIN " . MAIN_DB_PREFIX . "user u ON u.rowid = cl.fk_user_assign";
+$sqlLists .= " WHERE cl.entity IN (" . getEntity('call_list') . ")";
+$sqlLists .= " AND cl.status = " . CallList::STATUS_ACTIVE;
+$sqlLists .= " AND (u.employee = 1 OR cl.fk_user_assign = " . ((int) $user->id) . " OR cl.rowid = " . ((int) $object->id) . ")";
+$sqlLists .= " ORDER BY cl.date_creation DESC";
 $resqlLists = $db->query($sqlLists);
 
 $myLists = [];
@@ -230,19 +235,28 @@ if ($resqlLists) {
     }
 }
 
-print '<select class="pwa-call-list-select" onchange="if(this.value) window.location.href=\'?id=\'+this.value">';
-foreach ($myLists as $lst) {
-    $sel = ($lst->rowid == $object->id) ? ' selected' : '';
-    print '<option value="' . $lst->rowid . '"' . $sel . '>' . dol_escape_htmltag($lst->label) . '</option>';
+print '<select id="pwa-call-list-select" class="pwa-call-list-select">';
+if (!empty($myLists)) {
+    print '<optgroup label="' . dol_escape_htmltag($langs->trans('MyCallLists')) . '">';
+    foreach ($myLists as $lst) {
+        $sel = ($lst->rowid == $object->id) ? ' selected' : '';
+        print '<option value="' . $lst->rowid . '"' . $sel . '>' . dol_escape_htmltag($lst->label) . '</option>';
+    }
+    print '</optgroup>';
 }
 if (!empty($otherLists)) {
-    if (!empty($myLists)) print '<option disabled>---------------</option>';
+    print '<optgroup label="' . dol_escape_htmltag($langs->trans('OtherCallLists')) . '">';
     foreach ($otherLists as $lst) {
         $sel = ($lst->rowid == $object->id) ? ' selected' : '';
         print '<option value="' . $lst->rowid . '"' . $sel . '>' . dol_escape_htmltag($lst->label) . '</option>';
     }
+    print '</optgroup>';
 }
 print '</select>';
+
+// select2 turns the plain select into a searchable dropdown, mandatory once the instance
+// holds dozens of lists. Navigation itself is handled in js/modules/pwa_call_list.js
+print ajax_combobox('pwa-call-list-select');
 
 print '</div>';
 
