@@ -223,4 +223,49 @@ class CallListLine extends SaturneObject
 
         return $lines;
     }
+
+    /**
+     * Create object into database
+     *
+     * @param  User $user      User that creates
+     * @param  int  $notrigger 0=launch triggers after, 1=disable triggers
+     * @return int             <0 if KO, Id of created object if OK
+     */
+    public function create(User $user, int $notrigger = 0): int
+    {
+        global $langs;
+        $langs->load('reedcrm@reedcrm');
+
+        $hasPhone = false;
+
+        if ($this->fk_contact > 0) {
+            require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+            $contact = new Contact($this->db);
+            if ($contact->fetch($this->fk_contact) > 0) {
+                if (!empty($contact->phone_pro) || !empty($contact->phone_mobile) || !empty($contact->phone_perso)) {
+                    $hasPhone = true;
+                }
+            }
+        } elseif ($this->element_type === 'project' && $this->element_id > 0) {
+            require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+            $project = new Project($this->db);
+            if ($project->fetch($this->element_id) > 0) {
+                $project->fetch_optionals();
+                if (!empty(trim((string) ($project->array_options['options_projectphone'] ?? '')))) {
+                    $hasPhone = true;
+                }
+            }
+        }
+
+        if (!$hasPhone) {
+            if ($this->fk_contact > 0) {
+                $this->error = $langs->trans('CallListWidgetNoPhone');
+            } else {
+                $this->error = $langs->trans('CallListWidgetNoContact');
+            }
+            return -1;
+        }
+
+        return parent::create($user, $notrigger);
+    }
 }
