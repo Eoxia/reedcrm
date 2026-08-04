@@ -231,7 +231,7 @@ class CallListLine extends SaturneObject
      * @param  int  $notrigger 0=launch triggers after, 1=disable triggers
      * @return int             <0 if KO, Id of created object if OK
      */
-    public function create($user, $notrigger = 0)
+    public function create(User $user, int $notrigger = 0): int
     {
         global $langs;
         $langs->load('reedcrm@reedcrm');
