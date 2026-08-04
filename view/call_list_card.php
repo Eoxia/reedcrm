@@ -179,7 +179,9 @@ if (empty($resHook)) {
             if ($lineObject->existsByElement($object->id, $lineObject->element_type, $lineObject->element_id)) {
                 setEventMessages($langs->trans('CallListLineDuplicate'), null, 'warnings');
             } else {
-                $lineObject->create($user);
+                if ($lineObject->create($user) <= 0) {
+                    setEventMessages($lineObject->error, $lineObject->errors, 'errors');
+                }
             }
         }
 
