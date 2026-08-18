@@ -815,9 +815,10 @@ class ActionsReedcrm
                 <?php
             }
 
-            $jQueryElement = 'notation_' . $object->element . '_contact';
-            $pictoPath     = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
-            $picto         = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule'); ?>
+            if (!empty($object) && is_object($object)) {
+                $jQueryElement = 'notation_' . $object->element . '_contact';
+                $pictoPath     = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
+                $picto         = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule'); ?>
 
             <script>
                 var objectElement = <?php echo "'" . $jQueryElement . "'"; ?>;
@@ -826,6 +827,7 @@ class ActionsReedcrm
                 cell.prepend(outJS);
             </script>
             <?php
+            }
         }
 
         if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
