@@ -289,9 +289,15 @@ body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
                 }
 
-                // Ensure the plus icon inside also renders
-                &::before {
+                // Ensure the plus icon inside also renders with proper FontAwesome overrides
+                i, i.fas, i.fa, span.fa, span.fas, svg.svg-inline--fa, &::before {
                     display: inline-block !important;
+                    font-style: normal !important;
+                    font-weight: 900 !important;
+                    font-family: 'Font Awesome 5 Free', 'Font Awesome 5 Brands', 'FontAwesome' !important;
+                    -webkit-font-smoothing: antialiased;
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
             }
         }
