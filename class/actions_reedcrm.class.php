@@ -641,9 +641,10 @@ class ActionsReedcrm
                         } else {
                             $cardProUrlFull = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe&actioncode=' . $actonComByType['actioncode'];
                         }
-                        $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                        $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                        $out .= '<i class="fas fa-plus"></i>';
                         $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
-                        $out .= '</span>';
+                        $out .= '</div>';
                     }
 
                     $out .= '</div>';
@@ -1708,9 +1709,10 @@ class ActionsReedcrm
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
                                 $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_TEL';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+                                $out .= '<i class="fas fa-plus"></i>';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
-                                $out .= '</span>';
+                                $out .= '</div>';
                             }
                             $out .= '</div>';
 
