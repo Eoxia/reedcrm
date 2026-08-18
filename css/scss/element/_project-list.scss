@@ -228,17 +228,20 @@ body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
                 font-size: 0.9em;
                 cursor: pointer;
 
-                i, i.fas, i.fa {
+                i, i.fas, i.fa, span.fa, span.fas {
                     display: inline-block !important;
-                    margin-right: 4px;
+                    margin-right: 4px !important;
                     font-style: normal !important;
+                    font-weight: 900 !important;
                     font-family: 'Font Awesome 5 Free', 'Font Awesome 5 Brands', 'FontAwesome' !important;
                     -webkit-font-smoothing: antialiased;
                 }
 
                 .reedcrm-plist-relaunch-count {
                     display: inline-block !important;
-                    font-weight: 600;
+                    font-weight: 600 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
             }
 
@@ -262,8 +265,8 @@ body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
             // The 'plus' quick add button
             .reedcrm-plist-relaunch-add {
                 position: absolute !important;
-                top: -9px;
-                right: -9px;
+                top: -9px !important;
+                right: -9px !important;
                 width: 20px !important;
                 height: 20px !important;
                 background-color: #9283ba !important;
@@ -272,11 +275,13 @@ body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                font-size: 0.85em;
+                font-size: 0.85em !important;
                 cursor: pointer;
-                border: 1.5px solid white;
-                line-height: 1;
-                z-index: 2;
+                border: 1.5px solid white !important;
+                line-height: 1 !important;
+                z-index: 2 !important;
+                margin: 0 !important;
+                padding: 0 !important;
 
                 &:hover {
                     background-color: #aa9cd0 !important;
