@@ -109,9 +109,10 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
 
         if ($user->hasRight('agenda', 'myactions', 'create')) {
             $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=' . $actonComByType['actioncode'];
-            $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+            $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
+            $out .= '<i class="fas fa-plus"></i>';
             $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
-            $out .= '</span>';
+            $out .= '</div>';
         }
 
         $out .= '</div>';

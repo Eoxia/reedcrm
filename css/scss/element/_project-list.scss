@@ -197,13 +197,13 @@ body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
     gap: 15px;
 
     .reedcrm-plist-relaunch-buttons {
-        display: flex;
-        align-items: center;
+        display: flex !important;
+        align-items: center !important;
         gap: 10px;
 
         // Reset the global styling provided by event-pro.scss to adhere to custom look
         .reedcrm-relaunch-button {
-            position: relative;
+            position: relative !important;
             background: transparent !important;
             border: none;
             padding: 0;
@@ -211,70 +211,93 @@ body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
             width: auto;
             height: auto;
             min-width: auto;
+            overflow: visible !important;
 
             &:nth-child(n) {
                 background: transparent !important;
             }
 
             .reedcrm-plist-relaunch-btn-content {
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
                 width: 44px;
                 height: 36px;
-                color: white;
+                color: white !important;
                 border-radius: 4px;
                 font-size: 0.9em;
                 cursor: pointer;
 
-                i {
-                    margin-right: 4px;
+                i, i.fas, i.fa, span.fa, span.fas, svg.svg-inline--fa {
+                    display: inline-block !important;
+                    margin-right: 4px !important;
+                    font-style: normal !important;
+                    font-weight: 900 !important;
+                    font-family: 'Font Awesome 5 Free', 'Font Awesome 5 Brands', 'FontAwesome' !important;
+                    -webkit-font-smoothing: antialiased;
                 }
 
                 .reedcrm-plist-relaunch-count {
-                    font-weight: 600;
+                    display: inline-block !important;
+                    font-weight: 600 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
             }
 
             &.reedcrm-plist-relaunch-btn-call .reedcrm-plist-relaunch-btn-content {
-                background-color: #648FFF;
+                background-color: #648FFF !important;
             }
             &.reedcrm-plist-relaunch-btn-email .reedcrm-plist-relaunch-btn-content {
-                background-color: #DC267F;
+                background-color: #DC267F !important;
             }
             &.reedcrm-plist-relaunch-btn-rdv .reedcrm-plist-relaunch-btn-content {
-                background-color: #FE6100;
+                background-color: #FE6100 !important;
             }
             &.reedcrm-plist-relaunch-btn-other .reedcrm-plist-relaunch-btn-content {
-                background-color: #FFB000;
+                background-color: #FFB000 !important;
             }
 
             .reedcrm-plist-relaunch-btn-content.count-zero {
-                filter: grayscale(0.3) opacity(0.8);
+                filter: grayscale(0.3) opacity(0.8) !important;
             }
 
             // The 'plus' quick add button
             .reedcrm-plist-relaunch-add {
-                position: absolute;
-                top: -9px;
-                right: -9px;
-                width: 20px;
-                height: 20px;
-                background-color: #9283ba;
-                color: white;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.85em;
+                position: absolute !important;
+                top: -9px !important;
+                right: -9px !important;
+                width: 20px !important;
+                height: 20px !important;
+                background-color: #9283ba !important;
+                color: white !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 0.85em !important;
                 cursor: pointer;
-                border: 1.5px solid white;
-                line-height: 1;
+                border: 1.5px solid white !important;
+                line-height: 1 !important;
+                z-index: 2 !important;
+                margin: 0 !important;
+                padding: 0 !important;
 
                 &:hover {
-                    background-color: #aa9cd0;
+                    background-color: #aa9cd0 !important;
                     transform: scale(1.1);
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                }
+
+                // Ensure the plus icon inside also renders with proper FontAwesome overrides
+                i, i.fas, i.fa, span.fa, span.fas, svg.svg-inline--fa, &::before {
+                    display: inline-block !important;
+                    font-style: normal !important;
+                    font-weight: 900 !important;
+                    font-family: 'Font Awesome 5 Free', 'Font Awesome 5 Brands', 'FontAwesome' !important;
+                    -webkit-font-smoothing: antialiased;
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
             }
         }
