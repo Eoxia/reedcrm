@@ -544,7 +544,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   var tooltipHovered = false;
   var loadingTooltip = false;
 
-  $(document).off('mouseenter.reedcrmRelaunchBtn').on('mouseenter.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseenter', '.reedcrm-relaunch-button').on('mouseenter.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
     var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
@@ -704,7 +704,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
 
   });
 
-  $(document).off('mouseleave.reedcrmRelaunchBtn').on('mouseleave.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseleave', '.reedcrm-relaunch-button').on('mouseleave.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
     clearTimeout(tooltipTimeout);
     tooltipTimeout = setTimeout(function () {
       if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
