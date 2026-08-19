@@ -612,17 +612,22 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
     var left = buttonOffset.left;
     var top = buttonOffset.top + buttonHeight + 5;
 
-    if (left + tooltipWidth > $(window).width()) {
-      left = $(window).width() - tooltipWidth - 10;
+    var scrollLeft = $(window).scrollLeft();
+    var scrollTop = $(window).scrollTop();
+    var viewportWidth = $(window).width();
+    var viewportHeight = $(window).height();
+
+    if (left + tooltipWidth > scrollLeft + viewportWidth) {
+      left = scrollLeft + viewportWidth - tooltipWidth - 10;
     }
-    if (left < 10) {
-      left = 10;
+    if (left < scrollLeft + 10) {
+      left = scrollLeft + 10;
     }
-    if (top + tooltipHeight > $(window).height()) {
+    if (top + tooltipHeight > scrollTop + viewportHeight) {
       top = buttonOffset.top - tooltipHeight - 5;
     }
-    if (top < 10) {
-      top = 10;
+    if (top < scrollTop + 10) {
+      top = scrollTop + 10;
     }
 
     $currentTooltip.css({
