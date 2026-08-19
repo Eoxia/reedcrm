@@ -202,6 +202,10 @@ if (empty($resHook)) {
 
             $actionComm->label        = GETPOST('reminder_title');
             $actionComm->note_private = '';
+            
+            $reminderUserId = GETPOSTINT('reminder_user_id') ?: $user->id;
+            $actionComm->userownerid  = $reminderUserId;
+            $actionComm->userassigned = [$reminderUserId => ['id' => $reminderUserId]];
 
             $result = $actionComm->create($user);
 
