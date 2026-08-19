@@ -28,7 +28,7 @@
         </div>
 
         <div class="reminder-date-row">
-            <?php echo $form->selectDate(dol_now('tzuser'), 'reminder_', 1, 1); ?>
+            <?php echo $form->selectDate(dol_now(), 'reminder_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?>
         </div>
 
         <div class="reminder-user-row">
