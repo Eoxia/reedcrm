@@ -47,6 +47,7 @@ global $conf, $db, $langs, $user;
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 
 // This endpoint boots on the core main.inc.php, which only brings main.lang. Without this the
 // module keys of the table header render as raw keys, while Date / Status / Done / ToDo work
