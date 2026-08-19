@@ -47,6 +47,7 @@ global $conf, $db, $langs, $user;
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 
 // This endpoint boots on the core main.inc.php, which only brings main.lang. Without this the
 // module keys of the table header render as raw keys, while Date / Status / Done / ToDo work
@@ -110,10 +111,10 @@ if (is_array($actionComms) && !empty($actionComms)) {
 
     // Column order follows what a relance carries: when, who, what, where it stands
     print '<tr class="liste_titre">';
-    print '<td>' . $langs->trans('Date') . '</td>';
-    print '<td>' . $langs->trans('RelaunchWho') . '</td>';
+    print '<td style="width: 130px;">' . $langs->trans('Date') . '</td>';
+    print '<td style="width: 50px;" class="center">' . $langs->trans('RelaunchWho') . '</td>';
     print '<td>' . $langs->trans('RelaunchWhat') . '</td>';
-    print '<td class="center">' . $langs->trans('Status') . '</td>';
+    print '<td style="width: 90px;" class="right">' . $langs->trans('Status') . '</td>';
     print '</tr>';
 
     foreach ($actionComms as $ac) {
@@ -144,7 +145,8 @@ if (is_array($actionComms) && !empty($actionComms)) {
             require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
             $contact = new Contact($db);
             if ($contact->fetch($ac->contact_id) > 0) {
-                $contactName = $contact->getFullName($langs);
+                // getNomUrl(-2) returns ONLY the photo avatar without the text.
+                $contactName = $contact->getNomUrl(-2, '', 0, '', -1, 0, '');
             }
         }
 
@@ -153,25 +155,27 @@ if (is_array($actionComms) && !empty($actionComms)) {
             require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
             $userOwner = new User($db);
             if ($userOwner->fetch($ac->userownerid) > 0) {
-                $userName = $userOwner->getFullName($langs);
+                // getNomUrl(-2) returns ONLY the photo avatar without the text.
+                $userName = $userOwner->getNomUrl(-2, '', 0, 0, 24, 0, '', '');
             }
         }
 
         print '<tr class="oddeven">';
 
-        // Date
-        print '<td class="nowrap" style="min-width: 150px;">';
+        // Date & Action ID
+        print '<td class="nowrap" style="min-width: 130px;">';
+        // getNomUrl(1, -1) prints the picto and the reference (ID) instead of the label
+        print '<div class="opacitymedium" style="margin-bottom: 2px;">' . $ac->getNomUrl(1, -1) . '</div>';
         print dol_print_date($ac->datep, 'dayhour', 'tzuser');
         print '</td>';
 
         // Who
-        print '<td class="nowrap">';
+        print '<td class="nowrap center">';
         if ($contactName) {
-            print '<span class="opacitymedium">' . img_picto('', 'contact', 'class="pictofixedwidth"') . ' ' . dol_escape_htmltag($contactName) . '</span>';
+            print '<div style="margin-bottom: 2px;">' . $contactName . '</div>';
         }
         if ($userName) {
-            if ($contactName) print '<br>';
-            print '<span class="opacitymedium">' . img_picto('', 'user', 'class="pictofixedwidth"') . ' ' . dol_escape_htmltag($userName) . '</span>';
+            print '<div>' . $userName . '</div>';
         }
         print '</td>';
 
@@ -186,9 +190,8 @@ if (is_array($actionComms) && !empty($actionComms)) {
         }
         print '</td>';
 
-        // Status. Always rendered now that the column is named: an empty cell under a "Statut"
-        // header reads as missing data, where it actually means the relance is still to do.
-        print '<td class="center">';
+        // Status
+        print '<td class="right">';
         if (!isset($ac->percentage) || $ac->percentage < 0) {
             // -1 is the Dolibarr value for an event that does not track progress at all
             print '<span class="opacitymedium">' . $langs->trans('ActionNotApplicable') . '</span>';
