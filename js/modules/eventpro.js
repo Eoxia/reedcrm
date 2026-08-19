@@ -544,7 +544,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   var tooltipHovered = false;
   var loadingTooltip = false;
 
-  $(document).on('mouseenter', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseenter.reedcrmRelaunchBtn').on('mouseenter.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
     var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
@@ -600,6 +600,21 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
       display: 'none'
     });
     $('body').append($currentTooltip);
+
+    $currentTooltip.on('mouseenter', function () {
+      tooltipHovered = true;
+      clearTimeout(tooltipTimeout);
+    });
+
+    $currentTooltip.on('mouseleave', function () {
+      tooltipHovered = false;
+      if (!loadingTooltip) {
+        $currentTooltip.fadeOut(150, function () {
+          $(this).remove();
+          $currentTooltip = null;
+        });
+      }
+    });
 
     var buttonOffset = $button.offset();
     var buttonHeight = $button.outerHeight();
@@ -681,23 +696,10 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
       });
     }, 300);
 
-    $currentTooltip.on('mouseenter', function () {
-      tooltipHovered = true;
-      clearTimeout(tooltipTimeout);
-    });
 
-    $currentTooltip.on('mouseleave', function () {
-      tooltipHovered = false;
-      if (!loadingTooltip) {
-        $currentTooltip.fadeOut(150, function () {
-          $(this).remove();
-          $currentTooltip = null;
-        });
-      }
-    });
   });
 
-  $(document).on('mouseleave', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseleave.reedcrmRelaunchBtn').on('mouseleave.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
     clearTimeout(tooltipTimeout);
     tooltipTimeout = setTimeout(function () {
       if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
