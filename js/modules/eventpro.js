@@ -544,7 +544,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   var tooltipHovered = false;
   var loadingTooltip = false;
 
-  $(document).on('mouseenter', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseenter', '.reedcrm-relaunch-button').on('mouseenter.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
     var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
@@ -601,6 +601,21 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
     });
     $('body').append($currentTooltip);
 
+    $currentTooltip.on('mouseenter', function () {
+      tooltipHovered = true;
+      clearTimeout(tooltipTimeout);
+    });
+
+    $currentTooltip.on('mouseleave', function () {
+      tooltipHovered = false;
+      if (!loadingTooltip) {
+        $currentTooltip.fadeOut(150, function () {
+          $(this).remove();
+          $currentTooltip = null;
+        });
+      }
+    });
+
     var buttonOffset = $button.offset();
     var buttonHeight = $button.outerHeight();
 
@@ -612,17 +627,22 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
     var left = buttonOffset.left;
     var top = buttonOffset.top + buttonHeight + 5;
 
-    if (left + tooltipWidth > $(window).width()) {
-      left = $(window).width() - tooltipWidth - 10;
+    var scrollLeft = $(window).scrollLeft();
+    var scrollTop = $(window).scrollTop();
+    var viewportWidth = $(window).width();
+    var viewportHeight = $(window).height();
+
+    if (left + tooltipWidth > scrollLeft + viewportWidth) {
+      left = scrollLeft + viewportWidth - tooltipWidth - 10;
     }
-    if (left < 10) {
-      left = 10;
+    if (left < scrollLeft + 10) {
+      left = scrollLeft + 10;
     }
-    if (top + tooltipHeight > $(window).height()) {
+    if (top + tooltipHeight > scrollTop + viewportHeight) {
       top = buttonOffset.top - tooltipHeight - 5;
     }
-    if (top < 10) {
-      top = 10;
+    if (top < scrollTop + 10) {
+      top = scrollTop + 10;
     }
 
     $currentTooltip.css({
@@ -681,23 +701,10 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
       });
     }, 300);
 
-    $currentTooltip.on('mouseenter', function () {
-      tooltipHovered = true;
-      clearTimeout(tooltipTimeout);
-    });
 
-    $currentTooltip.on('mouseleave', function () {
-      tooltipHovered = false;
-      if (!loadingTooltip) {
-        $currentTooltip.fadeOut(150, function () {
-          $(this).remove();
-          $currentTooltip = null;
-        });
-      }
-    });
   });
 
-  $(document).on('mouseleave', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseleave', '.reedcrm-relaunch-button').on('mouseleave.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
     clearTimeout(tooltipTimeout);
     tooltipTimeout = setTimeout(function () {
       if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
