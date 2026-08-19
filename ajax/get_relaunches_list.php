@@ -144,7 +144,7 @@ if (is_array($actionComms) && !empty($actionComms)) {
             require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
             $contact = new Contact($db);
             if ($contact->fetch($ac->contact_id) > 0) {
-                $contactName = $contact->getFullName($langs);
+                $contactName = $contact->getNomUrl(1, '', 0, '', -1, 0, 'pictofixedwidth');
             }
         }
 
@@ -153,25 +153,27 @@ if (is_array($actionComms) && !empty($actionComms)) {
             require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
             $userOwner = new User($db);
             if ($userOwner->fetch($ac->userownerid) > 0) {
-                $userName = $userOwner->getFullName($langs);
+                // getNomUrl(1) returns the avatar and the linked name.
+                // We use 'pictofixedwidth' for consistent alignment if needed, or let Dolibarr handle it.
+                $userName = $userOwner->getNomUrl(1, '', 0, 0, 24, 0, '', 'pictofixedwidth');
             }
         }
 
         print '<tr class="oddeven">';
 
-        // Date
+        // Date & Action ID
         print '<td class="nowrap" style="min-width: 150px;">';
+        print '<div class="opacitymedium" style="margin-bottom: 2px;">' . $ac->getNomUrl(1) . '</div>';
         print dol_print_date($ac->datep, 'dayhour', 'tzuser');
         print '</td>';
 
         // Who
         print '<td class="nowrap">';
         if ($contactName) {
-            print '<span class="opacitymedium">' . img_picto('', 'contact', 'class="pictofixedwidth"') . ' ' . dol_escape_htmltag($contactName) . '</span>';
+            print '<div style="margin-bottom: 2px;">' . $contactName . '</div>';
         }
         if ($userName) {
-            if ($contactName) print '<br>';
-            print '<span class="opacitymedium">' . img_picto('', 'user', 'class="pictofixedwidth"') . ' ' . dol_escape_htmltag($userName) . '</span>';
+            print '<div>' . $userName . '</div>';
         }
         print '</td>';
 
