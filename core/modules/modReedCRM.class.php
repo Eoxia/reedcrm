@@ -946,7 +946,11 @@ class modReedCRM extends DolibarrModules
             $category->type  = 'actioncomm';
             $categoryID      = $category->create($user);
 
-            dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            // Only store a real id: create() returns a negative error code, and storing that would
+            // make the "== 0" guard above never retry, leaving the tag permanently broken
+            if ($categoryID > 0) {
+                dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            }
         }
 
         if (getDolGlobalInt('REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG') == 0) {
@@ -958,7 +962,10 @@ class modReedCRM extends DolibarrModules
             $category->type  = 'actioncomm';
             $categoryID      = $category->create($user);
 
-            dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            // Same as above: never store the negative error code create() returns on failure
+            if ($categoryID > 0) {
+                dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            }
         }
 
         if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') < 2) {
