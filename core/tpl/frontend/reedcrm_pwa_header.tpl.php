@@ -124,6 +124,13 @@
         }
     }
     
+    /* Dolibarr pins its notifications at top:0 with z-index 100000, so on the App they land right
+       on top of this fixed header and swallow every control in it (the back link in particular)
+       for the few seconds they stay up. Push them just below the header instead. */
+    body.template-pwa .jnotify-container {
+        top: 60px !important;
+    }
+
     /* Ensure user avatar is kept contained natively */
     .custom-badge-avatar {
         width: 100% !important;
