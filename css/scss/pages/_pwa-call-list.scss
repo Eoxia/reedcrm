@@ -301,3 +301,66 @@
     color: #dc2626;
     font-size: 0.85rem;
 }
+
+/* Drill-down to the App opportunity page. Styled as a disclosure row rather than a text link:
+   the card already carries five buttons, so a coloured title just reads as decoration. */
+.pwa-call-opp-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    /* 44px is the usual minimum for a touch target, and this one is hit while driving */
+    min-height: 48px;
+    margin-bottom: 16px;
+    padding: 7px 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
+    border-radius: 10px;
+    text-decoration: none !important;
+
+    &:active {
+        background: #eff6ff;
+        border-color: #3b82f6;
+    }
+}
+
+.pwa-call-opp-link-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.pwa-call-opp-link-title {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: #64748b;
+    /* Free text: never let a long label push the chevron out of the card */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pwa-call-opp-link-action {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #3b82f6;
+}
+
+.pwa-call-opp-link-chevron {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

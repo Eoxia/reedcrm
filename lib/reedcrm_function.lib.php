@@ -504,3 +504,100 @@ function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
 
     return 0;
 }
+
+/**
+ * Resolve the person to call for an opportunity.
+ *
+ * A project carries its caller in three mutually exclusive ways, in decreasing priority:
+ * a real contact referenced by the projectaddress extrafield, the free-text ReedCRM
+ * extrafields (lastname/firstname/phone/email) or, as a last resort, the linked thirdparty.
+ * The call list, its mobile view and the opportunity App pages all need the same resolution,
+ * hence this shared helper.
+ *
+ * @param  Project $project Project to resolve the contact of (optionals are fetched on demand)
+ * @return array            ['contact_id', 'lastname', 'firstname', 'phone', 'email'] — raw values, NOT escaped
+ */
+function reedcrm_get_project_contact_details(Project $project): array
+{
+    $details = ['contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '', 'email' => ''];
+
+    if (empty($project->id)) {
+        return $details;
+    }
+
+    if (!is_array($project->array_options) || empty($project->array_options)) {
+        $project->fetch_optionals();
+    }
+
+    if (!empty($project->array_options['options_projectaddress'])) {
+        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+
+        $contact = new Contact($project->db);
+        if ($contact->fetch($project->array_options['options_projectaddress']) > 0) {
+            $details['contact_id'] = $contact->id;
+            $details['lastname']   = $contact->lastname;
+            $details['firstname']  = $contact->firstname;
+            $details['phone']      = $contact->phone_pro ?: $contact->phone_mobile ?: '';
+            $details['email']      = $contact->email;
+
+            return $details;
+        }
+    }
+
+    if (!empty($project->array_options['options_reedcrm_lastname']) || !empty($project->array_options['options_projectphone'])) {
+        $details['lastname']  = (string) ($project->array_options['options_reedcrm_lastname'] ?? '');
+        $details['firstname'] = (string) ($project->array_options['options_reedcrm_firstname'] ?? '');
+        $details['phone']     = (string) ($project->array_options['options_projectphone'] ?? '');
+        $details['email']     = (string) ($project->array_options['options_reedcrm_email'] ?? '');
+
+        return $details;
+    }
+
+    if ($project->socid > 0) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+        $thirdparty = new Societe($project->db);
+        if ($thirdparty->fetch($project->socid) > 0) {
+            $details['lastname'] = $thirdparty->name;
+            $details['phone']    = $thirdparty->phone;
+            $details['email']    = $thirdparty->email;
+        }
+    }
+
+    return $details;
+}
+
+/**
+ * Relaunch types shown on the commercial relaunch widgets (project list, opportunity App page).
+ *
+ * The keys drive the CSS modifiers (reedcrm-plist-relaunch-btn-<key>) and every event whose
+ * type_code is not explicitly mapped falls into 'other'.
+ *
+ * @return array<string, array{picto: string, actioncode: string}>
+ */
+function reedcrm_get_relaunch_types(): array
+{
+    return [
+        'call'  => ['picto' => 'headset',      'actioncode' => 'AC_TEL'],
+        'email' => ['picto' => 'envelope',     'actioncode' => 'AC_EMAIL'],
+        'rdv'   => ['picto' => 'calendar',     'actioncode' => 'AC_RDV'],
+        'other' => ['picto' => 'comment-dots', 'actioncode' => 'AC_OTH'],
+    ];
+}
+
+/**
+ * Map an event type_code to its relaunch bucket.
+ *
+ * @param  string $typeCode ActionComm type code (AC_TEL, AC_EMAIL, ...)
+ * @return string           Bucket key of reedcrm_get_relaunch_types()
+ */
+function reedcrm_get_relaunch_type_key(string $typeCode): string
+{
+    foreach (reedcrm_get_relaunch_types() as $key => $type) {
+        if ($type['actioncode'] === $typeCode) {
+            return $key;
+        }
+    }
+
+    return 'other';
+}

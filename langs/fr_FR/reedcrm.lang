@@ -699,3 +699,12 @@ FollowupChartInvoiced = Facturé
 BackToDolibarr = Retour sur Dolibarr
 MyCallLists = Mes listes d'appel
 OtherCallLists = Autres listes d'appel
+
+# PWA opportunité
+BackToOpportunity = Retour à l'opportunité
+ContactNotFilled = Contact non renseigné
+CopyPhoneNumber = Copier le numéro
+NoPhoneNumber = Pas de téléphone
+NoEventOnOpportunity = Aucun événement sur cette opportunité
+ToCallShort = à appeler
+SeeOpportunityTimeline = Voir l'historique

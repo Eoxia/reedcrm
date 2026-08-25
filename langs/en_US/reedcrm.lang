@@ -653,3 +653,12 @@ PleaseLinkProjectFirst=Please first link a project to the ticket
 BackToDolibarr = Back to Dolibarr
 MyCallLists = My call lists
 OtherCallLists = Other call lists
+
+# PWA opportunity
+BackToOpportunity = Back to the opportunity
+ContactNotFilled = No contact set
+CopyPhoneNumber = Copy the phone number
+NoPhoneNumber = No phone number
+NoEventOnOpportunity = No event on this opportunity yet
+ToCallShort = to call
+SeeOpportunityTimeline = See the history

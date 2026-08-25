@@ -21,7 +21,16 @@
  * \brief   Library files with common functions for ReedCRM eventPro
  */
 
-function showEventProTabs($id, $fromType, $currentTab): string
+/**
+ * Render the eventPro tab bar (customer note / email / ticket).
+ *
+ * @param  int    $id          Id of the object the events belong to
+ * @param  string $fromType    Element type of that object (project, societe, ...)
+ * @param  string $currentTab  Active tab key
+ * @param  string $extraParams Extra query string (starting with &) kept across tab switches
+ * @return string              HTML output
+ */
+function showEventProTabs($id, $fromType, $currentTab, string $extraParams = ''): string
 {
     global $langs;
 
@@ -45,7 +54,7 @@ function showEventProTabs($id, $fromType, $currentTab): string
         $isActive = ($currentTab == $tabKey);
         $out .= '<div class="inline-block tabsElem' . ($isActive ? ' tabsElemActive' : '') . '">';
             $out .= '<div class="tab tab' . ($isActive ? 'active' : 'unactive') . '">';
-                $out .= '<a class="tab inline-block valignmiddle" href="' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=' . $tabKey . '" title="' . $langs->trans($tabInfos['label']) . '">';
+                $out .= '<a class="tab inline-block valignmiddle" href="' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=' . $tabKey . $extraParams . '" title="' . $langs->trans($tabInfos['label']) . '">';
                     $out .= img_picto($langs->trans($tabInfos['label']), $tabInfos['picto'], 'class="pictofixedwidth"');
                     $out .= $langs->trans($tabInfos['label']);
                 $out .= '</a>';
