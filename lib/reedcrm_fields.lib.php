@@ -51,40 +51,16 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
     $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
     $actionComms = $actionComm->getActions($socid, $projectId, 'project', $filter, 'a.datec');
 
-    $actonComsByType = [
-        'call' => [
-            'picto'      => 'headset',
-            'actioncode' => 'AC_TEL',
-            'nb'         => 0
-        ],
-        'email' => [
-            'picto'      => 'envelope',
-            'actioncode' => 'AC_EMAIL',
-            'nb'         => 0
-        ],
-        'rdv' => [
-            'picto'      => 'calendar',
-            'actioncode' => 'AC_RDV',
-            'nb'         => 0
-        ],
-        'other' => [
-            'picto'      => 'comment-dots',
-            'actioncode' => 'AC_OTH',
-            'nb'         => 0
-        ],
-    ];
+    require_once __DIR__ . '/reedcrm_function.lib.php';
+
+    $actonComsByType = [];
+    foreach (reedcrm_get_relaunch_types() as $typeKey => $type) {
+        $actonComsByType[$typeKey] = $type + ['nb' => 0];
+    }
 
     if (is_array($actionComms) && !empty($actionComms)) {
         foreach ($actionComms as $ac) {
-            if ($ac->type_code == 'AC_TEL') {
-                $actonComsByType['call']['nb']++;
-            } elseif ($ac->type_code == 'AC_EMAIL') {
-                $actonComsByType['email']['nb']++;
-            } elseif ($ac->type_code == 'AC_RDV') {
-                $actonComsByType['rdv']['nb']++;
-            } else {
-                $actonComsByType['other']['nb']++;
-            }
+            $actonComsByType[reedcrm_get_relaunch_type_key((string) $ac->type_code)]['nb']++;
         }
     }
 
