@@ -44,12 +44,22 @@ class ReedcrmDashboard
 	/**
 	 * Load dashboard info.
 	 *
+	 * @param  array|null $moreParams Parameters for load dashboard info
 	 * @return array
 	 * @throws Exception
 	 */
-	public function load_dashboard(): array
+	public function load_dashboard(?array $moreParams = []): array
 	{
         global $user, $langs;
+
+        // The ticket dashboard is a page of its own: it replaces the content instead of adding to it
+        if (!empty($moreParams['LoadTicketDashboard'])) {
+            require_once __DIR__ . '/reedcrmticketdashboard.class.php';
+
+            $ticketDashboard = new ReedcrmTicketDashboard($this->db);
+
+            return ['ticket' => $ticketDashboard->load_dashboard()];
+        }
 
         $confName        = 'REEDCRM_DASHBOARD_CONFIG';
         $dashboardConfig = isset($user->conf->$confName) ? json_decode($user->conf->$confName) : null;

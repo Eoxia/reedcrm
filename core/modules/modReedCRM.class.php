@@ -679,6 +679,38 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
+            'titre'    => $langs->transnoentities('TicketDashboard'),
+            'prefix'   => '<i class="fas fa-ticket-alt pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmticketdashboard',
+            'url'      => '/reedcrm/view/ticket_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'ticket\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=ticket',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('TicketDashboard'),
+            'prefix'   => '<i class="fas fa-chart-line pictofixedwidth"></i>',
+            'mainmenu' => 'ticket',
+            'leftmenu' => 'reedcrmticketdashboard',
+            'url'      => '/reedcrm/view/ticket_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'ticket\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
             'titre'    => $langs->transnoentities('RecurringInvoices'),
             'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',

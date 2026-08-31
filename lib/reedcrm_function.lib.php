@@ -601,3 +601,30 @@ function reedcrm_get_relaunch_type_key(string $typeCode): string
 
     return 'other';
 }
+
+/**
+ * Build the criteria filtering a Dolibarr list on a date range
+ *
+ * A Dolibarr list expects one day, month and year parameter per bound, so a range is spelled out field by field.
+ *
+ * @param  string $prefix Prefix of the search parameters of the list, without its bound suffix
+ * @param  int    $start  Timestamp the range starts at, 0 for an open lower bound
+ * @param  int    $end    Timestamp the range ends at, 0 for an open upper bound
+ * @return string         Criteria, url encoded and ready to be appended to a list URL
+ */
+function reedcrm_get_date_range_filter(string $prefix, int $start = 0, int $end = 0): string
+{
+    $filter = [];
+    foreach (['start' => $start, 'end' => $end] as $bound => $timestamp) {
+        if (empty($timestamp)) {
+            continue;
+        }
+
+        $date     = dol_getdate($timestamp);
+        $filter[] = $prefix . '_' . $bound . 'day=' . $date['mday'];
+        $filter[] = $prefix . '_' . $bound . 'month=' . $date['mon'];
+        $filter[] = $prefix . '_' . $bound . 'year=' . $date['year'];
+    }
+
+    return implode('&', $filter);
+}
