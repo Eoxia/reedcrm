@@ -19,9 +19,9 @@
  * \file    core/tpl/frontend/reedcrm_pwa_relaunch_bar.tpl.php
  * \ingroup reedcrm
  * \brief   Sticky relaunch bar of the opportunity App page: one counter per relaunch type, each with
- *          a quick add shortcut. Same counting rule as the desktop project list (only events carrying
- *          the commercial relaunch tag), so both screens show the same numbers.
- *          Expects $project (Project) and $oppRelaunchCounts (type key => count). $callListId, when
+ *          the desktop surfaces (past / upcoming), rendered by reedcrm_render_relaunch_widget() so the
+ *          screens can never drift apart again.
+ *          Expects $project (Project). $callListId, when
  *          the page was reached from a call list, is carried over so the whole add-an-event round
  *          trip comes back with the way home still in the header.
  */
@@ -32,25 +32,16 @@ if (!defined('DOL_DOCUMENT_ROOT')) {
 global $langs, $user;
 
 $canAddEvent   = $user->hasRight('agenda', 'myactions', 'create') && $user->hasRight('reedcrm', 'eventpro', 'write');
-$relaunchUrl   = dol_buildpath('/custom/reedcrm/view/frontend/pwa_relaunch.php', 1);
-$relaunchQuery = '?from_id=' . (int) $project->id . '&from_type=project';
-$relaunchQuery .= !empty($callListId) ? '&call_list_id=' . (int) $callListId : '';
 ?>
 <div class="pwa-opp-relaunch-bar">
-    <div class="reedcrm-relaunch-buttons">
-        <?php foreach (reedcrm_get_relaunch_types() as $typeKey => $type) :
-            $count = (int) ($oppRelaunchCounts[$typeKey] ?? 0); ?>
-            <div class="reedcrm-relaunch-button reedcrm-relaunch-btn-<?php echo $typeKey; ?><?php echo $count === 0 ? ' count-zero' : ''; ?>">
-                <div class="reedcrm-relaunch-btn-content">
-                    <i class="fas fa-<?php echo $type['picto']; ?>"></i>
-                    <span class="reedcrm-relaunch-count"><?php echo $count; ?></span>
-                </div>
-                <?php if ($canAddEvent) : ?>
-                    <a class="reedcrm-relaunch-add" href="<?php echo dol_escape_htmltag($relaunchUrl . $relaunchQuery . '&actioncode=' . $type['actioncode']); ?>" title="<?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?>" aria-label="<?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?>">
-                        <i class="fas fa-plus"></i>
-                    </a>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
-    </div>
+    <?php
+    require_once __DIR__ . '/../../../lib/reedcrm_relaunch.lib.php';
+
+    print reedcrm_render_relaunch_widget([
+        'projectId'  => (int) $project->id,
+        'mode'       => 'link',
+        'canCreate'  => $canAddEvent,
+        'extraQuery' => !empty($callListId) ? '&call_list_id=' . (int) $callListId : '',
+    ]);
+    ?>
 </div>

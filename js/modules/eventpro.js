@@ -368,7 +368,11 @@ window.reedcrm.eventpro.modalCloseWatcher = function () {
 window.reedcrm.eventpro.event = function () {
   var modalSelector = '#' + window.reedcrm.eventpro.modalId;
 
-  $(document).on('click', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function (e) {
+  // eventpro.js is loaded once inside reedcrm.min.js and once raw by every host page, so without
+  // this the modal handlers end up bound twice and a single click opens two AJAX requests.
+  $(document).off('.reedcrmEventProModal');
+
+  $(document).on('click.reedcrmEventProModal', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function (e) {
     e.preventDefault();
     var $modal = $(modalSelector);
     $modal.removeClass('modal-active');
@@ -376,18 +380,37 @@ window.reedcrm.eventpro.event = function () {
   });
 
   var mousedownOnBackdrop = false;
-  $(document).on('mousedown', modalSelector, function (e) {
+  $(document).on('mousedown.reedcrmEventProModal', modalSelector, function (e) {
     mousedownOnBackdrop = $(e.target).is(modalSelector);
   });
 
-  $(document).on('click', modalSelector, function (e) {
+  $(document).on('click.reedcrmEventProModal', modalSelector, function (e) {
     if ($(e.target).is(modalSelector) && mousedownOnBackdrop) {
       $(this).removeClass('modal-active');
       $(this).find('#' + window.reedcrm.eventpro.modalId + '-content').empty();
     }
   });
 
-  $(document).on('click', '.reedcrm-modal-open, .reedcrm-card-modal-open', function (e) {
+  // #873: date shortcuts of the direct reminder form. selectDate() drives the POST through its
+  // hidden day/month/year inputs, so they are set alongside the visible one.
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-reminder-shortcut', function (e) {
+    e.preventDefault();
+
+    var days = parseInt($(this).data('days'), 10) || 1;
+    var target = new Date();
+    target.setDate(target.getDate() + days);
+
+    var day = ('0' + target.getDate()).slice(-2);
+    var month = ('0' + (target.getMonth() + 1)).slice(-2);
+    var year = target.getFullYear();
+
+    $('#reminder_').val(day + '/' + month + '/' + year);
+    $('#reminder_day').val(day);
+    $('#reminder_month').val(month);
+    $('#reminder_year').val(year);
+  });
+
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-modal-open, .reedcrm-card-modal-open', function (e) {
     var $button = $(this);
     var modalUrl = $button.attr('data-modal-url');
     var projectId = $button.attr('data-project-id');
@@ -547,6 +570,8 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   $(document).off('mouseenter', '.reedcrm-relaunch-button').on('mouseenter.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
+    // #873: the two-button widget asks for a temporal bucket ('past' / 'upcoming') instead of a type
+    var scope = $button.data('relaunch-scope') || '';
     var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
     // The button always carries the project id. The "+" span it was read from before only exists
     // for users allowed to create events, so the tooltip stayed empty for read-only ones.
@@ -586,7 +611,9 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
       'all': 'Relances commerciales'
     };
 
-    tooltipContent += '<strong>' + (typeLabels[type] || type) + '</strong>';
+    // data-dialog-title is emitted server-side and translated; typeLabels is the legacy fallback
+    var dialogTitle = $button.data('dialog-title');
+    tooltipContent += '<strong>' + (dialogTitle || typeLabels[type] || type) + '</strong>';
     tooltipContent += '</div>';
     tooltipContent += '<div class="reedcrm-relaunch-tooltip-content">';
     tooltipContent += '<div class="reedcrm-relaunch-tooltip-loading">' + (typeof window.saturne !== 'undefined' && window.saturne.loader ? '' : 'Chargement...') + '</div>';
@@ -670,6 +697,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
           project_id: projectId || '',
           socid: socid,
           action_type: actionType,
+          scope: scope,
           limit: $button.data('limit') || 0,
           token: $('meta[name=anti-csrf-currenttoken]').attr('content') || ''
         },

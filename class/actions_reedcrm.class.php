@@ -558,80 +558,25 @@ class ActionsReedcrm
             $pictoMod  = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
 
             if (isModEnabled('agenda')) {
-                require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-
-                $actionComm       = new ActionComm($db);
                 $isProjectContext = (strpos($parameters['context'], 'projectcard') !== false);
-                $isThirdpartyContext = preg_match('/thirdpartycomm|thirdpartycard/', $parameters['context']);
 
                 if (strpos($parameters['context'], 'thirdpartycard') !== false) {
                     $socid = (int) $object->id;
                 } else {
-                    $socid = (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
+                    $socid = (int) (GETPOSTISSET('socid') ? GETPOST('socid') : $object->socid);
                 }
                 $projectId = $isProjectContext ? (int) $object->id : 0;
 
-                $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM '  . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG') . ')';
-                $actionComms = $actionComm->getActions($socid, ($isProjectContext ? GETPOST('id') : ''), ($isProjectContext ? 'project' : ''), $filter, 'a.datec');
-                $actonComsByType = [
-                    'call'  => ['picto' => 'headset',      'actioncode' => 'AC_TEL',   'nb' => 0],
-                    'email' => ['picto' => 'envelope',     'actioncode' => 'AC_EMAIL', 'nb' => 0],
-                    'rdv'   => ['picto' => 'calendar',     'actioncode' => 'AC_RDV',   'nb' => 0],
-                    'other' => ['picto' => 'comment-dots', 'actioncode' => 'AC_OTH',   'nb' => 0],
-                ];
-                if (is_array($actionComms) && !empty($actionComms)) {
-                    foreach ($actionComms as $ac) {
-                        if ($ac->type_code == 'AC_TEL')        $actonComsByType['call']['nb']++;
-                        elseif ($ac->type_code == 'AC_EMAIL')  $actonComsByType['email']['nb']++;
-                        elseif ($ac->type_code == 'AC_RDV')    $actonComsByType['rdv']['nb']++;
-                        else                                   $actonComsByType['other']['nb']++;
-                    }
-                }
+                require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
 
-                $out = '<tr id="reedcrm-relaunch-row-hidden" style="display:none;"><td colspan="2">';
-
-                $out .= '<div class="contact-inline-wrapper reedcrm-header-relaunch-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
-                $out .= '<img src="' . $pictoPath . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
-
-                // socid is required by the hover tooltip when there is no project context (propal/thirdparty cards)
-                $socidAttr = !$isProjectContext ? ' data-socid="' . (int) $socid . '"' : '';
-                $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons"' . $socidAttr . ' style="display: inline-flex; align-items: center; gap: 4px;">';
-                $relaunchAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
-
-                foreach ($actonComsByType as $actionCommType => $actonComByType) {
-                    $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $object->id . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
-                    $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $object->id . '"';
-                    $out .= ' data-dialog-title="' . $langs->trans($actionCommType) . '"';
-                    $out .= ' data-dialog-icon="fas fa-' . $actonComByType['picto'] . '"';
-                    $out .= ' data-dialog-align="center"';
-                    $out .= ' data-dialog-url="' . dol_escape_htmltag($relaunchAjaxUrl) . '"';
-                    $out .= ' data-dialog-footer="none"';
-                    $out .= ' data-project-id="' . $projectId . '"';
-                    $out .= ' data-relaunch-type="' . $actionCommType . '"'; // consumed by the hover tooltip (initRelaunchTooltips)
-                    $out .= ' data-action-comm-type="' . $actonComByType['actioncode'] . '">';
-
-                    $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
-                    $out .= '<i class="fas fa-' . $actonComByType['picto'] . '"></i>';
-                    $out .= '<span class="reedcrm-plist-relaunch-count">' . $actonComByType['nb'] . '</span>';
-                    $out .= '</div>';
-
-                    if ($user->hasRight('agenda', 'myactions', 'create')) {
-                        if ($isProjectContext) {
-                            $cardProUrlFull = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id . '&actioncode=' . $actonComByType['actioncode'];
-                        } else {
-                            $cardProUrlFull = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe&actioncode=' . $actonComByType['actioncode'];
-                        }
-                        $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-                        $out .= '<i class="fas fa-plus"></i>';
-                        $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
-                        $out .= '</div>';
-                    }
-
-                    $out .= '</div>';
-                }
-
-                $out .= '</div>'; // End reedcrm-plist-relaunch-buttons
-                $out .= '</div>'; // End wrapper block
+                $out  = '<tr id="reedcrm-relaunch-row-hidden" style="display:none;"><td colspan="2">';
+                $out .= '<div class="contact-inline-wrapper reedcrm-header-relaunch-master">';
+                $out .= '<img src="' . $pictoPath . '" class="reedcrm-header-relaunch-logo" alt="ReedCRM" />';
+                $out .= reedcrm_render_relaunch_widget([
+                    'projectId' => $projectId,
+                    'socid'     => $socid,
+                ]);
+                $out .= '</div>';
 
                 // Teleport the block to the header area
                 $out .= '<script>
@@ -1587,86 +1532,7 @@ class ActionsReedcrm
 
                             $actionComms = $actionComm->getActions($socId, $objId, 'project', $filter, 'a.datec');
 
-                            $countsByType = [
-                                'call' => 0,
-                                'email' => 0,
-                                'rdv' => 0,
-                                'other' => 0
-                            ];
-
-                            $relaunchesByType = [
-                                'call' => [],
-                                'email' => [],
-                                'rdv' => [],
-                                'other' => []
-                            ];
-
-                            if (is_array($actionComms) && !empty($actionComms)) {
-                                $nbActionComms = count($actionComms);
-
-                                require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-                                require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
-
-                                foreach ($actionComms as $ac) {
-                                    $contactName = '';
-                                    if (!empty($ac->contact_id)) {
-                                        $contact = new Contact($db);
-                                        if ($contact->fetch($ac->contact_id) > 0) {
-                                            $contactName = $contact->getFullName($langs);
-                                        }
-                                    }
-
-                                    $userName = '';
-                                    if (!empty($ac->userownerid)) {
-                                        $userOwner = new User($db);
-                                        if ($userOwner->fetch($ac->userownerid) > 0) {
-                                            $userName = $userOwner->getFullName($langs);
-                                        }
-                                    }
-
-                                    $status = '';
-                                    if (isset($ac->percentage)) {
-                                        if ($ac->percentage >= 100) {
-                                            $status = $langs->trans('Done');
-                                        } elseif ($ac->percentage > 0) {
-                                            $status = $ac->percentage . '%';
-                                        }
-                                    }
-
-                                    $note = '';
-                                    if (!empty($ac->note_private)) {
-                                        $note = dolGetFirstLineOfText(dol_string_nohtmltag($ac->note_private, 1));
-                                        $note = dol_trunc($note, 100);
-                                    }
-
-                                    $relaunchData = [
-                                        'date' => dol_print_date($ac->datec, 'dayhourtext', 'tzuser'),
-                                        'datep' => dol_print_date($ac->datep, 'dayhour', 'tzuser'),
-                                        'label' => $ac->label,
-                                        'note' => $note,
-                                        'contact' => $contactName,
-                                        'user' => $userName,
-                                        'status' => $status,
-                                        'id' => $ac->id
-                                    ];
-
-                                    if ($ac->type_code == 'AC_TEL') {
-                                        $countsByType['call']++;
-                                        $relaunchesByType['call'][] = $relaunchData;
-                                    } elseif ($ac->type_code == 'AC_EMAIL') {
-                                        $countsByType['email']++;
-                                        $relaunchesByType['email'][] = $relaunchData;
-                                    } elseif ($ac->type_code == 'AC_RDV') {
-                                        $countsByType['rdv']++;
-                                        $relaunchesByType['rdv'][] = $relaunchData;
-                                    } else {
-                                        $countsByType['other']++;
-                                        $relaunchesByType['other'][] = $relaunchData;
-                                    }
-                                }
-                            } else {
-                                $nbActionComms = 0;
-                            }
+                            $nbActionComms = is_array($actionComms) ? count($actionComms) : 0;
 
                             // @todo is a backward, should be removed one day when corrupted tools repair is added in saturne
                             if ($parameters['obj']->options_commrelaunch != $nbActionComms) {
@@ -1676,68 +1542,13 @@ class ActionsReedcrm
                                 $project->updateExtrafield('commrelaunch');
                             }
 
-                            $modalId = 'eventproCardModal';
-                            $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $objId . '&from_type=project&project_id=' . $objId;
+                            require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
 
-                            $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
-                            $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
-
-                            $dialogUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
-
-                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-call" data-project-id="' . $objId . '" data-dialog-url="' . $dialogUrl . '" data-relaunch-type="call" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['call'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['call'] == 0 ? ' count-zero' : '') . '">';
-                            $out .= '<i class="fas fa-headset"></i>';
-                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['call'] . '</span>';
-                            $out .= '</div>';
-                            if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_TEL';
-                                $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-                                $out .= '<i class="fas fa-plus"></i>';
-                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
-                                $out .= '</div>';
-                            }
-                            $out .= '</div>';
-
-                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-email" data-project-id="' . $objId . '" data-dialog-url="' . $dialogUrl . '" data-relaunch-type="email" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['email'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['email'] == 0 ? ' count-zero' : '') . '">';
-                            $out .= '<i class="fas fa-envelope"></i>';
-                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['email'] . '</span>';
-                            $out .= '</div>';
-                            if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_EMAIL';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
-                                $out .= '</span>';
-                            }
-                            $out .= '</div>';
-
-                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-rdv" data-project-id="' . $objId . '" data-dialog-url="' . $dialogUrl . '" data-relaunch-type="rdv" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['rdv'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['rdv'] == 0 ? ' count-zero' : '') . '">';
-                            $out .= '<i class="fas fa-calendar"></i>';
-                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['rdv'] . '</span>';
-                            $out .= '</div>';
-                            if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_RDV';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
-                                $out .= '</span>';
-                            }
-                            $out .= '</div>';
-
-                            $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-other" data-project-id="' . $objId . '" data-dialog-url="' . $dialogUrl . '" data-relaunch-type="other" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['other'])) . '">';
-                            $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['other'] == 0 ? ' count-zero' : '') . '">';
-                            $out .= '<i class="fas fa-comment-dots"></i>';
-                            $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['other'] . '</span>';
-                            $out .= '</div>';
-                            if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_OTH';
-                                $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-                                $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
-                                $out .= '</span>';
-                            }
-                            $out .= '</div>';
-
-                            $out .= '</div>';
+                            $out .= reedcrm_render_relaunch_widget([
+                                'projectId'    => $objId,
+                                'socid'        => $socId,
+                                'wrapperClass' => 'reedcrm-plist-relaunch-wrapper',
+                            ]);
 
 //                            $oppPercent = isset($parameters['obj']->opp_percent) ? (int) $parameters['obj']->opp_percent : 0;
 //                            // Adding progress bar right after badges
