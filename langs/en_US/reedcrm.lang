@@ -662,3 +662,18 @@ NoPhoneNumber = No phone number
 NoEventOnOpportunity = No event on this opportunity yet
 ToCallShort = to call
 SeeOpportunityTimeline = See the history
+
+# Quick close of an event
+QuickCloseEventTitle = Close the event
+QuickCloseEventTooltip = Close this event
+QuickCloseEventComment = Comment
+QuickCloseEventCommentPlaceholder = Appended to the event description (optional)
+QuickCloseEventReschedule = Schedule the same event again for later
+QuickCloseEventInOneMonth = In 1 month
+QuickCloseEventInDays = In
+QuickCloseEventInDaysSuffix = days
+QuickCloseEventConfirm = Close
+QuickCloseEventDone = Event closed
+QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
+QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
+QuickCloseEventError = Closing the event failed

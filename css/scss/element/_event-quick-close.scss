@@ -1,0 +1,125 @@
+// =============================================================================
+// Quick close of a to-do event
+// The status badge of every unfinished event listed by show_actions_done()
+// becomes a trigger (js/modules/event_quick_close.js) opening the modal
+// rendered by core/tpl/reedcrm_event_quick_close_modal.tpl.php.
+// =============================================================================
+
+$reedcrm-quick-close-accent: #014751;
+
+// Status badge turned into a trigger. The core badge already carries its own colors,
+// only the affordance is added here.
+.reedcrm-quick-close-trigger {
+  cursor: pointer;
+  transition: box-shadow .15s ease, transform .15s ease;
+
+  &:hover {
+    box-shadow: 0 0 0 2px rgba(1, 71, 81, .35);
+    transform: translateY(-1px);
+  }
+
+  .reedcrm-quick-close-icon {
+    margin-left: 5px;
+    opacity: .6;
+  }
+
+  &:hover .reedcrm-quick-close-icon {
+    opacity: 1;
+  }
+}
+
+// Short highlight of the row whose event has just been closed.
+tr.reedcrm-quick-close-flash > td {
+  animation: reedcrm-quick-close-flash 1.6s ease-out;
+}
+
+@keyframes reedcrm-quick-close-flash {
+  0%   { background-color: rgba(1, 71, 81, .18); }
+  100% { background-color: transparent; }
+}
+
+// The framework sizes its modals with fixed percentages, this one is short and hugs its content.
+.wpeo-modal.modal-reedcrm-quick-close {
+  .modal-container {
+    max-width: 520px;
+    height: auto;
+    max-height: 90vh;
+  }
+
+  .modal-container .modal-header,
+  .modal-container .modal-footer {
+    height: auto;
+  }
+
+  .modal-container .modal-content {
+    height: auto;
+    padding: 16px 24px;
+    overflow-y: auto;
+  }
+
+  .modal-container .modal-footer {
+    padding: 14px 24px 0;
+  }
+
+  // Label of the event being closed, recalled above the form.
+  .reedcrm-quick-close-event {
+    margin: 0 0 14px;
+    padding: 8px 10px;
+    border-left: 3px solid $reedcrm-quick-close-accent;
+    background: #f5f8f9;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .reedcrm-quick-close-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  .reedcrm-quick-close-comment {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+
+  .reedcrm-quick-close-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  // Postponement choices, revealed only once the clone is requested.
+  .reedcrm-quick-close-delay {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: #f5f8f9;
+
+    &.reedcrm-quick-close-delay-visible {
+      display: block;
+    }
+  }
+
+  .reedcrm-quick-close-delay-choice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    cursor: pointer;
+  }
+
+  .reedcrm-quick-close-delay-value {
+    width: 70px;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+}
