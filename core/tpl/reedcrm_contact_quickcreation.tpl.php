@@ -42,6 +42,14 @@ if ($permissiontoaddcontact) {
 		print '</tr>';
 	}
 
+	// Categories
+	if (isModEnabled('categorie') && getDolGlobalInt('REEDCRM_CONTACT_CATEGORIES_VISIBLE') > 0) {
+		print '<tr><td>' . $langs->trans('ContactCategoriesShort') . '</td><td>';
+		$cate_arbo = $form->select_all_categories(Categorie::TYPE_CONTACT, '', 'parent', 64, 0, 1);
+		print img_picto('', 'category', 'class="pictofixedwidth"') . $form->multiselectarray('categories_contact', $cate_arbo, GETPOST('categories_contact', 'array'), '', 0, 'quatrevingtpercent widthcentpercentminusx');
+		print '</td></tr>';
+	}
+
 	print '</table>';
 
 	print dol_get_fiche_end();

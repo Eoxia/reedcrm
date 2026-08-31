@@ -64,7 +64,7 @@ if ($permissiontoaddproject) {
 	}
 
 	// Commercial
-	if ($conf->global->REEDCRM_PROJECT_COMMERCIAL_VISIBLE > 0 && empty($conf->global->REEDCRM_PROJECT_COMMERCIAL_INHERIT)) {
+	if (getDolGlobalInt('REEDCRM_PROJECT_COMMERCIAL_VISIBLE') > 0 && !getDolGlobalInt('REEDCRM_PROJECT_COMMERCIAL_INHERIT')) {
 		require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 		if (!isset($userList) || empty($userList)) {
 			$userList = $form->select_dolusers('', '', 0, null, 0, '', '', 0, 0, 0, '((u.statut:=:1) AND (u.employee:=:1))', 0, '', '', 0, 1);
