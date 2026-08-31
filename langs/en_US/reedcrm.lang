@@ -664,3 +664,25 @@ NoPhoneNumber = No phone number
 NoEventOnOpportunity = No event on this opportunity yet
 ToCallShort = to call
 SeeOpportunityTimeline = See the history
+
+# Relaunch widget (#873)
+RelaunchScopePastTooltip = Relaunch history
+RelaunchScopeUpcomingTooltip = Upcoming relaunches
+RelaunchAddFullEvent = Add a complete event
+RelaunchAddDirectReminder = Add a direct reminder
+RelaunchOverdue = Overdue
+RelaunchOverdueCount = %s overdue relaunch(es)
+RelaunchLateBy = %s day(s) late
+RelaunchNoPast = No past relaunch
+RelaunchNoUpcoming = No upcoming relaunch
+RelaunchWhen = When
+RelaunchInOneDay = Tomorrow
+RelaunchInThreeDays = In 3 days
+RelaunchInOneWeek = In 1 week
+RelaunchTypeCall = Call
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = Meeting
+RelaunchTypeOther = Other
+RelaunchReminderCreated = Reminder created
+RelaunchReminderTitlePlaceholder = Reminder subject
+RelaunchReminderTitleRequired = The reminder subject is required

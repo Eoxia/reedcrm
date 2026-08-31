@@ -710,3 +710,25 @@ NoPhoneNumber = Pas de téléphone
 NoEventOnOpportunity = Aucun événement sur cette opportunité
 ToCallShort = à appeler
 SeeOpportunityTimeline = Voir l'historique
+
+# Relaunch widget - Widget de relance (#873)
+RelaunchScopePastTooltip = Historique des relances
+RelaunchScopeUpcomingTooltip = Relances à venir
+RelaunchAddFullEvent = Ajouter un événement complet
+RelaunchAddDirectReminder = Ajouter un rappel direct
+RelaunchOverdue = En retard
+RelaunchOverdueCount = %s relance(s) en retard
+RelaunchLateBy = En retard de %s jour(s)
+RelaunchNoPast = Aucune relance passée
+RelaunchNoUpcoming = Aucune relance à venir
+RelaunchWhen = Quand
+RelaunchInOneDay = Demain
+RelaunchInThreeDays = Dans 3 jours
+RelaunchInOneWeek = Dans 1 semaine
+RelaunchTypeCall = Appel
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = RDV
+RelaunchTypeOther = Autre
+RelaunchReminderCreated = Rappel créé
+RelaunchReminderTitlePlaceholder = Objet du rappel
+RelaunchReminderTitleRequired = L'objet du rappel est obligatoire

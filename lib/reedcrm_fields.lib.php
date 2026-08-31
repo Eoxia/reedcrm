@@ -22,7 +22,7 @@
  */
 
 /**
- * Render the relaunch commercial field (ActionComm buttons by type).
+ * Render the relaunch commercial field: the two-button widget (past / upcoming).
  *
  * @param  array        $parameters Hook parameters (key, context, ...)
  * @param  CommonObject $object     The object
@@ -30,74 +30,21 @@
  */
 function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $object): string
 {
-    global $conf, $db, $langs, $user;
-
-    $out = '';
-
     if (!isModEnabled('agenda')) {
-        return $out;
+        return '';
     }
 
-    // In the saturne list loop the record id is $object->id (rowid is 0); the raw row
-    // (carrying the real project id and socid) is passed via the hook param 'obj'.
+    // In the saturne list loop the record id is $object->id (rowid is 0); the raw row, carrying
+    // the real project id, is passed through the hook param 'obj'.
     $row       = !empty($parameters['obj']) ? $parameters['obj'] : $object;
     $projectId = (int) (!empty($row->id) ? $row->id : $object->id);
-    $socid     = (int) ($row->socid ?? 0);
 
-    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+    require_once __DIR__ . '/reedcrm_relaunch.lib.php';
 
-    $actionComm = new ActionComm($db);
-
-    $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
-    $actionComms = $actionComm->getActions($socid, $projectId, 'project', $filter, 'a.datec');
-
-    require_once __DIR__ . '/reedcrm_function.lib.php';
-
-    $actonComsByType = [];
-    foreach (reedcrm_get_relaunch_types() as $typeKey => $type) {
-        $actonComsByType[$typeKey] = $type + ['nb' => 0];
-    }
-
-    if (is_array($actionComms) && !empty($actionComms)) {
-        foreach ($actionComms as $ac) {
-            $actonComsByType[reedcrm_get_relaunch_type_key((string) $ac->type_code)]['nb']++;
-        }
-    }
-
-    $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId;
-
-    $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
-    $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
-
-    foreach ($actonComsByType as $actionCommType => $actonComByType) {
-        $dialogUrl = dol_buildpath('custom/reedcrm/ajax/get_relaunches_list.php', 1);
-
-        $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $projectId . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
-        $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '"';
-        // Required by the hover tooltip (eventpro.js): without it the tooltip bails out and never opens
-        $out .= ' data-relaunch-type="' . $actionCommType . '"';
-        $out .= ' data-action-comm-type="' . $actonComByType['actioncode'] . '">';
-
-        $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
-        $out .= '<i class="fas fa-' . $actonComByType['picto'] . '"></i>';
-        $out .= '<span class="reedcrm-plist-relaunch-count">' . $actonComByType['nb'] . '</span>';
-        $out .= '</div>';
-
-        if ($user->hasRight('agenda', 'myactions', 'create')) {
-            $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=' . $actonComByType['actioncode'];
-            $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-            $out .= '<i class="fas fa-plus"></i>';
-            $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
-            $out .= '</div>';
-        }
-
-        $out .= '</div>';
-    }
-
-    $out .= '</div>';
-    $out .= '</div>';
-
-    return $out;
+    return reedcrm_render_relaunch_widget([
+        'projectId'    => $projectId,
+        'wrapperClass' => 'reedcrm-plist-relaunch-wrapper',
+    ]);
 }
 
 /**

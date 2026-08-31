@@ -161,7 +161,13 @@ require __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_opportunity_head.tpl.php
 // Keep the picked event type when switching tabs, otherwise the shortcut the user came from is lost
 $eventProTabExtraParams = '&actioncode=' . urlencode($actionCode) . ($callListId > 0 ? '&call_list_id=' . $callListId : '');
 
-require __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_relaunch_form.tpl.php';
+// The right-hand button of the relaunch widget asks for the short reminder form (#873)
+if (GETPOST('mode', 'aZ09') === 'reminder') {
+    require_once __DIR__ . '/../../lib/reedcrm_relaunch.lib.php';
+    require __DIR__ . '/../../core/tpl/view/eventpro/view_eventpro_reminder.tpl.php';
+} else {
+    require __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_relaunch_form.tpl.php';
+}
 
 print '</div>';
 
