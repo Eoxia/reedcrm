@@ -183,12 +183,10 @@ window.reedcrm.eventQuickClose.event = function () {
  * @return {void}
  */
 window.reedcrm.eventQuickClose.open = function ($trigger) {
-  var $row     = $trigger.closest('tr');
-  var $link    = $row.find('a[href*="/comm/action/card.php?id="]').first();
-  var refIndex = $link.closest('td').index();
-  // In the show_actions_done() layout the status sits 7 cells after the reference and the title 4,
-  // any other list has its own column order so only the reference is trustworthy there
-  var label = ($trigger.closest('td').index() - refIndex === 7) ? $row.find('td').eq(refIndex + 4).text().trim() : '';
+  var $row  = $trigger.closest('tr');
+  var $link = $row.find('a[href*="/comm/action/card.php?id="]').first();
+  // getNomUrl() puts the event label in the title of the reference link, whatever the column order
+  var label = ($link.attr('title') || '').trim();
 
   window.reedcrm.eventQuickClose.currentEventId = parseInt($trigger.attr('data-event-id'), 10);
 
