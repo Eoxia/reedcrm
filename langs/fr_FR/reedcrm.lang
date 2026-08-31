@@ -42,6 +42,8 @@ ProjectPhone = Téléphone projet
 ErrorInvalidProjectPhone = Le numéro de téléphone n'est pas valide ou est trop long (max 20 caractères)
 ContactInformations = Coordonnées
 Vocal = Vocal
+AddressContactSameAsThirdPartyContact = Contact de l'adresse identique au contact du tiers
+ProjectContactSameAsThirdPartyContact = Contact du projet identique au contact du tiers
 
 # Frontend - Frontend
 QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
