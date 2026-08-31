@@ -77,6 +77,39 @@ window.reedcrm.eventpro.init = function () {
   window.reedcrm.eventpro.modalCloseWatcher();
   window.reedcrm.eventpro.initAddContact();
   window.reedcrm.eventpro.initRelaunchTooltips();
+  window.reedcrm.eventpro.fixDatePickerTriggers();
+};
+
+/**
+ * Put the datepicker button back on the date line
+ *
+ * jQuery UI injects its calendar trigger inside .divfordateinput, right after the input, which in a
+ * narrow column drops it under the field. Move it between the date and the hours, so the row reads
+ * [date] [calendar] [hh:mm].
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param  {Object} [$scope] Optional container to limit the fix to
+ * @returns {void}
+ */
+window.reedcrm.eventpro.fixDatePickerTriggers = function ($scope) {
+  var $root = $scope && $scope.length ? $scope : $(document);
+
+  ['#reminder_', '#event_'].forEach(function (selector) {
+    var $input = $root.find ? $root.find(selector) : $(selector);
+    if (!$input.length) {
+      return;
+    }
+
+    var $trigger = $input.siblings('.ui-datepicker-trigger');
+    var $hours = $input.closest('.divfordateinput').nextAll('span.nowraponall').first();
+    if ($trigger.length && $hours.length) {
+      $hours.before($trigger.detach());
+    }
+  });
 };
 
 /**
@@ -283,6 +316,11 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
   $content.find('#toggle_reminder').on('change', function () {
     $content.find('#reminder_fields').slideToggle(200);
   });
+
+  // The datepicker is built after the fragment is inserted, so replace its trigger now
+  setTimeout(function () {
+    window.reedcrm.eventpro.fixDatePickerTriggers($content);
+  }, 100);
 };
 
 /**
@@ -408,6 +446,9 @@ window.reedcrm.eventpro.event = function () {
     $('#reminder_day').val(day);
     $('#reminder_month').val(month);
     $('#reminder_year').val(year);
+
+    $(this).closest('.reedcrm-reminder-shortcuts').find('.reedcrm-reminder-shortcut').removeClass('is-active');
+    $(this).addClass('is-active');
   });
 
   $(document).on('click.reedcrmEventProModal', '.reedcrm-modal-open, .reedcrm-card-modal-open', function (e) {

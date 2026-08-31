@@ -423,6 +423,8 @@ function reedcrm_create_call_reminder(DoliDB $db, User $user, array $data): int
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncommreminder.class.php';
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+    // dol_time_plus_duree() lives in date.lib.php, which not every host page loads
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 
     $label = trim((string) ($data['label'] ?? ''));
     if ($label === '') {
