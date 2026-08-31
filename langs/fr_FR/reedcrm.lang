@@ -93,7 +93,7 @@ ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni
 ReminderValue = Délai du rappel
 ReminderValueDescription = Nombre d’unités de temps avant l’événement pour déclencher le rappel
 ReminderUnit = Unité du rappel
-ReminderUnitDescription = nité de temps utilisée pour le rappel
+ReminderUnitDescription = Unité de temps utilisée pour le rappel
 
 # ApiQuickCreation
 ApiQuickCreations = ajouts rapides via l'api
