@@ -105,6 +105,14 @@ if ($actionComm->update($user) <= 0) {
 $newEvent = ['id' => 0];
 
 if ($reschedule > 0) {
+    // A caller sending nothing falls back on the delay configured for the module
+    if ($delayUnit !== 'm' && $delayUnit !== 'd') {
+        $delayUnit = getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm') === 'd' ? 'd' : 'm';
+    }
+    if ($delayValue < 1) {
+        $delayValue = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
+    }
+
     if ($delayUnit === 'd') {
         $delayValue = max(1, min(3650, $delayValue));
         $newDatep   = dol_time_plus_duree(dol_now(), $delayValue, 'd');

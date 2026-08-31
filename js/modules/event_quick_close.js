@@ -190,11 +190,15 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
 
   window.reedcrm.eventQuickClose.currentEventId = parseInt($trigger.attr('data-event-id'), 10);
 
+  // The postponement always reopens on the delay configured for the module
+  var defaultUnit = window.reedcrm.eventQuickClose.config('default-unit') || 'm';
+  var defaultDays = window.reedcrm.eventQuickClose.config('default-days') || 7;
+
   $('#reedcrm-quick-close-comment').val('');
   $('#reedcrm-quick-close-reschedule').prop('checked', false);
   $('#reedcrm-quick-close-delay').removeClass('reedcrm-quick-close-delay-visible');
-  $('input[name="reedcrm-quick-close-delay-unit"][value="m"]').prop('checked', true);
-  $('#reedcrm-quick-close-delay-value').val(7);
+  $('input[name="reedcrm-quick-close-delay-unit"][value="' + defaultUnit + '"]').prop('checked', true);
+  $('#reedcrm-quick-close-delay-value').val(defaultDays);
 
   $('#reedcrm-quick-close-modal .reedcrm-quick-close-event').text(label || $link.text().trim());
   $('#reedcrm-quick-close-modal').addClass('modal-active');

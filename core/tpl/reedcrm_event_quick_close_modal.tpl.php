@@ -30,6 +30,10 @@ if (empty($conf) || !is_object($conf)) {
 
 global $langs;
 
+// Postponement preselected in the reschedule block, set in the module configuration
+$quickCloseDelayUnit  = getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm') === 'd' ? 'd' : 'm';
+$quickCloseDelayValue = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
+
 // The wpeo framework is not loaded on native Dolibarr pages, the modal needs it to display
 ?>
 <link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1)); ?>">
@@ -38,6 +42,8 @@ global $langs;
 <div id="reedcrm-quick-close-config"
      data-url="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/quick_close_event.php', 1)); ?>"
      data-token="<?php echo dol_escape_htmltag(newToken()); ?>"
+     data-default-unit="<?php echo dol_escape_htmltag($quickCloseDelayUnit); ?>"
+     data-default-days="<?php echo (int) $quickCloseDelayValue; ?>"
      data-trans-tooltip="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"
      data-trans-error="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventError')); ?>"></div>
 
@@ -60,13 +66,13 @@ global $langs;
 
             <div class="reedcrm-quick-close-delay" id="reedcrm-quick-close-delay">
                 <label class="reedcrm-quick-close-delay-choice">
-                    <input type="radio" name="reedcrm-quick-close-delay-unit" value="m" checked>
+                    <input type="radio" name="reedcrm-quick-close-delay-unit" value="m"<?php echo $quickCloseDelayUnit === 'm' ? ' checked' : ''; ?>>
                     <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventInOneMonth')); ?></span>
                 </label>
                 <label class="reedcrm-quick-close-delay-choice">
-                    <input type="radio" name="reedcrm-quick-close-delay-unit" value="d">
+                    <input type="radio" name="reedcrm-quick-close-delay-unit" value="d"<?php echo $quickCloseDelayUnit === 'd' ? ' checked' : ''; ?>>
                     <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventInDays')); ?></span>
-                    <input type="number" id="reedcrm-quick-close-delay-value" class="reedcrm-quick-close-delay-value" value="7" min="1" max="3650">
+                    <input type="number" id="reedcrm-quick-close-delay-value" class="reedcrm-quick-close-delay-value" value="<?php echo (int) $quickCloseDelayValue; ?>" min="1" max="3650">
                     <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventInDaysSuffix')); ?></span>
                 </label>
             </div>
