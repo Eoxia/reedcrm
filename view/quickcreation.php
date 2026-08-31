@@ -48,6 +48,9 @@ if (isModEnabled('categorie')) {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 }
 
+// Load ReedCRM librairies
+require_once __DIR__ . '/../class/geolocation.class.php';
+
 // Global variables definitions
 global $conf, $db, $hookmanager, $mysoc, $langs, $user;
 
@@ -73,6 +76,7 @@ if (isModEnabled('societe')) {
     $thirdparty = new Societe($db);
     $contact    = new Contact($db);
 }
+$geolocation = new Geolocation($db);
 
 // Initialize view objects
 $form = new Form($db);
