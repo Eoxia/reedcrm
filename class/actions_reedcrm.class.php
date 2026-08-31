@@ -279,26 +279,6 @@ class ActionsReedcrm
      */
     public function addMoreActionsButtons(array $parameters, CommonObject $object): int
     {
-        global $langs, $user;
-
-        // Do something only for the current context
-        if (preg_match('/thirdpartycomm|projectcard/', $parameters['context'])) {
-            if (empty(GETPOST('action')) || GETPOST('action') == 'update') {
-                if (strpos($parameters['context'], 'thirdpartycomm') !== false) {
-                    $socid = $object->id;
-                    $moreparam = '';
-                } else {
-                    $socid = $object->socid;
-                    $moreparam = '&project_id=' . $object->id;
-                }
-                $url = '?socid=' . $socid . '&fromtype=' . $object->element . $moreparam . '&action=create&token=' . newToken();
-                
-                // Print the standard quick event creation
-                print dolGetButtonAction('', $langs->trans('QuickEventCreation'), 'default', dol_buildpath('/reedcrm/view/quickevent.php', 1) . $url, '', $user->rights->agenda->myactions->create);
-                
-            }
-        }
-
         // ReedCRM: on the validated Reception card, the core line view renders only the empty line
         // description and exposes no per-line hook, so the product description never shows. We inject it
         // client-side from a data-island computed here. (Shipment already shows it natively via the order line.)
