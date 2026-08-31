@@ -287,8 +287,8 @@ $pwaDocs = reedcrm_get_pwa_projects_documents($pwaProjectIds);
 
             <div class="contact-inline-wrapper pwa-card-contacts" data-project-id="<?php echo $project->id; ?>">
                 <i class="fas fa-address-book" style="color:#64748b;font-size:1.1em;margin-right:6px;"></i>
-                <span class="inline-edit-contact" data-field="firstname" data-val="<?php echo dol_escape_htmltag($cFirstName); ?>" style="margin-right:4px;" title="Modifier le prénom"><?php echo $hFirstName; ?></span>
-                <span class="inline-edit-contact" data-field="lastname"  data-val="<?php echo dol_escape_htmltag($cLastName);  ?>" style="margin-right:8px;" title="Modifier le nom"><?php echo $hLastName; ?></span>
+                <span class="inline-edit-contact" data-field="lastname"  data-val="<?php echo dol_escape_htmltag($cLastName);  ?>" style="margin-right:4px;" title="Modifier le nom"><?php echo $hLastName; ?></span>
+                <span class="inline-edit-contact" data-field="firstname" data-val="<?php echo dol_escape_htmltag($cFirstName); ?>" style="margin-right:8px;" title="Modifier le prénom"><?php echo $hFirstName; ?></span>
                 <span class="dot-sep">&bull;</span>
                 <?php echo $linkPhone; ?>
                 <span class="inline-edit-contact" data-field="phone"   data-val="<?php echo dol_escape_htmltag($cPhone); ?>" style="margin-right:8px;" title="Modifier le téléphone"><?php echo $hPhone; ?></span>
