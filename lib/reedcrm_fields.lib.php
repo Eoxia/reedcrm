@@ -141,8 +141,8 @@ function reedcrm_field_contact_details(array $parameters, CommonObject $object):
     $out .= '<div class="reedcrm-plist-coordonnees-box">';
     $out .= '<div class="reedcrm-plist-coordonnees-name" style="display:flex; align-items:center; padding-left:8px;">';
     $out .= '<i class="fas fa-address-book" style="color:#64748b; margin-right:4px; flex-shrink:0;"></i>';
-    $out .= $span('firstname', $firstname, 'Prénom', 'margin-right:4px;');
-    $out .= $span('lastname', $lastname, 'Nom', 'flex-grow:1;');
+    $out .= $span('lastname', $lastname, 'Nom', 'margin-right:4px;');
+    $out .= $span('firstname', $firstname, 'Prénom', 'flex-grow:1;');
     $out .= '</div>';
 
     $out .= '<div class="reedcrm-plist-coordonnees-email" style="display:flex; align-items:center; padding-left:8px;">';
