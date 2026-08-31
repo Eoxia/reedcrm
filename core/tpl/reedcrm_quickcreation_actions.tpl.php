@@ -60,7 +60,17 @@ if ($action == 'add') {
 					$contact->phone_pro = GETPOST('phone_pro', 'alpha');
 
 					$contactID = $contact->create($user);
-					if ($contactID < 0) {
+					if ($contactID > 0) {
+						// Category association
+						$categories = GETPOST('categories_contact', 'array');
+						if (count($categories) > 0) {
+							$result = $contact->setCategories($categories);
+							if ($result < 0) {
+								setEventMessages($contact->error, $contact->errors, 'errors');
+								$error++;
+							}
+						}
+					} else {
 						setEventMessages($contact->error, $contact->errors, 'errors');
 						$error++;
 					}

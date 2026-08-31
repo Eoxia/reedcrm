@@ -343,6 +343,17 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_CONTACT_EMAIL_VISIBLE');
 print '</td></td><td></td></tr>';
 
+// ContactCategoriesShort
+print '<tr class="oddeven"><td>';
+print $langs->trans('ContactCategoriesShort');
+print '</td><td>';
+print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('ContactCategoriesShort'));
+print '</td>';
+
+print '<td class="center">';
+print ajax_constantonoff('REEDCRM_CONTACT_CATEGORIES_VISIBLE');
+print '</td></td><td></td></tr>';
+
 // PROJECT
 print '<tr class="oddeven"><td colspan="4" class="center"><div class="titre inline-block">' . $langs->trans('Configs', $langs->transnoentities('QuickProjectCreations')) . '</div></td></tr>';
 
@@ -435,7 +446,7 @@ print $langs->trans('ObjectVisibleDescription', $langs->transnoentities('Extrafi
 print '</td>';
 
 print '<td class="center">';
-print ajax_constantonoff('REEDCRM_PROJECT_CATEGORIES_VISIBLE');
+print ajax_constantonoff('REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE');
 print '</td></td><td></td></tr>';
 
 // Categories

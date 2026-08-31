@@ -307,7 +307,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <?php endif; ?>
 
         <!-- Commercial -->
-        <?php if ($conf->global->REEDCRM_PROJECT_COMMERCIAL_VISIBLE > 0 && empty($conf->global->REEDCRM_PROJECT_COMMERCIAL_INHERIT)) : ?>
+        <?php if (getDolGlobalInt('REEDCRM_PROJECT_COMMERCIAL_VISIBLE') > 0 && !getDolGlobalInt('REEDCRM_PROJECT_COMMERCIAL_INHERIT')) : ?>
             <div class="form-group" style="margin-top: 15px;">
                 <div class="category-wrapper">
                     <div style="flex: 1; min-width: 0;" class="category-select-container">

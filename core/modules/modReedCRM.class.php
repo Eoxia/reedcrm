@@ -187,6 +187,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_CONTACT_JOB_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_CONTACT_PHONEPRO_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_CONTACT_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_CONTACT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
             // CONST PROJECT
             $i++ => ['REEDCRM_PROJECT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
@@ -194,6 +195,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_STATUS_VALUE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE', 'integer', 3000, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_COMMERCIAL_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE', 'integer', 1, '', 0, 'current'],
