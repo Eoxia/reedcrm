@@ -710,3 +710,88 @@ NoPhoneNumber = Pas de téléphone
 NoEventOnOpportunity = Aucun événement sur cette opportunité
 ToCallShort = à appeler
 SeeOpportunityTimeline = Voir l'historique
+
+#
+# Tableau de bord tickets
+#
+TicketDashboard = Tableau de bord tickets
+OpenTicketList = Tickets ouverts
+TicketPeriodFilter = Période analysée
+TicketPeriodLastMonth = 01 dernier mois
+TicketPeriodLastMonths = %s derniers mois
+TicketPeriodAll = Tout l'historique
+TicketAssigneeFilter = Affecté à
+TicketAllAssignees = Tous les intervenants
+
+# Tableau de bord tickets - Widgets
+TicketFlow = Flux des tickets
+TicketsCreatedOverPeriod = Créés sur la période
+TicketsClosedOverPeriod = Clôturés sur la période
+TicketBalanceOverPeriod = Solde
+TicketBalanceOverPeriodDescription = Différence entre les tickets créés et les tickets clôturés sur la période. Un solde positif signifie que le stock de tickets ouverts augmente.
+NbOfOpenedTicket = Tickets ouverts
+TicketsUnassigned = Non assignés
+TicketsNeverRead = Jamais lus
+TicketsUnread = Non lus
+TicketDelays = Délais
+MeanTakeOverTime = Prise en compte moyenne
+MeanTakeOverTimeDescription = Temps écoulé entre la création du ticket et sa première lecture, sur les tickets créés pendant la période.
+MeanFirstResponseTime = 1re réponse moyenne
+MeanFirstResponseTimeDescription = Temps écoulé entre la création du ticket et le premier message public écrit par un utilisateur interne. Les tickets restés sans réponse ne sont pas comptés.
+MedianFirstResponseTime = 1re réponse médiane
+MeanResolutionTime = Résolution moyenne
+MeanResolutionTimeDescription = Temps écoulé entre la création et la clôture, mesuré sur les tickets clôturés pendant la période.
+MedianResolutionTime = Résolution médiane
+MeanBacklogAge = Ancienneté moyenne du stock
+MeanBacklogAgeDescription = Ancienneté moyenne des tickets encore ouverts aujourd'hui, quelle que soit la période sélectionnée.
+OldestOpenTicket = Ticket ouvert le plus ancien
+TicketTimeSpent = Temps consigné
+TotalTimeSpentOverPeriod = Temps total
+TotalTimeSpentOverPeriodDescription = Temps consigné pendant la période sur les tâches de ticket, c'est-à-dire les tâches dont le libellé commence par le préfixe défini dans la configuration ReedCRM.
+NbOfTimeEntries = Saisies de temps
+MeanTimePerEntry = Temps moyen par saisie
+MeanTimePerTicket = Temps moyen par ticket
+NbOfTicketsWithTime = Tickets avec du temps
+NbOfTimeContributors = Contributeurs
+TimeSpentHours = Temps consigné (h)
+TicketPeople = Personnes
+NbOfAssignees = Intervenants
+NbOfAssigneesDescription = Nombre d'utilisateurs ayant au moins un ticket ouvert qui leur est affecté.
+MeanOpenTicketPerAssignee = Tickets ouverts / intervenant
+MostLoadedAssignee = Intervenant le plus chargé
+NbOfExchangesOverPeriod = Messages sur la période
+MeanExchangePerTicket = Messages par ticket
+NbOfConcernedSocieties = Tiers concernés
+NbOfExchanges = Messages
+
+# Tableau de bord tickets - Graphiques
+TicketRepartitionPerUser = Charge et délais par intervenant
+TicketTimeSpentPerUser = Temps consigné par intervenant
+TicketMessagesPerUser = Messages par intervenant
+TicketPublicMessages = Messages publics
+TicketPrivateMessages = Notes privées
+TicketsCreatedVersusClosedByMonth = Tickets créés et clôturés sur les %s derniers mois
+TicketsCreated = Tickets créés
+TicketsClosed = Tickets clôturés
+TicketTimeSpentByMonth = Temps consigné sur les %s derniers mois
+TicketOpenByStatus = Tickets ouverts par statut
+TicketBacklogAge = Ancienneté des tickets ouverts
+TicketResolutionTimeRepartition = Répartition des délais de résolution
+TicketBySeverity = Tickets ouverts par sévérité
+TicketByType = Tickets ouverts par type
+TicketCreationByWeekday = Créations par jour de la semaine
+TicketCreationByHour = Créations par heure
+TopSocietyWithMostOpenTickets = Top %s des tiers avec le plus de tickets ouverts
+DurationUnderDays = Moins de %s j
+DurationBetweenDays = De %s à %s j
+DurationOverDays = Plus de %s j
+
+# Tableau de bord tickets - Listes
+TicketWorkloadPerUserList = Charge détaillée par intervenant
+LastActivity = Dernière activité
+TicketOldestOpenList = Les %s tickets ouverts les plus anciens
+TicketAge = Ancienneté
+LastMessage = Dernier message
+TicketStaleList = Les %s tickets ouverts sans message depuis plus de %s jours
+NbOfTicketsWithTimeDescription = Nombre de tickets ayant au moins une saisie de temps, rapporté au nombre de tickets analysés : les tickets encore ouverts plus ceux créés ou clôturés pendant la période.
+TimeSpentOnAssignedTickets = Temps sur ses tickets
