@@ -795,3 +795,37 @@ LastMessage = Dernier message
 TicketStaleList = Les %s tickets ouverts sans message depuis plus de %s jours
 NbOfTicketsWithTimeDescription = Nombre de tickets ayant au moins une saisie de temps, rapporté au nombre de tickets analysés : les tickets encore ouverts plus ceux créés ou clôturés pendant la période.
 TimeSpentOnAssignedTickets = Temps sur ses tickets
+
+#
+# Todo - tableau des événements d'agenda
+#
+TodoBoard = Todo
+TodoAllUsers = Tous les utilisateurs
+TodoAllTypes = Tous les types
+TodoSearchPlaceholder = Libellé, lieu ou tiers
+TodoFilterHideAuto = Masquer les événements automatiques
+TodoFilterHideAutoHelp = Les événements tracés par Dolibarr lui-même ne sont pas des actions à mener
+TodoFilterCount = %s événement(s)
+TodoNoEvent = Aucun événement
+TodoNoLabel = Sans libellé
+TodoLateEvent = En retard
+TodoUnassigned = Non affecté
+TodoAddAssigned = Affecter un utilisateur
+TodoRemoveAssigned = Retirer l'affectation
+TodoLoadMore = Afficher %s de plus
+TodoColumnWidth = Largeur des colonnes
+TodoColumnGap = Espacement
+
+# Todo - relances automatiques (crons)
+TodoColumnPropalRelaunch = Devis à relancer
+TodoColumnInvoiceRelaunch = Factures à relancer
+TodoPropalRelaunchLabel = Relancer le devis %s
+TodoPropalRelaunchNote = Devis validé le %s, montant %s, toujours sans réponse.
+TodoInvoiceRelaunchLabel = Relancer la facture impayée %s
+TodoInvoiceRelaunchNote = Facture échue le %s, montant %s, toujours impayée.
+TodoPropalRelaunchCronLabel = ReedCRM - Relances des devis sans réponse
+TodoPropalRelaunchCronComment = Crée un événement à faire pour chaque devis validé depuis plus de 30 jours (constante REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) qui n'est ni signé ni refusé. L'événement alimente la colonne « Devis à relancer » du tableau Todo.
+TodoPropalRelaunchCronResult = %s relance(s) de devis créée(s)
+TodoInvoiceRelaunchCronLabel = ReedCRM - Relances des factures impayées
+TodoInvoiceRelaunchCronComment = Crée un événement à faire pour chaque facture validée impayée depuis plus de 30 jours après son échéance (constante REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). L'événement alimente la colonne « Factures à relancer » du tableau Todo.
+TodoInvoiceRelaunchCronResult = %s relance(s) de facture créée(s)

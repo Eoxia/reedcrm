@@ -440,6 +440,34 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
                 'priority'      => 54
+            ],
+            7 => [
+                'label'         => $langs->transnoentities('TodoPropalRelaunchCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmtodocron.class.php',
+                'objectname'    => 'ReedcrmTodoCron',
+                'method'        => 'createProposalRelaunchEvents',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('TodoPropalRelaunchCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && isModEnabled(\'agenda\')',
+                'priority'      => 55
+            ],
+            8 => [
+                'label'         => $langs->transnoentities('TodoInvoiceRelaunchCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmtodocron.class.php',
+                'objectname'    => 'ReedcrmTodoCron',
+                'method'        => 'createInvoiceRelaunchEvents',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('TodoInvoiceRelaunchCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\') && isModEnabled(\'agenda\')',
+                'priority'      => 56
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -592,6 +620,22 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\') && ' . $menuEnabled,
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('TodoBoard'),
+            'prefix'   => '<i class="fas fa-clipboard-check pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmtodo',
+            'url'      => '/reedcrm/view/todo_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'agenda\', \'myactions\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
