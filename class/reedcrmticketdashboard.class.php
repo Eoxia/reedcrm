@@ -103,6 +103,16 @@ class ReedcrmTicketDashboard
     protected int $filterUserId = 0;
 
     /**
+     * @var bool Whether the filters were given from the outside instead of read from the user configuration
+     */
+    protected bool $filtersSet = false;
+
+    /**
+     * @var string Root URL the links of the dashboard are built on, absolute when the dashboard is read remotely
+     */
+    protected string $urlRoot = '';
+
+    /**
      * @var int Timestamp the dashboard is built at, kept so every age is measured against the same instant
      */
     protected int $now = 0;
@@ -144,8 +154,9 @@ class ReedcrmTicketDashboard
      */
     public function __construct(DoliDB $db)
     {
-        $this->db  = $db;
-        $this->now = dol_now();
+        $this->db      = $db;
+        $this->now     = dol_now();
+        $this->urlRoot = DOL_URL_ROOT;
     }
 
     /**
@@ -173,7 +184,8 @@ class ReedcrmTicketDashboard
             'graphs'         => [],
             'lists'          => [],
             'disabledGraphs' => [],
-            'graphsFilters'  => $this->getGraphsFilters()
+            'graphsFilters'  => $this->getGraphsFilters(),
+            'summary'        => $this->getSummary()
         ];
 
         // Each entry names the method building it, so a hidden graph costs a lookup instead of its whole computation
@@ -221,12 +233,235 @@ class ReedcrmTicketDashboard
     }
 
     /**
+     * Load the counters of the dashboard, without building any widget
+     *
+     * @return array Counters of the analysed period and of the backlog it leaves behind
+     */
+    public function load_summary(): array
+    {
+        $this->loadFilters();
+        $this->loadTickets();
+        $this->loadMessages();
+        $this->loadTimeSpent();
+
+        return $this->getSummary();
+    }
+
+    /**
+     * Set the filters instead of reading them from the user configuration
+     *
+     * The dashboard normally reads its filters from the configuration of the user browsing it. A caller reading it
+     * through the API has no such configuration: it passes the period and the assignee it wants, and the
+     * configuration of the user carrying the API token is left alone.
+     *
+     * @param  string $period Number of days the flow indicators cover, 0 for the whole history
+     * @param  int    $userId Id of the assignee the dashboard is restricted to, 0 for every assignee
+     * @return void
+     */
+    public function setFilters(string $period, int $userId): void
+    {
+        if (!array_key_exists($period, $this->getPeriodValues())) {
+            $period = '365';
+        }
+
+        $this->period       = $period;
+        $this->periodStart  = empty((int) $period) ? 0 : dol_get_first_hour($this->now - (int) $period * 86400);
+        $this->filterUserId = $userId;
+        $this->filtersSet   = true;
+    }
+
+    /**
+     * Set the root URL the links of the dashboard are built on
+     *
+     * The links are relative to the instance by default, which is what a page needs. A dashboard read from another
+     * instance is displayed elsewhere, so its links have to carry the absolute URL of the instance owning the
+     * tickets.
+     *
+     * @param  string $urlRoot Root URL, without its trailing slash
+     * @return void
+     */
+    public function setUrlRoot(string $urlRoot): void
+    {
+        $this->urlRoot = rtrim($urlRoot, '/');
+    }
+
+    /**
+     * Get the counters of the dashboard as plain numbers
+     *
+     * The widgets carry their HTML and their translated labels, which is what a page needs but not what a caller
+     * comparing several instances needs. The summary gives the same figures as plain numbers, every delay in
+     * seconds, so they can be summed or put side by side. Flow counters follow the selected period, stock counters
+     * describe the tickets open right now, exactly like the widgets they mirror.
+     *
+     * @return array Counters of the analysed period and of the backlog it leaves behind
+     */
+    protected function getSummary(): array
+    {
+        $staleDays  = getDolGlobalInt('REEDCRM_TICKET_DASHBOARD_STALE_DAYS', self::STALE_TICKET_DAYS);
+        $staleLimit = $this->now - $staleDays * 86400;
+
+        $created            = 0;
+        $closed             = 0;
+        $open               = 0;
+        $unassigned         = 0;
+        $neverRead          = 0;
+        $stale              = 0;
+        $takeOverTimes      = [];
+        $firstResponseTimes = [];
+        $resolutionTimes    = [];
+        $backlogAges        = [];
+        $assignees          = [];
+        $societies          = [];
+        foreach ($this->tickets as $ticket) {
+            if ($this->isInPeriod($ticket->datec)) {
+                $created++;
+                if (!empty($ticket->date_read) && $ticket->date_read > $ticket->datec) {
+                    $takeOverTimes[] = $ticket->date_read - $ticket->datec;
+                }
+                $firstAnswer = $this->ticketMessages[$ticket->rowid]['first_answer'] ?? 0;
+                if (!empty($firstAnswer)) {
+                    $firstResponseTimes[] = $firstAnswer - $ticket->datec;
+                }
+            }
+            if (!empty($ticket->date_close) && $this->isInPeriod($ticket->date_close)) {
+                $closed++;
+                if ($ticket->date_close > $ticket->datec) {
+                    $resolutionTimes[] = $ticket->date_close - $ticket->datec;
+                }
+            }
+            if (!$this->isOpenTicket($ticket)) {
+                continue;
+            }
+            $open++;
+            $backlogAges[] = $this->now - $ticket->datec;
+            if ($ticket->fk_user_assign > 0) {
+                $assignees[$ticket->fk_user_assign] = 1;
+            } else {
+                $unassigned++;
+            }
+            if (empty($ticket->date_read)) {
+                $neverRead++;
+            }
+            if ($ticket->fk_soc > 0) {
+                $societies[$ticket->fk_soc] = 1;
+            }
+            if (($this->ticketMessages[$ticket->rowid]['last_message'] ?? $ticket->datec) < $staleLimit) {
+                $stale++;
+            }
+        }
+
+        $timeSpent     = 0;
+        $nbTimeEntries = 0;
+        foreach ($this->timeEntries as $entry) {
+            if (!$this->isInPeriod($entry->date)) {
+                continue;
+            }
+            $timeSpent += $entry->duration;
+            $nbTimeEntries++;
+        }
+
+        $nbExchanges = 0;
+        foreach ($this->messages as $message) {
+            if ($this->isInPeriod($message->date)) {
+                $nbExchanges++;
+            }
+        }
+
+        return [
+            'period'              => (int) $this->period,
+            'nbTickets'           => count($this->tickets),
+            'ticketsCreated'      => $created,
+            'ticketsClosed'       => $closed,
+            'ticketsOpen'         => $open,
+            'ticketsUnassigned'   => $unassigned,
+            'ticketsNeverRead'    => $neverRead,
+            'ticketsStale'        => $stale,
+            'meanTakeOver'        => $this->mean($takeOverTimes),
+            'meanFirstResponse'   => $this->mean($firstResponseTimes),
+            'medianFirstResponse' => $this->median($firstResponseTimes),
+            'meanResolution'      => $this->mean($resolutionTimes),
+            'medianResolution'    => $this->median($resolutionTimes),
+            'meanBacklogAge'      => $this->mean($backlogAges),
+            'oldestOpenAge'       => empty($backlogAges) ? 0 : max($backlogAges),
+            'timeSpent'           => (int) round($timeSpent),
+            'nbTimeEntries'       => $nbTimeEntries,
+            'nbExchanges'         => $nbExchanges,
+            'nbAssignees'         => count($assignees),
+            'nbSocieties'         => count($societies)
+        ];
+    }
+
+    /**
+     * Get the tickets the dashboard works on, as flat rows
+     *
+     * A caller reading the dashboard through the API also wants the tickets behind the figures. The rows carry the
+     * labels, the totals and the card URL the dashboard already knows, so the caller has nothing left to fetch or
+     * to join on its side.
+     *
+     * @param  int   $openOnly 1 to keep only the tickets still open
+     * @param  int   $limit    Maximum number of rows, 0 for every ticket the dashboard loaded
+     * @return array           Ticket rows, the most recently created first
+     */
+    public function getTicketRows(int $openOnly = 0, int $limit = 0): array
+    {
+        global $langs;
+
+        $tickets = $this->tickets;
+        if (!empty($openOnly)) {
+            $tickets = array_filter($tickets, function ($ticket) {
+                return $this->isOpenTicket($ticket);
+            });
+        }
+        uasort($tickets, function ($first, $second) {
+            return $second->datec <=> $first->datec;
+        });
+        if (!empty($limit)) {
+            $tickets = array_slice($tickets, 0, $limit, true);
+        }
+
+        // labelStatusShort is filled by the constructor, no ticket has to be fetched to read the status labels
+        $statusLabels = (new Ticket($this->db))->labelStatusShort;
+
+        $rows = [];
+        foreach ($tickets as $ticket) {
+            $rows[] = [
+                'id'           => $ticket->rowid,
+                'ref'          => $ticket->ref,
+                'trackId'      => $ticket->track_id,
+                'subject'      => $ticket->subject,
+                'url'          => $this->getTicketCardUrl($ticket),
+                'societyId'    => $ticket->fk_soc,
+                'societyName'  => $ticket->societe_name ?? '',
+                'assigneeId'   => $ticket->fk_user_assign,
+                'assigneeName' => $ticket->fk_user_assign > 0 ? $this->getUser($ticket->fk_user_assign)->getFullName($langs) : '',
+                'status'       => $ticket->fk_statut,
+                'statusLabel'  => $langs->transnoentities($statusLabels[$ticket->fk_statut] ?? 'Unknown'),
+                'severityCode' => $ticket->severity_code,
+                'typeCode'     => $ticket->type_code,
+                'dateCreation' => $ticket->datec,
+                'dateRead'     => $ticket->date_read,
+                'dateClose'    => $ticket->date_close,
+                'lastMessage'  => $this->ticketMessages[$ticket->rowid]['last_message'] ?? 0,
+                'nbMessages'   => $this->ticketMessages[$ticket->rowid]['nb'] ?? 0,
+                'timeSpent'    => (int) round($this->ticketTime[$ticket->rowid]['duration'] ?? 0),
+                'isOpen'       => $this->isOpenTicket($ticket) ? 1 : 0
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * Read the dashboard filters from the user configuration
      *
      * @return void
      */
     protected function loadFilters(): void
     {
+        if ($this->filtersSet) {
+            return;
+        }
+
         $dashboardConfig = json_decode(getDolUserString('REEDCRM_DASHBOARD_CONFIG'));
 
         $period = isset($dashboardConfig->filters->ticketPeriod) ? (string) $dashboardConfig->filters->ticketPeriod : '365';
@@ -1690,7 +1925,18 @@ class ReedcrmTicketDashboard
      */
     protected function getTicketListUrl(string $searchFilter): string
     {
-        return DOL_URL_ROOT . '/ticket/list.php?mainmenu=ticket&' . $searchFilter;
+        return $this->urlRoot . '/ticket/list.php?mainmenu=ticket&' . $searchFilter;
+    }
+
+    /**
+     * Get the URL of the card of a ticket
+     *
+     * @param  stdClass $ticket Compact ticket row loaded by the dashboard
+     * @return string           Ticket card URL
+     */
+    protected function getTicketCardUrl(stdClass $ticket): string
+    {
+        return $this->urlRoot . '/ticket/card.php?action=view&track_id=' . urlencode($ticket->track_id);
     }
 
     /**
