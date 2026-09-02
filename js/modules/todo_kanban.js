@@ -31,6 +31,8 @@ window.reedcrm.todoKanban = {};
 
 /**
  * Pre-rendered cards awaiting injection, keyed by column. Populated by initLazyLoad().
+ * Each entry is {ts: sort date, id: event id, html: markup of the card}, the date and the id
+ * letting a column be sorted without parsing the markup back.
  *
  * @type {Object}
  */
@@ -57,6 +59,7 @@ window.reedcrm.todoKanban.init = function () {
   window.reedcrm.todoKanban.initLazyLoad();
   window.reedcrm.todoKanban.initSortable();
   window.reedcrm.todoKanban.initSettings();
+  window.reedcrm.todoKanban.initColumnMenu();
 };
 
 /**
@@ -76,6 +79,8 @@ window.reedcrm.todoKanban.event = function () {
   $(document).on('click', '.todo-remove-assigned', window.reedcrm.todoKanban.removeAssigned);
 
   $(document).on('input', '.todo-owner-search, .todo-assigned-search', window.reedcrm.todoKanban.filterOptions);
+
+  $(document).on('click', '.todo-column-sort', window.reedcrm.todoKanban.toggleColumnSort);
 
   $(document).on('click', '.todo-load-more', function (event) {
     event.preventDefault();
@@ -760,7 +765,9 @@ window.reedcrm.todoKanban.loadMore = function (columnKey) {
 
   var $button = $('.todo-column[data-column="' + columnKey + '"]').find('.todo-load-more');
 
-  $button.before(remaining.splice(0, window.reedcrm.todoKanban.chunkSize).join(''));
+  $button.before(remaining.splice(0, window.reedcrm.todoKanban.chunkSize).map(function (entry) {
+    return entry.html;
+  }).join(''));
 
   if (!remaining.length) {
     $button.remove();
@@ -770,6 +777,108 @@ window.reedcrm.todoKanban.loadMore = function (columnKey) {
   }
 
   // Make the freshly injected cards draggable
+  if ($('.todo-board').data('editable')) {
+    $('.todo-sortable').sortable('refresh');
+  }
+};
+
+/**
+ * Turn the way a column is sorted, on a click on its title.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleColumnSort = function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  var $button = $(this);
+
+  window.reedcrm.todoKanban.applyColumnSort(
+    $button.attr('data-column'),
+    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc'
+  );
+};
+
+/**
+ * Sort a column and put its title button in that state, whichever of the two entry points
+ * asked for it: a click on the title or the column menu.
+ *
+ * @param  {string} columnKey Key of the column
+ * @param  {string} direction 'asc' (oldest first) or 'desc' (newest first)
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction) {
+  var $button = $('.todo-column-sort[data-column="' + columnKey + '"]');
+
+  // The cards move under an open selector, close it first
+  window.reedcrm.todoKanban.closeDropdowns();
+
+  // The stylesheet reads the way off the button to darken the matching arrow
+  $button.attr('data-direction', direction);
+
+  window.reedcrm.todoKanban.sortColumn(columnKey, direction);
+};
+
+/**
+ * Sort the cards of a column on the date the server put in data-date-sort: the start date of
+ * the event, or the date a relaunch was raised since a relaunch carries no start date.
+ *
+ * The cards not injected yet take part in the sort: they are merged with the ones already
+ * in the DOM and the column keeps as many live cards as it had, so a card sorted to the top
+ * shows up even when it was still waiting behind the "load more" button.
+ *
+ * @param  {string} columnKey Key of the column
+ * @param  {string} direction 'asc' (oldest first) or 'desc' (newest first)
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.sortColumn = function (columnKey, direction) {
+  var $body    = $('.todo-column[data-column="' + columnKey + '"]').find('.todo-column-body');
+  var deferred = window.reedcrm.todoKanban.deferredCards[columnKey] || [];
+  var entries  = [];
+
+  $body.children('.todo-card').each(function () {
+    entries.push({
+      ts: parseInt($(this).attr('data-date-sort'), 10) || 0,
+      id: parseInt($(this).attr('data-event-id'), 10) || 0,
+      element: this
+    });
+  });
+
+  var liveCount = entries.length;
+  if (!liveCount) {
+    return;
+  }
+
+  deferred.forEach(function (card) {
+    entries.push({ts: card.ts || 0, id: card.id || 0, html: card.html});
+  });
+
+  // An event the server could date on none of its keys stays at the bottom either way. Cards
+  // sharing a date are told apart by their event, so that turning the way round moves them too
+  entries.sort(function (first, second) {
+    if (!first.ts || !second.ts) {
+      return (second.ts ? 1 : 0) - (first.ts ? 1 : 0);
+    }
+    var delta = first.ts !== second.ts ? first.ts - second.ts : first.id - second.id;
+
+    return direction === 'desc' ? -delta : delta;
+  });
+
+  // The cards staying on screen are moved, not re-rendered: an open dropdown or a running
+  // save keeps the very same node
+  var $loadMore = $body.children('.todo-load-more').detach();
+  $body.children('.todo-card').detach();
+
+  entries.slice(0, liveCount).forEach(function (entry) {
+    $body.append(entry.element ? entry.element : entry.html);
+  });
+  window.reedcrm.todoKanban.deferredCards[columnKey] = entries.slice(liveCount).map(function (entry) {
+    return {ts: entry.ts, id: entry.id, html: entry.element ? entry.element.outerHTML : entry.html};
+  });
+
+  $body.append($loadMore);
+
   if ($('.todo-board').data('editable')) {
     $('.todo-sortable').sortable('refresh');
   }
@@ -842,5 +951,178 @@ window.reedcrm.todoKanban.initSettings = function () {
     $gapValue.text(value + 'px');
     $board.css('gap', value + 'px');
     localStorage.setItem('todoColGap', value);
+  });
+};
+
+/**
+ * Key of the column whose menu is open, empty when no menu is open.
+ *
+ * @type {string}
+ */
+window.reedcrm.todoKanban.openMenuColumn = '';
+
+/**
+ * Wire the column menu: the caret of a column header opens the popover-body of the saturne
+ * lists, sorting and masking the column it was opened from.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initColumnMenu = function () {
+  var $popover = $('#todoColumnPopover');
+
+  if (!$popover.length) {
+    return;
+  }
+
+  // Positioned on document coordinates: it has to hang off the body, not off a column
+  // of the horizontally scrolling board
+  $('body').append($popover);
+
+  window.reedcrm.todoKanban.applyColumnVisibility();
+
+  $(document).on('click', '.todo-column-menu', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    window.reedcrm.todoKanban.toggleColumnMenu($(this));
+  });
+
+  $popover.on('click', '.action-sort-asc, .action-sort-desc', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    var columnKey = window.reedcrm.todoKanban.openMenuColumn;
+    var direction = $(this).hasClass('action-sort-asc') ? 'asc' : 'desc';
+
+    window.reedcrm.todoKanban.closeColumnMenu();
+    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction);
+  });
+
+  $popover.on('click', '.action-hide', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    var columnKey = window.reedcrm.todoKanban.openMenuColumn;
+    window.reedcrm.todoKanban.closeColumnMenu();
+    window.reedcrm.todoKanban.setColumnVisible(columnKey, false);
+  });
+
+  $(document).on('click', function (event) {
+    if (!$(event.target).closest('#todoColumnPopover, .todo-column-menu').length) {
+      window.reedcrm.todoKanban.closeColumnMenu();
+    }
+  });
+
+  $(document).on('change', '.todo-column-toggle', function () {
+    window.reedcrm.todoKanban.setColumnVisible($(this).val(), $(this).is(':checked'));
+  });
+
+  // The menu hangs off the body: scrolling the board would leave it behind its caret
+  $('.todo-board').on('scroll', window.reedcrm.todoKanban.closeColumnMenu);
+};
+
+/**
+ * Open the menu under the caret it was clicked on, or close it when it already belongs to
+ * that column.
+ *
+ * @param  {jQuery} $button Caret of the column header
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleColumnMenu = function ($button) {
+  var columnKey = $button.attr('data-column');
+
+  if (window.reedcrm.todoKanban.openMenuColumn === columnKey) {
+    window.reedcrm.todoKanban.closeColumnMenu();
+    return;
+  }
+
+  var $popover = $('#todoColumnPopover');
+  var offset   = $button.offset();
+
+  // The caret stops the click from reaching the handler that closes them
+  window.reedcrm.todoKanban.closeDropdowns();
+
+  // Shown before it is measured, the menu of the last column would else be laid out past
+  // the right edge of the window
+  $popover.css({top: 0, left: 0, display: 'block'});
+
+  var maxLeft = $(window).scrollLeft() + $(window).width() - $popover.outerWidth() - 8;
+
+  $popover.css({
+    top: (offset.top + $button.outerHeight() + 6) + 'px',
+    left: Math.max(0, Math.min(offset.left, maxLeft)) + 'px'
+  });
+
+  window.reedcrm.todoKanban.openMenuColumn = columnKey;
+};
+
+/**
+ * Close the column menu.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.closeColumnMenu = function () {
+  $('#todoColumnPopover').hide();
+  window.reedcrm.todoKanban.openMenuColumn = '';
+};
+
+/**
+ * Show or hide a column and remember it, the settings popover being the only way back for
+ * a column masked from its own menu.
+ *
+ * @param  {string}  columnKey Key of the column
+ * @param  {boolean} visible   Whether the column stays on the board
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.setColumnVisible = function (columnKey, visible) {
+  if (!columnKey) {
+    return;
+  }
+
+  var hidden = window.reedcrm.todoKanban.getHiddenColumns();
+  var index  = hidden.indexOf(columnKey);
+
+  if (visible && index !== -1) {
+    hidden.splice(index, 1);
+  } else if (!visible && index === -1) {
+    hidden.push(columnKey);
+  }
+
+  localStorage.setItem('todoHiddenColumns', JSON.stringify(hidden));
+  window.reedcrm.todoKanban.applyColumnVisibility();
+};
+
+/**
+ * Columns the user masked, as stored by setColumnVisible().
+ *
+ * @returns {Array} Keys of the masked columns
+ */
+window.reedcrm.todoKanban.getHiddenColumns = function () {
+  var stored = [];
+
+  try {
+    stored = JSON.parse(localStorage.getItem('todoHiddenColumns')) || [];
+  } catch (error) {
+    stored = [];
+  }
+
+  return Array.isArray(stored) ? stored : [];
+};
+
+/**
+ * Put the board and the checkboxes of the settings popover back in line with the masked
+ * columns.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.applyColumnVisibility = function () {
+  var hidden = window.reedcrm.todoKanban.getHiddenColumns();
+
+  $('.todo-column').each(function () {
+    var columnKey = $(this).attr('data-column');
+    $(this).toggleClass('todo-column-hidden', hidden.indexOf(columnKey) !== -1);
+  });
+
+  $('.todo-column-toggle').each(function () {
+    $(this).prop('checked', hidden.indexOf($(this).val()) === -1);
   });
 };
