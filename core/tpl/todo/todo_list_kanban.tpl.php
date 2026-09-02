@@ -59,6 +59,42 @@ foreach ($todoEvents as $todoEvent) {
             <input type="range" id="todoColGap" min="8" max="50" value="26" step="2">
             <span class="tds-val" id="todoColGapVal">26px</span>
         </div>
+        <?php // A column masked from its own menu has no other way back than this list ?>
+        <div class="tds-row tds-row-columns">
+            <label><i class="fas fa-eye"></i> <?php echo $langs->trans('TodoVisibleColumns'); ?></label>
+            <div class="tds-columns">
+                <?php foreach ($todoColumns as $todoColumn) : ?>
+                    <label class="tds-column-toggle">
+                        <input type="checkbox" class="todo-column-toggle" value="<?php echo dol_escape_htmltag($todoColumn['key']); ?>" checked>
+                        <span><?php echo dol_escape_htmltag($todoColumn['label']); ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php // Column menu, same popover-body as the saturne lists : rendered once, the JS module
+      // moves it to the body on the first open and positions it under the clicked caret ?>
+<div class="saturne-col-filter-popover todo-column-popover" id="todoColumnPopover">
+    <div class="popover-body">
+        <div class="popover-action action-sort-asc">
+            <i class="fas fa-arrow-up"></i> <?php echo $langs->trans('TodoSortDateAsc'); ?>
+        </div>
+        <div class="popover-action action-sort-desc">
+            <i class="fas fa-arrow-down"></i> <?php echo $langs->trans('TodoSortDateDesc'); ?>
+        </div>
+        <div class="popover-divider"></div>
+        <div class="popover-action is-disabled" title="<?php echo dol_escape_htmltag($langs->trans('TodoComingSoon')); ?>">
+            <i class="fas fa-layer-group"></i> <?php echo $langs->trans('TodoGroup'); ?>
+        </div>
+        <div class="popover-action is-disabled" title="<?php echo dol_escape_htmltag($langs->trans('TodoComingSoon')); ?>">
+            <i class="fas fa-snowflake"></i> <?php echo $langs->trans('TodoFreeze'); ?>
+        </div>
+        <div class="popover-divider"></div>
+        <div class="popover-action action-hide">
+            <i class="fas fa-eye-slash"></i> <?php echo $langs->trans('TodoHideColumn'); ?>
+        </div>
     </div>
 </div>
 
@@ -97,8 +133,21 @@ foreach ($todoEvents as $todoEvent) {
              data-color="<?php echo dol_escape_htmltag($columnDefinition['color']); ?>">
             <div class="todo-column-header" style="border-top: 3px solid <?php echo dol_escape_htmltag($columnDefinition['color']); ?>">
                 <span class="todo-column-icon"><i class="fas <?php echo dol_escape_htmltag($columnDefinition['icon']); ?>"></i></span>
-                <span class="todo-column-title"><?php echo dol_escape_htmltag($columnDefinition['label']); ?></span>
+                <?php // Clicking the title sorts the cards of the column on their date. Both arrows
+                      // stay up, the way in force is the one the stylesheet darkens ?>
+                <button type="button" class="todo-column-sort" data-column="<?php echo dol_escape_htmltag($columnKey); ?>" data-direction=""
+                        title="<?php echo dol_escape_htmltag($langs->trans('TodoSortByDate')); ?>">
+                    <span class="todo-column-title"><?php echo dol_escape_htmltag($columnDefinition['label']); ?></span>
+                    <span class="todo-column-sort-icon">
+                        <i class="fas fa-sort-up"></i>
+                        <i class="fas fa-sort-down"></i>
+                    </span>
+                </button>
                 <span class="todo-column-count"><?php echo count($columnEvents[$columnKey]); ?></span>
+                <button type="button" class="todo-column-menu" data-column="<?php echo dol_escape_htmltag($columnKey); ?>"
+                        title="<?php echo dol_escape_htmltag($langs->trans('TodoColumnOptions')); ?>">
+                    <i class="fas fa-caret-down"></i>
+                </button>
             </div>
             <div class="todo-column-body todo-sortable" data-column="<?php echo dol_escape_htmltag($columnKey); ?>">
                 <?php if (empty($columnEvents[$columnKey])) : ?>
@@ -115,7 +164,9 @@ foreach ($todoEvents as $todoEvent) {
                     } else {
                         ob_start();
                         require __DIR__ . '/todo_kanban_card.tpl.php';
-                        $deferredCards[] = ob_get_clean();
+                        // The start date travels beside the markup: sorting a column must reach
+                        // the cards still waiting to be injected without parsing their HTML
+                        $deferredCards[] = ['ts' => (int) $t['date_sort_ts'], 'id' => (int) $t['id'], 'html' => ob_get_clean()];
                     }
                 }
                 ?>

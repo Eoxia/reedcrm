@@ -813,8 +813,17 @@ TodoUnassigned = Non affecté
 TodoAddAssigned = Affecter un utilisateur
 TodoRemoveAssigned = Retirer l'affectation
 TodoLoadMore = Afficher %s de plus
+TodoSortByDate = Trier par date de début
 TodoColumnWidth = Largeur des colonnes
 TodoColumnGap = Espacement
+TodoVisibleColumns = Colonnes affichées
+TodoColumnOptions = Options de la colonne
+TodoSortDateAsc = Trier par date croissante
+TodoSortDateDesc = Trier par date décroissante
+TodoGroup = Grouper
+TodoFreeze = Figer
+TodoHideColumn = Masquer
+TodoComingSoon = Bientôt disponible
 
 # Todo - relances automatiques (crons)
 TodoColumnPropalRelaunch = Devis à relancer

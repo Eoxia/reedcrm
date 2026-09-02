@@ -217,6 +217,36 @@
     text-align: right;
 }
 
+/* The column list needs the whole width of the popover, its label sits above it */
+.tds-row-columns {
+    flex-direction: column;
+    align-items: stretch;
+
+    label {
+        flex: none;
+    }
+}
+
+.tds-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 4px;
+}
+
+.tds-column-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #55606e;
+    cursor: pointer;
+
+    input[type="checkbox"] {
+        margin: 0;
+    }
+}
+
 /* ---- Board ---- */
 .todo-board {
     display: flex;
@@ -236,6 +266,11 @@
     display: flex;
     flex-direction: column;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+    // Masked from its own menu, brought back from the settings popover
+    &.todo-column-hidden {
+        display: none;
+    }
 }
 
 .todo-column-header {
@@ -252,6 +287,75 @@
 .todo-column-icon {
     font-size: 13px;
     opacity: 0.7;
+}
+
+.todo-column-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+
+    &:hover .todo-column-sort-icon i {
+        color: #97a1b0;
+    }
+
+    // Both arrows stay up, the one in force is the only one darkened: the pair keeps telling
+    // the column can be sorted the other way round
+    &[data-direction="asc"] .todo-column-sort-icon .fa-sort-up,
+    &[data-direction="desc"] .todo-column-sort-icon .fa-sort-down {
+        color: #2c3e50;
+    }
+}
+
+/* Caret of the column menu, same cue as the one the saturne lists put on a column title */
+.todo-column-menu {
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: #b4bcc8;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: #2c3e50;
+    }
+}
+
+/* The saturne popover carries a filter field and a Valider button the board has no use for:
+   only its popover-body is rendered, so it needs no room for an input */
+.todo-column-popover {
+    min-width: 210px;
+
+    .popover-action.is-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+}
+
+/* fa-sort-up and fa-sort-down each draw their half of the fa-sort glyph, so stacking them in
+   the same box gives the very same pair of arrows, each one its own colour */
+.todo-column-sort-icon {
+    position: relative;
+    display: inline-block;
+    width: 8px;
+    height: 1em;
+    font-size: 11px;
+
+    i {
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: #ccd2db;
+        transition: color 0.2s ease;
+    }
 }
 
 .todo-column-count {

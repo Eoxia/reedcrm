@@ -153,7 +153,7 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, int $limit = 0): array
         $limit = getDolGlobalInt('REEDCRM_TODO_MAX_EVENTS', 2000);
     }
 
-    $sql  = 'SELECT a.id, a.ref, a.label, a.datep, a.datep2, a.percent, a.priority, a.location, a.fulldayevent, a.note, a.code,';
+    $sql  = 'SELECT a.id, a.ref, a.label, a.datep, a.datep2, a.datec, a.percent, a.priority, a.location, a.fulldayevent, a.note, a.code,';
     $sql .= ' a.fk_soc, a.fk_project, a.fk_contact, a.fk_user_action, a.fk_element, a.elementtype,';
     $sql .= ' ca.id as type_id, ca.code as type_code, ca.libelle as type_label, ca.color as type_color, ca.picto as type_picto,';
     $sql .= ' s.nom as soc_name, p.ref as project_ref, p.title as project_title';
@@ -188,7 +188,9 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, int $limit = 0): array
         $searchValue = $db->escape($db->escapeforlike($filters['search']));
         $sql .= " AND (a.label LIKE '%" . $searchValue . "%' OR a.location LIKE '%" . $searchValue . "%' OR s.nom LIKE '%" . $searchValue . "%')";
     }
-    $sql .= ' ORDER BY a.datep ASC, a.id ASC';
+    // Same key as the one the board sorts a column on, so the order the server sends and the
+    // one a click on a column title gives are the same
+    $sql .= ' ORDER BY COALESCE(a.datep, a.datec) ASC, a.id ASC';
     $sql .= $db->plimit($limit, 0);
 
     $resql = $db->query($sql);
@@ -236,17 +238,33 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, int $limit = 0): array
             unset($assigned[$owner['id']]);
         }
 
+        $origin = $originInfos[$eventId] ?? [];
+
+        // Date the columns of the board are sorted on. A relaunch carries no start date on
+        // purpose, so that a period never hides it: it falls back on the date of the object
+        // it was raised on, the very one its note prints, then on its own creation date
+        $dateSortTs = 0;
+        if ($obj->datep) {
+            $dateSortTs = (int) $db->jdate($obj->datep);
+        } elseif (!empty($origin['date_ts'])) {
+            $dateSortTs = (int) $origin['date_ts'];
+        } elseif ($obj->datec) {
+            $dateSortTs = (int) $db->jdate($obj->datec);
+        }
+
         $todoCards[] = [
             'id'             => $eventId,
             'ref'            => !empty($obj->ref) ? $obj->ref : (string) $eventId,
             'code'           => (string) $obj->code,
             'label'          => !empty($obj->label) ? $obj->label : $langs->trans('TodoNoLabel'),
             'percent'        => $percent,
-            'origin'         => $originInfos[$eventId] ?? [],
+            'origin'         => $origin,
             'priority'       => (int) $obj->priority,
             'location'       => $obj->location,
             'note'           => dol_trunc(dol_string_nohtmltag((string) $obj->note), 160),
             'fullday'        => (int) $obj->fulldayevent,
+            'date_start_ts'  => $obj->datep ? (int) $db->jdate($obj->datep) : 0,
+            'date_sort_ts'   => $dateSortTs,
             'date_start'     => $obj->datep ? dol_print_date($db->jdate($obj->datep), $rawFormat) : '',
             'date_start_fmt' => $obj->datep ? dol_print_date($db->jdate($obj->datep), empty($obj->fulldayevent) ? 'dayhour' : 'day') : '',
             'date_end'       => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), $rawFormat) : '',
@@ -268,6 +286,12 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, int $limit = 0): array
         ];
     }
 
+    // The SQL could only order on the two dates the event itself carries: the board opens on
+    // the same order a click on "date croissante" gives, origin dates included
+    usort($todoCards, function (array $first, array $second) {
+        return $first['date_sort_ts'] <=> $second['date_sort_ts'] ?: $first['id'] <=> $second['id'];
+    });
+
     return $todoCards;
 }
 
@@ -276,15 +300,19 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, int $limit = 0): array
  *
  * Only the two element types the relaunch cron jobs link to are resolved, one query each.
  *
+ * The date each source is read on is the one the relaunch cron raised the event on, the very
+ * one the note of the card prints: it is what the relaunch backlogs are sorted on, their
+ * events carrying no start date.
+ *
  * @param  DoliDB $db     Database handler
  * @param  array  $events Rows of the board, indexed by event ID
- * @return array          [event id => ['ref' => , 'url' => , 'type' => ]]
+ * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => ]]
  */
 function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 {
     $sources = [
-        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id='],
-        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id='],
+        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id=', 'date' => 'COALESCE(date_valid, datep)'],
+        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id=', 'date' => 'COALESCE(date_lim_reglement, datef)'],
     ];
 
     // Group the linked object IDs per element type
@@ -298,7 +326,8 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 
     $origins = [];
     foreach ($idsByType as $elementType => $elementIds) {
-        $sql   = 'SELECT rowid, ref FROM ' . MAIN_DB_PREFIX . $sources[$elementType]['table'];
+        $sql   = 'SELECT rowid, ref, ' . $sources[$elementType]['date'] . ' as date_reference';
+        $sql  .= ' FROM ' . MAIN_DB_PREFIX . $sources[$elementType]['table'];
         $sql  .= ' WHERE rowid IN (' . implode(',', array_keys($elementIds)) . ')';
         $resql = $db->query($sql);
         if (!$resql) {
@@ -308,9 +337,10 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
         while ($obj = $db->fetch_object($resql)) {
             foreach ($elementIds[(int) $obj->rowid] as $eventId) {
                 $origins[$eventId] = [
-                    'type' => $elementType,
-                    'ref'  => $obj->ref,
-                    'url'  => DOL_URL_ROOT . $sources[$elementType]['url'] . (int) $obj->rowid,
+                    'type'    => $elementType,
+                    'ref'     => $obj->ref,
+                    'url'     => DOL_URL_ROOT . $sources[$elementType]['url'] . (int) $obj->rowid,
+                    'date_ts' => $obj->date_reference ? (int) $db->jdate($obj->date_reference) : 0,
                 ];
             }
         }
