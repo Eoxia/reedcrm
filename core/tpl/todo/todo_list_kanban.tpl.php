@@ -22,26 +22,12 @@
  *
  * Variables expected from calling PHP:
  * - $todoColumns       array     Columns from reedcrmTodoGetKanbanColumns()
- * - $todoEvents        array     Enriched events from reedcrmTodoGetEvents()
+ * - $todoPage          array     First page of cards per column key
+ * - $todoCounts        array     Total number of events per column key
  * - $todoUsers         array     Selectable users (owner and assigned users selectors)
  * - $permissionToWrite bool      Whether the user may change an event
  * - $langs             Translate Translation object
  */
-
-// Number of cards rendered live per column; the rest is lazy-loaded by the JS module
-$todoPageSize = getDolGlobalInt('REEDCRM_TODO_KANBAN_PAGE_SIZE', 30);
-
-// Sort the events into their status column
-$columnEvents = [];
-foreach ($todoColumns as $todoColumn) {
-    $columnEvents[$todoColumn['key']] = [];
-}
-foreach ($todoEvents as $todoEvent) {
-    $eventColumn = reedcrmTodoGetColumnForEvent($todoColumns, $todoEvent);
-    if (!empty($eventColumn)) {
-        $columnEvents[$eventColumn['key']][] = $todoEvent;
-    }
-}
 ?>
 
 <div class="todo-settings-wrapper">
@@ -118,7 +104,10 @@ foreach ($todoEvents as $todoEvent) {
      data-na-label="<?php echo dol_escape_htmltag($langs->trans('StatusNotApplicable')); ?>"
      data-empty-label="<?php echo dol_escape_htmltag($langs->trans('TodoNoEvent')); ?>">
     <?php foreach ($todoColumns as $columnDefinition) :
-        $columnKey = $columnDefinition['key'];
+        $columnKey       = $columnDefinition['key'];
+        $columnCards     = $todoPage[$columnKey] ?? [];
+        $columnTotal     = (int) ($todoCounts[$columnKey] ?? 0);
+        $columnRemaining = max(0, $columnTotal - count($columnCards));
     ?>
         <?php // A relaunch backlog is keyed on the code of its events, not on a percentage:
               // it takes no drop, a card leaves it by being marked done or not applicable ?>
@@ -143,39 +132,28 @@ foreach ($todoEvents as $todoEvent) {
                         <i class="fas fa-sort-down"></i>
                     </span>
                 </button>
-                <span class="todo-column-count"><?php echo count($columnEvents[$columnKey]); ?></span>
+                <span class="todo-column-count"><?php echo (int) $columnTotal; ?></span>
                 <button type="button" class="todo-column-menu" data-column="<?php echo dol_escape_htmltag($columnKey); ?>"
                         title="<?php echo dol_escape_htmltag($langs->trans('TodoColumnOptions')); ?>">
                     <i class="fas fa-caret-down"></i>
                 </button>
             </div>
             <div class="todo-column-body todo-sortable" data-column="<?php echo dol_escape_htmltag($columnKey); ?>">
-                <?php if (empty($columnEvents[$columnKey])) : ?>
+                <?php if (empty($columnCards)) : ?>
                     <div class="todo-empty"><?php echo $langs->trans('TodoNoEvent'); ?></div>
                 <?php endif; ?>
-                <?php
-                // Lazy-render: only the first $todoPageSize cards are emitted live, the rest is
-                // pre-rendered and handed to the JS module as JSON so a board carrying thousands
-                // of events does not freeze the browser on load.
-                $deferredCards = [];
-                foreach ($columnEvents[$columnKey] as $cardIndex => $t) {
-                    if ($cardIndex < $todoPageSize) {
-                        require __DIR__ . '/todo_kanban_card.tpl.php';
-                    } else {
-                        ob_start();
-                        require __DIR__ . '/todo_kanban_card.tpl.php';
-                        // The start date travels beside the markup: sorting a column must reach
-                        // the cards still waiting to be injected without parsing their HTML
-                        $deferredCards[] = ['ts' => (int) $t['date_sort_ts'], 'id' => (int) $t['id'], 'html' => ob_get_clean()];
-                    }
-                }
-                ?>
-                <?php if (!empty($deferredCards)) : ?>
-                    <button type="button" class="todo-load-more" data-column="<?php echo dol_escape_htmltag($columnKey); ?>" data-remaining="<?php echo count($deferredCards); ?>" data-label="<?php echo dol_escape_htmltag($langs->trans('TodoLoadMore', '%s')); ?>">
-                        <i class="fas fa-chevron-down"></i> <span class="todo-load-more-text"><?php echo $langs->trans('TodoLoadMore', count($deferredCards)); ?></span>
-                    </button>
-                    <script type="application/json" class="todo-deferred-data" data-column="<?php echo dol_escape_htmltag($columnKey); ?>"><?php echo json_encode($deferredCards, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?></script>
-                <?php endif; ?>
+                <?php foreach ($columnCards as $t) {
+                    require __DIR__ . '/todo_kanban_card.tpl.php';
+                } ?>
+                <?php // The rest of the column stays on the server: the button goes and gets the
+                      // next page, so a board of thousands of events weighs the same as a small one ?>
+                <button type="button" class="todo-load-more<?php echo $columnRemaining > 0 ? '' : ' todo-load-more-hidden'; ?>"
+                        data-column="<?php echo dol_escape_htmltag($columnKey); ?>"
+                        data-offset="<?php echo count($columnCards); ?>"
+                        data-remaining="<?php echo (int) $columnRemaining; ?>"
+                        data-label="<?php echo dol_escape_htmltag($langs->trans('TodoLoadMore', '%s')); ?>">
+                    <i class="fas fa-chevron-down"></i> <span class="todo-load-more-text"><?php echo $langs->trans('TodoLoadMore', $columnRemaining); ?></span>
+                </button>
             </div>
         </div>
     <?php endforeach; ?>

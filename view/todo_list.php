@@ -103,6 +103,50 @@ function reedcrmTodoLoadEditableEvent(DoliDB $db, User $user, int $eventId): Act
  * Actions
  */
 
+// A column reads its cards by pages: the board only ever renders the first one, "load more"
+// and a change of sorting come back here for the next
+if ($action == 'loadColumn') {
+    header('Content-Type: application/json');
+
+    $todoFilters = reedcrmTodoGetFilters();
+    $todoColumns = reedcrmTodoGetKanbanColumns();
+    $columnKey   = GETPOST('column', 'aZ09');
+    $direction   = GETPOST('direction', 'aZ09') == 'desc' ? 'desc' : 'asc';
+    $offset      = GETPOSTINT('offset');
+    $pageSize    = reedcrmTodoGetPageSize();
+
+    $column = [];
+    foreach ($todoColumns as $todoColumn) {
+        if ($todoColumn['key'] === $columnKey) {
+            $column = $todoColumn;
+            break;
+        }
+    }
+    if (empty($column)) {
+        reedcrmTodoAjaxAnswer($db, ['success' => 0, 'error' => 'Unknown column'], 400);
+    }
+
+    $todoEvents = reedcrmTodoGetEvents($db, $todoFilters, $column, $todoColumns, $direction, $offset, $pageSize);
+    $counts     = reedcrmTodoCountByColumn($db, $todoFilters, $todoColumns);
+    $total      = (int) ($counts[$columnKey] ?? 0);
+
+    $permissionToWrite = $user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create');
+
+    ob_start();
+    foreach ($todoEvents as $t) {
+        require __DIR__ . '/../core/tpl/todo/todo_kanban_card.tpl.php';
+    }
+    $html = ob_get_clean();
+
+    reedcrmTodoAjaxAnswer($db, [
+        'success'   => 1,
+        'html'      => $html,
+        'loaded'    => count($todoEvents),
+        'remaining' => max(0, $total - $offset - count($todoEvents)),
+        'total'     => $total,
+    ]);
+}
+
 $ajaxActions = ['updateEventPercent', 'updateEventLabel', 'updateEventDate', 'updateEventOwner', 'addEventAssigned', 'removeEventAssigned'];
 
 if (in_array($action, $ajaxActions, true)) {
@@ -247,7 +291,13 @@ $helpUrl = 'FR:Module_' . $moduleName;
 // Displayed events criteria (user, period, type of event, text), shared by the board and its counters
 $todoFilters = reedcrmTodoGetFilters();
 $todoColumns = reedcrmTodoGetKanbanColumns();
-$todoEvents  = reedcrmTodoGetEvents($db, $todoFilters);
+// Counted in one query, then read a page at a time: a board of thousands of events weighs
+// the same as a small one, "load more" fetching the rest column by column
+$todoCounts  = reedcrmTodoCountByColumn($db, $todoFilters, $todoColumns);
+$todoPage    = [];
+foreach ($todoColumns as $todoColumn) {
+    $todoPage[$todoColumn['key']] = reedcrmTodoGetEvents($db, $todoFilters, $todoColumn, $todoColumns);
+}
 // The user being filtered on travels with the list, so the selector never shows a criteria
 // other than the one the board applied
 $todoUsers   = reedcrmTodoGetSelectableUsers($db, (int) $todoFilters['user']);

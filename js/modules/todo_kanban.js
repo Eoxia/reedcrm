@@ -29,21 +29,6 @@ if (!window.reedcrm) {
 
 window.reedcrm.todoKanban = {};
 
-/**
- * Pre-rendered cards awaiting injection, keyed by column. Populated by initLazyLoad().
- * Each entry is {ts: sort date, id: event id, html: markup of the card}, the date and the id
- * letting a column be sorted without parsing the markup back.
- *
- * @type {Object}
- */
-window.reedcrm.todoKanban.deferredCards = {};
-
-/**
- * Number of cards injected per "load more" click (matches the server page size default).
- *
- * @type {number}
- */
-window.reedcrm.todoKanban.chunkSize = 30;
 
 /**
  * Init: only the todo board wires this module up.
@@ -56,7 +41,6 @@ window.reedcrm.todoKanban.init = function () {
   }
 
   window.reedcrm.todoKanban.event();
-  window.reedcrm.todoKanban.initLazyLoad();
   window.reedcrm.todoKanban.initSortable();
   window.reedcrm.todoKanban.initSettings();
   window.reedcrm.todoKanban.initColumnMenu();
@@ -433,8 +417,8 @@ window.reedcrm.todoKanban.moveToColumn = function ($card, percent) {
   // Keep the "load more" button anchored at the bottom of the column
   $targetBody.append($targetBody.children('.todo-load-more'));
 
-  if (!$sourceBody.children('.todo-card').length && !$sourceBody.children('.todo-load-more').length) {
-    $sourceBody.append($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+  if (!$sourceBody.children('.todo-card').length) {
+    $sourceBody.prepend($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
   }
 
   window.reedcrm.todoKanban.updateCounts();
@@ -721,8 +705,8 @@ window.reedcrm.todoKanban.initSortable = function () {
       $(this).append($(this).children('.todo-load-more'));
 
       var $source = ui.sender;
-      if (!$source.children('.todo-card').length && !$source.children('.todo-load-more').length) {
-        $source.append($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+      if (!$source.children('.todo-card').length) {
+        $source.prepend($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
       }
 
       window.reedcrm.todoKanban.updateCounts();
@@ -732,54 +716,71 @@ window.reedcrm.todoKanban.initSortable = function () {
 };
 
 /**
- * Read the deferred card payloads emitted per column and stash them in memory.
+ * Go and get the next page of a column.
  *
+ * Nothing but the first page reaches the browser on load: the rest stays on the server, so a
+ * board carrying thousands of events costs no more to open than a small one.
+ *
+ * @param  {string}  columnKey Key of the column
+ * @param  {boolean} replace   Empty the column first, for a change of sorting
  * @returns {void}
  */
-window.reedcrm.todoKanban.initLazyLoad = function () {
-  window.reedcrm.todoKanban.deferredCards = {};
+window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
+  var $column = $('.todo-column[data-column="' + columnKey + '"]');
+  var $button = $column.find('.todo-load-more');
+  var $body   = $column.find('.todo-column-body');
 
-  $('.todo-deferred-data').each(function () {
-    var columnKey = $(this).data('column');
-    try {
-      window.reedcrm.todoKanban.deferredCards[columnKey] = JSON.parse($(this).text()) || [];
-    } catch (error) {
-      window.reedcrm.todoKanban.deferredCards[columnKey] = [];
-    }
-    // Free the inline payload from the DOM once parsed
-    $(this).remove();
-  });
-};
-
-/**
- * Inject the next chunk of deferred cards into a column.
- *
- * @param  {string} columnKey Key of the column
- * @returns {void}
- */
-window.reedcrm.todoKanban.loadMore = function (columnKey) {
-  var remaining = window.reedcrm.todoKanban.deferredCards[columnKey] || [];
-  if (!remaining.length) {
+  if ($button.hasClass('todo-load-more-loading')) {
     return;
   }
 
-  var $button = $('.todo-column[data-column="' + columnKey + '"]').find('.todo-load-more');
+  var offset    = replace ? 0 : (parseInt($button.attr('data-offset'), 10) || 0);
+  var direction = $column.find('.todo-column-sort').attr('data-direction') === 'desc' ? 'desc' : 'asc';
+  var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
 
-  $button.before(remaining.splice(0, window.reedcrm.todoKanban.chunkSize).map(function (entry) {
-    return entry.html;
-  }).join(''));
+  $button.addClass('todo-load-more-loading');
 
-  if (!remaining.length) {
-    $button.remove();
-  } else {
-    $button.attr('data-remaining', remaining.length);
-    $button.find('.todo-load-more-text').text(String($button.data('label') || '+ %s').replace('%s', remaining.length));
-  }
+  $.ajax({
+    url: document.URL + separator + $.param({
+      action: 'loadColumn',
+      column: columnKey,
+      offset: offset,
+      direction: direction,
+      token: window.saturne.toolbox.getToken()
+    }),
+    type: 'POST',
+    dataType: 'json',
+    success: function (response) {
+      $button.removeClass('todo-load-more-loading');
+      if (!response || !response.success) {
+        return;
+      }
 
-  // Make the freshly injected cards draggable
-  if ($('.todo-board').data('editable')) {
-    $('.todo-sortable').sortable('refresh');
-  }
+      if (replace) {
+        $body.children('.todo-card').remove();
+      }
+      $body.children('.todo-empty').remove();
+      $button.before(response.html);
+
+      if (!$body.children('.todo-card').length) {
+        $button.before($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+      }
+
+      $button.attr('data-offset', offset + (response.loaded || 0));
+      $button.attr('data-remaining', response.remaining || 0);
+      $button.toggleClass('todo-load-more-hidden', !response.remaining);
+      $button.find('.todo-load-more-text').text(String($button.data('label') || '+ %s').replace('%s', response.remaining || 0));
+      $column.find('.todo-column-count').text(response.total || 0);
+
+      // Make the freshly injected cards draggable
+      if ($('.todo-board').data('editable')) {
+        $('.todo-sortable').sortable('refresh');
+      }
+    },
+    error: function () {
+      $button.removeClass('todo-load-more-loading');
+    }
+  });
 };
 
 /**
@@ -817,82 +818,32 @@ window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction) {
   // The stylesheet reads the way off the button to darken the matching arrow
   $button.attr('data-direction', direction);
 
-  window.reedcrm.todoKanban.sortColumn(columnKey, direction);
+  window.reedcrm.todoKanban.sortColumn(columnKey);
 };
 
 /**
- * Sort the cards of a column on the date the server put in data-date-sort: the start date of
- * the event, or the date a relaunch was raised since a relaunch carries no start date.
+ * Ask the server for a column read the other way round.
  *
- * The cards not injected yet take part in the sort: they are merged with the ones already
- * in the DOM and the column keeps as many live cards as it had, so a card sorted to the top
- * shows up even when it was still waiting behind the "load more" button.
+ * Only the first page of a column is in the browser, so sorting it here would only order
+ * what happens to be loaded: the column is read again from its first page instead.
  *
  * @param  {string} columnKey Key of the column
- * @param  {string} direction 'asc' (oldest first) or 'desc' (newest first)
  * @returns {void}
  */
-window.reedcrm.todoKanban.sortColumn = function (columnKey, direction) {
-  var $body    = $('.todo-column[data-column="' + columnKey + '"]').find('.todo-column-body');
-  var deferred = window.reedcrm.todoKanban.deferredCards[columnKey] || [];
-  var entries  = [];
-
-  $body.children('.todo-card').each(function () {
-    entries.push({
-      ts: parseInt($(this).attr('data-date-sort'), 10) || 0,
-      id: parseInt($(this).attr('data-event-id'), 10) || 0,
-      element: this
-    });
-  });
-
-  var liveCount = entries.length;
-  if (!liveCount) {
-    return;
-  }
-
-  deferred.forEach(function (card) {
-    entries.push({ts: card.ts || 0, id: card.id || 0, html: card.html});
-  });
-
-  // An event the server could date on none of its keys stays at the bottom either way. Cards
-  // sharing a date are told apart by their event, so that turning the way round moves them too
-  entries.sort(function (first, second) {
-    if (!first.ts || !second.ts) {
-      return (second.ts ? 1 : 0) - (first.ts ? 1 : 0);
-    }
-    var delta = first.ts !== second.ts ? first.ts - second.ts : first.id - second.id;
-
-    return direction === 'desc' ? -delta : delta;
-  });
-
-  // The cards staying on screen are moved, not re-rendered: an open dropdown or a running
-  // save keeps the very same node
-  var $loadMore = $body.children('.todo-load-more').detach();
-  $body.children('.todo-card').detach();
-
-  entries.slice(0, liveCount).forEach(function (entry) {
-    $body.append(entry.element ? entry.element : entry.html);
-  });
-  window.reedcrm.todoKanban.deferredCards[columnKey] = entries.slice(liveCount).map(function (entry) {
-    return {ts: entry.ts, id: entry.id, html: entry.element ? entry.element.outerHTML : entry.html};
-  });
-
-  $body.append($loadMore);
-
-  if ($('.todo-board').data('editable')) {
-    $('.todo-sortable').sortable('refresh');
-  }
+window.reedcrm.todoKanban.sortColumn = function (columnKey) {
+  window.reedcrm.todoKanban.loadMore(columnKey, true);
 };
 
 /**
- * Update the counters of the columns: cards in the DOM plus the ones not injected yet.
+ * Update the counters of the columns: the cards on screen plus the ones the column has left
+ * on the server.
  *
  * @returns {void}
  */
 window.reedcrm.todoKanban.updateCounts = function () {
   $('.todo-column').each(function () {
-    var deferred = window.reedcrm.todoKanban.deferredCards[$(this).data('column')];
-    $(this).find('.todo-column-count').text($(this).find('.todo-card').length + (deferred ? deferred.length : 0));
+    var remaining = parseInt($(this).find('.todo-load-more').attr('data-remaining'), 10) || 0;
+    $(this).find('.todo-column-count').text($(this).find('.todo-card').length + remaining);
   });
 };
 
