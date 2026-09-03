@@ -647,3 +647,32 @@ FollowupAuditRenewedOn = Line renewed: next audit in %s
 FollowupAuditRenewNoInvoice = No new DU invoice for this client. Create the renewal invoice first: the line will then move to the next cycle (or automatically via the cron).
 FollowupAuditRenewConfirm = Renew this audit? The line will move to the next cycle (next audit in a year) if a new DU invoice exists.
 FollowupChartInvoiced = Invoiced
+
+# Signed quotes never invoiced
+SignedUnbilledMenu = Signed quotes not invoiced
+SignedUnbilledIntro = Signed proposals with no invoice linked. Every line is cross-checked against the customer invoices to spot the ones actually billed separately (standalone invoice, via the order or the contract).
+SignedUnbilledToBill = Really to invoice
+SignedUnbilledOver6Months = Signed more than 6 months ago
+SignedUnbilledSuspect = Probably already invoiced
+SignedUnbilledDisplayed = Displayed lines
+SignedUnbilledPeriod = Period
+SignedUnbilledPeriodMonths = Last %s months
+SignedUnbilledVerification = Billing cross-check
+SignedUnbilledFilterAll = Show everything
+SignedUnbilledFilterTodo = To invoice only
+SignedUnbilledFilterSuspect = Doubtful ones only
+SignedUnbilledSalesRep = Sales rep
+SignedUnbilledMinAmount = Min. amount incl. tax
+SignedUnbilledAge = Age
+SignedUnbilledDays = %s d
+SignedUnbilledClientInvoices = Customer invoices since signature
+SignedUnbilledNone = No signed unbilled proposal for this period
+SignedUnbilledMatchNone = To invoice
+SignedUnbilledMatchChain = Invoiced through order / contract
+SignedUnbilledMatchAmount = Invoice with the same amount
+SignedUnbilledMatchProducts = Same products invoiced
+SignedUnbilledInvoice = Create the invoice from this quote
+SignedUnbilledClassifyBilled = Classify as billed (removes the line)
+SignedUnbilledConfirmBilled = Classify quote %s as billed?
+SignedUnbilledMarkedBilled = Quote %s classified as billed
+SignedUnbilledLegend = Cross-check: "Invoiced through order / contract" = an invoice exists through the order or contract created from the quote. "Invoice with the same amount" = a customer invoice dated after the signature (30-day tolerance) has exactly the same amount excl. or incl. tax. "Same products invoiced" = at least half the quote products were invoiced to this customer after the signature. Check these three cases by eye: if it is the same job, classify the quote as billed.

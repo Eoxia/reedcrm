@@ -741,6 +741,22 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
+            'titre'    => $langs->transnoentities('SignedUnbilledMenu'),
+            'prefix'   => '<i class="fas fa-file-signature pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'signedunbilled',
+            'url'      => '/reedcrm/view/signedunbilled_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
             'titre'    => $langs->trans('Tools'),
             'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
