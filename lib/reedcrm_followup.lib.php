@@ -315,7 +315,8 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
 {
     $now  = dol_now();
     $data = [
-        'counts'      => ['tobill' => 0, 'tosend' => 0, 'awaiting' => 0, 'paid' => 0, 'late' => 0, 'total' => 0],
+        // done / todo = traceability of the month's billing run: an invoice was really generated, or not.
+        'counts'      => ['tobill' => 0, 'tosend' => 0, 'awaiting' => 0, 'paid' => 0, 'late' => 0, 'done' => 0, 'todo' => 0, 'total' => 0],
         'montant_ttc' => 0,
         'temps_sav'   => 0,
         'montant_pr'  => 0,
@@ -340,9 +341,12 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND MONTH(f9.datef) = ' . $browsedMonth . ' AND YEAR(f9.datef) = ' . $browsedYear . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
-    $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0';
-    // Like the native "Factures modèles" next-generation filter: next generation in the browsed month AND year.
-    $sql .= ' AND MONTH(fr.date_when) = ' . $browsedMonth . ' AND YEAR(fr.date_when) = ' . $browsedYear;
+    $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
+    // A template belongs to the browsed month either because its next generation falls in that month
+    // (still to bill, like the native "Factures modèles" filter), or because an invoice was really
+    // generated from it that month. The second branch keeps the traceability of finished months: once
+    // the invoices are generated, date_when has already moved to the next period.
+    $sql .= ' AND ((fr.suspended = 0 AND MONTH(fr.date_when) = ' . $browsedMonth . ' AND YEAR(fr.date_when) = ' . $browsedYear . ') OR fa.rowid IS NOT NULL)';
     $sql .= ' ORDER BY fr.total_ttc DESC';
 
     $resql = $db->query($sql);
@@ -354,6 +358,9 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
             if (!empty($obj->gen_date)) {
                 $obj->facture_creee = 1;
                 $obj->facture_payee = (int) $obj->gen_paye;
+                $data['counts']['done']++;
+            } else {
+                $data['counts']['todo']++;
             }
             $code       = reedcrmFollowupStatusCode($obj, $now);
             $data['counts'][$code]++;
@@ -759,4 +766,143 @@ function reedcrmSignedUnbilledGetProposals(DoliDB $db, int $months = 24, int $li
     }
 
     return $rows;
+}
+
+/**
+ * SQL expression giving the month a recurring template left the portfolio.
+ *
+ * A stopped subscription has no dedicated "stop date" in Dolibarr: the last successful generation
+ * (date_last_gen) is the real last month billed, so it is the reference. When a template was suspended
+ * before ever generating anything, fall back on the last modification date (tms), which is when it was
+ * suspended in practice.
+ *
+ * @return string SQL expression.
+ */
+function reedcrmFollowupExitDateSql(): string
+{
+    return 'COALESCE(fr.date_last_gen, fr.tms)';
+}
+
+/**
+ * Common WHERE conditions selecting the recurring templates that make up the subscription portfolio.
+ *
+ * @return string SQL conditions (starting with AND).
+ */
+function reedcrmFollowupPortfolioSql(): string
+{
+    return ' AND fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
+}
+
+/**
+ * Monthly "entries / exits" of the recurring subscription portfolio over a year.
+ *
+ * ENTRY  = a recurring template created during the month (fr.datec): a new subscription was signed.
+ * EXIT   = a suspended template whose billing stopped during the month (see reedcrmFollowupExitDateSql()):
+ *          a lost client / stopped subscription.
+ * Amounts are the template TTC amount, i.e. the recurring revenue gained or lost each month.
+ *
+ * @param  DoliDB $db   Database handler.
+ * @param  int    $year Year to browse.
+ * @return array<string,mixed> months: 1..12 => [in_nb, in_amount, out_nb, out_amount, net_nb, net_amount],
+ *                             totals: same keys summed over the year.
+ */
+function reedcrmFollowupGetRecurringMovementsByMonth(DoliDB $db, int $year): array
+{
+    $data = ['months' => [], 'totals' => ['in_nb' => 0, 'in_amount' => 0.0, 'out_nb' => 0, 'out_amount' => 0.0, 'net_nb' => 0, 'net_amount' => 0.0]];
+    for ($m = 1; $m <= 12; $m++) {
+        $data['months'][$m] = ['in_nb' => 0, 'in_amount' => 0.0, 'out_nb' => 0, 'out_amount' => 0.0, 'net_nb' => 0, 'net_amount' => 0.0];
+    }
+
+    // Entries: templates created during the year.
+    $sqlIn  = 'SELECT MONTH(fr.datec) as m, COUNT(*) as nb, SUM(fr.total_ttc) as tot';
+    $sqlIn .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+    $sqlIn .= ' WHERE YEAR(fr.datec) = ' . $year . reedcrmFollowupPortfolioSql();
+    $sqlIn .= ' GROUP BY m';
+    $resIn  = $db->query($sqlIn);
+    if ($resIn) {
+        while ($obj = $db->fetch_object($resIn)) {
+            $m = (int) $obj->m;
+            if ($m >= 1 && $m <= 12) {
+                $data['months'][$m]['in_nb']     = (int) $obj->nb;
+                $data['months'][$m]['in_amount'] = (float) $obj->tot;
+            }
+        }
+    }
+
+    // Exits: suspended templates whose billing stopped during the year.
+    $exitDate = reedcrmFollowupExitDateSql();
+    $sqlOut   = 'SELECT MONTH(' . $exitDate . ') as m, COUNT(*) as nb, SUM(fr.total_ttc) as tot';
+    $sqlOut  .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+    $sqlOut  .= ' WHERE fr.suspended = 1 AND YEAR(' . $exitDate . ') = ' . $year . reedcrmFollowupPortfolioSql();
+    $sqlOut  .= ' GROUP BY m';
+    $resOut   = $db->query($sqlOut);
+    if ($resOut) {
+        while ($obj = $db->fetch_object($resOut)) {
+            $m = (int) $obj->m;
+            if ($m >= 1 && $m <= 12) {
+                $data['months'][$m]['out_nb']     = (int) $obj->nb;
+                $data['months'][$m]['out_amount'] = (float) $obj->tot;
+            }
+        }
+    }
+
+    foreach ($data['months'] as $m => $row) {
+        $data['months'][$m]['net_nb']     = $row['in_nb'] - $row['out_nb'];
+        $data['months'][$m]['net_amount'] = $row['in_amount'] - $row['out_amount'];
+        foreach (['in_nb', 'in_amount', 'out_nb', 'out_amount'] as $k) {
+            $data['totals'][$k] += $row[$k];
+        }
+    }
+    $data['totals']['net_nb']     = $data['totals']['in_nb'] - $data['totals']['out_nb'];
+    $data['totals']['net_amount'] = $data['totals']['in_amount'] - $data['totals']['out_amount'];
+
+    return $data;
+}
+
+/**
+ * Detail of the entries / exits of the recurring subscription portfolio for one month.
+ *
+ * @param  DoliDB $db    Database handler.
+ * @param  int    $year  Year of the browsed month.
+ * @param  int    $month Month number (1..12).
+ * @return array{in:array<int,array<string,mixed>>,out:array<int,array<string,mixed>>} Detail rows:
+ *                       frec_id, titre, fk_soc, thirdparty, montant_ttc, date, prestation, suspended, nb_gen_done.
+ */
+function reedcrmFollowupGetRecurringMovementsForMonth(DoliDB $db, int $year, int $month): array
+{
+    $movements = ['in' => [], 'out' => []];
+    $exitDate  = reedcrmFollowupExitDateSql();
+
+    $select  = 'SELECT fr.rowid as frec_id, fr.titre, fr.total_ttc, fr.suspended, fr.nb_gen_done, fr.fk_soc,';
+    $select .= ' s.nom as thirdparty_name, s.status as soc_status';
+    $from    = ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+    $from   .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+
+    $queries = [
+        'in'  => $select . ', fr.datec as mvt_date' . $from . ' WHERE YEAR(fr.datec) = ' . $year . ' AND MONTH(fr.datec) = ' . $month . reedcrmFollowupPortfolioSql(),
+        'out' => $select . ', ' . $exitDate . ' as mvt_date' . $from . ' WHERE fr.suspended = 1 AND YEAR(' . $exitDate . ') = ' . $year . ' AND MONTH(' . $exitDate . ') = ' . $month . reedcrmFollowupPortfolioSql(),
+    ];
+
+    foreach ($queries as $way => $sql) {
+        $resql = $db->query($sql . ' ORDER BY fr.total_ttc DESC');
+        if (!$resql) {
+            continue;
+        }
+        while ($obj = $db->fetch_object($resql)) {
+            $movements[$way][] = [
+                'frec_id'     => (int) $obj->frec_id,
+                'titre'       => (string) $obj->titre,
+                'fk_soc'      => (int) $obj->fk_soc,
+                'thirdparty'  => (string) $obj->thirdparty_name,
+                'soc_status'  => (int) $obj->soc_status,
+                'montant_ttc' => (float) $obj->total_ttc,
+                'date'        => !empty($obj->mvt_date) ? $db->jdate($obj->mvt_date) : 0,
+                'prestation'  => reedcrmFollowupGuessPrestation((string) $obj->titre),
+                'suspended'   => (int) $obj->suspended,
+                'nb_gen_done' => (int) $obj->nb_gen_done,
+            ];
+        }
+    }
+
+    return $movements;
 }

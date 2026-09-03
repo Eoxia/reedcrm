@@ -676,3 +676,32 @@ SignedUnbilledClassifyBilled = Classify as billed (removes the line)
 SignedUnbilledConfirmBilled = Classify quote %s as billed?
 SignedUnbilledMarkedBilled = Quote %s classified as billed
 SignedUnbilledLegend = Cross-check: "Invoiced through order / contract" = an invoice exists through the order or contract created from the quote. "Invoice with the same amount" = a customer invoice dated after the signature (30-day tolerance) has exactly the same amount excl. or incl. tax. "Same products invoiced" = at least half the quote products were invoiced to this customer after the signature. Check these three cases by eye: if it is the same job, classify the quote as billed.
+
+# Recurring invoice follow-up - billing run traceability & portfolio movements
+FollowupRunStatus = Processing
+FollowupRunStatusHelp = Where the month billing stands for this subscription: "To do" while no invoice has been generated, "Done" as soon as an invoice created from this template is dated in the browsed month. Done lines stay visible, so the list no longer empties itself at the end of the month.
+FollowupRunToDo = To do
+FollowupRunDone = Done
+FollowupGeneratedInvoice = Generated invoice
+FollowupTemplateSuspended = Stopped
+FollowupTemplateSuspendedHelp = Template now suspended: it stays visible on the months it was actually billed.
+FollowupMovementsTitle = Recurring subscriptions in / out
+FollowupMovementsInMonth = New subscriptions this month
+FollowupMovementsInAmount = Amount gained (month)
+FollowupMovementsOutMonth = Subscriptions stopped this month
+FollowupMovementsOutAmount = Amount lost (month)
+FollowupMovementsNetMonth = Net balance of the month
+FollowupMovementsNetYear = Net balance of the year
+FollowupMovementsNetYearNb = In / out of the year
+FollowupMovementsChartTitle = In (+) / out (-) per month and cumulative balance
+FollowupMovementsIn = In
+FollowupMovementsOut = Out
+FollowupMovementsCumul = Cumulative balance
+FollowupMovementsNoIn = No new subscription this month
+FollowupMovementsNoOut = No subscription stopped this month
+FollowupRunLate = Late
+FollowupRunLateHelp = The month due date has passed and no invoice has been generated yet.
+FollowupRunToDoHelp = No invoice generated for this month on this subscription: still to generate.
+FollowupRunDoneOn = Invoice generated on %s
+FollowupRunNothingToDo = Nothing to do on %s: the %s invoices of the month have already been generated.
+FollowupRunNothingDone = No invoice generated yet on %s.
