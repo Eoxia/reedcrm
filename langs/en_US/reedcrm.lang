@@ -91,6 +91,15 @@ KeyyoCalls = Keyyo Calls
 # Project Extra
 GravityFormLink=GravityForm Link
 
+# Module project extrafield labels (llx_extrafields.label doubles as the translation key,
+# and showOptionals() only loads the extrafield langfile, here reedcrm@reedcrm).
+# LastName / FirstName live in users.lang, not loaded on those screens, and the core key
+# is "WebSite" not "Website": without these, the quick creation form shows raw keys.
+LastName=Last name
+FirstName=First name
+Website=Website
+ReedCRMGravityForm=GravityForm link
+
 # Geolocation PWA
 DetectingLocation = Detecting your location
 GeolocationNotSupported = Geolocation is not supported by this browser
