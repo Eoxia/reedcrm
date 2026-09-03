@@ -2441,8 +2441,17 @@ class ActionsReedcrm
             // Commercial relaunch column (call / email / rdv / other counters + quick add)
             $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
 
+            // Tags/categories column, like the ticket list has : a project carries its tags in
+            // llx_categorie_project, and the tag filter of the list header does the filtering,
+            // so the column is neither sortable nor searchable on its own
+            $virtualFields = ['contact_details', 'opportunity_details', 'relauch_commercial'];
+            if (isModEnabled('categorie')) {
+                $object->fields['categories'] = ['label' => 'Categories', 'enabled' => 1, 'position' => 18, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1, 'disablesearch' => 1];
+                $virtualFields[]              = 'categories';
+            }
+
             // Virtual columns (not real DB columns)
-            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], ['contact_details', 'opportunity_details', 'relauch_commercial']);
+            $this->results['excludeFields'] = array_merge($parameters['excludeFields'], $virtualFields);
 
             return 1;
         }
@@ -2503,6 +2512,7 @@ class ActionsReedcrm
                 'fk_opp_status'      => 'reedcrm_field_opp_status',
                 'fk_statut'          => 'reedcrm_field_status_badge',
                 'opp_percent'        => 'reedcrm_field_opp_percent',
+                'categories'         => 'reedcrm_field_categories',
             ];
 
             $key = $parameters['key'];
