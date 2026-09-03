@@ -102,7 +102,8 @@
 <?php // The labels the JS module writes back into repainted cards and emptied columns ?>
 <div class="todo-board" data-token="<?php echo newToken(); ?>" data-editable="<?php echo $permissionToWrite ? 1 : 0; ?>"
      data-na-label="<?php echo dol_escape_htmltag($langs->trans('StatusNotApplicable')); ?>"
-     data-empty-label="<?php echo dol_escape_htmltag($langs->trans('TodoNoEvent')); ?>">
+     data-empty-label="<?php echo dol_escape_htmltag($langs->trans('TodoNoEvent')); ?>"
+     data-load-more-label="<?php echo dol_escape_htmltag($langs->trans('TodoLoadMore', '%s')); ?>">
     <?php foreach ($todoColumns as $columnDefinition) :
         $columnKey       = $columnDefinition['key'];
         $columnCards     = $todoPage[$columnKey] ?? [];
@@ -138,22 +139,22 @@
                     <i class="fas fa-caret-down"></i>
                 </button>
             </div>
-            <div class="todo-column-body todo-sortable" data-column="<?php echo dol_escape_htmltag($columnKey); ?>">
+            <?php // The column carries how far it has been read: the button is only there when
+                  // something is left behind it, and the JS puts it back when there is again ?>
+            <div class="todo-column-body todo-sortable" data-column="<?php echo dol_escape_htmltag($columnKey); ?>"
+                 data-offset="<?php echo count($columnCards); ?>">
                 <?php if (empty($columnCards)) : ?>
                     <div class="todo-empty"><?php echo $langs->trans('TodoNoEvent'); ?></div>
                 <?php endif; ?>
                 <?php foreach ($columnCards as $t) {
                     require __DIR__ . '/todo_kanban_card.tpl.php';
                 } ?>
-                <?php // The rest of the column stays on the server: the button goes and gets the
-                      // next page, so a board of thousands of events weighs the same as a small one ?>
-                <button type="button" class="todo-load-more<?php echo $columnRemaining > 0 ? '' : ' todo-load-more-hidden'; ?>"
-                        data-column="<?php echo dol_escape_htmltag($columnKey); ?>"
-                        data-offset="<?php echo count($columnCards); ?>"
-                        data-remaining="<?php echo (int) $columnRemaining; ?>"
-                        data-label="<?php echo dol_escape_htmltag($langs->trans('TodoLoadMore', '%s')); ?>">
-                    <i class="fas fa-chevron-down"></i> <span class="todo-load-more-text"><?php echo $langs->trans('TodoLoadMore', $columnRemaining); ?></span>
-                </button>
+                <?php if ($columnRemaining > 0) : ?>
+                    <button type="button" class="todo-load-more" data-column="<?php echo dol_escape_htmltag($columnKey); ?>"
+                            data-remaining="<?php echo (int) $columnRemaining; ?>">
+                        <i class="fas fa-chevron-down"></i> <span class="todo-load-more-text"><?php echo $langs->trans('TodoLoadMore', $columnRemaining); ?></span>
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     <?php endforeach; ?>

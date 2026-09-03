@@ -86,6 +86,33 @@
     min-width: 200px;
 }
 
+// The user criteria is a select2: line its box up on the plain fields beside it
+.tdf-field .select2-container {
+    .select2-selection--single {
+        height: 30px;
+        border: 1px solid #d4d9e0;
+        border-radius: 6px;
+        background: #fff;
+
+        .select2-selection__rendered {
+            height: 28px;
+            padding-left: 8px;
+            line-height: 28px;
+            font-size: 13px;
+            color: inherit;
+        }
+
+        .select2-selection__arrow {
+            height: 28px;
+        }
+    }
+
+    &.select2-container--focus .select2-selection--single,
+    &.select2-container--open .select2-selection--single {
+        border-color: #a9b2c0;
+    }
+}
+
 .tdf-toggle {
     display: inline-flex;
     align-items: center;
@@ -403,12 +430,6 @@
     &:hover {
         background: #f0f0f0;
         border-color: #999;
-    }
-
-    // A column whose last page is on screen keeps the button in the DOM: the JS reads the
-    // offset it carries, and shows it again as soon as the column has more to give
-    &.todo-load-more-hidden {
-        display: none;
     }
 
     &.todo-load-more-loading {
