@@ -419,14 +419,24 @@ function reedcrmTodoGetUserInfos(DoliDB $db, array $userIds): array
 /**
  * Return every active internal user, for the owner and assigned users selectors
  *
- * @param  DoliDB $db Database handler
- * @return array      User infos, ordered by name
+ * An internal user is one that is not tied to a third party: "Employee" is an optional HR
+ * flag a hand made account rarely carries, and filtering on it left real users out of the
+ * selectors, hence out of reach of the board.
+ *
+ * @param  DoliDB $db            Database handler
+ * @param  int    $alwaysInclude User to return whatever the criteria, so that the selector
+ *                               always holds an option for the one it is filtering on
+ * @return array                 User infos, ordered by name
  */
-function reedcrmTodoGetSelectableUsers(DoliDB $db): array
+function reedcrmTodoGetSelectableUsers(DoliDB $db, int $alwaysInclude = 0): array
 {
     $sql  = 'SELECT u.rowid, u.firstname, u.lastname, u.photo FROM ' . MAIN_DB_PREFIX . 'user as u';
-    $sql .= ' WHERE u.statut = 1 AND u.employee = 1';
-    $sql .= ' AND u.entity IN (0, ' . getEntity('user') . ')';
+    $sql .= ' WHERE (';
+    $sql .= '   (u.statut = 1 AND u.fk_soc IS NULL AND u.entity IN (0, ' . getEntity('user') . '))';
+    if ($alwaysInclude > 0) {
+        $sql .= ' OR u.rowid = ' . $alwaysInclude;
+    }
+    $sql .= ' )';
     $sql .= ' ORDER BY u.lastname, u.firstname';
 
     $resql = $db->query($sql);

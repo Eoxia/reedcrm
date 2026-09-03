@@ -248,7 +248,9 @@ $helpUrl = 'FR:Module_' . $moduleName;
 $todoFilters = reedcrmTodoGetFilters();
 $todoColumns = reedcrmTodoGetKanbanColumns();
 $todoEvents  = reedcrmTodoGetEvents($db, $todoFilters);
-$todoUsers   = reedcrmTodoGetSelectableUsers($db);
+// The user being filtered on travels with the list, so the selector never shows a criteria
+// other than the one the board applied
+$todoUsers   = reedcrmTodoGetSelectableUsers($db, (int) $todoFilters['user']);
 $todoTypes   = reedcrmTodoGetEventTypes($db);
 
 // The board scrolls sideways: #id-right is a table cell, only classforhorizontalscrolloftabs bounds it
