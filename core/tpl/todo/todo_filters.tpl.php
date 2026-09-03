@@ -22,7 +22,7 @@
  *
  * Variables expected from calling PHP:
  * - $todoFilters array     Criteria from reedcrmTodoGetFilters()
- * - $todoEvents  array     Displayed events
+ * - $todoCounts   array     Number of events per column
  * - $todoUsers   array     Selectable users
  * - $todoTypes   array     Selectable types of event
  * - $langs       Translate Translation object
@@ -106,7 +106,7 @@ $menuId   = GETPOSTINT('idmenu');
         </a>
         <span class="tdf-count">
             <i class="fas fa-clipboard-list"></i>
-            <?php echo $langs->trans('TodoFilterCount', count($todoEvents)); ?>
+            <?php echo $langs->trans('TodoFilterCount', array_sum($todoCounts)); ?>
         </span>
     </div>
 </form>

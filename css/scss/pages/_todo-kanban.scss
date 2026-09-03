@@ -404,6 +404,17 @@
         background: #f0f0f0;
         border-color: #999;
     }
+
+    // A column whose last page is on screen keeps the button in the DOM: the JS reads the
+    // offset it carries, and shows it again as soon as the column has more to give
+    &.todo-load-more-hidden {
+        display: none;
+    }
+
+    &.todo-load-more-loading {
+        opacity: 0.6;
+        cursor: progress;
+    }
 }
 
 /* ---- Cards ---- */
