@@ -218,6 +218,9 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_EVENT_STATUS_VALUE', 'integer', -1, '', 0, 'current'],
             $i++ => ['REEDCRM_EVENT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_EVENT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
+            // CONST QUICK CLOSE EVENT
+            $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'chaine', 'm', '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_VALUE', 'integer', 7, '', 0, 'current'],
 
             // QUICK CREATION
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],

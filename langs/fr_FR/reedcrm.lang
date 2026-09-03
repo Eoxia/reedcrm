@@ -95,7 +95,7 @@ ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni
 ReminderValue = Délai du rappel
 ReminderValueDescription = Nombre d’unités de temps avant l’événement pour déclencher le rappel
 ReminderUnit = Unité du rappel
-ReminderUnitDescription = nité de temps utilisée pour le rappel
+ReminderUnitDescription = Unité de temps utilisée pour le rappel
 
 # ApiQuickCreation
 ApiQuickCreations = ajouts rapides via l'api
@@ -851,3 +851,24 @@ TodoPropalRelaunchCronResult = %s relance(s) de devis créée(s)
 TodoInvoiceRelaunchCronLabel = ReedCRM - Relances des factures impayées
 TodoInvoiceRelaunchCronComment = Crée un événement à faire pour chaque facture validée impayée depuis plus de 30 jours après son échéance (constante REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). L'événement alimente la colonne « Factures à relancer » du tableau Todo.
 TodoInvoiceRelaunchCronResult = %s relance(s) de facture créée(s)
+
+# Clôture rapide d'un événement
+QuickCloseEventTitle = Clôturer l'événement
+QuickCloseEventTooltip = Clôturer cet événement
+QuickCloseEventComment = Commentaire
+QuickCloseEventCommentPlaceholder = Ajouté à la description de l'événement (facultatif)
+QuickCloseEventReschedule = Reprogrammer un événement identique pour plus tard
+QuickCloseEventInOneMonth = Dans 1 mois
+QuickCloseEventInDays = Dans
+QuickCloseEventInDaysSuffix = jours
+QuickCloseEventConfirm = Clôturer
+QuickCloseEventDone = Événement clôturé
+QuickCloseEventDoneAndRescheduled = Événement clôturé, nouvel événement programmé le %s
+QuickCloseEventNotTodo = Cet événement n'est pas à faire, il ne peut pas être clôturé
+QuickCloseEventError = La clôture de l'événement a échoué
+QuickCloseEvents = clôtures rapides d'événement
+QuickCloseEventInDaysLabel = Dans un nombre de jours
+QuickCloseEventDefaultDelay = Délai de reprogrammation par défaut
+QuickCloseEventDefaultDelayDescription = Choix présélectionné dans la modale de clôture rapide quand la reprogrammation est demandée
+QuickCloseEventDefaultDays = Nombre de jours par défaut
+QuickCloseEventDefaultDaysDescription = Nombre de jours prérempli pour le délai « Dans un nombre de jours »

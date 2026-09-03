@@ -1473,6 +1473,15 @@ class ActionsReedcrm
 
             $this->resprints .= $html;
         }
+
+        // Quick close of the to-do events listed by show_actions_done(), on every page displaying that list
+        $quickCloseContexts = 'agenda|thirdpartycomm|thirdpartysupplier|projectcardinfo|call_list_card|thirdpartycalls|address';
+        if (isModEnabled('agenda') && preg_match('/' . $quickCloseContexts . '/', $parameters['context'])
+            && ($user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create'))) {
+            $langs->load('reedcrm@reedcrm');
+            require __DIR__ . '/../core/tpl/reedcrm_event_quick_close_modal.tpl.php';
+        }
+
         return 0; // or return 1 to replace standard code
     }
 

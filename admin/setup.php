@@ -117,6 +117,22 @@ if ($action == 'set_config') {
     exit;
 }
 
+if ($action == 'set_config_quick_close') {
+    $delayUnit  = GETPOST('quick_close_delay_unit', 'aZ09') === 'd' ? 'd' : 'm';
+    $delayValue = GETPOSTINT('quick_close_delay_value');
+
+    if ($delayValue < 1) {
+        $delayValue = 1;
+    }
+
+    dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_UNIT', $delayUnit, 'chaine', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_VALUE', $delayValue, 'integer', 0, '', $conf->entity);
+
+    setEventMessage('SavedConfig');
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
 if ($action == 'add_api_quick_affected_user') {
     $config = getDolGlobalString('REEDCRM_API_QUICK_CREATIONS');
     $config = json_decode($config, true);
@@ -689,6 +705,46 @@ print '<td class="">';
 print $form->selectarray('remind_unit', $offsetUnits, getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT'));
 print '</td></td></tr>';
 
+
+print '</table>';
+print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';
+print '</form>';
+
+// Quick close of an event
+print load_fiche_titre($langs->trans('Configs', $langs->transnoentities('QuickCloseEvents')), '', '');
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="quick_close">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="set_config_quick_close">';
+print '<table class="noborder centpercent">';
+
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('Name') . '</td>';
+print '<td>' . $langs->trans('Description') . '</td>';
+print '<td>' . $langs->trans('Value') . '</td>';
+print '</tr>';
+
+// Delay preselected in the reschedule block of the quick close modal
+$quickCloseUnits = [
+    'm' => $langs->transnoentities('QuickCloseEventInOneMonth'),
+    'd' => $langs->transnoentities('QuickCloseEventInDaysLabel')
+];
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('QuickCloseEventDefaultDelay');
+print '</td><td>';
+print $langs->trans('QuickCloseEventDefaultDelayDescription');
+print '</td><td>';
+print $form->selectarray('quick_close_delay_unit', $quickCloseUnits, getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm'), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx');
+print '</td></tr>';
+
+// Number of days proposed when the delay is expressed in days
+print '<tr class="oddeven"><td>';
+print $langs->trans('QuickCloseEventDefaultDays');
+print '</td><td>';
+print $langs->trans('QuickCloseEventDefaultDaysDescription');
+print '</td><td>';
+print '<input type="number" name="quick_close_delay_value" class="minwidth200" value="' . getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7) . '" min="1" max="3650">';
+print '</td></tr>';
 
 print '</table>';
 print '<div class="tabsAction"><input type="submit" class="butAction" name="save" value="' . $langs->trans('Save') . '"></div>';

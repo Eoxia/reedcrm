@@ -762,3 +762,24 @@ LastMessage = Last message
 TicketStaleList = The %s open tickets with no message for more than %s days
 NbOfTicketsWithTimeDescription = Number of tickets holding at least one time entry, over the number of analysed tickets: the tickets still open plus the ones created or closed over the period.
 TimeSpentOnAssignedTickets = Time on their tickets
+
+# Quick close of an event
+QuickCloseEventTitle = Close the event
+QuickCloseEventTooltip = Close this event
+QuickCloseEventComment = Comment
+QuickCloseEventCommentPlaceholder = Appended to the event description (optional)
+QuickCloseEventReschedule = Schedule the same event again for later
+QuickCloseEventInOneMonth = In 1 month
+QuickCloseEventInDays = In
+QuickCloseEventInDaysSuffix = days
+QuickCloseEventConfirm = Close
+QuickCloseEventDone = Event closed
+QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
+QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
+QuickCloseEventError = Closing the event failed
+QuickCloseEvents = quick event closures
+QuickCloseEventInDaysLabel = In a number of days
+QuickCloseEventDefaultDelay = Default reschedule delay
+QuickCloseEventDefaultDelayDescription = Choice preselected in the quick close modal when a reschedule is requested
+QuickCloseEventDefaultDays = Default number of days
+QuickCloseEventDefaultDaysDescription = Number of days prefilled for the "In a number of days" delay
