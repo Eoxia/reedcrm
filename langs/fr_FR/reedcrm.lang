@@ -42,6 +42,8 @@ ProjectPhone = Téléphone projet
 ErrorInvalidProjectPhone = Le numéro de téléphone n'est pas valide ou est trop long (max 20 caractères)
 ContactInformations = Coordonnées
 Vocal = Vocal
+AddressContactSameAsThirdPartyContact = Contact de l'adresse identique au contact du tiers
+ProjectContactSameAsThirdPartyContact = Contact du projet identique au contact du tiers
 
 # Frontend - Frontend
 QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
@@ -218,7 +220,7 @@ UpdateObjectContactTrigger = Mise à jour du rôle "contacts facturation" des fa
 NoContact = Aucun contact
 AddContactNotificationTrigger = Ajout d'une notification contact "action Facture client validée" des tiers
 DictionarySource = Origine des opportunités/devis/commandes/factures
-OpportunityOrigin = Origine de l'opportunitée
+OpportunityOrigin = Origine de l'opportunité
 SRC_INTE = Internet
 SRC_CAMP_MAIL = Campagne Publipostage
 SRC_CAMP_EMAIL = Campagne d'emailing
@@ -243,6 +245,15 @@ Opportunities = Opportunités
 OpenedPropals = PR ouvertes
 RecurringInvoices = Factures récurrentes
 GravityFormLink                        = Lien GravityForm
+
+# Libellés des extrafields projet du module (llx_extrafields.label sert de clé de traduction,
+# et showOptionals() ne charge que le langfile de l'extrafield, ici reedcrm@reedcrm).
+# LastName / FirstName vivent dans users.lang, non chargé sur ces écrans ; le noyau écrit "WebSite"
+# et non "Website" : sans ces clés, l'Ajout rapide affiche les clés brutes.
+LastName                               = Nom
+FirstName                              = Prénom
+Website                                = Site web
+ReedCRMGravityForm                     = Lien GravityForm
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall = Appel entrant
@@ -708,6 +719,138 @@ NoPhoneNumber = Pas de téléphone
 NoEventOnOpportunity = Aucun événement sur cette opportunité
 ToCallShort = à appeler
 SeeOpportunityTimeline = Voir l'historique
+
+#
+# Tableau de bord tickets
+#
+TicketDashboard = Tableau de bord tickets
+OpenTicketList = Tickets ouverts
+TicketPeriodFilter = Période analysée
+TicketPeriodLastMonth = 01 dernier mois
+TicketPeriodLastMonths = %s derniers mois
+TicketPeriodAll = Tout l'historique
+TicketAssigneeFilter = Affecté à
+TicketAllAssignees = Tous les intervenants
+TicketClosedFilter = Tickets clôturés
+TicketWithClosedTickets = Inclus dans les calculs
+TicketWithoutClosedTickets = Exclus des calculs
+
+# Tableau de bord tickets - Widgets
+TicketFlow = Flux des tickets
+TicketsCreatedOverPeriod = Créés sur la période
+TicketsClosedOverPeriod = Clôturés sur la période
+TicketBalanceOverPeriod = Solde
+TicketBalanceOverPeriodDescription = Différence entre les tickets créés et les tickets clôturés sur la période. Un solde positif signifie que le stock de tickets ouverts augmente.
+NbOfOpenedTicket = Tickets ouverts
+TicketsUnassigned = Non assignés
+TicketsNeverRead = Jamais lus
+TicketsUnread = Non lus
+TicketDelays = Délais
+MeanTakeOverTime = Prise en compte moyenne
+MeanTakeOverTimeDescription = Temps écoulé entre la création du ticket et sa première lecture, sur les tickets créés pendant la période.
+MeanFirstResponseTime = 1re réponse moyenne
+MeanFirstResponseTimeDescription = Temps écoulé entre la création du ticket et le premier message public écrit par un utilisateur interne. Les tickets restés sans réponse ne sont pas comptés.
+MedianFirstResponseTime = 1re réponse médiane
+MeanResolutionTime = Résolution moyenne
+MeanResolutionTimeDescription = Temps écoulé entre la création et la clôture, mesuré sur les tickets clôturés pendant la période.
+MedianResolutionTime = Résolution médiane
+MeanBacklogAge = Ancienneté moyenne du stock
+MeanBacklogAgeDescription = Ancienneté moyenne des tickets encore ouverts aujourd'hui, quelle que soit la période sélectionnée.
+OldestOpenTicket = Ticket ouvert le plus ancien
+TicketTimeSpent = Temps consigné
+TotalTimeSpentOverPeriod = Temps total
+TotalTimeSpentOverPeriodDescription = Temps consigné pendant la période sur les tâches de ticket, c'est-à-dire les tâches dont le libellé commence par le préfixe défini dans la configuration ReedCRM.
+NbOfTimeEntries = Saisies de temps
+MeanTimePerEntry = Temps moyen par saisie
+MeanTimePerTicket = Temps moyen par ticket
+NbOfTicketsWithTime = Tickets avec du temps
+NbOfTimeContributors = Contributeurs
+TimeSpentHours = Temps consigné (h)
+TicketPeople = Personnes
+NbOfAssignees = Intervenants
+NbOfAssigneesDescription = Nombre d'utilisateurs ayant au moins un ticket ouvert qui leur est affecté.
+MeanOpenTicketPerAssignee = Tickets ouverts / intervenant
+MostLoadedAssignee = Intervenant le plus chargé
+NbOfExchangesOverPeriod = Messages sur la période
+MeanExchangePerTicket = Messages par ticket
+NbOfConcernedSocieties = Tiers concernés
+NbOfExchanges = Messages
+
+# Tableau de bord tickets - Graphiques
+TicketRepartitionPerUser = Charge et délais par intervenant
+TicketTimeSpentPerUser = Temps consigné par intervenant
+TicketMessagesPerUser = Messages par intervenant
+TicketPublicMessages = Messages publics
+TicketPrivateMessages = Notes privées
+TicketsCreatedVersusClosedByMonth = Tickets créés et clôturés sur les %s derniers mois
+TicketsCreatedByMonth = Tickets créés sur les %s derniers mois
+TicketsCreated = Tickets créés
+TicketsClosed = Tickets clôturés
+TicketTimeSpentByMonth = Temps consigné sur les %s derniers mois
+TicketOpenByStatus = Tickets ouverts par statut
+TicketBacklogAge = Ancienneté des tickets ouverts
+TicketResolutionTimeRepartition = Répartition des délais de résolution
+TicketBySeverity = Tickets ouverts par sévérité
+TicketByType = Tickets ouverts par type
+TicketCreationByWeekday = Créations par jour de la semaine
+TicketCreationByHour = Créations par heure
+TopSocietyWithMostOpenTickets = Top %s des tiers avec le plus de tickets ouverts
+DurationUnderDays = Moins de %s j
+DurationBetweenDays = De %s à %s j
+DurationOverDays = Plus de %s j
+
+# Tableau de bord tickets - Listes
+TicketWorkloadPerUserList = Charge détaillée par intervenant
+LastActivity = Dernière activité
+TicketOldestOpenList = Les %s tickets ouverts les plus anciens
+TicketAge = Ancienneté
+LastMessage = Dernier message
+TicketStaleList = Les %s tickets ouverts sans message depuis plus de %s jours
+NbOfTicketsWithTimeDescription = Nombre de tickets ayant au moins une saisie de temps, rapporté au nombre de tickets analysés : les tickets encore ouverts plus ceux créés ou clôturés pendant la période.
+TimeSpentOnAssignedTickets = Temps sur ses tickets
+
+#
+# Todo - tableau des événements d'agenda
+#
+TodoBoard = Todo
+TodoAllUsers = Tous les utilisateurs
+TodoAllTypes = Tous les types
+TodoSearchPlaceholder = Libellé, lieu ou tiers
+TodoFilterHideAuto = Masquer les événements automatiques
+TodoFilterHideAutoHelp = Les événements tracés par Dolibarr lui-même ne sont pas des actions à mener
+TodoFilterCount = %s événement(s)
+TodoNoEvent = Aucun événement
+TodoNoLabel = Sans libellé
+TodoLateEvent = En retard
+TodoUnassigned = Non affecté
+TodoAddAssigned = Affecter un utilisateur
+TodoRemoveAssigned = Retirer l'affectation
+TodoLoadMore = Afficher %s de plus
+TodoSortByDate = Trier par date de début
+TodoColumnWidth = Largeur des colonnes
+TodoColumnGap = Espacement
+TodoVisibleColumns = Colonnes affichées
+TodoColumnOptions = Options de la colonne
+TodoSortDateAsc = Trier par date croissante
+TodoSortDateDesc = Trier par date décroissante
+TodoGroup = Grouper
+TodoFreeze = Figer
+TodoHideColumn = Masquer
+TodoComingSoon = Bientôt disponible
+
+# Todo - relances automatiques (crons)
+TodoColumnPropalRelaunch = Devis à relancer
+TodoColumnInvoiceRelaunch = Factures à relancer
+TodoPropalRelaunchLabel = Relancer le devis %s
+TodoPropalRelaunchNote = Devis validé le %s, montant %s, toujours sans réponse.
+TodoInvoiceRelaunchLabel = Relancer la facture impayée %s
+TodoInvoiceRelaunchNote = Facture échue le %s, montant %s, toujours impayée.
+TodoPropalRelaunchCronLabel = ReedCRM - Relances des devis sans réponse
+TodoPropalRelaunchCronComment = Crée un événement à faire pour chaque devis validé depuis plus de 30 jours (constante REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) qui n'est ni signé ni refusé. L'événement alimente la colonne « Devis à relancer » du tableau Todo.
+TodoPropalRelaunchCronResult = %s relance(s) de devis créée(s)
+TodoInvoiceRelaunchCronLabel = ReedCRM - Relances des factures impayées
+TodoInvoiceRelaunchCronComment = Crée un événement à faire pour chaque facture validée impayée depuis plus de 30 jours après son échéance (constante REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). L'événement alimente la colonne « Factures à relancer » du tableau Todo.
+TodoInvoiceRelaunchCronResult = %s relance(s) de facture créée(s)
 
 # Clôture rapide d'un événement
 QuickCloseEventTitle = Clôturer l'événement

@@ -1,0 +1,1149 @@
+/* Copyright (C) 2026 EVARISK <technique@evarisk.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+"use strict";
+
+/**
+ * \file    js/modules/todo_kanban.js
+ * \ingroup reedcrm
+ * \brief   Kanban board of the todo tab: drag & drop between event statuses and
+ *          inline edition of the agenda events (label, dates, owner, assigned users).
+ */
+
+if (!window.reedcrm) {
+  window.reedcrm = {};
+}
+
+window.reedcrm.todoKanban = {};
+
+
+/**
+ * Init: only the todo board wires this module up.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.init = function () {
+  if (!$('.todo-board').length) {
+    return;
+  }
+
+  window.reedcrm.todoKanban.event();
+  window.reedcrm.todoKanban.initSortable();
+  window.reedcrm.todoKanban.initSettings();
+  window.reedcrm.todoKanban.initColumnMenu();
+  window.reedcrm.todoKanban.initUserSelect();
+};
+
+/**
+ * Turn the user criteria into a searchable list: a board shared by twenty people is picked
+ * through by typing a name rather than by scrolling.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initUserSelect = function () {
+  var $select = $('#search_user');
+
+  if (!$select.length || typeof $.fn.select2 === 'undefined') {
+    return;
+  }
+
+  $select.select2({
+    width: '220px',
+    minimumResultsForSearch: 0,
+    dropdownAutoWidth: true
+  });
+};
+
+/**
+ * Register the delegated events of the board.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.event = function () {
+  $(document).on('click', '.todo-editable-label', window.reedcrm.todoKanban.editLabel);
+  $(document).on('click', '.todo-editable-date', window.reedcrm.todoKanban.editDate);
+  $(document).on('mousedown', '.todo-progress-bar.todo-editable-progress', window.reedcrm.todoKanban.dragPercent);
+
+  $(document).on('click', '.todo-initial-owner', window.reedcrm.todoKanban.toggleOwnerDropdown);
+  $(document).on('click', '.todo-owner-dropdown .todo-user-option', window.reedcrm.todoKanban.selectOwner);
+  $(document).on('click', '.todo-add-assigned-btn', window.reedcrm.todoKanban.toggleAssignedDropdown);
+  $(document).on('click', '.todo-assigned-dropdown .todo-user-option', window.reedcrm.todoKanban.addAssigned);
+  $(document).on('click', '.todo-remove-assigned', window.reedcrm.todoKanban.removeAssigned);
+
+  $(document).on('input', '.todo-owner-search, .todo-assigned-search', window.reedcrm.todoKanban.filterOptions);
+
+  $(document).on('click', '.todo-column-sort', window.reedcrm.todoKanban.toggleColumnSort);
+
+  $(document).on('click', '.todo-load-more', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    window.reedcrm.todoKanban.loadMore($(this).data('column'));
+  });
+
+  // Close every open dropdown when clicking outside of one
+  $(document).on('click', function () {
+    window.reedcrm.todoKanban.closeDropdowns();
+  });
+  $(document).on('click', '.todo-owner-dropdown, .todo-assigned-dropdown', function (event) {
+    event.stopPropagation();
+  });
+
+  // Interacting with a control of the card must never start a drag
+  $(document).on('mousedown', '.todo-editable-label, .todo-editable-date, .todo-card-progress, .todo-initial-owner, .todo-owner-dropdown, .todo-assigned-dropdown, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge', function (event) {
+    event.stopPropagation();
+  });
+};
+
+/**
+ * Run a callback on every click landing outside of a selector.
+ *
+ * The click is caught on the way down rather than on the way up: several controls of a card
+ * stop the propagation of theirs, and jQuery drops the handlers of the outer elements as soon
+ * as one does, so a popover listening on the document would simply never be told.
+ *
+ * @param  {string}   inside   Selector the click may land in without triggering the callback
+ * @param  {Function} callback Called when the click landed anywhere else
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.onOutsideClick = function (inside, callback) {
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+
+    if (!target || typeof target.closest !== 'function' || !target.closest(inside)) {
+      callback();
+    }
+  }, true);
+};
+
+/**
+ * Close every open owner / assigned users dropdown.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.closeDropdowns = function () {
+  $('.todo-owner-dropdown.visible, .todo-assigned-dropdown.visible').each(function () {
+    $(this).removeClass('visible');
+    $(this).closest('.todo-card').removeClass('todo-card-dropdown-open');
+  });
+};
+
+/**
+ * Send an update of the board to the page controller.
+ *
+ * @param  {Object}   params    Query parameters, action included
+ * @param  {jQuery}   $card     Card to flag while the call runs
+ * @param  {Function} onSuccess Called with the JSON payload when the update went through
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.request = function (params, $card, onSuccess) {
+  var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
+
+  params.token = window.saturne.toolbox.getToken();
+  $card.addClass('todo-card-saving');
+
+  $.ajax({
+    url: document.URL + separator + $.param(params),
+    type: 'POST',
+    dataType: 'json',
+    success: function (response) {
+      $card.removeClass('todo-card-saving');
+      if (response && response.success) {
+        window.reedcrm.todoKanban.flag($card, 'todo-card-saved', 2000);
+        if (onSuccess) {
+          onSuccess(response);
+        }
+      } else {
+        window.reedcrm.todoKanban.flag($card, 'todo-card-error', 3000);
+      }
+    },
+    error: function () {
+      $card.removeClass('todo-card-saving');
+      window.reedcrm.todoKanban.flag($card, 'todo-card-error', 3000);
+    }
+  });
+};
+
+/**
+ * Flag a card for a while (saved / error feedback).
+ *
+ * @param  {jQuery} $card    Card to flag
+ * @param  {string} cssClass Class to add then remove
+ * @param  {number} delay    Milliseconds the flag stays on
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.flag = function ($card, cssClass, delay) {
+  $card.addClass(cssClass);
+  setTimeout(function () {
+    $card.removeClass(cssClass);
+  }, delay);
+};
+
+/**
+ * Inline edition of the label of an event.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.editLabel = function (event) {
+  event.stopPropagation();
+
+  var $label = $(this);
+  if ($label.find('textarea').length) {
+    return;
+  }
+
+  var originalText = $label.text().trim();
+  var $card        = $label.closest('.todo-card');
+  var eventId      = $card.data('event-id');
+  var $textarea    = $('<textarea class="todo-inline-edit"></textarea>').val(originalText);
+
+  $label.empty().append($textarea);
+  $textarea.trigger('focus').select();
+
+  $textarea.on('blur', function () {
+    var newLabel = $textarea.val().trim();
+    if (newLabel === '' || newLabel === originalText) {
+      $label.text(originalText);
+      return;
+    }
+
+    $label.text(newLabel);
+    window.reedcrm.todoKanban.request(
+      {action: 'updateEventLabel', event_id: eventId, new_label: newLabel},
+      $card,
+      null
+    );
+  });
+
+  $textarea.on('keydown', function (keyEvent) {
+    if (keyEvent.key === 'Enter' && !keyEvent.shiftKey) {
+      keyEvent.preventDefault();
+      $textarea.trigger('blur');
+    } else if (keyEvent.key === 'Escape') {
+      $textarea.off('blur');
+      $label.text(originalText);
+    }
+  });
+};
+
+/**
+ * Inline edition of a date of an event, through the native picker of the browser.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.editDate = function (event) {
+  event.stopPropagation();
+
+  var $date = $(this);
+  if ($date.find('input').length) {
+    return;
+  }
+
+  var $value       = $date.find('.todo-date-value');
+  var $card        = $date.closest('.todo-card');
+  var eventId      = $card.data('event-id');
+  var field        = $date.data('field');
+  var rawValue     = $date.data('raw') || '';
+  var originalText = $value.text();
+  var $input       = $('<input class="todo-date-input">').attr('type', $date.data('input-type') || 'datetime-local').val(rawValue);
+
+  $value.replaceWith($input);
+  $input.trigger('focus');
+
+  // Typing rewrites the field segment by segment and the browser fires a `change` on
+  // every intermediate value: hold the save until the user leaves the field or validates.
+  var isTyping    = false;
+  var typingTimer = null;
+  var isDone      = false;
+
+  function restore(text) {
+    $input.replaceWith($('<span class="todo-date-value"></span>').text(text));
+  }
+
+  function save() {
+    if (isDone) {
+      return;
+    }
+    isDone = true;
+    clearTimeout(typingTimer);
+    $input.off('blur change keydown');
+
+    var value = $input.val();
+
+    // A half typed date reads as an empty value, do not erase what was being edited
+    if (!value && $input[0].validity && $input[0].validity.badInput) {
+      restore(originalText);
+      return;
+    }
+    if (value === rawValue) {
+      restore(originalText);
+      return;
+    }
+    if (field === 'date_start' && !value) {
+      restore(originalText);
+      return;
+    }
+
+    // An end date before the start date is refused before the round trip
+    var otherRaw = $date.closest('.todo-dates-row').find('.todo-date').not($date).data('raw') || '';
+    if (value && otherRaw && ((field === 'date_end' && value < otherRaw) || (field === 'date_start' && otherRaw && value > otherRaw))) {
+      window.reedcrm.todoKanban.flag($card, 'todo-card-error', 3000);
+      restore(originalText);
+      return;
+    }
+
+    restore(originalText);
+    window.reedcrm.todoKanban.request(
+      {action: 'updateEventDate', event_id: eventId, field: field, value: value},
+      $card,
+      function (response) {
+        $date.data('raw', response.raw);
+        $date.find('.todo-date-value').text(response.formatted || '-');
+      }
+    );
+  }
+
+  // Picking a date in the native calendar fires `change` without any keystroke
+  $input.on('change', function () {
+    if (!isTyping) {
+      save();
+    }
+  });
+  $input.on('blur', save);
+  $input.on('keydown', function (keyEvent) {
+    if (keyEvent.key === 'Escape') {
+      isDone = true;
+      clearTimeout(typingTimer);
+      $input.off('blur change');
+      restore(originalText);
+      return;
+    }
+    if (keyEvent.key === 'Enter') {
+      keyEvent.preventDefault();
+      save();
+      return;
+    }
+    isTyping = true;
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(function () {
+      isTyping = false;
+    }, 1500);
+  });
+};
+
+/**
+ * Drag the progress bar of a card to set the percentage of the event.
+ *
+ * @param  {Event} event Mouse down event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.dragPercent = function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  var $bar     = $(this);
+  var $card    = $bar.closest('.todo-card');
+  var barWidth = $bar.width();
+  var percent  = 0;
+
+  function computePercent(pageX) {
+    var value = Math.round(((pageX - $bar.offset().left) / barWidth) * 100);
+    return Math.max(0, Math.min(100, value));
+  }
+
+  percent = computePercent(event.pageX);
+  window.reedcrm.todoKanban.paintCard($card, percent);
+  $bar.addClass('todo-bar-dragging');
+
+  $(document).on('mousemove.todoPercent', function (moveEvent) {
+    percent = computePercent(moveEvent.pageX);
+    window.reedcrm.todoKanban.paintCard($card, percent);
+  });
+
+  $(document).on('mouseup.todoPercent', function () {
+    $(document).off('mousemove.todoPercent mouseup.todoPercent');
+    $bar.removeClass('todo-bar-dragging');
+    window.reedcrm.todoKanban.moveToColumn($card, percent);
+    window.reedcrm.todoKanban.savePercent($card, percent);
+  });
+};
+
+/**
+ * Repaint a card with the colour and the percentage of the column it belongs to.
+ *
+ * @param  {jQuery} $card   Card to repaint
+ * @param  {number} percent New percentage (-1 for an event carrying none)
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.paintCard = function ($card, percent) {
+  var $column = window.reedcrm.todoKanban.findColumn($card, percent);
+  var color   = $column ? $column.data('color') : $card.closest('.todo-column').data('color');
+
+  $card.data('percent', percent).attr('data-percent', percent);
+  $card.find('.todo-progress-fill').css({width: Math.max(0, percent) + '%', background: color});
+  $card.find('.todo-progress-text').text(percent >= 0 ? percent + '%' : String($('.todo-board').data('na-label') || ''));
+  $card.find('.todo-initial-owner').css('background', color);
+};
+
+/**
+ * Return the column a card belongs to, mirroring reedcrmTodoGetColumnForEvent(): a relaunch
+ * stays in its own backlog as long as it is neither done nor dropped.
+ *
+ * @param  {jQuery} $card   Card to place
+ * @param  {number} percent Percentage of the event
+ * @returns {jQuery|null}    Matching column
+ */
+window.reedcrm.todoKanban.findColumn = function ($card, percent) {
+  var code   = String($card.data('event-code') || '');
+  var $found = null;
+
+  $('.todo-column').each(function () {
+    var $column     = $(this);
+    var columnCode  = String($column.data('code') || '');
+
+    if (columnCode) {
+      if (columnCode === code && percent >= 0 && percent < 100) {
+        $found = $column;
+        return false;
+      }
+      return true;
+    }
+
+    var minimum = parseInt($column.data('percent-min'), 10);
+    var maximum = parseInt($column.data('percent-max'), 10);
+    if (!isNaN(minimum) && percent >= minimum && percent <= maximum) {
+      $found = $column;
+      return false;
+    }
+
+    return true;
+  });
+
+  return $found;
+};
+
+/**
+ * Move a card to the column matching a percentage.
+ *
+ * @param  {jQuery} $card   Card to move
+ * @param  {number} percent Percentage of the event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.moveToColumn = function ($card, percent) {
+  var $target = window.reedcrm.todoKanban.findColumn($card, percent);
+
+  if (!$target || $target[0] === $card.closest('.todo-column')[0]) {
+    return;
+  }
+
+  var $sourceBody = $card.closest('.todo-column-body');
+  var $targetBody = $target.find('.todo-column-body');
+
+  $card.detach();
+  $targetBody.find('.todo-empty').remove();
+  $targetBody.append($card);
+  // Keep the "load more" button anchored at the bottom of the column
+  $targetBody.append($targetBody.children('.todo-load-more'));
+
+  if (!$sourceBody.children('.todo-card').length) {
+    $sourceBody.prepend($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+  }
+
+  window.reedcrm.todoKanban.updateCounts();
+};
+
+/**
+ * Save the percentage of an event.
+ *
+ * @param  {jQuery} $card   Card holding the event
+ * @param  {number} percent New percentage
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.savePercent = function ($card, percent) {
+  window.reedcrm.todoKanban.request(
+    {action: 'updateEventPercent', event_id: $card.data('event-id'), new_percent: percent},
+    $card,
+    null
+  );
+};
+
+/**
+ * Open or close the owner selector of a card.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleOwnerDropdown = function (event) {
+  var $dropdown = $(this).closest('.todo-owner-wrapper').find('.todo-owner-dropdown');
+  if (!$dropdown.length) {
+    return;
+  }
+
+  event.stopPropagation();
+  window.reedcrm.todoKanban.openDropdown($dropdown, '.todo-owner-search');
+};
+
+/**
+ * Open or close the assigned users selector of a card.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleAssignedDropdown = function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  window.reedcrm.todoKanban.openDropdown($(this).siblings('.todo-assigned-dropdown'), '.todo-assigned-search');
+};
+
+/**
+ * Show one dropdown, closing the others and focusing its search field.
+ *
+ * @param  {jQuery} $dropdown     Dropdown to toggle
+ * @param  {string} searchSelector Selector of its search field
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.openDropdown = function ($dropdown, searchSelector) {
+  var $card = $dropdown.closest('.todo-card');
+
+  $('.todo-owner-dropdown.visible, .todo-assigned-dropdown.visible').not($dropdown).each(function () {
+    $(this).removeClass('visible');
+    $(this).closest('.todo-card').removeClass('todo-card-dropdown-open');
+  });
+
+  $dropdown.toggleClass('visible');
+  if ($dropdown.hasClass('visible')) {
+    window.reedcrm.todoKanban.fillDropdown($dropdown);
+    $card.addClass('todo-card-dropdown-open');
+    $dropdown.find(searchSelector).val('').trigger('input').trigger('focus');
+  } else {
+    $card.removeClass('todo-card-dropdown-open');
+  }
+};
+
+/**
+ * Fill a dropdown from the list of users rendered once for the whole board, then flag
+ * the users already on the event so they are not offered twice.
+ *
+ * @param  {jQuery} $dropdown Dropdown being opened
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.fillDropdown = function ($dropdown) {
+  var $options = $dropdown.children('.todo-user-options');
+  var isOwner  = $dropdown.hasClass('todo-owner-dropdown');
+
+  if (!$options.data('filled')) {
+    $options.html($('#todoUserOptions').html()).data('filled', 1);
+    // Only an owner may be cleared, a user is unassigned from his own chip
+    if (!isOwner) {
+      $options.children('.todo-user-option-none').remove();
+    }
+  }
+
+  // The owner is never offered as an assigned user, he already carries his own chip
+  var $card    = $dropdown.closest('.todo-card');
+  var ownerId  = parseInt($card.find('.todo-owner-wrapper').attr('data-current-user'), 10) || 0;
+  var takenIds = [ownerId];
+
+  if (!isOwner) {
+    $card.find('.todo-initial-wrapper').each(function () {
+      takenIds.push(parseInt($(this).data('user-id'), 10));
+    });
+  }
+
+  $options.children('.todo-user-option').each(function () {
+    var $option = $(this);
+    var isTaken = takenIds.indexOf(parseInt($option.data('value'), 10)) !== -1;
+
+    $option.toggleClass('assigned', isTaken);
+    $option.children('.todo-option-check').remove();
+    if (isTaken) {
+      $option.append('<i class="fas fa-check todo-option-check"></i>');
+    }
+  });
+};
+
+/**
+ * Filter the options of a dropdown on the typed text.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.filterOptions = function () {
+  var query = $(this).val().toLowerCase();
+
+  $(this).siblings('.todo-user-options').children('.todo-user-option').each(function () {
+    var search = String($(this).data('search') || '');
+    $(this).toggleClass('hidden', query !== '' && search.indexOf(query) === -1);
+  });
+};
+
+/**
+ * Set the owner of an event.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.selectOwner = function (event) {
+  event.stopPropagation();
+
+  var $option = $(this);
+  if ($option.hasClass('assigned')) {
+    return;
+  }
+
+  var $dropdown = $option.closest('.todo-owner-dropdown');
+  var $wrapper  = $dropdown.closest('.todo-owner-wrapper');
+  var $card     = $option.closest('.todo-card');
+  var userId    = parseInt($option.data('value'), 10);
+  var fullname  = $option.text().trim();
+  var initials  = userId > 0 ? String($option.data('initial') || fullname.substring(0, 2).toUpperCase()) : '?';
+
+  $dropdown.children('.todo-user-options').children('.assigned').removeClass('assigned').children('.todo-option-check').remove();
+  $option.addClass('assigned').append('<i class="fas fa-check todo-option-check"></i>');
+
+  $dropdown.removeClass('visible');
+  $card.removeClass('todo-card-dropdown-open');
+  $wrapper.attr('data-current-user', userId);
+  $wrapper.find('.todo-initial-owner')
+    .text(initials)
+    .attr('title', userId > 0 ? fullname : '')
+    .toggleClass('todo-initial-empty', userId === 0);
+
+  // The owner is also an assigned user: he keeps a single chip, his own
+  $card.find('.todo-initial-wrapper[data-user-id="' + userId + '"]').remove();
+
+  window.reedcrm.todoKanban.request(
+    {action: 'updateEventOwner', event_id: $card.data('event-id'), user_id: userId},
+    $card,
+    null
+  );
+};
+
+/**
+ * Assign a user to an event.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.addAssigned = function (event) {
+  event.stopPropagation();
+
+  var $option = $(this);
+  if ($option.hasClass('assigned')) {
+    return;
+  }
+
+  var $dropdown = $option.closest('.todo-assigned-dropdown');
+  var $card     = $option.closest('.todo-card');
+  var eventId   = $card.data('event-id');
+  var userId    = parseInt($option.data('value'), 10);
+
+  $dropdown.removeClass('visible');
+  $card.removeClass('todo-card-dropdown-open');
+
+  window.reedcrm.todoKanban.request(
+    {action: 'addEventAssigned', event_id: eventId, user_id: userId},
+    $card,
+    function (response) {
+      var user     = response.user || {};
+      var $wrapper = $('<span class="todo-initial-wrapper"></span>').attr({'data-event-id': eventId, 'data-user-id': userId});
+
+      $wrapper.append($('<span class="todo-initial todo-initial-assigned"></span>').attr('title', user.fullname || '').text(user.initials || '??'));
+      $wrapper.append($('<span class="todo-remove-assigned">&times;</span>'));
+      $card.find('.todo-add-assigned-wrapper').before($wrapper);
+
+      $option.addClass('assigned').append('<i class="fas fa-check todo-option-check"></i>');
+    }
+  );
+};
+
+/**
+ * Unassign a user from an event.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.removeAssigned = function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  var $wrapper = $(this).closest('.todo-initial-wrapper');
+  var $card    = $wrapper.closest('.todo-card');
+  var userId   = $wrapper.data('user-id');
+
+  $wrapper.css('opacity', '0.4');
+
+  window.reedcrm.todoKanban.request(
+    {action: 'removeEventAssigned', event_id: $card.data('event-id'), user_id: userId},
+    $card,
+    function () {
+      $wrapper.remove();
+      $card.find('.todo-user-option[data-value="' + userId + '"]').removeClass('assigned').find('.todo-option-check').remove();
+    }
+  );
+
+  // The chip is restored when the call failed
+  setTimeout(function () {
+    $wrapper.css('opacity', '1');
+  }, 1500);
+};
+
+/**
+ * Make the columns of the board sortable and save the status a dropped card lands on.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initSortable = function () {
+  if (!$('.todo-board').data('editable') || !$('.todo-sortable').length) {
+    return;
+  }
+
+  $('.todo-sortable').sortable({
+    connectWith: '.todo-sortable',
+    items: '> .todo-card',
+    placeholder: 'todo-card-placeholder',
+    tolerance: 'pointer',
+    cursor: 'grabbing',
+    cancel: '.todo-editable-label, .todo-inline-edit, .todo-editable-date, .todo-date-input, .todo-card-progress, .todo-progress-bar, .todo-initial-owner, .todo-owner-dropdown, .todo-owner-search, .todo-assigned-dropdown, .todo-assigned-search, .todo-user-option, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge',
+    receive: function (event, ui) {
+      var $card   = ui.item;
+      var $column = $(this).closest('.todo-column');
+      var minimum = parseInt($column.data('percent-min'), 10);
+      var maximum = parseInt($column.data('percent-max'), 10);
+      var percent = parseInt($card.data('percent'), 10);
+
+      // A percentage already inside the range of the column is kept, otherwise the card
+      // takes the lowest value of the column (0 for "to do", 100 for "done", -1 for "n/a")
+      if (isNaN(percent) || percent < minimum || percent > maximum) {
+        percent = minimum;
+      }
+
+      // A relaunch backlog holds cards on their code, no percentage puts a card in it, and
+      // a relaunch only leaves its backlog once done or dropped. Any other move would be
+      // undone by the next reload: send the card back where it came from instead.
+      var $wouldLand = window.reedcrm.todoKanban.findColumn($card, percent);
+      if (isNaN(minimum) || !$wouldLand || $wouldLand[0] !== $column[0]) {
+        ui.sender.sortable('cancel');
+        return;
+      }
+
+      window.reedcrm.todoKanban.paintCard($card, percent);
+
+      $column.find('.todo-empty').remove();
+      $(this).append($(this).children('.todo-load-more'));
+
+      var $source = ui.sender;
+      if (!$source.children('.todo-card').length) {
+        $source.prepend($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+      }
+
+      window.reedcrm.todoKanban.updateCounts();
+      window.reedcrm.todoKanban.savePercent($card, percent);
+    }
+  });
+};
+
+/**
+ * Go and get the next page of a column.
+ *
+ * Nothing but the first page reaches the browser on load: the rest stays on the server, so a
+ * board carrying thousands of events costs no more to open than a small one.
+ *
+ * @param  {string}  columnKey Key of the column
+ * @param  {boolean} replace   Empty the column first, for a change of sorting
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
+  var $column = $('.todo-column[data-column="' + columnKey + '"]');
+  var $button = $column.find('.todo-load-more');
+  var $body   = $column.find('.todo-column-body');
+
+  if ($button.hasClass('todo-load-more-loading')) {
+    return;
+  }
+
+  var offset    = replace ? 0 : (parseInt($body.attr('data-offset'), 10) || 0);
+  var direction = $column.find('.todo-column-sort').attr('data-direction') === 'desc' ? 'desc' : 'asc';
+  var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
+
+  $button.addClass('todo-load-more-loading');
+
+  $.ajax({
+    url: document.URL + separator + $.param({
+      action: 'loadColumn',
+      column: columnKey,
+      offset: offset,
+      direction: direction,
+      token: window.saturne.toolbox.getToken()
+    }),
+    type: 'POST',
+    dataType: 'json',
+    success: function (response) {
+      $button.removeClass('todo-load-more-loading');
+      if (!response || !response.success) {
+        return;
+      }
+
+      if (replace) {
+        $body.children('.todo-card').remove();
+      }
+      $body.children('.todo-empty').remove();
+
+      if ($button.length) {
+        $button.before(response.html);
+      } else {
+        $body.append(response.html);
+      }
+
+      if (!$body.children('.todo-card').length) {
+        $body.prepend($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+      }
+
+      $body.attr('data-offset', offset + (response.loaded || 0));
+      window.reedcrm.todoKanban.syncLoadMore($column, response.remaining || 0);
+      $column.find('.todo-column-count').text(response.total || 0);
+
+      // Make the freshly injected cards draggable
+      if ($('.todo-board').data('editable')) {
+        $('.todo-sortable').sortable('refresh');
+      }
+    },
+    error: function () {
+      $button.removeClass('todo-load-more-loading');
+    }
+  });
+};
+
+/**
+ * Put the "load more" of a column in line with what the column has left on the server: the
+ * button is simply absent when there is nothing behind it, rather than hidden by a rule an
+ * outdated stylesheet may not carry yet.
+ *
+ * @param  {jQuery} $column   Column to sync
+ * @param  {number} remaining Events the column still has on the server
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.syncLoadMore = function ($column, remaining) {
+  var $button = $column.find('.todo-load-more');
+
+  if (!remaining) {
+    $button.remove();
+    return;
+  }
+
+  var label = String($('.todo-board').data('load-more-label') || '+ %s').replace('%s', remaining);
+
+  if (!$button.length) {
+    $button = $('<button type="button" class="todo-load-more"><i class="fas fa-chevron-down"></i> <span class="todo-load-more-text"></span></button>')
+      .attr('data-column', $column.attr('data-column'));
+    $column.find('.todo-column-body').append($button);
+  }
+
+  $button.removeClass('todo-load-more-loading').attr('data-remaining', remaining);
+  $button.find('.todo-load-more-text').text(label);
+};
+
+/**
+ * Turn the way a column is sorted, on a click on its title.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleColumnSort = function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  var $button = $(this);
+
+  window.reedcrm.todoKanban.applyColumnSort(
+    $button.attr('data-column'),
+    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc'
+  );
+};
+
+/**
+ * Sort a column and put its title button in that state, whichever of the two entry points
+ * asked for it: a click on the title or the column menu.
+ *
+ * @param  {string} columnKey Key of the column
+ * @param  {string} direction 'asc' (oldest first) or 'desc' (newest first)
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction) {
+  var $button = $('.todo-column-sort[data-column="' + columnKey + '"]');
+
+  // The cards move under an open selector, close it first
+  window.reedcrm.todoKanban.closeDropdowns();
+
+  // The stylesheet reads the way off the button to darken the matching arrow
+  $button.attr('data-direction', direction);
+
+  window.reedcrm.todoKanban.sortColumn(columnKey);
+};
+
+/**
+ * Ask the server for a column read the other way round.
+ *
+ * Only the first page of a column is in the browser, so sorting it here would only order
+ * what happens to be loaded: the column is read again from its first page instead.
+ *
+ * @param  {string} columnKey Key of the column
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.sortColumn = function (columnKey) {
+  window.reedcrm.todoKanban.loadMore(columnKey, true);
+};
+
+/**
+ * Update the counters of the columns: the cards on screen plus the ones the column has left
+ * on the server.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.updateCounts = function () {
+  $('.todo-column').each(function () {
+    var remaining = parseInt($(this).find('.todo-load-more').attr('data-remaining'), 10) || 0;
+    $(this).find('.todo-column-count').text($(this).find('.todo-card').length + remaining);
+  });
+};
+
+/**
+ * Width and gap of the columns, kept in the browser of the user.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initSettings = function () {
+  var $button       = $('#todoSettingsBtn');
+  var $popover      = $('#todoSettingsPopover');
+  var $board        = $('.todo-board');
+  var $widthSlider  = $('#todoColWidth');
+  var $gapSlider    = $('#todoColGap');
+  var $widthValue   = $('#todoColWidthVal');
+  var $gapValue     = $('#todoColGapVal');
+
+  if (!$button.length) {
+    return;
+  }
+
+  var savedWidth = localStorage.getItem('todoColWidth');
+  var savedGap   = localStorage.getItem('todoColGap');
+
+  if (savedWidth) {
+    $widthSlider.val(savedWidth);
+    $widthValue.text(savedWidth + 'px');
+    $('.todo-column').css({'min-width': savedWidth + 'px', 'max-width': savedWidth + 'px'});
+  }
+  if (savedGap) {
+    $gapSlider.val(savedGap);
+    $gapValue.text(savedGap + 'px');
+    $board.css('gap', savedGap + 'px');
+  }
+
+  $button.on('click', function (event) {
+    event.stopPropagation();
+    $popover.toggleClass('open');
+  });
+
+  // Listened to on the way down: the cards and the column titles stop the click from
+  // bubbling, a handler waiting for it on the way up would never see those
+  window.reedcrm.todoKanban.onOutsideClick('.todo-settings-wrapper', function () {
+    $popover.removeClass('open');
+  });
+
+  $widthSlider.on('input', function () {
+    var value = $(this).val();
+    $widthValue.text(value + 'px');
+    $('.todo-column').css({'min-width': value + 'px', 'max-width': value + 'px'});
+    localStorage.setItem('todoColWidth', value);
+  });
+
+  $gapSlider.on('input', function () {
+    var value = $(this).val();
+    $gapValue.text(value + 'px');
+    $board.css('gap', value + 'px');
+    localStorage.setItem('todoColGap', value);
+  });
+};
+
+/**
+ * Key of the column whose menu is open, empty when no menu is open.
+ *
+ * @type {string}
+ */
+window.reedcrm.todoKanban.openMenuColumn = '';
+
+/**
+ * Wire the column menu: the caret of a column header opens the popover-body of the saturne
+ * lists, sorting and masking the column it was opened from.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initColumnMenu = function () {
+  var $popover = $('#todoColumnPopover');
+
+  if (!$popover.length) {
+    return;
+  }
+
+  // Positioned on document coordinates: it has to hang off the body, not off a column
+  // of the horizontally scrolling board
+  $('body').append($popover);
+
+  window.reedcrm.todoKanban.applyColumnVisibility();
+
+  $(document).on('click', '.todo-column-menu', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    window.reedcrm.todoKanban.toggleColumnMenu($(this));
+  });
+
+  $popover.on('click', '.action-sort-asc, .action-sort-desc', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    var columnKey = window.reedcrm.todoKanban.openMenuColumn;
+    var direction = $(this).hasClass('action-sort-asc') ? 'asc' : 'desc';
+
+    window.reedcrm.todoKanban.closeColumnMenu();
+    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction);
+  });
+
+  $popover.on('click', '.action-hide', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    var columnKey = window.reedcrm.todoKanban.openMenuColumn;
+    window.reedcrm.todoKanban.closeColumnMenu();
+    window.reedcrm.todoKanban.setColumnVisible(columnKey, false);
+  });
+
+  window.reedcrm.todoKanban.onOutsideClick('#todoColumnPopover, .todo-column-menu', window.reedcrm.todoKanban.closeColumnMenu);
+
+  $(document).on('change', '.todo-column-toggle', function () {
+    window.reedcrm.todoKanban.setColumnVisible($(this).val(), $(this).is(':checked'));
+  });
+
+  // The menu hangs off the body: scrolling the board would leave it behind its caret
+  $('.todo-board').on('scroll', window.reedcrm.todoKanban.closeColumnMenu);
+};
+
+/**
+ * Open the menu under the caret it was clicked on, or close it when it already belongs to
+ * that column.
+ *
+ * @param  {jQuery} $button Caret of the column header
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleColumnMenu = function ($button) {
+  var columnKey = $button.attr('data-column');
+
+  if (window.reedcrm.todoKanban.openMenuColumn === columnKey) {
+    window.reedcrm.todoKanban.closeColumnMenu();
+    return;
+  }
+
+  var $popover = $('#todoColumnPopover');
+  var offset   = $button.offset();
+
+  // The caret stops the click from reaching the handler that closes them
+  window.reedcrm.todoKanban.closeDropdowns();
+
+  // Shown before it is measured, the menu of the last column would else be laid out past
+  // the right edge of the window
+  $popover.css({top: 0, left: 0, display: 'block'});
+
+  var maxLeft = $(window).scrollLeft() + $(window).width() - $popover.outerWidth() - 8;
+
+  $popover.css({
+    top: (offset.top + $button.outerHeight() + 6) + 'px',
+    left: Math.max(0, Math.min(offset.left, maxLeft)) + 'px'
+  });
+
+  window.reedcrm.todoKanban.openMenuColumn = columnKey;
+};
+
+/**
+ * Close the column menu.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.closeColumnMenu = function () {
+  $('#todoColumnPopover').hide();
+  window.reedcrm.todoKanban.openMenuColumn = '';
+};
+
+/**
+ * Show or hide a column and remember it, the settings popover being the only way back for
+ * a column masked from its own menu.
+ *
+ * @param  {string}  columnKey Key of the column
+ * @param  {boolean} visible   Whether the column stays on the board
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.setColumnVisible = function (columnKey, visible) {
+  if (!columnKey) {
+    return;
+  }
+
+  var hidden = window.reedcrm.todoKanban.getHiddenColumns();
+  var index  = hidden.indexOf(columnKey);
+
+  if (visible && index !== -1) {
+    hidden.splice(index, 1);
+  } else if (!visible && index === -1) {
+    hidden.push(columnKey);
+  }
+
+  localStorage.setItem('todoHiddenColumns', JSON.stringify(hidden));
+  window.reedcrm.todoKanban.applyColumnVisibility();
+};
+
+/**
+ * Columns the user masked, as stored by setColumnVisible().
+ *
+ * @returns {Array} Keys of the masked columns
+ */
+window.reedcrm.todoKanban.getHiddenColumns = function () {
+  var stored = [];
+
+  try {
+    stored = JSON.parse(localStorage.getItem('todoHiddenColumns')) || [];
+  } catch (error) {
+    stored = [];
+  }
+
+  return Array.isArray(stored) ? stored : [];
+};
+
+/**
+ * Put the board and the checkboxes of the settings popover back in line with the masked
+ * columns.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.applyColumnVisibility = function () {
+  var hidden = window.reedcrm.todoKanban.getHiddenColumns();
+
+  $('.todo-column').each(function () {
+    var columnKey = $(this).attr('data-column');
+    $(this).toggleClass('todo-column-hidden', hidden.indexOf(columnKey) !== -1);
+  });
+
+  $('.todo-column-toggle').each(function () {
+    $(this).prop('checked', hidden.indexOf($(this).val()) === -1);
+  });
+};

@@ -73,6 +73,9 @@ window.reedcrm.quickcreation.init = function() {
  */
 window.reedcrm.quickcreation.event = function() {
 
+  // Show the dedicated contact fields when the contact is not the third party one
+  $(document).on('change', '.reedcrm-same-contact', window.reedcrm.quickcreation.toggleSameContactFields);
+
   // Get current GPS position of navigator user
   window.reedcrm.quickcreation.getCurrentPosition();
 
@@ -83,6 +86,18 @@ window.reedcrm.quickcreation.event = function() {
   $(document).on('input', '#opp_percent', window.reedcrm.quickcreation.showOppPercentValue);
 };
 
+
+/**
+ * Toggle the fields of a dedicated contact (address or project) on checkbox change
+ *
+ * @since   22.0.0
+ * @version 22.0.0
+ *
+ * @return {void}
+ */
+window.reedcrm.quickcreation.toggleSameContactFields = function() {
+  $('.' + $(this).attr('data-target')).toggle(!$(this).is(':checked'));
+};
 
 /**
  * Get current GPS position of navigator user

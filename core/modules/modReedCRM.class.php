@@ -443,6 +443,34 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
                 'priority'      => 54
+            ],
+            7 => [
+                'label'         => $langs->transnoentities('TodoPropalRelaunchCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmtodocron.class.php',
+                'objectname'    => 'ReedcrmTodoCron',
+                'method'        => 'createProposalRelaunchEvents',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('TodoPropalRelaunchCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && isModEnabled(\'agenda\')',
+                'priority'      => 55
+            ],
+            8 => [
+                'label'         => $langs->transnoentities('TodoInvoiceRelaunchCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmtodocron.class.php',
+                'objectname'    => 'ReedcrmTodoCron',
+                'method'        => 'createInvoiceRelaunchEvents',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('TodoInvoiceRelaunchCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\') && isModEnabled(\'agenda\')',
+                'priority'      => 56
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -602,6 +630,22 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
+            'titre'    => $langs->transnoentities('TodoBoard'),
+            'prefix'   => '<i class="fas fa-clipboard-check pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmtodo',
+            'url'      => '/reedcrm/view/todo_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'agenda\', \'myactions\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
             'titre'    => $langs->transnoentities('Opportunities'),
             'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
@@ -675,6 +719,38 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'expedition\')',
             'perms'    => '$user->hasRight(\'expedition\', \'lire\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('TicketDashboard'),
+            'prefix'   => '<i class="fas fa-ticket-alt pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmticketdashboard',
+            'url'      => '/reedcrm/view/ticket_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'ticket\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=ticket',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('TicketDashboard'),
+            'prefix'   => '<i class="fas fa-chart-line pictofixedwidth"></i>',
+            'mainmenu' => 'ticket',
+            'leftmenu' => 'reedcrmticketdashboard',
+            'url'      => '/reedcrm/view/ticket_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'ticket\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];

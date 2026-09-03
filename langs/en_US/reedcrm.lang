@@ -91,6 +91,15 @@ KeyyoCalls = Keyyo Calls
 # Project Extra
 GravityFormLink=GravityForm Link
 
+# Module project extrafield labels (llx_extrafields.label doubles as the translation key,
+# and showOptionals() only loads the extrafield langfile, here reedcrm@reedcrm).
+# LastName / FirstName live in users.lang, not loaded on those screens, and the core key
+# is "WebSite" not "Website": without these, the quick creation form shows raw keys.
+LastName=Last name
+FirstName=First name
+Website=Website
+ReedCRMGravityForm=GravityForm link
+
 # Geolocation PWA
 DetectingLocation = Detecting your location
 GeolocationNotSupported = Geolocation is not supported by this browser
@@ -271,6 +280,8 @@ ProjectPhone = Project phone
 ErrorInvalidProjectPhone = The phone number is not valid or is too long (max 20 characters)
 ContactInformations = Contact details
 Vocal = Voice
+AddressContactSameAsThirdPartyContact = Address contact same as third party contact
+ProjectContactSameAsThirdPartyContact = Project contact same as third party contact
 OpportunityStatusDescription = Opportunity status selection <br> Default value: <b> Prospection </b>
 OpportunityAmountDescription = Opportunity amount selection <br> Default value: <b> 3000 € </b>
 ProspectCustomerDescription = Third-party nature selection <br> Default value: <b> Prospect </b>
@@ -662,6 +673,95 @@ NoPhoneNumber = No phone number
 NoEventOnOpportunity = No event on this opportunity yet
 ToCallShort = to call
 SeeOpportunityTimeline = See the history
+
+#
+# Ticket dashboard
+#
+TicketDashboard = Ticket dashboard
+OpenTicketList = Open tickets
+TicketPeriodFilter = Analysed period
+TicketPeriodLastMonth = 01 last month
+TicketPeriodLastMonths = %s last months
+TicketPeriodAll = Whole history
+TicketAssigneeFilter = Assigned to
+TicketAllAssignees = Every assignee
+TicketClosedFilter = Closed tickets
+TicketWithClosedTickets = Included in the figures
+TicketWithoutClosedTickets = Excluded from the figures
+
+# Ticket dashboard - Widgets
+TicketFlow = Ticket flow
+TicketsCreatedOverPeriod = Created over the period
+TicketsClosedOverPeriod = Closed over the period
+TicketBalanceOverPeriod = Balance
+TicketBalanceOverPeriodDescription = Difference between the tickets created and the tickets closed over the period. A positive balance means the open ticket backlog is growing.
+NbOfOpenedTicket = Open tickets
+TicketsUnassigned = Unassigned
+TicketsNeverRead = Never read
+TicketsUnread = Unread
+TicketDelays = Delays
+MeanTakeOverTime = Mean take over time
+MeanTakeOverTimeDescription = Time between the creation of the ticket and its first read, on the tickets created over the period.
+MeanFirstResponseTime = Mean first response time
+MeanFirstResponseTimeDescription = Time between the creation of the ticket and the first public message written by an internal user. Tickets left unanswered are not counted.
+MedianFirstResponseTime = Median first response time
+MeanResolutionTime = Mean resolution time
+MeanResolutionTimeDescription = Time between the creation and the closing, measured on the tickets closed over the period.
+MedianResolutionTime = Median resolution time
+MeanBacklogAge = Mean backlog age
+MeanBacklogAgeDescription = Mean age of the tickets still open today, whatever the selected period is.
+OldestOpenTicket = Oldest open ticket
+TicketTimeSpent = Logged time
+TotalTimeSpentOverPeriod = Total time
+TotalTimeSpentOverPeriodDescription = Time logged over the period on the ticket tasks, that is the tasks whose label starts with the prefix set in the ReedCRM configuration.
+NbOfTimeEntries = Time entries
+MeanTimePerEntry = Mean time per entry
+MeanTimePerTicket = Mean time per ticket
+NbOfTicketsWithTime = Tickets with logged time
+NbOfTimeContributors = Contributors
+TimeSpentHours = Logged time (h)
+TicketPeople = People
+NbOfAssignees = Assignees
+NbOfAssigneesDescription = Number of users having at least one open ticket assigned to them.
+MeanOpenTicketPerAssignee = Open tickets / assignee
+MostLoadedAssignee = Most loaded assignee
+NbOfExchangesOverPeriod = Messages over the period
+MeanExchangePerTicket = Messages per ticket
+NbOfConcernedSocieties = Third parties involved
+NbOfExchanges = Messages
+
+# Ticket dashboard - Graphs
+TicketRepartitionPerUser = Workload and delays per assignee
+TicketTimeSpentPerUser = Logged time per assignee
+TicketMessagesPerUser = Messages per user
+TicketPublicMessages = Public messages
+TicketPrivateMessages = Private notes
+TicketsCreatedVersusClosedByMonth = Tickets created and closed over the last %s months
+TicketsCreatedByMonth = Tickets created over the last %s months
+TicketsCreated = Tickets created
+TicketsClosed = Tickets closed
+TicketTimeSpentByMonth = Time logged over the last %s months
+TicketOpenByStatus = Open tickets per status
+TicketBacklogAge = Age of the open tickets
+TicketResolutionTimeRepartition = Repartition of the resolution times
+TicketBySeverity = Open tickets per severity
+TicketByType = Open tickets per type
+TicketCreationByWeekday = Creations per weekday
+TicketCreationByHour = Creations per hour
+TopSocietyWithMostOpenTickets = Top %s third parties with the most open tickets
+DurationUnderDays = Under %s d
+DurationBetweenDays = From %s to %s d
+DurationOverDays = Over %s d
+
+# Ticket dashboard - Lists
+TicketWorkloadPerUserList = Detailed workload per assignee
+LastActivity = Last activity
+TicketOldestOpenList = The %s oldest open tickets
+TicketAge = Age
+LastMessage = Last message
+TicketStaleList = The %s open tickets with no message for more than %s days
+NbOfTicketsWithTimeDescription = Number of tickets holding at least one time entry, over the number of analysed tickets: the tickets still open plus the ones created or closed over the period.
+TimeSpentOnAssignedTickets = Time on their tickets
 
 # Quick close of an event
 QuickCloseEventTitle = Close the event
