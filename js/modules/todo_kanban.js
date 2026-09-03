@@ -44,6 +44,27 @@ window.reedcrm.todoKanban.init = function () {
   window.reedcrm.todoKanban.initSortable();
   window.reedcrm.todoKanban.initSettings();
   window.reedcrm.todoKanban.initColumnMenu();
+  window.reedcrm.todoKanban.initUserSelect();
+};
+
+/**
+ * Turn the user criteria into a searchable list: a board shared by twenty people is picked
+ * through by typing a name rather than by scrolling.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initUserSelect = function () {
+  var $select = $('#search_user');
+
+  if (!$select.length || typeof $.fn.select2 === 'undefined') {
+    return;
+  }
+
+  $select.select2({
+    width: '220px',
+    minimumResultsForSearch: 0,
+    dropdownAutoWidth: true
+  });
 };
 
 /**
@@ -84,6 +105,27 @@ window.reedcrm.todoKanban.event = function () {
   $(document).on('mousedown', '.todo-editable-label, .todo-editable-date, .todo-card-progress, .todo-initial-owner, .todo-owner-dropdown, .todo-assigned-dropdown, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge', function (event) {
     event.stopPropagation();
   });
+};
+
+/**
+ * Run a callback on every click landing outside of a selector.
+ *
+ * The click is caught on the way down rather than on the way up: several controls of a card
+ * stop the propagation of theirs, and jQuery drops the handlers of the outer elements as soon
+ * as one does, so a popover listening on the document would simply never be told.
+ *
+ * @param  {string}   inside   Selector the click may land in without triggering the callback
+ * @param  {Function} callback Called when the click landed anywhere else
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.onOutsideClick = function (inside, callback) {
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+
+    if (!target || typeof target.closest !== 'function' || !target.closest(inside)) {
+      callback();
+    }
+  }, true);
 };
 
 /**
@@ -734,7 +776,7 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
     return;
   }
 
-  var offset    = replace ? 0 : (parseInt($button.attr('data-offset'), 10) || 0);
+  var offset    = replace ? 0 : (parseInt($body.attr('data-offset'), 10) || 0);
   var direction = $column.find('.todo-column-sort').attr('data-direction') === 'desc' ? 'desc' : 'asc';
   var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
 
@@ -760,16 +802,19 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
         $body.children('.todo-card').remove();
       }
       $body.children('.todo-empty').remove();
-      $button.before(response.html);
 
-      if (!$body.children('.todo-card').length) {
-        $button.before($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+      if ($button.length) {
+        $button.before(response.html);
+      } else {
+        $body.append(response.html);
       }
 
-      $button.attr('data-offset', offset + (response.loaded || 0));
-      $button.attr('data-remaining', response.remaining || 0);
-      $button.toggleClass('todo-load-more-hidden', !response.remaining);
-      $button.find('.todo-load-more-text').text(String($button.data('label') || '+ %s').replace('%s', response.remaining || 0));
+      if (!$body.children('.todo-card').length) {
+        $body.prepend($('<div class="todo-empty"></div>').text($('.todo-board').data('empty-label') || ''));
+      }
+
+      $body.attr('data-offset', offset + (response.loaded || 0));
+      window.reedcrm.todoKanban.syncLoadMore($column, response.remaining || 0);
       $column.find('.todo-column-count').text(response.total || 0);
 
       // Make the freshly injected cards draggable
@@ -781,6 +826,35 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
       $button.removeClass('todo-load-more-loading');
     }
   });
+};
+
+/**
+ * Put the "load more" of a column in line with what the column has left on the server: the
+ * button is simply absent when there is nothing behind it, rather than hidden by a rule an
+ * outdated stylesheet may not carry yet.
+ *
+ * @param  {jQuery} $column   Column to sync
+ * @param  {number} remaining Events the column still has on the server
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.syncLoadMore = function ($column, remaining) {
+  var $button = $column.find('.todo-load-more');
+
+  if (!remaining) {
+    $button.remove();
+    return;
+  }
+
+  var label = String($('.todo-board').data('load-more-label') || '+ %s').replace('%s', remaining);
+
+  if (!$button.length) {
+    $button = $('<button type="button" class="todo-load-more"><i class="fas fa-chevron-down"></i> <span class="todo-load-more-text"></span></button>')
+      .attr('data-column', $column.attr('data-column'));
+    $column.find('.todo-column-body').append($button);
+  }
+
+  $button.removeClass('todo-load-more-loading').attr('data-remaining', remaining);
+  $button.find('.todo-load-more-text').text(label);
 };
 
 /**
@@ -884,10 +958,10 @@ window.reedcrm.todoKanban.initSettings = function () {
     $popover.toggleClass('open');
   });
 
-  $(document).on('click', function (event) {
-    if (!$(event.target).closest('.todo-settings-wrapper').length) {
-      $popover.removeClass('open');
-    }
+  // Listened to on the way down: the cards and the column titles stop the click from
+  // bubbling, a handler waiting for it on the way up would never see those
+  window.reedcrm.todoKanban.onOutsideClick('.todo-settings-wrapper', function () {
+    $popover.removeClass('open');
   });
 
   $widthSlider.on('input', function () {
@@ -957,11 +1031,7 @@ window.reedcrm.todoKanban.initColumnMenu = function () {
     window.reedcrm.todoKanban.setColumnVisible(columnKey, false);
   });
 
-  $(document).on('click', function (event) {
-    if (!$(event.target).closest('#todoColumnPopover, .todo-column-menu').length) {
-      window.reedcrm.todoKanban.closeColumnMenu();
-    }
-  });
+  window.reedcrm.todoKanban.onOutsideClick('#todoColumnPopover, .todo-column-menu', window.reedcrm.todoKanban.closeColumnMenu);
 
   $(document).on('change', '.todo-column-toggle', function () {
     window.reedcrm.todoKanban.setColumnVisible($(this).val(), $(this).is(':checked'));
