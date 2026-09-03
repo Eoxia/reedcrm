@@ -581,3 +581,182 @@ function reedcrmBillingGetOverdueRecurring(DoliDB $db): array
     }
     return $rows;
 }
+
+/**
+ * Signed proposals with no invoice linked, cross-checked against the customer invoices to detect
+ * the ones that WERE actually billed, just outside the quote -> invoice link (invoice created from
+ * scratch, from the order, from the contract...).
+ *
+ * Each returned row carries a "match" telling how sure we are it was already billed:
+ *  - 'chain'    : an invoice exists through the order or the contract created from this quote (billed).
+ *  - 'amount'   : an invoice of the same customer, dated after the signature, has the very same amount.
+ *  - 'products' : invoices of the same customer, dated after the signature, carry the same products.
+ *  - ''         : nothing found, really still to invoice.
+ *
+ * @param  DoliDB $db     Database handler.
+ * @param  int    $months Only quotes signed within the last X months (older ones cannot be billed anymore).
+ * @param  int    $limit  Max rows.
+ * @return array<int,array<string,mixed>> Rows: id, ref, fk_soc, thirdparty, date_sig, total_ht, total_ttc,
+ *                                        fk_user, project_ref, match, match_invoices, client_nb, client_total.
+ */
+function reedcrmSignedUnbilledGetProposals(DoliDB $db, int $months = 24, int $limit = 500): array
+{
+    $months  = max(1, $months);
+    $entProp = getEntity('propal');
+    $entFact = getEntity('facture');
+    $rows    = [];
+
+    // 1. Candidates: signed quotes (status 2) with no invoice linked. Dolibarr stores the link either
+    // way round depending on how the invoice was created, so both directions must be excluded.
+    $sql  = 'SELECT pr.rowid as id, pr.ref, pr.datep, pr.date_signature, pr.total_ht, pr.total_ttc,';
+    $sql .= ' pr.fk_user_signature, pr.fk_user_author, pr.fk_projet, p.ref as project_ref,';
+    $sql .= ' s.rowid as fk_soc, s.nom as thirdparty_name, s.zip, s.town, s.status as soc_status';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propal as pr';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = pr.fk_soc';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON p.rowid = pr.fk_projet';
+    $sql .= ' WHERE pr.entity IN (' . $entProp . ') AND pr.fk_statut = 2'; // 2 = signed
+    $sql .= ' AND COALESCE(pr.date_signature, pr.datep) >= DATE_SUB(NOW(), INTERVAL ' . $months . ' MONTH)';
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element ee WHERE ee.fk_source = pr.rowid AND ee.sourcetype = 'propal' AND ee.targettype = 'facture')";
+    $sql .= ' AND NOT EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "element_element er WHERE er.fk_target = pr.rowid AND er.targettype = 'propal' AND er.sourcetype = 'facture')";
+    $sql .= ' ORDER BY COALESCE(pr.date_signature, pr.datep) DESC, pr.rowid DESC' . $db->plimit($limit);
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return $rows;
+    }
+    $socIds = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $dateSig      = !empty($obj->date_signature) ? $db->jdate($obj->date_signature) : (!empty($obj->datep) ? $db->jdate($obj->datep) : 0);
+        $location     = trim(($obj->zip ? $obj->zip . ' ' : '') . ($obj->town ?? ''));
+        $id           = (int) $obj->id;
+        $socIds[]     = (int) $obj->fk_soc;
+        $rows[$id]    = [
+            'id'             => $id,
+            'ref'            => $obj->ref,
+            'fk_soc'         => (int) $obj->fk_soc,
+            'thirdparty'     => $obj->thirdparty_name,
+            'soc_status'     => (int) $obj->soc_status,
+            'location'       => $location,
+            'date_sig'       => $dateSig,
+            'date_prop'      => !empty($obj->datep) ? $db->jdate($obj->datep) : 0,
+            'total_ht'       => (float) $obj->total_ht,
+            'total_ttc'      => (float) $obj->total_ttc,
+            'fk_user'        => (int) ($obj->fk_user_signature ?: $obj->fk_user_author),
+            'project_ref'    => $obj->project_ref,
+            'match'          => '',
+            'match_invoices' => [],
+            'client_nb'      => 0,
+            'client_total'   => 0.0,
+        ];
+    }
+    if (empty($rows)) {
+        return $rows;
+    }
+    $propalIds = implode(',', array_map('intval', array_keys($rows)));
+    $socIdsIn  = implode(',', array_unique(array_map('intval', $socIds)));
+
+    // 2. Billed through the order or the contract born from this quote (propal -> commande|contrat -> facture).
+    $sqlChain  = 'SELECT e1.fk_source as propal_id, e1.targettype as via, f.rowid as invoice_id, f.ref, f.datef, f.total_ttc, f.fk_statut, f.type';
+    $sqlChain .= ' FROM ' . MAIN_DB_PREFIX . 'element_element as e1';
+    $sqlChain .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'element_element as e2 ON e2.fk_source = e1.fk_target AND e2.sourcetype = e1.targettype';
+    $sqlChain .= " AND e2.targettype = 'facture'";
+    $sqlChain .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facture as f ON f.rowid = e2.fk_target';
+    $sqlChain .= " WHERE e1.sourcetype = 'propal' AND e1.targettype IN ('commande', 'contrat') AND e1.fk_source IN (" . $propalIds . ')';
+    $resChain  = $db->query($sqlChain);
+    if ($resChain) {
+        while ($o = $db->fetch_object($resChain)) {
+            $pid = (int) $o->propal_id;
+            if (!isset($rows[$pid])) {
+                continue;
+            }
+            $rows[$pid]['match']            = 'chain';
+            $rows[$pid]['match_invoices'][] = ['id' => (int) $o->invoice_id, 'ref' => $o->ref, 'date' => !empty($o->datef) ? $db->jdate($o->datef) : 0, 'total_ttc' => (float) $o->total_ttc, 'status' => (int) $o->fk_statut, 'via' => $o->via];
+        }
+    }
+
+    // 3. All the invoices of those customers, to look for a separate billing (same amount / same products).
+    $invoices = [];
+    $sqlInv   = 'SELECT f.rowid as id, f.ref, f.fk_soc, f.datef, f.total_ht, f.total_ttc, f.fk_statut, f.type';
+    $sqlInv  .= ' FROM ' . MAIN_DB_PREFIX . 'facture as f';
+    $sqlInv  .= ' WHERE f.entity IN (' . $entFact . ') AND f.fk_soc IN (' . $socIdsIn . ')';
+    $sqlInv  .= ' AND f.type <> 2 AND f.fk_statut <> 3'; // no credit note, no abandoned invoice
+    $sqlInv  .= ' AND f.datef >= DATE_SUB(NOW(), INTERVAL ' . ($months + 6) . ' MONTH)';
+    $resInv   = $db->query($sqlInv);
+    if ($resInv) {
+        while ($o = $db->fetch_object($resInv)) {
+            $invoices[(int) $o->fk_soc][] = ['id' => (int) $o->id, 'ref' => $o->ref, 'date' => !empty($o->datef) ? $db->jdate($o->datef) : 0, 'total_ht' => (float) $o->total_ht, 'total_ttc' => (float) $o->total_ttc, 'status' => (int) $o->fk_statut, 'type' => (int) $o->type];
+        }
+    }
+
+    // 4. Same products invoiced to the same customer after the signature (partial or reworded billing).
+    $prodTotal = [];
+    $resPt     = $db->query('SELECT fk_propal, COUNT(DISTINCT fk_product) as nb FROM ' . MAIN_DB_PREFIX . 'propaldet WHERE fk_propal IN (' . $propalIds . ') AND fk_product > 0 GROUP BY fk_propal');
+    if ($resPt) {
+        while ($o = $db->fetch_object($resPt)) {
+            $prodTotal[(int) $o->fk_propal] = (int) $o->nb;
+        }
+    }
+    $prodMatch = [];
+    $sqlProd   = 'SELECT pd.fk_propal as propal_id, f.rowid as invoice_id, f.ref, f.datef, f.total_ttc, f.fk_statut, COUNT(DISTINCT pd.fk_product) as nbmatch';
+    $sqlProd  .= ' FROM ' . MAIN_DB_PREFIX . 'propaldet as pd';
+    $sqlProd  .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'propal as pr ON pr.rowid = pd.fk_propal';
+    $sqlProd  .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facture as f ON f.fk_soc = pr.fk_soc AND f.entity IN (' . $entFact . ') AND f.type <> 2 AND f.fk_statut <> 3';
+    $sqlProd  .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet as fd ON fd.fk_facture = f.rowid AND fd.fk_product = pd.fk_product';
+    $sqlProd  .= ' WHERE pd.fk_propal IN (' . $propalIds . ') AND pd.fk_product > 0';
+    $sqlProd  .= ' AND f.datef >= DATE_SUB(COALESCE(pr.date_signature, pr.datep), INTERVAL 15 DAY)';
+    $sqlProd  .= ' GROUP BY pd.fk_propal, f.rowid, f.ref, f.datef, f.total_ttc, f.fk_statut';
+    $resProd   = $db->query($sqlProd);
+    if ($resProd) {
+        while ($o = $db->fetch_object($resProd)) {
+            $prodMatch[(int) $o->propal_id][] = ['id' => (int) $o->invoice_id, 'ref' => $o->ref, 'date' => !empty($o->datef) ? $db->jdate($o->datef) : 0, 'total_ttc' => (float) $o->total_ttc, 'status' => (int) $o->fk_statut, 'nbmatch' => (int) $o->nbmatch];
+        }
+    }
+
+    // 5. Score every candidate.
+    foreach ($rows as $id => $row) {
+        $sig       = $row['date_sig'];
+        $window    = $sig ? $sig - (30 * 86400) : 0; // 30-day tolerance before the signature
+        $socInvs   = $invoices[$row['fk_soc']] ?? [];
+        $sameAmt   = [];
+        $clientNb  = 0;
+        $clientTot = 0.0;
+        foreach ($socInvs as $inv) {
+            if ($sig && $inv['date'] >= $sig) {
+                $clientNb++;
+                $clientTot += $inv['total_ttc'];
+            }
+            if ($inv['date'] < $window) {
+                continue;
+            }
+            if ((abs($inv['total_ttc'] - $row['total_ttc']) < 0.01 && $row['total_ttc'] != 0)
+                || (abs($inv['total_ht'] - $row['total_ht']) < 0.01 && $row['total_ht'] != 0)) {
+                $sameAmt[] = $inv;
+            }
+        }
+        $rows[$id]['client_nb']    = $clientNb;
+        $rows[$id]['client_total'] = $clientTot;
+
+        if ($row['match'] === 'chain') {
+            continue; // already the strongest signal
+        }
+        if (!empty($sameAmt)) {
+            $rows[$id]['match']          = 'amount';
+            $rows[$id]['match_invoices'] = $sameAmt;
+            continue;
+        }
+        // Same products billed after the signature: only meaningful if most of the quote lines are covered.
+        $nbProd = $prodTotal[$id] ?? 0;
+        if ($nbProd > 0 && !empty($prodMatch[$id])) {
+            $best = 0;
+            foreach ($prodMatch[$id] as $pm) {
+                $best = max($best, $pm['nbmatch']);
+            }
+            if ($best / $nbProd >= 0.5) {
+                $rows[$id]['match']          = 'products';
+                $rows[$id]['match_invoices'] = $prodMatch[$id];
+            }
+        }
+    }
+
+    return $rows;
+}
