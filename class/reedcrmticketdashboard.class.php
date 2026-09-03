@@ -39,6 +39,9 @@ require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
  * The dashboard splits its indicators in two families, and every label says which one it belongs to:
  * - flow indicators (created, closed, messages, logged time) only count what happened inside the selected period,
  * - stock indicators (backlog, age, unassigned) always describe the tickets open right now, a backlog has no period.
+ *
+ * The closed tickets can be left out of every figure: the dashboard then only reads the tickets still open, and the
+ * indicators that can only be measured on a closed ticket are not displayed at all rather than displayed empty.
  */
 class ReedcrmTicketDashboard
 {
@@ -103,6 +106,11 @@ class ReedcrmTicketDashboard
     protected int $filterUserId = 0;
 
     /**
+     * @var bool Whether the tickets nobody works on anymore feed the indicators
+     */
+    protected bool $includeClosed = true;
+
+    /**
      * @var bool Whether the filters were given from the outside instead of read from the user configuration
      */
     protected bool $filtersSet = false;
@@ -146,6 +154,11 @@ class ReedcrmTicketDashboard
      * @var User[] Users already fetched, the same user shows up in most of the indicators
      */
     protected array $userCache = [];
+
+    /**
+     * @var array|null Ids of the disabled users, read once on first use, null while they have not been read
+     */
+    protected ?array $disabledUsers = null;
 
     /**
      * Constructor
@@ -205,6 +218,11 @@ class ReedcrmTicketDashboard
             'TopSocietyWithMostOpenTickets'     => 'getTopSocietyWithMostOpenTickets'
         ];
 
+        // Every figure of that graph is read on a closed ticket, it has nothing left to draw once they are left out
+        if (!$this->includeClosed) {
+            unset($graphs['TicketResolutionTimeRepartition']);
+        }
+
         $lists = [
             'TicketWorkloadPerUserList' => 'getTicketWorkloadPerUserList',
             'TicketOldestOpenList'      => 'getTicketOldestOpenList',
@@ -254,20 +272,22 @@ class ReedcrmTicketDashboard
      * through the API has no such configuration: it passes the period and the assignee it wants, and the
      * configuration of the user carrying the API token is left alone.
      *
-     * @param  string $period Number of days the flow indicators cover, 0 for the whole history
-     * @param  int    $userId Id of the assignee the dashboard is restricted to, 0 for every assignee
+     * @param  string $period        Number of days the flow indicators cover, 0 for the whole history
+     * @param  int    $userId        Id of the assignee the dashboard is restricted to, 0 for every assignee
+     * @param  int    $includeClosed 1 to count the closed tickets, 0 to read the tickets still open only
      * @return void
      */
-    public function setFilters(string $period, int $userId): void
+    public function setFilters(string $period, int $userId, int $includeClosed = 1): void
     {
         if (!array_key_exists($period, $this->getPeriodValues())) {
             $period = '365';
         }
 
-        $this->period       = $period;
-        $this->periodStart  = empty((int) $period) ? 0 : dol_get_first_hour($this->now - (int) $period * 86400);
-        $this->filterUserId = $userId;
-        $this->filtersSet   = true;
+        $this->period        = $period;
+        $this->periodStart   = empty((int) $period) ? 0 : dol_get_first_hour($this->now - (int) $period * 86400);
+        $this->filterUserId  = $userId;
+        $this->includeClosed = !empty($includeClosed);
+        $this->filtersSet    = true;
     }
 
     /**
@@ -471,7 +491,11 @@ class ReedcrmTicketDashboard
         $this->period      = $period;
         $this->periodStart = empty((int) $period) ? 0 : dol_get_first_hour($this->now - (int) $period * 86400);
 
-        $this->filterUserId = isset($dashboardConfig->filters->ticketUser) ? (int) $dashboardConfig->filters->ticketUser : 0;
+        // A user disabled since the filter was saved is not offered anymore, the dashboard falls back on everybody
+        $filterUserId       = isset($dashboardConfig->filters->ticketUser) ? (int) $dashboardConfig->filters->ticketUser : 0;
+        $this->filterUserId = $this->isActiveUser($filterUserId) ? $filterUserId : 0;
+
+        $this->includeClosed = !isset($dashboardConfig->filters->ticketClosed) || !empty($dashboardConfig->filters->ticketClosed);
     }
 
     /**
@@ -496,6 +520,21 @@ class ReedcrmTicketDashboard
     }
 
     /**
+     * Get the ways the closed tickets can be taken into account
+     *
+     * @return array Whether the closed tickets are counted, mapped to its label
+     */
+    protected function getClosedValues(): array
+    {
+        global $langs;
+
+        return [
+            '1' => $langs->transnoentities('TicketWithClosedTickets'),
+            '0' => $langs->transnoentities('TicketWithoutClosedTickets')
+        ];
+    }
+
+    /**
      * Get the dashboard filters
      *
      * @return array
@@ -507,7 +546,7 @@ class ReedcrmTicketDashboard
         // The assignee list is built from the tickets themselves, a user with no ticket has nothing to show
         $assignees = [];
         foreach ($this->tickets as $ticket) {
-            if ($ticket->fk_user_assign > 0) {
+            if ($this->isActiveUser($ticket->fk_user_assign)) {
                 $assignees[$ticket->fk_user_assign] = $this->getUser($ticket->fk_user_assign)->getFullName($langs);
             }
         }
@@ -527,6 +566,13 @@ class ReedcrmTicketDashboard
                 'filter'       => 'ticketUser',
                 'values'       => [0 => $langs->transnoentities('TicketAllAssignees')] + $assignees,
                 'currentValue' => $this->filterUserId
+            ],
+            'ticketClosed' => [
+                'title'        => $langs->transnoentities('TicketClosedFilter'),
+                'type'         => 'selectarray',
+                'filter'       => 'ticketClosed',
+                'values'       => $this->getClosedValues(),
+                'currentValue' => $this->includeClosed ? '1' : '0'
             ]
         ];
     }
@@ -535,7 +581,8 @@ class ReedcrmTicketDashboard
      * Load the tickets the dashboard works on
      *
      * A ticket is kept when it is still open, whatever its age, or when it was created or closed inside the
-     * period: those are the only tickets the indicators of the dashboard look at.
+     * period: those are the only tickets the indicators of the dashboard look at. When the closed tickets are left
+     * out, only the open ones are loaded, whatever their age: every figure then describes the work left to do.
      *
      * @return void
      */
@@ -547,7 +594,9 @@ class ReedcrmTicketDashboard
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'ticket AS t';
         $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe AS s ON s.rowid = t.fk_soc';
         $sql .= ' WHERE t.entity IN (' . getEntity('ticket') . ')';
-        if (!empty($this->periodStart)) {
+        if (!$this->includeClosed) {
+            $sql .= ' AND t.fk_statut NOT IN (' . implode(',', self::DONE_STATUS) . ')';
+        } elseif (!empty($this->periodStart)) {
             $periodStart = "'" . $this->db->idate($this->periodStart) . "'";
             $sql        .= ' AND (t.fk_statut NOT IN (' . implode(',', self::DONE_STATUS) . ')';
             $sql        .= ' OR t.datec >= ' . $periodStart;
@@ -713,15 +762,15 @@ class ReedcrmTicketDashboard
         $array['picto']      = 'fas fa-ticket-alt';
         $array['pictoColor'] = '#0D8AFF';
 
-        // Widget labels parameters
-        $array['label'] = [
-            $langs->transnoentities('TicketsCreatedOverPeriod'),
-            $langs->transnoentities('TicketsClosedOverPeriod'),
-            $form->textwithpicto($langs->transnoentities('TicketBalanceOverPeriod'), $langs->transnoentities('TicketBalanceOverPeriodDescription')),
-            $langs->transnoentities('NbOfOpenedTicket'),
-            $langs->transnoentities('TicketsUnassigned'),
-            $langs->transnoentities('TicketsNeverRead')
-        ];
+        // Widget labels parameters, the closed tickets and the balance they weigh on are dropped when left out
+        $array['label'] = [$langs->transnoentities('TicketsCreatedOverPeriod')];
+        if ($this->includeClosed) {
+            $array['label'][] = $langs->transnoentities('TicketsClosedOverPeriod');
+            $array['label'][] = $form->textwithpicto($langs->transnoentities('TicketBalanceOverPeriod'), $langs->transnoentities('TicketBalanceOverPeriodDescription'));
+        }
+        $array['label'][] = $langs->transnoentities('NbOfOpenedTicket');
+        $array['label'][] = $langs->transnoentities('TicketsUnassigned');
+        $array['label'][] = $langs->transnoentities('TicketsNeverRead');
 
         $created    = 0;
         $closed     = 0;
@@ -750,16 +799,22 @@ class ReedcrmTicketDashboard
         $balance = $created - $closed;
 
         // Widget content parameters
-        $array['content'] = [$created, $closed, ($balance > 0 ? '+' : '') . $balance, $open, $unassigned, $neverRead];
+        $array['content']     = [$created];
+        $array['moreContent'] = [''];
+        if ($this->includeClosed) {
+            $array['content'][]     = $closed;
+            $array['content'][]     = ($balance > 0 ? '+' : '') . $balance;
+            $array['moreContent'][] = '';
+            $array['moreContent'][] = '';
+        }
 
-        $array['moreContent'] = [
-            '',
-            '',
-            '',
-            $this->getTicketListLink(self::OPEN_TICKETS_FILTER),
-            $unassigned > 0 ? $this->getTicketListLink(self::OPEN_TICKETS_FILTER . '&search_fk_user_assign=-1') : '',
-            $neverRead > 0 ? $this->getTicketListLink('search_fk_statut%5B%5D=' . Ticket::STATUS_NOT_READ) : ''
-        ];
+        $array['content'][] = $open;
+        $array['content'][] = $unassigned;
+        $array['content'][] = $neverRead;
+
+        $array['moreContent'][] = $this->getTicketListLink(self::OPEN_TICKETS_FILTER);
+        $array['moreContent'][] = $unassigned > 0 ? $this->getTicketListLink(self::OPEN_TICKETS_FILTER . '&search_fk_user_assign=-1') : '';
+        $array['moreContent'][] = $neverRead > 0 ? $this->getTicketListLink('search_fk_statut%5B%5D=' . Ticket::STATUS_NOT_READ) : '';
 
         return ['ticketFlow' => $array];
     }
@@ -779,16 +834,18 @@ class ReedcrmTicketDashboard
         $array['picto']      = 'fas fa-stopwatch';
         $array['pictoColor'] = '#E9A00D';
 
-        // Widget labels parameters
+        // Widget labels parameters, a resolution time is only measured on a closed ticket
         $array['label'] = [
             $form->textwithpicto($langs->transnoentities('MeanTakeOverTime'), $langs->transnoentities('MeanTakeOverTimeDescription')),
             $form->textwithpicto($langs->transnoentities('MeanFirstResponseTime'), $langs->transnoentities('MeanFirstResponseTimeDescription')),
-            $langs->transnoentities('MedianFirstResponseTime'),
-            $form->textwithpicto($langs->transnoentities('MeanResolutionTime'), $langs->transnoentities('MeanResolutionTimeDescription')),
-            $langs->transnoentities('MedianResolutionTime'),
-            $form->textwithpicto($langs->transnoentities('MeanBacklogAge'), $langs->transnoentities('MeanBacklogAgeDescription')),
-            $langs->transnoentities('OldestOpenTicket')
+            $langs->transnoentities('MedianFirstResponseTime')
         ];
+        if ($this->includeClosed) {
+            $array['label'][] = $form->textwithpicto($langs->transnoentities('MeanResolutionTime'), $langs->transnoentities('MeanResolutionTimeDescription'));
+            $array['label'][] = $langs->transnoentities('MedianResolutionTime');
+        }
+        $array['label'][] = $form->textwithpicto($langs->transnoentities('MeanBacklogAge'), $langs->transnoentities('MeanBacklogAgeDescription'));
+        $array['label'][] = $langs->transnoentities('OldestOpenTicket');
 
         $takeOverTimes      = [];
         $firstResponseTimes = [];
@@ -822,22 +879,27 @@ class ReedcrmTicketDashboard
         $array['content'] = [
             $this->formatDelay($this->mean($takeOverTimes)),
             $this->formatDelay($this->mean($firstResponseTimes)),
-            $this->formatDelay($this->median($firstResponseTimes)),
-            $this->formatDelay($this->mean($resolutionTimes)),
-            $this->formatDelay($this->median($resolutionTimes)),
-            $this->formatDelay($this->mean($backlogAges)),
-            !empty($oldestTicket) ? $this->formatDelay($this->now - $oldestTicket->datec) : $langs->transnoentities('NoData')
+            $this->formatDelay($this->median($firstResponseTimes))
         ];
 
         $array['moreContent'] = [
             !empty($takeOverTimes) ? ' <span class="opacitymedium">(' . count($takeOverTimes) . ')</span>' : '',
             !empty($firstResponseTimes) ? ' <span class="opacitymedium">(' . count($firstResponseTimes) . ')</span>' : '',
-            '',
-            !empty($resolutionTimes) ? ' <span class="opacitymedium">(' . count($resolutionTimes) . ')</span>' : '',
-            '',
-            !empty($backlogAges) ? ' <span class="opacitymedium">(' . count($backlogAges) . ')</span>' : '',
-            !empty($oldestTicket) ? ' ' . $this->getTicketObject($oldestTicket)->getNomUrl(1) : ''
+            ''
         ];
+
+        if ($this->includeClosed) {
+            $array['content'][]     = $this->formatDelay($this->mean($resolutionTimes));
+            $array['content'][]     = $this->formatDelay($this->median($resolutionTimes));
+            $array['moreContent'][] = !empty($resolutionTimes) ? ' <span class="opacitymedium">(' . count($resolutionTimes) . ')</span>' : '';
+            $array['moreContent'][] = '';
+        }
+
+        $array['content'][] = $this->formatDelay($this->mean($backlogAges));
+        $array['content'][] = !empty($oldestTicket) ? $this->formatDelay($this->now - $oldestTicket->datec) : $langs->transnoentities('NoData');
+
+        $array['moreContent'][] = !empty($backlogAges) ? ' <span class="opacitymedium">(' . count($backlogAges) . ')</span>' : '';
+        $array['moreContent'][] = !empty($oldestTicket) ? ' ' . $this->getTicketObject($oldestTicket)->getNomUrl(1) : '';
 
         return ['ticketDelays' => $array];
     }
@@ -934,7 +996,8 @@ class ReedcrmTicketDashboard
             if ($ticket->fk_soc > 0) {
                 $societies[$ticket->fk_soc] = 1;
             }
-            if ($ticket->fk_user_assign > 0) {
+            // A disabled user is not part of the team the widget describes anymore
+            if ($this->isActiveUser($ticket->fk_user_assign)) {
                 if (!isset($openPerUser[$ticket->fk_user_assign])) {
                     $openPerUser[$ticket->fk_user_assign] = 0;
                 }
@@ -993,20 +1056,20 @@ class ReedcrmTicketDashboard
         $array['height']     = 300;
         $array['type']       = 'bar';
         $array['showlegend'] = 1;
-        $array['dataset']    = 4;
+        $array['dataset']    = $this->includeClosed ? 4 : 2;
         $array['moreCSS']    = 'grid-2';
 
         // The resolution time series holds days, the unit is carried by the legend as the bars only show raw values
-        $array['labels'] = [
-            ['label' => $langs->transnoentities('NbOfOpenedTicket'), 'color' => '#0D8AFF'],
-            ['label' => $langs->transnoentities('TicketsClosedOverPeriod'), 'color' => '#32E592'],
-            ['label' => $langs->transnoentities('MeanResolutionTime') . ' (' . $langs->transnoentities('DurationDays') . ')', 'color' => '#E9A00D']
-        ];
+        $array['labels'] = [['label' => $langs->transnoentities('NbOfOpenedTicket'), 'color' => '#0D8AFF']];
+        if ($this->includeClosed) {
+            $array['labels'][] = ['label' => $langs->transnoentities('TicketsClosedOverPeriod'), 'color' => '#32E592'];
+            $array['labels'][] = ['label' => $langs->transnoentities('MeanResolutionTime') . ' (' . $langs->transnoentities('DurationDays') . ')', 'color' => '#E9A00D'];
+        }
 
         $perUser = [];
         foreach ($this->tickets as $ticket) {
-            // An unassigned ticket stores -1 as well as null, and both must stay out of the graph
-            if ($ticket->fk_user_assign <= 0) {
+            // An unassigned ticket stores -1 as well as null, and a disabled user has left the team
+            if (!$this->isActiveUser($ticket->fk_user_assign)) {
                 continue;
             }
             $userId = $ticket->fk_user_assign;
@@ -1030,17 +1093,21 @@ class ReedcrmTicketDashboard
 
         $links = [];
         foreach ($perUser as $userId => $data) {
-            $array['data'][] = [
-                $this->getUser($userId)->getFullName($langs),
-                $data['open'],
-                $data['closed'],
-                round($this->mean($data['resolutionTimes']) / 86400, 1)
-            ];
-            $links[] = $this->getTicketListUrl('search_fk_user_assign=' . $userId);
+            $row = [$this->getUser($userId)->getFullName($langs), $data['open']];
+            if ($this->includeClosed) {
+                $row[] = $data['closed'];
+                $row[] = round($this->mean($data['resolutionTimes']) / 86400, 1);
+            }
+            $array['data'][] = $row;
+            $links[]         = $this->getTicketListUrl('search_fk_user_assign=' . $userId);
         }
 
         // A resolution time in days dwarfs a ticket count on a shared scale, so it gets its own Y axis
-        $array['morehtmlright'] = SaturneDashboard::getGraphOptionsInput(['links' => $links, 'secondAxisDataset' => 2]);
+        $graphOptions = ['links' => $links];
+        if ($this->includeClosed) {
+            $graphOptions['secondAxisDataset'] = 2;
+        }
+        $array['morehtmlright'] = SaturneDashboard::getGraphOptionsInput($graphOptions);
 
         return $array;
     }
@@ -1074,7 +1141,7 @@ class ReedcrmTicketDashboard
 
         $perUser = [];
         foreach ($this->timeEntries as $entry) {
-            if ($entry->fk_user <= 0 || !$this->isInPeriod($entry->date)) {
+            if (!$this->isActiveUser($entry->fk_user) || !$this->isInPeriod($entry->date)) {
                 continue;
             }
             if (!isset($perUser[$entry->fk_user])) {
@@ -1124,7 +1191,7 @@ class ReedcrmTicketDashboard
 
         $perUser = [];
         foreach ($this->messages as $message) {
-            if ($message->fk_user <= 0 || !$this->isInPeriod($message->date)) {
+            if (!$this->isActiveUser($message->fk_user) || !$this->isInPeriod($message->date)) {
                 continue;
             }
             if (!isset($perUser[$message->fk_user])) {
@@ -1157,8 +1224,8 @@ class ReedcrmTicketDashboard
     {
         global $langs;
 
-        // Graph title parameters
-        $array['title'] = $langs->transnoentities('TicketsCreatedVersusClosedByMonth', self::NB_MONTHS_OF_FLOW);
+        // Graph title parameters, without the closed tickets only the creations are left to draw
+        $array['title'] = $langs->transnoentities($this->includeClosed ? 'TicketsCreatedVersusClosedByMonth' : 'TicketsCreatedByMonth', self::NB_MONTHS_OF_FLOW);
         $array['name']  = 'TicketsCreatedVersusClosedByMonth';
         $array['picto'] = 'fontawesome_fa-exchange-alt_fas_#3bbfa8';
 
@@ -1167,13 +1234,13 @@ class ReedcrmTicketDashboard
         $array['height']     = 300;
         $array['type']       = 'bar';
         $array['showlegend'] = 1;
-        $array['dataset']    = 3;
+        $array['dataset']    = $this->includeClosed ? 3 : 2;
         $array['moreCSS']    = 'grid-2';
 
-        $array['labels'] = [
-            ['label' => $langs->transnoentities('TicketsCreated'), 'color' => '#0D8AFF'],
-            ['label' => $langs->transnoentities('TicketsClosed'), 'color' => '#32E592']
-        ];
+        $array['labels'] = [['label' => $langs->transnoentities('TicketsCreated'), 'color' => '#0D8AFF']];
+        if ($this->includeClosed) {
+            $array['labels'][] = ['label' => $langs->transnoentities('TicketsClosed'), 'color' => '#32E592'];
+        }
 
         $months = $this->getMonthBuckets();
         foreach ($this->tickets as $ticket) {
@@ -1192,13 +1259,19 @@ class ReedcrmTicketDashboard
         $createdLinks = [];
         $closedLinks  = [];
         foreach ($months as $month) {
-            $array['data'][] = [$month['label'], $month['created'] ?? 0, $month['closed'] ?? 0];
+            $row = [$month['label'], $month['created'] ?? 0];
+            if ($this->includeClosed) {
+                $row[] = $month['closed'] ?? 0;
+            }
+            $array['data'][] = $row;
             $createdLinks[]  = $this->getTicketListUrl(reedcrm_get_date_range_filter('search_date', $month['start'], $month['end']));
             $closedLinks[]   = $this->getTicketListUrl(reedcrm_get_date_range_filter('search_dateclose', $month['start'], $month['end']));
         }
 
         // Each series filters on a date of its own, so the links are declared per dataset
-        $array['morehtmlright'] = SaturneDashboard::getGraphOptionsInput(['datasetLinks' => [$createdLinks, $closedLinks]]);
+        $datasetLinks = $this->includeClosed ? [$createdLinks, $closedLinks] : [$createdLinks];
+
+        $array['morehtmlright'] = SaturneDashboard::getGraphOptionsInput(['datasetLinks' => $datasetLinks]);
 
         return $array;
     }
@@ -1663,9 +1736,14 @@ class ReedcrmTicketDashboard
             'LastActivity'            => 'LastActivity'
         ];
 
+        // The two columns read on a closed ticket leave the list when the closed tickets are left out
+        if (!$this->includeClosed) {
+            unset($array['labels']['TicketsClosedOverPeriod'], $array['labels']['MeanResolutionTime']);
+        }
+
         $perUser = [];
         foreach ($this->tickets as $ticket) {
-            if ($ticket->fk_user_assign <= 0) {
+            if (!$this->isActiveUser($ticket->fk_user_assign)) {
                 continue;
             }
             $userId = $ticket->fk_user_assign;
@@ -1728,6 +1806,11 @@ class ReedcrmTicketDashboard
                 'NbOfExchanges'           => ['value' => $line['nbExchanges']],
                 'LastActivity'            => ['value' => $line['lastActivity'] > 0 ? dol_print_date($line['lastActivity'], 'dayhour') : '-']
             ];
+
+            // A row carries its cells in the order of the columns, both drop the same two
+            if (!$this->includeClosed) {
+                unset($data[$userId]['TicketsClosedOverPeriod'], $data[$userId]['MeanResolutionTime']);
+            }
         }
 
         $array['data'] = $data;
@@ -1987,6 +2070,51 @@ class ReedcrmTicketDashboard
         $object->status = (int) $ticket->societe_status;
 
         return $object;
+    }
+
+    /**
+     * Check whether a user still works on the tickets
+     *
+     * The people indicators describe the team handling the tickets today: a user nobody can log in with anymore is
+     * not part of it, so their bar, their line and their entry in the assignee filter are left out. The tickets
+     * assigned to them stay counted, they are still part of the backlog somebody has to take over.
+     *
+     * @param  int  $userId Id of the user, 0 or -1 when the ticket carries no assignee
+     * @return bool         True when the user is set and not disabled
+     */
+    protected function isActiveUser(int $userId): bool
+    {
+        if (!isset($this->disabledUsers)) {
+            $this->loadDisabledUsers();
+        }
+
+        return $userId > 0 && !isset($this->disabledUsers[$userId]);
+    }
+
+    /**
+     * Load the users nobody can log in with anymore
+     *
+     * @return void
+     */
+    protected function loadDisabledUsers(): void
+    {
+        $this->disabledUsers = [];
+
+        $sql  = 'SELECT u.rowid';
+        $sql .= ' FROM ' . MAIN_DB_PREFIX . 'user AS u';
+        $sql .= ' WHERE u.entity IN (' . getEntity('user') . ')';
+        $sql .= ' AND u.statut = 0';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            dol_syslog(__METHOD__ . ' ' . $this->db->lasterror(), LOG_ERR);
+            return;
+        }
+
+        while ($obj = $this->db->fetch_object($resql)) {
+            $this->disabledUsers[(int) $obj->rowid] = 1;
+        }
+        $this->db->free($resql);
     }
 
     /**
