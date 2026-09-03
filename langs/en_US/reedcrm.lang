@@ -676,6 +676,9 @@ TicketPeriodLastMonths = %s last months
 TicketPeriodAll = Whole history
 TicketAssigneeFilter = Assigned to
 TicketAllAssignees = Every assignee
+TicketClosedFilter = Closed tickets
+TicketWithClosedTickets = Included in the figures
+TicketWithoutClosedTickets = Excluded from the figures
 
 # Ticket dashboard - Widgets
 TicketFlow = Ticket flow
@@ -725,6 +728,7 @@ TicketMessagesPerUser = Messages per user
 TicketPublicMessages = Public messages
 TicketPrivateMessages = Private notes
 TicketsCreatedVersusClosedByMonth = Tickets created and closed over the last %s months
+TicketsCreatedByMonth = Tickets created over the last %s months
 TicketsCreated = Tickets created
 TicketsClosed = Tickets closed
 TicketTimeSpentByMonth = Time logged over the last %s months

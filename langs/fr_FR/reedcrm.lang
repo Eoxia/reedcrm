@@ -722,6 +722,9 @@ TicketPeriodLastMonths = %s derniers mois
 TicketPeriodAll = Tout l'historique
 TicketAssigneeFilter = Affecté à
 TicketAllAssignees = Tous les intervenants
+TicketClosedFilter = Tickets clôturés
+TicketWithClosedTickets = Inclus dans les calculs
+TicketWithoutClosedTickets = Exclus des calculs
 
 # Tableau de bord tickets - Widgets
 TicketFlow = Flux des tickets
@@ -771,6 +774,7 @@ TicketMessagesPerUser = Messages par intervenant
 TicketPublicMessages = Messages publics
 TicketPrivateMessages = Notes privées
 TicketsCreatedVersusClosedByMonth = Tickets créés et clôturés sur les %s derniers mois
+TicketsCreatedByMonth = Tickets créés sur les %s derniers mois
 TicketsCreated = Tickets créés
 TicketsClosed = Tickets clôturés
 TicketTimeSpentByMonth = Temps consigné sur les %s derniers mois

@@ -249,9 +249,9 @@ class ReedCRM extends DolibarrApi
 	 * @throws RestException 403 Not allowed
 	 * @throws RestException 501 Ticket module not enabled on the instance
 	 */
-	public function ticketDashboard($period = '365', $userid = 0, $tickets = 0, $openonly = 0, $lang = '')
+	public function ticketDashboard($period = '365', $userid = 0, $tickets = 0, $openonly = 0, $lang = '', $includeclosed = 1)
 	{
-		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang);
+		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang, $includeclosed);
 
 		$data = $dashboard->load_dashboard();
 		if ((int) $tickets != 0) {
@@ -277,9 +277,9 @@ class ReedCRM extends DolibarrApi
 	 * @throws RestException 403 Not allowed
 	 * @throws RestException 501 Ticket module not enabled on the instance
 	 */
-	public function ticketSummary($period = '365', $userid = 0, $lang = '')
+	public function ticketSummary($period = '365', $userid = 0, $lang = '', $includeclosed = 1)
 	{
-		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang);
+		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang, $includeclosed);
 
 		return [
 			'summary'  => $dashboard->load_summary(),
@@ -305,9 +305,9 @@ class ReedCRM extends DolibarrApi
 	 * @throws RestException 403 Not allowed
 	 * @throws RestException 501 Ticket module not enabled on the instance
 	 */
-	public function ticketList($period = '365', $userid = 0, $openonly = 0, $limit = 100, $lang = '')
+	public function ticketList($period = '365', $userid = 0, $openonly = 0, $limit = 100, $lang = '', $includeclosed = 1)
 	{
-		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang);
+		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang, $includeclosed);
 		$dashboard->load_dashboard();
 
 		$data = [
@@ -321,15 +321,16 @@ class ReedCRM extends DolibarrApi
 	/**
 	 * Build the ticket dashboard of the instance, with the environment its widgets expect
 	 *
-	 * @param  string $period Number of days the flow indicators cover, 0 for the whole history
-	 * @param  int    $userid Id of the assignee the dashboard is restricted to, 0 for every assignee
-	 * @param  string $lang   Language the labels are rendered in, empty for the language of the instance
+	 * @param  string $period        Number of days the flow indicators cover, 0 for the whole history
+	 * @param  int    $userid        Id of the assignee the dashboard is restricted to, 0 for every assignee
+	 * @param  string $lang          Language the labels are rendered in, empty for the language of the instance
+	 * @param  int    $includeclosed 1 to count the closed tickets, 0 to read the tickets still open only
 	 * @return ReedcrmTicketDashboard
 	 *
 	 * @throws RestException 403 Not allowed
 	 * @throws RestException 501 Ticket module not enabled on the instance
 	 */
-	private function prepareTicketDashboard($period, $userid, $lang = ''): ReedcrmTicketDashboard
+	private function prepareTicketDashboard($period, $userid, $lang = '', $includeclosed = 1): ReedcrmTicketDashboard
 	{
 		global $db, $langs;
 
@@ -358,7 +359,7 @@ class ReedCRM extends DolibarrApi
 		}
 
 		$dashboard = new ReedcrmTicketDashboard($this->db);
-		$dashboard->setFilters((string) $period, (int) $userid);
+		$dashboard->setFilters((string) $period, (int) $userid, (int) $includeclosed);
 		$dashboard->setUrlRoot($this->getInstanceUrl());
 
 		return $dashboard;
