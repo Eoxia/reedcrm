@@ -133,54 +133,51 @@ $title = $langs->trans('RecurringInvoiceFollowupMenu');
 if (!in_array($sortfield, ['fr.date_when', 'fr.titre', 'fr.fk_soc', 'fr.total_ttc', 't.prestation', 't.facture_creee', 't.facture_payee', 't.date_relance', 't.date_maj_du', 't.next_maj_du', 'fa.ref', 'fa.datef'], true)) {
     $sortfield = 'fr.date_when';
 }
-$sql  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.total_ttc as montant_ttc, fr.date_when as period, fr.fk_soc, fr.suspended,';
-$sql .= ' t.rowid as followup_id, t.prestation, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, t.date_maj_du, t.next_maj_du, t.besoin,';
-$sql .= ' fa.rowid as gen_facture_id, fa.ref as gen_facture_ref, fa.datef as gen_date, fa.paye as gen_paye, fa.fk_statut as gen_statut, fa.total_ttc as gen_total_ttc,';
-$sql .= ' s.nom as thirdparty_name';
-$sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-// At most ONE annotation per template (old data may hold several rows per template) — avoids row duplication.
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = (SELECT t9.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup t9';
-$sql .= '   WHERE t9.fk_facture_rec = fr.rowid AND t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ORDER BY t9.rowid DESC' . $db->plimit(1) . ')';
-// The invoice actually generated from this template within the browsed month+year (if any) — to show
-// when it was really billed on past/current months.
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
-$sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
-$sql .= '   AND MONTH(f9.datef) = ' . ((int) $monthMonth) . ' AND YEAR(f9.datef) = ' . ((int) $monthYear) . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
-$sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
+$sqlFields  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.total_ttc as montant_ttc, fr.date_when as period, fr.fk_soc, fr.suspended,';
+$sqlFields .= ' t.rowid as followup_id, t.prestation, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, t.date_maj_du, t.next_maj_du, t.besoin,';
+$sqlFields .= ' fa.rowid as gen_facture_id, fa.ref as gen_facture_ref, fa.datef as gen_date, fa.paye as gen_paye, fa.fk_statut as gen_statut, fa.total_ttc as gen_total_ttc,';
+$sqlFields .= ' s.nom as thirdparty_name';
+
+$sqlFrom  = ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+$sqlFrom .= reedcrmFollowupMonthJoinsSql($db, $periodStart, $periodEnd);
+$sqlFrom .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+
+$sqlWhere = ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
 // A template belongs to the browsed month for one of two reasons:
 //  - its real next generation date (date_when) falls in that month AND year, exactly like the native
 //    "Factures modèles" filter — so the date shown always matches the template card: still to bill;
 //  - an invoice was really generated from it that month (fa) — already billed. This second branch keeps
 //    the traceability of finished months: once generated, date_when has moved on to the next period, and
 //    the template may even have been suspended since.
-$sql .= ' AND ((fr.suspended = 0 AND MONTH(fr.date_when) = ' . ((int) $monthMonth) . ' AND YEAR(fr.date_when) = ' . ((int) $monthYear) . ') OR fa.rowid IS NOT NULL)';
+$sqlWhere .= ' AND ((fr.suspended = 0 AND MONTH(fr.date_when) = ' . ((int) $monthMonth) . ' AND YEAR(fr.date_when) = ' . ((int) $monthYear) . ') OR fa.rowid IS NOT NULL)';
 if (dol_strlen($search_ref)) {
-    $sql .= natural_search('fr.titre', $search_ref);
+    $sqlWhere .= natural_search('fr.titre', $search_ref);
 }
 if ($search_fk_soc > 0) {
-    $sql .= ' AND fr.fk_soc = ' . ((int) $search_fk_soc);
+    $sqlWhere .= ' AND fr.fk_soc = ' . ((int) $search_fk_soc);
 }
 if (dol_strlen($search_prestation)) {
-    $sql .= natural_search('t.prestation', $search_prestation);
+    $sqlWhere .= natural_search('t.prestation', $search_prestation);
 }
 if ($search_done === 'done') {
-    $sql .= ' AND fa.rowid IS NOT NULL';
+    $sqlWhere .= ' AND fa.rowid IS NOT NULL';
 } elseif ($search_done === 'todo') {
-    $sql .= ' AND fa.rowid IS NULL';
+    $sqlWhere .= ' AND fa.rowid IS NULL';
 }
 
-// Count total records.
+// Count total records. COUNT(*), not a full fetch of every row just to call num_rows on it.
 $nbtotalofrecords = '';
 if (!getDolGlobalInt('MAIN_DISABLE_FULL_SCANLIST')) {
-    $resql            = $db->query($sql);
-    $nbtotalofrecords = $resql ? $db->num_rows($resql) : 0;
+    $resqlCount       = $db->query('SELECT COUNT(*) as nb' . $sqlFrom . $sqlWhere);
+    $objCount         = $resqlCount ? $db->fetch_object($resqlCount) : null;
+    $nbtotalofrecords = $objCount ? (int) $objCount->nb : 0;
     if (($page * $limit) > $nbtotalofrecords) {
         $page   = 0;
         $offset = 0;
     }
 }
 
+$sql  = $sqlFields . $sqlFrom . $sqlWhere;
 $sql .= $db->order($sortfield, $sortorder);
 if ($limit) {
     $sql .= $db->plimit($limit + 1, $offset);

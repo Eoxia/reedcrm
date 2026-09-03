@@ -333,13 +333,7 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sql .= ' fa.datef as gen_date, fa.paye as gen_paye,';
     $sql .= ' s.nom as thirdparty_name';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-    // At most ONE annotation per template (old data may hold several rows per template) — avoids row duplication.
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = (SELECT t9.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup t9';
-    $sql .= '   WHERE t9.fk_facture_rec = fr.rowid AND t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ORDER BY t9.rowid DESC' . $db->plimit(1) . ')';
-    // The invoice actually generated from this template in the browsed month+year (done or not).
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
-    $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
-    $sql .= '   AND MONTH(f9.datef) = ' . $browsedMonth . ' AND YEAR(f9.datef) = ' . $browsedYear . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
+    $sql .= reedcrmFollowupMonthJoinsSql($db, $periodStart, $periodEnd);
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
     $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
     // A template belongs to the browsed month either because its next generation falls in that month
@@ -766,6 +760,39 @@ function reedcrmSignedUnbilledGetProposals(DoliDB $db, int $months = 24, int $li
     }
 
     return $rows;
+}
+
+/**
+ * Joins bringing, for one month, the stored annotation and the invoice really generated from each
+ * recurring template. Both expose the aliases the callers select from: t (annotation) and fa (invoice).
+ *
+ * They used to be correlated subqueries evaluated once per template row. llx_facture carries no index
+ * on fk_fac_rec_source, and wrapping datef in MONTH()/YEAR() also ruled out the datef index, so the
+ * invoice table was fully scanned once per template: seconds of query time on a base with a few hundred
+ * templates, and the page runs this shape three times (list, count, dashboard). They are pre-aggregated
+ * once here instead, with the month expressed as a date range so the datef index applies.
+ *
+ * @param  DoliDB $db          Database handler.
+ * @param  int    $periodStart First-day-of-month timestamp.
+ * @param  int    $periodEnd   Last-day-of-month timestamp.
+ * @return string              SQL LEFT JOIN clauses, to append after the facture_rec table aliased fr.
+ */
+function reedcrmFollowupMonthJoinsSql(DoliDB $db, int $periodStart, int $periodEnd): string
+{
+    // At most ONE annotation per template (old data may hold several rows per template) — avoids row
+    // duplication. MAX(rowid) is the latest one, what the previous per-row subquery already returned.
+    $sql  = ' LEFT JOIN (SELECT MAX(t9.rowid) as tid, t9.fk_facture_rec FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t9';
+    $sql .= '  WHERE t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') GROUP BY t9.fk_facture_rec) as tlast ON tlast.fk_facture_rec = fr.rowid';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = tlast.tid';
+    // The invoice actually generated from this template within the browsed month (if any) — tells when
+    // it was really billed on past and current months. A template bills once a month, so at most one row.
+    $sql .= ' LEFT JOIN (SELECT MAX(f9.rowid) as fid, f9.fk_fac_rec_source FROM ' . MAIN_DB_PREFIX . 'facture as f9';
+    $sql .= '  WHERE f9.type <> 2 AND f9.fk_fac_rec_source > 0 AND f9.entity IN (' . getEntity('facture') . ')';
+    $sql .= "  AND f9.datef >= '" . $db->idate($periodStart) . "' AND f9.datef <= '" . $db->idate($periodEnd) . "'";
+    $sql .= ' GROUP BY f9.fk_fac_rec_source) as falast ON falast.fk_fac_rec_source = fr.rowid';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = falast.fid';
+
+    return $sql;
 }
 
 /**
