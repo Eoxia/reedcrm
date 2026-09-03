@@ -424,3 +424,112 @@ function reedcrm_field_date_details(array $parameters, CommonObject $object): st
 
     return '<div class="reedcrm-dates-cell">' . $startHtml . $endHtml . '</div>';
 }
+
+/**
+ * Load, for a whole page of listed objects, the categories carried by each of them.
+ *
+ * The categories live in llx_categorie_<element>, so rendering them row by row would cost one
+ * query per line. The page ids are read back from the list query ($sqlForList, exposed by the
+ * saturne list TPL) and every tag of the page is loaded in a single query.
+ *
+ * @param  CommonObject $object The listed object (gives the element, hence the link table)
+ * @return array                Categories (id, label, color) indexed by object id
+ */
+function reedcrm_load_list_categories(CommonObject $object): array
+{
+    global $db, $limit, $offset, $sortfield, $sortorder, $sqlForList;
+
+    if (empty($sqlForList)) {
+        return [];
+    }
+
+    $element   = $object->element;
+    $linkTable = MAIN_DB_PREFIX . 'categorie_' . $element;
+    $linkField = 'fk_' . $element;
+
+    $sql   = 'SELECT listpage.rowid FROM (' . $sqlForList;
+    $sql  .= $db->order($sortfield, $sortorder);
+    $sql  .= (!empty($limit) ? $db->plimit($limit + 1, $offset) : '');
+    $sql  .= ') AS listpage';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return [];
+    }
+
+    $objectIds = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $objectIds[] = (int) $obj->rowid;
+    }
+    $db->free($resql);
+
+    if (empty($objectIds)) {
+        return [];
+    }
+
+    $sql   = 'SELECT link.' . $linkField . ' AS fk_object, categorie.rowid, categorie.label, categorie.color';
+    $sql  .= ' FROM ' . $linkTable . ' AS link';
+    $sql  .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'categorie AS categorie ON categorie.rowid = link.fk_categorie';
+    $sql  .= ' WHERE link.' . $linkField . ' IN (' . implode(',', $objectIds) . ')';
+    $sql  .= ' AND categorie.entity IN (' . getEntity('category') . ')';
+    $sql  .= ' ORDER BY categorie.label ASC';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return [];
+    }
+
+    $categories = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $categories[(int) $obj->fk_object][] = ['id' => (int) $obj->rowid, 'label' => $obj->label, 'color' => $obj->color];
+    }
+    $db->free($resql);
+
+    return $categories;
+}
+
+/**
+ * Render the tags/categories cell, like the ticket list does.
+ *
+ * The column is virtual : a project carries its tags in llx_categorie_project, not in its own
+ * table, so it is declared in $excludeFields and filled here. Each tag links back to the list
+ * with the category added to the tag filter of the list header.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_categories(array $parameters, CommonObject $object): string
+{
+    global $conf, $langs, $param;
+
+    $objectId = (int) (!empty($object->id) ? $object->id : ($parameters['obj']->rowid ?? 0));
+    if ($objectId <= 0) {
+        return '';
+    }
+
+    $element = $object->element;
+    if (!isset($conf->cache['reedcrmListCategories'][$element])) {
+        $conf->cache['reedcrmListCategories'][$element] = reedcrm_load_list_categories($object);
+    }
+
+    $categories = $conf->cache['reedcrmListCategories'][$element][$objectId] ?? [];
+    if (empty($categories)) {
+        return '';
+    }
+
+    $listUrl = $_SERVER['PHP_SELF'] . '?' . ltrim($param ?? '', '&');
+
+    $out = '';
+    foreach ($categories as $category) {
+        // Same tag rendering as the native lists : colored pill, text forced to keep a readable contrast
+        $color     = preg_match('/^[0-9a-f]{6}$/i', ltrim((string) $category['color'], '#')) ? ltrim($category['color'], '#') : 'bbbbbb';
+        $textColor = colorIsLight($color) == 1 ? 'categtextblack' : 'categtextwhite';
+        $tagUrl    = $listUrl . '&search_categories_filter[]=' . $category['id'];
+
+        $out .= '<span class="noborderoncategories" style="background: #' . $color . ';">';
+        $out .= '<a class="' . $textColor . '" href="' . dol_escape_htmltag($tagUrl) . '" title="' . dol_escape_htmltag($langs->trans('Categories')) . '">';
+        $out .= '<span class="fas fa-tag paddingright"></span>' . dol_escape_htmltag($category['label']);
+        $out .= '</a></span>';
+    }
+
+    return $out;
+}
