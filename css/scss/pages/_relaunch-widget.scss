@@ -89,6 +89,42 @@
     }
 }
 
+/* List surfaces. Dolibarr flattens every div of a truncating list cell with
+ * `table.liste td[class*="tdoverflowmax"] div { display: inline; padding: 0; margin: 0 }`, whose
+ * specificity the class pair above cannot reach - the widget collapses to 80x17 instead of 126x26.
+ * The old pills escaped it by carrying `!important` in _project-list.scss; restating the layout
+ * from inside that same selector is the same fix without the keyword. */
+table.liste td[class*="tdoverflowmax"] {
+    .reedcrm-relaunch-wrapper {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .reedcrm-relaunch-duo {
+        display: inline-flex;
+        gap: 6px;
+    }
+
+    .reedcrm-relaunch-duo .reedcrm-relaunch-seg {
+        display: inline-flex;
+        padding: 6px 10px;
+    }
+
+    .reedcrm-relaunch-duo .reedcrm-relaunch-btn-content {
+        display: flex;
+        gap: 6px;
+    }
+
+    .reedcrm-relaunch-duo .reedcrm-relaunch-add {
+        display: flex;
+    }
+
+    .reedcrm-relaunch-duo .reedcrm-relaunch-overdue {
+        display: inline-flex;
+        padding: 0 4px;
+    }
+}
+
 /* Header block of the project / thirdparty / proposal card. The markup used to carry these as
  * inline styles built in PHP. */
 .reedcrm-header-relaunch-master {
