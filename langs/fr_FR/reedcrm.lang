@@ -879,3 +879,32 @@ SignedUnbilledClassifyBilled = Classer "Facturée" (la ligne sort de la liste)
 SignedUnbilledConfirmBilled = Classer le devis %s comme facturé ?
 SignedUnbilledMarkedBilled = Devis %s classé facturé
 SignedUnbilledLegend = Recoupement : "Facturée via la commande / le contrat" = une facture existe via la commande ou le contrat issu du devis. "Facture du même montant" = une facture du client, postérieure à la signature (tolérance 30 j), a exactement le même montant HT ou TTC. "Mêmes produits facturés" = au moins la moitié des produits du devis ont été facturés à ce client après la signature. Ces trois cas sont à vérifier à l'œil : si c'est bien la même prestation, classe le devis "Facturée".
+
+# Recurring invoice follow-up - billing run traceability & portfolio movements
+FollowupRunStatus = Traitement
+FollowupRunStatusHelp = Où en est la facturation du mois pour cet abonnement : « À faire » tant qu'aucune facture n'a été générée, « Fait » dès qu'une facture issue de cette facture modèle est datée du mois consulté. Les lignes déjà faites restent affichées, la liste ne se vide plus en fin de mois.
+FollowupRunToDo = À faire
+FollowupRunDone = Fait
+FollowupGeneratedInvoice = Facture générée
+FollowupTemplateSuspended = Arrêté
+FollowupTemplateSuspendedHelp = Facture modèle aujourd'hui suspendue : elle reste affichée sur les mois où elle a réellement été facturée.
+FollowupMovementsTitle = Entrées / sorties des abonnements récurrents
+FollowupMovementsInMonth = Nouveaux abonnements du mois
+FollowupMovementsInAmount = Montant gagné (mois)
+FollowupMovementsOutMonth = Abonnements arrêtés du mois
+FollowupMovementsOutAmount = Montant perdu (mois)
+FollowupMovementsNetMonth = Solde net du mois
+FollowupMovementsNetYear = Solde net de l'année
+FollowupMovementsNetYearNb = Entrées / sorties de l'année
+FollowupMovementsChartTitle = Entrées (+) / sorties (-) par mois et solde cumulé
+FollowupMovementsIn = Entrées
+FollowupMovementsOut = Sorties
+FollowupMovementsCumul = Solde cumulé
+FollowupMovementsNoIn = Aucun nouvel abonnement ce mois-ci
+FollowupMovementsNoOut = Aucun abonnement arrêté ce mois-ci
+FollowupRunLate = En retard
+FollowupRunLateHelp = L'échéance du mois est passée et aucune facture n'a encore été générée.
+FollowupRunToDoHelp = Aucune facture générée sur ce mois pour cet abonnement : reste à générer.
+FollowupRunDoneOn = Facture générée le %s
+FollowupRunNothingToDo = Rien à faire sur %s : les %s factures du mois ont déjà été générées.
+FollowupRunNothingDone = Aucune facture encore générée sur %s.
