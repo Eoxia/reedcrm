@@ -258,31 +258,48 @@ print '</div>';
 /*
  * Chart on top: recurring-invoice amount over the 12 months of the browsed year.
  */
-$chartYear = $monthYear;
-$faByMonth = array_fill(1, 12, 0.0);
-// Annual recurring calendar: amount per billing month across all active templates (same every year).
-$sqlChartFa  = 'SELECT MONTH(fr.date_when) as m, SUM(fr.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-$sqlChartFa .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0 GROUP BY m';
-$resChartFa  = $db->query($sqlChartFa);
-if ($resChartFa) {
-    while ($o = $db->fetch_object($resChartFa)) {
-        $faByMonth[(int) $o->m] = (float) $o->tot;
-    }
-}
+// Each month is split into what has really been billed (green) and what is still to bill (red), so the
+// year reads at a glance: a red past month is late billing, a red month to come is simply still due.
+$chartYear   = $monthYear;
+$progress    = reedcrmFollowupGetYearBillingProgress($db, $chartYear);
 $monthLabels = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+$chartDone   = [];
+$chartTodo   = [];
+$chartDoneNb = [];
+$chartTodoNb = [];
+foreach ($progress as $row) {
+    $chartDone[]   = round($row['done_amount']);
+    $chartTodo[]   = round($row['todo_amount']);
+    $chartDoneNb[] = $row['done_nb'];
+    $chartTodoNb[] = $row['todo_nb'];
+}
+// Outline the browsed month so the chart and the list below stay tied together.
+$chartBorder = [];
+for ($m = 1; $m <= 12; $m++) {
+    $chartBorder[] = ($m === $monthMonth ? '#2f3d4f' : 'transparent');
+}
 
 print '<div class="rcf-chartbox"><div class="rcf-charttitle">' . $langs->trans('FollowupChartFaAmount') . ' — ' . $chartYear . '</div><div class="rcf-canvaswrap"><canvas id="rcfChartFa"></canvas></div></div>';
 print '<script src="' . DOL_URL_ROOT . '/includes/nnnick/chartjs/dist/chart.min.js"></script>';
 print '<script>
 (function() {
     if (typeof Chart === "undefined") { return; }
-    var eur = function(v){ return v.toLocaleString("fr-FR") + " €"; };
+    var eur    = function(v){ return v.toLocaleString("fr-FR") + " €"; };
+    var doneNb = ' . json_encode($chartDoneNb) . ', todoNb = ' . json_encode($chartTodoNb) . ';
     new Chart(document.getElementById("rcfChartFa"), {
         type: "bar",
-        data: { labels: ' . json_encode($monthLabels) . ', datasets: [{ label: "' . dol_escape_js($langs->transnoentities('FollowupChartFaAmount')) . '", data: ' . json_encode(array_map('round', array_values($faByMonth))) . ', backgroundColor: "#2f6f9f", borderRadius: 4, maxBarThickness: 34 }] },
+        data: { labels: ' . json_encode($monthLabels) . ', datasets: [
+            { label: "' . dol_escape_js($langs->transnoentities('FollowupRunDone')) . '", data: ' . json_encode($chartDone) . ', backgroundColor: "#2e9e6c", borderColor: ' . json_encode($chartBorder) . ', borderWidth: 2, borderSkipped: false, maxBarThickness: 34 },
+            { label: "' . dol_escape_js($langs->transnoentities('FollowupRunToDo')) . '", data: ' . json_encode($chartTodo) . ', backgroundColor: "#cf4257", borderColor: ' . json_encode($chartBorder) . ', borderWidth: 2, borderSkipped: false, maxBarThickness: 34 }
+        ] },
         options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return eur(c.parsed.y); } } } },
-            scales: { y: { beginAtZero: true, grid: { color: "rgba(120,130,150,.15)" }, ticks: { callback: eur } }, x: { grid: { display: false } } } }
+            plugins: { legend: { display: true, position: "bottom", labels: { boxWidth: 12, usePointStyle: true } },
+                tooltip: { callbacks: { label: function(c){
+                    var nb = (c.datasetIndex === 0 ? doneNb : todoNb)[c.dataIndex];
+                    return c.dataset.label + " : " + eur(c.parsed.y) + " (" + nb + ")";
+                } } } },
+            scales: { x: { stacked: true, grid: { display: false } },
+                y: { stacked: true, beginAtZero: true, grid: { color: "rgba(120,130,150,.15)" }, ticks: { callback: eur } } } }
     });
 })();
 </script>';
