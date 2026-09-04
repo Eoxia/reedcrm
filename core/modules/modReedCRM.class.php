@@ -238,6 +238,22 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_CALL_LIST_ADDON', 'chaine', 'mod_call_list_standard', '', 0, 'current'],
             $i++ => ['REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'chaine', 'pdf_calllist_standard', '', 0, 'current'],
 
+            // CONST POCKET
+            // The API key and the imported folder are deliberately left empty: nothing is fetched
+            // from Pocket until an admin fills them in admin/pocket.php
+            $i++ => ['REEDCRM_POCKET_API_KEY', 'chaine', '', '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_FOLDER_ID', 'chaine', '', '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_FOLDER_LABEL', 'chaine', '', '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_THIRDPARTY', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_PROJECT', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_TICKET', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_INVOICE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_PROPAL', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_CONTACT', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_ORDER', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_CONTRACT', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_TASK', 'integer', 0, '', 0, 'current'],
+
             // CONST MODULE
             $i++ => ['REEDCRM_VERSION','chaine', $this->version, '', 0, 'current'],
             $i++ => ['REEDCRM_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
@@ -271,6 +287,30 @@ class modReedCRM extends DolibarrModules
         $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
         $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=societe'];
         $this->tabs[] = ['data' => 'thirdparty:+keyyo:' . $pictoReedcrm . $langs->transnoentities('KeyyoCalls') . ':reedcrm@reedcrm:$user->hasRight(\'societe\', \'lire\'):/custom/reedcrm/view/thirdparty_calls.php?id=__ID__'];
+
+        // Pocket recording tabs, driven by the REEDCRM_POCKET_LINK_* constants set in admin/pocket.php.
+        // This loop belongs to the constructor: saturne_refresh_module_registrations() instantiates the
+        // descriptor and calls insert_tabs() without going through init(), a loop left in init() would
+        // register nothing and wipe the existing tabs.
+        dol_include_once('/reedcrm/lib/reedcrm_pocketrecording.lib.php');
+
+        if (function_exists('reedcrm_pocket_get_linkable_objects')) {
+            $pocketLinkableObjects = reedcrm_pocket_get_linkable_objects();
+
+            foreach (reedcrm_pocket_get_enabled_linked_object_types() as $objectType) {
+                $objectMetadata = $pocketLinkableObjects[$objectType];
+
+                // An object contributed by another module is reached through its own tab type
+                if (preg_match('/_/', $objectType)) {
+                    $splittedElementType = explode('_', $objectType);
+                    $tabType             = dol_strtolower($objectMetadata['class_name']) . '@' . $splittedElementType[0];
+                } else {
+                    $tabType = $objectMetadata['tab_type'];
+                }
+
+                $this->tabs[] = ['data' => $tabType . ':+pocketrecording:' . $pictoReedcrm . $langs->transnoentities('PocketRecordings') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'pocketrecording\', \'read\'):/custom/reedcrm/view/pocketrecording/pocketrecording_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            }
+        }
         /* END MODULEBUILDER TABS */
 
         // Dictionaries
@@ -468,6 +508,20 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\') && isModEnabled(\'agenda\')',
                 'priority'      => 56
+            ],
+            9 => [
+                'label'         => $langs->transnoentities('PocketSyncCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/pocketcron.class.php',
+                'objectname'    => 'PocketCron',
+                'method'        => 'syncPocketRecordings',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('PocketSyncCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 3600,
+                'status'        => 0,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && getDolGlobalString(\'REEDCRM_POCKET_API_KEY\') != \'\'',
+                'priority'      => 57
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -558,6 +612,23 @@ class modReedCRM extends DolibarrModules
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
         $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('RecurringInvoiceFollowup'));
         $this->rights[$r][4] = 'followup';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* POCKET RECORDING PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('PocketRecording'));
+        $this->rights[$r][4] = 'pocketrecording';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('PocketRecording'));
+        $this->rights[$r][4] = 'pocketrecording';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('PocketRecording'));
+        $this->rights[$r][4] = 'pocketrecording';
         $this->rights[$r][5] = 'delete';
         $r++;
 
@@ -796,6 +867,22 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('PocketRecordings'),
+            'prefix'   => '<i class="fas fa-microphone pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'pocketrecording',
+            'url'      => '/reedcrm/view/pocketrecording/pocketrecording_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'pocketrecording\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -1204,7 +1291,17 @@ class modReedCRM extends DolibarrModules
             dolibarr_set_const($this->db, 'PRODUIT_DESC_IN_FORM', '2', 'chaine', 0, '', $conf->entity);
         }
 
-        return $this->_init([], $options);
+        // Pocket linked objects. Order matters: the constructor read the constants before _init()
+        // wrote them, so the backward runs first and the tabs are rebuilt afterwards, from a fresh
+        // descriptor that sees the final configuration.
+        require_once __DIR__ . '/../../lib/reedcrm_pocketrecording.lib.php';
+        reedcrm_pocket_run_linked_object_backward();
+
+        $result = $this->_init([], $options);
+
+        reedcrm_pocket_sync_linked_objects();
+
+        return $result;
     }
 
     /**
