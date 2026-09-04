@@ -908,3 +908,95 @@ FollowupRunToDoHelp = Aucune facture générée sur ce mois pour cet abonnement 
 FollowupRunDoneOn = Facture générée le %s
 FollowupRunNothingToDo = Rien à faire sur %s : les %s factures du mois ont déjà été générées.
 FollowupRunNothingDone = Aucune facture encore générée sur %s.
+
+#
+# Pocket
+#
+Pocket = Pocket
+PocketRecording = Enregistrement Pocket
+PocketRecordings = Enregistrements Pocket
+PocketRecordingId = Identifiant Pocket
+PocketRecordingDate = Date d'enregistrement
+PocketFolder = Dossier Pocket
+PocketFolderId = Identifiant du dossier Pocket
+PocketFolderTitle = Dossier importé
+PocketFolderHelp = Seuls les enregistrements de ce dossier sont importés dans Dolibarr. Tant qu'aucun dossier n'est choisi, aucune synchronisation n'a lieu.
+PocketFolderMissing = Aucun dossier Pocket sélectionné
+PocketNoFolderSelected = -- Aucun dossier --
+PocketTags = Tags Pocket
+PocketState = État Pocket
+PocketSummary = Résumé
+PocketTranscript = Transcription
+PocketActionItems = Actions à faire
+PocketLastSyncDate = Dernière synchronisation
+PocketNoSummary = Aucun résumé disponible pour cet enregistrement
+PocketNoTranscript = Aucune transcription disponible pour cet enregistrement
+PocketNoActionItem = Aucune action détectée par Pocket
+PocketRecordingStatusNew = Nouveau
+PocketRecordingStatusProcessed = Traité
+PocketRecordingStatusArchived = Archivé
+PocketConnection = Connexion à Pocket
+PocketConnectionState = État de la connexion
+PocketApiKey = Clé API Pocket
+PocketApiKeyHelp = Clé de type pk_... créée depuis l'application Pocket. Elle donne accès en lecture aux enregistrements, transcriptions et audios du compte.
+PocketApiKeySet = Clé enregistrée
+PocketApiKeyMissing = Aucune clé API Pocket configurée
+PocketApiHttpError = L'API Pocket a répondu une erreur HTTP %s
+PocketApiInvalidResponse = Réponse illisible de l'API Pocket
+PocketTestConnection = Tester la connexion
+PocketConnectionFailed = Connexion à Pocket impossible : %s
+PocketConnectionSucceeded = Connexion à Pocket réussie, %s dossiers trouvés
+PocketManualSync = Synchronisation manuelle
+PocketManualSyncHelp = Importe immédiatement les enregistrements du dossier configuré. La même opération est jouée automatiquement par la tâche planifiée.
+PocketSyncNow = Synchroniser maintenant
+PocketSyncReport = Synchronisation Pocket : %s créés, %s mis à jour, %s ignorés, %s en erreur
+PocketSyncCronLabel = Synchronisation des enregistrements Pocket
+PocketSyncCronComment = Importe les enregistrements du dossier Pocket configuré, avec leur résumé, leur transcription et leurs actions
+PocketRefreshFromApi = Rafraîchir depuis Pocket
+PocketRefreshDone = Enregistrement rafraîchi depuis Pocket
+PocketRefreshFailed = Le rafraîchissement depuis Pocket a échoué
+PocketDownloadAudio = Télécharger l'audio
+PocketAudioUnavailable = Audio indisponible pour cet enregistrement
+DeletePocketRecording = Supprimer l'enregistrement Pocket
+ConfirmDeletePocketRecording = Êtes-vous sûr de vouloir supprimer cet enregistrement ? Il sera réimporté à la prochaine synchronisation s'il est toujours présent dans le dossier Pocket.
+
+#
+# Objets liables aux enregistrements Pocket
+# Ces clés sont génériques (tpl saturne) : ReedCRM charge son .lang en premier, sa formulation gagne
+#
+LinkableElements = Éléments liables
+LinkedObjectUsage = Utilisation
+LinkedObjectUsageDetail = %s lien(s) vers un enregistrement Pocket
+NoLinkedObjectUsage = Aucun lien
+EnableAllLinksConfirm = Activer le lien vers tous les éléments ?
+DisableAllLinksConfirm = Désactiver le lien vers tous les éléments ? Les onglets correspondants disparaîtront, les liens déjà créés sont conservés.
+DisableLinkConfirm = Désactiver le lien vers « %s » ? L'onglet disparaîtra, les liens déjà créés sont conservés.
+CleanUnusedLinks = Réaligner les onglets sur la configuration
+CleanUnusedLinksConfirm = Reconstruire les onglets et les hooks à partir des liens activés ?
+LinkedObjectSyncDone = Configuration appliquée : %s onglets et %s hooks enregistrés
+LinkedObjectSyncError = L'application de la configuration des liens a échoué
+
+#
+# Pocket - lecteur audio et actions a faire
+#
+PocketAudio = Audio
+PocketPlayAudio = Écouter l'enregistrement
+PocketAssignedUser = Affecté à
+PocketAssignee = Interlocuteur Pocket
+PocketCreateEvent = Créer un événement
+PocketActionItemId = Identifiant de l'action Pocket
+PocketActionItemTodo = À faire
+PocketActionItemDone = Faite
+
+#
+# Pocket - rattachement depuis les objets
+#
+PocketLinkedObjects = Objets liés
+PocketNoLinkedObject = Aucun objet lié à cet enregistrement
+PocketLinkFromObjectHint = Pour rattacher cet enregistrement, ouvrez la fiche du ticket, du projet, de la facture ou de la proposition concerné et utilisez son onglet « Enregistrements Pocket ».
+PocketLinkRecording = Rattacher un enregistrement
+PocketUnlinkRecording = Détacher cet enregistrement
+PocketNoRecordingToLink = Tous les enregistrements disponibles sont déjà rattachés
+PocketRecordingLinked = Enregistrement rattaché
+PocketRecordingUnlinked = Enregistrement détaché
+PocketRecordingLinkFailed = L'opération de rattachement a échoué

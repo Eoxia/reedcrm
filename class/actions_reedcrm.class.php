@@ -2360,6 +2360,29 @@ class ActionsReedcrm
             'lib_path'       => 'custom/reedcrm/lib/reedcrm_call_list.lib.php',
         ];
 
+        $this->results['pocketrecording'] = [
+            'mainmenu'       => 'reedcrm',
+            'leftmenu'       => 'pocketrecording',
+            'langs'          => 'PocketRecording',
+            'langfile'       => 'reedcrm@reedcrm',
+            'picto'          => 'fontawesome_fa-microphone_fas_#63ACC9',
+            'color'          => '#63ACC9',
+            'class_name'     => 'PocketRecording',
+            'name_field'     => 'ref',
+            'post_name'      => 'fk_pocketrecording',
+            'link_name'      => 'pocketrecording',
+            'tab_type'       => 'pocketrecording',
+            'table_element'  => 'reedcrm_pocket_recording',
+            'hook_name_card' => 'pocketrecordingcard',
+            'hook_name_list' => 'pocketrecordinglist',
+            'create_url'     => 'custom/reedcrm/view/pocketrecording/pocketrecording_card.php',
+            'list_url'       => 'custom/reedcrm/view/pocketrecording/pocketrecording_list.php',
+            'defaultsort'    => 't.recording_date',
+            'defaultorder'   => 'DESC',
+            'class_path'     => 'custom/reedcrm/class/pocketrecording.class.php',
+            'lib_path'       => 'custom/reedcrm/lib/reedcrm_pocketrecording.lib.php',
+        ];
+
         return 0; // or return 1 to replace standard code
     }
 

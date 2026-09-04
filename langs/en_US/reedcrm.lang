@@ -820,3 +820,95 @@ FollowupRunToDoHelp = No invoice generated for this month on this subscription: 
 FollowupRunDoneOn = Invoice generated on %s
 FollowupRunNothingToDo = Nothing to do on %s: the %s invoices of the month have already been generated.
 FollowupRunNothingDone = No invoice generated yet on %s.
+
+#
+# Pocket
+#
+Pocket = Pocket
+PocketRecording = Pocket recording
+PocketRecordings = Pocket recordings
+PocketRecordingId = Pocket identifier
+PocketRecordingDate = Recording date
+PocketFolder = Pocket folder
+PocketFolderId = Pocket folder identifier
+PocketFolderTitle = Imported folder
+PocketFolderHelp = Only the recordings of this folder are imported into Dolibarr. As long as no folder is selected, no synchronisation happens.
+PocketFolderMissing = No Pocket folder selected
+PocketNoFolderSelected = -- No folder --
+PocketTags = Pocket tags
+PocketState = Pocket state
+PocketSummary = Summary
+PocketTranscript = Transcript
+PocketActionItems = Action items
+PocketLastSyncDate = Last synchronisation
+PocketNoSummary = No summary available for this recording
+PocketNoTranscript = No transcript available for this recording
+PocketNoActionItem = No action item detected by Pocket
+PocketRecordingStatusNew = New
+PocketRecordingStatusProcessed = Processed
+PocketRecordingStatusArchived = Archived
+PocketConnection = Pocket connection
+PocketConnectionState = Connection state
+PocketApiKey = Pocket API key
+PocketApiKeyHelp = A pk_... key created from the Pocket application. It grants read access to the recordings, transcripts and audio files of the account.
+PocketApiKeySet = Key stored
+PocketApiKeyMissing = No Pocket API key configured
+PocketApiHttpError = The Pocket API answered HTTP error %s
+PocketApiInvalidResponse = Unreadable answer from the Pocket API
+PocketTestConnection = Test connection
+PocketConnectionFailed = Cannot reach Pocket: %s
+PocketConnectionSucceeded = Connection to Pocket succeeded, %s folders found
+PocketManualSync = Manual synchronisation
+PocketManualSyncHelp = Imports the recordings of the configured folder right away. The scheduled job runs the very same operation.
+PocketSyncNow = Synchronise now
+PocketSyncReport = Pocket synchronisation: %s created, %s updated, %s skipped, %s failed
+PocketSyncCronLabel = Pocket recordings synchronisation
+PocketSyncCronComment = Imports the recordings of the configured Pocket folder, along with their summary, transcript and action items
+PocketRefreshFromApi = Refresh from Pocket
+PocketRefreshDone = Recording refreshed from Pocket
+PocketRefreshFailed = Refreshing from Pocket failed
+PocketDownloadAudio = Download the audio
+PocketAudioUnavailable = Audio unavailable for this recording
+DeletePocketRecording = Delete the Pocket recording
+ConfirmDeletePocketRecording = Are you sure you want to delete this recording? It will be imported again on the next synchronisation if it is still in the Pocket folder.
+
+#
+# Objects a Pocket recording can be linked to
+# These keys are generic (saturne tpl): ReedCRM loads its .lang first, so its wording wins
+#
+LinkableElements = Linkable elements
+LinkedObjectUsage = Usage
+LinkedObjectUsageDetail = %s link(s) to a Pocket recording
+NoLinkedObjectUsage = No link
+EnableAllLinksConfirm = Enable the link towards every element?
+DisableAllLinksConfirm = Disable the link towards every element? The matching tabs disappear, the links already created are kept.
+DisableLinkConfirm = Disable the link towards "%s"? The tab disappears, the links already created are kept.
+CleanUnusedLinks = Realign the tabs on the configuration
+CleanUnusedLinksConfirm = Rebuild the tabs and hooks from the enabled links?
+LinkedObjectSyncDone = Configuration applied: %s tabs and %s hooks registered
+LinkedObjectSyncError = Applying the link configuration failed
+
+#
+# Pocket - audio player and action items
+#
+PocketAudio = Audio
+PocketPlayAudio = Play the recording
+PocketAssignedUser = Assigned to
+PocketAssignee = Pocket assignee
+PocketCreateEvent = Create an event
+PocketActionItemId = Pocket action identifier
+PocketActionItemTodo = To do
+PocketActionItemDone = Done
+
+#
+# Pocket - attach from the business objects
+#
+PocketLinkedObjects = Linked objects
+PocketNoLinkedObject = No object linked to this recording
+PocketLinkFromObjectHint = To attach this recording, open the ticket, project, invoice or proposal it belongs to and use its "Pocket recordings" tab.
+PocketLinkRecording = Attach a recording
+PocketUnlinkRecording = Detach this recording
+PocketNoRecordingToLink = Every available recording is already attached
+PocketRecordingLinked = Recording attached
+PocketRecordingUnlinked = Recording detached
+PocketRecordingLinkFailed = The attach operation failed
