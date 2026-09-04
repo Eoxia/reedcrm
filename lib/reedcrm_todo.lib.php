@@ -135,30 +135,90 @@ function reedcrmTodoGetUserCondition(int $userId): string
 }
 
 /**
- * Fetch the agenda events of the todo board, enriched for the Kanban cards
+ * Read one page of a column, as raw rows
  *
- * Everything the cards display is loaded in batch (owners, assigned users, type of event)
- * so the board stays on a fixed number of queries whatever the number of events.
+ * Kept apart from the enrichment so that the board can read its six columns first and
+ * resolve what their cards display in a single batch, rather than once per column.
  *
- * @param  DoliDB $db      Database handler
- * @param  array  $filters Criteria from reedcrmTodoGetFilters()
- * @param  int    $limit   Maximum number of events, 0 to use the module configuration
- * @return array           Enriched events, ordered by start date
+ * A status column is read in two passes. The events carrying a start date - all but the
+ * relaunches - are read on the module index, which hands them over already ordered on that
+ * date and lets the database stop at the page instead of sorting everything the criteria
+ * matched. The few carrying none are read apart, on the same index, and ordered on the object
+ * they were raised on; merging the two ordered lists gives back exactly the order a single
+ * query over the whole cascade would have produced.
+ *
+ * @param  DoliDB $db        Database handler
+ * @param  array  $filters   Criteria from reedcrmTodoGetFilters()
+ * @param  array  $column    Column to read
+ * @param  array  $columns   Every column of the board
+ * @param  string $direction 'asc' (oldest first) or 'desc'
+ * @param  int    $offset    Rows to skip
+ * @param  int    $limit     Maximum number of events, 0 to use the module configuration
+ * @return array             Rows indexed by event ID, in the order they were read
  */
-function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $columns, string $direction = 'asc', int $offset = 0, int $limit = 0): array
+function reedcrmTodoFetchColumnRows(DoliDB $db, array $filters, array $column, array $columns, string $direction = 'asc', int $offset = 0, int $limit = 0): array
 {
     if ($limit <= 0) {
         $limit = reedcrmTodoGetPageSize();
     }
     $order = strtolower($direction) === 'desc' ? 'DESC' : 'ASC';
 
+    // A relaunch backlog is read on the code of its events, which Dolibarr indexes on its own,
+    // and never holds more than the objects still to be relaunched: one pass is enough
+    if (!empty($column['code'])) {
+        return reedcrmTodoReadColumnRows($db, $filters, $column, $columns, 'all', $order, $offset, $limit);
+    }
+
+    // Taking the first page of events from each pass is enough to know the first page of the
+    // two put together, whichever pass each of its rows comes from
+    $needed  = $offset + $limit;
+    $dated   = reedcrmTodoReadColumnRows($db, $filters, $column, $columns, 'dated', $order, 0, $needed);
+    $undated = reedcrmTodoReadColumnRows($db, $filters, $column, $columns, 'undated', $order, 0, $needed);
+
+    if (empty($undated)) {
+        return array_slice($dated, $offset, $limit, true);
+    }
+
+    return reedcrmTodoMergeOnSortDate($dated, $undated, $order, $offset, $limit);
+}
+
+/**
+ * Read the rows of one pass of a column
+ *
+ * @param  DoliDB $db      Database handler
+ * @param  array  $filters Criteria from reedcrmTodoGetFilters()
+ * @param  array  $column  Column to read
+ * @param  array  $columns Every column of the board
+ * @param  string $scope   'dated' for the events carrying a start date, 'undated' for the
+ *                         others, 'all' to read a column in one pass
+ * @param  string $order   'ASC' or 'DESC'
+ * @param  int    $offset  Rows to skip
+ * @param  int    $limit   Maximum number of events
+ * @return array           Rows indexed by event ID, in the order they were read
+ */
+function reedcrmTodoReadColumnRows(DoliDB $db, array $filters, array $column, array $columns, string $scope, string $order, int $offset, int $limit): array
+{
+    // Only the pass that has to fall back on the source object reaches the proposal and the
+    // invoice; the dated one already holds the date it is ordered on
+    $isDated = $scope === 'dated';
+
     $sql  = 'SELECT a.id, a.ref, a.label, a.datep, a.datep2, a.datec, a.percent, a.priority, a.location, a.fulldayevent, a.note, a.code,';
     $sql .= ' a.fk_soc, a.fk_project, a.fk_contact, a.fk_user_action, a.fk_element, a.elementtype,';
     $sql .= ' ca.id as type_id, ca.code as type_code, ca.libelle as type_label, ca.color as type_color, ca.picto as type_picto,';
-    $sql .= ' s.nom as soc_name, p.ref as project_ref, p.title as project_title';
-    $sql .= reedcrmTodoBuildEventsFrom($db, $filters);
+    $sql .= ' s.nom as soc_name, p.ref as project_ref, p.title as project_title,';
+    $sql .= ' ' . ($isDated ? 'a.datep' : reedcrmTodoGetSortExpression()) . ' as sort_date';
+    $sql .= reedcrmTodoBuildEventsFrom($db, $filters, ['origin' => !$isDated, 'hint' => empty($column['code'])]);
     $sql .= ' AND ' . reedcrmTodoGetColumnSqlCondition($column, $columns);
-    $sql .= ' ORDER BY ' . reedcrmTodoGetSortExpression() . ' ' . $order . ', a.id ' . $order;
+    if ($scope === 'dated') {
+        $sql .= ' AND a.datep IS NOT NULL';
+    } elseif ($scope === 'undated') {
+        $sql .= ' AND a.datep IS NULL';
+    }
+    // The dated pass is ordered on the columns of the index, in their order, so the rows come
+    // out sorted and the tie between two events sharing a date stays settled
+    $sql .= $isDated
+        ? ' ORDER BY a.datep ' . $order . ', a.fk_action ' . $order . ', a.id ' . $order
+        : ' ORDER BY ' . reedcrmTodoGetSortExpression() . ' ' . $order . ', a.id ' . $order;
     $sql .= $db->plimit($limit, $offset);
 
     $resql = $db->query($sql);
@@ -167,23 +227,125 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $
         return [];
     }
 
-    $events   = [];
-    $eventIds = [];
-    $ownerIds = [];
+    $events = [];
     while ($obj = $db->fetch_object($resql)) {
         $events[(int) $obj->id] = $obj;
-        $eventIds[]             = (int) $obj->id;
-        if ($obj->fk_user_action > 0) {
-            $ownerIds[] = (int) $obj->fk_user_action;
-        }
     }
     $db->free($resql);
 
+    return $events;
+}
+
+/**
+ * Merge the two passes of a column back into the one order they share
+ *
+ * Both lists arrive ordered on the date their cards show, so walking them side by side is
+ * enough: no row is ever compared to one it was not already ordered against.
+ *
+ * @param  array  $dated   Rows of the events carrying a start date
+ * @param  array  $undated Rows of the events carrying none
+ * @param  string $order   'ASC' or 'DESC'
+ * @param  int    $offset  Rows to skip
+ * @param  int    $limit   Rows to keep
+ * @return array           Rows indexed by event ID, in order
+ */
+function reedcrmTodoMergeOnSortDate(array $dated, array $undated, string $order, int $offset, int $limit): array
+{
+    $left    = array_values($dated);
+    $right   = array_values($undated);
+    $leftNb  = count($left);
+    $rightNb = count($right);
+    $needed  = $offset + $limit;
+
+    $merged = [];
+    $i      = 0;
+    $j      = 0;
+    while (count($merged) < $needed && ($i < $leftNb || $j < $rightNb)) {
+        if ($j >= $rightNb) {
+            $merged[] = $left[$i++];
+            continue;
+        }
+        if ($i >= $leftNb) {
+            $merged[] = $right[$j++];
+            continue;
+        }
+        // A row without any date at all sorts the way the database sorts a NULL: first when
+        // reading from the oldest, last the other way round
+        $comparison = strcmp((string) $left[$i]->sort_date, (string) $right[$j]->sort_date);
+        $takeLeft   = $order === 'DESC' ? $comparison >= 0 : $comparison <= 0;
+        $merged[]   = $takeLeft ? $left[$i++] : $right[$j++];
+    }
+
+    $page = [];
+    foreach (array_slice($merged, $offset, $limit) as $obj) {
+        $page[(int) $obj->id] = $obj;
+    }
+
+    return $page;
+}
+
+/**
+ * Fetch one page of a column, enriched for the Kanban cards
+ *
+ * @param  DoliDB $db        Database handler
+ * @param  array  $filters   Criteria from reedcrmTodoGetFilters()
+ * @param  array  $column    Column to read
+ * @param  array  $columns   Every column of the board
+ * @param  string $direction 'asc' (oldest first) or 'desc'
+ * @param  int    $offset    Rows to skip
+ * @param  int    $limit     Maximum number of events, 0 to use the module configuration
+ * @return array             Enriched events, in the order they were read
+ */
+function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $columns, string $direction = 'asc', int $offset = 0, int $limit = 0): array
+{
+    $events = reedcrmTodoFetchColumnRows($db, $filters, $column, $columns, $direction, $offset, $limit);
     if (empty($events)) {
         return [];
     }
 
-    return reedcrmTodoEnrichEvents($db, $events, $eventIds, $ownerIds);
+    return reedcrmTodoEnrichEvents($db, $events);
+}
+
+/**
+ * Fetch the first page of every column of the board at once
+ *
+ * The six columns are read one query each, then enriched together: owners, assigned users
+ * and origins are resolved for the whole board in one batch instead of once per column,
+ * which is what keeps the number of queries flat as columns are added.
+ *
+ * @param  DoliDB $db      Database handler
+ * @param  array  $filters Criteria from reedcrmTodoGetFilters()
+ * @param  array  $columns Columns from reedcrmTodoGetKanbanColumns()
+ * @return array           [column key => enriched events]
+ */
+function reedcrmTodoGetColumnPages(DoliDB $db, array $filters, array $columns): array
+{
+    $rowsByColumn = [];
+    $allRows      = [];
+    foreach ($columns as $column) {
+        $rows                         = reedcrmTodoFetchColumnRows($db, $filters, $column, $columns);
+        $rowsByColumn[$column['key']] = array_keys($rows);
+        $allRows                     += $rows;
+    }
+
+    $cardsById = [];
+    foreach (reedcrmTodoEnrichEvents($db, $allRows) as $card) {
+        $cardsById[$card['id']] = $card;
+    }
+
+    // Each column takes its cards back in the order it read them: a page must never be
+    // reordered here, it would no longer follow the one before it
+    $pages = [];
+    foreach ($rowsByColumn as $columnKey => $eventIds) {
+        $pages[$columnKey] = [];
+        foreach ($eventIds as $eventId) {
+            if (isset($cardsById[$eventId])) {
+                $pages[$columnKey][] = $cardsById[$eventId];
+            }
+        }
+    }
+
+    return $pages;
 }
 
 /**
@@ -199,27 +361,115 @@ function reedcrmTodoGetPageSize(): int
 }
 
 /**
+ * Return the IDs of the dictionary types Dolibarr flags as logged by itself
+ *
+ * The "hide the automatic events" criterion used to be written on the type of the joined
+ * dictionary row, which forced the database to resolve that join for every candidate event
+ * before it could drop any of them - on a base where 97% of the agenda is the automatic log,
+ * that is the whole table. The dictionary holds a handful of rows: reading the matching IDs
+ * once turns the criterion into a plain test on llx_actioncomm, which an index can serve.
+ *
+ * @param  DoliDB $db Database handler
+ * @return array      Row IDs of the 'systemauto' types
+ */
+function reedcrmTodoGetAutoTypeIds(DoliDB $db): array
+{
+    static $autoTypeIds = null;
+
+    if ($autoTypeIds !== null) {
+        return $autoTypeIds;
+    }
+
+    $autoTypeIds = [];
+    $resql       = $db->query('SELECT ca.id FROM ' . MAIN_DB_PREFIX . "c_actioncomm as ca WHERE ca.type = 'systemauto'");
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return $autoTypeIds;
+    }
+    while ($obj = $db->fetch_object($resql)) {
+        $autoTypeIds[] = (int) $obj->id;
+    }
+    $db->free($resql);
+
+    return $autoTypeIds;
+}
+
+/**
+ * Return the index hint the columns keyed on a percentage are read through
+ *
+ * llx_actioncomm carries a one column index on the entity and another on the percentage,
+ * and the planner would rather intersect those two than walk the index the module adds -
+ * a choice that costs a full sort of everything the criteria matched, since neither of them
+ * holds the date the board orders on. Naming the index keeps the read on the first thirty
+ * rows it needs.
+ *
+ * The hint is only emitted once the index has been seen: a base where the module was not
+ * activated again after the update simply keeps the plan it had, rather than erroring out.
+ *
+ * @param  DoliDB $db Database handler
+ * @return string     SQL fragment, empty when the index is not there
+ */
+function reedcrmTodoGetIndexHint(DoliDB $db): string
+{
+    static $hint = null;
+
+    if ($hint !== null) {
+        return $hint;
+    }
+
+    $hint  = '';
+    $resql = $db->query("SHOW INDEX FROM " . MAIN_DB_PREFIX . "actioncomm WHERE Key_name = 'idx_reedcrm_todo'");
+    if ($resql && $db->num_rows($resql) > 0) {
+        $hint = ' FORCE INDEX (idx_reedcrm_todo)';
+    }
+    if ($resql) {
+        $db->free($resql);
+    }
+
+    return $hint;
+}
+
+/**
  * Return the FROM and the WHERE the board runs on, criteria included
  *
  * Shared by the counters and by the paged reading of a column, so that a card is never
- * counted on one set of criteria and read on another.
+ * counted on one set of criteria and read on another. Only the joins the caller answers for
+ * are laid out: the counters read no label at all, and the proposal and the invoice are only
+ * reached by the two relaunch backlogs, which order their cards on them.
  *
  * @param  DoliDB $db      Database handler
  * @param  array  $filters Criteria from reedcrmTodoGetFilters()
+ * @param  array  $options 'display' to join the label tables, 'origin' the source objects,
+ *                         'hint' to name the index of the percentage columns
  * @return string          SQL fragment starting with FROM
  */
-function reedcrmTodoBuildEventsFrom(DoliDB $db, array $filters): string
+function reedcrmTodoBuildEventsFrom(DoliDB $db, array $filters, array $options = []): string
 {
     global $user;
 
-    $sql  = ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_actioncomm as ca ON ca.id = a.fk_action';
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON p.rowid = a.fk_project';
+    $options += ['display' => true, 'origin' => true, 'hint' => false];
+    // The third party is also what a text criterion is matched on, join it either way
+    $withSociete = !empty($options['display']) || !empty($filters['search']);
+
+    $sql = ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+    if (!empty($options['hint'])) {
+        $sql .= reedcrmTodoGetIndexHint($db);
+    }
+    if (!empty($options['display'])) {
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_actioncomm as ca ON ca.id = a.fk_action';
+    }
+    if ($withSociete) {
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
+    }
+    if (!empty($options['display'])) {
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'projet as p ON p.rowid = a.fk_project';
+    }
     // A relaunch carries no start date: it is ordered on the date of the object it was raised
     // on, the very one its note prints
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . "propal as rp ON a.elementtype = 'propal' AND rp.rowid = a.fk_element";
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . "facture as rf ON a.elementtype = 'invoice' AND rf.rowid = a.fk_element";
+    if (!empty($options['origin'])) {
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . "propal as rp ON a.elementtype = 'propal' AND rp.rowid = a.fk_element";
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . "facture as rf ON a.elementtype = 'invoice' AND rf.rowid = a.fk_element";
+    }
     $sql .= ' WHERE a.entity IN (' . getEntity('agenda') . ')';
 
     // Without the right on every action, a user only sees the events he owns or is assigned to
@@ -240,8 +490,13 @@ function reedcrmTodoBuildEventsFrom(DoliDB $db, array $filters): string
         $sql .= ' AND a.fk_action = ' . ((int) $filters['type']);
     }
     if (!empty($filters['hide_auto'])) {
-        // Events logged by Dolibarr itself are not something anybody has to do
-        $sql .= " AND (ca.type IS NULL OR ca.type <> 'systemauto')";
+        // Events logged by Dolibarr itself are not something anybody has to do. Written on the
+        // type the event points at rather than on the joined dictionary row, so that the whole
+        // criterion stays on llx_actioncomm, see reedcrmTodoGetAutoTypeIds()
+        $autoTypeIds = reedcrmTodoGetAutoTypeIds($db);
+        if (!empty($autoTypeIds)) {
+            $sql .= ' AND (a.fk_action IS NULL OR a.fk_action NOT IN (' . implode(', ', $autoTypeIds) . '))';
+        }
     }
     if (!empty($filters['search'])) {
         $searchValue = $db->escape($db->escapeforlike($filters['search']));
@@ -253,6 +508,12 @@ function reedcrmTodoBuildEventsFrom(DoliDB $db, array $filters): string
 
 /**
  * Date a column is ordered on, same cascade as the date_sort_ts of a card
+ *
+ * It is not only the relaunch backlogs that need the fallback: a relaunch marked done or
+ * dropped leaves its backlog for a status column while still carrying no start date, and it
+ * has to keep sorting on the object it was raised on rather than land at one end of the
+ * column. Reaching that object costs the proposal and the invoice joins, which is why the
+ * events that do carry a start date are read without this expression.
  *
  * @return string SQL expression
  */
@@ -281,24 +542,51 @@ function reedcrmTodoGetColumnSqlCondition(array $column, array $columns): string
         return '(1 = 0)';
     }
 
-    $backlogCodes = [];
-    foreach ($columns as $otherColumn) {
-        if (!empty($otherColumn['code'])) {
-            $backlogCodes[] = "'" . $otherColumn['code'] . "'";
-        }
-    }
+    // A column standing on a single percentage says so: a range over one value reads the same
+    // but costs the index the equality it needs to hand the rows over already sorted on the date
+    $sql = (int) $column['min'] === (int) $column['max']
+        ? '(a.percent = ' . ((int) $column['min'])
+        : '(a.percent >= ' . ((int) $column['min']) . ' AND a.percent <= ' . ((int) $column['max']);
 
-    $sql = '(a.percent >= ' . ((int) $column['min']) . ' AND a.percent <= ' . ((int) $column['max']);
-    if (!empty($backlogCodes)) {
-        $sql .= ' AND NOT (a.code IN (' . implode(', ', $backlogCodes) . ') AND a.percent >= 0 AND a.percent < 100)';
-    }
+    // The percentage is tested before the code so an event outside the range of a backlog is
+    // dropped without ever reading it
+    $sql .= reedcrmTodoGetBacklogExclusion($columns);
 
     return $sql . ')';
 }
 
 /**
- * Count the events of every column in one query, so a column knows how many cards are left
- * behind its "load more" without reading them
+ * Return the condition leaving the events of the relaunch backlogs to their own column
+ *
+ * @param  array $columns Every column of the board
+ * @return string         SQL condition, empty when no column is keyed on a code
+ */
+function reedcrmTodoGetBacklogExclusion(array $columns): string
+{
+    $backlogCodes = [];
+    foreach ($columns as $column) {
+        if (!empty($column['code'])) {
+            $backlogCodes[] = "'" . $column['code'] . "'";
+        }
+    }
+
+    if (empty($backlogCodes)) {
+        return '';
+    }
+
+    return ' AND NOT (a.percent >= 0 AND a.percent < 100 AND a.code IN (' . implode(', ', $backlogCodes) . '))';
+}
+
+/**
+ * Count the events of every column, so a column knows how many cards are left behind its
+ * "load more" without reading them
+ *
+ * Counting has to walk everything the criteria match - there is no page to stop at - so what
+ * matters is what each row costs. The percentage columns are counted on their raw ranges,
+ * which reads nothing but the columns the module index already holds: the database answers
+ * from that index and never opens a row. The relaunch events that would then be counted both
+ * in their backlog and in a percentage column are taken back out by a second query, read on
+ * the code index, that returns a couple of rows.
  *
  * @param  DoliDB $db      Database handler
  * @param  array  $filters Criteria from reedcrmTodoGetFilters()
@@ -307,50 +595,109 @@ function reedcrmTodoGetColumnSqlCondition(array $column, array $columns): string
  */
 function reedcrmTodoCountByColumn(DoliDB $db, array $filters, array $columns): array
 {
-    $counts   = [];
-    $selects  = [];
+    $counts    = [];
+    $ranges    = [];
+    $keyByCode = [];
     foreach ($columns as $index => $column) {
         $counts[$column['key']] = 0;
-        $selects[] = 'SUM(' . reedcrmTodoGetColumnSqlCondition($column, $columns) . ') as col' . ((int) $index);
+        if (!empty($column['code'])) {
+            $keyByCode[$column['code']] = $column['key'];
+            continue;
+        }
+        if ($column['min'] === null) {
+            continue;
+        }
+        $ranges[$index] = (int) $column['min'] === (int) $column['max']
+            ? 'a.percent = ' . ((int) $column['min'])
+            : 'a.percent >= ' . ((int) $column['min']) . ' AND a.percent <= ' . ((int) $column['max']);
     }
 
-    if (empty($selects)) {
+    $rangeSelects = [];
+    foreach ($ranges as $index => $condition) {
+        $rangeSelects[] = 'SUM(' . $condition . ') as col' . ((int) $index);
+    }
+
+    // Percentage columns, relaunch events included for now
+    if (!empty($rangeSelects)) {
+        $sql   = 'SELECT ' . implode(', ', $rangeSelects);
+        $sql  .= reedcrmTodoBuildEventsFrom($db, $filters, ['display' => false, 'origin' => false, 'hint' => true]);
+        $resql = $db->query($sql);
+        if (!$resql) {
+            dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+            return $counts;
+        }
+        $obj = $db->fetch_object($resql);
+        $db->free($resql);
+        if (!empty($obj)) {
+            foreach ($ranges as $index => $condition) {
+                $alias                           = 'col' . ((int) $index);
+                $counts[$columns[$index]['key']] = (int) $obj->$alias;
+            }
+        }
+    }
+
+    if (empty($keyByCode)) {
         return $counts;
     }
 
-    $sql   = 'SELECT ' . implode(', ', $selects) . reedcrmTodoBuildEventsFrom($db, $filters);
+    // Relaunch backlogs: their own total, and where their events would otherwise have been
+    // counted a second time
+    $sql  = 'SELECT a.code as backlog_code, COUNT(*) as nb';
+    foreach ($rangeSelects as $rangeSelect) {
+        $sql .= ', ' . $rangeSelect;
+    }
+    $sql .= reedcrmTodoBuildEventsFrom($db, $filters, ['display' => false, 'origin' => false]);
+    $sql .= ' AND a.percent >= 0 AND a.percent < 100';
+    $sql .= " AND a.code IN ('" . implode("', '", array_keys($keyByCode)) . "')";
+    $sql .= ' GROUP BY a.code';
+
     $resql = $db->query($sql);
     if (!$resql) {
         dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
         return $counts;
     }
-
-    $obj = $db->fetch_object($resql);
+    while ($obj = $db->fetch_object($resql)) {
+        $backlogKey = $keyByCode[$obj->backlog_code] ?? '';
+        if (empty($backlogKey)) {
+            continue;
+        }
+        $counts[$backlogKey] = (int) $obj->nb;
+        foreach ($ranges as $index => $condition) {
+            $alias              = 'col' . ((int) $index);
+            $columnKey          = $columns[$index]['key'];
+            $counts[$columnKey] = max(0, $counts[$columnKey] - (int) $obj->$alias);
+        }
+    }
     $db->free($resql);
-    if (empty($obj)) {
-        return $counts;
-    }
-
-    foreach ($columns as $index => $column) {
-        $alias                  = 'col' . ((int) $index);
-        $counts[$column['key']] = (int) $obj->$alias;
-    }
 
     return $counts;
 }
 
 /**
- * Turn the rows of a column into the cards the templates render
+ * Turn rows into the cards the templates render
  *
- * @param  DoliDB $db       Database handler
- * @param  array  $events   Rows read, indexed by event ID
- * @param  array  $eventIds IDs of those rows
- * @param  array  $ownerIds Owners to resolve
- * @return array            Enriched events
+ * Everything the cards display is resolved in batch (owners, assigned users, source objects),
+ * so a whole board costs the same handful of queries as a single column.
+ *
+ * @param  DoliDB $db     Database handler
+ * @param  array  $events Rows read, indexed by event ID
+ * @return array          Enriched events
  */
-function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, array $ownerIds): array
+function reedcrmTodoEnrichEvents(DoliDB $db, array $events): array
 {
     global $langs;
+
+    if (empty($events)) {
+        return [];
+    }
+
+    $eventIds = array_keys($events);
+    $ownerIds = [];
+    foreach ($events as $obj) {
+        if ($obj->fk_user_action > 0) {
+            $ownerIds[] = (int) $obj->fk_user_action;
+        }
+    }
 
     $assignedByEvent = reedcrmTodoGetAssignedUsers($db, $eventIds);
 
