@@ -6,7 +6,32 @@ if ($permissiontoaddthirdparty) {
 
 	print dol_get_fiche_head();
 
+	// The SIREN search of the module Sirene prefills the third party with the official company data
+	$sireneEnabled = isModEnabled('sirene') && dol_include_once('/sirene/class/actions_sirene.class.php');
+	if ($sireneEnabled) {
+		// Data of the company selected in the search, kept in the form until the third party creation
+		foreach (['name_alias', 'address', 'zipcode', 'town', 'state_id', 'country_id', 'idprof1', 'idprof2', 'idprof3', 'idprof6', 'tva_intra', 'effectif_id', 'forme_juridique_code', 'options_sirene_company_admin_status'] as $sireneField) {
+			print '<input type="hidden" name="' . $sireneField . '" value="' . dol_escape_htmltag(GETPOST($sireneField, 'alphanohtml')) . '">';
+		}
+	}
+
 	print '<table class="border centpercent tableforfieldcreate">';
+
+	// SIREN search form, moved above the table by the module Sirene javascript
+	if ($sireneEnabled) {
+		$sireneThirdParty          = new Societe($db);
+		$sireneThirdParty->name    = GETPOST('name', 'alphanohtml');
+		$sireneThirdParty->idprof1 = GETPOST('idprof1', 'alphanohtml');
+		$sireneThirdParty->idprof2 = GETPOST('idprof2', 'alphanohtml');
+		$sireneThirdParty->idprof3 = GETPOST('idprof3', 'alphanohtml');
+		$sireneThirdParty->idprof6 = GETPOST('idprof6', 'alphanohtml');
+		$sireneThirdParty->zip     = GETPOST('zipcode', 'alphanohtml');
+		$sireneThirdParty->town    = GETPOST('town', 'alphanohtml');
+
+		$sireneAction  = 'create';
+		$actionsSirene = new ActionsSirene($db);
+		$actionsSirene->formObjectOptions(['context' => 'thirdpartycard'], $sireneThirdParty, $sireneAction, $hookmanager);
+	}
 
 	// Name, firstname
 	if (getDolGlobalInt('REEDCRM_THIRDPARTY_NAME_VISIBLE') > 0) {
