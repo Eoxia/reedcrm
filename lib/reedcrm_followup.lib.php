@@ -333,13 +333,7 @@ function reedcrmFollowupGetDashboardData(DoliDB $db, int $periodStart, int $peri
     $sql .= ' fa.datef as gen_date, fa.paye as gen_paye,';
     $sql .= ' s.nom as thirdparty_name';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-    // At most ONE annotation per template (old data may hold several rows per template) — avoids row duplication.
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = (SELECT t9.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup t9';
-    $sql .= '   WHERE t9.fk_facture_rec = fr.rowid AND t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ORDER BY t9.rowid DESC' . $db->plimit(1) . ')';
-    // The invoice actually generated from this template in the browsed month+year (done or not).
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
-    $sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
-    $sql .= '   AND MONTH(f9.datef) = ' . $browsedMonth . ' AND YEAR(f9.datef) = ' . $browsedYear . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
+    $sql .= reedcrmFollowupMonthJoinsSql($db, $periodStart, $periodEnd);
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
     $sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
     // A template belongs to the browsed month either because its next generation falls in that month
@@ -766,6 +760,104 @@ function reedcrmSignedUnbilledGetProposals(DoliDB $db, int $months = 24, int $li
     }
 
     return $rows;
+}
+
+/**
+ * Joins bringing, for one month, the stored annotation and the invoice really generated from each
+ * recurring template. Both expose the aliases the callers select from: t (annotation) and fa (invoice).
+ *
+ * They used to be correlated subqueries evaluated once per template row. llx_facture carries no index
+ * on fk_fac_rec_source, and wrapping datef in MONTH()/YEAR() also ruled out the datef index, so the
+ * invoice table was fully scanned once per template: seconds of query time on a base with a few hundred
+ * templates, and the page runs this shape three times (list, count, dashboard). They are pre-aggregated
+ * once here instead, with the month expressed as a date range so the datef index applies.
+ *
+ * @param  DoliDB $db          Database handler.
+ * @param  int    $periodStart First-day-of-month timestamp.
+ * @param  int    $periodEnd   Last-day-of-month timestamp.
+ * @return string              SQL LEFT JOIN clauses, to append after the facture_rec table aliased fr.
+ */
+function reedcrmFollowupMonthJoinsSql(DoliDB $db, int $periodStart, int $periodEnd): string
+{
+    // At most ONE annotation per template (old data may hold several rows per template) — avoids row
+    // duplication. MAX(rowid) is the latest one, what the previous per-row subquery already returned.
+    $sql  = ' LEFT JOIN (SELECT MAX(t9.rowid) as tid, t9.fk_facture_rec FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t9';
+    $sql .= '  WHERE t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') GROUP BY t9.fk_facture_rec) as tlast ON tlast.fk_facture_rec = fr.rowid';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = tlast.tid';
+    // The invoice actually generated from this template within the browsed month (if any) — tells when
+    // it was really billed on past and current months. A template bills once a month, so at most one row.
+    $sql .= ' LEFT JOIN (SELECT MAX(f9.rowid) as fid, f9.fk_fac_rec_source FROM ' . MAIN_DB_PREFIX . 'facture as f9';
+    $sql .= '  WHERE f9.type <> 2 AND f9.fk_fac_rec_source > 0 AND f9.entity IN (' . getEntity('facture') . ')';
+    $sql .= "  AND f9.datef >= '" . $db->idate($periodStart) . "' AND f9.datef <= '" . $db->idate($periodEnd) . "'";
+    $sql .= ' GROUP BY f9.fk_fac_rec_source) as falast ON falast.fk_fac_rec_source = fr.rowid';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = falast.fid';
+
+    return $sql;
+}
+
+/**
+ * Billing progress of a whole year, month by month: what has really been invoiced, and what is still
+ * expected. Follows the very same rule as the monthly list, so the chart always agrees with the tiles.
+ *
+ * DONE = invoices really generated from a recurring template and dated in the month.
+ * TODO = active templates whose next generation falls in that month of the year with no invoice
+ *        generated for them that month. On a past month that is late billing; on a month to come it is
+ *        simply what remains to be done.
+ *
+ * @param  DoliDB $db   Database handler.
+ * @param  int    $year Year to browse.
+ * @return array<int,array<string,mixed>> 1..12 => done_nb, done_amount, todo_nb, todo_amount.
+ */
+function reedcrmFollowupGetYearBillingProgress(DoliDB $db, int $year): array
+{
+    $months = [];
+    for ($m = 1; $m <= 12; $m++) {
+        $months[$m] = ['done_nb' => 0, 'done_amount' => 0.0, 'todo_nb' => 0, 'todo_amount' => 0.0];
+    }
+    // Date range rather than YEAR(datef), so the datef index can be used.
+    $yearStart = "'" . $db->idate(dol_get_first_day($year, 1)) . "'";
+    $yearEnd   = "'" . $db->idate(dol_get_last_day($year, 12)) . "'";
+
+    // Really billed: the invoices generated from a template, per month.
+    $sqlDone  = 'SELECT MONTH(f.datef) as m, COUNT(*) as nb, SUM(f.total_ttc) as tot';
+    $sqlDone .= ' FROM ' . MAIN_DB_PREFIX . 'facture as f';
+    $sqlDone .= ' WHERE f.type <> 2 AND f.fk_fac_rec_source > 0 AND f.entity IN (' . getEntity('facture') . ')';
+    $sqlDone .= ' AND f.datef >= ' . $yearStart . ' AND f.datef <= ' . $yearEnd . ' GROUP BY m';
+    $resDone  = $db->query($sqlDone);
+    if ($resDone) {
+        while ($obj = $db->fetch_object($resDone)) {
+            $m = (int) $obj->m;
+            if ($m >= 1 && $m <= 12) {
+                $months[$m]['done_nb']     = (int) $obj->nb;
+                $months[$m]['done_amount'] = (float) $obj->tot;
+            }
+        }
+    }
+
+    // Still expected: templates due that month with no invoice generated for them that month.
+    $sqlTodo  = 'SELECT MONTH(fr.date_when) as m, COUNT(*) as nb, SUM(fr.total_ttc) as tot';
+    $sqlTodo .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+    $sqlTodo .= ' LEFT JOIN (SELECT MAX(f9.rowid) as fid, f9.fk_fac_rec_source, MONTH(f9.datef) as fm';
+    $sqlTodo .= '  FROM ' . MAIN_DB_PREFIX . 'facture as f9';
+    $sqlTodo .= '  WHERE f9.type <> 2 AND f9.fk_fac_rec_source > 0 AND f9.entity IN (' . getEntity('facture') . ')';
+    $sqlTodo .= '  AND f9.datef >= ' . $yearStart . ' AND f9.datef <= ' . $yearEnd;
+    $sqlTodo .= '  GROUP BY f9.fk_fac_rec_source, MONTH(f9.datef)) as fl';
+    $sqlTodo .= '  ON fl.fk_fac_rec_source = fr.rowid AND fl.fm = MONTH(fr.date_when)';
+    $sqlTodo .= ' WHERE fr.suspended = 0 AND YEAR(fr.date_when) = ' . $year . ' AND fl.fid IS NULL';
+    $sqlTodo .= reedcrmFollowupPortfolioSql();
+    $sqlTodo .= ' GROUP BY m';
+    $resTodo  = $db->query($sqlTodo);
+    if ($resTodo) {
+        while ($obj = $db->fetch_object($resTodo)) {
+            $m = (int) $obj->m;
+            if ($m >= 1 && $m <= 12) {
+                $months[$m]['todo_nb']     = (int) $obj->nb;
+                $months[$m]['todo_amount'] = (float) $obj->tot;
+            }
+        }
+    }
+
+    return $months;
 }
 
 /**
