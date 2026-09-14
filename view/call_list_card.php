@@ -340,7 +340,7 @@ if ($show === 'notes' && $object->id > 0) {
     print dol_get_fiche_head($head, 'notes', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
     $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
-    saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
+    saturne_banner_tab($object, 'id', $morehtml, 1, 'rowid', 'ref', '', false, ['moreHtml' => 1, 'bannerTab' => '&show=notes']);
 
     print '<div class="fichecenter">';
 
@@ -387,7 +387,7 @@ if ($show === 'agenda' && $object->id > 0) {
     print dol_get_fiche_head($head, 'agenda', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
     $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
-    saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
+    saturne_banner_tab($object, 'id', $morehtml, 1, 'rowid', 'ref', '', false, ['moreHtml' => 1, 'bannerTab' => '&show=agenda']);
 
     print dol_get_fiche_end();
 
@@ -420,7 +420,9 @@ if ($object->id > 0) {
     print dol_get_fiche_head($head, 'card', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
     $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
-    saturne_banner_tab($object, 'ref', $morehtml, 1, 'ref', 'ref', '', false);
+    // Walk the call lists by rowid, as the list does, and hand the card the 'id' it reads first :
+    // navigating by ref walked them in alphabetical order, archived and (PROV…) records included
+    saturne_banner_tab($object, 'id', $morehtml, 1, 'rowid', 'ref', '', false, ['moreHtml' => 1]);
 
     // Confirm dialogs
     if ($action === 'delete') {
