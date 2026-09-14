@@ -529,7 +529,8 @@ class modReedCRM extends DolibarrModules
                 'parameters'    => '',
                 'comment'       => $langs->transnoentities('PocketSyncCronComment'),
                 'frequency'     => 1,
-                'unitfrequency' => 3600,
+                'unitfrequency' => 86400,
+                'datenextrun'   => dol_mktime(20, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
                 'status'        => 0,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && getDolGlobalString(\'REEDCRM_POCKET_API_KEY\') != \'\'',
                 'priority'      => 57
