@@ -76,3 +76,6 @@ ALTER TABLE `llx_reedcrm_du_audit` ADD `proposal_sent_date` date DEFAULT NULL AF
 ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_propal` integer DEFAULT NULL AFTER `proposal_sent_date`;
 ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_user_assign` integer DEFAULT NULL AFTER `fk_propal`;
 ALTER TABLE `llx_reedcrm_du_audit` ADD `date_done` date DEFAULT NULL AFTER `next_audit_date`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_facture` integer DEFAULT NULL AFTER `fk_propal`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `date_rdv` date DEFAULT NULL AFTER `next_audit_date`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_fichinter` integer DEFAULT NULL AFTER `fk_facture`;
