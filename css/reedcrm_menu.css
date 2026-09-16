@@ -1,0 +1,153 @@
+/* Copyright (C) 2026 EVARISK <technique@evarisk.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* Section headers of the ReedCRM left menu.
+ * Loaded on every page through module_parts['css'] because the ReedCRM left menu
+ * is also displayed on pages that do not belong to the module (recurring invoice
+ * templates, saturne generic lists...) and that never load reedcrm.min.css.
+ * Everything is scoped to a left menu that actually carries a section marker, so
+ * the other main menus of Dolibarr keep their native rendering.
+ * The markers live in the "prefix" column of llx_menu because "titre" is split on
+ * "/" by Menubase::menuLoad() to translate composed titles.
+ */
+
+/* ReedCRM brand palette. */
+:root {
+    --reedcrm-brand-deep: #014751;
+}
+
+/* ------------------------------------------------------------------ */
+/* Section headers                                                     */
+/* ------------------------------------------------------------------ */
+
+#id-left .blockvmenu:has(.reedcrm-menu-section) {
+    margin: 9px 8px 0 4px;
+    padding-top: 5px;
+    padding-bottom: 4px;
+    background: var(--reedcrm-brand-deep);
+    border: none;
+    border-radius: 5px;
+}
+
+#id-left .blockvmenu:has(.reedcrm-menu-section) .menu_titre {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#id-left .menu_titre .vmenu:has(> .reedcrm-menu-section) {
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    opacity: 1;
+}
+
+/* The picto sits on the dark band, so it must not inherit any theme picto colour. */
+#id-left .menu_titre .reedcrm-menu-section > i {
+    color: #FFFFFF;
+}
+
+/* The block right after a header must not look detached from it. */
+#id-left .blockvmenu:has(.reedcrm-menu-section) + .blockvmenu {
+    padding-top: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sub entries                                                         */
+/* ------------------------------------------------------------------ */
+
+/* The eldy menu indents sub entries with non breaking spaces from level 2 only,
+ * so a level 1 entry ends up further left than the label of its own parent.
+ * Align it under the parent label, past the parent picto. The theme sizes the row in
+ * content box, so without border-box that indent widens it by 26px past the level 1
+ * rows: harmless while the row had no background, visible once it is hovered.
+ */
+#id-left:has(.reedcrm-menu-section) .menu_contenu {
+    box-sizing: border-box;
+    padding-left: 26px;
+}
+
+#id-left:has(.reedcrm-menu-section) .menu_contenu .vsmenu {
+    opacity: 0.85;
+}
+
+/* ------------------------------------------------------------------ */
+/* Rule that sets the App entry apart                                  */
+/* ------------------------------------------------------------------ */
+
+#id-left .blockvmenu:has(.reedcrm-menu-separator) {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+#id-left .blockvmenu:has(.reedcrm-menu-separator) .menu_titre {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#id-left .menu_titre .vmenu:has(> .reedcrm-menu-separator) {
+    display: block;
+}
+
+#id-left .menu_titre .reedcrm-menu-separator {
+    display: block;
+    height: 3px;
+    margin: 3px 10px 3px 0;
+    background: var(--reedcrm-brand-deep);
+}
+
+/* Drop the hairline of the entry above so the thick rule reads as a single break. */
+#id-left .blockvmenu:has(+ .blockvmenu .reedcrm-menu-separator) {
+    border-bottom: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Full row click target                                               */
+/* ------------------------------------------------------------------ */
+
+/* Eldy prints each entry as an inline <a> inside a row that spans the whole
+ * width of the left menu, so only the label itself reacts to a click. Stretch
+ * the link over its row with a transparent overlay rather than turning it into
+ * a block: the indentation that eldy prints as "&nbsp;" text nodes before the
+ * link stays on the same line, and no width or margin of the theme is touched.
+ * Rows without a link (section headers, separator, disabled entries) hold a
+ * <span> instead of an <a> and are left alone by the :has() guard.
+ */
+#id-left:has(.reedcrm-menu-section) .menu_titre:has(> a.vmenu),
+#id-left:has(.reedcrm-menu-section) .menu_contenu:has(> a.vsmenu) {
+    position: relative;
+}
+
+#id-left:has(.reedcrm-menu-section) .menu_titre > a.vmenu::after,
+#id-left:has(.reedcrm-menu-section) .menu_contenu > a.vsmenu::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+}
+
+/* Nothing would tell that the whole row is now clickable without a hover state. */
+#id-left:has(.reedcrm-menu-section) .menu_titre:has(> a.vmenu):hover,
+#id-left:has(.reedcrm-menu-section) .menu_contenu:has(> a.vsmenu):hover {
+    background: rgba(1, 71, 81, 0.07);
+    border-radius: 4px;
+    cursor: pointer;
+}

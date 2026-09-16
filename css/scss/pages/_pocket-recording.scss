@@ -1,0 +1,440 @@
+// Pocket recording card: markdown summary and raw transcript blocks
+
+.reedcrm-pocket-summary {
+    padding: 12px 16px;
+    background: #f7f9fc;
+    border: 1px solid #e3e6ea;
+    border-radius: 4px;
+
+    h1,
+    h2,
+    h3 {
+        font-size: 15px;
+        font-weight: 700;
+        margin: 12px 0 6px;
+    }
+
+    ul {
+        margin: 6px 0;
+        padding-left: 20px;
+    }
+
+    p {
+        margin: 6px 0;
+    }
+}
+
+// Status of a recording: it is read on the badge of the banner, so it is changed there too. The
+// menu is positioned against the banner block Dolibarr prints, which the script only decorates.
+.reedcrm-pocket-status {
+    position: relative;
+
+    .reedcrm-pocket-status-badge {
+        cursor: pointer;
+
+        i {
+            margin-left: 6px;
+            font-size: 11px;
+        }
+    }
+
+    &.error .reedcrm-pocket-status-badge {
+        color: #c0392b;
+    }
+}
+
+.reedcrm-pocket-status-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    z-index: 10;
+    margin: 4px 0 0;
+    padding: 4px 0;
+    min-width: 140px;
+    list-style: none;
+    text-align: left;
+    background: #ffffff;
+    border: 1px solid #e3e6ea;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+    li {
+        padding: 5px 14px;
+        cursor: pointer;
+        white-space: nowrap;
+
+        &:hover {
+            background: #f0f4f8;
+        }
+    }
+
+    .reedcrm-pocket-status.open & {
+        display: block;
+    }
+}
+
+// The summary is edited in place, like the action items: the rendered block stays flat until it is
+// hovered, and the click swaps it for its markdown source
+.reedcrm-pocket-summary-block {
+
+    [hidden] {
+        display: none;
+    }
+
+    &[data-url] .reedcrm-pocket-summary {
+        cursor: text;
+
+        &:hover {
+            border-color: #63acc9;
+        }
+
+        &.error {
+            border-color: #c0392b;
+        }
+    }
+}
+
+// A monospaced source keeps the lists and the Pocket blocks readable while they are edited
+.reedcrm-pocket-summary-edit {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #63acc9;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.reedcrm-pocket-transcript {
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e3e6ea;
+    border-radius: 4px;
+    max-height: 70vh;
+    overflow-y: auto;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+// Pocket recording audio: a load button that becomes a native player on first play
+.reedcrm-pocket-audio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    audio {
+        width: 100%;
+        max-width: 480px;
+        height: 36px;
+    }
+}
+
+.reedcrm-pocket-audio-load {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #63acc9;
+    color: #ffffff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+        opacity: 0.85;
+    }
+
+    &.loading {
+        opacity: 0.5;
+        cursor: progress;
+    }
+
+    &.error {
+        background: #c0392b;
+    }
+
+    i {
+        font-size: 11px;
+        pointer-events: none;
+    }
+}
+
+// Action items: the label and its description are edited in place, so the fields stay flat until
+// the row is hovered, otherwise the table would read as a form instead of a summary
+.pocket-action-row td.pocket-action-text {
+
+    .pocket-action-label,
+    .pocket-action-description {
+        width: 100%;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        padding: 2px 4px;
+
+        &:hover {
+            border-color: #e3e6ea;
+        }
+
+        &:focus {
+            background: #ffffff;
+            border-color: #63acc9;
+        }
+
+        &.error {
+            border-color: #c0392b;
+        }
+    }
+
+    .pocket-action-description {
+        margin-top: 2px;
+        font-size: 11px;
+        color: #888888;
+        line-height: 1.4;
+        resize: vertical;
+    }
+}
+
+// Attach form: above the recordings list on a business object tab, and above the linked objects of
+// a recording card
+.reedcrm-pocket-link-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 0;
+}
+
+// Object search: the results hang under the field, they are drawn here rather than taken from a
+// component, so the list shows the whole line (type, reference, thirdparty, date and amount)
+.reedcrm-pocket-object-search-wrapper {
+    position: relative;
+}
+
+.reedcrm-pocket-object-results {
+    position: absolute;
+    z-index: 10;
+    left: 0;
+    right: 0;
+    margin: 2px 0 0;
+    padding: 4px 0;
+    max-height: 260px;
+    overflow-y: auto;
+    list-style: none;
+    background: #ffffff;
+    border: 1px solid #e3e6ea;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+    &[hidden] {
+        display: none;
+    }
+
+    li {
+        padding: 5px 12px;
+
+        &[data-key] {
+            cursor: pointer;
+
+            &:hover {
+                background: #f0f4f8;
+            }
+        }
+    }
+}
+
+// Pocket blocks: the chart, flowchart, timeline and decision tree the summary embeds through its
+// own tags. The PHP only emits the data, every arrow and marker is drawn here
+.reedcrm-pocket-block {
+    margin: 12px 0;
+    padding: 10px 14px;
+    background: #ffffff;
+    border: 1px solid #e3e6ea;
+    border-left: 3px solid #63acc9;
+    border-radius: 4px;
+}
+
+.reedcrm-pocket-block-title {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.reedcrm-pocket-block-raw {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+// Chart: one row per value, the share and the colour come from the data as CSS variables
+.reedcrm-pocket-chart {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 3px 0;
+    }
+}
+
+.reedcrm-pocket-chart-label {
+    flex: 0 0 40%;
+    max-width: 40%;
+    word-break: break-word;
+}
+
+.reedcrm-pocket-chart-track {
+    flex: 1 1 auto;
+    height: 10px;
+    background: #eef1f5;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.reedcrm-pocket-chart-bar {
+    display: block;
+    height: 100%;
+    width: var(--pocket-share, 0%);
+    background: var(--pocket-color, #63acc9);
+    border-radius: 5px;
+}
+
+.reedcrm-pocket-chart-value {
+    flex: 0 0 auto;
+    color: #888888;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+// Flowchart: one transition per row
+.reedcrm-pocket-flow {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 3px 0;
+    }
+}
+
+.reedcrm-pocket-flow-node {
+    padding: 3px 8px;
+    background: #f0f4f8;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+}
+
+// The arrow belongs between the two pills, so it is drawn outside the one that follows
+.reedcrm-pocket-flow-node + .reedcrm-pocket-flow-node {
+    position: relative;
+    margin-left: 16px;
+
+    &::before {
+        content: "\2192";
+        position: absolute;
+        left: -16px;
+        color: #63acc9;
+    }
+}
+
+// Timeline: the step number is drawn from the position of the item in the list
+.reedcrm-pocket-timeline {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: pocket-step;
+
+    li {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        position: relative;
+        padding: 4px 0 4px 26px;
+        counter-increment: pocket-step;
+
+        &::before {
+            content: counter(pocket-step);
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            border-radius: 50%;
+            background: #63acc9;
+            color: #ffffff;
+            font-size: 10px;
+        }
+    }
+}
+
+.reedcrm-pocket-timeline-step {
+    font-weight: 700;
+}
+
+.reedcrm-pocket-timeline-detail {
+    flex: 1 1 240px;
+    color: #666666;
+}
+
+// Decision tree: a node, its context, then the branches leaving it
+.reedcrm-pocket-tree {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    > li {
+        padding: 4px 0;
+    }
+}
+
+.reedcrm-pocket-tree-label {
+    display: block;
+    font-weight: 700;
+}
+
+.reedcrm-pocket-tree-text {
+    display: block;
+    color: #666666;
+}
+
+.reedcrm-pocket-tree-branches {
+    margin: 2px 0 0 14px;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 0;
+    }
+}
+
+.reedcrm-pocket-tree-answer {
+    padding: 1px 8px;
+    background: #f0f4f8;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    font-size: 11px;
+}
+
+.reedcrm-pocket-tree-target {
+    position: relative;
+    margin-left: 22px;
+
+    &::before {
+        content: "\2192";
+        position: absolute;
+        left: -22px;
+        color: #63acc9;
+    }
+}

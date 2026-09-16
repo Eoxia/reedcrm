@@ -95,7 +95,7 @@ ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni
 ReminderValue = Délai du rappel
 ReminderValueDescription = Nombre d’unités de temps avant l’événement pour déclencher le rappel
 ReminderUnit = Unité du rappel
-ReminderUnitDescription = nité de temps utilisée pour le rappel
+ReminderUnitDescription = Unité de temps utilisée pour le rappel
 
 # ApiQuickCreation
 ApiQuickCreations = ajouts rapides via l'api
@@ -931,3 +931,194 @@ FollowupRunToDoHelp = Aucune facture générée sur ce mois pour cet abonnement 
 FollowupRunDoneOn = Facture générée le %s
 FollowupRunNothingToDo = Rien à faire sur %s : les %s factures du mois ont déjà été générées.
 FollowupRunNothingDone = Aucune facture encore générée sur %s.
+
+#
+# Pocket
+#
+Pocket = Pocket
+PocketRecording = Enregistrement Pocket
+PocketRecordings = Enregistrements Pocket
+PocketRecordingId = Identifiant Pocket
+PocketRecordingDate = Date d'enregistrement
+PocketFolder = Dossier Pocket
+PocketFolderId = Identifiant du dossier Pocket
+PocketFolderTitle = Dossier importé
+PocketFolderHelp = Seuls les enregistrements de ce dossier sont importés dans Dolibarr. Tant qu'aucun dossier n'est choisi, aucune synchronisation n'a lieu.
+PocketFolderMissing = Aucun dossier Pocket sélectionné
+PocketNoFolderSelected = -- Aucun dossier --
+PocketTags = Tags Pocket
+PocketState = État Pocket
+PocketSummary = Résumé
+PocketTranscript = Transcription
+PocketActionItems = Actions à faire
+PocketLastSyncDate = Dernière synchronisation
+PocketNoSummary = Aucun résumé disponible pour cet enregistrement
+PocketNoTranscript = Aucune transcription disponible pour cet enregistrement
+PocketNoActionItem = Aucune action détectée par Pocket
+PocketRecordingStatusNew = Nouveau
+PocketRecordingStatusProcessed = Traité
+PocketRecordingStatusArchived = Archivé
+PocketConnection = Connexion à Pocket
+PocketConnectionState = État de la connexion
+PocketApiKey = Clé API Pocket
+PocketApiKeyHelp = Clé de type pk_... créée depuis l'application Pocket. Elle donne accès en lecture aux enregistrements, transcriptions et audios du compte.
+PocketApiKeySet = Clé enregistrée
+PocketApiKeyMissing = Aucune clé API Pocket configurée
+PocketApiHttpError = L'API Pocket a répondu une erreur HTTP %s
+PocketApiInvalidResponse = Réponse illisible de l'API Pocket
+PocketTestConnection = Tester la connexion
+PocketConnectionFailed = Connexion à Pocket impossible : %s
+PocketConnectionSucceeded = Connexion à Pocket réussie, %s dossiers trouvés
+PocketManualSync = Synchronisation manuelle
+PocketManualSyncHelp = Importe immédiatement les enregistrements du dossier configuré. La même opération est jouée automatiquement par la tâche planifiée.
+PocketSyncNow = Synchroniser maintenant
+PocketSyncReport = Synchronisation Pocket : %s créés, %s mis à jour, %s ignorés, %s en erreur
+PocketSyncCronLabel = Synchronisation des enregistrements Pocket
+PocketSyncCronComment = Importe les enregistrements du dossier Pocket configuré, avec leur résumé, leur transcription et leurs actions
+PocketRefreshFromApi = Rafraîchir depuis Pocket
+PocketRefreshDone = Enregistrement rafraîchi depuis Pocket
+PocketRefreshFailed = Le rafraîchissement depuis Pocket a échoué
+PocketDownloadAudio = Télécharger l'audio
+PocketAudioUnavailable = Audio indisponible pour cet enregistrement
+DeletePocketRecording = Supprimer l'enregistrement Pocket
+ConfirmDeletePocketRecording = Êtes-vous sûr de vouloir supprimer cet enregistrement ? Il sera réimporté à la prochaine synchronisation s'il est toujours présent dans le dossier Pocket.
+
+#
+# Objets liables aux enregistrements Pocket
+# Ces clés sont génériques (tpl saturne) : ReedCRM charge son .lang en premier, sa formulation gagne
+#
+LinkableElements = Éléments liables
+LinkedObjectUsage = Utilisation
+LinkedObjectUsageDetail = %s lien(s) vers un enregistrement Pocket
+NoLinkedObjectUsage = Aucun lien
+EnableAllLinksConfirm = Activer le lien vers tous les éléments ?
+DisableAllLinksConfirm = Désactiver le lien vers tous les éléments ? Les onglets correspondants disparaîtront, les liens déjà créés sont conservés.
+DisableLinkConfirm = Désactiver le lien vers « %s » ? L'onglet disparaîtra, les liens déjà créés sont conservés.
+CleanUnusedLinks = Réaligner les onglets sur la configuration
+CleanUnusedLinksConfirm = Reconstruire les onglets et les hooks à partir des liens activés ?
+LinkedObjectSyncDone = Configuration appliquée : %s onglets et %s hooks enregistrés
+LinkedObjectSyncError = L'application de la configuration des liens a échoué
+
+#
+# Pocket - lecteur audio et actions a faire
+#
+PocketAudio = Audio
+PocketPlayAudio = Écouter l'enregistrement
+PocketAssignedUser = Affecté à
+PocketAssignee = Interlocuteur Pocket
+PocketCreateEvent = Créer un événement
+PocketActionItemId = Identifiant de l'action Pocket
+PocketActionItemTodo = À faire
+PocketActionItemDone = Faite
+PocketActionItemEdited = Action réécrite
+PocketChangeStatus = Changer l'état
+PocketSummaryEdited = Résumé réécrit
+PocketSummaryEditedHint = Ce résumé a été réécrit dans Dolibarr : les synchronisations Pocket ne l'écrasent plus.
+PocketEditSummary = Cliquer pour modifier le résumé
+PocketSummaryEditHelp = Le résumé est écrit en markdown, blocs Pocket compris. Il est enregistré en quittant le champ, et n'est plus écrasé par les synchronisations : videz-le pour reprendre celui de Pocket.
+
+#
+# Pocket - rattachement depuis les objets
+#
+PocketLinkedObjects = Objets liés
+PocketNoLinkedObject = Aucun objet lié à cet enregistrement
+PocketLinkRecording = Rattacher un enregistrement
+PocketUnlinkRecording = Détacher cet enregistrement
+PocketNoRecordingToLink = Tous les enregistrements disponibles sont déjà rattachés
+PocketRecordingLinked = Enregistrement rattaché
+PocketRecordingUnlinked = Enregistrement détaché
+PocketRecordingLinkFailed = L'opération de rattachement a échoué
+PocketLinkObject = Rattacher un objet
+PocketUnlinkObject = Détacher cet objet
+PocketAllObjectTypes = Tous les types
+PocketSearchObject = Rechercher par référence ou libellé
+PocketNoObjectFound = Aucun objet trouvé
+PocketObjectLinked = Objet rattaché
+PocketObjectUnlinked = Objet détaché
+
+#
+# Menu - Sections du menu de gauche
+#
+MenuSectionQuickAccess = Accès rapides
+MenuSectionCommerce = Commerce
+MenuSectionServicePortfolio = Portefeuille service
+MenuSectionAdvTechnical = ADV / Technique
+MenuSectionBilling = Facturation
+MenuSectionTools = Outils transversaux
+MenuSectionAdministration = Administration
+ShipmentFollowupMenu = Suivi des expéditions
+TicketFollowupMenu = Suivi des tickets
+DataManagementMenu = Gestion des données
+
+# Clôture rapide d'un événement
+QuickCloseEventTitle = Clôturer l'événement
+QuickCloseEventTooltip = Clôturer cet événement
+QuickCloseEventDescription = Description
+QuickCloseEventDescriptionPlaceholder = Ajouté à la description de l'événement (facultatif)
+QuickCloseEventReschedule = Reprogrammer un événement identique pour plus tard
+QuickCloseEventNewLabel = Nom du nouvel événement
+QuickCloseEventNewLabelPlaceholder = Nom de l'événement clôturé
+QuickCloseEventInOneMonth = Dans 1 mois
+QuickCloseEventInDays = Dans
+QuickCloseEventInDaysSuffix = jours
+QuickCloseEventOnDate = Le
+QuickCloseEventDateRequired = Choisissez la date du nouvel événement
+QuickCloseEventConfirm = Clôturer
+QuickCloseEventDone = Événement clôturé
+QuickCloseEventDoneAndRescheduled = Événement clôturé, nouvel événement programmé le %s
+QuickCloseEventNotTodo = Cet événement n'est pas à faire, il ne peut pas être clôturé
+QuickCloseEventError = La clôture de l'événement a échoué
+QuickCloseEvents = clôtures rapides d'événement
+QuickCloseEventInDaysLabel = Dans un nombre de jours
+QuickCloseEventDefaultDelay = Délai de reprogrammation par défaut
+QuickCloseEventDefaultDelayDescription = Choix présélectionné dans la modale de clôture rapide quand la reprogrammation est demandée
+QuickCloseEventDefaultDays = Nombre de jours par défaut
+QuickCloseEventDefaultDaysDescription = Nombre de jours prérempli pour le délai « Dans un nombre de jours »
+
+#
+# Dates d'intervention
+#
+InterventionCalendar = Calendrier des interventions
+InterventionDates = Dates d'intervention
+InterventionDate = Date d'intervention
+InterventionUser = Intervenant
+InterventionUsers = Intervenants
+InterventionNoUser = Non affecté
+InterventionToPlan = À planifier
+InterventionPlanned = Planifiée
+InterventionDone = Réalisée
+InterventionStatus = Statut de l'intervention
+InterventionPropalStatus = Statut du devis
+InterventionDurationMinutes = Durée (min)
+InterventionDateHelp = Une date par unité de quantité : une quantité de 2,5 demande 3 interventions. Laisser une date vide retire l'intervention et son événement.
+InterventionDateNoQuantity = Cette ligne de service n'a pas de quantité, aucune intervention à planifier.
+InterventionDatePlanTooltip = Planifier les dates d'intervention de cette ligne de service
+InterventionDateSaved = Dates d'intervention enregistrées
+InterventionDateSaveError = Erreur lors de l'enregistrement des dates d'intervention
+InterventionDateFeatureDisabled = Les dates d'intervention ne sont pas activées dans la configuration de ReedCRM
+InterventionSeeEvent = Voir l'événement dans l'agenda
+InterventionEventLabel = Intervention %s - %s (%s)
+InterventionsThisMonth = Interventions du mois
+InterventionViewMonth = Mois
+InterventionViewList = Liste
+InterventionOnlyMine = Mes interventions
+InterventionNoneThisMonth = Aucune intervention planifiée sur ce mois
+InterventionToPlanList = Interventions à planifier (%s lignes de service)
+InterventionPlanAction = Planifier
+InterventionPlannedCount = Planifiées
+InterventionRemainingCount = Restantes
+ActionAC_REEDCRM_INTERVENTION = Intervention
+InterventionDateSetupTitle = Dates d'intervention sur les lignes de service
+InterventionDateEnabled = Activer les dates d'intervention
+InterventionDateEnabledDescription = Ajoute un bouton de planification sur chaque ligne de service des devis et affiche le calendrier des interventions
+InterventionDateCreateEvent = Créer un événement d'agenda par date
+InterventionDateCreateEventDescription = Chaque date d'intervention crée un événement de type Intervention affecté à l'intervenant, mis à jour et supprimé avec la date
+InterventionDateDefaultDurationLabel = Durée par défaut d'une intervention (minutes)
+InterventionDateMaxPerLineLabel = Nombre maximum de dates par ligne de service
+InterventionDateMaxPerLineDescription = Garde-fou pour les lignes de service à très grande quantité
+InterventionLocation = Lieu
+InterventionDateFromLabel = Devis pris en compte à partir du
+InterventionDateFromDescription = Les devis antérieurs à cette date sortent du périmètre : ni pastille sur leurs lignes de service, ni interventions à planifier. Vider le champ pour prendre tout l'historique.
+InterventionDateProductTagLabel = Tag des services à planifier
+InterventionDateProductTagDescription = Seules les lignes de service dont le produit porte ce tag reçoivent des dates d'intervention. Les lignes libres, sans produit, sont hors périmètre. Tant qu'aucun tag n'est choisi, aucune ligne n'est planifiable.
+InterventionDateNoProductTagWarning = Aucun tag de service n'est sélectionné : aucune ligne de service n'est planifiable. Choisissez le tag dans Configuration ReedCRM, onglet Propositions.

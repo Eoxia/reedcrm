@@ -36,6 +36,10 @@ $cardColor  = !empty($cardColumn) ? $cardColumn['color'] : '#999999';
 $hasPercent  = ((int) $t['percent'] >= 0);
 $percentText = $hasPercent ? $t['percent'] . '%' : $langs->trans('StatusNotApplicable');
 
+// The percentage doubles as the quick close trigger of the event, the same one the events list and
+// the event card carry: only a to-do event has a progress left to close
+$quickCloseEvent = $permissionToWrite && $hasPercent && (int) $t['percent'] < 100;
+
 $ownerId       = !empty($t['owner']) ? $t['owner']['id'] : 0;
 $ownerFullname = !empty($t['owner']) ? $t['owner']['fullname'] : '';
 $ownerInitials = !empty($t['owner']) ? $t['owner']['initials'] : '';
@@ -43,7 +47,7 @@ $ownerInitials = !empty($t['owner']) ? $t['owner']['initials'] : '';
 // Full day events are picked on a plain date, the others carry an hour
 $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
 ?>
-<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>">
+<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
 
     <!-- Header: type of event + reference + late flag -->
     <div class="todo-card-header">
@@ -155,7 +159,9 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
         <div class="todo-progress-bar<?php echo $permissionToWrite ? ' todo-editable-progress' : ''; ?>">
             <div class="todo-progress-fill" style="width: <?php echo $hasPercent ? (int) $t['percent'] : 0; ?>%; background: <?php echo dol_escape_htmltag($cardColor); ?>"></div>
         </div>
-        <span class="todo-progress-text"><?php echo dol_escape_htmltag($percentText); ?></span>
+        <?php // Clicking the percentage opens the quick close modal loaded by the printCommonFooter hook ?>
+        <span class="todo-progress-text<?php echo $quickCloseEvent ? ' reedcrm-quick-close-trigger' : ''; ?>"
+              <?php if ($quickCloseEvent) : ?>data-event-id="<?php echo $t['id']; ?>" title="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"<?php endif; ?>><?php echo dol_escape_htmltag($percentText); ?><?php if ($quickCloseEvent) : ?><i class="fas fa-check-circle reedcrm-quick-close-icon"></i><?php endif; ?></span>
     </div>
 
     <!-- Location and private note -->

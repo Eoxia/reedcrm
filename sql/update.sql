@@ -79,3 +79,7 @@ ALTER TABLE `llx_reedcrm_du_audit` ADD `date_done` date DEFAULT NULL AFTER `next
 ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_facture` integer DEFAULT NULL AFTER `fk_propal`;
 ALTER TABLE `llx_reedcrm_du_audit` ADD `date_rdv` date DEFAULT NULL AFTER `next_audit_date`;
 ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_fichinter` integer DEFAULT NULL AFTER `fk_facture`;
+
+-- 23.0.1 - Pocket recordings: keep what the user rewrote out of the reach of the next synchronisation
+ALTER TABLE `llx_reedcrm_pocket_recording` ADD `summary_edited` smallint DEFAULT 0 NOT NULL AFTER `summary`;
+ALTER TABLE `llx_reedcrm_pocket_action_item` ADD `user_edited` smallint DEFAULT 0 NOT NULL AFTER `priority`;

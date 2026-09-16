@@ -103,7 +103,8 @@
 <div class="todo-board" data-token="<?php echo newToken(); ?>" data-editable="<?php echo $permissionToWrite ? 1 : 0; ?>"
      data-na-label="<?php echo dol_escape_htmltag($langs->trans('StatusNotApplicable')); ?>"
      data-empty-label="<?php echo dol_escape_htmltag($langs->trans('TodoNoEvent')); ?>"
-     data-load-more-label="<?php echo dol_escape_htmltag($langs->trans('TodoLoadMore', '%s')); ?>">
+     data-load-more-label="<?php echo dol_escape_htmltag($langs->trans('TodoLoadMore', '%s')); ?>"
+     data-quick-close-label="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>">
     <?php foreach ($todoColumns as $columnDefinition) :
         $columnKey       = $columnDefinition['key'];
         $columnCards     = $todoPage[$columnKey] ?? [];

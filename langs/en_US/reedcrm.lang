@@ -820,3 +820,194 @@ FollowupRunToDoHelp = No invoice generated for this month on this subscription: 
 FollowupRunDoneOn = Invoice generated on %s
 FollowupRunNothingToDo = Nothing to do on %s: the %s invoices of the month have already been generated.
 FollowupRunNothingDone = No invoice generated yet on %s.
+
+#
+# Pocket
+#
+Pocket = Pocket
+PocketRecording = Pocket recording
+PocketRecordings = Pocket recordings
+PocketRecordingId = Pocket identifier
+PocketRecordingDate = Recording date
+PocketFolder = Pocket folder
+PocketFolderId = Pocket folder identifier
+PocketFolderTitle = Imported folder
+PocketFolderHelp = Only the recordings of this folder are imported into Dolibarr. As long as no folder is selected, no synchronisation happens.
+PocketFolderMissing = No Pocket folder selected
+PocketNoFolderSelected = -- No folder --
+PocketTags = Pocket tags
+PocketState = Pocket state
+PocketSummary = Summary
+PocketTranscript = Transcript
+PocketActionItems = Action items
+PocketLastSyncDate = Last synchronisation
+PocketNoSummary = No summary available for this recording
+PocketNoTranscript = No transcript available for this recording
+PocketNoActionItem = No action item detected by Pocket
+PocketRecordingStatusNew = New
+PocketRecordingStatusProcessed = Processed
+PocketRecordingStatusArchived = Archived
+PocketConnection = Pocket connection
+PocketConnectionState = Connection state
+PocketApiKey = Pocket API key
+PocketApiKeyHelp = A pk_... key created from the Pocket application. It grants read access to the recordings, transcripts and audio files of the account.
+PocketApiKeySet = Key stored
+PocketApiKeyMissing = No Pocket API key configured
+PocketApiHttpError = The Pocket API answered HTTP error %s
+PocketApiInvalidResponse = Unreadable answer from the Pocket API
+PocketTestConnection = Test connection
+PocketConnectionFailed = Cannot reach Pocket: %s
+PocketConnectionSucceeded = Connection to Pocket succeeded, %s folders found
+PocketManualSync = Manual synchronisation
+PocketManualSyncHelp = Imports the recordings of the configured folder right away. The scheduled job runs the very same operation.
+PocketSyncNow = Synchronise now
+PocketSyncReport = Pocket synchronisation: %s created, %s updated, %s skipped, %s failed
+PocketSyncCronLabel = Pocket recordings synchronisation
+PocketSyncCronComment = Imports the recordings of the configured Pocket folder, along with their summary, transcript and action items
+PocketRefreshFromApi = Refresh from Pocket
+PocketRefreshDone = Recording refreshed from Pocket
+PocketRefreshFailed = Refreshing from Pocket failed
+PocketDownloadAudio = Download the audio
+PocketAudioUnavailable = Audio unavailable for this recording
+DeletePocketRecording = Delete the Pocket recording
+ConfirmDeletePocketRecording = Are you sure you want to delete this recording? It will be imported again on the next synchronisation if it is still in the Pocket folder.
+
+#
+# Objects a Pocket recording can be linked to
+# These keys are generic (saturne tpl): ReedCRM loads its .lang first, so its wording wins
+#
+LinkableElements = Linkable elements
+LinkedObjectUsage = Usage
+LinkedObjectUsageDetail = %s link(s) to a Pocket recording
+NoLinkedObjectUsage = No link
+EnableAllLinksConfirm = Enable the link towards every element?
+DisableAllLinksConfirm = Disable the link towards every element? The matching tabs disappear, the links already created are kept.
+DisableLinkConfirm = Disable the link towards "%s"? The tab disappears, the links already created are kept.
+CleanUnusedLinks = Realign the tabs on the configuration
+CleanUnusedLinksConfirm = Rebuild the tabs and hooks from the enabled links?
+LinkedObjectSyncDone = Configuration applied: %s tabs and %s hooks registered
+LinkedObjectSyncError = Applying the link configuration failed
+
+#
+# Pocket - audio player and action items
+#
+PocketAudio = Audio
+PocketPlayAudio = Play the recording
+PocketAssignedUser = Assigned to
+PocketAssignee = Pocket assignee
+PocketCreateEvent = Create an event
+PocketActionItemId = Pocket action identifier
+PocketActionItemTodo = To do
+PocketActionItemDone = Done
+PocketActionItemEdited = Rewritten action
+PocketChangeStatus = Change the status
+PocketSummaryEdited = Rewritten summary
+PocketSummaryEditedHint = This summary was rewritten in Dolibarr: Pocket synchronisations no longer overwrite it.
+PocketEditSummary = Click to edit the summary
+PocketSummaryEditHelp = The summary is written in markdown, Pocket blocks included. It is saved when the field loses the focus, and is no longer overwritten by the synchronisations: empty it to get the Pocket one back.
+
+#
+# Pocket - attach from the business objects
+#
+PocketLinkedObjects = Linked objects
+PocketNoLinkedObject = No object linked to this recording
+PocketLinkRecording = Attach a recording
+PocketUnlinkRecording = Detach this recording
+PocketNoRecordingToLink = Every available recording is already attached
+PocketRecordingLinked = Recording attached
+PocketRecordingUnlinked = Recording detached
+PocketRecordingLinkFailed = The attach operation failed
+PocketLinkObject = Attach an object
+PocketUnlinkObject = Detach this object
+PocketAllObjectTypes = Every type
+PocketSearchObject = Search by reference or label
+PocketNoObjectFound = No object found
+PocketObjectLinked = Object attached
+PocketObjectUnlinked = Object detached
+
+#
+# Menu - Left menu sections
+#
+MenuSectionQuickAccess = Quick access
+MenuSectionCommerce = Sales
+MenuSectionServicePortfolio = Service portfolio
+MenuSectionAdvTechnical = Sales administration / Technical
+MenuSectionBilling = Billing
+MenuSectionTools = Cross-functional tools
+MenuSectionAdministration = Administration
+ShipmentFollowupMenu = Shipment follow-up
+TicketFollowupMenu = Ticket follow-up
+DataManagementMenu = Data management
+
+# Quick close of an event
+QuickCloseEventTitle = Close the event
+QuickCloseEventTooltip = Close this event
+QuickCloseEventDescription = Description
+QuickCloseEventDescriptionPlaceholder = Appended to the event description (optional)
+QuickCloseEventReschedule = Schedule the same event again for later
+QuickCloseEventNewLabel = New event name
+QuickCloseEventNewLabelPlaceholder = Name of the closed event
+QuickCloseEventInOneMonth = In 1 month
+QuickCloseEventInDays = In
+QuickCloseEventInDaysSuffix = days
+QuickCloseEventOnDate = On
+QuickCloseEventDateRequired = Pick the date of the rescheduled event
+QuickCloseEventConfirm = Close
+QuickCloseEventDone = Event closed
+QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
+QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
+QuickCloseEventError = Closing the event failed
+QuickCloseEvents = quick event closures
+QuickCloseEventInDaysLabel = In a number of days
+QuickCloseEventDefaultDelay = Default reschedule delay
+QuickCloseEventDefaultDelayDescription = Choice preselected in the quick close modal when a reschedule is requested
+QuickCloseEventDefaultDays = Default number of days
+QuickCloseEventDefaultDaysDescription = Number of days prefilled for the "In a number of days" delay
+
+#
+# Intervention dates
+#
+InterventionCalendar = Intervention calendar
+InterventionDates = Intervention dates
+InterventionDate = Intervention date
+InterventionUser = Assignee
+InterventionUsers = Assignees
+InterventionNoUser = Unassigned
+InterventionToPlan = To plan
+InterventionPlanned = Planned
+InterventionDone = Done
+InterventionStatus = Intervention status
+InterventionPropalStatus = Proposal status
+InterventionDurationMinutes = Duration (min)
+InterventionDateHelp = One date per unit of quantity: a quantity of 2.5 asks for 3 interventions. Leaving a date empty removes the intervention and its event.
+InterventionDateNoQuantity = This service line has no quantity, there is no intervention to plan.
+InterventionDatePlanTooltip = Plan the intervention dates of this service line
+InterventionDateSaved = Intervention dates saved
+InterventionDateSaveError = Error while saving the intervention dates
+InterventionDateFeatureDisabled = Intervention dates are not enabled in the ReedCRM setup
+InterventionSeeEvent = See the event in the agenda
+InterventionEventLabel = Intervention %s - %s (%s)
+InterventionsThisMonth = Interventions this month
+InterventionViewMonth = Month
+InterventionViewList = List
+InterventionOnlyMine = My interventions
+InterventionNoneThisMonth = No intervention planned this month
+InterventionToPlanList = Interventions to plan (%s service lines)
+InterventionPlanAction = Plan
+InterventionPlannedCount = Planned
+InterventionRemainingCount = Remaining
+ActionAC_REEDCRM_INTERVENTION = Intervention
+InterventionDateSetupTitle = Intervention dates on the service lines
+InterventionDateEnabled = Enable the intervention dates
+InterventionDateEnabledDescription = Adds a planning button on every service line of the proposals and displays the intervention calendar
+InterventionDateCreateEvent = Create one agenda event per date
+InterventionDateCreateEventDescription = Every intervention date creates an Intervention event assigned to the assignee, updated and deleted along with the date
+InterventionDateDefaultDurationLabel = Default length of an intervention (minutes)
+InterventionDateMaxPerLineLabel = Maximum number of dates per service line
+InterventionDateMaxPerLineDescription = Safeguard for the service lines carrying a very large quantity
+InterventionLocation = Place
+InterventionDateFromLabel = Proposals taken into account from
+InterventionDateFromDescription = Proposals dated before this day are out of scope: no button on their service lines, no interventions to plan. Leave empty to take the whole history.
+InterventionDateProductTagLabel = Tag of the services to plan
+InterventionDateProductTagDescription = Only the service lines whose product carries this tag get intervention dates. Free lines, the ones without a product, are out of scope. As long as no tag is chosen, no line can be planned.
+InterventionDateNoProductTagWarning = No service tag is selected: no service line can be planned. Pick the tag in the ReedCRM setup, Proposals tab.

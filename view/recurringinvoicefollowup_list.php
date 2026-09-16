@@ -410,6 +410,10 @@ while ($i < min($num, $limit)) {
         $obj->facture_creee = 1;
         $obj->facture_payee = (int) $obj->gen_paye;
     }
+    // The live SELECT aliases the annotation id as followup_id, so the raw row carries no rowid:
+    // setVarsFromFetchObj() reads it without a guard to fill $object->id (0 when the template has no
+    // annotation yet), and a missing property raises a PHP warning on every row.
+    $obj->rowid = (int) $obj->followup_id;
     $object->setVarsFromFetchObj($obj);
     $followupStatus = $object->getFollowupStatus();
     $totalTtc      += (float) $obj->montant_ttc;

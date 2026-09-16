@@ -1,168 +1,203 @@
-# [ReedCRM] [23.1.1] - Listes d'appel - Suivi de temps sur tickets - Chaîne d'opportunités
+# [ReedCRM] [23.2.0] - Todo & relances automatiques - Pocket - Tableau de bord des tickets - Dates d'intervention - Suivi de facturation
 
-Description : Version corrective de la 23.1.0 (conformité de l'empaquetage Dolistore : chargement des classes du module via `dol_include_once`). Elle introduit un système complet de **listes d'appel** (vue PWA mobile, PDF, widgets sur projets / propositions / factures, actions de masse, enregistrement audio, création automatique d'événements), un **suivi de temps natif sur les tickets**, l'analyse de la **chaîne d'opportunités** sur la fiche et l'onglet Vue d'ensemble du projet, une refonte de la **liste des projets** (cartes KPI, vues enregistrées, densité, édition inline), ainsi que de nombreuses améliorations PWA, expéditions et suivis récurrents.
+Description : Version majeure. Elle ajoute un **tableau Todo** (kanban des événements d'agenda) accompagné de deux **relances automatiques** quotidiennes sur les devis et les factures, le **miroir Pocket** des enregistrements et de leurs actions rattachables aux objets métier, un **tableau de bord des tickets** centré sur le temps et les personnes (également exposé par l'API), les **dates d'intervention** par unité de ligne de service avec leur événement d'agenda et leur calendrier, ainsi qu'un ensemble complet de **suivi de facturation** (factures récurrentes en live, audits DU, devis signés non facturés, clients Digirisk sans abonnement). Le **menu de gauche** est réorganisé en sections, la **création rapide** gagne la recherche SIREN et les tags de contact, et la PWA permet désormais de consulter une opportunité et de saisir une relance depuis un mobile.
+
+> **Mise à jour** : le module doit être **désactivé puis réactivé** — cette version apporte de nouvelles tables (Pocket, dates d'intervention, liste Digirisk masquée), une entrée de dictionnaire, des constantes, des entrées de menu et deux tâches planifiées.
 
 ## Nouvelles fonctionnalités et innovations
 
-### Listes d'appel (Call List)
+### Todo : le kanban des événements d'agenda
 
-* Nouvel objet « liste d'appel » complet : tables SQL, classes, permissions, menu, numérotation, modèle PDF et endpoints AJAX.
-* Vue **PWA mobile** dédiée avec mise à jour du statut en AJAX (à appeler / appelé / sans réponse / à rappeler) ; la carte passe en fin de liste au changement de statut.
-* Gros **bouton d'appel vert** avec copie du numéro (clic = appel, appui long = copie), séparation appel / copie.
-* **Enregistrement audio** Saturne sur chaque fiche d'appel.
-* Widget « ajouter à une liste d'appel » injecté sur les fiches projet / proposition / facture, plus **action de masse** sur les listes.
-* Liste d'appel **par défaut** provisionnée pour chaque utilisateur, étoile en un clic sur le widget.
-* Routage via la **liste générique Saturne**, note publique et contacts en bas du PDF.
-* Création automatique d'un **événement + tâche commerciale** au changement de statut depuis la PWA.
-* Refus d'ajout d'un contact sans numéro de téléphone ; repli sur les coordonnées ReedCRM du projet si aucun contact n'est lié.
+* Nouvelle page **Todo** : un kanban dont les colonnes sont les statuts de l'événement — `Devis à relancer` · `Factures à relancer` · `À faire` · `En cours` · `Réalisé` · `Non applicable`.
+* Glisser une carte d'une colonne à l'autre écrit le pourcentage de l'événement ; la barre de progression est elle aussi déplaçable.
+* **Édition en place** sur la carte : libellé, dates de début et de fin, propriétaire et utilisateurs affectés.
+* La carte porte le type d'événement, la référence, le tiers, le projet, le devis / la facture d'origine, un badge « En retard », le lieu et la note.
+* **Filtres** : utilisateur affecté (soi-même par défaut), période, type d'événement, recherche texte, masquage des événements automatiques — critères conservés d'une visite à l'autre.
+* **Menu de colonne** pour trier et masquer les colonnes, chargement progressif par pages et réglage de la largeur / de l'espacement.
+* **Clôture rapide** : depuis le pourcentage d'une carte, à une date choisie, avec datation de la fin de l'événement.
 
 <!-- 📸 Ajouter une screenshot ici -->
 
-### Suivi de temps sur les tickets
+### Relances automatiques des devis et des factures
 
-* Bloc de **suivi de temps rapide** natif sur la fiche ticket + page de configuration.
-* Case « enregistrement automatique du temps » sur le formulaire d'envoi de message ; création d'un `actioncomm` au log du temps.
-* Dernière saisie de temps affichée sous le bloc et mise à jour dynamiquement à l'enregistrement.
-* En-tête avec référence de tâche, temps passé / prévu en infobulle, compteur d'entrées, icône tâche cliquable vers `time.php`.
-* Blocs **gravité** et **assignation** en édition inline (Select2) sur la fiche ticket ; zone de note redimensionnable.
-* Réglages : longueur max du titre d'événement, suffixe du libellé de tâche.
-
-<!-- 📸 Ajouter une screenshot ici -->
-
-### Chaîne d'opportunités
-
-* Barre de **chaîne d'opportunités** sur la fiche projet (`procard.php`) et sur l'onglet Vue d'ensemble (hook `projectOverview`).
-* `reedcrm_compute_opportunity_chain` : état de progression + 4 règles d'incohérence, progression colorée, badges d'incohérence, mode icônes seules.
-* Exposition des statuts de pièces et des totaux facturé / payé du projet pour l'analyse.
+* `ReedcrmTodoCron::createProposalRelaunchEvents` : un événement à faire pour chaque **devis validé depuis plus de 30 jours** qui n'est ni signé ni refusé.
+* `ReedcrmTodoCron::createInvoiceRelaunchEvents` : un événement à faire pour chaque **facture validée et non payée** plus de 30 jours après son échéance (avoirs exclus).
+* Délais réglables (`REEDCRM_TODO_PROPAL_RELAUNCH_DAYS`, `REEDCRM_TODO_INVOICE_RELAUNCH_DAYS`), exécution quotidienne.
+* L'événement est créé **sans date** — c'est une chose à faire, pas un rendez-vous — affecté à celui qui a validé l'objet, et rattaché au devis / à la facture : il apparaît donc aussi dans l'onglet Agenda de l'objet.
+* Anti-doublon : une relance déjà ouverte, ou créée depuis moins que le délai configuré, bloque la suivante.
 
 <!-- 📸 Ajouter une screenshot ici -->
 
-### Refonte de la liste des projets
+### Pocket : miroir des enregistrements et rattachement aux objets
 
-* **Cartes KPI** d'opportunités en tête de liste.
-* **Vues enregistrées** (presets) par filtres, avec mise en avant de la vue active.
-* Bascule de **densité** compacte / confortable par utilisateur.
-* Édition inline enrichie : contact, téléphone (recherche pays type-ahead), `opp_percent`, statut avec infobulle native.
+* Nouvel objet **enregistrement Pocket** reflétant les enregistrements d'un dossier configurable, avec les **actions** que Pocket en extrait.
+* Configuration dans `admin/pocket.php` : clé d'API avec **test de connexion**, dossier importé alimenté en direct par l'API, et objets auxquels un enregistrement peut être rattaché (mécanisme d'objets liés Saturne).
+* Synchronisation **idempotente** : elle n'écrase jamais ce qui appartient à l'utilisateur (statut, tiers, note, liens, utilisateur affecté, événement créé).
+* **Rattachement depuis l'onglet de l'objet métier**, là où l'utilisateur a le contexte ; recherche de n'importe quel objet par type et par référence, au-delà du seul tiers.
+* Édition en place du **libellé d'action**, du **tiers**, du **statut** (sur le badge du bandeau) et réécriture de la **synthèse**, dont les blocs graphiques sont rendus tels quels.
+
+<!-- 📸 Ajouter une screenshot ici -->
+
+### Tableau de bord des tickets
+
+* Nouvelle page de pilotage branchée sur le **renderer de tableau de bord Saturne** : graphiques masquables, filtrables et exportables en CSV comme tous les tableaux de bord Evarisk.
+* **4 widgets** : flux des tickets, délais (prise en charge, première réponse, résolution — moyenne **et** médiane), temps loggé, personnes.
+* **13 graphiques** : charge et délais par affecté, temps loggé par affecté, messages publics contre notes privées, créés contre clôturés par mois, temps loggé par mois, tickets ouverts par statut, âge du backlog, répartition des temps de résolution, gravité, type, créations par jour de semaine et par heure, top tiers.
+* **3 listes** : charge détaillée par affecté, tickets ouverts les plus anciens, tickets dormants. **2 filtres** : période analysée et affecté.
+* Les indicateurs de **flux** suivent la période choisie, ceux de **stock** décrivent toujours les tickets ouverts à l'instant ; chaque infobulle dit à quelle famille appartient le compteur.
+* Le temps loggé est lu à travers les **tâches ticket** créées par ReedCRM, donc conforme au préfixe et au suffixe réglés dans la configuration.
+* Tout est calculé par **quatre requêtes groupées** au lieu d'un fetch par ticket : 473 tickets et 2 736 événements agrégés en ~50 ms.
+* Le tableau de bord est également **exposé par l'API**.
+* Les utilisateurs désactivés sont sortis des affectés et les tickets clôturés peuvent être ignorés.
+
+<!-- 📸 Ajouter une screenshot ici -->
+
+### Dates d'intervention sur les lignes de service
+
+* Nouvel objet **date d'intervention** : une ligne par intervention attendue, avec sa date, sa durée, son intervenant, son lieu, sa note et son statut.
+* Le nombre d'interventions attendues est la **quantité arrondie au supérieur** (qty 2,5 → 3 dates), plafonné par une constante.
+* Une **pastille compteur** (`2/3`) sous chaque ligne de service ouvre une modale de saisie ; vider une date supprime l'intervention, baisser la quantité retire celles qui n'ont plus d'unité sur laquelle tenir.
+* Un **événement d'agenda** par intervention (nouveau type `AC_REEDCRM_INTERVENTION`), affecté à l'intervenant, lié au devis et au tiers, passé à 100 % quand l'intervention est réalisée.
+* Nouveau **calendrier des interventions** : vue mois ou liste, navigation par mois, filtres intervenants / tiers / statut d'intervention / statut de devis, raccourci « Mes interventions », et sous le calendrier les **interventions à planifier**.
+* Périmètre réglé dans la configuration : tag des services à planifier, date plancher des devis pris en compte, durée par défaut et plafond de dates par ligne.
+
+<!-- 📸 Ajouter une screenshot ici -->
+
+### Suivi de facturation
+
+* Nouvelle page **« Suivi facturation »** consolidant ce qui n'a pas encore été facturé : devis signés sans facture, commandes validées sans facture, factures modèles au-delà de leur date de génération, plus les factures brouillon et les impayés échus — chaque ligne pointe vers le document et vers sa facturation.
+* Le **suivi des factures récurrentes** est désormais piloté **en live par les factures modèles** : un modèle appartient au mois parcouru soit parce que sa prochaine génération y tombe, soit parce qu'une facture y a réellement été générée, même si le modèle a été suspendu depuis. Badge de traitement explicite (Fait / À faire / En retard), facture générée liée à côté, tuiles cliquables.
+* **Mouvements de portefeuille** demandés par le commerce : entrées (création de modèle) et sorties (modèle suspendu, daté sur sa dernière génération réelle), graphique entrées / sorties / solde cumulé sur 12 mois et détail du mois.
+* **Devis signés jamais facturés** listés sur une période glissante et **recoupés avec les factures réellement émises** (même chaîne de facturation, même montant, mêmes produits facturés après la signature) ; une ligne peut être classée « facturé » à la main.
+* **Audit DU** : devis Document Unique signés non facturés, audits amorcés aussi depuis les services de mise en place.
+* **Clients Digirisk sans abonnement récurrent**, détectés aussi par leurs projets `*.digirisk.com` actifs, avec masquage d'un client de la liste.
+
+<!-- 📸 Ajouter une screenshot ici -->
+
+### Menu de gauche par sections
+
+* Entrées **regroupées en sections**, avec un picto par en-tête et les couleurs d'en-tête Dolibarr, puis la couleur de marque ReedCRM.
+* Cible de clic sur **toute la ligne**, sous-entrées alignées et tenues à la largeur du menu.
+* Page des outils déplacée dans l'administration, picto de la carte unifié.
+
+<!-- 📸 Ajouter une screenshot ici -->
+
+### Création rapide
+
+* **Recherche SIREN** via le module Sirene dans la création rapide de tiers.
+* Cases **« identique à »** pour l'adresse et pour les contacts du projet.
+* **Tags de contact** à la création, bascules de configuration du projet corrigées.
+* **Héritage des commerciaux** lors de l'ajout rapide d'un projet.
+* Configuration des **tags / catégories des modèles de propositions commerciales**.
 
 <!-- 📸 Ajouter une screenshot ici -->
 
 ### PWA
 
-* **Menu burger** et **favoris personnels** dans la barre de navigation basse.
-* **Kanban** des tickets avec filtre par assigné, recherche et glisser-déposer.
-* Barre de **statut des documents** + page de configuration.
-* Ajout d'un **tiers** directement depuis la PWA.
-* Pourcentage d'opportunité repositionné près du montant, référence réduite.
+* **Consultation de l'opportunité et saisie d'une relance depuis un mobile**.
+* **Lien de sortie vers Dolibarr** dans le tiroir de navigation de l'App.
+* Sélecteur de **liste d'appel recherchable**, restreint aux employés.
 
-<!-- 📸 Ajouter une screenshot ici -->
+### Listes
 
-### Expéditions
-
-* Nouvelle **liste des expéditions** avec colonne des factures liées et montant total.
-* Colonne de **contrôle OK/KO** (expédition vs factures) ; factures brouillon ignorées, PROV réintégrées à l'affichage mais exclues du contrôle.
-* Marquage « facturé » réversible en AJAX + `actioncomm`.
-* Option **date d'expédition = date de création** (déclencheur `SHIPPING_CREATE`, bascule admin `REEDCRM_EXPEDITION_SHIPPING_DATE_AS_CREATION_DATE`).
-* Entrée de menu « Expéditions ».
-
-### Suivis récurrents & audit DU
-
-* **Suivi des factures récurrentes** et **audit DU** : nouvelles tables, listes et fiche.
-* État automatique suivant le devis et la facture, date d'audit réelle capturée au passage « Fait », ancrage du cycle suivant.
-
-### Divers
-
-* **Colonnes de tableau redimensionnables** avec persistance serveur + colonne message.
-* **Ligne du jour** (rouge) matérialisée dans les listes d'événements de l'agenda.
-* Carte « **rappels d'appel à venir** » sur le tableau de bord.
-* Description produit injectée sous les lignes de réception.
-* Sélecteur inline `SALESREPINTERNAL` dans l'en-tête de la fiche projet.
-* Documentation agent IA & architecture.
+* Colonne **tags / catégories** sur la liste des opportunités.
+* Liste des projets : retrait de l'icône œil, **filtre de date**, **validation en masse**, libellés de colonnes clarifiés.
+* Liste des expéditions : **commande liée** avec sa référence et son total HT — le total de la commande est affiché quand le montant de l'expédition est à 0.
+* Clôture rapide des événements « à faire » depuis une liste ou depuis la fiche événement.
 
 ---
 
 ## Améliorations & corrections
 
-### Packaging / Dolistore
+### Hooks & intégration Saturne
 
-* Chargement des classes et librairies du module via `dol_include_once` au lieu de `DOL_DOCUMENT_ROOT` (le module réside dans `/custom`) — `actions_reedcrm`, `reedcrm_call_list.lib`, endpoints AJAX des listes d'appel et template frontend des opportunités.
-* `test_hooks.php` : chargement de l'environnement via `reedcrm.main.inc.php` (pattern à 2 tentatives) au lieu d'un `require` direct de `main.inc.php`.
+* Contextes de hook comparés **à l'identique** au lieu d'une recherche de sous-chaîne (`invoicelist` matchait `supplierinvoicelist`), puis prise en compte des **vues génériques Saturne** suffixées `_saturne`.
+* Notation du contact tenue **hors de la liste des factures fournisseur**.
+* Assets CSS/JS et UI de relance rétablis sur `saturne_list.php` : icônes FontAwesome isolées des boutons ReedCRM, `tdoverflowmax` neutralisé, garde d'objet nul dans `printCommonFooter` (erreur fatale).
 
-### Menu & navigation
+### Agenda & infobulles
 
-* Préfixe `/custom` ajouté aux URLs du menu Saturne.
-* Logos des modules externes affichés dans le menu « Plus », icône PNG ReedCRM restaurée, alignement des entrées de la barre supérieure.
+* **Double décalage de fuseau horaire** à la création d'un événement rapide corrigé (`dol_now()` + `tzuserrel` explicite).
+* Rappel affecté à **l'utilisateur choisi** et non au créateur de l'événement.
+* Infobulles : doublons dus à un double branchement d'écouteurs, position hors écran lors d'un défilement horizontal, `data-dialog-url` manquant sur la liste de projets native, « Class Form not found » au rendu d'un avatar.
+* Infobulle de relance : avatars des utilisateurs, colonnes alignées et lien vers l'événement.
 
-### Compatibilité modules
+### Listes d'appel
 
-* Pages fonctionnelles sans le module **Projet** (`hasRight()`), page blanche de la création rapide corrigée.
-* « Class FormTicket not found » évitée quand le module **Ticket** est désactivé.
-
-### PWA & carte
-
-* Filtres de la carte réparés, preset actif, retrait Type / icône.
-* Modale vCard et double scrollbar corrigés, chevauchement de la navigation basse sur la pagination.
-* Positionnement de l'en-tête PWA et geoloc, spinner infini corrigé.
-* Double init du module Saturne causant une création d'opportunité en double corrigé.
-
-### Traductions & outils
-
-* Traductions manquantes ajoutées (PropalList, RelauchCommercial, ContactDetails, parité en_US).
-* Accès `conf->global` déprécié remplacé par `getDolGlobalString` dans `reedcrmtools.php`.
-* Import : BOM UTF-8, multiselect natif des tags, confirmation de tag en double.
-* Include `reedcrm.main.inc.php` en 2 tentatives pour Dolistore.
+* **Numéro de téléphone obligatoire** à l'ajout d'un élément dans une liste d'appel, avec des messages d'erreur explicites.
+* Logo du widget dimensionné par ses attributs `width` / `height`.
+* Libellé configurable des événements créés au changement de statut, tiret cadratin restauré dans le libellé par défaut.
 
 ### Divers
 
-* EventPro : rappel créé « à faire » et non « fait », titre de projet complet dans le select.
-* Bloc de relance : infobulle au survol restaurée.
-* PDF : téléphone et e-mail du projet injectés dans le bloc adressé.
+* Onglets de **facture récurrente** réparés (boucle infinie et onglet « Factures générées » écrasé).
+* Clé `options_notation_societe_contact` indéfinie dans `actions_reedcrm`.
+* Fiche ticket : traductions du hook chargées et blocs inline qui ne s'étirent plus verticalement.
+* Bloc contact : **nom avant prénom** ; traduction des libellés des extrafields projet.
+* Table de relance : colonnes nommées, 404 de l'infobulle quand Dolibarr tourne dans un sous-répertoire, fichier de langue chargé dans l'endpoint.
+* Statut du projet respectant `PROJECT_CREATE_NO_DRAFT`.
+* Portée du **manifest PWA** restreinte aux pages de l'App.
+* Bouton d'événement rapide retiré des barres d'action des fiches.
+* Suivi FA : un warning PHP par ligne affichée, la ligne brute de la requête live ne portant pas de `rowid`.
+* Artefacts de travail internes retirés du dépôt.
 
-## Comparaison des versions [23.0.0](https://github.com/Eoxia/easycrm/compare/23.0.0...23.1.1) et 23.1.1
+## Comparaison des versions [23.1.1](https://github.com/Eoxia/reedcrm/compare/23.1.1...23.2.0) et 23.2.0
 
-* [Mod] fix: `dol_include_once` pour les includes du module + bootstrap 2 tentatives dans test_hooks (conformité Dolistore) [`64d0335`](https://github.com/Eoxia/easycrm/commit/64d0335)
-* [#796] [DU] feat: suivi des factures récurrentes et de l'audit DU [`74cee58`](https://github.com/Eoxia/easycrm/commit/74cee58) [`dd85810`](https://github.com/Eoxia/easycrm/commit/dd85810) [`1966cc4`](https://github.com/Eoxia/easycrm/commit/1966cc4) [`7f834ce`](https://github.com/Eoxia/easycrm/commit/7f834ce)
-* [#790] [Agenda] feat: ligne du jour (rouge) dans les listes d'événements + rebuild css [`f8c5269`](https://github.com/Eoxia/easycrm/commit/f8c5269) [`9404f5a`](https://github.com/Eoxia/easycrm/commit/9404f5a) [`6c1e0c9`](https://github.com/Eoxia/easycrm/commit/6c1e0c9)
-* [#791] [ProCard] fix: éviter « Class FormTicket not found » sans le module Ticket [`c568fb3`](https://github.com/Eoxia/easycrm/commit/c568fb3)
-* [#788] [Frontend] fix: page blanche de la création rapide sans le module Projet [`82e6546`](https://github.com/Eoxia/easycrm/commit/82e6546)
-* [#786] [Frontend] fix: `hasRight()` pour fonctionner sans le module Projet [`fc2a180`](https://github.com/Eoxia/easycrm/commit/fc2a180)
-* [#782] [Dashboard] feat: carte des rappels d'appel à venir [`023658b`](https://github.com/Eoxia/easycrm/commit/023658b)
-* [#779] [Import] fix: BOM UTF-8, historique inline, multiselect natif des tags, confirmation de doublon [`9351598`](https://github.com/Eoxia/easycrm/commit/9351598)
-* [#777] [Tools] fix: `getDolGlobalString` dans `reedcrmtools.php` [`5086272`](https://github.com/Eoxia/easycrm/commit/5086272)
-* [#775] [ProCard] feat: en-tête d'édition inline compact + titre dynamique + Select2 [`76e7330`](https://github.com/Eoxia/easycrm/commit/76e7330)
-* [#773] [Traductions] fix: traductions manquantes PropalList, RelauchCommercial, ContactDetails [`873a855`](https://github.com/Eoxia/easycrm/commit/873a855)
-* [#769] [Dolistore] fix: include `reedcrm.main.inc.php` en 2 tentatives [`1d4acb7`](https://github.com/Eoxia/easycrm/commit/1d4acb7)
-* [#762] [CallList] feat: création auto d'événement et de tâche commerciale au changement de statut PWA [`4f52693`](https://github.com/Eoxia/easycrm/commit/4f52693)
-* [#759] [PWA] fix: visibilité de la modale vCard et double scrollbar [`8010efb`](https://github.com/Eoxia/easycrm/commit/8010efb)
-* [#757] [PWA] feat: gros bouton d'appel vert avec copie [`0becb06`](https://github.com/Eoxia/easycrm/commit/0becb06) [`c2a7763`](https://github.com/Eoxia/easycrm/commit/c2a7763)
-* [#755] [CallList] fix: lecture des listes d'appel par les admins dans la PWA [`71f6519`](https://github.com/Eoxia/easycrm/commit/71f6519)
-* [#753] [PWA] feat: menu burger et favoris perso dans la bottom nav [`9cf415f`](https://github.com/Eoxia/easycrm/commit/9cf415f)
-* [#750] [PWA] feat: UX et audio de la liste d'appel PWA [`28a591e`](https://github.com/Eoxia/easycrm/commit/28a591e)
-* [#748] [CallList] fix: valider les listes avec une ref définitive au lieu de PROV [`5090b7e`](https://github.com/Eoxia/easycrm/commit/5090b7e)
-* [#745] [Ticket] feat: suivi de temps natif (bloc rapide, actioncomm, gravité/assignation inline) [`d0e01aa`](https://github.com/Eoxia/easycrm/commit/d0e01aa) [`cd03e63`](https://github.com/Eoxia/easycrm/commit/cd03e63) [`cfcd8db`](https://github.com/Eoxia/easycrm/commit/cfcd8db)
-* [#729] [EventPro] fix: rappel créé « à faire » et non « fait » [`79cd567`](https://github.com/Eoxia/easycrm/commit/79cd567)
-* [#728] [EventPro] fix: titre de projet complet dans le select (16 → 64) [`b6631a4`](https://github.com/Eoxia/easycrm/commit/b6631a4)
-* [#726] [CallList] feat: routage de la liste d'appel via la liste générique Saturne [`e6d7285`](https://github.com/Eoxia/easycrm/commit/e6d7285)
-* [#724] [CallList] fix: repli sur les coordonnées ReedCRM du projet sans contact [`5154746`](https://github.com/Eoxia/easycrm/commit/5154746)
-* [#722] [Expedition] feat: option date d'expédition = date de création (`SHIPPING_CREATE`) [`63e77f3`](https://github.com/Eoxia/easycrm/commit/63e77f3) [`a062638`](https://github.com/Eoxia/easycrm/commit/a062638) [`2957965`](https://github.com/Eoxia/easycrm/commit/2957965)
-* [#716] [ReedCRM] feat: barre de chaîne d'opportunités sur la fiche projet et l'onglet Vue d'ensemble [`e3717e6`](https://github.com/Eoxia/easycrm/commit/e3717e6) [`620211c`](https://github.com/Eoxia/easycrm/commit/620211c) [`54ec112`](https://github.com/Eoxia/easycrm/commit/54ec112)
-* [#711] [ReedCRM] feat: description produit injectée sous les lignes de réception [`77ac840`](https://github.com/Eoxia/easycrm/commit/77ac840) [`d8d7dcd`](https://github.com/Eoxia/easycrm/commit/d8d7dcd) [`057bf8b`](https://github.com/Eoxia/easycrm/commit/057bf8b)
-* [#710] [Project] feat: sélecteur inline `SALESREPINTERNAL` dans l'en-tête de la fiche projet [`c349561`](https://github.com/Eoxia/easycrm/commit/c349561) [`d87933f`](https://github.com/Eoxia/easycrm/commit/d87933f)
-* [#709] [RelaunchBlock] fix: infobulle au survol restaurée sur les boutons de relance [`3f5abf2`](https://github.com/Eoxia/easycrm/commit/3f5abf2)
-* [#707] [CallList] add: note publique en bas du PDF [`b1d88aa`](https://github.com/Eoxia/easycrm/commit/b1d88aa)
-* [#700] [ReedCRM/PWA] feat: calcul de la chaîne d'opportunités + barre de statut des documents [`b54561f`](https://github.com/Eoxia/easycrm/commit/b54561f) [`e0f95cc`](https://github.com/Eoxia/easycrm/commit/e0f95cc) [`42a4b5c`](https://github.com/Eoxia/easycrm/commit/42a4b5c)
-* [#696] [CallList] feat: système complet de listes d'appel (widgets, actions de masse, PDF, PWA) [`1382915`](https://github.com/Eoxia/easycrm/commit/1382915) [`3cd2346`](https://github.com/Eoxia/easycrm/commit/3cd2346) [`717baf7`](https://github.com/Eoxia/easycrm/commit/717baf7)
-* [#693] [JS] fix: double init de Saturne provoquant une création d'opportunité en double [`baee3d7`](https://github.com/Eoxia/easycrm/commit/baee3d7)
-* [#687] [Project] feat: cartes KPI, vues enregistrées, densité et édition inline sur la liste [`ae2ee38`](https://github.com/Eoxia/easycrm/commit/ae2ee38) [`2f43d53`](https://github.com/Eoxia/easycrm/commit/2f43d53) [`1a1e261`](https://github.com/Eoxia/easycrm/commit/1a1e261)
-* [#686] [Map] fix: réparation des filtres + preset actif [`f947669`](https://github.com/Eoxia/easycrm/commit/f947669) [`782bba8`](https://github.com/Eoxia/easycrm/commit/782bba8) [`1d9cd75`](https://github.com/Eoxia/easycrm/commit/1d9cd75)
-* [#683] [Project] feat: colonnes redimensionnables avec persistance serveur + colonne message [`5fa02aa`](https://github.com/Eoxia/easycrm/commit/5fa02aa)
-* [#682] [PWA] feat: Kanban des tickets avec filtre par assigné et glisser-déposer [`a62ac34`](https://github.com/Eoxia/easycrm/commit/a62ac34) [`06a8625`](https://github.com/Eoxia/easycrm/commit/06a8625) [`8c91f7c`](https://github.com/Eoxia/easycrm/commit/8c91f7c)
-* [#679] [JS] fix: positionnement de l'en-tête geoloc PWA + spinner infini [`33475f7`](https://github.com/Eoxia/easycrm/commit/33475f7) [`76fe0c5`](https://github.com/Eoxia/easycrm/commit/76fe0c5) [`6e4a5cc`](https://github.com/Eoxia/easycrm/commit/6e4a5cc)
-* [#676] [PWA] fix: exclure le PROJECTLEADER interne des chips de contact [`ef041a4`](https://github.com/Eoxia/easycrm/commit/ef041a4)
-* [#674] [Projet] rework: bloc de relance d'en-tête remplacé par des boutons typés [`669334f`](https://github.com/Eoxia/easycrm/commit/669334f)
-* [#671] [PWA] rework: UI/UX des cartes projet [`11172d2`](https://github.com/Eoxia/easycrm/commit/11172d2)
-* [#669] [Projet] fix: ajout de l'opportunité au dictionnaire de sources [`a48d584`](https://github.com/Eoxia/easycrm/commit/a48d584)
-* [#667] [Docs] feat: guidelines agent IA et docs d'architecture [`d607998`](https://github.com/Eoxia/easycrm/commit/d607998) [`f09c10c`](https://github.com/Eoxia/easycrm/commit/f09c10c)
-* [#665] [QuickCreation] fix: intégration du module media Saturne pour l'upload de photos [`03f1ae2`](https://github.com/Eoxia/easycrm/commit/03f1ae2)
-* [#659] [PWA] feat: ajouter un tiers depuis la PWA [`8d14b5d`](https://github.com/Eoxia/easycrm/commit/8d14b5d)
-* [#633] [Menu] fix: préfixe `/custom` sur les URLs du menu Saturne [`e6982da`](https://github.com/Eoxia/easycrm/commit/e6982da)
-* [#597] [PDF] fix: injection du téléphone et de l'e-mail du projet dans le bloc adressé [`8a9406a`](https://github.com/Eoxia/easycrm/commit/8a9406a)
+* [#954] [Facturation] fix: `rowid` alimenté avant `setVarsFromFetchObj` sur le Suivi FA [`fb29248`](https://github.com/Eoxia/reedcrm/commit/fb29248)
+* [#952] [Pocket] fix: réparation des tables des installs existantes et blocs graphiques d'une synthèse éditée [`017a265`](https://github.com/Eoxia/reedcrm/commit/017a265)
+* [#950] [Hook] fix: prise en compte des contextes génériques Saturne [`7025280`](https://github.com/Eoxia/reedcrm/commit/7025280)
+* [#946] [Pocket] feat: édition du tiers, du statut et de la synthèse, rattachement de n'importe quel objet [`80b6f6c`](https://github.com/Eoxia/reedcrm/commit/80b6f6c)
+* [#944] [Intervention] feat: une date par unité de ligne de service, son événement d'agenda et le calendrier des interventions [`b951c5f`](https://github.com/Eoxia/reedcrm/commit/b951c5f)
+* [#942] [Todo] feat: conservation des critères du tableau, clôture à une date choisie et datation de la fin [`2b4db41`](https://github.com/Eoxia/reedcrm/commit/2b4db41)
+* [#940] [Todo] feat: clôture rapide d'un événement depuis le pourcentage d'une carte [`d079ab2`](https://github.com/Eoxia/reedcrm/commit/d079ab2)
+* [#937] [Menu] fix: sous-entrées tenues à la largeur du menu de gauche [`a16632e`](https://github.com/Eoxia/reedcrm/commit/a16632e)
+* [#935] [Menu] fix: cible de clic sur toute la ligne du menu de gauche [`85518a7`](https://github.com/Eoxia/reedcrm/commit/85518a7)
+* [#933] [Pocket] feat: édition en place du libellé d'action et rendu des blocs de la synthèse [`9c05533`](https://github.com/Eoxia/reedcrm/commit/9c05533)
+* [#926] [Menu] rework: regroupement des entrées du menu de gauche en sections, pictos et couleurs [`38efe44`](https://github.com/Eoxia/reedcrm/commit/38efe44) [`239278f`](https://github.com/Eoxia/reedcrm/commit/239278f) [`000d8e9`](https://github.com/Eoxia/reedcrm/commit/000d8e9) [`2cfedca`](https://github.com/Eoxia/reedcrm/commit/2cfedca) [`e5051f1`](https://github.com/Eoxia/reedcrm/commit/e5051f1) [`2138ed1`](https://github.com/Eoxia/reedcrm/commit/2138ed1)
+* [#924] [Hook] fix: contextes de hook comparés à l'identique au lieu d'une sous-chaîne [`b36713d`](https://github.com/Eoxia/reedcrm/commit/b36713d)
+* [#922] [Invoice] fix: notation du contact tenue hors de la liste des factures fournisseur [`e39b336`](https://github.com/Eoxia/reedcrm/commit/e39b336)
+* [#912] [Pocket] feat: miroir des enregistrements Pocket et rattachement depuis les objets métier [`d78ed5a`](https://github.com/Eoxia/reedcrm/commit/d78ed5a)
+* [#904] [FA] feat: statistiques mensuelles d'entrées / sorties et traçabilité des générations [`4a8bbbf`](https://github.com/Eoxia/reedcrm/commit/4a8bbbf)
+* [#899] [Ticket] feat: utilisateurs désactivés exclus et tickets clôturés ignorables [`a82ddbd`](https://github.com/Eoxia/reedcrm/commit/a82ddbd)
+* [#897] [Todo] fix: load more vide, fermeture des popovers au clic extérieur, recherche des utilisateurs [`a36c4b0`](https://github.com/Eoxia/reedcrm/commit/a36c4b0)
+* [#895] [Todo] fix: toutes les tâches en attente affichées, colonnes lues par pages [`45633fe`](https://github.com/Eoxia/reedcrm/commit/45633fe)
+* [#893] [Todo] fix: utilisateurs internes listés sur `fk_soc` plutôt que sur l'indicateur employé [`722b10d`](https://github.com/Eoxia/reedcrm/commit/722b10d)
+* [#891] [Todo] feat: menu de colonne pour trier et masquer les colonnes du kanban [`e0f355d`](https://github.com/Eoxia/reedcrm/commit/e0f355d)
+* [#888] [Todo] feat: kanban des événements d'agenda par statut et crons de relance devis / factures [`6196bd0`](https://github.com/Eoxia/reedcrm/commit/6196bd0)
+* [#886] [PWA] fix: portée du manifest restreinte aux pages de l'App [`6721ee9`](https://github.com/Eoxia/reedcrm/commit/6721ee9)
+* [#884] [Ticket] feat: exposition du tableau de bord des tickets par l'API [`73f75b4`](https://github.com/Eoxia/reedcrm/commit/73f75b4)
+* [#882] [Ticket] feat: tableau de bord des tickets centré sur le temps et les personnes [`8f40be3`](https://github.com/Eoxia/reedcrm/commit/8f40be3)
+* [#875] [Project] feat: colonne tags / catégories sur la liste des opportunités [`9e49570`](https://github.com/Eoxia/reedcrm/commit/9e49570)
+* [#874] [Agenda] feat: clôture rapide des événements à faire, depuis une liste ou la fiche [`dd3532c`](https://github.com/Eoxia/reedcrm/commit/dd3532c)
+* [#872] [QuickCreation] feat: tags de contact et bascules de configuration du projet [`f3530e2`](https://github.com/Eoxia/reedcrm/commit/f3530e2)
+* [#871] [QuickEvent] remove: bouton d'événement rapide des barres d'action des fiches [`032c817`](https://github.com/Eoxia/reedcrm/commit/032c817)
+* [#856] [PWA] feat: consultation de l'opportunité et saisie de relance sur mobile [`d48b8fb`](https://github.com/Eoxia/reedcrm/commit/d48b8fb)
+* [#865] [Agenda] fix: double décalage de fuseau horaire à la création d'un événement [`939792c`](https://github.com/Eoxia/reedcrm/commit/939792c)
+* [#864] [Tooltip] fix: infobulles multiples, position hors écran et `data-dialog-url` manquant [`1e2ef80`](https://github.com/Eoxia/reedcrm/commit/1e2ef80) [`d521a5b`](https://github.com/Eoxia/reedcrm/commit/d521a5b) [`b57b910`](https://github.com/Eoxia/reedcrm/commit/b57b910) [`6a74c5a`](https://github.com/Eoxia/reedcrm/commit/6a74c5a)
+* [#860] [Relaunch] rework: avatars, colonnes alignées et lien vers l'événement dans l'infobulle [`785f2a3`](https://github.com/Eoxia/reedcrm/commit/785f2a3) [`75fc770`](https://github.com/Eoxia/reedcrm/commit/75fc770) [`3fd4eee`](https://github.com/Eoxia/reedcrm/commit/3fd4eee) [`ad84763`](https://github.com/Eoxia/reedcrm/commit/ad84763)
+* [#857] [Saturne] fix: assets CSS/JS et UI de relance rétablis sur `saturne_list.php` [`690b97b`](https://github.com/Eoxia/reedcrm/commit/690b97b) [`d56fd75`](https://github.com/Eoxia/reedcrm/commit/d56fd75) [`75bf5d4`](https://github.com/Eoxia/reedcrm/commit/75bf5d4) [`23f2d1d`](https://github.com/Eoxia/reedcrm/commit/23f2d1d) [`f037b43`](https://github.com/Eoxia/reedcrm/commit/f037b43) [`187a238`](https://github.com/Eoxia/reedcrm/commit/187a238)
+* [#854] [Agenda] fix: rappel affecté à l'utilisateur choisi et non au créateur [`218ee13`](https://github.com/Eoxia/reedcrm/commit/218ee13)
+* [#843] [Ticket] fix: traductions du hook et blocs inline qui ne s'étirent plus [`0ad9e8b`](https://github.com/Eoxia/reedcrm/commit/0ad9e8b) [`0653d8a`](https://github.com/Eoxia/reedcrm/commit/0653d8a)
+* [#837] [FA] fix: calendrier annuel, jointure dédoublonnée, cron à une annotation par modèle, filtre identique au natif [`d1ed0f6`](https://github.com/Eoxia/reedcrm/commit/d1ed0f6) [`ac92d4c`](https://github.com/Eoxia/reedcrm/commit/ac92d4c) [`a4845f7`](https://github.com/Eoxia/reedcrm/commit/a4845f7) [`f6d31f7`](https://github.com/Eoxia/reedcrm/commit/f6d31f7) [`1c923f7`](https://github.com/Eoxia/reedcrm/commit/1c923f7)
+* [#835] [FA] refactor: suivi des factures récurrentes piloté en live par les factures modèles [`a791b54`](https://github.com/Eoxia/reedcrm/commit/a791b54) [`2bc0b58`](https://github.com/Eoxia/reedcrm/commit/2bc0b58) [`79c4d64`](https://github.com/Eoxia/reedcrm/commit/79c4d64) [`c014288`](https://github.com/Eoxia/reedcrm/commit/c014288) [`529eccc`](https://github.com/Eoxia/reedcrm/commit/529eccc) [`3f9e8e1`](https://github.com/Eoxia/reedcrm/commit/3f9e8e1)
+* [#833] [Facturation] feat: page « Suivi facturation » des manquements de facturation [`146a3e3`](https://github.com/Eoxia/reedcrm/commit/146a3e3)
+* [#832] [DU] feat: devis Document Unique signés non facturés [`83da21d`](https://github.com/Eoxia/reedcrm/commit/83da21d) [`8fa3203`](https://github.com/Eoxia/reedcrm/commit/8fa3203) [`0a90a87`](https://github.com/Eoxia/reedcrm/commit/0a90a87) [`58fa38f`](https://github.com/Eoxia/reedcrm/commit/58fa38f)
+* [#829] [CallList] fix: logo du widget dimensionné par `width` / `height` [`cf38c13`](https://github.com/Eoxia/reedcrm/commit/cf38c13)
+* [#827] [QuickCreation] feat: cases « identique à » pour l'adresse et les contacts du projet [`11b3f49`](https://github.com/Eoxia/reedcrm/commit/11b3f49)
+* [#826] [QuickCreation] feat: recherche SIREN du module Sirene dans la création rapide de tiers [`065ee3a`](https://github.com/Eoxia/reedcrm/commit/065ee3a)
+* [#825] [Propale] feat: configuration des tags / catégories des modèles de propositions [`1ae00fe`](https://github.com/Eoxia/reedcrm/commit/1ae00fe)
+* [#822] [PWA] feat: lien de sortie vers Dolibarr dans le tiroir de navigation [`09cfd9b`](https://github.com/Eoxia/reedcrm/commit/09cfd9b)
+* [#821] [QuickCreation] fix: statut du projet respectant `PROJECT_CREATE_NO_DRAFT` [`6a3550a`](https://github.com/Eoxia/reedcrm/commit/6a3550a)
+* [#820] [ReedCRM] fix: clé `options_notation_societe_contact` indéfinie dans `actions_reedcrm` [`572eb98`](https://github.com/Eoxia/reedcrm/commit/572eb98)
+* [#817] [Facture] fix: onglets de facture récurrente (boucle infinie et onglet « Factures générées » écrasé) [`fdfc598`](https://github.com/Eoxia/reedcrm/commit/fdfc598)
+* [#816] [Digirisk] feat: clients Digirisk sans abonnement récurrent, détection par projets et masquage [`7e68ce9`](https://github.com/Eoxia/reedcrm/commit/7e68ce9) [`e0ace76`](https://github.com/Eoxia/reedcrm/commit/e0ace76) [`5f46fd9`](https://github.com/Eoxia/reedcrm/commit/5f46fd9) [`a789c43`](https://github.com/Eoxia/reedcrm/commit/a789c43) [`c6029ea`](https://github.com/Eoxia/reedcrm/commit/c6029ea) [`a7e4a0b`](https://github.com/Eoxia/reedcrm/commit/a7e4a0b) [`b72cdb1`](https://github.com/Eoxia/reedcrm/commit/b72cdb1)
+* [#815] [CallList] fix: numéro de téléphone obligatoire à l'ajout dans une liste d'appel [`f6e7e37`](https://github.com/Eoxia/reedcrm/commit/f6e7e37) [`29cef57`](https://github.com/Eoxia/reedcrm/commit/29cef57) [`da832c1`](https://github.com/Eoxia/reedcrm/commit/da832c1)
+* [#814] [Project] feat: héritage des commerciaux à l'ajout rapide d'un projet [`71d67e3`](https://github.com/Eoxia/reedcrm/commit/71d67e3)
+* [#813] [Project] feat: filtre de date, validation en masse et libellés de la liste des projets [`1e73f20`](https://github.com/Eoxia/reedcrm/commit/1e73f20) [`003172e`](https://github.com/Eoxia/reedcrm/commit/003172e) [`2759522`](https://github.com/Eoxia/reedcrm/commit/2759522) [`ca8f98c`](https://github.com/Eoxia/reedcrm/commit/ca8f98c) [`e25a317`](https://github.com/Eoxia/reedcrm/commit/e25a317)
+* [#810] [DU] chore: migration des colonnes de suivi d'audit DU et montant DU du mois parcouru [`bf3e766`](https://github.com/Eoxia/reedcrm/commit/bf3e766) [`8942074`](https://github.com/Eoxia/reedcrm/commit/8942074)
+* [#790] [Projet] fix: nom avant prénom dans le bloc contact [`7cc1359`](https://github.com/Eoxia/reedcrm/commit/7cc1359)
+* [#790] [Relaunch] add: colonnes nommées, 404 de l'infobulle en sous-répertoire, fichier de langue de l'endpoint [`907c4ed`](https://github.com/Eoxia/reedcrm/commit/907c4ed) [`781bbfc`](https://github.com/Eoxia/reedcrm/commit/781bbfc) [`c64fb68`](https://github.com/Eoxia/reedcrm/commit/c64fb68)
+* [#790] [CallList] add: libellé configurable des événements de changement de statut et tiret cadratin [`5d9ada3`](https://github.com/Eoxia/reedcrm/commit/5d9ada3) [`b479268`](https://github.com/Eoxia/reedcrm/commit/b479268)
+* [#790] [Lang] fix: traduction des libellés des extrafields projet [`e44aac8`](https://github.com/Eoxia/reedcrm/commit/e44aac8)
+* [#767] [Expedition] feat: commande liée avec sa référence et son total HT sur la liste [`71a7ac2`](https://github.com/Eoxia/reedcrm/commit/71a7ac2) [`3b7c3d7`](https://github.com/Eoxia/reedcrm/commit/3b7c3d7)
+* [#866] [Repo] chore: retrait des artefacts de travail internes [`441f2da`](https://github.com/Eoxia/reedcrm/commit/441f2da)

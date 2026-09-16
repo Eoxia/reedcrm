@@ -49,7 +49,7 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'ReedCRM triggers';
-        $this->version     = '23.1.1';
+        $this->version     = '23.2.0';
         $this->picto       = 'reedcrm@reedcrm';
     }
 
@@ -283,6 +283,40 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                             $this->errors   = array_merge($this->errors, $object->errors);
                             return -1;
                         }
+                    }
+                }
+                break;
+            case 'LINEPROPAL_DELETE':
+                // A deleted service line takes its intervention dates and their events with it
+                require_once __DIR__ . '/../../class/interventiondate.class.php';
+
+                $interventionDate = new InterventionDate($this->db);
+                foreach ($interventionDate->fetchAllByLine('propal', (int) $object->id) as $lineInterventionDate) {
+                    $lineInterventionDate->delete($user);
+                }
+                break;
+            case 'LINEPROPAL_MODIFY':
+                // A quantity brought down leaves dates beyond the last unit of the line
+                require_once __DIR__ . '/../../class/interventiondate.class.php';
+
+                $expected         = InterventionDate::getExpectedCount((float) $object->qty);
+                $interventionDate = new InterventionDate($this->db);
+                foreach ($interventionDate->fetchAllByLine('propal', (int) $object->id) as $position => $lineInterventionDate) {
+                    if ($position > $expected) {
+                        $lineInterventionDate->delete($user);
+                    }
+                }
+                break;
+            case 'PROPAL_DELETE':
+                require_once __DIR__ . '/../../class/interventiondate.class.php';
+
+                $interventionDate        = new InterventionDate($this->db);
+                $propalInterventionDates = $interventionDate->fetchAll('', '', 0, 0, [
+                    'customsql' => "t.element_type = 'propal' AND t.element_id = " . (int) $object->id
+                ]);
+                if (is_array($propalInterventionDates)) {
+                    foreach ($propalInterventionDates as $propalInterventionDate) {
+                        $propalInterventionDate->delete($user);
                     }
                 }
                 break;

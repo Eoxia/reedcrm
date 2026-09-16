@@ -32,6 +32,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
 
@@ -91,6 +92,21 @@ if ($action == 'update_tag') {
     $tag_id = GETPOST('reedcrm_propal_model_tag_id', 'int');
     dolibarr_set_const($db, 'REEDCRM_PROPAL_MODEL_TAG_ID', $tag_id, 'chaine', 0, '', $conf->entity);
     setEventMessages($langs->trans("SetupSaved"), null, 'mesgs');
+}
+
+if ($action == 'update_intervention') {
+    $defaultDuration = GETPOSTINT('reedcrm_intervention_default_duration');
+    $maxPerLine      = GETPOSTINT('reedcrm_intervention_max_per_line');
+    $dateFrom        = GETPOST('reedcrm_intervention_date_from', 'alphanohtml');
+    // The empty option of selectarray() carries -1
+    $productTag      = max(0, GETPOSTINT('reedcrm_intervention_product_tag'));
+
+    dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_FROM', preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) ? $dateFrom : '', 'chaine', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', $productTag, 'integer', 0, '', $conf->entity);
+
+    dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_DEFAULT_DURATION', $defaultDuration > 0 ? $defaultDuration : 60, 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', $maxPerLine > 0 ? $maxPerLine : 24, 'integer', 0, '', $conf->entity);
+    setEventMessages($langs->trans('SetupSaved'), null, 'mesgs');
 }
 
 /*
@@ -153,6 +169,83 @@ print 'Affichage du menu Tags/catégories';
 print '<br><small class="opacitymedium">(Ce toggle ajoute ou retire CATEGORY_EDIT_IN_MENU_NOT_IN_POPUP dans l\'onglet Divers)</small>';
 print '</td>';
 print '<td class="right">' . ajax_constantonoff('CATEGORY_EDIT_IN_MENU_NOT_IN_POPUP', [], null, 0, 0, 1) . '</td>';
+print '</tr>';
+
+print '</table>';
+print '</form>';
+
+// Intervention dates carried by the service lines of the proposals
+print '<br>';
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="update_intervention">';
+
+// Without a tag nothing is planned : say it here rather than letting the feature look broken
+if (getDolGlobalInt('REEDCRM_INTERVENTION_DATE_ENABLED') && getDolGlobalInt('REEDCRM_INTERVENTION_DATE_PRODUCT_TAG') <= 0) {
+    print info_admin($langs->trans('InterventionDateNoProductTagWarning'), 0, 0, '1', 'warning');
+}
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td colspan="2">' . $langs->trans('InterventionDateSetupTitle') . '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('InterventionDateEnabled');
+print '<br><small class="opacitymedium">' . $langs->trans('InterventionDateEnabledDescription') . '</small>';
+print '</td>';
+print '<td class="right">' . ajax_constantonoff('REEDCRM_INTERVENTION_DATE_ENABLED', [], null, 0, 0, 1) . '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('InterventionDateCreateEvent');
+print '<br><small class="opacitymedium">' . $langs->trans('InterventionDateCreateEventDescription') . '</small>';
+print '</td>';
+print '<td class="right">' . ajax_constantonoff('REEDCRM_INTERVENTION_DATE_CREATE_EVENT', [], null, 0, 0, 1) . '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('InterventionDateProductTagLabel');
+print '<br><small class="opacitymedium">' . $langs->trans('InterventionDateProductTagDescription') . '</small>';
+print '</td>';
+print '<td class="right">';
+$tmpProductCat     = new Categorie($db);
+$productCatTypeID  = $tmpProductCat->MAP_ID[Categorie::TYPE_PRODUCT] ?? 0;
+$selectedTagID     = getDolGlobalInt('REEDCRM_INTERVENTION_DATE_PRODUCT_TAG');
+$productCategories = [];
+
+$sqlProductCat   = 'SELECT rowid, label FROM ' . MAIN_DB_PREFIX . 'categorie WHERE type = ' . (int) $productCatTypeID;
+$sqlProductCat  .= ' AND entity IN (0, ' . (int) $conf->entity . ') ORDER BY label';
+$resqlProductCat = $db->query($sqlProductCat);
+if ($resqlProductCat) {
+    while ($objProductCat = $db->fetch_object($resqlProductCat)) {
+        $productCategories[(int) $objProductCat->rowid] = $objProductCat->label;
+    }
+}
+
+// selectarray turns it into a select2, the tag lists get long
+print Form::selectarray('reedcrm_intervention_product_tag', $productCategories, $selectedTagID ?: -1, '-- ' . $langs->trans('None') . ' --', 0, 0, '', 0, 0, 0, '', 'minwidth200', 1);
+print '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('InterventionDateFromLabel');
+print '<br><small class="opacitymedium">' . $langs->trans('InterventionDateFromDescription') . '</small>';
+print '</td>';
+print '<td class="right"><input type="date" name="reedcrm_intervention_date_from" value="' . dol_escape_htmltag(getDolGlobalString('REEDCRM_INTERVENTION_DATE_FROM')) . '"></td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>' . $langs->trans('InterventionDateDefaultDurationLabel') . '</td>';
+print '<td class="right"><input type="number" min="5" step="5" name="reedcrm_intervention_default_duration" value="' . getDolGlobalInt('REEDCRM_INTERVENTION_DATE_DEFAULT_DURATION', 60) . '"></td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('InterventionDateMaxPerLineLabel');
+print '<br><small class="opacitymedium">' . $langs->trans('InterventionDateMaxPerLineDescription') . '</small>';
+print '</td>';
+print '<td class="right"><input type="number" min="1" max="365" name="reedcrm_intervention_max_per_line" value="' . getDolGlobalInt('REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', 24) . '">';
+print '&nbsp;<input type="submit" class="button" value="' . $langs->trans('Save') . '">';
+print '</td>';
 print '</tr>';
 
 print '</table>';

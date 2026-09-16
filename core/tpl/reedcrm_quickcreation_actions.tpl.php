@@ -27,6 +27,28 @@ if ($action == 'add') {
 			$thirdparty->note_private = GETPOST('note_private');
             $thirdparty->country_id   = $mysoc->country_id;
 
+			// Official company data brought by the SIREN search (module Sirene)
+			if (isModEnabled('sirene') && GETPOSTINT('has_done_sirene_search')) {
+				$thirdparty->name_alias           = GETPOST('name_alias', 'alphanohtml');
+				$thirdparty->address              = GETPOST('address', 'alphanohtml');
+				$thirdparty->zip                  = GETPOST('zipcode', 'alphanohtml');
+				$thirdparty->town                 = GETPOST('town', 'alphanohtml');
+				$thirdparty->state_id             = GETPOSTINT('state_id');
+				$thirdparty->idprof1              = GETPOST('idprof1', 'alphanohtml');
+				$thirdparty->idprof2              = GETPOST('idprof2', 'alphanohtml');
+				$thirdparty->idprof3              = GETPOST('idprof3', 'alphanohtml');
+				$thirdparty->idprof6              = GETPOST('idprof6', 'alphanohtml');
+				$thirdparty->tva_intra            = GETPOST('tva_intra', 'alphanohtml');
+				$thirdparty->effectif_id          = GETPOSTINT('effectif_id');
+				$thirdparty->forme_juridique_code = GETPOST('forme_juridique_code', 'alphanohtml');
+				if (GETPOSTINT('country_id') > 0) {
+					$thirdparty->country_id = GETPOSTINT('country_id');
+				}
+
+				$thirdparty->array_options['options_sirene_company_admin_status'] = GETPOST('options_sirene_company_admin_status', 'alphanohtml');
+				$thirdparty->array_options['options_sirene_update_date']          = dol_now();
+			}
+
 			$thirdpartyID = $thirdparty->create($user);
 			if ($thirdpartyID > 0) {
 				$backtopage = dol_buildpath('/societe/card.php', 1) . '?id=' . $thirdpartyID;

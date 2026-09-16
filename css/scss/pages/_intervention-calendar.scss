@@ -1,0 +1,424 @@
+/* Intervention calendar : toolbar, filters, figures and month grid. */
+
+.reedcrm-intervention-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reedcrm-intervention-period {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .reedcrm-intervention-period-label {
+    min-width: 180px;
+    font-size: 1.15em;
+    font-weight: 600;
+    text-transform: capitalize;
+    color: #2d3748;
+  }
+}
+
+/* One button look for the whole page : links and submits alike, away from the eldy .button */
+a.reedcrm-btn,
+button.reedcrm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid #d5dde5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: none;
+  color: #4a5568;
+  font-family: inherit;
+  font-size: 0.85em;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: none;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    border-color: #63acc9;
+    background: #f2f9fc;
+    color: #2d3748;
+  }
+
+  i {
+    font-size: 0.95em;
+    opacity: 0.8;
+  }
+
+  &.reedcrm-btn-icon {
+    width: 32px;
+    padding: 0;
+
+    i {
+      opacity: 1;
+    }
+  }
+
+  /* Selected view, active shortcut */
+  &.reedcrm-btn-on {
+    border-color: #63acc9;
+    background: #eaf4f9;
+    color: #2b6b83;
+    font-weight: 600;
+
+    i {
+      opacity: 1;
+    }
+  }
+
+  &.reedcrm-btn-primary {
+    border-color: #63acc9;
+    background: #63acc9;
+    color: #fff;
+
+    &:hover {
+      border-color: #4f9ab8;
+      background: #4f9ab8;
+      color: #fff;
+    }
+
+    i {
+      opacity: 1;
+    }
+  }
+}
+
+.reedcrm-intervention-views {
+  display: inline-flex;
+
+  .reedcrm-btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .reedcrm-btn:last-child {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  .reedcrm-btn-on {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.reedcrm-intervention-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.reedcrm-intervention-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #718096;
+  }
+}
+
+.reedcrm-intervention-filter-actions {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.reedcrm-intervention-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reedcrm-intervention-stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+
+  .reedcrm-intervention-stat-value {
+    font-size: 1.4em;
+    font-weight: 600;
+    color: #2d3748;
+  }
+
+  .reedcrm-intervention-stat-label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #718096;
+  }
+}
+
+.reedcrm-intervention-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 0.85em;
+  color: #4a5568;
+}
+
+.reedcrm-intervention-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.reedcrm-intervention-legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.reedcrm-calendar {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.reedcrm-calendar-head,
+.reedcrm-calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.reedcrm-calendar-head-day {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f7fafc;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #718096;
+}
+
+.reedcrm-calendar-day {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 128px;
+  padding: 4px;
+  border-right: 1px solid #eef2f6;
+  border-bottom: 1px solid #eef2f6;
+  // A long service label must stay inside its day, not spill over the neighbouring ones
+  overflow: hidden;
+
+  &.reedcrm-calendar-day-out {
+    background: #fafbfc;
+    color: #a0aec0;
+  }
+
+  &.reedcrm-calendar-day-weekend {
+    background: #f7f9fb;
+  }
+
+  &.reedcrm-calendar-day-today {
+    box-shadow: inset 0 0 0 2px #63acc9;
+  }
+}
+
+.reedcrm-calendar-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .reedcrm-calendar-day-number {
+    font-size: 0.9em;
+    font-weight: 600;
+  }
+
+  .reedcrm-calendar-day-count {
+    padding: 0 5px;
+    border-radius: 8px;
+    background: #edf3f8;
+    font-size: 0.7em;
+    color: #4a5568;
+  }
+}
+
+.reedcrm-intervention-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 6px;
+  border: 1px solid #e4ebf1;
+  border-left: 3px solid #63acc9;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 0.78em;
+  line-height: 1.25;
+  cursor: pointer;
+  // The host page centers the text of its cells, a chip reads from the left and truncates
+  text-align: left;
+
+  &:hover {
+    border-color: #cfe0ea;
+    border-left-color: inherit;
+    background: #f4f9fc;
+  }
+
+  &.reedcrm-intervention-chip-done {
+    background: #f7f9f7;
+
+    .reedcrm-chip-soc,
+    .reedcrm-chip-label {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+  }
+
+  .reedcrm-chip-label,
+  .reedcrm-chip-soc,
+  .reedcrm-chip-user-name {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .reedcrm-chip-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .reedcrm-chip-time {
+    padding: 0 4px;
+    border-radius: 3px;
+    background: #edf3f8;
+    color: #2b6b83;
+    font-weight: 700;
+    font-size: 0.95em;
+  }
+
+  // The third party is what a planner reads first
+  .reedcrm-chip-soc {
+    color: #2d3748;
+    font-weight: 600;
+  }
+
+  .reedcrm-chip-label {
+    color: #718096;
+  }
+
+  .reedcrm-chip-user {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    margin-top: 1px;
+    padding-top: 3px;
+    border-top: 1px dashed #eaeff4;
+    color: #4a5568;
+
+    &.reedcrm-chip-user-none {
+      color: #a0aec0;
+      font-style: italic;
+    }
+  }
+
+  .reedcrm-chip-link {
+    flex: 0 0 auto;
+    color: #a8bcc9;
+
+    &:hover {
+      color: #63acc9;
+    }
+  }
+}
+
+/* Photo of the intervenant, or his initials when he has none */
+.reedcrm-chip-photo,
+.reedcrm-chip-avatar {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reedcrm-chip-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #b0b8c1;
+  color: #fff;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  &.reedcrm-chip-avatar-none {
+    background: #cbd5e0;
+  }
+}
+
+.reedcrm-intervention-user-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reedcrm-intervention-unplanned {
+  padding-top: 18px;
+}
+
+.reedcrm-intervention-remaining {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #fdecec;
+  color: #b13c3c;
+  font-weight: 600;
+}
+
+.reedcrm-intervention-chip .reedcrm-chip-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #8b95a1;
+
+  i {
+    flex: 0 0 auto;
+    font-size: 0.9em;
+  }
+}
+
+.reedcrm-intervention-chip .reedcrm-chip-location,
+.reedcrm-intervention-field-location {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

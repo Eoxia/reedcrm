@@ -397,6 +397,33 @@ window.reedcrm.todoKanban.paintCard = function ($card, percent) {
   $card.find('.todo-progress-fill').css({width: Math.max(0, percent) + '%', background: color});
   $card.find('.todo-progress-text').text(percent >= 0 ? percent + '%' : String($('.todo-board').data('na-label') || ''));
   $card.find('.todo-initial-owner').css('background', color);
+  window.reedcrm.todoKanban.paintQuickClose($card, percent);
+};
+
+/**
+ * Turn the percentage of a card into the quick close trigger of its event, or back into plain text
+ * once that event has nothing left to close. Called on every repaint: paintCard() rewrites the text
+ * of the badge, so the icon of the trigger has to be put back with it.
+ *
+ * @param  {jQuery} $card   Card to decorate
+ * @param  {number} percent New percentage (-1 for an event carrying none)
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.paintQuickClose = function ($card, percent) {
+  var $text = $card.find('.todo-progress-text');
+
+  $text.find('.reedcrm-quick-close-icon').remove();
+
+  // A reader closes nothing, and a done event or one carrying no percentage has no progress to close
+  if (!$card.data('quick-close') || percent < 0 || percent >= 100) {
+    $text.removeClass('reedcrm-quick-close-trigger').removeAttr('data-event-id').removeAttr('title');
+    return;
+  }
+
+  $text.addClass('reedcrm-quick-close-trigger')
+    .attr('data-event-id', $card.data('event-id'))
+    .attr('title', String($('.todo-board').data('quick-close-label') || ''))
+    .append('<i class="fas fa-check-circle reedcrm-quick-close-icon"></i>');
 };
 
 /**

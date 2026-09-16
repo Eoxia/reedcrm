@@ -32,6 +32,18 @@
 $menuMain = GETPOST('mainmenu', 'aZ09');
 $menuLeft = GETPOST('leftmenu', 'aZ09');
 $menuId   = GETPOSTINT('idmenu');
+
+// Wiping the criteria has to say so: a plain link would find the last ones back
+$todoResetUrl = $_SERVER['PHP_SELF'] . '?removefilter=1';
+if (!empty($menuMain)) {
+    $todoResetUrl .= '&mainmenu=' . urlencode($menuMain);
+}
+if (!empty($menuLeft)) {
+    $todoResetUrl .= '&leftmenu=' . urlencode($menuLeft);
+}
+if ($menuId > 0) {
+    $todoResetUrl .= '&idmenu=' . $menuId;
+}
 ?>
 
 <form class="todo-filter-bar" method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
@@ -101,7 +113,7 @@ $menuId   = GETPOSTINT('idmenu');
         <button type="submit" class="tdf-btn tdf-btn-search">
             <i class="fas fa-search"></i> <?php echo $langs->trans('Search'); ?>
         </button>
-        <a class="tdf-btn tdf-btn-reset" href="<?php echo $_SERVER['PHP_SELF']; ?>">
+        <a class="tdf-btn tdf-btn-reset" href="<?php echo dol_escape_htmltag($todoResetUrl); ?>">
             <i class="fas fa-eraser"></i> <?php echo $langs->trans('RemoveFilter'); ?>
         </a>
         <span class="tdf-count">

@@ -82,10 +82,29 @@ function reedcrmTodoGetColumnForEvent(array $columns, array $event): array
 }
 
 /**
+ * Return the session entry the criteria of the board are kept in
+ *
+ * Kept per entity: a user switching company must not find the criteria of the other one, the
+ * users and the types of event they name belong to the entity they were picked in.
+ *
+ * @return string Session key
+ */
+function reedcrmTodoGetFilterSessionKey(): string
+{
+    global $conf;
+
+    return 'reedcrm_todo_filters_' . (int) $conf->entity;
+}
+
+/**
  * Read the criteria of the todo board from the query string
  *
  * The filter bar always posts `filtered`, so an untouched page can be told from a
  * deliberately emptied criterion (the "everybody" user is 0, just like the unset value).
+ *
+ * A page opened without any criterion falls back on the ones last searched rather than on the
+ * default ones: reloading the board, or coming back to it from the menu, finds it as it was
+ * left. Only the reset link of the filter bar wipes them, saying so with `removefilter`.
  *
  * @return array Criteria used by reedcrmTodoGetEvents()
  */
@@ -93,23 +112,33 @@ function reedcrmTodoGetFilters(): array
 {
     global $user;
 
+    // Out of the box the board shows everything the connected user has to do, however old:
+    // a lower bound on the start date can only ever hide what he is the most late on
+    $defaults = [
+        'user'       => (int) $user->id,
+        'date_start' => 0,
+        'date_end'   => 0,
+        'type'       => 0,
+        'search'     => '',
+        'hide_auto'  => 1,
+    ];
+
+    $sessionKey = reedcrmTodoGetFilterSessionKey();
+
+    if (GETPOSTINT('removefilter')) {
+        unset($_SESSION[$sessionKey]);
+
+        return $defaults;
+    }
+
     if (!GETPOSTINT('filtered')) {
-        // Out of the box the board shows everything the connected user has to do, however old:
-        // a lower bound on the start date can only ever hide what he is the most late on
-        return [
-            'user'       => (int) $user->id,
-            'date_start' => 0,
-            'date_end'   => 0,
-            'type'       => 0,
-            'search'     => '',
-            'hide_auto'  => 1,
-        ];
+        return reedcrmTodoNormalizeFilters($_SESSION[$sessionKey] ?? [], $defaults);
     }
 
     $dateStart = GETPOST('search_date_start', 'alpha');
     $dateEnd   = GETPOST('search_date_end', 'alpha');
 
-    return [
+    $filters = [
         'user'       => GETPOSTINT('search_user'),
         'date_start' => !empty($dateStart) ? (int) strtotime($dateStart . ' 00:00:00') : 0,
         'date_end'   => !empty($dateEnd) ? (int) strtotime($dateEnd . ' 23:59:59') : 0,
@@ -117,6 +146,40 @@ function reedcrmTodoGetFilters(): array
         'search'     => GETPOST('search_text', 'alphanohtml'),
         'hide_auto'  => GETPOSTINT('search_hide_auto'),
     ];
+
+    $_SESSION[$sessionKey] = $filters;
+
+    return $filters;
+}
+
+/**
+ * Give back a complete set of criteria from what the session holds
+ *
+ * The session outlives a release: criteria written by an older version are completed by the
+ * default ones instead of leaving the board reading keys that are not there.
+ *
+ * @param  array $filters  Criteria read back from the session
+ * @param  array $defaults Criteria of an untouched board
+ * @return array           Complete criteria
+ */
+function reedcrmTodoNormalizeFilters(array $filters, array $defaults): array
+{
+    if (empty($filters)) {
+        return $defaults;
+    }
+
+    $normalized = [];
+    foreach ($defaults as $key => $default) {
+        $normalized[$key] = array_key_exists($key, $filters) ? $filters[$key] : $default;
+    }
+
+    // The searched text is the only criterion that is not a number
+    $normalized['search'] = (string) $normalized['search'];
+    foreach (['user', 'date_start', 'date_end', 'type', 'hide_auto'] as $key) {
+        $normalized[$key] = (int) $normalized[$key];
+    }
+
+    return $normalized;
 }
 
 /**

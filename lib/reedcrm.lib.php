@@ -73,6 +73,11 @@ function reedcrm_admin_prepare_head(): array
     $head[$h][2] = 'propal';
     $h++;
 
+    $head[$h][0] = dol_buildpath('/reedcrm/admin/pocket.php', 1);
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-microphone pictofixedwidth"></i>' . $langs->trans('Pocket') : '<i class="fas fa-microphone"></i>';
+    $head[$h][2] = 'pocket';
+    $h++;
+
     $head[$h][0] = dol_buildpath('/reedcrm/admin/ticket.php', 1);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-ticket-alt pictofixedwidth"></i>' . $langs->trans('Ticket') : '<i class="fas fa-ticket-alt"></i>';
     $head[$h][2] = 'ticket';

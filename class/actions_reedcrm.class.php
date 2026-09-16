@@ -62,6 +62,27 @@ class ActionsReedcrm
     }
 
     /**
+     * Check the hook context against exact context names
+     *
+     * The context is a colon separated list of names, so a substring test on 'invoicelist'
+     * or 'invoicereccard' also matches 'supplierinvoicelist' or 'supplierinvoicereccard'
+     * and runs the code on a supplier object.
+     *
+     * The generic Saturne views suffix their own context ('projectlist_saturne'), where the
+     * module behaves like on the native page, so the suffix is dropped before matching.
+     *
+     * @param  array $parameters Hook metadatas (context, etc...)
+     * @param  array $names      Context names to look for
+     * @return bool              True when one of the names is one of the current contexts
+     */
+    protected function isContext(array $parameters, array $names): bool
+    {
+        $contexts = preg_replace('/_saturne$/', '', explode(':', $parameters['context'] ?? ''));
+
+        return count(array_intersect($contexts, $names)) > 0;
+    }
+
+    /**
      * Overload the menuLeftMenuItems hook to inject our custom menu entries
      *
      * @param array $parameters
@@ -475,7 +496,7 @@ class ActionsReedcrm
             }
         }
 
-        if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
+        if ($this->isContext($parameters, ['invoicecard', 'invoicereccard', 'thirdpartycomm', 'thirdpartycard'])) {
             if ($action == 'set_notation_object_contact') {
                 require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
@@ -748,11 +769,11 @@ class ActionsReedcrm
             }
         }
 
-        if (preg_match('/invoicelist|invoicereclist|thirdpartylist|projectlist|propallist/', $parameters['context'])) {
+        if ($this->isContext($parameters, ['invoicelist', 'invoicereclist', 'thirdpartylist', 'projectlist', 'propallist'])) {
             $cssPath = dol_buildpath('/saturne/css/saturne.min.css', 1);
             print '<link href="' . $cssPath . '" rel="stylesheet">';
             // Load reedcrm modal CSS and JS for projectlist and propallist
-            if (preg_match('/projectlist|propallist/', $parameters['context'])) {
+            if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
                 global $langs;
                 // Load main reedcrm CSS
                 $reedcrmMainCssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
@@ -811,7 +832,7 @@ class ActionsReedcrm
             }
         }
 
-        if (preg_match('/invoicecard|invoicereccard|thirdpartycomm|thirdpartycard/', $parameters['context'])) {
+        if ($this->isContext($parameters, ['invoicecard', 'invoicereccard', 'thirdpartycomm', 'thirdpartycard'])) {
             $cssPath = dol_buildpath('/saturne/css/saturne.min.css', 1);
             print '<link href="' . $cssPath . '" rel="stylesheet">';
 
@@ -1473,6 +1494,24 @@ class ActionsReedcrm
 
             $this->resprints .= $html;
         }
+
+        // Quick close of the to-do events listed by show_actions_done(), on every page displaying that list,
+        // of the event shown alone on its own card (actioncard) and of the cards of the to-do board
+        $quickCloseContexts = 'agenda|actioncard|thirdpartycomm|thirdpartysupplier|projectcardinfo|call_list_card|thirdpartycalls|address|reedcrmtodolist';
+        if (isModEnabled('agenda') && preg_match('/' . $quickCloseContexts . '/', $parameters['context'])
+            && ($user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create'))) {
+            $langs->load('reedcrm@reedcrm');
+            require __DIR__ . '/../core/tpl/reedcrm_event_quick_close_modal.tpl.php';
+        }
+
+        // Intervention dates of the service lines, planned from the proposal card
+        require_once __DIR__ . '/../lib/reedcrm_interventiondate.lib.php';
+        if (strpos($parameters['context'], 'propalcard') !== false && reedcrmInterventionIsEnabled()
+            && $user->hasRight('propal', 'lire') && is_object($object) && $object->id > 0) {
+            $langs->load('reedcrm@reedcrm');
+            require __DIR__ . '/../core/tpl/reedcrm_intervention_date_modal.tpl.php';
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
@@ -1883,17 +1922,18 @@ class ActionsReedcrm
             }
         }
 
-        if (preg_match('/invoicelist|invoicereclist|thirdpartylist/', $parameters['context'])) {
-            if (isModEnabled('facture') && $user->hasRight('facture', 'lire')) {
-                $extrafieldName = 'options_notation_' . $object->element . '_contact';
+        if ($this->isContext($parameters, ['invoicelist', 'invoicereclist', 'thirdpartylist'])) {
+            $extrafieldName = 'options_notation_' . $object->element . '_contact';
+            $obj            = $parameters['obj'] ?? null;
+            if (isModEnabled('facture') && $user->hasRight('facture', 'lire') && is_object($obj) && property_exists($obj, $extrafieldName)) {
                 if ($object->element == 'facturerec') {
                     $specialName = 'facture_rec';
                 } else {
                     $specialName = $object->element;
                 }
                 $jQueryElement  = $specialName . '.notation_' . $object->element . '_contact';
-                $out            = '<div class="wpeo-button button-strong ' . (($parameters['obj']->$extrafieldName >= 80) ? 'button-green' : 'button-red') . '" style="padding: 0; line-height: 1;">';
-                $out           .= '<span>' . $parameters['obj']->$extrafieldName . '</span>';
+                $out            = '<div class="wpeo-button button-strong ' . (($obj->$extrafieldName >= 80) ? 'button-green' : 'button-red') . '" style="padding: 0; line-height: 1;">';
+                $out           .= '<span>' . $obj->$extrafieldName . '</span>';
                 $out           .= '</div>'; ?>
 
                 <script>
@@ -1938,7 +1978,7 @@ class ActionsReedcrm
     {
         global $langs;
 
-        if (preg_match('/invoicereccard|invoicereccontact/', $parameters['context']) && ($parameters['mode'] ?? '') === 'add') {
+        if ($this->isContext($parameters, ['invoicereccard', 'invoicereccontact']) && ($parameters['mode'] ?? '') === 'add') {
             $nbContact = 0;
             // Enable caching of thirdrparty count Contacts
             require_once DOL_DOCUMENT_ROOT . '/core/lib/memory.lib.php';
@@ -2358,6 +2398,29 @@ class ActionsReedcrm
             'defaultorder'   => 'DESC',
             'class_path'     => 'custom/reedcrm/class/calllist.class.php',
             'lib_path'       => 'custom/reedcrm/lib/reedcrm_call_list.lib.php',
+        ];
+
+        $this->results['pocketrecording'] = [
+            'mainmenu'       => 'reedcrm',
+            'leftmenu'       => 'pocketrecording',
+            'langs'          => 'PocketRecording',
+            'langfile'       => 'reedcrm@reedcrm',
+            'picto'          => 'fontawesome_fa-microphone_fas_#63ACC9',
+            'color'          => '#63ACC9',
+            'class_name'     => 'PocketRecording',
+            'name_field'     => 'ref',
+            'post_name'      => 'fk_pocketrecording',
+            'link_name'      => 'pocketrecording',
+            'tab_type'       => 'pocketrecording',
+            'table_element'  => 'reedcrm_pocket_recording',
+            'hook_name_card' => 'pocketrecordingcard',
+            'hook_name_list' => 'pocketrecordinglist',
+            'create_url'     => 'custom/reedcrm/view/pocketrecording/pocketrecording_card.php',
+            'list_url'       => 'custom/reedcrm/view/pocketrecording/pocketrecording_list.php',
+            'defaultsort'    => 't.recording_date',
+            'defaultorder'   => 'DESC',
+            'class_path'     => 'custom/reedcrm/class/pocketrecording.class.php',
+            'lib_path'       => 'custom/reedcrm/lib/reedcrm_pocketrecording.lib.php',
         ];
 
         return 0; // or return 1 to replace standard code
@@ -3644,6 +3707,76 @@ EOT;
         ob_start();
         require __DIR__ . '/../core/tpl/index/reedcrm_upcoming_reminders.tpl.php';
         $this->resprints = ob_get_clean();
+
+        return 0;
+    }
+
+    /**
+     * Overloading the objectLineView_ProductSupplier function : hangs the intervention date trigger
+     * under every service line of a proposal. It is the last hook of the description cell, and the
+     * return value stays 0 so the native supplier block is still displayed.
+     *
+     * @param  array  $parameters Hook metadata (context, etc...)
+     * @param  object $object     Object the displayed line belongs to
+     * @param  string $action     Current action
+     * @return int                0 on success
+     */
+    public function objectLineView_ProductSupplier(array $parameters, $object, string $action): int
+    {
+        global $db, $langs, $user;
+
+        require_once __DIR__ . '/../lib/reedcrm_interventiondate.lib.php';
+
+        if (!is_object($object) || $object->element !== 'propal' || !reedcrmInterventionIsEnabled()) {
+            return 0;
+        }
+        if (!$user->hasRight('propal', 'lire') || empty($parameters['line'])) {
+            return 0;
+        }
+
+        // A proposal older than the go-live date of the feature carries no intervention
+        $minPropalDate = reedcrmInterventionMinPropalDate();
+        $propalDate    = !empty($object->date) ? $object->date : ($object->datep ?? 0);
+        if ($minPropalDate > 0 && !empty($propalDate) && $propalDate < $minPropalDate) {
+            return 0;
+        }
+
+        require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+
+        $line = $parameters['line'];
+        if ((int) $line->product_type !== Product::TYPE_SERVICE) {
+            return 0;
+        }
+        if (!reedcrmInterventionProductHasTag((int) $line->fk_product)) {
+            return 0;
+        }
+
+        require_once __DIR__ . '/interventiondate.class.php';
+
+        $expected = InterventionDate::getExpectedCount((float) $line->qty);
+        if ($expected <= 0) {
+            return 0;
+        }
+
+        // Every line of the card asks for the same counters, they are read once for the whole proposal
+        static $plannedByLine = [];
+        if (!isset($plannedByLine[$object->id])) {
+            $interventionDate               = new InterventionDate($db);
+            $plannedByLine[$object->id]     = $interventionDate->countPlannedByElement('propal', (int) $object->id);
+        }
+        $planned = $plannedByLine[$object->id][(int) $line->id] ?? 0;
+
+        $langs->load('reedcrm@reedcrm');
+
+        $html  = '<div class="reedcrm-intervention-line">';
+        $html .= '<div class="reedcrm-intervention-trigger' . ($planned >= $expected ? ' reedcrm-intervention-trigger-complete' : '') . '"';
+        $html .= ' data-line-id="' . (int) $line->id . '" title="' . dol_escape_htmltag($langs->trans('InterventionDatePlanTooltip')) . '">';
+        $html .= '<i class="fas fa-calendar-alt"></i>';
+        $html .= '<span class="reedcrm-intervention-count">' . $planned . '/' . $expected . '</span>';
+        $html .= '<span class="reedcrm-intervention-trigger-label">' . dol_escape_htmltag($langs->trans('InterventionDates')) . '</span>';
+        $html .= '</div></div>';
+
+        $this->resprints = $html;
 
         return 0;
     }
