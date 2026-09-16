@@ -89,7 +89,7 @@ class DuAudit extends SaturneObject
         'proposal_sent_date' => ['type' => 'date',        'label' => 'FollowupProposalSent', 'enabled' => 1, 'position' => 125, 'notnull' => 0, 'visible' => 1],
         'fk_propal'         => ['type' => 'integer:Propal:comm/propal/class/propal.class.php', 'label' => 'FollowupLinkedQuote', 'enabled' => 1, 'position' => 126, 'notnull' => 0, 'visible' => 1],
         'fk_facture'        => ['type' => 'integer:Facture:compta/facture/class/facture.class.php', 'label' => 'FollowupLinkedInvoice', 'enabled' => 1, 'position' => 127, 'notnull' => 0, 'visible' => 1],
-        'fk_fichinter'      => ['type' => 'integer:Fichinter:fichinter/class/fichinter.class.php', 'label' => 'FollowupLinkedIntervention', 'enabled' => 1, 'position' => 127.5, 'notnull' => 0, 'visible' => 1],
+        'fk_intervention_date' => ['type' => 'integer', 'label' => 'FollowupLinkedIntervention', 'enabled' => 1, 'position' => 129, 'notnull' => 0, 'visible' => 1],
         'fk_user_assign'    => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'FollowupAssignedTo', 'picto' => 'user', 'enabled' => 1, 'position' => 128, 'notnull' => 0, 'visible' => 1, 'foreignkey' => 'user.rowid'],
         'note'              => ['type' => 'text',         'label' => 'Note',          'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 1],
         'montant'           => ['type' => 'price',        'label' => 'FollowupAmountTTC', 'enabled' => 1, 'position' => 135, 'notnull' => 0, 'visible' => 1, 'isameasure' => 1],

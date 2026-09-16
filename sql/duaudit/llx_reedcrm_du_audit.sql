@@ -32,7 +32,7 @@ CREATE TABLE llx_reedcrm_du_audit(
   proposal_sent_date date DEFAULT NULL,
   fk_propal         integer DEFAULT NULL,
   fk_facture        integer DEFAULT NULL,
-  fk_fichinter      integer DEFAULT NULL,
+  fk_intervention_date integer DEFAULT NULL,
   fk_user_assign    integer DEFAULT NULL,
   note              text,
   montant           double(24,8) DEFAULT NULL,
