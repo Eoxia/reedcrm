@@ -80,6 +80,18 @@ saturne_check_access($permissiontoread);
 if ($action === 'addaudit' && $permissiontoadd) {
     $auditSoc  = GETPOSTINT('audit_fk_soc');
     $auditDate = dol_stringtotime(GETPOST('audit_date', 'alpha'));
+
+    // Optional link to a real document (quote or invoice) so a hand-added line is not orphaned.
+    // Both are re-checked against the selected client before being stored.
+    $linkedPropal  = reedcrmFollowupFetchLinkableDoc($db, 'propal', GETPOSTINT('audit_fk_propal'), $auditSoc);
+    $linkedFacture = reedcrmFollowupFetchLinkableDoc($db, 'facture', GETPOSTINT('audit_fk_facture'), $auditSoc);
+    // No date typed: plan the audit in the month being browsed (today when that is the current month),
+    // so a line added from this board always lands where the user is looking.
+    if (!$auditDate) {
+        $nowTs     = dol_now();
+        $auditDate = ($nowTs >= $periodStart && $nowTs <= $periodEnd) ? $nowTs : $periodStart;
+    }
+
     if ($auditSoc > 0 && $auditDate) {
         // One audit per client: update the existing one if any, otherwise create it.
         $existingId  = 0;
@@ -101,6 +113,21 @@ if ($action === 'addaudit' && $permissiontoadd) {
         $montantInput = price2num(GETPOST('audit_montant', 'alpha'));
         if ($montantInput !== '' && (float) $montantInput != 0) {
             $audit->montant = (float) $montantInput;
+        } else {
+            // Amount left blank: take it from the linked document (invoice first), drafts at 0 aside.
+            $docAmount = $linkedFacture ? (float) $linkedFacture['total_ttc'] : ($linkedPropal ? (float) $linkedPropal['total_ttc'] : 0);
+            if ($docAmount > 0) {
+                $audit->montant = $docAmount;
+            }
+        }
+        if ($linkedPropal) {
+            $audit->fk_propal = $linkedPropal['id'];
+        }
+        if ($linkedFacture) {
+            // The invoice both links the line and dates the cycle it closes.
+            $audit->fk_facture        = $linkedFacture['id'];
+            $audit->fk_facture_source = $linkedFacture['id'];
+            $audit->last_audit_date   = $linkedFacture['date'];
         }
         if ($existingId > 0) {
             $result = $audit->update($user);
@@ -110,9 +137,19 @@ if ($action === 'addaudit' && $permissiontoadd) {
         }
         if ($result > 0) {
             setEventMessages($langs->trans('FollowupAuditAdded'), []);
+            // The line may belong to another month (date typed by hand, or client already followed
+            // with another date): jump to that month so it is never added out of sight.
+            $auditMonth = dol_print_date($auditDate, '%Y-%m');
+            if ($auditMonth !== $search_month) {
+                setEventMessages($langs->trans('FollowupAuditAddedOtherMonth', dol_print_date($auditDate, '%B %Y')), null, 'warnings');
+                header('Location: ' . $_SERVER['PHP_SELF'] . '?search_month=' . urlencode($auditMonth));
+                exit;
+            }
         } else {
             setEventMessages($audit->error, $audit->errors, 'errors');
         }
+    } else {
+        setEventMessages($langs->trans('FollowupAuditAddNoThirdParty'), null, 'errors');
     }
 }
 if ($action === 'auditmove' && $permissiontoadd) {
@@ -122,6 +159,44 @@ if ($action === 'auditmove' && $permissiontoadd) {
     if ($auditId > 0 && $auditDate && $audit->fetch($auditId) > 0) {
         $audit->next_audit_date = $auditDate;
         $audit->update($user);
+    }
+}
+if ($action === 'auditrdv' && $permissiontoadd) {
+    // Real date agreed with the client. This — and only this — books an intervention: the yearly
+    // theoretical date never creates one, so the intervention list stays free of fictitious dates.
+    $auditId = GETPOSTINT('audit_id');
+    $rdvDate = dol_stringtotime(GETPOST('audit_rdv_date', 'alpha'));
+    $audit   = new DuAudit($db);
+    if ($auditId > 0 && $audit->fetch($auditId) > 0) {
+        if (!$rdvDate) {
+            // Appointment cancelled: the line goes back to its theoretical date. The intervention
+            // already created is left alone (it is a real document) but is no longer followed here.
+            $audit->date_rdv     = null;
+            $audit->fk_fichinter = null;
+            if ($audit->update($user) > 0) {
+                setEventMessages($langs->trans('FollowupAuditRdvCleared'), []);
+            } else {
+                setEventMessages($audit->error, $audit->errors, 'errors');
+            }
+        } else {
+            $interventionId = reedcrmFollowupSyncAuditIntervention($db, $user, $audit, $rdvDate);
+            $audit->date_rdv = $rdvDate;
+            if ($interventionId > 0) {
+                $audit->fk_fichinter = $interventionId;
+            }
+            if ($audit->update($user) > 0) {
+                if ($interventionId > 0) {
+                    setEventMessages($langs->trans('FollowupAuditRdvPlanned', dol_print_date($rdvDate, 'day')), []);
+                } elseif ($interventionId === 0) {
+                    // No right on interventions (or module off): the date is kept anyway.
+                    setEventMessages($langs->trans('FollowupAuditRdvNoIntervention'), null, 'warnings');
+                } else {
+                    setEventMessages($langs->trans('FollowupAuditRdvInterventionFailed'), null, 'errors');
+                }
+            } else {
+                setEventMessages($audit->error, $audit->errors, 'errors');
+            }
+        }
     }
 }
 if ($action === 'auditassign' && $permissiontoadd) {
@@ -158,6 +233,10 @@ if ($action === 'auditrenew' && $permissiontoadd) {
                 $audit->source             = 'invoice';
                 $audit->status             = DuAudit::STATUS_TODO;
                 $audit->proposal_sent_date = null; // new cycle needs a new proposal
+                $audit->fk_propal          = null; // drop the previous cycle's manual links
+                $audit->fk_facture         = null;
+                $audit->date_rdv           = null; // the new cycle has no appointment yet
+                $audit->fk_fichinter       = null;
                 $rolled                    = true;
             }
         }
@@ -186,6 +265,7 @@ if (($action === 'auditdone' || $action === 'auditdelete') && $permissiontoadd) 
             $audit->last_audit_date = $doneDate;
             $audit->next_audit_date = dol_time_plus_duree($doneDate, 1, 'y');
             $audit->status          = DuAudit::STATUS_TODO;
+            $audit->date_rdv        = null; // the appointment has happened, date_done records it
             if ($audit->update($user) > 0) {
                 setEventMessages($langs->trans('FollowupAuditDoneRolled', dol_print_date($doneDate, 'day'), dol_print_date($audit->next_audit_date, 'day')), []);
             } else {
@@ -204,7 +284,7 @@ if ($action === 'exportoverdueaudits' && $permissiontoread) {
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="audits_du_en_retard_' . dol_print_date(dol_now(), 'dayxcard') . '.csv"');
     print "\xEF\xBB\xBF";
-    print implode($sep, ['Tiers', 'Localisation', 'Derniere facture DU', 'Prochain audit du', 'Retard (jours)', 'Service', 'Montant', 'Assigne a', 'Devis', 'Montant devis', 'Statut']) . "\n";
+    print implode($sep, ['Tiers', 'Localisation', 'Derniere facture DU', 'Prochain audit prevu', 'RDV client', 'Intervention', 'Retard (jours)', 'Service', 'Montant', 'Assigne a', 'Devis', 'Montant devis', 'Statut']) . "\n";
     $csvUserCache = [];
     foreach ($exportRows as $r) {
         $assignName = '';
@@ -219,7 +299,10 @@ if ($action === 'exportoverdueaudits' && $permissiontoread) {
         $cells = [
             $r['thirdparty'], $r['location'],
             !empty($r['last_audit']) ? dol_print_date($r['last_audit'], 'day') : '',
-            dol_print_date($r['next_audit'], 'day'), $r['days_late'], $r['service'],
+            dol_print_date($r['next_audit'], 'day'),
+            !empty($r['date_rdv']) ? dol_print_date($r['date_rdv'], 'day') : '',
+            !empty($r['fichinter_ref']) ? $r['fichinter_ref'] : '',
+            $r['days_late'], $r['service'],
             $r['montant'] !== null ? $r['montant'] : '', $assignName,
             !empty($r['propal_ref']) ? $r['propal_ref'] : '',
             $r['propal_ttc'] !== null ? $r['propal_ttc'] : '',
@@ -260,7 +343,8 @@ print '<style>
 .rcf-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
 .rcf-tile{border:1px solid var(--colortopbordertitle1,#ddd);border-radius:8px;padding:10px 12px;background:var(--colorbacklinepair2,#fff);position:relative;overflow:hidden}
 .rcf-tile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#2f6f9f}
-.rcf-tile.warn:before{background:#c8871a}.rcf-tile.crit:before{background:#cf4257}.rcf-tile.good:before{background:#2e9e6c}
+.rcf-tile.warn:before{background:#c8871a}.rcf-tile.crit:before{background:#cf4257}.rcf-tile.good:before{background:#2e9e6c}.rcf-tile.rdv:before{background:#0b7285}
+.rcf-tile.rdv .v{color:#0b7285}
 .rcf-tile .k{font-size:.82em;color:#777;font-weight:600}
 .rcf-tile .v{font-size:1.7em;font-weight:800;line-height:1.1}
 .rcf-tile.warn .v{color:#c8871a}.rcf-tile.crit .v{color:#cf4257}.rcf-tile.good .v{color:#2e9e6c}
@@ -274,6 +358,27 @@ print '<style>
 .rcf-assignform{display:inline-flex;align-items:center;gap:3px}
 .rcf-assignsel{min-width:110px}
 .rcf-statedot{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:middle;margin-right:5px}
+/* Audit carried out during the browsed month: the line stays in the table, flagged green. */
+.rcf-donerow>td{background:rgba(46,158,108,.12) !important}
+.rcf-donerow>td:first-child{box-shadow:inset 3px 0 0 #2e9e6c}
+.rcf-donetag{color:#2e9e6c;font-weight:700}
+/* Forecast date (theoretical, from last year) kept quiet, real appointment made loud. */
+.rcf-planned input[type=date]{opacity:.7;font-size:.9em}
+.rcf-planned-tag{font-size:.72em;text-transform:uppercase;letter-spacing:.04em;color:#8a8a8a;margin-top:2px}
+.rcf-rdvcell input[type=date]{font-size:.9em}
+.rcf-rdvcell.set input[type=date]{border:1px solid #0b7285;border-radius:5px;color:#0b7285;font-weight:700}
+.rcf-rdvtag{color:#0b7285;font-weight:700}
+.rcf-interlink{display:inline-block;margin-top:3px;font-size:.85em;color:#0b7285}
+/* "Link a quote / an invoice" pickers of the add-an-audit line. */
+.rcf-doclink{display:flex;flex-direction:column;gap:6px;min-width:250px}
+.rcf-doclink-row{display:flex;align-items:center;gap:7px;text-align:left}
+.rcf-doclink-row>i{flex:0 0 16px;text-align:center;font-size:.95em;opacity:.8}
+.rcf-doclink-row.pr>i{color:#2f6f9f}
+.rcf-doclink-row.fa>i{color:#2e9e6c}
+.rcf-doclink-row .select2-container,select.rcf-docsel{flex:1 1 auto;min-width:0}
+select.rcf-docsel{padding:5px 9px;border:1px solid var(--colortopbordertitle1,#ccc);border-radius:7px;background:var(--colorbacklinepair2,#fff);color:inherit;font-size:.9em;max-width:100%}
+select.rcf-docsel:focus{border-color:#2f6f9f;outline:none}
+.rcf-doclink-row .select2-selection--single{border-radius:7px !important;height:29px !important}
 @media (max-width:900px){.rcf-charts{grid-template-columns:1fr}}
 </style>';
 
@@ -317,13 +422,13 @@ $sqlChart .= ' SUM(CASE WHEN a.status = 2 THEN a.montant ELSE 0 END) as doneamt,
 // Amount proposed to clients: the real total of the derived DU renewal quote (rows that have one).
 $sqlChart .= ' SUM(CASE WHEN a.status <> 2 AND prc.rowid IS NOT NULL THEN prc.total_ttc ELSE 0 END) as pramt';
 $sqlChart .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
-$sqlChart .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'propal as prc ON prc.rowid = (';
+$sqlChart .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'propal as prc ON prc.rowid = COALESCE((';
 $sqlChart .= '   SELECT p2.rowid FROM ' . MAIN_DB_PREFIX . 'propal p2';
 $sqlChart .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'propaldet pd ON pd.fk_propal = p2.rowid';
 $sqlChart .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_A%'";
 $sqlChart .= '   WHERE p2.fk_soc = a.fk_soc AND p2.entity IN (' . getEntity('propal') . ')';
 $sqlChart .= '   AND (a.last_audit_date IS NULL OR p2.datep > a.last_audit_date)';
-$sqlChart .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1)';
+$sqlChart .= '   ORDER BY p2.datep DESC, p2.rowid DESC LIMIT 1), a.fk_propal)';
 $sqlChart .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ') AND s.status = 1 AND YEAR(a.next_audit_date) = ' . $chartYear . ' GROUP BY m';
 $resChart  = $db->query($sqlChart);
 if ($resChart) {
@@ -413,18 +518,24 @@ $auditToPrepare   = 0;
 $auditOverdueM    = 0;
 $auditDone        = 0;
 $auditPrSent      = 0;
+$auditRdvCount    = 0;
 $auditPrTotal     = 0;
 $auditTotMontant  = 0;
 $auditDoneMontant = 0;
 $nowStat          = dol_now();
 foreach ($audits as $auditStat) {
-    if ($auditStat['status'] == DuAudit::STATUS_DONE) {
+    // Done = closed line, or audit actually carried out during the browsed month.
+    $doneThisMonth = !empty($auditStat['date_done']) && $auditStat['date_done'] >= $periodStart && $auditStat['date_done'] <= $periodEnd;
+    if ($auditStat['status'] == DuAudit::STATUS_DONE || $doneThisMonth) {
         $auditDone++;
         $auditDoneMontant += (float) $auditStat['montant'];
-    } elseif ($auditStat['next_audit'] < $nowStat) {
+    } elseif ($auditStat['effective'] < $nowStat) {
         $auditOverdueM++;
     } else {
         $auditToPrepare++;
+    }
+    if (!empty($auditStat['date_rdv']) && !$doneThisMonth) {
+        $auditRdvCount++;
     }
     if (!empty($auditStat['propal_id'])) {
         $auditPrSent++;
@@ -446,6 +557,7 @@ if ($resLost && $oLost = $db->fetch_object($resLost)) {
 print '<div class="rcf-dash"><div class="rcf-tiles">';
 printf('<div class="rcf-tile warn"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditToPrepareCount'), $auditToPrepare);
 printf('<div class="rcf-tile crit"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditOverdueCount'), $auditOverdueM);
+printf('<div class="rcf-tile rdv"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditRdvCount'), $auditRdvCount);
 printf('<div class="rcf-tile good"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupAuditDoneCount'), $auditDone);
 printf('<div class="rcf-tile"><div class="k">%s</div><div class="v">%d</div></div>', $langs->trans('FollowupProposalSentCount'), $auditPrSent);
 printf('<div class="rcf-tile good"><div class="k">%s</div><div class="v">%s</div></div>', $langs->trans('FollowupAuditInvoicedAmount'), price($auditDoneMontant, 0, $langs, 1, -1, 0, $conf->currency));
@@ -457,24 +569,50 @@ $thirdpartyStatic = new Societe($db);
 $assignUserCache  = [];
 
 // Shared renderer for one audit row.
-$printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartyStatic, &$assignUserCache, $form, $propalStatic, $langs, $conf, $selfMonth, $permissiontoadd, $permissiontodelete) {
-    $isDone                   = ($audit['status'] == DuAudit::STATUS_DONE);
+$printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartyStatic, &$assignUserCache, $form, $propalStatic, $langs, $conf, $selfMonth, $permissiontoadd, $permissiontodelete, $periodStart, $periodEnd) {
+    $isDone = ($audit['status'] == DuAudit::STATUS_DONE);
+    // An audit carried out during the browsed month keeps its line in the table (its next date has
+    // already rolled one year ahead) so the month's work stays visible instead of vanishing.
+    $doneInMonth              = !empty($audit['date_done']) && $audit['date_done'] >= $periodStart && $audit['date_done'] <= $periodEnd;
     $thirdpartyStatic->id     = $audit['fk_soc'];
     $thirdpartyStatic->name   = $audit['thirdparty'];
     $thirdpartyStatic->status = 1;
 
-    print '<tr class="oddeven' . ($isDone ? ' opacitymedium' : '') . '">';
+    print '<tr class="oddeven' . ($isDone ? ' opacitymedium' : '') . ($doneInMonth ? ' rcf-donerow' : '') . '">';
     print '<td class="tdoverflowmax200">' . $thirdpartyStatic->getNomUrl(1) . '</td>';
     print '<td class="tdoverflowmax150" title="' . dol_escape_htmltag($audit['address']) . '">';
     print $audit['location'] !== '' ? '<i class="fas fa-map-marker-alt paddingright opacitymedium"></i>' . dol_escape_htmltag($audit['location']) : '<span class="opacitymedium">-</span>';
     print '</td>';
     print '<td class="center">' . (!empty($audit['last_audit']) ? dol_print_date($audit['last_audit'], 'day') : '') . '</td>';
-    print '<td class="center nowraponall">';
+    // Theoretical yearly date (last audit + 1 year): a forecast, kept discreet on purpose.
+    print '<td class="center nowraponall rcf-planned">';
+    if ($doneInMonth) {
+        print '<span class="rcf-donetag"><i class="fas fa-check-circle paddingright"></i>' . $langs->trans('FollowupAuditDoneOn', dol_print_date($audit['date_done'], 'day')) . '</span><br>';
+    }
     print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
     print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditmove"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
     print '<input type="date" name="audit_date" value="' . dol_print_date($audit['next_audit'], '%Y-%m-%d') . '" class="maxwidth150">';
     print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMove')) . '"><i class="fas fa-arrows-alt-h"></i></button>';
-    print '</form></td>';
+    print '</form>';
+    print '<div class="rcf-planned-tag">' . $langs->trans('FollowupAuditPlannedTag') . '</div>';
+    print '</td>';
+    // Date really agreed with the client: filling it books the intervention.
+    print '<td class="center nowraponall rcf-rdvcell' . (!empty($audit['date_rdv']) ? ' set' : '') . '">';
+    if ($permissiontoadd) {
+        print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
+        print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditrdv"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
+        print '<input type="date" name="audit_rdv_date" value="' . (!empty($audit['date_rdv']) ? dol_print_date($audit['date_rdv'], '%Y-%m-%d') : '') . '" class="maxwidth150">';
+        print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans(!empty($audit['date_rdv']) ? 'FollowupAuditRdvMove' : 'FollowupAuditRdvPlan')) . '"><i class="fas fa-calendar-check"></i></button>';
+        print '</form>';
+    } elseif (!empty($audit['date_rdv'])) {
+        print '<span class="rcf-rdvtag">' . dol_print_date($audit['date_rdv'], 'day') . '</span>';
+    } else {
+        print '<span class="opacitymedium">-</span>';
+    }
+    if (!empty($audit['fichinter_id'])) {
+        print '<div><a href="' . DOL_URL_ROOT . '/fichinter/card.php?id=' . ((int) $audit['fichinter_id']) . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-tools paddingright"></i>' . dol_escape_htmltag($audit['fichinter_ref']) . '</a></div>';
+    }
+    print '</td>';
     if ($showDaysLate) {
         print '<td class="center"><span style="color:#cf4257;font-weight:bold">' . (int) $audit['days_late'] . ' ' . $langs->trans('FollowupDaysLate') . '</span></td>';
     }
@@ -526,8 +664,15 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     // as progress (an old proposal on a long-overdue audit is dead) -> show "En retard".
     $stateTitle = '';
     $staleDocs  = $showDaysLate && (max((int) $audit['facture_date'], (int) $audit['propal_date']) < dol_time_plus_duree(dol_now(), -6, 'm'));
-    if ($isDone) {
+    if ($doneInMonth) {
+        // Audit really carried out this month: this is the state that matters, it wins over the docs.
+        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditDoneOn', dol_print_date($audit['date_done'], 'day'));
+    } elseif ($isDone) {
         $stateColor = '#6c757d'; $stateLabel = $langs->trans('FollowupAuditDone');
+    } elseif (!empty($audit['date_rdv'])) {
+        // A date agreed with the client outranks the commercial documents: it is the firm one.
+        $stateColor = '#0b7285'; $stateLabel = $langs->trans('FollowupAuditRdvOn', dol_print_date($audit['date_rdv'], 'day'));
+        $stateTitle = (string) $audit['fichinter_ref'];
     } elseif (!$staleDocs && !empty($audit['facture_id']) && !empty($audit['facture_paye'])) {
         $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditPaid');       $stateTitle = (string) $audit['facture_ref'];
     } elseif (!$staleDocs && !empty($audit['facture_id'])) {
@@ -536,12 +681,16 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         $stateColor = '#6f42c1'; $stateLabel = $langs->trans('FollowupAuditPrSigned');   $stateTitle = (string) $audit['propal_ref'];
     } elseif (!$staleDocs && !empty($audit['propal_id'])) {
         $stateColor = '#2f6f9f'; $stateLabel = $langs->trans('FollowupProposalSent');    $stateTitle = (string) $audit['propal_ref'];
-    } elseif ($audit['next_audit'] < dol_now()) {
+    } elseif ($audit['effective'] < dol_now()) {
         $stateColor = '#cf4257'; $stateLabel = $langs->trans('FollowupAuditOverdue');
     } else {
         $stateColor = '#c8871a'; $stateLabel = $langs->trans('FollowupAuditToPrepare');
     }
     print '<span class="rcf-statedot" style="background:' . $stateColor . '"' . ($stateTitle !== '' ? ' title="' . dol_escape_htmltag($stateTitle) . '"' : '') . '></span> ' . $stateLabel;
+    // The invoice behind the state is reachable in one click (also true of a hand-linked one).
+    if (!empty($audit['facture_id']) && !empty($audit['facture_ref'])) {
+        print '<br><a href="' . DOL_URL_ROOT . '/compta/facture/card.php?id=' . ((int) $audit['facture_id']) . '" target="_blank" rel="noopener" class="opacitymedium"><i class="fas fa-file-invoice-dollar paddingright"></i>' . dol_escape_htmltag($audit['facture_ref']) . '</a>';
+    }
     if ($audit['source'] === 'manual') {
         print ' <span class="badge badge-secondary" title="' . dol_escape_htmltag($langs->trans('FollowupAuditManual')) . '">M</span>';
     }
@@ -551,13 +700,17 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         // Create the yearly renewal quote (Dolibarr proposal) for this client.
         print '<a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/comm/propal/card.php?action=create&socid=' . (int) $audit['fk_soc'] . '" title="' . dol_escape_htmltag($langs->trans('FollowupCreateProposal')) . '"><i class="fas fa-file-invoice"></i></a> ';
         // Roll the line forward to the next yearly cycle (only if a newer DU_AU invoice exists).
-        print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('FollowupAuditRenewConfirm')) . '\');">';
-        print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditrenew"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
-        print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRenew')) . '"><i class="fas fa-redo"></i></button></form> ';
-        print '<form method="POST" action="' . $selfMonth . '" class="inline-block" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRealDate')) . '">';
+        // Already done this month: the cycle has just rolled, no second roll offered here.
+        if (!$doneInMonth) {
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('FollowupAuditRenewConfirm')) . '\');">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditrenew"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
+            print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRenew')) . '"><i class="fas fa-redo"></i></button></form> ';
+        }
+        // Mark done / correct the real date: re-submitting simply re-anchors the cycle on the new date.
+        print '<form method="POST" action="' . $selfMonth . '" class="inline-block" title="' . dol_escape_htmltag($langs->trans($doneInMonth ? 'FollowupAuditCorrectDoneDate' : 'FollowupAuditRealDate')) . '">';
         print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditdone"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
-        print '<input type="date" name="audit_done_date" value="' . dol_print_date(dol_now(), '%Y-%m-%d') . '" class="maxwidth130">';
-        print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMarkDone')) . '"><i class="fas fa-check"></i></button></form> ';
+        print '<input type="date" name="audit_done_date" value="' . dol_print_date($audit['date_done'] ?: dol_now(), '%Y-%m-%d') . '" class="maxwidth130">';
+        print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans($doneInMonth ? 'FollowupAuditCorrectDoneDate' : 'FollowupAuditMarkDone')) . '"><i class="fas fa-check"></i></button></form> ';
     }
     if ($permissiontodelete) {
         print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('ConfirmDeleteObject')) . '\');">';
@@ -573,19 +726,19 @@ print load_fiche_titre('<i class="fas fa-clipboard-check paddingright"></i>' . $
 print '<div class="div-table-responsive"><table class="tagtable nobottomiftotal liste">';
 print '<tr class="liste_titre">';
 print '<th>' . $langs->trans('ThirdParty') . '</th><th>' . $langs->trans('FollowupLocation') . '</th>';
-print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAudit') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAuditPlanned') . '</th><th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
 print '<th>' . $langs->trans('Service') . '</th><th class="right">' . $langs->trans('FollowupAmount') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupAssignedTo') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupProposalSent') . '</th>';
 print '<th class="center">' . $langs->trans('Status') . '</th><th class="center maxwidthsearch"></th>';
 print '</tr>';
 if (empty($audits)) {
-    print '<tr class="oddeven"><td colspan="10" class="opacitymedium center">' . $langs->trans('FollowupNoAuditThisMonth') . '</td></tr>';
+    print '<tr class="oddeven"><td colspan="11" class="opacitymedium center">' . $langs->trans('FollowupNoAuditThisMonth') . '</td></tr>';
 } else {
     foreach ($audits as $audit) {
         $printAuditRow($audit, false);
     }
-    print '<tr class="liste_total"><td colspan="5">' . $langs->trans('Total') . '</td><td class="right">' . price($auditTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td></td><td class="center nowraponall">' . ($auditPrTotal > 0 ? price($auditPrTotal, 0, $langs, 1, -1, 0, $conf->currency) : '') . '</td><td colspan="2"></td></tr>';
+    print '<tr class="liste_total"><td colspan="6">' . $langs->trans('Total') . '</td><td class="right">' . price($auditTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td></td><td class="center nowraponall">' . ($auditPrTotal > 0 ? price($auditPrTotal, 0, $langs, 1, -1, 0, $conf->currency) : '') . '</td><td colspan="2"></td></tr>';
 }
 if ($permissiontoadd) {
     print '<tr class="oddeven">';
@@ -594,12 +747,63 @@ if ($permissiontoadd) {
     print '<td>' . $formcompany->select_company(0, 'audit_fk_soc', '', $langs->trans('SelectThirdParty'), 0, 0, [], 0, 'minwidth150 maxwidth250') . '</td>';
     print '<td></td><td></td>';
     print '<td class="center"><input type="date" name="audit_date" class="maxwidth150"></td>';
+    print '<td class="center opacitymedium">' . $langs->trans('FollowupAuditRdvLater') . '</td>';
     print '<td><input type="text" name="audit_note" class="maxwidth200" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '"></td>';
     print '<td class="right"><input type="text" name="audit_montant" class="maxwidth75 right" placeholder="0"></td>';
-    print '<td class="center" colspan="4"><button type="submit" class="button button-add smallpaddingimp"><i class="fas fa-plus paddingright"></i>' . $langs->trans('FollowupAuditAdd') . '</button></td>';
+    print '<td></td>';
+    // Optional link to an existing quote / invoice of the client: a hand-added line stays attached to
+    // a real document (both lists are loaded on the fly once a client is picked).
+    print '<td class="center" colspan="2"><div class="rcf-doclink">';
+    print '<div class="rcf-doclink-row pr"><i class="fas fa-file-signature" title="' . dol_escape_htmltag($langs->trans('FollowupLinkProposal')) . '"></i>';
+    print '<select name="audit_fk_propal" id="audit_fk_propal" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
+    print '<div class="rcf-doclink-row fa"><i class="fas fa-file-invoice-dollar" title="' . dol_escape_htmltag($langs->trans('FollowupLinkInvoice')) . '"></i>';
+    print '<select name="audit_fk_facture" id="audit_fk_facture" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
+    print '</div></td>';
+    print '<td class="center"><button type="submit" class="button button-add smallpaddingimp"><i class="fas fa-plus paddingright"></i>' . $langs->trans('FollowupAuditAdd') . '</button></td>';
     print '</form></tr>';
 }
 print '</table></div>';
+
+if ($permissiontoadd) {
+    // Same searchable dropdowns as the rest of Dolibarr for the two document pickers.
+    print ajax_combobox('audit_fk_propal', [], 0, 0, 'resolve', '0');
+    print ajax_combobox('audit_fk_facture', [], 0, 0, 'resolve', '0');
+    // Fill the quote/invoice pickers of the "add an audit" line with the documents of the chosen client.
+    print '<script>
+    $(document).ready(function() {
+        var url = "' . dol_escape_js(dol_buildpath('/custom/reedcrm/ajax/get_du_audit_documents.php', 1)) . '";
+        var labels = {
+            pick: ' . json_encode($langs->transnoentities('FollowupLinkPickClient')) . ',
+            none: ' . json_encode($langs->transnoentities('FollowupLinkNoDocument')) . ',
+            propal: ' . json_encode($langs->transnoentities('FollowupLinkProposal')) . ',
+            facture: ' . json_encode($langs->transnoentities('FollowupLinkInvoice')) . '
+        };
+        var fill = function(id, rows, emptyLabel) {
+            var $sel = $("#" + id).empty();
+            $sel.append($("<option>").val(0).text(emptyLabel));
+            $.each(rows, function(i, row) {
+                $sel.append($("<option>").val(row.id).text(row.label));
+            });
+            // Let select2 redraw the freshly rebuilt option list.
+            $sel.val(0).trigger("change");
+        };
+        $("#audit_fk_soc").on("change", function() {
+            var socid = parseInt($(this).val(), 10) || 0;
+            if (!socid) {
+                fill("audit_fk_propal", [], labels.pick);
+                fill("audit_fk_facture", [], labels.pick);
+                return;
+            }
+            $.getJSON(url, { socid: socid }, function(data) {
+                if (!data || !data.success) { return; }
+                var propals = data.propals || [], factures = data.factures || [];
+                fill("audit_fk_propal", propals, propals.length ? labels.propal : labels.none);
+                fill("audit_fk_facture", factures, factures.length ? labels.facture : labels.none);
+            });
+        });
+    });
+    </script>';
+}
 
 // --- Proposal amount per assignee for the BROWSED MONTH (from the month's audits that have a DU quote) ---
 $byUser = [];
@@ -642,7 +846,7 @@ print load_fiche_titre('<i class="fas fa-exclamation-triangle paddingright" styl
 print '<div class="div-table-responsive"><table class="tagtable liste">';
 print '<tr class="liste_titre">';
 print '<th>' . $langs->trans('ThirdParty') . '</th><th>' . $langs->trans('FollowupLocation') . '</th>';
-print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAudit') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAuditPlanned') . '</th><th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupLate') . '</th>';
 print '<th>' . $langs->trans('Service') . '</th><th class="right">' . $langs->trans('FollowupAmount') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupAssignedTo') . '</th>';
@@ -650,14 +854,14 @@ print '<th class="center">' . $langs->trans('FollowupProposalSent') . '</th>';
 print '<th class="center">' . $langs->trans('Status') . '</th><th class="center maxwidthsearch"></th>';
 print '</tr>';
 if (empty($overdueAudits)) {
-    print '<tr class="oddeven"><td colspan="11" class="center opacitymedium">' . $langs->trans('FollowupNoOverdue') . '</td></tr>';
+    print '<tr class="oddeven"><td colspan="12" class="center opacitymedium">' . $langs->trans('FollowupNoOverdue') . '</td></tr>';
 } else {
     $overdueTotMontant = 0;
     foreach ($overdueAudits as $audit) {
         $printAuditRow($audit, true);
         $overdueTotMontant += (float) $audit['montant'];
     }
-    print '<tr class="liste_total"><td colspan="6">' . $langs->trans('Total') . '</td><td class="right">' . price($overdueTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td colspan="4"></td></tr>';
+    print '<tr class="liste_total"><td colspan="7">' . $langs->trans('Total') . '</td><td class="right">' . price($overdueTotMontant, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td colspan="4"></td></tr>';
 }
 print '</table></div>';
 
