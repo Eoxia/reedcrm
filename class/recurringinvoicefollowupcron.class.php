@@ -325,7 +325,7 @@ class RecurringInvoiceFollowupCron
                     $audit->status            = DuAudit::STATUS_TODO;
                     // New cycle: the appointment of the previous one no longer applies.
                     $audit->date_rdv          = null;
-                    $audit->fk_fichinter      = null;
+                    $audit->fk_intervention_date = null;
                     if ($audit->update($user) > 0) {
                         $updated++;
                     }

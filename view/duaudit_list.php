@@ -39,6 +39,7 @@ require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 
 // Load ReedCRM libraries.
 require_once __DIR__ . '/../class/duaudit.class.php';
+require_once __DIR__ . '/../class/clienttracking.class.php';
 require_once __DIR__ . '/../lib/reedcrm_followup.lib.php';
 
 global $conf, $db, $hookmanager, $langs, $user;
@@ -169,10 +170,11 @@ if ($action === 'auditrdv' && $permissiontoadd) {
     $audit   = new DuAudit($db);
     if ($auditId > 0 && $audit->fetch($auditId) > 0) {
         if (!$rdvDate) {
-            // Appointment cancelled: the line goes back to its theoretical date. The intervention
-            // already created is left alone (it is a real document) but is no longer followed here.
-            $audit->date_rdv     = null;
-            $audit->fk_fichinter = null;
+            // Appointment cancelled: the slot leaves the calendar and the line goes back to its
+            // theoretical date.
+            reedcrmFollowupDeleteAuditIntervention($db, $user, (int) $audit->fk_intervention_date);
+            $audit->date_rdv             = null;
+            $audit->fk_intervention_date = null;
             if ($audit->update($user) > 0) {
                 setEventMessages($langs->trans('FollowupAuditRdvCleared'), []);
             } else {
@@ -182,14 +184,17 @@ if ($action === 'auditrdv' && $permissiontoadd) {
             $interventionId = reedcrmFollowupSyncAuditIntervention($db, $user, $audit, $rdvDate);
             $audit->date_rdv = $rdvDate;
             if ($interventionId > 0) {
-                $audit->fk_fichinter = $interventionId;
+                $audit->fk_intervention_date = $interventionId;
             }
             if ($audit->update($user) > 0) {
                 if ($interventionId > 0) {
                     setEventMessages($langs->trans('FollowupAuditRdvPlanned', dol_print_date($rdvDate, 'day')), []);
                 } elseif ($interventionId === 0) {
-                    // No right on interventions (or module off): the date is kept anyway.
+                    // Feature off or no write right: the date is kept anyway, nothing is planned.
                     setEventMessages($langs->trans('FollowupAuditRdvNoIntervention'), null, 'warnings');
+                } elseif ($interventionId === -2) {
+                    // The calendar hangs off the quote lines: no DU quote, nothing to plan on.
+                    setEventMessages($langs->trans('FollowupAuditRdvNoProposal'), null, 'warnings');
                 } else {
                     setEventMessages($langs->trans('FollowupAuditRdvInterventionFailed'), null, 'errors');
                 }
@@ -208,50 +213,6 @@ if ($action === 'auditassign' && $permissiontoadd) {
         $audit->update($user);
     }
 }
-if ($action === 'auditrenew' && $permissiontoadd) {
-    // Roll a client's DU line forward to the next yearly cycle. If a newer DU_AU invoice exists,
-    // rebase on it (new amount + date); otherwise just advance the planned date by one year.
-    $auditId = GETPOSTINT('audit_id');
-    $audit   = new DuAudit($db);
-    if ($auditId > 0 && $audit->fetch($auditId) > 0) {
-        $sqlInv  = 'SELECT f.rowid, f.datef, SUM(fd.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture as f';
-        $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet as fd ON fd.fk_facture = f.rowid';
-        $sqlInv .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = fd.fk_product';
-        $sqlInv .= " WHERE p.ref LIKE 'DU\_A%' AND f.type <> 2 AND f.fk_soc = " . ((int) $audit->fk_soc);
-        $sqlInv .= ' AND f.datef IS NOT NULL AND f.entity IN (' . getEntity('facture') . ')';
-        $sqlInv .= ' GROUP BY f.rowid, f.datef ORDER BY f.datef DESC' . $db->plimit(1);
-        $resqlInv = $db->query($sqlInv);
-        $rolled   = false;
-        if ($resqlInv && $inv = $db->fetch_object($resqlInv)) {
-            $invDate = $db->jdate($inv->datef);
-            $curLast = !empty($audit->last_audit_date) ? (int) $audit->last_audit_date : 0;
-            if ($invDate > $curLast) {
-                $audit->last_audit_date    = $invDate;
-                $audit->montant            = (float) $inv->tot;
-                $audit->next_audit_date    = dol_time_plus_duree($invDate, 1, 'y');
-                $audit->fk_facture_source  = (int) $inv->rowid;
-                $audit->source             = 'invoice';
-                $audit->status             = DuAudit::STATUS_TODO;
-                $audit->proposal_sent_date = null; // new cycle needs a new proposal
-                $audit->fk_propal          = null; // drop the previous cycle's manual links
-                $audit->fk_facture         = null;
-                $audit->date_rdv           = null; // the new cycle has no appointment yet
-                $audit->fk_fichinter       = null;
-                $rolled                    = true;
-            }
-        }
-        if ($rolled) {
-            if ($audit->update($user) > 0) {
-                setEventMessages($langs->trans('FollowupAuditRenewedOn', dol_print_date($audit->next_audit_date, '%B %Y')), []);
-            } else {
-                setEventMessages($audit->error, $audit->errors, 'errors');
-            }
-        } else {
-            // No DU_AU invoice newer than the current cycle: don't silently jump a year ahead.
-            setEventMessages($langs->trans('FollowupAuditRenewNoInvoice'), null, 'warnings');
-        }
-    }
-}
 if (($action === 'auditdone' || $action === 'auditdelete') && $permissiontoadd) {
     $auditId = GETPOSTINT('audit_id');
     $audit   = new DuAudit($db);
@@ -259,20 +220,155 @@ if (($action === 'auditdone' || $action === 'auditdelete') && $permissiontoadd) 
         if ($action === 'auditdone') {
             // Record the REAL audit completion date (physical audit, not the billing date) and anchor
             // the next cycle on it: next audit = real date + 1 year. The line then rolls forward.
+            // Date given (correction form) > appointment agreed with the client > today.
             $doneInput = GETPOST('audit_done_date', 'alpha');
-            $doneDate  = $doneInput ? dol_stringtotime($doneInput) : dol_now();
+            if ($doneInput) {
+                $doneDate = dol_stringtotime($doneInput);
+            } elseif (!empty($audit->date_rdv)) {
+                $doneDate = is_numeric($audit->date_rdv) ? (int) $audit->date_rdv : (int) dol_stringtotime($audit->date_rdv);
+            } else {
+                $doneDate = dol_now();
+            }
             $audit->date_done       = $doneDate;
             $audit->last_audit_date = $doneDate;
             $audit->next_audit_date = dol_time_plus_duree($doneDate, 1, 'y');
             $audit->status          = DuAudit::STATUS_TODO;
-            $audit->date_rdv        = null; // the appointment has happened, date_done records it
+            // The appointment has happened: date_done records it here, and the slot already booked in
+            // the intervention calendar is marked done rather than left hanging as "planned".
+            reedcrmFollowupMarkAuditInterventionDone($db, $user, (int) $audit->fk_intervention_date);
+            $audit->date_rdv = null;
             if ($audit->update($user) > 0) {
                 setEventMessages($langs->trans('FollowupAuditDoneRolled', dol_print_date($doneDate, 'day'), dol_print_date($audit->next_audit_date, 'day')), []);
             } else {
                 setEventMessages($audit->error, $audit->errors, 'errors');
             }
         } elseif ($permissiontodelete) {
-            $audit->delete($user);
+            $audit->delete($user, 0, false); // real delete: a soft-deleted ref would block re-adding the client
+        }
+    }
+}
+
+/*
+ * Actions on the other client engagements (support, training, sprint…). Same moves as the audits,
+ * except nothing is ever created automatically here: every line is added by hand.
+ */
+if ($action === 'addtracking' && $permissiontoadd) {
+    $trackSoc  = GETPOSTINT('tracking_fk_soc');
+    $trackType = GETPOST('tracking_type', 'aZ09');
+    $trackDate = dol_stringtotime(GETPOST('tracking_date', 'alpha'));
+    if (!in_array($trackType, ClientTracking::TYPES, true)) {
+        $trackType = 'assistance';
+    }
+    // No date typed: plan it in the month being browsed, like the audits do.
+    if (!$trackDate) {
+        $nowTs     = dol_now();
+        $trackDate = ($nowTs >= $periodStart && $nowTs <= $periodEnd) ? $nowTs : $periodStart;
+    }
+
+    if ($trackSoc > 0) {
+        $linkedPropal  = reedcrmFollowupFetchLinkableDoc($db, 'propal', GETPOSTINT('tracking_fk_propal'), $trackSoc);
+        $linkedFacture = reedcrmFollowupFetchLinkableDoc($db, 'facture', GETPOSTINT('tracking_fk_facture'), $trackSoc);
+
+        $tracking               = new ClientTracking($db);
+        $tracking->fk_soc       = $trackSoc;
+        $tracking->type         = $trackType;
+        $tracking->date_planned = $trackDate;
+        $tracking->status       = ClientTracking::STATUS_TODO;
+        $tracking->label        = GETPOST('tracking_label', 'alphanohtml');
+
+        $montantInput = price2num(GETPOST('tracking_montant', 'alpha'));
+        if ($montantInput !== '' && (float) $montantInput != 0) {
+            $tracking->montant = (float) $montantInput;
+        } else {
+            $docAmount = $linkedFacture ? (float) $linkedFacture['total_ttc'] : ($linkedPropal ? (float) $linkedPropal['total_ttc'] : 0);
+            if ($docAmount > 0) {
+                $tracking->montant = $docAmount;
+            }
+        }
+        if ($linkedPropal) {
+            $tracking->fk_propal = $linkedPropal['id'];
+        }
+        if ($linkedFacture) {
+            $tracking->fk_facture = $linkedFacture['id'];
+        }
+
+        if ($tracking->create($user) > 0) {
+            setEventMessages($langs->trans('FollowupTrackingAdded'), []);
+            $trackMonth = dol_print_date($trackDate, '%Y-%m');
+            if ($trackMonth !== $search_month) {
+                setEventMessages($langs->trans('FollowupAuditAddedOtherMonth', dol_print_date($trackDate, '%B %Y')), null, 'warnings');
+                header('Location: ' . $_SERVER['PHP_SELF'] . '?search_month=' . urlencode($trackMonth));
+                exit;
+            }
+        } else {
+            setEventMessages($tracking->error, $tracking->errors, 'errors');
+        }
+    } else {
+        setEventMessages($langs->trans('FollowupAuditAddNoThirdParty'), null, 'errors');
+    }
+}
+if (in_array($action, ['trackingmove', 'trackingrdv', 'trackingassign', 'trackingdone', 'trackingdelete'], true) && $permissiontoadd) {
+    $trackId  = GETPOSTINT('tracking_id');
+    $tracking = new ClientTracking($db);
+    if ($trackId > 0 && $tracking->fetch($trackId) > 0) {
+        if ($action === 'trackingmove') {
+            $newDate = dol_stringtotime(GETPOST('tracking_date', 'alpha'));
+            if ($newDate) {
+                $tracking->date_planned = $newDate;
+                $tracking->update($user);
+            }
+        } elseif ($action === 'trackingassign') {
+            $tracking->fk_user_assign = GETPOSTINT('assign_user') ?: null;
+            $tracking->update($user);
+        } elseif ($action === 'trackingrdv') {
+            $rdvDate = dol_stringtotime(GETPOST('tracking_rdv_date', 'alpha'));
+            if (!$rdvDate) {
+                reedcrmFollowupDeleteAuditIntervention($db, $user, (int) $tracking->fk_intervention_date);
+                $tracking->date_rdv             = null;
+                $tracking->fk_intervention_date = null;
+                if ($tracking->update($user) > 0) {
+                    setEventMessages($langs->trans('FollowupAuditRdvCleared'), []);
+                }
+            } else {
+                $interventionId     = reedcrmTrackingSyncIntervention($db, $user, $tracking, $rdvDate);
+                $tracking->date_rdv = $rdvDate;
+                if ($interventionId > 0) {
+                    $tracking->fk_intervention_date = $interventionId;
+                }
+                if ($tracking->update($user) > 0) {
+                    if ($interventionId > 0) {
+                        setEventMessages($langs->trans('FollowupAuditRdvPlanned', dol_print_date($rdvDate, 'day')), []);
+                    } elseif ($interventionId === -2) {
+                        setEventMessages($langs->trans('FollowupTrackingRdvNoProposal'), null, 'warnings');
+                    } elseif ($interventionId < 0) {
+                        setEventMessages($langs->trans('FollowupAuditRdvInterventionFailed'), null, 'errors');
+                    }
+                } else {
+                    setEventMessages($tracking->error, $tracking->errors, 'errors');
+                }
+            }
+        } elseif ($action === 'trackingdone') {
+            // Same rule as the audits: the date given, else the appointment, else today. A hand-added
+            // line does not roll over to a next cycle, it is simply closed.
+            $doneInput = GETPOST('tracking_done_date', 'alpha');
+            if ($doneInput) {
+                $doneDate = dol_stringtotime($doneInput);
+            } elseif (!empty($tracking->date_rdv)) {
+                $doneDate = is_numeric($tracking->date_rdv) ? (int) $tracking->date_rdv : (int) dol_stringtotime($tracking->date_rdv);
+            } else {
+                $doneDate = dol_now();
+            }
+            reedcrmFollowupMarkAuditInterventionDone($db, $user, (int) $tracking->fk_intervention_date);
+            $tracking->date_done = $doneDate;
+            $tracking->status    = ClientTracking::STATUS_DONE;
+            if ($tracking->update($user) > 0) {
+                setEventMessages($langs->trans('FollowupTrackingDone', dol_print_date($doneDate, 'day')), []);
+            } else {
+                setEventMessages($tracking->error, $tracking->errors, 'errors');
+            }
+        } elseif ($permissiontodelete) {
+            reedcrmFollowupDeleteAuditIntervention($db, $user, (int) $tracking->fk_intervention_date);
+            $tracking->delete($user, 0, false);
         }
     }
 }
@@ -301,7 +397,7 @@ if ($action === 'exportoverdueaudits' && $permissiontoread) {
             !empty($r['last_audit']) ? dol_print_date($r['last_audit'], 'day') : '',
             dol_print_date($r['next_audit'], 'day'),
             !empty($r['date_rdv']) ? dol_print_date($r['date_rdv'], 'day') : '',
-            !empty($r['fichinter_ref']) ? $r['fichinter_ref'] : '',
+            !empty($r['intervention_id']) ? dol_print_date($r['intervention_date'], 'dayhour') : '',
             $r['days_late'], $r['service'],
             $r['montant'] !== null ? $r['montant'] : '', $assignName,
             !empty($r['propal_ref']) ? $r['propal_ref'] : '',
@@ -362,23 +458,51 @@ print '<style>
 .rcf-donerow>td{background:rgba(46,158,108,.12) !important}
 .rcf-donerow>td:first-child{box-shadow:inset 3px 0 0 #2e9e6c}
 .rcf-donetag{color:#2e9e6c;font-weight:700}
+/* Done line: the date shows alone, the form to correct it unfolds on click. */
+.rcf-donedetails summary{cursor:pointer;list-style:none;display:inline-block;padding:2px 4px;border-radius:5px}
+.rcf-donedetails summary::-webkit-details-marker{display:none}
+.rcf-donedetails summary:hover{background:rgba(46,158,108,.18)}
+.rcf-donedetails[open] summary{margin-bottom:4px}
 /* Forecast date (theoretical, from last year) kept quiet, real appointment made loud. */
-.rcf-planned input[type=date]{opacity:.7;font-size:.9em}
-.rcf-planned-tag{font-size:.72em;text-transform:uppercase;letter-spacing:.04em;color:#8a8a8a;margin-top:2px}
-.rcf-rdvcell input[type=date]{font-size:.9em}
+/* Every date field of the board is drawn the same way: a date input inherits neither the page font
+   nor its size, so both have to be stated or two identical fields end up in two typefaces. */
+.rcf-datefield{font-family:inherit !important;font-size:.85em !important;font-style:normal !important;font-weight:400 !important;line-height:1.4;padding:3px 6px;border:1px solid var(--colortopbordertitle1,#ccc);border-radius:6px;background:var(--colorbacklinepair2,#fff);color:inherit;width:118px;max-width:100%;box-sizing:border-box}
+.rcf-datefield:focus{border-color:#2f6f9f;outline:none}
+.rcf-planned .rcf-datefield{color:#777}
+/* Label above the field, and both cells aligned on their bottom edge, so the two date boxes of a
+   row sit on exactly the same line whatever sits above them. */
+.rcf-planned-tag{font-size:.7em;text-transform:uppercase;letter-spacing:.04em;color:#8a8a8a;margin:0 0 2px}
+td.rcf-planned,td.rcf-rdvcell{vertical-align:bottom}
 .rcf-rdvcell.set input[type=date]{border:1px solid #0b7285;border-radius:5px;color:#0b7285;font-weight:700}
 .rcf-rdvtag{color:#0b7285;font-weight:700}
 .rcf-interlink{display:inline-block;margin-top:3px;font-size:.85em;color:#0b7285}
+/* Actions: lined up on the right, so the delete button lands in the same place on every row. */
+td.rcf-actions{text-align:right !important}
+.rcf-actions>a,.rcf-actions>form{margin-left:4px;vertical-align:middle}
+/* Icon-only buttons: the theme sizes buttons for a text label, these carry none. */
+.rcf-actions .button{min-width:0 !important;width:auto !important;padding:3px 8px !important;font-size:.9em !important;line-height:1.4 !important;height:auto !important}
+.rcf-actions .button i{margin:0;padding:0}
+/* Engagement type badge: one colour per kind of work followed. */
+.rcf-type{display:inline-block;padding:1px 8px;border-radius:10px;font-size:.78em;font-weight:700;letter-spacing:.02em;border:1px solid}
+.rcf-type-assistance{color:#2f6f9f;border-color:#2f6f9f;background:rgba(47,111,159,.08)}
+.rcf-type-formation{color:#7048c0;border-color:#7048c0;background:rgba(112,72,192,.08)}
+.rcf-type-sprint{color:#c8871a;border-color:#c8871a;background:rgba(200,135,26,.1)}
+.rcf-type-other{color:#6c757d;border-color:#6c757d;background:rgba(108,117,125,.08)}
 /* "Link a quote / an invoice" pickers of the add-an-audit line. */
 .rcf-doclink{display:flex;flex-direction:column;gap:6px;min-width:250px}
 .rcf-doclink-row{display:flex;align-items:center;gap:7px;text-align:left}
 .rcf-doclink-row>i{flex:0 0 16px;text-align:center;font-size:.95em;opacity:.8}
 .rcf-doclink-row.pr>i{color:#2f6f9f}
 .rcf-doclink-row.fa>i{color:#2e9e6c}
-.rcf-doclink-row .select2-container,select.rcf-docsel{flex:1 1 auto;min-width:0}
-select.rcf-docsel{padding:5px 9px;border:1px solid var(--colortopbordertitle1,#ccc);border-radius:7px;background:var(--colorbacklinepair2,#fff);color:inherit;font-size:.9em;max-width:100%}
-select.rcf-docsel:focus{border-color:#2f6f9f;outline:none}
+.rcf-doclink-row .select2-container,.rcf-doclink-row select{flex:1 1 auto;min-width:0;max-width:100%}
+/* Same typography whether the browser draws the native select or select2 replaces it. */
+.rcf-doclink-row select,
+.rcf-doclink-row .select2-selection__rendered,
+.rcf-doclink-row .select2-selection__placeholder{font-family:inherit !important;font-size:.9em !important;font-style:normal !important;font-weight:400 !important;line-height:1.6}
+.rcf-doclink-row select{padding:5px 9px;border:1px solid var(--colortopbordertitle1,#ccc);border-radius:7px;background:var(--colorbacklinepair2,#fff);color:inherit}
+.rcf-doclink-row select:focus{border-color:#2f6f9f;outline:none}
 .rcf-doclink-row .select2-selection--single{border-radius:7px !important;height:29px !important}
+.rcf-doclink-row .select2-selection__placeholder{color:inherit;opacity:.65}
 @media (max-width:900px){.rcf-charts{grid-template-columns:1fr}}
 </style>';
 
@@ -584,24 +708,38 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     print $audit['location'] !== '' ? '<i class="fas fa-map-marker-alt paddingright opacitymedium"></i>' . dol_escape_htmltag($audit['location']) : '<span class="opacitymedium">-</span>';
     print '</td>';
     print '<td class="center">' . (!empty($audit['last_audit']) ? dol_print_date($audit['last_audit'], 'day') : '') . '</td>';
-    // Theoretical yearly date (last audit + 1 year): a forecast, kept discreet on purpose.
+    // Theoretical yearly date (last audit + 1 year): a forecast, kept discreet on purpose. Once the
+    // audit is done, that forecast is behind us: only the date it was carried out is worth showing.
     print '<td class="center nowraponall rcf-planned">';
     if ($doneInMonth) {
-        print '<span class="rcf-donetag"><i class="fas fa-check-circle paddingright"></i>' . $langs->trans('FollowupAuditDoneOn', dol_print_date($audit['date_done'], 'day')) . '</span><br>';
+        // One date, and one only. The form to correct it stays one click away, folded.
+        print '<details class="rcf-donedetails">';
+        print '<summary class="rcf-donetag"><i class="fas fa-check-circle paddingright"></i>' . $langs->trans('FollowupAuditDoneOn', dol_print_date($audit['date_done'], 'day')) . '</summary>';
+        if ($permissiontoadd) {
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit" title="' . dol_escape_htmltag($langs->trans('FollowupAuditCorrectDoneDate')) . '">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditdone"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
+            print '<input type="date" name="audit_done_date" value="' . dol_print_date($audit['date_done'], '%Y-%m-%d') . '" class="rcf-datefield">';
+            print '<button type="submit" class="button smallpaddingimp"><i class="fas fa-check"></i></button>';
+            print '</form>';
+        }
+        print '</details>';
+    } else {
+        print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit">';
+        print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditmove"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
+        print '<input type="date" name="audit_date" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMove')) . '" value="' . dol_print_date($audit['next_audit'], '%Y-%m-%d') . '" class="rcf-datefield">';
+        print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMove')) . '"><i class="fas fa-arrows-alt-h"></i></button>';
+        print '</form>';
     }
-    print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
-    print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditmove"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
-    print '<input type="date" name="audit_date" value="' . dol_print_date($audit['next_audit'], '%Y-%m-%d') . '" class="maxwidth150">';
-    print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMove')) . '"><i class="fas fa-arrows-alt-h"></i></button>';
-    print '</form>';
-    print '<div class="rcf-planned-tag">' . $langs->trans('FollowupAuditPlannedTag') . '</div>';
     print '</td>';
     // Date really agreed with the client: filling it books the intervention.
     print '<td class="center nowraponall rcf-rdvcell' . (!empty($audit['date_rdv']) ? ' set' : '') . '">';
-    if ($permissiontoadd) {
-        print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
+    if ($doneInMonth) {
+        // Nothing left to book on a line whose audit has just been carried out.
+        print '<span class="opacitymedium">-</span>';
+    } elseif ($permissiontoadd) {
+        print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit">';
         print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditrdv"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
-        print '<input type="date" name="audit_rdv_date" value="' . (!empty($audit['date_rdv']) ? dol_print_date($audit['date_rdv'], '%Y-%m-%d') : '') . '" class="maxwidth150">';
+        print '<input type="date" name="audit_rdv_date" title="' . dol_escape_htmltag($langs->trans(!empty($audit['date_rdv']) ? 'FollowupAuditRdvMove' : 'FollowupAuditRdvPlan')) . '" value="' . (!empty($audit['date_rdv']) ? dol_print_date($audit['date_rdv'], '%Y-%m-%d') : '') . '" class="rcf-datefield">';
         print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans(!empty($audit['date_rdv']) ? 'FollowupAuditRdvMove' : 'FollowupAuditRdvPlan')) . '"><i class="fas fa-calendar-check"></i></button>';
         print '</form>';
     } elseif (!empty($audit['date_rdv'])) {
@@ -609,8 +747,10 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     } else {
         print '<span class="opacitymedium">-</span>';
     }
-    if (!empty($audit['fichinter_id'])) {
-        print '<div><a href="' . DOL_URL_ROOT . '/fichinter/card.php?id=' . ((int) $audit['fichinter_id']) . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-tools paddingright"></i>' . dol_escape_htmltag($audit['fichinter_ref']) . '</a></div>';
+    if (!empty($audit['intervention_id'])) {
+        // The appointment sits in the ReedCRM intervention calendar: link straight to its month.
+        $interventionMonth = $audit['intervention_date'] ?: $audit['date_rdv'];
+        print '<div><a href="' . dol_buildpath('/custom/reedcrm/view/intervention_calendar.php', 1) . '?month=' . (int) dol_print_date($interventionMonth, '%m') . '&year=' . (int) dol_print_date($interventionMonth, '%Y') . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-calendar-alt paddingright"></i>' . $langs->trans('FollowupAuditRdvInCalendar') . '</a></div>';
     }
     print '</td>';
     if ($showDaysLate) {
@@ -666,13 +806,14 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     $staleDocs  = $showDaysLate && (max((int) $audit['facture_date'], (int) $audit['propal_date']) < dol_time_plus_duree(dol_now(), -6, 'm'));
     if ($doneInMonth) {
         // Audit really carried out this month: this is the state that matters, it wins over the docs.
-        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditDoneOn', dol_print_date($audit['date_done'], 'day'));
+        // The date itself is already shown once on the line, no need to repeat it here.
+        $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditDone');
     } elseif ($isDone) {
         $stateColor = '#6c757d'; $stateLabel = $langs->trans('FollowupAuditDone');
     } elseif (!empty($audit['date_rdv'])) {
         // A date agreed with the client outranks the commercial documents: it is the firm one.
         $stateColor = '#0b7285'; $stateLabel = $langs->trans('FollowupAuditRdvOn', dol_print_date($audit['date_rdv'], 'day'));
-        $stateTitle = (string) $audit['fichinter_ref'];
+        $stateTitle = !empty($audit['intervention_id']) ? $langs->trans('FollowupAuditRdvInCalendar') : '';
     } elseif (!$staleDocs && !empty($audit['facture_id']) && !empty($audit['facture_paye'])) {
         $stateColor = '#2e9e6c'; $stateLabel = $langs->trans('FollowupAuditPaid');       $stateTitle = (string) $audit['facture_ref'];
     } elseif (!$staleDocs && !empty($audit['facture_id'])) {
@@ -695,22 +836,22 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         print ' <span class="badge badge-secondary" title="' . dol_escape_htmltag($langs->trans('FollowupAuditManual')) . '">M</span>';
     }
     print '</td>';
-    print '<td class="center nowraponall">';
+    print '<td class="nowraponall rcf-actions">';
     if ($permissiontoadd && !$isDone) {
-        // Create the yearly renewal quote (Dolibarr proposal) for this client.
-        print '<a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/comm/propal/card.php?action=create&socid=' . (int) $audit['fk_soc'] . '" title="' . dol_escape_htmltag($langs->trans('FollowupCreateProposal')) . '"><i class="fas fa-file-invoice"></i></a> ';
-        // Roll the line forward to the next yearly cycle (only if a newer DU_AU invoice exists).
-        // Already done this month: the cycle has just rolled, no second roll offered here.
-        if (!$doneInMonth) {
-            print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('FollowupAuditRenewConfirm')) . '\');">';
-            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditrenew"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
-            print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditRenew')) . '"><i class="fas fa-redo"></i></button></form> ';
+        // Create the yearly renewal quote (Dolibarr proposal): only while the client has none, the
+        // quote is one click away in its own column once it exists.
+        if (empty($audit['propal_id'])) {
+            print '<a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/comm/propal/card.php?action=create&socid=' . (int) $audit['fk_soc'] . '" title="' . dol_escape_htmltag($langs->trans('FollowupCreateProposal')) . '"><i class="fas fa-file-invoice"></i></a> ';
         }
-        // Mark done / correct the real date: re-submitting simply re-anchors the cycle on the new date.
-        print '<form method="POST" action="' . $selfMonth . '" class="inline-block" title="' . dol_escape_htmltag($langs->trans($doneInMonth ? 'FollowupAuditCorrectDoneDate' : 'FollowupAuditRealDate')) . '">';
-        print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditdone"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
-        print '<input type="date" name="audit_done_date" value="' . dol_print_date($audit['date_done'] ?: dol_now(), '%Y-%m-%d') . '" class="maxwidth130">';
-        print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans($doneInMonth ? 'FollowupAuditCorrectDoneDate' : 'FollowupAuditMarkDone')) . '"><i class="fas fa-check"></i></button></form> ';
+        // Mark done: re-submitting simply re-anchors the cycle on the date given. Once the audit is
+        // done, this form lives in the "done" cell instead, so the line keeps a single date.
+        if (!$doneInMonth) {
+            // No second date picker here: the audit is done on the appointment date when there is one,
+            // today otherwise. Correcting it stays possible from the "done" cell afterwards.
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="auditdone"><input type="hidden" name="audit_id" value="' . $audit['id'] . '">';
+            print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupAuditMarkDone')) . '"><i class="fas fa-check"></i></button></form> ';
+        }
     }
     if ($permissiontodelete) {
         print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('ConfirmDeleteObject')) . '\');">';
@@ -726,7 +867,7 @@ print load_fiche_titre('<i class="fas fa-clipboard-check paddingright"></i>' . $
 print '<div class="div-table-responsive"><table class="tagtable nobottomiftotal liste">';
 print '<tr class="liste_titre">';
 print '<th>' . $langs->trans('ThirdParty') . '</th><th>' . $langs->trans('FollowupLocation') . '</th>';
-print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAuditPlanned') . '</th><th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAuditPlanned') . '<div class="rcf-planned-tag">' . $langs->trans('FollowupAuditPlannedTag') . '</div></th><th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
 print '<th>' . $langs->trans('Service') . '</th><th class="right">' . $langs->trans('FollowupAmount') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupAssignedTo') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupProposalSent') . '</th>';
@@ -746,7 +887,7 @@ if ($permissiontoadd) {
     print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="addaudit">';
     print '<td>' . $formcompany->select_company(0, 'audit_fk_soc', '', $langs->trans('SelectThirdParty'), 0, 0, [], 0, 'minwidth150 maxwidth250') . '</td>';
     print '<td></td><td></td>';
-    print '<td class="center"><input type="date" name="audit_date" class="maxwidth150"></td>';
+    print '<td class="center"><input type="date" name="audit_date" class="rcf-datefield"></td>';
     print '<td class="center opacitymedium">' . $langs->trans('FollowupAuditRdvLater') . '</td>';
     print '<td><input type="text" name="audit_note" class="maxwidth200" placeholder="' . dol_escape_htmltag($langs->trans('Note')) . '"></td>';
     print '<td class="right"><input type="text" name="audit_montant" class="maxwidth75 right" placeholder="0"></td>';
@@ -768,9 +909,23 @@ if ($permissiontoadd) {
     // Same searchable dropdowns as the rest of Dolibarr for the two document pickers.
     print ajax_combobox('audit_fk_propal', [], 0, 0, 'resolve', '0');
     print ajax_combobox('audit_fk_facture', [], 0, 0, 'resolve', '0');
+    print ajax_combobox('tracking_fk_propal', [], 0, 0, 'resolve', '0');
+    print ajax_combobox('tracking_fk_facture', [], 0, 0, 'resolve', '0');
+    print ajax_combobox('tracking_type');
     // Fill the quote/invoice pickers of the "add an audit" line with the documents of the chosen client.
     print '<script>
     $(document).ready(function() {
+        // Dates save themselves when the field is left, so no validation button is needed. The
+        // buttons stay in the markup and are only hidden here, for the no-JS case. Saving on blur
+        // rather than on change: typing a year digit by digit briefly yields valid dates (year 0002…)
+        // that would otherwise be saved mid-typing.
+        $("form.rcf-autosubmit button[type=submit]").hide();
+        $(document).on("focusout", "form.rcf-autosubmit input[type=date]", function() {
+            if (this.value === this.defaultValue || this.dataset.rcfSaving) { return; }
+            this.dataset.rcfSaving = "1";
+            this.form.submit();
+        });
+
         var url = "' . dol_escape_js(dol_buildpath('/custom/reedcrm/ajax/get_du_audit_documents.php', 1)) . '";
         var labels = {
             pick: ' . json_encode($langs->transnoentities('FollowupLinkPickClient')) . ',
@@ -787,57 +942,238 @@ if ($permissiontoadd) {
             // Let select2 redraw the freshly rebuilt option list.
             $sel.val(0).trigger("change");
         };
-        $("#audit_fk_soc").on("change", function() {
-            var socid = parseInt($(this).val(), 10) || 0;
-            if (!socid) {
-                fill("audit_fk_propal", [], labels.pick);
-                fill("audit_fk_facture", [], labels.pick);
-                return;
-            }
-            $.getJSON(url, { socid: socid }, function(data) {
-                if (!data || !data.success) { return; }
-                var propals = data.propals || [], factures = data.factures || [];
-                fill("audit_fk_propal", propals, propals.length ? labels.propal : labels.none);
-                fill("audit_fk_facture", factures, factures.length ? labels.facture : labels.none);
+        // Both add lines (audit and other engagement) fill their own pair of pickers.
+        var bindPickers = function(socId, propalId, factureId) {
+            $("#" + socId).on("change", function() {
+                var socid = parseInt($(this).val(), 10) || 0;
+                if (!socid) {
+                    fill(propalId, [], labels.pick);
+                    fill(factureId, [], labels.pick);
+                    return;
+                }
+                $.getJSON(url, { socid: socid }, function(data) {
+                    if (!data || !data.success) { return; }
+                    var propals = data.propals || [], factures = data.factures || [];
+                    fill(propalId, propals, propals.length ? labels.propal : labels.none);
+                    fill(factureId, factures, factures.length ? labels.facture : labels.none);
+                });
             });
-        });
+        };
+        bindPickers("audit_fk_soc", "audit_fk_propal", "audit_fk_facture");
+        bindPickers("tracking_fk_soc", "tracking_fk_propal", "tracking_fk_facture");
     });
     </script>';
 }
+/*
+ * --- Other client engagements of the month (support, training, sprint…) ---
+ * Hand-added only: the board starts empty and nothing ever lands here by itself.
+ */
+$trackings = reedcrmTrackingGetForMonth($db, $periodStart, $periodEnd);
+$trackTot  = 0;
+foreach ($trackings as $t) {
+    $trackTot += (float) $t['montant'];
+}
+print '<br>';
+print load_fiche_titre('<i class="fas fa-headset paddingright"></i>' . $langs->trans('FollowupTrackingsOfMonth') . ' <span class="badge">' . count($trackings) . '</span>', '', '');
+print '<div class="div-table-responsive"><table class="tagtable nobottomiftotal liste">';
+print '<tr class="liste_titre">';
+print '<th>' . $langs->trans('ThirdParty') . '</th><th class="center">' . $langs->trans('Type') . '</th>';
+print '<th>' . $langs->trans('FollowupLocation') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupTrackingPlanned') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
+print '<th>' . $langs->trans('FollowupTrackingLabel') . '</th><th class="right">' . $langs->trans('FollowupAmount') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupAssignedTo') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupLinkedQuote') . '</th>';
+print '<th class="center">' . $langs->trans('Status') . '</th><th class="center maxwidthsearch"></th>';
+print '</tr>';
 
-// --- Proposal amount per assignee for the BROWSED MONTH (from the month's audits that have a DU quote) ---
-$byUser = [];
-foreach ($audits as $auditRow) {
-    if (empty($auditRow['assigned']) || empty($auditRow['propal_id'])) {
-        continue;
+if (empty($trackings)) {
+    print '<tr class="oddeven"><td colspan="11" class="opacitymedium center">' . $langs->trans('FollowupNoTrackingThisMonth') . '</td></tr>';
+} else {
+    foreach ($trackings as $track) {
+        $trackDone = ($track['status'] == ClientTracking::STATUS_DONE);
+        $thirdpartyStatic->id     = $track['fk_soc'];
+        $thirdpartyStatic->name   = $track['thirdparty'];
+        $thirdpartyStatic->status = 1;
+
+        print '<tr class="oddeven' . ($trackDone ? ' rcf-donerow' : '') . '">';
+        print '<td class="tdoverflowmax200">' . $thirdpartyStatic->getNomUrl(1) . '</td>';
+        print '<td class="center"><span class="rcf-type rcf-type-' . dol_escape_htmltag($track['type']) . '">' . dol_escape_htmltag(ClientTracking::typeLabel($track['type'])) . '</span></td>';
+        print '<td class="tdoverflowmax150">' . ($track['location'] !== '' ? '<i class="fas fa-map-marker-alt paddingright opacitymedium"></i>' . dol_escape_htmltag($track['location']) : '<span class="opacitymedium">-</span>') . '</td>';
+        // Planned date, then the date agreed with the client: same pair as the audits board.
+        print '<td class="center nowraponall rcf-planned">';
+        if ($trackDone) {
+            print '<details class="rcf-donedetails">';
+            print '<summary class="rcf-donetag"><i class="fas fa-check-circle paddingright"></i>' . $langs->trans('FollowupAuditDoneOn', dol_print_date($track['date_done'], 'day')) . '</summary>';
+            if ($permissiontoadd) {
+                print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit">';
+                print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingdone"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
+                print '<input type="date" name="tracking_done_date" value="' . dol_print_date($track['date_done'], '%Y-%m-%d') . '" class="rcf-datefield">';
+                print '<button type="submit" class="button smallpaddingimp"><i class="fas fa-check"></i></button></form>';
+            }
+            print '</details>';
+        } else {
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingmove"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
+            print '<input type="date" name="tracking_date" value="' . dol_print_date($track['planned'], '%Y-%m-%d') . '" class="rcf-datefield">';
+            print '<button type="submit" class="button smallpaddingimp"><i class="fas fa-arrows-alt-h"></i></button></form>';
+        }
+        print '</td>';
+        print '<td class="center nowraponall rcf-rdvcell' . (!empty($track['date_rdv']) ? ' set' : '') . '">';
+        if ($trackDone) {
+            print '<span class="opacitymedium">-</span>';
+        } elseif ($permissiontoadd) {
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingrdv"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
+            print '<input type="date" name="tracking_rdv_date" value="' . (!empty($track['date_rdv']) ? dol_print_date($track['date_rdv'], '%Y-%m-%d') : '') . '" class="rcf-datefield">';
+            print '<button type="submit" class="button smallpaddingimp"><i class="fas fa-calendar-check"></i></button></form>';
+        }
+        if (!empty($track['intervention_id'])) {
+            $interMonth = $track['intervention_date'] ?: $track['date_rdv'];
+            print '<div><a href="' . dol_buildpath('/custom/reedcrm/view/intervention_calendar.php', 1) . '?month=' . (int) dol_print_date($interMonth, '%m') . '&year=' . (int) dol_print_date($interMonth, '%Y') . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-calendar-alt paddingright"></i>' . $langs->trans('FollowupAuditRdvInCalendar') . '</a></div>';
+        }
+        print '</td>';
+        print '<td class="tdoverflowmax300" title="' . dol_escape_htmltag($track['label']) . '">' . dol_escape_htmltag($track['label']) . '</td>';
+        print '<td class="right nowraponall">' . ($track['montant'] !== null ? price($track['montant'], 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td>';
+        print '<td class="center nowraponall">';
+        if ($permissiontoadd) {
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-assignform">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingassign"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
+            print $form->select_dolusers($track['assigned'] ?: '', 'assign_user', 1, null, 0, '', '', 0, 0, 0, '', 0, '', 'maxwidth150 rcf-assignsel');
+            print '<button type="submit" class="button smallpaddingimp"><i class="fas fa-user-check"></i></button></form>';
+        }
+        print '</td>';
+        print '<td class="center nowraponall">';
+        if (!empty($track['propal_id']) && !empty($track['propal_ref'])) {
+            print '<a href="' . DOL_URL_ROOT . '/comm/propal/card.php?id=' . ((int) $track['propal_id']) . '" target="_blank" rel="noopener"><i class="fas fa-file-invoice paddingright opacitymedium"></i>' . dol_escape_htmltag($track['propal_ref']) . '</a>';
+            if ($track['propal_ttc'] !== null) {
+                print ' <span class="opacitymedium">(' . price($track['propal_ttc'], 0, $langs, 1, -1, 0, $conf->currency) . ')</span>';
+            }
+        } else {
+            print '<span class="opacitymedium">-</span>';
+        }
+        if (!empty($track['facture_id']) && !empty($track['facture_ref'])) {
+            print '<div><a href="' . DOL_URL_ROOT . '/compta/facture/card.php?id=' . ((int) $track['facture_id']) . '" target="_blank" rel="noopener" class="opacitymedium"><i class="fas fa-file-invoice-dollar paddingright"></i>' . dol_escape_htmltag($track['facture_ref']) . '</a></div>';
+        }
+        print '</td>';
+        // State: done > appointment booked > invoice > quote > late > to prepare.
+        print '<td class="center nowraponall">';
+        if ($trackDone) {
+            $tColor = '#2e9e6c'; $tLabel = $langs->trans('FollowupAuditDone');
+        } elseif (!empty($track['date_rdv'])) {
+            $tColor = '#0b7285'; $tLabel = $langs->trans('FollowupAuditRdvOn', dol_print_date($track['date_rdv'], 'day'));
+        } elseif (!empty($track['facture_id'])) {
+            $tColor = !empty($track['facture_paye']) ? '#2e9e6c' : '#17a2b8';
+            $tLabel = $langs->trans(!empty($track['facture_paye']) ? 'FollowupAuditPaid' : 'FollowupAuditInvoiced');
+        } elseif (!empty($track['propal_id'])) {
+            $tColor = '#2f6f9f'; $tLabel = $langs->trans('FollowupProposalSent');
+        } elseif ($track['effective'] < dol_now()) {
+            $tColor = '#cf4257'; $tLabel = $langs->trans('FollowupAuditOverdue');
+        } else {
+            $tColor = '#c8871a'; $tLabel = $langs->trans('FollowupAuditToPrepare');
+        }
+        print '<span class="rcf-statedot" style="background:' . $tColor . '"></span> ' . $tLabel;
+        print '</td>';
+        print '<td class="nowraponall rcf-actions">';
+        if ($permissiontoadd && !$trackDone) {
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingdone"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
+            print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('FollowupTrackingMarkDone')) . '"><i class="fas fa-check"></i></button></form>';
+        }
+        if ($permissiontodelete) {
+            print '<form method="POST" action="' . $selfMonth . '" class="inline-block" onsubmit="return confirm(\'' . dol_escape_js($langs->trans('ConfirmDeleteObject')) . '\');">';
+            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingdelete"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
+            print '<button type="submit" class="button smallpaddingimp" title="' . dol_escape_htmltag($langs->trans('Delete')) . '"><i class="fas fa-trash"></i></button></form>';
+        }
+        print '</td></tr>';
     }
-    $uid = (int) $auditRow['assigned'];
+    print '<tr class="liste_total"><td colspan="6">' . $langs->trans('Total') . '</td><td class="right">' . price($trackTot, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td colspan="4"></td></tr>';
+}
+
+if ($permissiontoadd) {
+    print '<tr class="oddeven">';
+    print '<form method="POST" action="' . $selfMonth . '">';
+    print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="addtracking">';
+    print '<td>' . $formcompany->select_company(0, 'tracking_fk_soc', '', $langs->trans('SelectThirdParty'), 0, 0, [], 0, 'minwidth150 maxwidth250') . '</td>';
+    print '<td class="center"><select name="tracking_type" id="tracking_type" class="rcf-docsel">';
+    foreach (ClientTracking::TYPES as $typeCode) {
+        print '<option value="' . $typeCode . '">' . dol_escape_htmltag(ClientTracking::typeLabel($typeCode)) . '</option>';
+    }
+    print '</select></td>';
+    print '<td></td>';
+    print '<td class="center"><input type="date" name="tracking_date" class="rcf-datefield"></td>';
+    print '<td class="center opacitymedium">' . $langs->trans('FollowupAuditRdvLater') . '</td>';
+    print '<td><input type="text" name="tracking_label" class="maxwidth200" placeholder="' . dol_escape_htmltag($langs->trans('FollowupTrackingLabel')) . '"></td>';
+    print '<td class="right"><input type="text" name="tracking_montant" class="maxwidth75 right" placeholder="0"></td>';
+    print '<td></td>';
+    print '<td class="center"><div class="rcf-doclink">';
+    print '<div class="rcf-doclink-row pr"><i class="fas fa-file-signature"></i>';
+    print '<select name="tracking_fk_propal" id="tracking_fk_propal" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
+    print '<div class="rcf-doclink-row fa"><i class="fas fa-file-invoice-dollar"></i>';
+    print '<select name="tracking_fk_facture" id="tracking_fk_facture" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
+    print '</div></td>';
+    print '<td class="center" colspan="2"><button type="submit" class="button button-add smallpaddingimp"><i class="fas fa-plus paddingright"></i>' . $langs->trans('FollowupTrackingAdd') . '</button></td>';
+    print '</form></tr>';
+}
+print '</table></div>';
+
+// --- Amount per assignee for the BROWSED MONTH, both boards together ---
+// DU audits count through their renewal quote (that is the amount being sold), the other
+// engagements through their quote when one is linked, their own amount otherwise.
+$byUser = [];
+$addToUser = function (int $uid, string $bucket, float $amount) use (&$byUser) {
+    if ($uid <= 0) {
+        return;
+    }
     if (!isset($byUser[$uid])) {
-        $byUser[$uid] = ['nb' => 0, 'tot' => 0.0];
+        $byUser[$uid] = ['nb' => 0, 'du' => 0.0, 'other' => 0.0];
     }
     $byUser[$uid]['nb']++;
-    $byUser[$uid]['tot'] += (float) $auditRow['propal_ttc'];
+    $byUser[$uid][$bucket] += $amount;
+};
+foreach ($audits as $auditRow) {
+    if (empty($auditRow['propal_id'])) {
+        continue;
+    }
+    $addToUser((int) $auditRow['assigned'], 'du', (float) $auditRow['propal_ttc']);
+}
+foreach ($trackings as $trackRow) {
+    $amount = !empty($trackRow['propal_id']) && $trackRow['propal_ttc'] !== null ? (float) $trackRow['propal_ttc'] : (float) $trackRow['montant'];
+    $addToUser((int) $trackRow['assigned'], 'other', $amount);
 }
 uasort($byUser, function ($x, $y) {
-    return $y['tot'] <=> $x['tot'];
+    return ($y['du'] + $y['other']) <=> ($x['du'] + $x['other']);
 });
 if (!empty($byUser)) {
+    $totDu    = 0;
+    $totOther = 0;
     print '<br>';
     print load_fiche_titre('<i class="fas fa-user-tag paddingright"></i>' . $langs->trans('FollowupAmountPerPerson'), '', '');
     print '<div class="div-table-responsive"><table class="tagtable liste">';
-    print '<tr class="liste_titre"><th>' . $langs->trans('FollowupAssignedTo') . '</th><th class="center">' . $langs->trans('FollowupProposalSentCount') . '</th><th class="right">' . $langs->trans('FollowupProposalAmount') . '</th></tr>';
+    print '<tr class="liste_titre"><th>' . $langs->trans('FollowupAssignedTo') . '</th><th class="center">' . $langs->trans('FollowupLineCount') . '</th>';
+    print '<th class="right">' . $langs->trans('FollowupAuditsOfMonth') . '</th><th class="right">' . $langs->trans('FollowupTrackingsOfMonth') . '</th>';
+    print '<th class="right">' . $langs->trans('Total') . '</th></tr>';
     foreach ($byUser as $uid => $agg) {
         if (!isset($assignUserCache[$uid])) {
             $u = new User($db);
             $u->fetch($uid);
             $assignUserCache[$uid] = $u;
         }
+        $totDu    += $agg['du'];
+        $totOther += $agg['other'];
         print '<tr class="oddeven"><td>' . $assignUserCache[$uid]->getNomUrl(-1) . '</td>';
         print '<td class="center">' . (int) $agg['nb'] . '</td>';
-        print '<td class="right nowraponall">' . price((float) $agg['tot'], 0, $langs, 1, -1, -1, $conf->currency) . '</td></tr>';
+        print '<td class="right nowraponall">' . ($agg['du'] > 0 ? price((float) $agg['du'], 0, $langs, 1, -1, -1, $conf->currency) : '<span class="opacitymedium">-</span>') . '</td>';
+        print '<td class="right nowraponall">' . ($agg['other'] > 0 ? price((float) $agg['other'], 0, $langs, 1, -1, -1, $conf->currency) : '<span class="opacitymedium">-</span>') . '</td>';
+        print '<td class="right nowraponall strong">' . price((float) ($agg['du'] + $agg['other']), 0, $langs, 1, -1, -1, $conf->currency) . '</td></tr>';
     }
+    print '<tr class="liste_total"><td colspan="2">' . $langs->trans('Total') . '</td>';
+    print '<td class="right nowraponall">' . price($totDu, 0, $langs, 1, -1, -1, $conf->currency) . '</td>';
+    print '<td class="right nowraponall">' . price($totOther, 0, $langs, 1, -1, -1, $conf->currency) . '</td>';
+    print '<td class="right nowraponall">' . price($totDu + $totOther, 0, $langs, 1, -1, -1, $conf->currency) . '</td></tr>';
     print '</table></div>';
 }
+
 
 // --- Overdue audits ---
 print '<br>';
@@ -846,7 +1182,7 @@ print load_fiche_titre('<i class="fas fa-exclamation-triangle paddingright" styl
 print '<div class="div-table-responsive"><table class="tagtable liste">';
 print '<tr class="liste_titre">';
 print '<th>' . $langs->trans('ThirdParty') . '</th><th>' . $langs->trans('FollowupLocation') . '</th>';
-print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAuditPlanned') . '</th><th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAuditPlanned') . '<div class="rcf-planned-tag">' . $langs->trans('FollowupAuditPlannedTag') . '</div></th><th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupLate') . '</th>';
 print '<th>' . $langs->trans('Service') . '</th><th class="right">' . $langs->trans('FollowupAmount') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupAssignedTo') . '</th>';

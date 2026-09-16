@@ -119,9 +119,9 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     // the theoretical yearly date otherwise.
     $effectiveDate = 'COALESCE(a.date_rdv, a.next_audit_date)';
 
-    $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.date_rdv, a.date_done, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_facture, a.fk_fichinter, a.fk_user_assign,';
+    $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.date_rdv, a.date_done, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_facture, a.fk_intervention_date, a.fk_user_assign,';
     $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
-    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date, fi.rowid as fichinter_rowid, fi.ref as fichinter_ref, fi.fk_statut as fichinter_statut,';
+    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date, idt.rowid as intervention_rowid, idt.date_intervention as intervention_date, idt.fk_user_intervenant as intervention_user,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -142,9 +142,11 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
     $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), a.fk_facture)';
-    // Intervention booked for the appointment, when one has been agreed with the client.
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'fichinter as fi ON fi.rowid = a.fk_fichinter';
+    // Intervention date planned for the appointment, when one has been agreed with the client.
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_intervention_date as idt ON idt.rowid = a.fk_intervention_date';
     $sql .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ')';
+    // Saturne deletes softly: a line put in the bin must not stay on the board.
+    $sql .= ' AND a.status >= 0';
     // A line sits in the month of its appointment once one is agreed, otherwise in the month of its
     // theoretical yearly date. Audits carried out during the month stay too (marking one done rolls
     // its next date a year ahead), so the month's work never disappears from the board.
@@ -166,9 +168,9 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
                 'next_audit'   => $nextAudit,
                 'date_rdv'     => !empty($obj->date_rdv) ? $db->jdate($obj->date_rdv) : 0,
                 'effective'    => $effective,
-                'fichinter_id'     => (int) $obj->fichinter_rowid,
-                'fichinter_ref'    => $obj->fichinter_ref,
-                'fichinter_statut' => $obj->fichinter_statut !== null ? (int) $obj->fichinter_statut : null,
+                'intervention_id'   => (int) $obj->intervention_rowid,
+                'intervention_date' => !empty($obj->intervention_date) ? $db->jdate($obj->intervention_date) : 0,
+                'intervention_user' => (int) $obj->intervention_user,
                 'date_done'    => !empty($obj->date_done) ? $db->jdate($obj->date_done) : 0,
                 'service'      => $obj->note,
                 'montant'      => $obj->montant !== null ? (float) $obj->montant : null,
@@ -208,9 +210,9 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $audits        = [];
     $effectiveDate = 'COALESCE(a.date_rdv, a.next_audit_date)';
 
-    $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.date_rdv, a.date_done, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_facture, a.fk_fichinter, a.fk_user_assign,';
+    $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.date_rdv, a.date_done, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_facture, a.fk_intervention_date, a.fk_user_assign,';
     $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
-    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date, fi.rowid as fichinter_rowid, fi.ref as fichinter_ref, fi.fk_statut as fichinter_statut,';
+    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date, idt.rowid as intervention_rowid, idt.date_intervention as intervention_date, idt.fk_user_intervenant as intervention_user,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -230,9 +232,10 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
     $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), a.fk_facture)';
-    // Intervention booked for the appointment, when one has been agreed with the client.
-    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'fichinter as fi ON fi.rowid = a.fk_fichinter';
+    // Intervention date planned for the appointment, when one has been agreed with the client.
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_intervention_date as idt ON idt.rowid = a.fk_intervention_date';
     $sql .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ')';
+    $sql .= ' AND a.status >= 0';
     $sql .= ' AND a.status <> 2'; // 2 = done
     // Late against the date that really counts: an audit whose appointment is booked ahead is not late.
     $sql .= ' AND ' . $effectiveDate . " < '" . $db->idate($now) . "'";
@@ -256,9 +259,9 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
                 'next_audit' => $nextAudit,
                 'date_rdv'   => !empty($obj->date_rdv) ? $db->jdate($obj->date_rdv) : 0,
                 'effective'  => $effective,
-                'fichinter_id'     => (int) $obj->fichinter_rowid,
-                'fichinter_ref'    => $obj->fichinter_ref,
-                'fichinter_statut' => $obj->fichinter_statut !== null ? (int) $obj->fichinter_statut : null,
+                'intervention_id'   => (int) $obj->intervention_rowid,
+                'intervention_date' => !empty($obj->intervention_date) ? $db->jdate($obj->intervention_date) : 0,
+                'intervention_user' => (int) $obj->intervention_user,
                 'date_done'  => !empty($obj->date_done) ? $db->jdate($obj->date_done) : 0,
                 'service'    => $obj->note,
                 'montant'    => $obj->montant !== null ? (float) $obj->montant : null,
@@ -1016,67 +1019,300 @@ function reedcrmFollowupFetchLinkableDoc(DoliDB $db, string $type, int $docId, i
 }
 
 /**
- * Create — or reschedule — the intervention (fiche d'intervention) backing a DU audit appointment.
+ * Find the DU service line a client's audit appointment can be planned on: the DU_AU line of the
+ * renewal quote (the latest one dated after the last audit), falling back to the quote hand-linked
+ * on the audit line.
  *
- * Only called when a real date has been agreed with the client: the yearly theoretical date never
- * creates anything, so the intervention list only holds appointments that really exist.
- *
- * @param  DoliDB  $db      Database handler.
- * @param  User    $user    User doing the action.
- * @param  DuAudit $audit   Audit whose appointment is being set (fk_soc + fk_fichinter are read).
- * @param  int     $rdvDate Appointment timestamp.
- * @return int              Intervention ID, 0 if the user may not create one, < 0 on error.
+ * @param  DoliDB  $db    Database handler.
+ * @param  DuAudit $audit Audit to look a quote up for.
+ * @return array{propal_id:int,line_id:int}|null Quote and line ids, null when the client has no DU quote.
  */
-function reedcrmFollowupSyncAuditIntervention(DoliDB $db, User $user, DuAudit $audit, int $rdvDate): int
+function reedcrmFollowupFindDuProposalLine(DoliDB $db, DuAudit $audit): ?array
 {
-    global $langs;
+    $socid = (int) $audit->fk_soc;
+    if ($socid <= 0) {
+        return null;
+    }
+    $lastAudit = !empty($audit->last_audit_date)
+        ? (is_numeric($audit->last_audit_date) ? (int) $audit->last_audit_date : (int) dol_stringtotime($audit->last_audit_date))
+        : 0;
 
-    require_once DOL_DOCUMENT_ROOT . '/fichinter/class/fichinter.class.php';
+    $base  = 'SELECT p.rowid as propal_id, pd.rowid as line_id FROM ' . MAIN_DB_PREFIX . 'propal as p';
+    $base .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'propaldet as pd ON pd.fk_propal = p.rowid';
+    $base .= ' INNER JOIN ' . MAIN_DB_PREFIX . "product as prod ON prod.rowid = pd.fk_product AND prod.ref LIKE 'DU\_A%'";
 
-    if (!isModEnabled('ficheinter') || !$user->hasRight('ficheinter', 'creer')) {
-        return 0;
+    // The renewal quote first, then any DU quote hand-linked on the audit.
+    $candidates = [
+        $base . ' WHERE p.fk_soc = ' . $socid . ' AND p.entity IN (' . getEntity('propal') . ')'
+            . ($lastAudit > 0 ? " AND p.datep > '" . $db->idate($lastAudit) . "'" : '')
+            . ' ORDER BY p.datep DESC, p.rowid DESC, pd.rowid ASC' . $db->plimit(1),
+    ];
+    if (!empty($audit->fk_propal)) {
+        $candidates[] = $base . ' WHERE p.rowid = ' . ((int) $audit->fk_propal)
+            . ' ORDER BY pd.rowid ASC' . $db->plimit(1);
     }
 
-    $duration = getDolGlobalInt('REEDCRM_DU_AUDIT_DURATION', 7 * 3600);
-    // The label ends up inside a real document: never let an untranslated key through (the module
-    // only ships fr_FR, and a cron or a CLI run may be on another language).
-    $label = $langs->transnoentities('FollowupInterventionLabel');
-    if ($label === 'FollowupInterventionLabel') {
-        $label = 'Audit du Document Unique';
-    }
-
-    // Already planned: move the existing intervention instead of piling up new ones.
-    if (!empty($audit->fk_fichinter)) {
-        $fichinter = new Fichinter($db);
-        if ($fichinter->fetch((int) $audit->fk_fichinter) > 0) {
-            $fichinter->fetch_lines();
-            if (!empty($fichinter->lines)) {
-                $line        = $fichinter->lines[0];
-                $line->date  = $rdvDate;
-                $line->datei = $rdvDate;
-                $line->update($user); // also refreshes dateo/datee on the intervention itself
-            } elseif ((int) $fichinter->statut === Fichinter::STATUS_DRAFT) {
-                $fichinter->addline($user, $fichinter->id, $label, $rdvDate, $duration);
-            }
-            $fichinter->set_date_delivery($user, $rdvDate); // draft only, no-op once validated
-            return (int) $fichinter->id;
+    foreach ($candidates as $sql) {
+        $resql = $db->query($sql);
+        if ($resql && $obj = $db->fetch_object($resql)) {
+            return ['propal_id' => (int) $obj->propal_id, 'line_id' => (int) $obj->line_id];
         }
     }
 
-    $fichinter              = new Fichinter($db);
-    $fichinter->socid       = (int) $audit->fk_soc;
-    $fichinter->description = $label;
-    $fichinter->duration    = $duration;
-    $newId                  = $fichinter->create($user);
-    if ($newId <= 0) {
+    return null;
+}
+
+/**
+ * Plan — or move — the intervention date backing a DU audit appointment, on the DU line of the
+ * client's quote, so it shows up in the ReedCRM intervention calendar (and in the agenda).
+ *
+ * Only called when a real date has been agreed with the client: the theoretical yearly date never
+ * plans anything, so the calendar only holds appointments that really exist.
+ *
+ * @param  DoliDB  $db      Database handler.
+ * @param  User    $user    User doing the action.
+ * @param  DuAudit $audit   Audit whose appointment is being set.
+ * @param  int     $rdvDate Appointment timestamp.
+ * @return int              Intervention date ID, 0 when the feature is off or forbidden,
+ *                          -2 when the client has no DU quote line to plan on, -1 on error.
+ */
+function reedcrmFollowupSyncAuditIntervention(DoliDB $db, User $user, DuAudit $audit, int $rdvDate): int
+{
+    global $conf, $langs;
+
+    require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+    require_once __DIR__ . '/../class/interventiondate.class.php';
+    require_once __DIR__ . '/reedcrm_interventiondate.lib.php';
+
+    if (!reedcrmInterventionIsEnabled() || !$user->hasRight('reedcrm', 'followup', 'write')) {
+        return 0;
+    }
+
+    $target = reedcrmFollowupFindDuProposalLine($db, $audit);
+    if ($target === null) {
+        return -2;
+    }
+
+    $propal = new Propal($db);
+    if ($propal->fetch($target['propal_id']) <= 0) {
         return -1;
     }
 
-    $fichinter->fetch($newId);
-    $fichinter->fetch_thirdparty(); // setValid() numbers the reference from the thirdparty
-    $fichinter->addline($user, $newId, $label, $rdvDate, $duration);
-    $fichinter->set_date_delivery($user, $rdvDate);
-    $fichinter->setValid($user); // give it a real ref; a failure just leaves it as a draft
+    // Reuse the line's first slot: planning from here or from the calendar writes the same row.
+    $interventionDate = new InterventionDate($db);
+    $existingDates    = $interventionDate->fetchAllByLine('propal', $target['line_id']);
+    $record           = $existingDates[1] ?? new InterventionDate($db);
 
-    return $newId;
+    $thirdparty = new Societe($db);
+    $thirdparty->fetch((int) $audit->fk_soc);
+
+    $record->entity              = $conf->entity;
+    $record->element_type        = 'propal';
+    $record->element_id          = (int) $propal->id;
+    $record->fk_element_line     = $target['line_id'];
+    $record->position            = 1;
+    $record->date_intervention   = $rdvDate;
+    // A DU audit is a day on site, not the generic one-hour slot.
+    $record->duration            = getDolGlobalInt('REEDCRM_DU_AUDIT_RDV_DURATION', 7 * 60);
+    $record->fk_user_intervenant = (int) $audit->fk_user_assign;
+    $record->location            = dol_trunc(trim(($thirdparty->zip ? $thirdparty->zip . ' ' : '') . (string) $thirdparty->town), 255, 'right', 'UTF-8', 1);
+    $record->status              = InterventionDate::STATUS_PLANNED;
+
+    $label = $langs->transnoentities('FollowupInterventionLabel');
+    if ($label === 'FollowupInterventionLabel') {
+        $label = 'Audit du Document Unique'; // the module only ships fr_FR
+    }
+    if (empty($record->note)) {
+        $record->note = $label;
+    }
+
+    // The event mirrors the date: written before the row so the row keeps its event id.
+    if ($record->syncEvent($user, $propal, $label) < 0) {
+        return -1;
+    }
+    $result = empty($record->id) ? $record->create($user) : $record->update($user);
+
+    return $result > 0 ? (int) $record->id : -1;
+}
+
+/**
+ * Remove the intervention date (and its agenda event) planned for a DU audit appointment.
+ *
+ * @param  DoliDB $db     Database handler.
+ * @param  User   $user   User doing the action.
+ * @param  int    $dateId Intervention date ID.
+ * @return int            > 0 if OK, 0 if nothing to do, < 0 on error.
+ */
+function reedcrmFollowupDeleteAuditIntervention(DoliDB $db, User $user, int $dateId): int
+{
+    require_once __DIR__ . '/../class/interventiondate.class.php';
+
+    if ($dateId <= 0) {
+        return 0;
+    }
+    $record = new InterventionDate($db);
+    if ($record->fetch($dateId) <= 0) {
+        return 0;
+    }
+
+    return $record->delete($user);
+}
+
+/**
+ * Mark the intervention date booked for a DU audit as carried out, so the calendar shows the slot
+ * as done instead of still planned.
+ *
+ * @param  DoliDB $db     Database handler.
+ * @param  User   $user   User doing the action.
+ * @param  int    $dateId Intervention date ID.
+ * @return int            > 0 if OK, 0 if nothing to do, < 0 on error.
+ */
+function reedcrmFollowupMarkAuditInterventionDone(DoliDB $db, User $user, int $dateId): int
+{
+    require_once __DIR__ . '/../class/interventiondate.class.php';
+
+    if ($dateId <= 0) {
+        return 0;
+    }
+    $record = new InterventionDate($db);
+    if ($record->fetch($dateId) <= 0 || (int) $record->status === InterventionDate::STATUS_DONE) {
+        return 0;
+    }
+    $record->status = InterventionDate::STATUS_DONE;
+
+    return $record->update($user);
+}
+
+/**
+ * List the hand-added client engagements (support, training, sprint…) of a month: those planned in
+ * it, plus those carried out during it, same rule as the DU audits board.
+ *
+ * @param  DoliDB $db          Database handler.
+ * @param  int    $periodStart First-day-of-month timestamp.
+ * @param  int    $periodEnd   Last-day-of-month timestamp.
+ * @return array<int,array<string,mixed>> Rows ready to render.
+ */
+function reedcrmTrackingGetForMonth(DoliDB $db, int $periodStart, int $periodEnd): array
+{
+    $rows          = [];
+    $effectiveDate = 'COALESCE(t.date_rdv, t.date_planned)';
+
+    $sql  = 'SELECT t.rowid, t.type, t.fk_soc, t.date_planned, t.date_rdv, t.date_done, t.label, t.montant, t.status,';
+    $sql .= ' t.fk_user_assign, t.fk_propal, t.fk_facture, t.fk_intervention_date,';
+    $sql .= ' pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut,';
+    $sql .= ' fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye,';
+    $sql .= ' idt.date_intervention, s.nom as thirdparty_name, s.zip, s.town';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_client_tracking as t';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'propal as pr ON pr.rowid = t.fk_propal';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = t.fk_facture';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_intervention_date as idt ON idt.rowid = t.fk_intervention_date';
+    $sql .= ' WHERE t.entity IN (' . getEntity('reedcrm_client_tracking') . ')';
+    $sql .= ' AND t.status >= 0';
+    $sql .= ' AND ((' . $effectiveDate . " >= '" . $db->idate($periodStart) . "' AND " . $effectiveDate . " <= '" . $db->idate($periodEnd) . "')";
+    $sql .= " OR (t.date_done >= '" . $db->idate($periodStart) . "' AND t.date_done <= '" . $db->idate($periodEnd) . "'))";
+    $sql .= ' ORDER BY ' . $effectiveDate . ' ASC';
+
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $planned  = $db->jdate($obj->date_planned);
+            $rdv      = !empty($obj->date_rdv) ? $db->jdate($obj->date_rdv) : 0;
+            $location = trim(($obj->zip ? $obj->zip . ' ' : '') . ($obj->town ?? ''));
+            $rows[]   = [
+                'id'                => (int) $obj->rowid,
+                'type'              => (string) $obj->type,
+                'fk_soc'            => (int) $obj->fk_soc,
+                'thirdparty'        => $obj->thirdparty_name,
+                'location'          => $location,
+                'planned'           => $planned,
+                'date_rdv'          => $rdv,
+                'effective'         => $rdv ?: $planned,
+                'date_done'         => !empty($obj->date_done) ? $db->jdate($obj->date_done) : 0,
+                'label'             => (string) $obj->label,
+                'montant'           => $obj->montant !== null ? (float) $obj->montant : null,
+                'status'            => (int) $obj->status,
+                'assigned'          => (int) $obj->fk_user_assign,
+                'propal_id'         => (int) $obj->fk_propal,
+                'propal_ref'        => $obj->propal_ref,
+                'propal_ttc'        => $obj->propal_ttc !== null ? (float) $obj->propal_ttc : null,
+                'propal_statut'     => $obj->propal_statut !== null ? (int) $obj->propal_statut : null,
+                'facture_id'        => (int) $obj->fk_facture,
+                'facture_ref'       => $obj->facture_ref,
+                'facture_paye'      => (int) $obj->facture_paye,
+                'intervention_id'   => (int) $obj->fk_intervention_date,
+                'intervention_date' => !empty($obj->date_intervention) ? $db->jdate($obj->date_intervention) : 0,
+            ];
+        }
+    }
+
+    return $rows;
+}
+
+/**
+ * Plan — or move — the intervention date of a hand-added engagement, on the first line of the quote
+ * it is linked to, so it shows up in the intervention calendar like the DU audits do.
+ *
+ * @param  DoliDB         $db      Database handler.
+ * @param  User           $user    User doing the action.
+ * @param  ClientTracking $row     Engagement being planned.
+ * @param  int            $rdvDate Appointment timestamp.
+ * @return int                     Intervention date ID, 0 when the feature is off or forbidden,
+ *                                 -2 when no quote is linked, -1 on error.
+ */
+function reedcrmTrackingSyncIntervention(DoliDB $db, User $user, ClientTracking $row, int $rdvDate): int
+{
+    global $conf, $langs;
+
+    require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+    require_once __DIR__ . '/../class/interventiondate.class.php';
+    require_once __DIR__ . '/reedcrm_interventiondate.lib.php';
+
+    if (!reedcrmInterventionIsEnabled() || !$user->hasRight('reedcrm', 'followup', 'write')) {
+        return 0;
+    }
+    // The calendar hangs off quote lines: without a linked quote there is nothing to plan on.
+    if (empty($row->fk_propal)) {
+        return -2;
+    }
+
+    $propal = new Propal($db);
+    if ($propal->fetch((int) $row->fk_propal) <= 0) {
+        return -1;
+    }
+    $propal->fetch_lines();
+    if (empty($propal->lines)) {
+        return -2;
+    }
+    $lineId = (int) $propal->lines[0]->id;
+
+    $interventionDate = new InterventionDate($db);
+    $existingDates    = $interventionDate->fetchAllByLine('propal', $lineId);
+    $record           = $existingDates[1] ?? new InterventionDate($db);
+
+    $thirdparty = new Societe($db);
+    $thirdparty->fetch((int) $row->fk_soc);
+
+    $label = trim((string) $row->label) !== '' ? (string) $row->label : ClientTracking::typeLabel((string) $row->type);
+
+    $record->entity              = $conf->entity;
+    $record->element_type        = 'propal';
+    $record->element_id          = (int) $propal->id;
+    $record->fk_element_line     = $lineId;
+    $record->position            = 1;
+    $record->date_intervention   = $rdvDate;
+    $record->duration            = reedcrmInterventionDefaultDuration();
+    $record->fk_user_intervenant = (int) $row->fk_user_assign;
+    $record->location            = dol_trunc(trim(($thirdparty->zip ? $thirdparty->zip . ' ' : '') . (string) $thirdparty->town), 255, 'right', 'UTF-8', 1);
+    $record->status              = InterventionDate::STATUS_PLANNED;
+    if (empty($record->note)) {
+        $record->note = $label;
+    }
+
+    if ($record->syncEvent($user, $propal, $label) < 0) {
+        return -1;
+    }
+    $result = empty($record->id) ? $record->create($user) : $record->update($user);
+
+    return $result > 0 ? (int) $record->id : -1;
 }
