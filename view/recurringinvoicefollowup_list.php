@@ -133,54 +133,51 @@ $title = $langs->trans('RecurringInvoiceFollowupMenu');
 if (!in_array($sortfield, ['fr.date_when', 'fr.titre', 'fr.fk_soc', 'fr.total_ttc', 't.prestation', 't.facture_creee', 't.facture_payee', 't.date_relance', 't.date_maj_du', 't.next_maj_du', 'fa.ref', 'fa.datef'], true)) {
     $sortfield = 'fr.date_when';
 }
-$sql  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.total_ttc as montant_ttc, fr.date_when as period, fr.fk_soc, fr.suspended,';
-$sql .= ' t.rowid as followup_id, t.prestation, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, t.date_maj_du, t.next_maj_du, t.besoin,';
-$sql .= ' fa.rowid as gen_facture_id, fa.ref as gen_facture_ref, fa.datef as gen_date, fa.paye as gen_paye, fa.fk_statut as gen_statut, fa.total_ttc as gen_total_ttc,';
-$sql .= ' s.nom as thirdparty_name';
-$sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-// At most ONE annotation per template (old data may hold several rows per template) — avoids row duplication.
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t ON t.rowid = (SELECT t9.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup t9';
-$sql .= '   WHERE t9.fk_facture_rec = fr.rowid AND t9.entity IN (' . getEntity('reedcrm_facturerec_followup') . ') ORDER BY t9.rowid DESC' . $db->plimit(1) . ')';
-// The invoice actually generated from this template within the browsed month+year (if any) — to show
-// when it was really billed on past/current months.
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'facture as fa ON fa.rowid = (SELECT f9.rowid FROM ' . MAIN_DB_PREFIX . 'facture f9';
-$sql .= '   WHERE f9.fk_fac_rec_source = fr.rowid AND f9.type <> 2 AND f9.entity IN (' . getEntity('facture') . ')';
-$sql .= '   AND MONTH(f9.datef) = ' . ((int) $monthMonth) . ' AND YEAR(f9.datef) = ' . ((int) $monthYear) . ' ORDER BY f9.datef DESC' . $db->plimit(1) . ')';
-$sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
-$sql .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
+$sqlFields  = 'SELECT fr.rowid as frec_id, fr.titre as frec_titre, fr.total_ttc as montant_ttc, fr.date_when as period, fr.fk_soc, fr.suspended,';
+$sqlFields .= ' t.rowid as followup_id, t.prestation, t.facture_creee, t.facture_envoyee, t.facture_payee, t.paiement_ok, t.date_relance, t.date_maj_du, t.next_maj_du, t.besoin,';
+$sqlFields .= ' fa.rowid as gen_facture_id, fa.ref as gen_facture_ref, fa.datef as gen_date, fa.paye as gen_paye, fa.fk_statut as gen_statut, fa.total_ttc as gen_total_ttc,';
+$sqlFields .= ' s.nom as thirdparty_name';
+
+$sqlFrom  = ' FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
+$sqlFrom .= reedcrmFollowupMonthJoinsSql($db, $periodStart, $periodEnd);
+$sqlFrom .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = fr.fk_soc';
+
+$sqlWhere = ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.frequency > 0 AND fr.fk_soc > 0';
 // A template belongs to the browsed month for one of two reasons:
 //  - its real next generation date (date_when) falls in that month AND year, exactly like the native
 //    "Factures modèles" filter — so the date shown always matches the template card: still to bill;
 //  - an invoice was really generated from it that month (fa) — already billed. This second branch keeps
 //    the traceability of finished months: once generated, date_when has moved on to the next period, and
 //    the template may even have been suspended since.
-$sql .= ' AND ((fr.suspended = 0 AND MONTH(fr.date_when) = ' . ((int) $monthMonth) . ' AND YEAR(fr.date_when) = ' . ((int) $monthYear) . ') OR fa.rowid IS NOT NULL)';
+$sqlWhere .= ' AND ((fr.suspended = 0 AND MONTH(fr.date_when) = ' . ((int) $monthMonth) . ' AND YEAR(fr.date_when) = ' . ((int) $monthYear) . ') OR fa.rowid IS NOT NULL)';
 if (dol_strlen($search_ref)) {
-    $sql .= natural_search('fr.titre', $search_ref);
+    $sqlWhere .= natural_search('fr.titre', $search_ref);
 }
 if ($search_fk_soc > 0) {
-    $sql .= ' AND fr.fk_soc = ' . ((int) $search_fk_soc);
+    $sqlWhere .= ' AND fr.fk_soc = ' . ((int) $search_fk_soc);
 }
 if (dol_strlen($search_prestation)) {
-    $sql .= natural_search('t.prestation', $search_prestation);
+    $sqlWhere .= natural_search('t.prestation', $search_prestation);
 }
 if ($search_done === 'done') {
-    $sql .= ' AND fa.rowid IS NOT NULL';
+    $sqlWhere .= ' AND fa.rowid IS NOT NULL';
 } elseif ($search_done === 'todo') {
-    $sql .= ' AND fa.rowid IS NULL';
+    $sqlWhere .= ' AND fa.rowid IS NULL';
 }
 
-// Count total records.
+// Count total records. COUNT(*), not a full fetch of every row just to call num_rows on it.
 $nbtotalofrecords = '';
 if (!getDolGlobalInt('MAIN_DISABLE_FULL_SCANLIST')) {
-    $resql            = $db->query($sql);
-    $nbtotalofrecords = $resql ? $db->num_rows($resql) : 0;
+    $resqlCount       = $db->query('SELECT COUNT(*) as nb' . $sqlFrom . $sqlWhere);
+    $objCount         = $resqlCount ? $db->fetch_object($resqlCount) : null;
+    $nbtotalofrecords = $objCount ? (int) $objCount->nb : 0;
     if (($page * $limit) > $nbtotalofrecords) {
         $page   = 0;
         $offset = 0;
     }
 }
 
+$sql  = $sqlFields . $sqlFrom . $sqlWhere;
 $sql .= $db->order($sortfield, $sortorder);
 if ($limit) {
     $sql .= $db->plimit($limit + 1, $offset);
@@ -261,31 +258,48 @@ print '</div>';
 /*
  * Chart on top: recurring-invoice amount over the 12 months of the browsed year.
  */
-$chartYear = $monthYear;
-$faByMonth = array_fill(1, 12, 0.0);
-// Annual recurring calendar: amount per billing month across all active templates (same every year).
-$sqlChartFa  = 'SELECT MONTH(fr.date_when) as m, SUM(fr.total_ttc) as tot FROM ' . MAIN_DB_PREFIX . 'facture_rec as fr';
-$sqlChartFa .= ' WHERE fr.entity IN (' . getEntity('facturerec') . ') AND fr.suspended = 0 AND fr.frequency > 0 AND fr.fk_soc > 0 GROUP BY m';
-$resChartFa  = $db->query($sqlChartFa);
-if ($resChartFa) {
-    while ($o = $db->fetch_object($resChartFa)) {
-        $faByMonth[(int) $o->m] = (float) $o->tot;
-    }
-}
+// Each month is split into what has really been billed (green) and what is still to bill (red), so the
+// year reads at a glance: a red past month is late billing, a red month to come is simply still due.
+$chartYear   = $monthYear;
+$progress    = reedcrmFollowupGetYearBillingProgress($db, $chartYear);
 $monthLabels = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+$chartDone   = [];
+$chartTodo   = [];
+$chartDoneNb = [];
+$chartTodoNb = [];
+foreach ($progress as $row) {
+    $chartDone[]   = round($row['done_amount']);
+    $chartTodo[]   = round($row['todo_amount']);
+    $chartDoneNb[] = $row['done_nb'];
+    $chartTodoNb[] = $row['todo_nb'];
+}
+// Outline the browsed month so the chart and the list below stay tied together.
+$chartBorder = [];
+for ($m = 1; $m <= 12; $m++) {
+    $chartBorder[] = ($m === $monthMonth ? '#2f3d4f' : 'transparent');
+}
 
 print '<div class="rcf-chartbox"><div class="rcf-charttitle">' . $langs->trans('FollowupChartFaAmount') . ' — ' . $chartYear . '</div><div class="rcf-canvaswrap"><canvas id="rcfChartFa"></canvas></div></div>';
 print '<script src="' . DOL_URL_ROOT . '/includes/nnnick/chartjs/dist/chart.min.js"></script>';
 print '<script>
 (function() {
     if (typeof Chart === "undefined") { return; }
-    var eur = function(v){ return v.toLocaleString("fr-FR") + " €"; };
+    var eur    = function(v){ return v.toLocaleString("fr-FR") + " €"; };
+    var doneNb = ' . json_encode($chartDoneNb) . ', todoNb = ' . json_encode($chartTodoNb) . ';
     new Chart(document.getElementById("rcfChartFa"), {
         type: "bar",
-        data: { labels: ' . json_encode($monthLabels) . ', datasets: [{ label: "' . dol_escape_js($langs->transnoentities('FollowupChartFaAmount')) . '", data: ' . json_encode(array_map('round', array_values($faByMonth))) . ', backgroundColor: "#2f6f9f", borderRadius: 4, maxBarThickness: 34 }] },
+        data: { labels: ' . json_encode($monthLabels) . ', datasets: [
+            { label: "' . dol_escape_js($langs->transnoentities('FollowupRunDone')) . '", data: ' . json_encode($chartDone) . ', backgroundColor: "#2e9e6c", borderColor: ' . json_encode($chartBorder) . ', borderWidth: 2, borderSkipped: false, maxBarThickness: 34 },
+            { label: "' . dol_escape_js($langs->transnoentities('FollowupRunToDo')) . '", data: ' . json_encode($chartTodo) . ', backgroundColor: "#cf4257", borderColor: ' . json_encode($chartBorder) . ', borderWidth: 2, borderSkipped: false, maxBarThickness: 34 }
+        ] },
         options: { responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return eur(c.parsed.y); } } } },
-            scales: { y: { beginAtZero: true, grid: { color: "rgba(120,130,150,.15)" }, ticks: { callback: eur } }, x: { grid: { display: false } } } }
+            plugins: { legend: { display: true, position: "bottom", labels: { boxWidth: 12, usePointStyle: true } },
+                tooltip: { callbacks: { label: function(c){
+                    var nb = (c.datasetIndex === 0 ? doneNb : todoNb)[c.dataIndex];
+                    return c.dataset.label + " : " + eur(c.parsed.y) + " (" + nb + ")";
+                } } } },
+            scales: { x: { stacked: true, grid: { display: false } },
+                y: { stacked: true, beginAtZero: true, grid: { color: "rgba(120,130,150,.15)" }, ticks: { callback: eur } } } }
     });
 })();
 </script>';
