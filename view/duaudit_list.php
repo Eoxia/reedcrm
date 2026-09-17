@@ -230,8 +230,10 @@ if (($action === 'auditdone' || $action === 'auditdelete') && $permissiontoadd) 
             } else {
                 $doneDate = dol_now();
             }
+            // last_audit_date is the billing anchor of the cycle (date of the last DU invoice) and
+            // must not be overwritten here: the audit is often carried out after being invoiced, and
+            // moving the anchor onto the completion date hides that invoice from the cycle.
             $audit->date_done       = $doneDate;
-            $audit->last_audit_date = $doneDate;
             $audit->next_audit_date = dol_time_plus_duree($doneDate, 1, 'y');
             $audit->status          = DuAudit::STATUS_TODO;
             // The appointment has happened: date_done records it here, and the slot already booked in
