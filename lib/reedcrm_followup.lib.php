@@ -121,7 +121,7 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
 
     $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.date_rdv, a.date_done, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_facture, a.fk_intervention_date, a.fk_user_assign,';
     $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
-    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date, idt.rowid as intervention_rowid, idt.date_intervention as intervention_date, idt.fk_user_intervenant as intervention_user,';
+    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.fk_statut as facture_statut, fa.datef as facture_date, idt.rowid as intervention_rowid, idt.date_intervention as intervention_date, idt.fk_user_intervenant as intervention_user,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -186,6 +186,7 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
                 'facture_ref'  => $obj->facture_ref,
                 'facture_ttc'  => $obj->facture_ttc !== null ? (float) $obj->facture_ttc : null,
                 'facture_paye' => (int) $obj->facture_paye,
+                'facture_statut' => $obj->facture_statut !== null ? (int) $obj->facture_statut : null,
                 'facture_date' => !empty($obj->facture_date) ? $db->jdate($obj->facture_date) : 0,
                 'assigned'     => (int) $obj->fk_user_assign,
                 'overdue'      => $effective < $periodStart,
@@ -212,7 +213,7 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
 
     $sql  = 'SELECT a.rowid, a.fk_soc, a.last_audit_date, a.next_audit_date, a.date_rdv, a.date_done, a.note, a.montant, a.status, a.source, a.proposal_sent_date, a.fk_propal, a.fk_facture, a.fk_intervention_date, a.fk_user_assign,';
     $sql .= ' pr.rowid as propal_rowid, pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut, pr.datep as propal_date,';
-    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.datef as facture_date, idt.rowid as intervention_rowid, idt.date_intervention as intervention_date, idt.fk_user_intervenant as intervention_user,';
+    $sql .= ' fa.rowid as facture_rowid, fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.fk_statut as facture_statut, fa.datef as facture_date, idt.rowid as intervention_rowid, idt.date_intervention as intervention_date, idt.fk_user_intervenant as intervention_user,';
     $sql .= ' s.nom as thirdparty_name, s.address, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_du_audit as a';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = a.fk_soc';
@@ -277,6 +278,7 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
                 'facture_ref' => $obj->facture_ref,
                 'facture_ttc' => $obj->facture_ttc !== null ? (float) $obj->facture_ttc : null,
                 'facture_paye' => (int) $obj->facture_paye,
+                'facture_statut' => $obj->facture_statut !== null ? (int) $obj->facture_statut : null,
                 'facture_date' => !empty($obj->facture_date) ? $db->jdate($obj->facture_date) : 0,
                 'assigned'   => (int) $obj->fk_user_assign,
                 'overdue'    => true,
@@ -1100,14 +1102,51 @@ function reedcrmFollowupFetchLinkableDoc(DoliDB $db, string $type, int $docId, i
     $resql = $db->query($sql);
     if ($resql && $obj = $db->fetch_object($resql)) {
         return [
-            'id'        => (int) $obj->rowid,
-            'ref'       => (string) $obj->ref,
-            'date'      => !empty($obj->doc_date) ? $db->jdate($obj->doc_date) : 0,
-            'total_ttc' => $obj->total_ttc !== null ? (float) $obj->total_ttc : null,
+            'id'         => (int) $obj->rowid,
+            'ref'        => (string) $obj->ref,
+            'date'       => !empty($obj->doc_date) ? $db->jdate($obj->doc_date) : 0,
+            'total_ttc'  => $obj->total_ttc !== null ? (float) $obj->total_ttc : null,
+            // What the document sells, to fill the object of a follow-up line without typing it.
+            'line_label' => reedcrmFollowupFirstLineLabel($db, $type, $docId),
         ];
     }
 
     return null;
+}
+
+/**
+ * Label of the first line of a quote or an invoice: its description, the product label otherwise.
+ *
+ * @param  DoliDB $db    Database handler.
+ * @param  string $type  'propal' or 'facture'.
+ * @param  int    $docId Document ID.
+ * @return string        Label, empty string when the document has no line.
+ */
+function reedcrmFollowupFirstLineLabel(DoliDB $db, string $type, int $docId): string
+{
+    $lineTable = $type === 'propal' ? 'propaldet' : 'facturedet';
+    $parentKey = $type === 'propal' ? 'fk_propal' : 'fk_facture';
+
+    $sql  = 'SELECT d.label as line_label, d.description, p.label as product_label FROM ' . MAIN_DB_PREFIX . $lineTable . ' as d';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = d.fk_product';
+    $sql .= ' WHERE d.' . $parentKey . ' = ' . $docId . ' AND d.product_type <> 9';
+    $sql .= ' ORDER BY d.rang ASC, d.rowid ASC' . $db->plimit(1);
+
+    $resql = $db->query($sql);
+    if (!$resql || !($obj = $db->fetch_object($resql))) {
+        return '';
+    }
+
+    // A line description is a whole paragraph on these documents: the short labels come first, and
+    // the description is only a last resort, cut short.
+    foreach ([$obj->line_label, $obj->product_label, $obj->description] as $candidate) {
+        $label = trim(html_entity_decode(dol_string_nohtmltag((string) $candidate), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($label !== '') {
+            return dol_trunc($label, 80, 'right', 'UTF-8', 1);
+        }
+    }
+
+    return '';
 }
 
 /**
@@ -1292,7 +1331,7 @@ function reedcrmTrackingGetForMonth(DoliDB $db, int $periodStart, int $periodEnd
     $sql  = 'SELECT t.rowid, t.type, t.fk_soc, t.date_planned, t.date_rdv, t.date_done, t.label, t.montant, t.status,';
     $sql .= ' t.fk_user_assign, t.fk_propal, t.fk_facture, t.fk_intervention_date,';
     $sql .= ' pr.ref as propal_ref, pr.total_ttc as propal_ttc, pr.fk_statut as propal_statut,';
-    $sql .= ' fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye,';
+    $sql .= ' fa.ref as facture_ref, fa.total_ttc as facture_ttc, fa.paye as facture_paye, fa.fk_statut as facture_statut,';
     $sql .= ' idt.date_intervention, s.nom as thirdparty_name, s.zip, s.town';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_client_tracking as t';
     $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = t.fk_soc';
@@ -1332,6 +1371,7 @@ function reedcrmTrackingGetForMonth(DoliDB $db, int $periodStart, int $periodEnd
                 'facture_id'        => (int) $obj->fk_facture,
                 'facture_ref'       => $obj->facture_ref,
                 'facture_paye'      => (int) $obj->facture_paye,
+                'facture_statut'    => $obj->facture_statut !== null ? (int) $obj->facture_statut : null,
                 'intervention_id'   => (int) $obj->fk_intervention_date,
                 'intervention_date' => !empty($obj->date_intervention) ? $db->jdate($obj->date_intervention) : 0,
             ];
@@ -1407,4 +1447,23 @@ function reedcrmTrackingSyncIntervention(DoliDB $db, User $user, ClientTracking 
     $result = empty($record->id) ? $record->create($user) : $record->update($user);
 
     return $result > 0 ? (int) $record->id : -1;
+}
+
+/**
+ * Read the document picked in the single quote/invoice dropdown of an add line, whose value carries
+ * the kind it points at ("propal:12", "facture:34").
+ *
+ * @param  DoliDB $db     Database handler.
+ * @param  string $picked Posted value.
+ * @param  int    $socid  Thirdparty the document must belong to.
+ * @return array{0:?array<string,mixed>,1:?array<string,mixed>} Quote and invoice, at most one set.
+ */
+function reedcrmFollowupPickedDoc(DoliDB $db, string $picked, int $socid): array
+{
+    if (!preg_match('/^(propal|facture):(\d+)$/', $picked, $parts)) {
+        return [null, null];
+    }
+    $doc = reedcrmFollowupFetchLinkableDoc($db, $parts[1], (int) $parts[2], $socid);
+
+    return $parts[1] === 'propal' ? [$doc, null] : [null, $doc];
 }
