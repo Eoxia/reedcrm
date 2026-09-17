@@ -141,7 +141,12 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_A%'";
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
-    $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), a.fk_facture)';
+    $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), (';
+    // Nothing found by date? The quote of the cycle may have been billed before the audit took
+    // place: follow the link Dolibarr keeps between a proposal and the invoice made from it.
+    $sql .= '   SELECT ee.fk_target FROM ' . MAIN_DB_PREFIX . 'element_element ee';
+    $sql .= "   WHERE ee.sourcetype = 'propal' AND ee.targettype = 'facture' AND ee.fk_source = pr.rowid";
+    $sql .= '   ORDER BY ee.rowid DESC LIMIT 1), a.fk_facture)';
     // Intervention date planned for the appointment, when one has been agreed with the client.
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_intervention_date as idt ON idt.rowid = a.fk_intervention_date';
     $sql .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ')';
@@ -232,7 +237,12 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf ON prodf.rowid = fd2.fk_product AND prodf.ref LIKE 'DU\_A%'";
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
-    $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), a.fk_facture)';
+    $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), (';
+    // Nothing found by date? The quote of the cycle may have been billed before the audit took
+    // place: follow the link Dolibarr keeps between a proposal and the invoice made from it.
+    $sql .= '   SELECT ee.fk_target FROM ' . MAIN_DB_PREFIX . 'element_element ee';
+    $sql .= "   WHERE ee.sourcetype = 'propal' AND ee.targettype = 'facture' AND ee.fk_source = pr.rowid";
+    $sql .= '   ORDER BY ee.rowid DESC LIMIT 1), a.fk_facture)';
     // Intervention date planned for the appointment, when one has been agreed with the client.
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_intervention_date as idt ON idt.rowid = a.fk_intervention_date';
     $sql .= ' WHERE a.entity IN (' . getEntity('reedcrm_du_audit') . ')';
