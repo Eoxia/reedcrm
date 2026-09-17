@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formcompany.class.php';
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
 
 // Load ReedCRM libraries.
 require_once __DIR__ . '/../class/duaudit.class.php';
@@ -65,7 +66,8 @@ $periodEnd   = dol_get_last_day($monthYear, $monthMonth);
 
 $formcompany = new FormCompany($db);
 $form        = new Form($db);
-$propalStatic = new Propal($db);
+$propalStatic  = new Propal($db);
+$factureStatic = new Facture($db);
 $hookmanager->initHooks(['duauditlist']);
 
 // Security check (reuse the followup permissions).
@@ -84,8 +86,7 @@ if ($action === 'addaudit' && $permissiontoadd) {
 
     // Optional link to a real document (quote or invoice) so a hand-added line is not orphaned.
     // Both are re-checked against the selected client before being stored.
-    $linkedPropal  = reedcrmFollowupFetchLinkableDoc($db, 'propal', GETPOSTINT('audit_fk_propal'), $auditSoc);
-    $linkedFacture = reedcrmFollowupFetchLinkableDoc($db, 'facture', GETPOSTINT('audit_fk_facture'), $auditSoc);
+    [$linkedPropal, $linkedFacture] = reedcrmFollowupPickedDoc($db, GETPOST('audit_fk_doc', 'alpha'), $auditSoc);
     // No date typed: plan the audit in the month being browsed (today when that is the current month),
     // so a line added from this board always lands where the user is looking.
     if (!$auditDate) {
@@ -266,25 +267,18 @@ if ($action === 'addtracking' && $permissiontoadd) {
     }
 
     if ($trackSoc > 0) {
-        $linkedPropal  = reedcrmFollowupFetchLinkableDoc($db, 'propal', GETPOSTINT('tracking_fk_propal'), $trackSoc);
-        $linkedFacture = reedcrmFollowupFetchLinkableDoc($db, 'facture', GETPOSTINT('tracking_fk_facture'), $trackSoc);
+        [$linkedPropal, $linkedFacture] = reedcrmFollowupPickedDoc($db, GETPOST('tracking_fk_doc', 'alpha'), $trackSoc);
+        $linkedDoc                      = $linkedFacture ?: $linkedPropal;
 
         $tracking               = new ClientTracking($db);
         $tracking->fk_soc       = $trackSoc;
         $tracking->type         = $trackType;
         $tracking->date_planned = $trackDate;
         $tracking->status       = ClientTracking::STATUS_TODO;
-        $tracking->label        = GETPOST('tracking_label', 'alphanohtml');
+        // Nothing typed by hand: object and amount are read from the document that was picked.
+        $tracking->label   = $linkedDoc ? $linkedDoc['line_label'] : '';
+        $tracking->montant = ($linkedDoc && (float) $linkedDoc['total_ttc'] > 0) ? (float) $linkedDoc['total_ttc'] : null;
 
-        $montantInput = price2num(GETPOST('tracking_montant', 'alpha'));
-        if ($montantInput !== '' && (float) $montantInput != 0) {
-            $tracking->montant = (float) $montantInput;
-        } else {
-            $docAmount = $linkedFacture ? (float) $linkedFacture['total_ttc'] : ($linkedPropal ? (float) $linkedPropal['total_ttc'] : 0);
-            if ($docAmount > 0) {
-                $tracking->montant = $docAmount;
-            }
-        }
         if ($linkedPropal) {
             $tracking->fk_propal = $linkedPropal['id'];
         }
@@ -458,6 +452,8 @@ print '<style>
 .rcf-donerow>td{background:rgba(46,158,108,.12) !important}
 .rcf-donerow>td:first-child{box-shadow:inset 3px 0 0 #2e9e6c}
 .rcf-donetag{color:#2e9e6c;font-weight:700}
+/* Audit done but not billed yet: the one thing left to do on that line. */
+.rcf-tobill{color:#c8871a;font-weight:700}
 /* Done line: the date shows alone, the form to correct it unfolds on click. */
 .rcf-donedetails summary{cursor:pointer;list-style:none;display:inline-block;padding:2px 4px;border-radius:5px}
 .rcf-donedetails summary::-webkit-details-marker{display:none}
@@ -693,7 +689,7 @@ $thirdpartyStatic = new Societe($db);
 $assignUserCache  = [];
 
 // Shared renderer for one audit row.
-$printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartyStatic, &$assignUserCache, $form, $propalStatic, $langs, $conf, $selfMonth, $permissiontoadd, $permissiontodelete, $periodStart, $periodEnd) {
+$printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartyStatic, &$assignUserCache, $form, $propalStatic, $factureStatic, $langs, $conf, $selfMonth, $permissiontoadd, $permissiontodelete, $periodStart, $periodEnd) {
     $isDone = ($audit['status'] == DuAudit::STATUS_DONE);
     // An audit carried out during the browsed month keeps its line in the table (its next date has
     // already rolled one year ahead) so the month's work stays visible instead of vanishing.
@@ -779,24 +775,44 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         }
     }
     print '</td>';
-    // Commercial proposal (devis): auto-derived renewal quote, shown as a clickable link + its real amount.
     print '<td class="center nowraponall">';
-    if (!empty($audit['propal_id']) && !empty($audit['propal_ref'])) {
-        print '<a href="' . DOL_URL_ROOT . '/comm/propal/card.php?id=' . ((int) $audit['propal_id']) . '" target="_blank" rel="noopener"><i class="fas fa-file-invoice paddingright opacitymedium"></i>' . dol_escape_htmltag($audit['propal_ref']) . '</a>';
-        if ($audit['propal_ttc'] !== null) {
-            print ' <span class="opacitymedium">(' . price($audit['propal_ttc'], 0, $langs, 1, -1, 0, $conf->currency) . ')</span>';
+    if ($isDone || $doneInMonth) {
+        // Audit carried out: the question is no longer the quote but the billing of it.
+        if (!empty($audit['facture_id']) && !empty($audit['facture_ref'])) {
+            print '<a href="' . DOL_URL_ROOT . '/compta/facture/card.php?id=' . ((int) $audit['facture_id']) . '" target="_blank" rel="noopener"><i class="fas fa-file-invoice-dollar paddingright opacitymedium"></i>' . dol_escape_htmltag($audit['facture_ref']) . '</a>';
+            if ($audit['facture_ttc'] !== null) {
+                print ' <span class="opacitymedium">(' . price($audit['facture_ttc'], 0, $langs, 1, -1, 0, $conf->currency) . ')</span>';
+            }
+            print '<br>';
+            if (!empty($audit['facture_date'])) {
+                print '<span class="opacitymedium">' . dol_print_date($audit['facture_date'], 'day') . '</span> ';
+            }
+            if ($audit['facture_statut'] !== null) {
+                print $factureStatic->LibStatut((int) $audit['facture_paye'], (int) $audit['facture_statut'], 5);
+            }
+        } else {
+            print '<span class="rcf-tobill"><i class="fas fa-exclamation-circle paddingright"></i>' . $langs->trans('FollowupAuditToBill') . '</span>';
         }
-        print '<br>';
-        if (!empty($audit['propal_date'])) {
-            print '<span class="opacitymedium">' . dol_print_date($audit['propal_date'], 'day') . '</span> ';
-        }
-        if ($audit['propal_statut'] !== null) {
-            print $propalStatic->LibStatut((int) $audit['propal_statut'], 5);
-        }
+        print '</td>';
     } else {
-        print '<span class="opacitymedium">-</span>';
+        // Commercial proposal (devis): auto-derived renewal quote, as a clickable link + its real amount.
+        if (!empty($audit['propal_id']) && !empty($audit['propal_ref'])) {
+            print '<a href="' . DOL_URL_ROOT . '/comm/propal/card.php?id=' . ((int) $audit['propal_id']) . '" target="_blank" rel="noopener"><i class="fas fa-file-invoice paddingright opacitymedium"></i>' . dol_escape_htmltag($audit['propal_ref']) . '</a>';
+            if ($audit['propal_ttc'] !== null) {
+                print ' <span class="opacitymedium">(' . price($audit['propal_ttc'], 0, $langs, 1, -1, 0, $conf->currency) . ')</span>';
+            }
+            print '<br>';
+            if (!empty($audit['propal_date'])) {
+                print '<span class="opacitymedium">' . dol_print_date($audit['propal_date'], 'day') . '</span> ';
+            }
+            if ($audit['propal_statut'] !== null) {
+                print $propalStatic->LibStatut((int) $audit['propal_statut'], 5);
+            }
+        } else {
+            print '<span class="opacitymedium">-</span>';
+        }
+        print '</td>';
     }
-    print '</td>';
     print '<td class="center nowraponall">';
     // Auto-derived state following the real quote AND invoice: Paid > Invoiced > Quote signed >
     // Quote sent > Overdue > To prepare. Nothing is lost after the audit is billed.
@@ -828,8 +844,9 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
         $stateColor = '#c8871a'; $stateLabel = $langs->trans('FollowupAuditToPrepare');
     }
     print '<span class="rcf-statedot" style="background:' . $stateColor . '"' . ($stateTitle !== '' ? ' title="' . dol_escape_htmltag($stateTitle) . '"' : '') . '></span> ' . $stateLabel;
-    // The invoice behind the state is reachable in one click (also true of a hand-linked one).
-    if (!empty($audit['facture_id']) && !empty($audit['facture_ref'])) {
+    // The invoice behind the state is reachable in one click (also true of a hand-linked one). On a
+    // done line it already has its own cell, no need to print it twice.
+    if (!$isDone && !$doneInMonth && !empty($audit['facture_id']) && !empty($audit['facture_ref'])) {
         print '<br><a href="' . DOL_URL_ROOT . '/compta/facture/card.php?id=' . ((int) $audit['facture_id']) . '" target="_blank" rel="noopener" class="opacitymedium"><i class="fas fa-file-invoice-dollar paddingright"></i>' . dol_escape_htmltag($audit['facture_ref']) . '</a>';
     }
     if ($audit['source'] === 'manual') {
@@ -838,9 +855,19 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     print '</td>';
     print '<td class="nowraponall rcf-actions">';
     if ($permissiontoadd && !$isDone) {
-        // Create the yearly renewal quote (Dolibarr proposal): only while the client has none, the
-        // quote is one click away in its own column once it exists.
-        if (empty($audit['propal_id'])) {
+        if ($doneInMonth) {
+            // Audit carried out: what is left is billing it, not quoting it. The invoice starts from
+            // the quote when there is one, so its lines come along.
+            if (empty($audit['facture_id'])) {
+                $invoiceUrl = DOL_URL_ROOT . '/compta/facture/card.php?action=create&socid=' . (int) $audit['fk_soc'];
+                if (!empty($audit['propal_id'])) {
+                    $invoiceUrl .= '&origin=propal&originid=' . (int) $audit['propal_id'];
+                }
+                print '<a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . $invoiceUrl . '" title="' . dol_escape_htmltag($langs->trans('FollowupCreateInvoice')) . '"><i class="fas fa-file-invoice-dollar"></i></a> ';
+            }
+        } elseif (empty($audit['propal_id'])) {
+            // Create the yearly renewal quote (Dolibarr proposal): only while the client has none,
+            // the quote is one click away in its own column once it exists.
             print '<a class="button smallpaddingimp" target="_blank" rel="noopener" href="' . DOL_URL_ROOT . '/comm/propal/card.php?action=create&socid=' . (int) $audit['fk_soc'] . '" title="' . dol_escape_htmltag($langs->trans('FollowupCreateProposal')) . '"><i class="fas fa-file-invoice"></i></a> ';
         }
         // Mark done: re-submitting simply re-anchors the cycle on the date given. Once the audit is
@@ -870,7 +897,7 @@ print '<th>' . $langs->trans('ThirdParty') . '</th><th>' . $langs->trans('Follow
 print '<th class="center">' . $langs->trans('FollowupLastDuInvoice') . '</th><th class="center">' . $langs->trans('FollowupNextAuditPlanned') . '<div class="rcf-planned-tag">' . $langs->trans('FollowupAuditPlannedTag') . '</div></th><th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
 print '<th>' . $langs->trans('Service') . '</th><th class="right">' . $langs->trans('FollowupAmount') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupAssignedTo') . '</th>';
-print '<th class="center">' . $langs->trans('FollowupProposalSent') . '</th>';
+print '<th class="center">' . $langs->trans('FollowupProposalOrInvoice') . '</th>';
 print '<th class="center">' . $langs->trans('Status') . '</th><th class="center maxwidthsearch"></th>';
 print '</tr>';
 if (empty($audits)) {
@@ -894,11 +921,11 @@ if ($permissiontoadd) {
     print '<td></td>';
     // Optional link to an existing quote / invoice of the client: a hand-added line stays attached to
     // a real document (both lists are loaded on the fly once a client is picked).
+    // One picker for both: the client's quotes and invoices sit in the same list, grouped.
     print '<td class="center" colspan="2"><div class="rcf-doclink">';
-    print '<div class="rcf-doclink-row pr"><i class="fas fa-file-signature" title="' . dol_escape_htmltag($langs->trans('FollowupLinkProposal')) . '"></i>';
-    print '<select name="audit_fk_propal" id="audit_fk_propal" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
-    print '<div class="rcf-doclink-row fa"><i class="fas fa-file-invoice-dollar" title="' . dol_escape_htmltag($langs->trans('FollowupLinkInvoice')) . '"></i>';
-    print '<select name="audit_fk_facture" id="audit_fk_facture" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
+    print '<div class="rcf-doclink-row pr"><i class="fas fa-link" title="' . dol_escape_htmltag($langs->trans('FollowupLinkDocument')) . '"></i>';
+    print '<select name="audit_fk_doc" id="audit_fk_doc" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
+    print '</div></td>';
     print '</div></td>';
     print '<td class="center"><button type="submit" class="button button-add smallpaddingimp"><i class="fas fa-plus paddingright"></i>' . $langs->trans('FollowupAuditAdd') . '</button></td>';
     print '</form></tr>';
@@ -907,10 +934,8 @@ print '</table></div>';
 
 if ($permissiontoadd) {
     // Same searchable dropdowns as the rest of Dolibarr for the two document pickers.
-    print ajax_combobox('audit_fk_propal', [], 0, 0, 'resolve', '0');
-    print ajax_combobox('audit_fk_facture', [], 0, 0, 'resolve', '0');
-    print ajax_combobox('tracking_fk_propal', [], 0, 0, 'resolve', '0');
-    print ajax_combobox('tracking_fk_facture', [], 0, 0, 'resolve', '0');
+    print ajax_combobox('audit_fk_doc', [], 0, 0, 'resolve', '0');
+    print ajax_combobox('tracking_fk_doc', [], 0, 0, 'resolve', '0');
     print ajax_combobox('tracking_type');
     // Fill the quote/invoice pickers of the "add an audit" line with the documents of the chosen client.
     print '<script>
@@ -931,36 +956,43 @@ if ($permissiontoadd) {
             pick: ' . json_encode($langs->transnoentities('FollowupLinkPickClient')) . ',
             none: ' . json_encode($langs->transnoentities('FollowupLinkNoDocument')) . ',
             propal: ' . json_encode($langs->transnoentities('FollowupLinkProposal')) . ',
-            facture: ' . json_encode($langs->transnoentities('FollowupLinkInvoice')) . '
+            facture: ' . json_encode($langs->transnoentities('FollowupLinkInvoice')) . ',
+            doc: ' . json_encode($langs->transnoentities('FollowupLinkDocument')) . '
         };
-        var fill = function(id, rows, emptyLabel) {
+        // One list per add line, holding the quotes and invoices of the chosen client, grouped. The
+        // value carries the kind: "propal:12" / "facture:34".
+        var fill = function(id, propals, factures, emptyLabel) {
             var $sel = $("#" + id).empty();
             $sel.append($("<option>").val(0).text(emptyLabel));
-            $.each(rows, function(i, row) {
-                $sel.append($("<option>").val(row.id).text(row.label));
-            });
+            var group = function(label, rows, kind) {
+                if (!rows.length) { return; }
+                var $grp = $("<optgroup>").attr("label", label);
+                $.each(rows, function(i, row) {
+                    $grp.append($("<option>").val(kind + ":" + row.id).text(row.label));
+                });
+                $sel.append($grp);
+            };
+            group(labels.propal, propals, "propal");
+            group(labels.facture, factures, "facture");
             // Let select2 redraw the freshly rebuilt option list.
             $sel.val(0).trigger("change");
         };
-        // Both add lines (audit and other engagement) fill their own pair of pickers.
-        var bindPickers = function(socId, propalId, factureId) {
+        var bindPickers = function(socId, docId) {
             $("#" + socId).on("change", function() {
                 var socid = parseInt($(this).val(), 10) || 0;
                 if (!socid) {
-                    fill(propalId, [], labels.pick);
-                    fill(factureId, [], labels.pick);
+                    fill(docId, [], [], labels.pick);
                     return;
                 }
                 $.getJSON(url, { socid: socid }, function(data) {
                     if (!data || !data.success) { return; }
                     var propals = data.propals || [], factures = data.factures || [];
-                    fill(propalId, propals, propals.length ? labels.propal : labels.none);
-                    fill(factureId, factures, factures.length ? labels.facture : labels.none);
+                    fill(docId, propals, factures, (propals.length || factures.length) ? labels.doc : labels.none);
                 });
             });
         };
-        bindPickers("audit_fk_soc", "audit_fk_propal", "audit_fk_facture");
-        bindPickers("tracking_fk_soc", "tracking_fk_propal", "tracking_fk_facture");
+        bindPickers("audit_fk_soc", "audit_fk_doc");
+        bindPickers("tracking_fk_soc", "tracking_fk_doc");
     });
     </script>';
 }
@@ -979,7 +1011,7 @@ print '<div class="div-table-responsive"><table class="tagtable nobottomiftotal 
 print '<tr class="liste_titre">';
 print '<th>' . $langs->trans('ThirdParty') . '</th><th class="center">' . $langs->trans('Type') . '</th>';
 print '<th>' . $langs->trans('FollowupLocation') . '</th>';
-print '<th class="center">' . $langs->trans('FollowupTrackingPlanned') . '</th>';
+// A single date here: a hand-added engagement has no theoretical yearly date to compare to.
 print '<th class="center">' . $langs->trans('FollowupAuditRdv') . '</th>';
 print '<th>' . $langs->trans('FollowupTrackingLabel') . '</th><th class="right">' . $langs->trans('FollowupAmount') . '</th>';
 print '<th class="center">' . $langs->trans('FollowupAssignedTo') . '</th>';
@@ -988,7 +1020,7 @@ print '<th class="center">' . $langs->trans('Status') . '</th><th class="center 
 print '</tr>';
 
 if (empty($trackings)) {
-    print '<tr class="oddeven"><td colspan="11" class="opacitymedium center">' . $langs->trans('FollowupNoTrackingThisMonth') . '</td></tr>';
+    print '<tr class="oddeven"><td colspan="10" class="opacitymedium center">' . $langs->trans('FollowupNoTrackingThisMonth') . '</td></tr>';
 } else {
     foreach ($trackings as $track) {
         $trackDone = ($track['status'] == ClientTracking::STATUS_DONE);
@@ -1000,8 +1032,8 @@ if (empty($trackings)) {
         print '<td class="tdoverflowmax200">' . $thirdpartyStatic->getNomUrl(1) . '</td>';
         print '<td class="center"><span class="rcf-type rcf-type-' . dol_escape_htmltag($track['type']) . '">' . dol_escape_htmltag(ClientTracking::typeLabel($track['type'])) . '</span></td>';
         print '<td class="tdoverflowmax150">' . ($track['location'] !== '' ? '<i class="fas fa-map-marker-alt paddingright opacitymedium"></i>' . dol_escape_htmltag($track['location']) : '<span class="opacitymedium">-</span>') . '</td>';
-        // Planned date, then the date agreed with the client: same pair as the audits board.
-        print '<td class="center nowraponall rcf-planned">';
+        // A single date column: the one agreed with the client, or the date it was closed on.
+        print '<td class="center nowraponall rcf-rdvcell' . (!empty($track['date_rdv']) ? ' set' : '') . '">';
         if ($trackDone) {
             print '<details class="rcf-donedetails">';
             print '<summary class="rcf-donetag"><i class="fas fa-check-circle paddingright"></i>' . $langs->trans('FollowupAuditDoneOn', dol_print_date($track['date_done'], 'day')) . '</summary>';
@@ -1012,16 +1044,6 @@ if (empty($trackings)) {
                 print '<button type="submit" class="button smallpaddingimp"><i class="fas fa-check"></i></button></form>';
             }
             print '</details>';
-        } else {
-            print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit">';
-            print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingmove"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
-            print '<input type="date" name="tracking_date" value="' . dol_print_date($track['planned'], '%Y-%m-%d') . '" class="rcf-datefield">';
-            print '<button type="submit" class="button smallpaddingimp"><i class="fas fa-arrows-alt-h"></i></button></form>';
-        }
-        print '</td>';
-        print '<td class="center nowraponall rcf-rdvcell' . (!empty($track['date_rdv']) ? ' set' : '') . '">';
-        if ($trackDone) {
-            print '<span class="opacitymedium">-</span>';
         } elseif ($permissiontoadd) {
             print '<form method="POST" action="' . $selfMonth . '" class="inline-block rcf-autosubmit">';
             print '<input type="hidden" name="token" value="' . newToken() . '"><input type="hidden" name="action" value="trackingrdv"><input type="hidden" name="tracking_id" value="' . $track['id'] . '">';
@@ -1044,16 +1066,22 @@ if (empty($trackings)) {
         }
         print '</td>';
         print '<td class="center nowraponall">';
+        // Ref and its real status, as on the audits board. No amount repeated here: it already has
+        // its own column, filled from this very document.
         if (!empty($track['propal_id']) && !empty($track['propal_ref'])) {
             print '<a href="' . DOL_URL_ROOT . '/comm/propal/card.php?id=' . ((int) $track['propal_id']) . '" target="_blank" rel="noopener"><i class="fas fa-file-invoice paddingright opacitymedium"></i>' . dol_escape_htmltag($track['propal_ref']) . '</a>';
-            if ($track['propal_ttc'] !== null) {
-                print ' <span class="opacitymedium">(' . price($track['propal_ttc'], 0, $langs, 1, -1, 0, $conf->currency) . ')</span>';
+            if ($track['propal_statut'] !== null) {
+                print ' ' . $propalStatic->LibStatut((int) $track['propal_statut'], 5);
             }
         } else {
             print '<span class="opacitymedium">-</span>';
         }
         if (!empty($track['facture_id']) && !empty($track['facture_ref'])) {
-            print '<div><a href="' . DOL_URL_ROOT . '/compta/facture/card.php?id=' . ((int) $track['facture_id']) . '" target="_blank" rel="noopener" class="opacitymedium"><i class="fas fa-file-invoice-dollar paddingright"></i>' . dol_escape_htmltag($track['facture_ref']) . '</a></div>';
+            print '<div><a href="' . DOL_URL_ROOT . '/compta/facture/card.php?id=' . ((int) $track['facture_id']) . '" target="_blank" rel="noopener" class="opacitymedium"><i class="fas fa-file-invoice-dollar paddingright"></i>' . dol_escape_htmltag($track['facture_ref']) . '</a>';
+            if ($track['facture_statut'] !== null) {
+                print ' ' . $factureStatic->LibStatut((int) $track['facture_paye'], (int) $track['facture_statut'], 5);
+            }
+            print '</div>';
         }
         print '</td>';
         // State: done > appointment booked > invoice > quote > late > to prepare.
@@ -1087,7 +1115,7 @@ if (empty($trackings)) {
         }
         print '</td></tr>';
     }
-    print '<tr class="liste_total"><td colspan="6">' . $langs->trans('Total') . '</td><td class="right">' . price($trackTot, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td colspan="4"></td></tr>';
+    print '<tr class="liste_total"><td colspan="5">' . $langs->trans('Total') . '</td><td class="right">' . price($trackTot, 0, $langs, 1, -1, -1, $conf->currency) . '</td><td colspan="4"></td></tr>';
 }
 
 if ($permissiontoadd) {
@@ -1102,15 +1130,12 @@ if ($permissiontoadd) {
     print '</select></td>';
     print '<td></td>';
     print '<td class="center"><input type="date" name="tracking_date" class="rcf-datefield"></td>';
-    print '<td class="center opacitymedium">' . $langs->trans('FollowupAuditRdvLater') . '</td>';
-    print '<td><input type="text" name="tracking_label" class="maxwidth200" placeholder="' . dol_escape_htmltag($langs->trans('FollowupTrackingLabel')) . '"></td>';
-    print '<td class="right"><input type="text" name="tracking_montant" class="maxwidth75 right" placeholder="0"></td>';
-    print '<td></td>';
+    // Object and amount are not typed: they come from the quote or the invoice picked on the right.
+    print '<td class="center opacitymedium"><i class="fas fa-arrow-right paddingright"></i>' . $langs->trans('FollowupTrackingFromDocument') . '</td>';
+    print '<td></td><td></td>';
     print '<td class="center"><div class="rcf-doclink">';
-    print '<div class="rcf-doclink-row pr"><i class="fas fa-file-signature"></i>';
-    print '<select name="tracking_fk_propal" id="tracking_fk_propal" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
-    print '<div class="rcf-doclink-row fa"><i class="fas fa-file-invoice-dollar"></i>';
-    print '<select name="tracking_fk_facture" id="tracking_fk_facture" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
+    print '<div class="rcf-doclink-row pr"><i class="fas fa-link" title="' . dol_escape_htmltag($langs->trans('FollowupLinkDocument')) . '"></i>';
+    print '<select name="tracking_fk_doc" id="tracking_fk_doc" class="rcf-docsel"><option value="0">' . dol_escape_htmltag($langs->trans('FollowupLinkPickClient')) . '</option></select></div>';
     print '</div></td>';
     print '<td class="center" colspan="2"><button type="submit" class="button button-add smallpaddingimp"><i class="fas fa-plus paddingright"></i>' . $langs->trans('FollowupTrackingAdd') . '</button></td>';
     print '</form></tr>';
