@@ -142,8 +142,17 @@ function reedcrmFollowupGetAuditsForMonth(DoliDB $db, int $periodStart, int $per
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
     $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), (';
-    // Nothing found by date? The quote of the cycle may have been billed before the audit took
-    // place: follow the link Dolibarr keeps between a proposal and the invoice made from it.
+    // A carried-out audit is very often invoiced before it takes place, and lines closed before the
+    // anchor was fixed carry the completion date as their anchor, which hides that invoice. Fall back
+    // on the last DU invoice of the year preceding the completion: the anchor invoice of the previous
+    // cycle is excluded by the strict comparison, so only the invoice of this cycle can match.
+    $sql .= '   SELECT f3.rowid FROM ' . MAIN_DB_PREFIX . 'facture f3';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd3 ON fd3.fk_facture = f3.rowid';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf3 ON prodf3.rowid = fd3.fk_product AND prodf3.ref LIKE 'DU\_A%'";
+    $sql .= '   WHERE f3.fk_soc = a.fk_soc AND f3.type <> 2 AND f3.entity IN (' . getEntity('facture') . ')';
+    $sql .= '   AND a.date_done IS NOT NULL AND f3.datef > DATE_SUB(a.date_done, INTERVAL 1 YEAR)';
+    $sql .= '   ORDER BY f3.datef DESC, f3.rowid DESC LIMIT 1), (';
+    // Last resort: the invoice Dolibarr made from the quote of the cycle, when one is known.
     $sql .= '   SELECT ee.fk_target FROM ' . MAIN_DB_PREFIX . 'element_element ee';
     $sql .= "   WHERE ee.sourcetype = 'propal' AND ee.targettype = 'facture' AND ee.fk_source = pr.rowid";
     $sql .= '   ORDER BY ee.rowid DESC LIMIT 1), a.fk_facture)';
@@ -238,8 +247,17 @@ function reedcrmFollowupGetOverdueAudits(DoliDB $db): array
     $sql .= '   WHERE f2.fk_soc = a.fk_soc AND f2.type <> 2 AND f2.entity IN (' . getEntity('facture') . ')';
     $sql .= '   AND (a.last_audit_date IS NULL OR f2.datef > a.last_audit_date)';
     $sql .= '   ORDER BY f2.datef DESC, f2.rowid DESC LIMIT 1), (';
-    // Nothing found by date? The quote of the cycle may have been billed before the audit took
-    // place: follow the link Dolibarr keeps between a proposal and the invoice made from it.
+    // A carried-out audit is very often invoiced before it takes place, and lines closed before the
+    // anchor was fixed carry the completion date as their anchor, which hides that invoice. Fall back
+    // on the last DU invoice of the year preceding the completion: the anchor invoice of the previous
+    // cycle is excluded by the strict comparison, so only the invoice of this cycle can match.
+    $sql .= '   SELECT f3.rowid FROM ' . MAIN_DB_PREFIX . 'facture f3';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . 'facturedet fd3 ON fd3.fk_facture = f3.rowid';
+    $sql .= '   INNER JOIN ' . MAIN_DB_PREFIX . "product prodf3 ON prodf3.rowid = fd3.fk_product AND prodf3.ref LIKE 'DU\_A%'";
+    $sql .= '   WHERE f3.fk_soc = a.fk_soc AND f3.type <> 2 AND f3.entity IN (' . getEntity('facture') . ')';
+    $sql .= '   AND a.date_done IS NOT NULL AND f3.datef > DATE_SUB(a.date_done, INTERVAL 1 YEAR)';
+    $sql .= '   ORDER BY f3.datef DESC, f3.rowid DESC LIMIT 1), (';
+    // Last resort: the invoice Dolibarr made from the quote of the cycle, when one is known.
     $sql .= '   SELECT ee.fk_target FROM ' . MAIN_DB_PREFIX . 'element_element ee';
     $sql .= "   WHERE ee.sourcetype = 'propal' AND ee.targettype = 'facture' AND ee.fk_source = pr.rowid";
     $sql .= '   ORDER BY ee.rowid DESC LIMIT 1), a.fk_facture)';
