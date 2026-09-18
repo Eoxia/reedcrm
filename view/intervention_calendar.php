@@ -142,7 +142,7 @@ saturne_header(0, '', $title, '');
 print load_fiche_titre($title, '', 'fontawesome_fa-calendar-alt_fas_#63ACC9');
 
 // Nothing can be planned until the tag of the services is chosen : an empty page would look broken
-if (reedcrmInterventionProductTagID() <= 0) {
+if (empty(reedcrmInterventionProductTagIDs())) {
     print info_admin($langs->trans('InterventionDateNoProductTagWarning'), 0, 0, '1', 'warning');
 }
 

@@ -1135,9 +1135,9 @@ InterventionDateMaxPerLineDescription = Garde-fou pour les lignes de service à 
 InterventionLocation = Lieu
 InterventionDateFromLabel = Devis pris en compte à partir du
 InterventionDateFromDescription = Les devis antérieurs à cette date sortent du périmètre : ni pastille sur leurs lignes de service, ni interventions à planifier. Vider le champ pour prendre tout l'historique.
-InterventionDateProductTagLabel = Tag des services à planifier
-InterventionDateProductTagDescription = Seules les lignes de service dont le produit porte ce tag reçoivent des dates d'intervention. Les lignes libres, sans produit, sont hors périmètre. Tant qu'aucun tag n'est choisi, aucune ligne n'est planifiable.
-InterventionDateNoProductTagWarning = Aucun tag de service n'est sélectionné : aucune ligne de service n'est planifiable. Choisissez le tag dans Configuration ReedCRM, onglet Propositions.
+InterventionDateProductTagLabel = Tags des services à planifier
+InterventionDateProductTagDescription = Seules les lignes de service dont le produit porte l'un de ces tags reçoivent des dates d'intervention. Les lignes libres, sans produit, sont hors périmètre. Tant qu'aucun tag n'est choisi, aucune ligne n'est planifiable.
+InterventionDateNoProductTagWarning = Aucun tag de service n'est sélectionné : aucune ligne de service n'est planifiable. Choisissez les tags dans Configuration ReedCRM, onglet Propositions.
 
 # Suivi des autres engagements clients (assistance, formation, sprint)
 FollowupTrackingsOfMonth = Autres suivis du mois

@@ -35,6 +35,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_interventiondate.lib.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -98,11 +99,17 @@ if ($action == 'update_intervention') {
     $defaultDuration = GETPOSTINT('reedcrm_intervention_default_duration');
     $maxPerLine      = GETPOSTINT('reedcrm_intervention_max_per_line');
     $dateFrom        = GETPOST('reedcrm_intervention_date_from', 'alphanohtml');
-    // The empty option of selectarray() carries -1
-    $productTag      = max(0, GETPOSTINT('reedcrm_intervention_product_tag'));
+    // Several tags can be picked, they are kept in a single constant as a comma separated list
+    $productTags = [];
+    foreach (GETPOST('reedcrm_intervention_product_tags', 'array') as $productTag) {
+        $productTag = (int) $productTag;
+        if ($productTag > 0) {
+            $productTags[$productTag] = $productTag;
+        }
+    }
 
     dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_FROM', preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) ? $dateFrom : '', 'chaine', 0, '', $conf->entity);
-    dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', $productTag, 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', implode(',', $productTags), 'chaine', 0, '', $conf->entity);
 
     dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_DEFAULT_DURATION', $defaultDuration > 0 ? $defaultDuration : 60, 'integer', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', $maxPerLine > 0 ? $maxPerLine : 24, 'integer', 0, '', $conf->entity);
@@ -181,7 +188,7 @@ print '<input type="hidden" name="token" value="' . newToken() . '">';
 print '<input type="hidden" name="action" value="update_intervention">';
 
 // Without a tag nothing is planned : say it here rather than letting the feature look broken
-if (getDolGlobalInt('REEDCRM_INTERVENTION_DATE_ENABLED') && getDolGlobalInt('REEDCRM_INTERVENTION_DATE_PRODUCT_TAG') <= 0) {
+if (getDolGlobalInt('REEDCRM_INTERVENTION_DATE_ENABLED') && empty(reedcrmInterventionProductTagIDs())) {
     print info_admin($langs->trans('InterventionDateNoProductTagWarning'), 0, 0, '1', 'warning');
 }
 
@@ -211,7 +218,7 @@ print '</td>';
 print '<td class="right">';
 $tmpProductCat     = new Categorie($db);
 $productCatTypeID  = $tmpProductCat->MAP_ID[Categorie::TYPE_PRODUCT] ?? 0;
-$selectedTagID     = getDolGlobalInt('REEDCRM_INTERVENTION_DATE_PRODUCT_TAG');
+$selectedTagIDs    = reedcrmInterventionProductTagIDs();
 $productCategories = [];
 
 $sqlProductCat   = 'SELECT rowid, label FROM ' . MAIN_DB_PREFIX . 'categorie WHERE type = ' . (int) $productCatTypeID;
@@ -223,8 +230,8 @@ if ($resqlProductCat) {
     }
 }
 
-// selectarray turns it into a select2, the tag lists get long
-print Form::selectarray('reedcrm_intervention_product_tag', $productCategories, $selectedTagID ?: -1, '-- ' . $langs->trans('None') . ' --', 0, 0, '', 0, 0, 0, '', 'minwidth200', 1);
+// A service line qualifies as soon as its product carries one of the tags picked here
+print Form::multiselectarray('reedcrm_intervention_product_tags', $productCategories, $selectedTagIDs, 0, 0, 'minwidth200 maxwidth500', 0, 0);
 print '</td>';
 print '</tr>';
 
