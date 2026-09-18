@@ -76,7 +76,10 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
             <div class="modal-close"><i class="fas fa-times"></i></div>
         </div>
         <div class="modal-content">
-            <p class="reedcrm-quick-close-event"></p>
+            <?php // The name of the event being closed both recalls which one it is and stays editable:
+                  // a name is often only settled once the call is over ?>
+            <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-event-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventCurrentLabel')); ?></label>
+            <input type="text" id="reedcrm-quick-close-event-label" class="reedcrm-quick-close-event-label" maxlength="255" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventCurrentLabelPlaceholder')); ?>">
 
             <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-comment"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDescription')); ?></label>
             <textarea id="reedcrm-quick-close-comment" class="reedcrm-quick-close-comment" rows="4" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDescriptionPlaceholder')); ?>"></textarea>

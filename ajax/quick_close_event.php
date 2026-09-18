@@ -18,7 +18,7 @@
 /**
  * \file    ajax/quick_close_event.php
  * \ingroup reedcrm
- * \brief   Closes a to-do event (progress set to 100%, ended today) with an optional comment, and optionally clones it
+ * \brief   Closes a to-do event (progress set to 100%, ended today), renaming it if asked, with an optional comment, and optionally clones it
  *          as a new to-do event, renamed at will and postponed by X months, X days, or to a picked day.
  */
 
@@ -47,6 +47,7 @@ header('Content-Type: application/json');
 
 $eventID     = GETPOSTINT('event_id');
 $comment     = GETPOST('comment', 'alphanohtml');
+$eventLabel  = GETPOST('event_label', 'alphanohtml');
 $reschedule  = GETPOSTINT('reschedule');
 $delayUnit   = GETPOST('delay_unit', 'aZ09');
 $delayValue  = GETPOSTINT('delay_value');
@@ -84,11 +85,19 @@ if ($actionComm->percentage >= 100 || $actionComm->percentage < 0) {
 $originalDatep = $actionComm->datep;
 $originalDatef = $actionComm->datef;
 $originalNote  = $actionComm->note_private;
+$originalLabel = $actionComm->label;
 
 $db->begin();
 
 $actionComm->oldcopy    = clone $actionComm;
 $actionComm->percentage = 100;
+
+// The name is often only settled once the call is over, the modal lets it be rewritten here.
+// An emptied field is not a rename, the event keeps the name it already carries.
+$eventLabel = trim($eventLabel);
+if ($eventLabel !== '') {
+    $actionComm->label = dol_trunc($eventLabel, 255, 'right', 'UTF-8', 1);
+}
 
 // Finishing an event records when it was done: its end date is today
 $actionComm->datef = dol_now();
@@ -155,11 +164,10 @@ if ($reschedule > 0) {
 
     // The clone repeats the event as it was, the closure comment belongs to the closed one only
     $clone->percentage   = 0;
-    // A name typed in the modal renames the clone, an empty one keeps the name of the closed event
-    $newLabel = trim($newLabel);
-    if ($newLabel !== '') {
-        $clone->label = dol_trunc($newLabel, 255, 'right', 'UTF-8', 1);
-    }
+    // A name typed in the modal renames the clone. An empty one keeps the name the event carried
+    // before this closure: renaming the closed event says what was done, not what is left to do.
+    $newLabel            = trim($newLabel);
+    $clone->label        = ($newLabel !== '') ? dol_trunc($newLabel, 255, 'right', 'UTF-8', 1) : $originalLabel;
     $clone->datep        = $newDatep;
     $clone->datef        = (!empty($originalDatef) && !empty($originalDatep)) ? $newDatep + ($originalDatef - $originalDatep) : null;
     // create() falls back on the deprecated note property when note_private is empty, both must be reset
@@ -188,6 +196,9 @@ $db->commit();
 echo json_encode([
     'success'     => true,
     'status_html' => $actionComm->LibStatut(100, 2, 0, $actionComm->datep),
+    // A renamed event still shows its former name wherever the closure repaints in place
+    'label'       => $actionComm->label,
+    'renamed'     => $actionComm->label !== $originalLabel ? 1 : 0,
     'new_event'   => $newEvent,
     'message'     => $newEvent['id'] > 0 ? $langs->trans('QuickCloseEventDoneAndRescheduled', $newEvent['date']) : $langs->trans('QuickCloseEventDone')
 ]);
