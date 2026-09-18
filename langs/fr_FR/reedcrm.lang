@@ -1079,6 +1079,11 @@ QuickCloseEventNewLabelPlaceholder = Nom de l'événement clôturé
 QuickCloseEventCurrentLabel = Nom de l'événement
 QuickCloseEventCurrentLabelPlaceholder = Renommez l'événement si besoin
 QuickCloseEventNewType = Type de rappel
+QuickCloseEventKeepType = Garder le type de l'événement clôturé
+QuickCloseEventTypeDisplay = Choix du type de rappel
+QuickCloseEventTypeDisplayDescription = Forme du sélecteur de type dans la modale de clôture rapide
+QuickCloseEventTypeDisplayButtons = Boutons
+QuickCloseEventTypeDisplaySelect = Liste déroulante
 
 # Types de relance, partagés par les pastilles de relance et les formulaires de rappel
 RelaunchTypeCall = Appel

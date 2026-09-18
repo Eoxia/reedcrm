@@ -963,6 +963,11 @@ QuickCloseEventNewLabelPlaceholder = Name of the closed event
 QuickCloseEventCurrentLabel = Event name
 QuickCloseEventCurrentLabelPlaceholder = Rename the event if needed
 QuickCloseEventNewType = Reminder type
+QuickCloseEventKeepType = Keep the type of the closed event
+QuickCloseEventTypeDisplay = Reminder type picker
+QuickCloseEventTypeDisplayDescription = Shape of the type picker in the quick close modal
+QuickCloseEventTypeDisplayButtons = Buttons
+QuickCloseEventTypeDisplaySelect = Drop-down list
 
 # Relaunch types, shared by the relaunch chips and the reminder forms
 RelaunchTypeCall = Call

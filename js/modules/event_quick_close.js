@@ -276,10 +276,14 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
 
   // The reminder starts on the type of the event being closed, so picking one is a deliberate
   // change. A list row cannot tell that type: nothing is checked there, and the reminder keeps it
+  // Only one of the two controls is rendered, whichever the module configuration asks for, so
+  // both are reset and filled here and the missing one is simply an empty selection
   var currentType = ($trigger.attr('data-event-type') || '').trim() || ($card.attr('data-event-type') || '').trim();
   $('input[name="reedcrm-quick-close-new-type"]').prop('checked', false);
+  $('#reedcrm-quick-close-new-type-select').val('');
   if (currentType) {
     $('input[name="reedcrm-quick-close-new-type"][value="' + currentType + '"]').prop('checked', true);
+    $('#reedcrm-quick-close-new-type-select').val(currentType);
   }
   // The rescheduled event repeats the closed one, its name stays editable
   $('#reedcrm-quick-close-new-label').val(label);
@@ -351,7 +355,7 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       delay_months: $('#reedcrm-quick-close-delay-months').val(),
       delay_date: delayDate,
       new_label: $('#reedcrm-quick-close-new-label').val(),
-      new_type: $('input[name="reedcrm-quick-close-new-type"]:checked').val() || ''
+      new_type: $('input[name="reedcrm-quick-close-new-type"]:checked').val() || $('#reedcrm-quick-close-new-type-select').val() || ''
     },
     success: function (response) {
       $button.removeClass('button-disable');

@@ -136,6 +136,13 @@ tr.reedcrm-quick-close-flash > td {
     }
   }
 
+  // Same slot as the pills, for the installs that ask for a drop-down list instead
+  .reedcrm-quick-close-type-select {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+  }
+
   .reedcrm-quick-close-type-call {
     > i { color: #4a90e2; }
     &:has(input:checked) { border-color: #4a90e2; background: #eff6ff; color: #1d4ed8; }

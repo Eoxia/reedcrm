@@ -39,6 +39,10 @@ $quickCloseDelayUnit   = getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm
 $quickCloseDelayValue  = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
 $quickCloseDelayMonths = max(1, getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 1));
 
+// The type of the reminder is picked either on four pills or in a drop-down list, at the choice
+// of the module configuration: the pills read faster, the list takes less room in the modal
+$quickCloseTypeDisplay = getDolGlobalString('REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', 'buttons') === 'select' ? 'select' : 'buttons';
+
 // On the event card the badge sits alone in the banner, the list markers the JS relies on are missing.
 // The event is handed over here, a system event (percentage -1) and a done one have no progress to close.
 $quickCloseCardID    = 0;
@@ -102,15 +106,26 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
                 <?php // Type of the reminder being raised. Nothing is preselected when the page cannot
                       // tell the type of the closed event: the reminder then simply repeats it ?>
                 <span class="reedcrm-quick-close-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewType')); ?></span>
-                <div class="reedcrm-quick-close-type-choices">
-                    <?php foreach (reedcrm_get_relaunch_types() as $typeKey => $type) : ?>
-                        <label class="reedcrm-quick-close-type-choice reedcrm-quick-close-type-<?php echo dol_escape_htmltag($typeKey); ?>">
-                            <input type="radio" name="reedcrm-quick-close-new-type" value="<?php echo dol_escape_htmltag($type['actioncode']); ?>">
-                            <i class="fas fa-<?php echo dol_escape_htmltag($type['picto']); ?>"></i>
-                            <span><?php echo dol_escape_htmltag($langs->trans('RelaunchType' . ucfirst($typeKey))); ?></span>
-                        </label>
-                    <?php endforeach; ?>
-                </div>
+                <?php if ($quickCloseTypeDisplay === 'select') : ?>
+                    <?php // The empty choice is what keeps the type of the closed event, which is also
+                          // what a list row falls back on since it cannot tell that type ?>
+                    <select id="reedcrm-quick-close-new-type-select" class="reedcrm-quick-close-type-select">
+                        <option value=""><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventKeepType')); ?></option>
+                        <?php foreach (reedcrm_get_relaunch_types() as $typeKey => $type) : ?>
+                            <option value="<?php echo dol_escape_htmltag($type['actioncode']); ?>"><?php echo dol_escape_htmltag($langs->trans('RelaunchType' . ucfirst($typeKey))); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php else : ?>
+                    <div class="reedcrm-quick-close-type-choices">
+                        <?php foreach (reedcrm_get_relaunch_types() as $typeKey => $type) : ?>
+                            <label class="reedcrm-quick-close-type-choice reedcrm-quick-close-type-<?php echo dol_escape_htmltag($typeKey); ?>">
+                                <input type="radio" name="reedcrm-quick-close-new-type" value="<?php echo dol_escape_htmltag($type['actioncode']); ?>">
+                                <i class="fas fa-<?php echo dol_escape_htmltag($type['picto']); ?>"></i>
+                                <span><?php echo dol_escape_htmltag($langs->trans('RelaunchType' . ucfirst($typeKey))); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
 
                 <label class="reedcrm-quick-close-delay-choice">
                     <input type="radio" name="reedcrm-quick-close-delay-unit" value="m"<?php echo $quickCloseDelayUnit === 'm' ? ' checked' : ''; ?>>
