@@ -121,6 +121,7 @@ if ($action == 'set_config_quick_close') {
     $delayUnit   = GETPOST('quick_close_delay_unit', 'aZ09') === 'd' ? 'd' : 'm';
     $delayValue  = GETPOSTINT('quick_close_delay_value');
     $delayMonths = GETPOSTINT('quick_close_delay_months');
+    $typeDisplay = GETPOST('quick_close_type_display', 'aZ09') === 'select' ? 'select' : 'buttons';
 
     if ($delayValue < 1) {
         $delayValue = 1;
@@ -132,6 +133,7 @@ if ($action == 'set_config_quick_close') {
     dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_UNIT', $delayUnit, 'chaine', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_VALUE', $delayValue, 'integer', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_MONTHS', $delayMonths, 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', $typeDisplay, 'chaine', 0, '', $conf->entity);
 
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
@@ -758,6 +760,20 @@ print '</td><td>';
 print $langs->trans('QuickCloseEventDefaultDaysDescription');
 print '</td><td>';
 print '<input type="number" name="quick_close_delay_value" class="minwidth200" value="' . getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7) . '" min="1" max="3650">';
+print '</td></tr>';
+
+// How the type of the reminder is picked in the quick close modal
+$quickCloseTypeDisplays = [
+    'buttons' => $langs->transnoentities('QuickCloseEventTypeDisplayButtons'),
+    'select'  => $langs->transnoentities('QuickCloseEventTypeDisplaySelect')
+];
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('QuickCloseEventTypeDisplay');
+print '</td><td>';
+print $langs->trans('QuickCloseEventTypeDisplayDescription');
+print '</td><td>';
+print $form->selectarray('quick_close_type_display', $quickCloseTypeDisplays, getDolGlobalString('REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', 'buttons'), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx');
 print '</td></tr>';
 
 print '</table>';

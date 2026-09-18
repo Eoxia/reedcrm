@@ -222,6 +222,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'chaine', 'm', '', 0, 'current'],
             $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_VALUE', 'integer', 7, '', 0, 'current'],
             $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', 'chaine', 'buttons', '', 0, 'current'],
 
             // QUICK CREATION
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],

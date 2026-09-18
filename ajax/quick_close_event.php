@@ -36,7 +36,11 @@ if (file_exists('../reedcrm.main.inc.php')) {
 
 // Load Dolibarr libraries
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+require_once DOL_DOCUMENT_ROOT . '/comm/action/class/cactioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+// Load ReedCRM libraries
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 global $db, $langs, $user;
 
@@ -54,6 +58,7 @@ $delayValue  = GETPOSTINT('delay_value');
 $delayMonths = GETPOSTINT('delay_months');
 $delayDate   = GETPOST('delay_date', 'aZ09');
 $newLabel    = GETPOST('new_label', 'alphanohtml');
+$newType     = GETPOST('new_type', 'aZ09');
 
 if ($eventID <= 0) {
     echo json_encode(['success' => false, 'error' => $langs->trans('ErrorRecordNotFound')]);
@@ -168,6 +173,18 @@ if ($reschedule > 0) {
     // before this closure: renaming the closed event says what was done, not what is left to do.
     $newLabel            = trim($newLabel);
     $clone->label        = ($newLabel !== '') ? dol_trunc($newLabel, 255, 'right', 'UTF-8', 1) : $originalLabel;
+
+    // A type picked in the modal is the type of the reminder. Nothing picked keeps the type of the
+    // closed event, which is what the clone already carries. Only the four types of the relaunch
+    // chips are accepted, so the endpoint never writes a type the widgets cannot render.
+    if (!empty($newType) && in_array($newType, array_column(reedcrm_get_relaunch_types(), 'actioncode'), true)) {
+        $cActionComm = new CActionComm($db);
+        if ($cActionComm->fetch($newType) > 0) {
+            $clone->type_id   = $cActionComm->id;
+            $clone->type_code = $cActionComm->code;
+        }
+    }
+
     $clone->datep        = $newDatep;
     $clone->datef        = (!empty($originalDatef) && !empty($originalDatep)) ? $newDatep + ($originalDatef - $originalDatep) : null;
     // create() falls back on the deprecated note property when note_private is empty, both must be reset
