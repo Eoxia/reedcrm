@@ -960,7 +960,8 @@ QuickCloseEventDescriptionPlaceholder = Appended to the event description (optio
 QuickCloseEventReschedule = Schedule the same event again for later
 QuickCloseEventNewLabel = New event name
 QuickCloseEventNewLabelPlaceholder = Name of the closed event
-QuickCloseEventInOneMonth = In 1 month
+QuickCloseEventInMonths = In
+QuickCloseEventInMonthsSuffix = months
 QuickCloseEventInDays = In
 QuickCloseEventInDaysSuffix = days
 QuickCloseEventOnDate = On
@@ -971,11 +972,14 @@ QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
 QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
 QuickCloseEventError = Closing the event failed
 QuickCloseEvents = quick event closures
+QuickCloseEventInMonthsLabel = In a number of months
 QuickCloseEventInDaysLabel = In a number of days
 QuickCloseEventDefaultDelay = Default reschedule delay
 QuickCloseEventDefaultDelayDescription = Choice preselected in the quick close modal when a reschedule is requested
 QuickCloseEventDefaultDays = Default number of days
 QuickCloseEventDefaultDaysDescription = Number of days prefilled for the "In a number of days" delay
+QuickCloseEventDefaultMonths = Default number of months
+QuickCloseEventDefaultMonthsDescription = Number of months prefilled for the "In a number of months" delay
 
 #
 # Intervention dates

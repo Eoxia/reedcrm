@@ -21,7 +21,7 @@
  * \ingroup reedcrm
  * \brief   Turns the status badge of every to-do event, listed by show_actions_done() or shown in the
  *          banner of its own card, into a quick close trigger : optional comment, and optional clone
- *          renamed at will and postponed by 1 month or X days.
+ *          renamed at will and postponed by X months, X days, or to a picked day.
  */
 
 if (!window.reedcrm) {
@@ -212,6 +212,10 @@ window.reedcrm.eventQuickClose.event = function () {
     $('input[name="reedcrm-quick-close-delay-unit"][value="d"]').prop('checked', true);
   });
 
+  $(document).on('focus.reedcrmQuickClose', '#reedcrm-quick-close-delay-months', function () {
+    $('input[name="reedcrm-quick-close-delay-unit"][value="m"]').prop('checked', true);
+  });
+
   $(document).on('focus.reedcrmQuickClose', '#reedcrm-quick-close-delay-date', function () {
     $('input[name="reedcrm-quick-close-delay-unit"][value="date"]').prop('checked', true);
   });
@@ -257,14 +261,16 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   window.reedcrm.eventQuickClose.currentEventId = parseInt($trigger.attr('data-event-id'), 10);
 
   // The postponement always reopens on the delay configured for the module
-  var defaultUnit = window.reedcrm.eventQuickClose.config('default-unit') || 'm';
-  var defaultDays = window.reedcrm.eventQuickClose.config('default-days') || 7;
+  var defaultUnit   = window.reedcrm.eventQuickClose.config('default-unit') || 'm';
+  var defaultDays   = window.reedcrm.eventQuickClose.config('default-days') || 7;
+  var defaultMonths = window.reedcrm.eventQuickClose.config('default-months') || 1;
 
   $('#reedcrm-quick-close-comment').val('');
   $('#reedcrm-quick-close-reschedule').prop('checked', false);
   $('#reedcrm-quick-close-delay').removeClass('reedcrm-quick-close-delay-visible');
   $('input[name="reedcrm-quick-close-delay-unit"][value="' + defaultUnit + '"]').prop('checked', true);
   $('#reedcrm-quick-close-delay-value').val(defaultDays);
+  $('#reedcrm-quick-close-delay-months').val(defaultMonths);
   $('#reedcrm-quick-close-delay-date').val('');
   // The rescheduled event repeats the closed one, its name stays editable
   $('#reedcrm-quick-close-new-label').val(label);
@@ -330,6 +336,7 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       reschedule: $('#reedcrm-quick-close-reschedule').is(':checked') ? 1 : 0,
       delay_unit: delayUnit,
       delay_value: $('#reedcrm-quick-close-delay-value').val(),
+      delay_months: $('#reedcrm-quick-close-delay-months').val(),
       delay_date: delayDate,
       new_label: $('#reedcrm-quick-close-new-label').val()
     },

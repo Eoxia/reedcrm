@@ -118,15 +118,20 @@ if ($action == 'set_config') {
 }
 
 if ($action == 'set_config_quick_close') {
-    $delayUnit  = GETPOST('quick_close_delay_unit', 'aZ09') === 'd' ? 'd' : 'm';
-    $delayValue = GETPOSTINT('quick_close_delay_value');
+    $delayUnit   = GETPOST('quick_close_delay_unit', 'aZ09') === 'd' ? 'd' : 'm';
+    $delayValue  = GETPOSTINT('quick_close_delay_value');
+    $delayMonths = GETPOSTINT('quick_close_delay_months');
 
     if ($delayValue < 1) {
         $delayValue = 1;
     }
+    if ($delayMonths < 1) {
+        $delayMonths = 1;
+    }
 
     dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_UNIT', $delayUnit, 'chaine', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_VALUE', $delayValue, 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_MONTHS', $delayMonths, 'integer', 0, '', $conf->entity);
 
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
@@ -725,7 +730,7 @@ print '</tr>';
 
 // Delay preselected in the reschedule block of the quick close modal
 $quickCloseUnits = [
-    'm' => $langs->transnoentities('QuickCloseEventInOneMonth'),
+    'm' => $langs->transnoentities('QuickCloseEventInMonthsLabel'),
     'd' => $langs->transnoentities('QuickCloseEventInDaysLabel')
 ];
 
@@ -735,6 +740,15 @@ print '</td><td>';
 print $langs->trans('QuickCloseEventDefaultDelayDescription');
 print '</td><td>';
 print $form->selectarray('quick_close_delay_unit', $quickCloseUnits, getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm'), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx');
+print '</td></tr>';
+
+// Number of months proposed when the delay is expressed in months
+print '<tr class="oddeven"><td>';
+print $langs->trans('QuickCloseEventDefaultMonths');
+print '</td><td>';
+print $langs->trans('QuickCloseEventDefaultMonthsDescription');
+print '</td><td>';
+print '<input type="number" name="quick_close_delay_months" class="minwidth200" value="' . getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 1) . '" min="1" max="120">';
 print '</td></tr>';
 
 // Number of days proposed when the delay is expressed in days
