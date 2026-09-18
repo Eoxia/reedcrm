@@ -1154,3 +1154,10 @@ FollowupTrackingTypeFormation = Formation
 FollowupTrackingTypeSprint = Sprint
 FollowupTrackingTypeOther = Autre
 FollowupLineCount = Lignes
+
+# Card empty fields toggle
+CardHideEmptyFields = Masquer les champs vides
+CardShowAllFields = Tout afficher
+CardEmptyFieldsHiddenCount = %s masqués
+CardEmptyFieldsTooltip = Masque ou affiche les champs de cette fiche qui n'ont pas de valeur. Le choix est conservé pour toutes vos fiches.
+CardEmptyFieldsUserParam = Champs vides des fiches

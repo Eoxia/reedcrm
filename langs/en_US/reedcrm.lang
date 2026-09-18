@@ -1024,3 +1024,10 @@ InterventionDateFromDescription = Proposals dated before this day are out of sco
 InterventionDateProductTagLabel = Tags of the services to plan
 InterventionDateProductTagDescription = Only the service lines whose product carries one of these tags get intervention dates. Free lines, the ones without a product, are out of scope. As long as no tag is chosen, no line can be planned.
 InterventionDateNoProductTagWarning = No service tag is selected: no service line can be planned. Pick the tags in the ReedCRM setup, Proposals tab.
+
+# Card empty fields toggle
+CardHideEmptyFields = Hide the empty fields
+CardShowAllFields = Show every field
+CardEmptyFieldsHiddenCount = %s hidden
+CardEmptyFieldsTooltip = Hides or shows the fields of this card left without a value. The choice is kept for all your cards.
+CardEmptyFieldsUserParam = Empty fields on the cards
