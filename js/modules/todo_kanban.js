@@ -41,10 +41,74 @@ window.reedcrm.todoKanban.init = function () {
   }
 
   window.reedcrm.todoKanban.event();
+  window.reedcrm.todoKanban.initScrollbar();
   window.reedcrm.todoKanban.initSortable();
   window.reedcrm.todoKanban.initSettings();
   window.reedcrm.todoKanban.initColumnMenu();
   window.reedcrm.todoKanban.initUserSelect();
+};
+
+/**
+ * Drive the board sideways from a bar pinned at the bottom of the screen.
+ *
+ * The board carries its own horizontal scrollbar, but it sits under the longest column, often
+ * far below the fold: reaching it means scrolling the page down first, which is why sideways
+ * moves end up done with shift + wheel. The bar here is a plain scroller whose content is as
+ * wide as the board, kept in step with it both ways.
+ *
+ * It is shown only while the board really overflows, and re-measured whenever the columns
+ * change: their width and the gap are set inline by the settings popover, a column can be
+ * hidden from its own menu, and a page of cards can be loaded into a column.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initScrollbar = function () {
+  var board = $('.todo-board').get(0);
+  var bar   = $('#todoBoardScrollbar').get(0);
+
+  if (!board || !bar) {
+    return;
+  }
+
+  var inner = $(bar).find('.todo-board-scrollbar-inner').get(0);
+
+  var measure = function () {
+    // The bar is the same width as the board, so an identical scrollLeft means the same column
+    $(inner).width(board.scrollWidth);
+    $(bar).toggleClass('todo-board-scrollbar-visible', board.scrollWidth > board.clientWidth + 1);
+    bar.scrollLeft = board.scrollLeft;
+  };
+
+  // Each side moves the other. Writing a value a scroller already holds raises no event, so
+  // comparing before writing is what stops the echo: the answering handler finds the two equal
+  // and does nothing. A flag would not do, scroll events land too late to be paired up.
+  $(bar).on('scroll', function () {
+    if (board.scrollLeft !== bar.scrollLeft) {
+      board.scrollLeft = bar.scrollLeft;
+    }
+  });
+
+  $(board).on('scroll', function () {
+    if (bar.scrollLeft !== board.scrollLeft) {
+      bar.scrollLeft = board.scrollLeft;
+    }
+  });
+
+  // Measured on the spot rather than on the next frame: reading scrollWidth settles the layout
+  // the change just queued, while a deferred read can still answer on the previous one and leave
+  // the bar showing the state before last. A handful of columns makes that read cheap.
+  $(window).on('resize.reedcrmTodoScrollbar', measure);
+
+  if (typeof window.MutationObserver !== 'undefined') {
+    new MutationObserver(measure).observe(board, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      attributeFilter: ['style', 'class']
+    });
+  }
+
+  measure();
 };
 
 /**
