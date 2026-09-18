@@ -313,6 +313,13 @@ window.reedcrm.todoKanban.editDate = function (event) {
       function (response) {
         $date.data('raw', response.raw);
         $date.find('.todo-date-value').text(response.formatted || '-');
+
+        // A relaunch just planned belongs to the column of its percentage from now on
+        if (field === 'date_start') {
+          var cardPercent = parseInt($card.data('percent'), 10);
+          window.reedcrm.todoKanban.paintCard($card, cardPercent);
+          window.reedcrm.todoKanban.moveToColumn($card, cardPercent);
+        }
       }
     );
   }
@@ -428,7 +435,7 @@ window.reedcrm.todoKanban.paintQuickClose = function ($card, percent) {
 
 /**
  * Return the column a card belongs to, mirroring reedcrmTodoGetColumnForEvent(): a relaunch
- * stays in its own backlog as long as it is neither done nor dropped.
+ * stays in its own backlog as long as it is neither done, dropped, nor planned.
  *
  * @param  {jQuery} $card   Card to place
  * @param  {number} percent Percentage of the event
@@ -436,6 +443,8 @@ window.reedcrm.todoKanban.paintQuickClose = function ($card, percent) {
  */
 window.reedcrm.todoKanban.findColumn = function ($card, percent) {
   var code   = String($card.data('event-code') || '');
+  // Giving a date to a relaunch is what takes it out of its backlog
+  var dated  = String($card.find('.todo-date-start').data('raw') || '') !== '';
   var $found = null;
 
   $('.todo-column').each(function () {
@@ -443,7 +452,7 @@ window.reedcrm.todoKanban.findColumn = function ($card, percent) {
     var columnCode  = String($column.data('code') || '');
 
     if (columnCode) {
-      if (columnCode === code && percent >= 0 && percent < 100) {
+      if (columnCode === code && !dated && percent >= 0 && percent < 100) {
         $found = $column;
         return false;
       }
