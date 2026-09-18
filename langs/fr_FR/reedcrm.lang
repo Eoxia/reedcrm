@@ -1163,3 +1163,15 @@ CardShowAllFields = Tout afficher
 CardEmptyFieldsHiddenCount = %s masqués
 CardEmptyFieldsTooltip = Masque ou affiche les champs de cette fiche qui n'ont pas de valeur. Le choix est conservé pour toutes vos fiches.
 CardEmptyFieldsUserParam = Champs vides des fiches
+
+#
+# Pocket - bouton « Je viens de raccrocher »
+#
+PocketHangup = Je viens de raccrocher
+PocketHangupWith = Je viens de raccrocher avec %s
+PocketHangupHelp = Importe le dernier enregistrement Pocket et le rattache à cet élément
+PocketHangupAttached = Dernier enregistrement Pocket rattaché : %s
+PocketHangupAlreadyLinked = Le dernier enregistrement Pocket est déjà rattaché à cet élément : %s
+PocketHangupOldRecording = Attention, le dernier enregistrement Pocket date du %s : vérifiez que Pocket a bien envoyé la conversation qui vient de se terminer
+PocketHangupNoRecording = Aucun enregistrement disponible dans Pocket
+PocketHangupImportFailed = L'import du dernier enregistrement Pocket a échoué

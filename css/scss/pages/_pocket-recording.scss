@@ -527,3 +527,53 @@
         color: #63acc9;
     }
 }
+
+// "I just hung up" chip. It sits beside the title of the banner of the cards linked to Pocket and
+// wears the colours of the action buttons of the theme, in the size of a secondary control: the
+// title has to stay the loudest thing on the line.
+// Written on the tag and not on the class alone: the banner colours every link of its title block,
+// and that rule would otherwise repaint the text of the chip.
+a.reedcrm-pocket-hangup-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 11px;
+    vertical-align: middle;
+    color: var(--textbutaction, #ffffff);
+    background: var(--butactionbg, #63acc9);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 19px;
+    white-space: nowrap;
+    text-decoration: none;
+
+    &:link,
+    &:visited,
+    &:hover,
+    &:focus,
+    &:active {
+        color: var(--textbutaction, #ffffff);
+        text-decoration: none;
+    }
+
+    // Darkened the way the theme darkens its own action buttons, rather than with a second colour
+    &:hover {
+        box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.3);
+    }
+
+    i {
+        font-size: 11px;
+    }
+}
+
+// The gap with the title belongs to the banner, the chip carries no margin of its own
+.refid a.reedcrm-pocket-hangup-button {
+    margin-left: 10px;
+}
+
+// Row the chip lands in once it is moved under the relaunch block of the header
+.reedcrm-pocket-hangup-row {
+    clear: both;
+    margin-top: 6px;
+}
