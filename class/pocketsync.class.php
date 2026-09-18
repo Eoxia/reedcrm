@@ -91,6 +91,9 @@ class PocketSync
         $page        = 1;
         $hasMore     = false;
 
+        // Read once: the loop below asks it for every recording of every page.
+        $mirroredPocketIds = $this->getMirroredPocketIds();
+
         do {
             $response = $this->api->getRecordings($folderId, 100, $page);
             if ($response === null) {
@@ -104,12 +107,18 @@ class PocketSync
                 // The folder filter is documented but currently not honoured by the API, which
                 // answers the whole account instead of failing on it. The page is therefore
                 // filtered again here, otherwise a silently unfiltered answer imports everything.
-                if (($recording['folder_id'] ?? '') !== $folderId) {
+                // A recording already mirrored keeps being refreshed whatever folder it sits in:
+                // the hang up button imports recordings before Pocket files them, and dropping them
+                // here would freeze them without transcript nor summary.
+                $recordingFolderId = (string) ($recording['folder_id'] ?? '');
+                if ($recordingFolderId !== $folderId && empty($mirroredPocketIds[(string) ($recording['id'] ?? '')])) {
                     $report['skipped']++;
                     continue;
                 }
 
-                $result = $this->importRecording($recording, $user, $folderId, $folderLabel);
+                // Each recording is stamped with the folder it really sits in, which is not always
+                // the configured one now that unfiled recordings can already be mirrored.
+                $result = $this->importRecording($recording, $user, $recordingFolderId, $recordingFolderId === $folderId ? $folderLabel : '');
                 if ($result < 0) {
                     $report['errors']++;
                 } elseif ($result == 1) {
@@ -124,6 +133,165 @@ class PocketSync
         } while ($hasMore && $page <= $maxPages);
 
         return $report;
+    }
+
+    /**
+     * Get the most recent recording available in Pocket.
+     *
+     * Answers the "I just hung up" button: the conversation that just ended is the last thing the
+     * dictaphone recorded. The folder filter of the API is not honoured (see syncRecordings), so the
+     * pages are filtered here, and more loosely than the synchronisation does: a recording made
+     * seconds ago is usually not filed in a folder yet, so an unfiled one is accepted too. A
+     * recording sitting in another folder belongs to another scope and is never picked.
+     *
+     * @param  int $maxPages Safety bound on the number of API pages walked when nothing matches.
+     * @return array<string,mixed>|null Recording as returned by the list endpoint, null when none.
+     */
+    public function findLastRecording(int $maxPages = 3): ?array
+    {
+        global $langs;
+
+        $this->error = '';
+
+        if (!$this->api->isConfigured()) {
+            $this->error = $langs->trans('PocketApiKeyMissing');
+            return null;
+        }
+
+        $folderId = getDolGlobalString('REEDCRM_POCKET_FOLDER_ID');
+        $last     = null;
+        $lastDate = 0;
+        $page     = 1;
+
+        do {
+            $response = $this->api->getRecordings($folderId, 100, $page);
+            if ($response === null) {
+                $this->error = $this->api->error;
+                return null;
+            }
+
+            foreach ($response['data'] ?? [] as $recording) {
+                if (empty($recording['id']) || !$this->isRealRecording($recording)) {
+                    continue;
+                }
+
+                $recordingFolder = (string) ($recording['folder_id'] ?? '');
+                if (!empty($folderId) && !empty($recordingFolder) && $recordingFolder !== $folderId) {
+                    continue;
+                }
+
+                $recordingDate = $this->getRecordingTimestamp($recording);
+                if ($last === null || $recordingDate > $lastDate) {
+                    $last     = $recording;
+                    $lastDate = $recordingDate;
+                }
+            }
+
+            // The API answers newest first: once a page brought a candidate, the following pages can
+            // only hold older ones. They are walked only while nothing matched at all.
+            $hasMore = !empty($response['pagination']['has_more']);
+            $page++;
+        } while ($last === null && $hasMore && $page <= $maxPages);
+
+        return $last;
+    }
+
+    /**
+     * Import the most recent Pocket recording into the local mirror.
+     *
+     * @param  User $user User the created record is attributed to.
+     * @return PocketRecording|null Recording as stored in Dolibarr, null on error, $this->error is then set.
+     */
+    public function importLastRecording(User $user): ?PocketRecording
+    {
+        global $langs;
+
+        $recording = $this->findLastRecording();
+        if ($recording === null) {
+            if (empty($this->error)) {
+                $this->error = $langs->trans('PocketHangupNoRecording');
+            }
+
+            return null;
+        }
+
+        // The recording keeps the folder it actually sits in: stamping a still unfiled recording
+        // with the configured folder would claim a filing Pocket has not done.
+        $folderId    = (string) ($recording['folder_id'] ?? '');
+        $folderLabel = ($folderId !== '' && $folderId === getDolGlobalString('REEDCRM_POCKET_FOLDER_ID'))
+            ? getDolGlobalString('REEDCRM_POCKET_FOLDER_LABEL')
+            : '';
+
+        if ($this->importRecording($recording, $user, $folderId, $folderLabel) < 0) {
+            $this->error = $langs->trans('PocketHangupImportFailed');
+            return null;
+        }
+
+        $importedRecording = new PocketRecording($this->db);
+        if ($importedRecording->fetchByPocketId((string) $recording['id']) <= 0) {
+            $this->error = $langs->trans('PocketHangupImportFailed');
+            return null;
+        }
+
+        return $importedRecording;
+    }
+
+    /**
+     * Get the Pocket identifiers already mirrored in the entity.
+     *
+     * @return array<string,bool> Pocket id => true.
+     */
+    private function getMirroredPocketIds(): array
+    {
+        $pocketIds = [];
+
+        $sql = 'SELECT pocket_id FROM ' . MAIN_DB_PREFIX . 'reedcrm_pocket_recording WHERE entity IN (' . getEntity('pocketrecording') . ')';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return $pocketIds;
+        }
+
+        while ($obj = $this->db->fetch_object($resql)) {
+            $pocketIds[(string) $obj->pocket_id] = true;
+        }
+        $this->db->free($resql);
+
+        return $pocketIds;
+    }
+
+    /**
+     * Tell a recording apart from the digests Pocket mixes into the same list.
+     *
+     * The list endpoint also answers the daily summaries the assistant writes on its own
+     * (id 'daily-highlights-<account>-<date>', no folder, no duration, state pending). They are the
+     * most recent entries of the account every evening, and attaching one to a card as the call
+     * that just ended would be plain wrong. A real recording is identified by its UUID, the digests
+     * never have one.
+     *
+     * @param  array<string,mixed> $recording Recording as returned by the list endpoint.
+     * @return bool                           True when the entry is an actual recording.
+     */
+    private function isRealRecording(array $recording): bool
+    {
+        return (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', (string) ($recording['id'] ?? ''));
+    }
+
+    /**
+     * Read the date of a recording from the list payload.
+     *
+     * @param  array<string,mixed> $recording Recording as returned by the list endpoint.
+     * @return int                            Timestamp, 0 when Pocket gave no usable date.
+     */
+    private function getRecordingTimestamp(array $recording): int
+    {
+        foreach (['recording_at', 'created_at', 'updated_at'] as $field) {
+            if (!empty($recording[$field])) {
+                return (int) dol_stringtotime((string) $recording[$field]);
+            }
+        }
+
+        return 0;
     }
 
     /**
