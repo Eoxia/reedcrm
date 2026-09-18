@@ -32,8 +32,9 @@ if (empty($conf) || !is_object($conf)) {
 global $langs, $object, $user;
 
 // Postponement preselected in the reschedule block, set in the module configuration
-$quickCloseDelayUnit  = getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm') === 'd' ? 'd' : 'm';
-$quickCloseDelayValue = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
+$quickCloseDelayUnit   = getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm') === 'd' ? 'd' : 'm';
+$quickCloseDelayValue  = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
+$quickCloseDelayMonths = max(1, getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 1));
 
 // On the event card the badge sits alone in the banner, the list markers the JS relies on are missing.
 // The event is handed over here, a system event (percentage -1) and a done one have no progress to close.
@@ -61,6 +62,7 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
      data-token="<?php echo dol_escape_htmltag(newToken()); ?>"
      data-default-unit="<?php echo dol_escape_htmltag($quickCloseDelayUnit); ?>"
      data-default-days="<?php echo (int) $quickCloseDelayValue; ?>"
+     data-default-months="<?php echo (int) $quickCloseDelayMonths; ?>"
      data-card-event-id="<?php echo $quickCloseCardID; ?>"
      data-card-event-label="<?php echo dol_escape_htmltag($quickCloseCardLabel); ?>"
      data-trans-tooltip="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"
@@ -90,7 +92,9 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
 
                 <label class="reedcrm-quick-close-delay-choice">
                     <input type="radio" name="reedcrm-quick-close-delay-unit" value="m"<?php echo $quickCloseDelayUnit === 'm' ? ' checked' : ''; ?>>
-                    <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventInOneMonth')); ?></span>
+                    <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventInMonths')); ?></span>
+                    <input type="number" id="reedcrm-quick-close-delay-months" class="reedcrm-quick-close-delay-value" value="<?php echo (int) $quickCloseDelayMonths; ?>" min="1" max="120">
+                    <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventInMonthsSuffix')); ?></span>
                 </label>
                 <label class="reedcrm-quick-close-delay-choice">
                     <input type="radio" name="reedcrm-quick-close-delay-unit" value="d"<?php echo $quickCloseDelayUnit === 'd' ? ' checked' : ''; ?>>

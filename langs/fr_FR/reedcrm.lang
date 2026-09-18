@@ -1076,7 +1076,8 @@ QuickCloseEventDescriptionPlaceholder = Ajouté à la description de l'événeme
 QuickCloseEventReschedule = Reprogrammer un événement identique pour plus tard
 QuickCloseEventNewLabel = Nom du nouvel événement
 QuickCloseEventNewLabelPlaceholder = Nom de l'événement clôturé
-QuickCloseEventInOneMonth = Dans 1 mois
+QuickCloseEventInMonths = Dans
+QuickCloseEventInMonthsSuffix = mois
 QuickCloseEventInDays = Dans
 QuickCloseEventInDaysSuffix = jours
 QuickCloseEventOnDate = Le
@@ -1087,11 +1088,14 @@ QuickCloseEventDoneAndRescheduled = Événement clôturé, nouvel événement pr
 QuickCloseEventNotTodo = Cet événement n'est pas à faire, il ne peut pas être clôturé
 QuickCloseEventError = La clôture de l'événement a échoué
 QuickCloseEvents = clôtures rapides d'événement
+QuickCloseEventInMonthsLabel = Dans un nombre de mois
 QuickCloseEventInDaysLabel = Dans un nombre de jours
 QuickCloseEventDefaultDelay = Délai de reprogrammation par défaut
 QuickCloseEventDefaultDelayDescription = Choix présélectionné dans la modale de clôture rapide quand la reprogrammation est demandée
 QuickCloseEventDefaultDays = Nombre de jours par défaut
 QuickCloseEventDefaultDaysDescription = Nombre de jours prérempli pour le délai « Dans un nombre de jours »
+QuickCloseEventDefaultMonths = Nombre de mois par défaut
+QuickCloseEventDefaultMonthsDescription = Nombre de mois prérempli pour le délai « Dans un nombre de mois »
 
 #
 # Dates d'intervention

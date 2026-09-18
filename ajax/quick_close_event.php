@@ -19,7 +19,7 @@
  * \file    ajax/quick_close_event.php
  * \ingroup reedcrm
  * \brief   Closes a to-do event (progress set to 100%, ended today) with an optional comment, and optionally clones it
- *          as a new to-do event, renamed at will and postponed by one month, X days, or to a picked day.
+ *          as a new to-do event, renamed at will and postponed by X months, X days, or to a picked day.
  */
 
 if (!defined('NOTOKENRENEWAL')) {
@@ -45,13 +45,14 @@ $langs->loadLangs(['agenda', 'errors', 'reedcrm@reedcrm']);
 
 header('Content-Type: application/json');
 
-$eventID    = GETPOSTINT('event_id');
-$comment    = GETPOST('comment', 'alphanohtml');
-$reschedule = GETPOSTINT('reschedule');
-$delayUnit  = GETPOST('delay_unit', 'aZ09');
-$delayValue = GETPOSTINT('delay_value');
-$delayDate  = GETPOST('delay_date', 'aZ09');
-$newLabel   = GETPOST('new_label', 'alphanohtml');
+$eventID     = GETPOSTINT('event_id');
+$comment     = GETPOST('comment', 'alphanohtml');
+$reschedule  = GETPOSTINT('reschedule');
+$delayUnit   = GETPOST('delay_unit', 'aZ09');
+$delayValue  = GETPOSTINT('delay_value');
+$delayMonths = GETPOSTINT('delay_months');
+$delayDate   = GETPOST('delay_date', 'aZ09');
+$newLabel    = GETPOST('new_label', 'alphanohtml');
 
 if ($eventID <= 0) {
     echo json_encode(['success' => false, 'error' => $langs->trans('ErrorRecordNotFound')]);
@@ -121,6 +122,9 @@ if ($reschedule > 0) {
     if ($delayValue < 1) {
         $delayValue = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
     }
+    if ($delayMonths < 1) {
+        $delayMonths = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 1);
+    }
 
     if ($delayUnit === 'date') {
         // The picked day keeps the hour of the closed event, the current one when it had no date
@@ -138,7 +142,8 @@ if ($reschedule > 0) {
         $delayValue = max(1, min(3650, $delayValue));
         $newDatep   = dol_time_plus_duree(dol_now(), $delayValue, 'd');
     } else {
-        $newDatep = dol_time_plus_duree(dol_now(), 1, 'm');
+        $delayMonths = max(1, min(120, $delayMonths));
+        $newDatep    = dol_time_plus_duree(dol_now(), $delayMonths, 'm');
     }
 
     $clone = new ActionComm($db);
