@@ -115,11 +115,13 @@ foreach ($rows as $row) {
 }
 ksort($monthUsers);
 
-$doneCount = 0;
+$doneCount   = 0;
+$amountTotal = 0;
 foreach ($rows as $row) {
     if ((int) $row->status === InterventionDate::STATUS_DONE) {
         $doneCount++;
     }
+    $amountTotal += (float) $row->amount_ht;
 }
 
 $unplannedCount = 0;

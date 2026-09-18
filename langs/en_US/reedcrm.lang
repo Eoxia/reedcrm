@@ -1001,6 +1001,7 @@ InterventionDateFeatureDisabled = Intervention dates are not enabled in the Reed
 InterventionSeeEvent = See the event in the agenda
 InterventionEventLabel = Intervention %s - %s (%s)
 InterventionsThisMonth = Interventions this month
+InterventionAmountThisMonth = Revenue this month
 InterventionViewMonth = Month
 InterventionViewList = List
 InterventionOnlyMine = My interventions

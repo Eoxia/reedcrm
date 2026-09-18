@@ -118,6 +118,10 @@ $onlyMine = count($searchUsers) === 1 && (int) reset($searchUsers) === (int) $us
         <span class="reedcrm-intervention-stat-label"><?php echo dol_escape_htmltag($langs->trans('InterventionToPlan')); ?></span>
     </div>
     <div class="reedcrm-intervention-stat">
+        <span class="reedcrm-intervention-stat-value"><?php echo price($amountTotal, 0, $langs, 1, -1, 0, $conf->currency); ?></span>
+        <span class="reedcrm-intervention-stat-label"><?php echo dol_escape_htmltag($langs->trans('InterventionAmountThisMonth')); ?></span>
+    </div>
+    <div class="reedcrm-intervention-stat">
         <span class="reedcrm-intervention-stat-value"><?php echo count($monthUsers); ?></span>
         <span class="reedcrm-intervention-stat-label"><?php echo dol_escape_htmltag($langs->trans('InterventionUsers')); ?></span>
     </div>
