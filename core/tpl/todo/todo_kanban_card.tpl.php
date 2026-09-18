@@ -47,9 +47,9 @@ $ownerInitials = !empty($t['owner']) ? $t['owner']['initials'] : '';
 // Full day events are picked on a plain date, the others carry an hour
 $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
 ?>
-<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
+<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?><?php echo !empty($t['upcoming']) ? ' todo-card-upcoming' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
 
-    <!-- Header: type of event + reference + late flag -->
+    <!-- Header: type of event + reference + late or upcoming flag -->
     <div class="todo-card-header">
         <span class="todo-card-type" <?php echo !empty($t['type_color']) ? 'style="background: ' . dol_escape_htmltag($t['type_color']) . '"' : ''; ?>
               title="<?php echo dol_escape_htmltag($t['type_label']); ?>">
@@ -62,6 +62,10 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
         <?php if (!empty($t['late'])) : ?>
             <span class="todo-card-late-badge" title="<?php echo dol_escape_htmltag($langs->trans('TodoLateEvent')); ?>">
                 <i class="fas fa-exclamation-circle"></i> <?php echo $langs->trans('TodoLateEvent'); ?>
+            </span>
+        <?php elseif (!empty($t['upcoming'])) : ?>
+            <span class="todo-card-upcoming-badge" title="<?php echo dol_escape_htmltag($langs->trans('TodoUpcomingEvent')); ?>">
+                <i class="fas fa-clock"></i> <?php echo $langs->trans('TodoUpcomingEvent'); ?>
             </span>
         <?php endif; ?>
     </div>

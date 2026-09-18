@@ -850,6 +850,7 @@ TodoFilterCount = %s événement(s)
 TodoNoEvent = Aucun événement
 TodoNoLabel = Sans libellé
 TodoLateEvent = En retard
+TodoUpcomingEvent = À venir
 TodoUnassigned = Non affecté
 TodoAddAssigned = Affecter un utilisateur
 TodoRemoveAssigned = Retirer l'affectation
