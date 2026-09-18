@@ -2768,10 +2768,15 @@ class ActionsReedcrm
      */
     public function getTooltipContent(array $parameters, CommonObject $object, string $action): int
     {
-        if (strpos($parameters['context'], 'projectdao') !== false) {
+        // The contexts of a page pile up, so 'projectdao' stayed set for every tooltip built after the first
+        // project link and the project layout below leaked on the proposals and the other objects of the page:
+        // only the object itself tells that the tooltip being built really is a project one
+        if ($object->element === 'project') {
             if (isset($parameters['tooltipcontentarray'])) {
                 global $langs, $conf;
                 $data = &$parameters['tooltipcontentarray'];
+
+                $langs->load('projects'); // 'OpportunityAmount' lives there, whatever the page that renders the tooltip
 
                 // Top row: Picto / Status and Opportunity Amount (flex layout)
                 if (isset($data['picto'])) {
@@ -2806,7 +2811,6 @@ class ActionsReedcrm
                 // Fourth row (or below): Description
                 unset($data['description']); // ensure no duplication
                 if (!empty($object->description)) {
-                    $langs->load('projects');
                     $data['custom_desc'] = '<div style="margin-top: 5px;"><b>' . $langs->trans('Description') . ':</b> ' . dol_string_nohtmltag($object->description) . '</div>';
                 }
 
