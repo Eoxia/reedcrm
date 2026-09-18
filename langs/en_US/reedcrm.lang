@@ -962,6 +962,13 @@ QuickCloseEventNewLabel = New event name
 QuickCloseEventNewLabelPlaceholder = Name of the closed event
 QuickCloseEventCurrentLabel = Event name
 QuickCloseEventCurrentLabelPlaceholder = Rename the event if needed
+QuickCloseEventNewType = Reminder type
+
+# Relaunch types, shared by the relaunch chips and the reminder forms
+RelaunchTypeCall = Call
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = Meeting
+RelaunchTypeOther = Other
 QuickCloseEventInMonths = In
 QuickCloseEventInMonthsSuffix = months
 QuickCloseEventInDays = In

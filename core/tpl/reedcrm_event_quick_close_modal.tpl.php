@@ -31,6 +31,9 @@ if (empty($conf) || !is_object($conf)) {
 
 global $langs, $object, $user;
 
+// The four relaunch types the module works with, shared with the relaunch chips
+require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
+
 // Postponement preselected in the reschedule block, set in the module configuration
 $quickCloseDelayUnit   = getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm') === 'd' ? 'd' : 'm';
 $quickCloseDelayValue  = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
@@ -40,6 +43,7 @@ $quickCloseDelayMonths = max(1, getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTH
 // The event is handed over here, a system event (percentage -1) and a done one have no progress to close.
 $quickCloseCardID    = 0;
 $quickCloseCardLabel = '';
+$quickCloseCardType  = '';
 if (is_object($object) && $object->element === 'action' && $object->id > 0
     && $object->percentage >= 0 && $object->percentage < 100) {
     // Same rule as the endpoint : all the events, or mine when I am the author or the owner
@@ -49,6 +53,7 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
     if ($canQuickClose) {
         $quickCloseCardID    = (int) $object->id;
         $quickCloseCardLabel = (string) $object->label;
+        $quickCloseCardType  = (string) $object->type_code;
     }
 }
 
@@ -65,6 +70,7 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
      data-default-months="<?php echo (int) $quickCloseDelayMonths; ?>"
      data-card-event-id="<?php echo $quickCloseCardID; ?>"
      data-card-event-label="<?php echo dol_escape_htmltag($quickCloseCardLabel); ?>"
+     data-card-event-type="<?php echo dol_escape_htmltag($quickCloseCardType); ?>"
      data-trans-tooltip="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"
      data-trans-error="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventError')); ?>"
      data-trans-date-required="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDateRequired')); ?>"></div>
@@ -91,7 +97,20 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
 
             <div class="reedcrm-quick-close-delay" id="reedcrm-quick-close-delay">
                 <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-new-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabel')); ?></label>
-                <input type="text" id="reedcrm-quick-close-new-label" class="reedcrm-quick-close-new-label" maxlength="255" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabelPlaceholder')); ?>">
+                <input type="text" id="reedcrm-quick-close-new-label" class="reedcrm-quick-close-new-label" maxlength="128" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabelPlaceholder')); ?>">
+
+                <?php // Type of the reminder being raised. Nothing is preselected when the page cannot
+                      // tell the type of the closed event: the reminder then simply repeats it ?>
+                <span class="reedcrm-quick-close-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewType')); ?></span>
+                <div class="reedcrm-quick-close-type-choices">
+                    <?php foreach (reedcrm_get_relaunch_types() as $typeKey => $type) : ?>
+                        <label class="reedcrm-quick-close-type-choice reedcrm-quick-close-type-<?php echo dol_escape_htmltag($typeKey); ?>">
+                            <input type="radio" name="reedcrm-quick-close-new-type" value="<?php echo dol_escape_htmltag($type['actioncode']); ?>">
+                            <i class="fas fa-<?php echo dol_escape_htmltag($type['picto']); ?>"></i>
+                            <span><?php echo dol_escape_htmltag($langs->trans('RelaunchType' . ucfirst($typeKey))); ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
 
                 <label class="reedcrm-quick-close-delay-choice">
                     <input type="radio" name="reedcrm-quick-close-delay-unit" value="m"<?php echo $quickCloseDelayUnit === 'm' ? ' checked' : ''; ?>>

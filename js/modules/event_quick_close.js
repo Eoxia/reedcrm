@@ -168,6 +168,7 @@ window.reedcrm.eventQuickClose.decorateCard = function () {
   $badge.addClass('reedcrm-quick-close-trigger reedcrm-quick-close-trigger-banner')
     .attr('data-event-id', eventId)
     .attr('data-event-label', window.reedcrm.eventQuickClose.config('card-event-label'))
+    .attr('data-event-type', window.reedcrm.eventQuickClose.config('card-event-type'))
     .attr('title', window.reedcrm.eventQuickClose.config('trans-tooltip'))
     .append('<i class="fas fa-check-circle reedcrm-quick-close-icon"></i>');
 };
@@ -272,6 +273,14 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   $('#reedcrm-quick-close-delay-value').val(defaultDays);
   $('#reedcrm-quick-close-delay-months').val(defaultMonths);
   $('#reedcrm-quick-close-delay-date').val('');
+
+  // The reminder starts on the type of the event being closed, so picking one is a deliberate
+  // change. A list row cannot tell that type: nothing is checked there, and the reminder keeps it
+  var currentType = ($trigger.attr('data-event-type') || '').trim() || ($card.attr('data-event-type') || '').trim();
+  $('input[name="reedcrm-quick-close-new-type"]').prop('checked', false);
+  if (currentType) {
+    $('input[name="reedcrm-quick-close-new-type"][value="' + currentType + '"]').prop('checked', true);
+  }
   // The rescheduled event repeats the closed one, its name stays editable
   $('#reedcrm-quick-close-new-label').val(label);
 
@@ -341,7 +350,8 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       delay_value: $('#reedcrm-quick-close-delay-value').val(),
       delay_months: $('#reedcrm-quick-close-delay-months').val(),
       delay_date: delayDate,
-      new_label: $('#reedcrm-quick-close-new-label').val()
+      new_label: $('#reedcrm-quick-close-new-label').val(),
+      new_type: $('input[name="reedcrm-quick-close-new-type"]:checked').val() || ''
     },
     success: function (response) {
       $button.removeClass('button-disable');

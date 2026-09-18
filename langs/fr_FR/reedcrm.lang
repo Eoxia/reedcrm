@@ -1078,6 +1078,13 @@ QuickCloseEventNewLabel = Nom du nouvel événement
 QuickCloseEventNewLabelPlaceholder = Nom de l'événement clôturé
 QuickCloseEventCurrentLabel = Nom de l'événement
 QuickCloseEventCurrentLabelPlaceholder = Renommez l'événement si besoin
+QuickCloseEventNewType = Type de rappel
+
+# Types de relance, partagés par les pastilles de relance et les formulaires de rappel
+RelaunchTypeCall = Appel
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = RDV
+RelaunchTypeOther = Autre
 QuickCloseEventInMonths = Dans
 QuickCloseEventInMonthsSuffix = mois
 QuickCloseEventInDays = Dans
