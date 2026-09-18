@@ -75,6 +75,7 @@ $todayKey       = dol_print_date($now, '%Y-%m-%d');
                     $tooltip .= ' - ' . $dayRow->line_label;
                     $tooltip .= ' - ' . $userLabel . ' - ' . $dayRow->propal_ref;
                     $tooltip .= !empty($dayRow->location) ? ' - ' . $dayRow->location : '';
+                    $tooltip .= ' - ' . $langs->transnoentities('AmountHT') . ' : ' . price($dayRow->amount_ht, 0, $langs, 1, -1, -1, $conf->currency);
                     ?>
                     <div class="reedcrm-intervention-chip reedcrm-intervention-trigger<?php echo (int) $dayRow->status === InterventionDate::STATUS_DONE ? ' reedcrm-intervention-chip-done' : ''; ?>"
                          data-line-id="<?php echo (int) $dayRow->fk_element_line; ?>"
@@ -82,6 +83,8 @@ $todayKey       = dol_print_date($now, '%Y-%m-%d');
                          title="<?php echo dol_escape_htmltag($tooltip); ?>">
                         <span class="reedcrm-chip-head">
                             <span class="reedcrm-chip-time"><?php echo dol_escape_htmltag(dol_print_date($dayRow->timestamp, '%H:%M')); ?></span>
+                            <?php // Rounded to the unit : a chip has no room for the cents ?>
+                            <span class="reedcrm-chip-amount" title="<?php echo dol_escape_htmltag($langs->trans('AmountHT')); ?>"><?php echo price($dayRow->amount_ht, 0, $langs, 1, -1, 0, $conf->currency); ?></span>
                             <a class="reedcrm-chip-link" href="<?php echo dol_escape_htmltag(DOL_URL_ROOT . '/comm/propal/card.php?id=' . (int) $dayRow->element_id); ?>" title="<?php echo dol_escape_htmltag($dayRow->propal_ref); ?>"><i class="fas fa-external-link-alt"></i></a>
                         </span>
                         <span class="reedcrm-chip-soc"><?php echo dol_escape_htmltag($dayRow->socname ?: '-'); ?></span>

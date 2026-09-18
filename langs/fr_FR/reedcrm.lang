@@ -1116,6 +1116,7 @@ InterventionDateFeatureDisabled = Les dates d'intervention ne sont pas activées
 InterventionSeeEvent = Voir l'événement dans l'agenda
 InterventionEventLabel = Intervention %s - %s (%s)
 InterventionsThisMonth = Interventions du mois
+InterventionAmountThisMonth = CA du mois
 InterventionViewMonth = Mois
 InterventionViewList = Liste
 InterventionOnlyMine = Mes interventions

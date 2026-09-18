@@ -312,6 +312,36 @@ function reedcrmInterventionGetLineLabel(object $line): string
 }
 
 /**
+ * Number of interventions a service line asks for : one per unit of quantity, capped by the setup.
+ *
+ * @param  float $qty Quantity of the service line
+ * @return int        Number of interventions expected, 0 when the line carries no quantity
+ */
+function reedcrmInterventionExpectedCount(float $qty): int
+{
+    $maximum = getDolGlobalInt('REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', 24);
+
+    return max(0, min((int) ceil(round($qty, 6)), $maximum));
+}
+
+/**
+ * What a single intervention brings in : the total of its service line shared between the
+ * interventions its quantity asks for, so the interventions of a line add up to the line itself.
+ *
+ * The total of the line is used and not its unit price : it already carries the discount of the line.
+ *
+ * @param  float $totalHT Total of the service line, excluding tax
+ * @param  float $qty     Quantity of the service line
+ * @return float          Amount of one intervention, excluding tax
+ */
+function reedcrmInterventionAmount(float $totalHT, float $qty): float
+{
+    $expected = reedcrmInterventionExpectedCount($qty);
+
+    return $expected > 0 ? $totalHT / $expected : $totalHT;
+}
+
+/**
  * Intervention dates matching the filters, with everything the calendar needs to draw a chip.
  *
  * @param  array $filters Accepted keys : date_start, date_end (timestamps), user_ids (array),
@@ -326,7 +356,7 @@ function reedcrmInterventionFetchRows(array $filters): array
 
     $sql  = 'SELECT i.rowid, i.position, i.date_intervention, i.duration, i.fk_user_intervenant, i.fk_actioncomm,';
     $sql .= ' i.location, i.note, i.status, i.element_id, i.fk_element_line,';
-    $sql .= ' pd.label, pd.description, pd.qty, prod.label as product_label,';
+    $sql .= ' pd.label, pd.description, pd.qty, pd.total_ht, prod.label as product_label,';
     $sql .= ' p.ref as propal_ref, p.fk_statut as propal_status, p.fk_soc, p.fk_projet,';
     $sql .= ' s.nom as socname, s.town as soctown,';
     $sql .= ' u.firstname, u.lastname, u.photo as user_photo, u.gender as user_gender, u.entity as user_entity';
@@ -387,6 +417,7 @@ function reedcrmInterventionFetchRows(array $filters): array
         $obj->line_label          = reedcrmInterventionGetLineLabel($obj);
         $obj->user_label          = $obj->fk_user_intervenant > 0 ? dolGetFirstLastname($obj->firstname, $obj->lastname) : '';
         $obj->color               = reedcrmInterventionUserColor($obj->fk_user_intervenant);
+        $obj->amount_ht           = reedcrmInterventionAmount((float) $obj->total_ht, (float) $obj->qty);
         $rows[]                   = $obj;
     }
 
@@ -465,7 +496,7 @@ function reedcrmInterventionFetchUnplanned(array $filters, int $limit = 100): ar
 
     while ($obj = $db->fetch_object($resql)) {
         $obj->planned    = (int) $obj->planned;
-        $obj->expected   = min((int) ceil(round((float) $obj->qty, 6)), $maximum);
+        $obj->expected   = reedcrmInterventionExpectedCount((float) $obj->qty);
         $obj->remaining  = max(0, $obj->expected - $obj->planned);
         $obj->line_label = reedcrmInterventionGetLineLabel($obj);
         $rows[]          = $obj;

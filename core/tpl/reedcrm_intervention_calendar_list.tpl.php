@@ -42,11 +42,12 @@ $interventionDate = new InterventionDate($db);
             <td><?php echo dol_escape_htmltag($langs->trans('InterventionLocation')); ?></td>
             <td><?php echo dol_escape_htmltag($langs->trans('Propal')); ?></td>
             <td><?php echo dol_escape_htmltag($langs->trans('Note')); ?></td>
+            <td class="right"><?php echo dol_escape_htmltag($langs->trans('AmountHT')); ?></td>
             <td class="right"><?php echo dol_escape_htmltag($langs->trans('Status')); ?></td>
         </tr>
 
         <?php if (empty($rows)) { ?>
-            <tr class="oddeven"><td colspan="8" class="opacitymedium"><?php echo dol_escape_htmltag($langs->trans('InterventionNoneThisMonth')); ?></td></tr>
+            <tr class="oddeven"><td colspan="9" class="opacitymedium"><?php echo dol_escape_htmltag($langs->trans('InterventionNoneThisMonth')); ?></td></tr>
         <?php } ?>
 
         <?php foreach ($rows as $row) { ?>
@@ -68,6 +69,7 @@ $interventionDate = new InterventionDate($db);
                 <td class="tdoverflowmax200"><?php echo dol_escape_htmltag($row->location); ?></td>
                 <td class="nowraponall"><a href="<?php echo dol_escape_htmltag(DOL_URL_ROOT . '/comm/propal/card.php?id=' . (int) $row->element_id); ?>"><?php echo dol_escape_htmltag($row->propal_ref); ?></a></td>
                 <td class="tdoverflowmax200"><?php echo dol_escape_htmltag($row->note); ?></td>
+                <td class="right nowraponall"><?php echo price($row->amount_ht, 0, $langs, 1, -1, -1, $conf->currency); ?></td>
                 <td class="right nowraponall">
                     <?php
                     $interventionDate->status = (int) $row->status;
@@ -77,6 +79,14 @@ $interventionDate = new InterventionDate($db);
                     }
                     ?>
                 </td>
+            </tr>
+        <?php } ?>
+
+        <?php if (!empty($rows)) { ?>
+            <tr class="liste_total">
+                <td colspan="7"><?php echo dol_escape_htmltag($langs->trans('Total')); ?></td>
+                <td class="right nowraponall"><?php echo price($amountTotal, 0, $langs, 1, -1, -1, $conf->currency); ?></td>
+                <td></td>
             </tr>
         <?php } ?>
     </table>
