@@ -73,10 +73,22 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
     <?php if (!empty($t['soc_id']) || !empty($t['project_id']) || !empty($t['origin'])) : ?>
         <div class="todo-card-links">
             <?php if (!empty($t['origin'])) : ?>
-                <a class="todo-link-badge todo-link-origin" target="_blank" href="<?php echo $t['origin']['url']; ?>">
-                    <i class="fas <?php echo $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar'; ?>"></i>
-                    <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
-                </a>
+                <?php
+                // The counter is glued to the reference it counts: the badge gives up its right
+                // corners so the two read as a single chip, and the wrapper keeps them on one line
+                $originRelaunchCount = (int) ($t['origin']['relaunch_count'] ?? 0);
+                ?>
+                <span class="todo-origin-wrapper">
+                    <a class="todo-link-badge todo-link-origin<?php echo $originRelaunchCount > 0 ? ' todo-link-origin-counted' : ''; ?>" target="_blank" href="<?php echo $t['origin']['url']; ?>">
+                        <i class="fas <?php echo $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar'; ?>"></i>
+                        <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
+                    </a>
+                    <?php if ($originRelaunchCount > 0) : ?>
+                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoRelaunchCount', $originRelaunchCount)); ?>">
+                            <i class="fas fa-headset"></i> <?php echo $originRelaunchCount; ?>
+                        </span>
+                    <?php endif; ?>
+                </span>
             <?php endif; ?>
             <?php if (!empty($t['soc_id'])) : ?>
                 <a class="todo-link-badge todo-link-soc" target="_blank"
