@@ -20,8 +20,8 @@
  * \file    js/modules/event_quick_close.js
  * \ingroup reedcrm
  * \brief   Turns the status badge of every to-do event, listed by show_actions_done() or shown in the
- *          banner of its own card, into a quick close trigger : optional comment, and optional clone
- *          renamed at will and postponed by X months, X days, or to a picked day.
+ *          banner of its own card, into a quick close trigger : the event renamed if needed, an optional
+ *          comment, and an optional clone renamed at will and postponed by X months, X days, or to a picked day.
  */
 
 if (!window.reedcrm) {
@@ -275,7 +275,9 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   // The rescheduled event repeats the closed one, its name stays editable
   $('#reedcrm-quick-close-new-label').val(label);
 
-  $('#reedcrm-quick-close-modal .reedcrm-quick-close-event').text(label);
+  // The closed event is renamed from the same modal, so a name settled during the call is
+  // written down where it belongs rather than in the comment
+  $('#reedcrm-quick-close-event-label').val(label);
   $('#reedcrm-quick-close-modal').addClass('modal-active');
   $('#reedcrm-quick-close-comment').trigger('focus');
 };
@@ -333,6 +335,7 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       token: window.reedcrm.eventQuickClose.config('token'),
       event_id: eventId,
       comment: $('#reedcrm-quick-close-comment').val(),
+      event_label: $('#reedcrm-quick-close-event-label').val(),
       reschedule: $('#reedcrm-quick-close-reschedule').is(':checked') ? 1 : 0,
       delay_unit: delayUnit,
       delay_value: $('#reedcrm-quick-close-delay-value').val(),
@@ -353,6 +356,10 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
 
       // On the to-do board the closed event is repainted at 100% and moves to the column it now belongs to
       if ($card.length && window.reedcrm.todoKanban) {
+        // A card stays on screen after the closure, a renamed event would keep its former name
+        if (response.renamed) {
+          $card.find('.todo-card-label').first().text(response.label);
+        }
         window.reedcrm.todoKanban.paintCard($card, 100);
         window.reedcrm.todoKanban.moveToColumn($card, 100);
         window.reedcrm.todoKanban.flag($card, 'todo-card-saved', 2000);
@@ -385,7 +392,9 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       window.reedcrm.eventQuickClose.close();
       window.reedcrm.eventQuickClose.notify(response.message, 'success');
 
-      if (response.new_event && response.new_event.id > 0) {
+      // A list row is rendered by a core function, the name sits in a column this module does not
+      // own: a reload is what puts a renamed event back in agreement with what is on screen
+      if (response.renamed || (response.new_event && response.new_event.id > 0)) {
         setTimeout(function () {
           window.location.reload();
         }, 1500);
