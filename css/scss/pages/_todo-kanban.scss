@@ -618,7 +618,14 @@
     }
 }
 
-/* Proposal or invoice a relaunch was raised on */
+/* Proposal or invoice a relaunch was raised on, followed by its relaunch counter */
+.todo-origin-wrapper {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    max-width: 100%;
+}
+
 .todo-link-origin {
     background: #fdf1e3;
     color: #a05a1a;
@@ -628,6 +635,30 @@
         background: #f8e2c8;
         color: #7a4310;
     }
+}
+
+/* The counter takes over the right end of the badge, the two make up one chip */
+.todo-link-origin-counted {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Number of times the object has already been chased: same chip as the reference, a thin
+   bar the only thing telling the two apart */
+.todo-relaunch-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-left: 1px solid rgba(160, 90, 26, 0.25);
+    border-radius: 0 12px 12px 0;
+    background: #fdf1e3;
+    color: #a05a1a;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: default;
 }
 
 /* People: owner and assigned users */

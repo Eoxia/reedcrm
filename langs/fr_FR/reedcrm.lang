@@ -879,6 +879,7 @@ TodoPropalRelaunchCronResult = %s relance(s) de devis créée(s)
 TodoInvoiceRelaunchCronLabel = ReedCRM - Relances des factures impayées
 TodoInvoiceRelaunchCronComment = Crée un événement à faire pour chaque facture validée impayée depuis plus de 30 jours après son échéance (constante REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). L'événement alimente la colonne « Factures à relancer » du tableau Todo.
 TodoInvoiceRelaunchCronResult = %s relance(s) de facture créée(s)
+TodoRelaunchCount = %s relance(s) sur cet objet
 # Signed quotes never invoiced
 SignedUnbilledMenu = PR signées non facturées
 SignedUnbilledIntro = Propositions commerciales signées sans facture rattachée. Chaque ligne est recoupée avec les factures du client pour repérer celles qui ont en fait été facturées séparément (facture créée à part, via la commande ou le contrat).
