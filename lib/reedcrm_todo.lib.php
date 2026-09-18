@@ -424,6 +424,10 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
     $originInfos = reedcrmTodoGetOriginInfos($db, $events);
 
     $now       = dol_now();
+    // An event planned for a later day is still to come. Today is the pivot the two badges
+    // leave alone: an event of the day is neither late until its hour has passed, nor to come.
+    $today     = dol_getdate($now);
+    $todayEnd  = dol_mktime(23, 59, 59, $today['mon'], $today['mday'], $today['year']);
     $todoCards = [];
     foreach ($events as $eventId => $obj) {
         $percent = (int) $obj->percent;
@@ -470,6 +474,7 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             'date_end'       => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), $rawFormat) : '',
             'date_end_fmt'   => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), empty($obj->fulldayevent) ? 'dayhour' : 'day') : '',
             'late'           => ($obj->datep && $db->jdate($obj->datep) < $now && $percent >= 0 && $percent < 100) ? 1 : 0,
+            'upcoming'       => ($obj->datep && $db->jdate($obj->datep) > $todayEnd && $percent >= 0 && $percent < 100) ? 1 : 0,
             'type_id'        => (int) $obj->type_id,
             'type_code'      => $obj->type_code,
             'type_label'     => reedcrmTodoGetTypeLabel((string) $obj->type_code, (string) $obj->type_label),
