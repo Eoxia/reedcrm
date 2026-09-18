@@ -68,19 +68,31 @@ function reedcrmInterventionMinPropalDate(): int
 }
 
 /**
- * Tag (product category) a service must carry to be planned. 0 when every service qualifies.
+ * Tags (product categories) a service must carry to be planned. Empty when nothing is planned.
  *
- * @return int Rowid of the category
+ * The constant holds a comma separated list of category rowids. A setup made before several tags
+ * could be chosen carries a single id, which reads the same way.
+ *
+ * @return int[] Rowids of the categories
  */
-function reedcrmInterventionProductTagID(): int
+function reedcrmInterventionProductTagIDs(): array
 {
-    return getDolGlobalInt('REEDCRM_INTERVENTION_DATE_PRODUCT_TAG');
+    $tagIDs = [];
+
+    foreach (explode(',', getDolGlobalString('REEDCRM_INTERVENTION_DATE_PRODUCT_TAG')) as $tagID) {
+        $tagID = (int) trim($tagID);
+        if ($tagID > 0) {
+            $tagIDs[$tagID] = $tagID;
+        }
+    }
+
+    return array_values($tagIDs);
 }
 
 /**
- * Does this service line fall in the scope ? Only the lines linked to a product carrying the
- * configured tag are planned : no tag chosen means nothing is planned, and a free line carries
- * no product, so it carries no tag either.
+ * Does this service line fall in the scope ? Only the lines linked to a product carrying one of
+ * the configured tags are planned : no tag chosen means nothing is planned, and a free line
+ * carries no product, so it carries no tag either.
  *
  * @param  int  $productID Product of the line, 0 for a free line
  * @return bool
@@ -89,8 +101,8 @@ function reedcrmInterventionProductHasTag(int $productID): bool
 {
     global $db;
 
-    $tagID = reedcrmInterventionProductTagID();
-    if ($tagID <= 0 || $productID <= 0) {
+    $tagIDs = reedcrmInterventionProductTagIDs();
+    if (empty($tagIDs) || $productID <= 0) {
         return false;
     }
 
@@ -101,7 +113,7 @@ function reedcrmInterventionProductHasTag(int $productID): bool
     }
 
     $sql  = 'SELECT fk_product FROM ' . MAIN_DB_PREFIX . 'categorie_product';
-    $sql .= ' WHERE fk_categorie = ' . $tagID . ' AND fk_product = ' . $productID;
+    $sql .= ' WHERE fk_categorie IN (' . implode(',', $tagIDs) . ') AND fk_product = ' . $productID;
 
     $resql             = $db->query($sql);
     $tagged[$productID] = (bool) ($resql && $db->num_rows($resql) > 0);
@@ -397,8 +409,8 @@ function reedcrmInterventionFetchUnplanned(array $filters, int $limit = 100): ar
     $maximum = getDolGlobalInt('REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', 24);
 
     // No tag chosen, no service in scope
-    $tagID = reedcrmInterventionProductTagID();
-    if ($tagID <= 0) {
+    $tagIDs = reedcrmInterventionProductTagIDs();
+    if (empty($tagIDs)) {
         return $rows;
     }
 
@@ -413,10 +425,13 @@ function reedcrmInterventionFetchUnplanned(array $filters, int $limit = 100): ar
     $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'reedcrm_intervention_date as i ON i.fk_element_line = pd.rowid';
     $sql .= "  AND i.element_type = 'propal' AND i.date_intervention IS NOT NULL";
 
-    // Only the services carrying the configured tag are planned
-    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'categorie_product as cp ON cp.fk_product = pd.fk_product AND cp.fk_categorie = ' . $tagID;
-
     $sql .= ' WHERE pd.product_type = 1';
+
+    // Only the services carrying one of the configured tags are planned. A subquery and not a join :
+    // a product carrying several of these tags would be joined as many times, and its interventions
+    // counted as many times too, so a line already planned would still look like it has dates left.
+    $sql .= ' AND pd.fk_product IN (SELECT cp.fk_product FROM ' . MAIN_DB_PREFIX . 'categorie_product as cp';
+    $sql .= ' WHERE cp.fk_categorie IN (' . implode(',', $tagIDs) . '))';
     $sql .= ' AND pd.qty > 0';
     $sql .= ' AND p.entity IN (' . getEntity('propal') . ')';
 

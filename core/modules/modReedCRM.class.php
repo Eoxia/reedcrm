@@ -243,7 +243,8 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_INTERVENTION_DATE_DEFAULT_DURATION', 'integer', 60, '', 0, 'current'],
             $i++ => ['REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', 'integer', 24, '', 0, 'current'],
             $i++ => ['REEDCRM_INTERVENTION_DATE_FROM', 'chaine', '2026-08-15', '', 0, 'current'],
-            $i++ => ['REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', 'integer', 0, '', 0, 'current'],
+            // Comma separated list of product category rowids
+            $i++ => ['REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', 'chaine', '', '', 0, 'current'],
 
             // CONST CALL LIST
             $i++ => ['REEDCRM_CALL_LIST_ADDON', 'chaine', 'mod_call_list_standard', '', 0, 'current'],
