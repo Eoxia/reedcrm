@@ -246,7 +246,7 @@ ProductLastSellList = Dernières ventes du produit (Commande et Facture)
 Opportunities = Opportunités
 OpenedPropals = PR ouvertes
 RecurringInvoices = Factures récurrentes
-GravityFormLink                        = Lien GravityForm
+GravityFormLink                        = Lien du formulaire web
 
 # Libellés des extrafields projet du module (llx_extrafields.label sert de clé de traduction,
 # et showOptionals() ne charge que le langfile de l'extrafield, ici reedcrm@reedcrm).
@@ -255,7 +255,7 @@ GravityFormLink                        = Lien GravityForm
 LastName                               = Nom
 FirstName                              = Prénom
 Website                                = Site web
-ReedCRMGravityForm                     = Lien GravityForm
+ReedCRMGravityForm                     = Formulaire web
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall = Appel entrant
@@ -717,6 +717,10 @@ FollowupChartToDo = DU à faire
 FollowupChartLost = DU perdus
 FollowupAmount = Montant
 DuFollowupMenu = Suivi client DU
+DuFollowupEnabled = Portefeuille service (suivi client DU)
+DuFollowupEnabledDescription = Affiche la section de menu « Portefeuille service » et son tableau de suivi des audits DU. Fonctionnalité interne Evarisk, adossée aux références produits DU_A*, D1 à D5 et aux projets digirisk.com : à laisser désactivée sur une installation client. Réactiver le module pour que le menu prenne ce réglage en compte.
+DuFollowupDisabled = Le suivi client DU est désactivé sur cette instance.
+OptionalFeatures = Fonctionnalités optionnelles
 BillingGapsMenu = Suivi facturation
 BillingGapsIntro = Tout ce qui a été signé, commandé ou dû mais qui n'a pas encore été facturé.
 BillingGapSignedProposals = Devis signés non facturés
@@ -850,6 +854,7 @@ TodoFilterCount = %s événement(s)
 TodoNoEvent = Aucun événement
 TodoNoLabel = Sans libellé
 TodoLateEvent = En retard
+TodoUpcomingEvent = À venir
 TodoUnassigned = Non affecté
 TodoAddAssigned = Affecter un utilisateur
 TodoRemoveAssigned = Retirer l'affectation
@@ -1075,7 +1080,22 @@ QuickCloseEventDescriptionPlaceholder = Ajouté à la description de l'événeme
 QuickCloseEventReschedule = Reprogrammer un événement identique pour plus tard
 QuickCloseEventNewLabel = Nom du nouvel événement
 QuickCloseEventNewLabelPlaceholder = Nom de l'événement clôturé
-QuickCloseEventInOneMonth = Dans 1 mois
+QuickCloseEventCurrentLabel = Nom de l'événement
+QuickCloseEventCurrentLabelPlaceholder = Renommez l'événement si besoin
+QuickCloseEventNewType = Type de rappel
+QuickCloseEventKeepType = Garder le type de l'événement clôturé
+QuickCloseEventTypeDisplay = Choix du type de rappel
+QuickCloseEventTypeDisplayDescription = Forme du sélecteur de type dans la modale de clôture rapide
+QuickCloseEventTypeDisplayButtons = Boutons
+QuickCloseEventTypeDisplaySelect = Liste déroulante
+
+# Types de relance, partagés par les pastilles de relance et les formulaires de rappel
+RelaunchTypeCall = Appel
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = RDV
+RelaunchTypeOther = Autre
+QuickCloseEventInMonths = Dans
+QuickCloseEventInMonthsSuffix = mois
 QuickCloseEventInDays = Dans
 QuickCloseEventInDaysSuffix = jours
 QuickCloseEventOnDate = Le
@@ -1086,11 +1106,14 @@ QuickCloseEventDoneAndRescheduled = Événement clôturé, nouvel événement pr
 QuickCloseEventNotTodo = Cet événement n'est pas à faire, il ne peut pas être clôturé
 QuickCloseEventError = La clôture de l'événement a échoué
 QuickCloseEvents = clôtures rapides d'événement
+QuickCloseEventInMonthsLabel = Dans un nombre de mois
 QuickCloseEventInDaysLabel = Dans un nombre de jours
 QuickCloseEventDefaultDelay = Délai de reprogrammation par défaut
 QuickCloseEventDefaultDelayDescription = Choix présélectionné dans la modale de clôture rapide quand la reprogrammation est demandée
 QuickCloseEventDefaultDays = Nombre de jours par défaut
 QuickCloseEventDefaultDaysDescription = Nombre de jours prérempli pour le délai « Dans un nombre de jours »
+QuickCloseEventDefaultMonths = Nombre de mois par défaut
+QuickCloseEventDefaultMonthsDescription = Nombre de mois prérempli pour le délai « Dans un nombre de mois »
 
 #
 # Dates d'intervention

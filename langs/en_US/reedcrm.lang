@@ -89,7 +89,7 @@ NearMe = Near me
 KeyyoCalls = Keyyo Calls
 
 # Project Extra
-GravityFormLink=GravityForm Link
+GravityFormLink=Web form link
 
 # Module project extrafield labels (llx_extrafields.label doubles as the translation key,
 # and showOptionals() only loads the extrafield langfile, here reedcrm@reedcrm).
@@ -98,7 +98,7 @@ GravityFormLink=GravityForm Link
 LastName=Last name
 FirstName=First name
 Website=Website
-ReedCRMGravityForm=GravityForm link
+ReedCRMGravityForm=Web form
 
 # Geolocation PWA
 DetectingLocation = Detecting your location
@@ -641,6 +641,10 @@ FollowupChartToDo = DU to do
 FollowupChartLost = DU lost
 FollowupAmount = Amount
 DuFollowupMenu = Client DU follow-up
+DuFollowupEnabled = Service portfolio (client DU follow-up)
+DuFollowupEnabledDescription = Shows the "Service portfolio" menu section and its DU audit follow-up board. Evarisk internal feature, wired to the DU_A*, D1 to D5 product references and to digirisk.com projects: leave it off on a customer install. Reactivate the module for the menu to take this setting into account.
+DuFollowupDisabled = The client DU follow-up is disabled on this instance.
+OptionalFeatures = Optional features
 BillingGapsMenu = Billing follow-up
 BillingGapsIntro = Everything signed, ordered or due that has not been invoiced yet.
 BillingGapSignedProposals = Signed quotes not invoiced
@@ -960,7 +964,22 @@ QuickCloseEventDescriptionPlaceholder = Appended to the event description (optio
 QuickCloseEventReschedule = Schedule the same event again for later
 QuickCloseEventNewLabel = New event name
 QuickCloseEventNewLabelPlaceholder = Name of the closed event
-QuickCloseEventInOneMonth = In 1 month
+QuickCloseEventCurrentLabel = Event name
+QuickCloseEventCurrentLabelPlaceholder = Rename the event if needed
+QuickCloseEventNewType = Reminder type
+QuickCloseEventKeepType = Keep the type of the closed event
+QuickCloseEventTypeDisplay = Reminder type picker
+QuickCloseEventTypeDisplayDescription = Shape of the type picker in the quick close modal
+QuickCloseEventTypeDisplayButtons = Buttons
+QuickCloseEventTypeDisplaySelect = Drop-down list
+
+# Relaunch types, shared by the relaunch chips and the reminder forms
+RelaunchTypeCall = Call
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = Meeting
+RelaunchTypeOther = Other
+QuickCloseEventInMonths = In
+QuickCloseEventInMonthsSuffix = months
 QuickCloseEventInDays = In
 QuickCloseEventInDaysSuffix = days
 QuickCloseEventOnDate = On
@@ -971,11 +990,14 @@ QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
 QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
 QuickCloseEventError = Closing the event failed
 QuickCloseEvents = quick event closures
+QuickCloseEventInMonthsLabel = In a number of months
 QuickCloseEventInDaysLabel = In a number of days
 QuickCloseEventDefaultDelay = Default reschedule delay
 QuickCloseEventDefaultDelayDescription = Choice preselected in the quick close modal when a reschedule is requested
 QuickCloseEventDefaultDays = Default number of days
 QuickCloseEventDefaultDaysDescription = Number of days prefilled for the "In a number of days" delay
+QuickCloseEventDefaultMonths = Default number of months
+QuickCloseEventDefaultMonthsDescription = Number of months prefilled for the "In a number of months" delay
 
 #
 # Intervention dates

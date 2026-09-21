@@ -279,9 +279,61 @@
     display: flex;
     gap: 26px;
     padding: 16px 0;
-    overflow-x: auto;
+    // scroll rather than auto: the track stays drawn instead of fading in and out
+    overflow-x: scroll;
     min-height: 400px;
     align-items: flex-start;
+}
+
+/* ---- Sideways scrolling ----
+ * The board is as tall as its longest column, so its own scrollbar ends up below the fold and
+ * users fall back on shift + wheel. A second bar rides at the bottom of the screen and drives it.
+ * Both wear the same visible track, so a board that does fit reads the same as one that does not.
+ */
+.todo-board,
+.todo-board-scrollbar {
+    scrollbar-width: auto;
+    scrollbar-color: #b4bcc8 #eef1f5;
+
+    &::-webkit-scrollbar {
+        height: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+        border-radius: 6px;
+        background: #eef1f5;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: 6px;
+        background: #b4bcc8;
+
+        &:hover {
+            background: #97a1b0;
+        }
+    }
+}
+
+.todo-board-scrollbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    // Left where it is until the JS has measured a board wider than the screen
+    display: none;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    padding-top: 4px;
+    background: #fff;
+    border-top: 1px solid #e6e9ee;
+
+    &.todo-board-scrollbar-visible {
+        display: block;
+    }
+
+    // Only there to give the bar something to scroll
+    .todo-board-scrollbar-inner {
+        height: 1px;
+    }
 }
 
 .todo-column {
@@ -462,6 +514,10 @@
         border-left: 3px solid #e05353;
     }
 
+    &.todo-card-upcoming {
+        border-left: 3px solid #63acc9;
+    }
+
     &.todo-card-saving {
         opacity: 0.7;
         outline: 2px solid #e9ad4f;
@@ -490,7 +546,7 @@
     background: rgba(99, 172, 201, 0.1);
 }
 
-/* Header: type of event, reference, late flag */
+/* Header: type of event, reference, late or upcoming flag */
 .todo-card-header {
     display: flex;
     align-items: center;
@@ -529,18 +585,27 @@
     }
 }
 
-.todo-card-late-badge {
+.todo-card-late-badge,
+.todo-card-upcoming-badge {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     margin-left: auto;
     padding: 2px 8px;
     border-radius: 4px;
-    background: #fdecec;
-    color: #e05353;
     font-size: 10px;
     font-weight: 700;
     white-space: nowrap;
+}
+
+.todo-card-late-badge {
+    background: #fdecec;
+    color: #e05353;
+}
+
+.todo-card-upcoming-badge {
+    background: #ecf5f9;
+    color: #3d8daf;
 }
 
 /* Label */

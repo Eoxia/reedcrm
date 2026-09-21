@@ -160,3 +160,10 @@
         </div>
     <?php endforeach; ?>
 </div>
+
+<?php // The board is as tall as its longest column, so its own scrollbar sits far below the fold
+      // and sideways moves end up done with shift + wheel. This one rides at the bottom of the
+      // screen and drives the board. The JS shows it only once the board really overflows. ?>
+<div class="todo-board-scrollbar" id="todoBoardScrollbar" aria-hidden="true">
+    <div class="todo-board-scrollbar-inner"></div>
+</div>

@@ -118,15 +118,22 @@ if ($action == 'set_config') {
 }
 
 if ($action == 'set_config_quick_close') {
-    $delayUnit  = GETPOST('quick_close_delay_unit', 'aZ09') === 'd' ? 'd' : 'm';
-    $delayValue = GETPOSTINT('quick_close_delay_value');
+    $delayUnit   = GETPOST('quick_close_delay_unit', 'aZ09') === 'd' ? 'd' : 'm';
+    $delayValue  = GETPOSTINT('quick_close_delay_value');
+    $delayMonths = GETPOSTINT('quick_close_delay_months');
+    $typeDisplay = GETPOST('quick_close_type_display', 'aZ09') === 'select' ? 'select' : 'buttons';
 
     if ($delayValue < 1) {
         $delayValue = 1;
     }
+    if ($delayMonths < 1) {
+        $delayMonths = 1;
+    }
 
     dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_UNIT', $delayUnit, 'chaine', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_VALUE', $delayValue, 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_DELAY_MONTHS', $delayMonths, 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', $typeDisplay, 'chaine', 0, '', $conf->entity);
 
     setEventMessage('SavedConfig');
     header('Location: ' . $_SERVER['PHP_SELF']);
@@ -189,6 +196,26 @@ print load_fiche_titre($title, $linkback, 'reedcrm_color@reedcrm');
 // Configuration header
 $head = reedcrm_admin_prepare_head();
 print dol_get_fiche_head($head, 'settings', $title, -1, 'reedcrm_color@reedcrm');
+
+// Optional features, left off on a fresh install until an admin turns them on.
+print load_fiche_titre($langs->trans('OptionalFeatures'), '', '');
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('Name') . '</td>';
+print '<td>' . $langs->trans('Description') . '</td>';
+print '<td class="center">' . $langs->trans('Status') . '</td>';
+print '</tr>';
+
+// Client DU follow-up: reload the page so the left menu picks the new state up right away.
+print '<tr class="oddeven"><td>';
+print $langs->trans('DuFollowupEnabled');
+print '</td><td>';
+print $langs->trans('DuFollowupEnabledDescription');
+print '</td>';
+print '<td class="center">' . ajax_constantonoff('REEDCRM_DU_FOLLOWUP_ENABLED', [], null, 0, 0, 1) . '</td>';
+print '</tr>';
+print '</table>';
 
 print load_fiche_titre($langs->trans('Configs', $langs->trans('QuickCreations')), '', '');
 
@@ -725,7 +752,7 @@ print '</tr>';
 
 // Delay preselected in the reschedule block of the quick close modal
 $quickCloseUnits = [
-    'm' => $langs->transnoentities('QuickCloseEventInOneMonth'),
+    'm' => $langs->transnoentities('QuickCloseEventInMonthsLabel'),
     'd' => $langs->transnoentities('QuickCloseEventInDaysLabel')
 ];
 
@@ -737,6 +764,15 @@ print '</td><td>';
 print $form->selectarray('quick_close_delay_unit', $quickCloseUnits, getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm'), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx');
 print '</td></tr>';
 
+// Number of months proposed when the delay is expressed in months
+print '<tr class="oddeven"><td>';
+print $langs->trans('QuickCloseEventDefaultMonths');
+print '</td><td>';
+print $langs->trans('QuickCloseEventDefaultMonthsDescription');
+print '</td><td>';
+print '<input type="number" name="quick_close_delay_months" class="minwidth200" value="' . getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 1) . '" min="1" max="120">';
+print '</td></tr>';
+
 // Number of days proposed when the delay is expressed in days
 print '<tr class="oddeven"><td>';
 print $langs->trans('QuickCloseEventDefaultDays');
@@ -744,6 +780,20 @@ print '</td><td>';
 print $langs->trans('QuickCloseEventDefaultDaysDescription');
 print '</td><td>';
 print '<input type="number" name="quick_close_delay_value" class="minwidth200" value="' . getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7) . '" min="1" max="3650">';
+print '</td></tr>';
+
+// How the type of the reminder is picked in the quick close modal
+$quickCloseTypeDisplays = [
+    'buttons' => $langs->transnoentities('QuickCloseEventTypeDisplayButtons'),
+    'select'  => $langs->transnoentities('QuickCloseEventTypeDisplaySelect')
+];
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('QuickCloseEventTypeDisplay');
+print '</td><td>';
+print $langs->trans('QuickCloseEventTypeDisplayDescription');
+print '</td><td>';
+print $form->selectarray('quick_close_type_display', $quickCloseTypeDisplays, getDolGlobalString('REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', 'buttons'), 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200 widthcentpercentminusx');
 print '</td></tr>';
 
 print '</table>';
