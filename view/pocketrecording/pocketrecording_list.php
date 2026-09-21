@@ -117,6 +117,19 @@ if ($action == 'link_recording' && $permissiontoadd && $fromId > 0 && !empty($fr
     exit;
 }
 
+// Same gesture as the button of the card the tab belongs to, offered again here: the user who
+// clicked the tab first should not have to go back to the card to attach the call that just ended
+if ($action == 'reedcrm_pocket_hangup' && $permissiontoadd && $fromId > 0 && !empty($fromType)) {
+    $hangupMetadata = reedcrm_pocket_get_object_metadata_from_link_name($fromType);
+
+    if (!empty($hangupMetadata['object']) && $hangupMetadata['object']->fetch($fromId) > 0) {
+        reedcrm_pocket_process_hangup($hangupMetadata['object'], $fromType, $user);
+    }
+
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?fromtype=' . urlencode($fromType) . '&fromid=' . $fromId);
+    exit;
+}
+
 if ($action == 'unlink_recording' && $permissiontoadd && $fromId > 0 && !empty($fromType)) {
     $recordingToUnlink = new PocketRecording($db);
 
@@ -249,6 +262,9 @@ if ($fromId > 0 && !empty($fromType) && $permissiontoadd) {
     print '<input type="hidden" name="fromtype" value="' . dol_escape_htmltag($fromType) . '">';
     print '<input type="hidden" name="fromid" value="' . $fromId . '">';
     print '<div class="reedcrm-pocket-link-form">';
+    if (!empty($fromObject)) {
+        print reedcrm_pocket_hangup_button($fromObject, $_SERVER['PHP_SELF'] . '?fromtype=' . urlencode($fromType) . '&fromid=' . $fromId);
+    }
     if (empty($linkableRecordings)) {
         print '<span class="opacitymedium">' . $langs->trans('PocketNoRecordingToLink') . '</span>';
     } else {

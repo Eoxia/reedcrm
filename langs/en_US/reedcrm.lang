@@ -1054,3 +1054,15 @@ CardShowAllFields = Show every field
 CardEmptyFieldsHiddenCount = %s hidden
 CardEmptyFieldsTooltip = Hides or shows the fields of this card left without a value. The choice is kept for all your cards.
 CardEmptyFieldsUserParam = Empty fields on the cards
+
+#
+# Pocket - "I just hung up" button
+#
+PocketHangup = I just hung up
+PocketHangupWith = I just hung up with %s
+PocketHangupHelp = Import the last Pocket recording and attach it to this record
+PocketHangupAttached = Last Pocket recording attached: %s
+PocketHangupAlreadyLinked = The last Pocket recording is already attached to this record: %s
+PocketHangupOldRecording = Beware, the last Pocket recording is dated %s: check that Pocket has uploaded the conversation that just ended
+PocketHangupNoRecording = No recording available in Pocket
+PocketHangupImportFailed = The import of the last Pocket recording failed

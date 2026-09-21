@@ -404,6 +404,25 @@ class ActionsReedcrm
      */
     public function doActions(array $parameters, $object, string $action): int
     {
+        // "I just hung up" button of the cards linked to Pocket: the last recording is imported and
+        // attached here, then the card is reloaded so a refresh never replays the import.
+        if ($action == 'reedcrm_pocket_hangup' && is_object($object) && !empty($object->id)) {
+            global $langs, $user;
+
+            require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
+
+            $objectMetadata = reedcrm_pocket_get_object_metadata_from_card_context($parameters['context']);
+
+            if (!empty($objectMetadata['link_name']) && reedcrm_pocket_can_hangup()) {
+                $langs->load('reedcrm@reedcrm');
+
+                reedcrm_pocket_process_hangup($object, $objectMetadata['link_name'], $user);
+
+                header('Location: ' . reedcrm_pocket_url_without_action());
+                exit;
+            }
+        }
+
         // "Empty fields on the cards" preference, saved from the display setup of a user.
         // The page saves its own parameters afterwards, so the hook only adds ours and returns 0.
         if (strpos($parameters['context'], 'userihm') !== false && $action == 'update' && !GETPOST('cancel')) {
@@ -1550,6 +1569,39 @@ class ActionsReedcrm
 
     /**
      * Overloading the addHtmlHeader function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function addHtmlHeader(array $parameters): int
+    {
+        require_once __DIR__ . '/../../saturne/lib/asset.lib.php';
+
+        $context = $parameters['context'] ?? '';
+
+        // The cards where the Pocket hang up chip is printed next to the title do not load the
+        // bundle of the module on their own, and the list of those cards follows the
+        // configuration, so it is asked rather than written down here
+        $needsHangupScript = false;
+        if (strpos($context, 'card') !== false) {
+            require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
+
+            $needsHangupScript = !empty(reedcrm_pocket_get_object_metadata_from_card_context($context)) && reedcrm_pocket_can_hangup();
+        }
+
+        // The chip has to be moved under the relaunch block once that block is teleported into
+        // the header, which is what the script does
+        if ($needsHangupScript) {
+            $this->resprints  = '<!-- Includes CSS added by module reedcrm -->';
+            $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
+            $this->resprints .= '<script src="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/js/modules/pocket_hangup.js')) . '"></script>';
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the hookSetManifest function : replacing the parent's function with the one below
      *
      * @param  array $parameters Hook metadata (context, etc...)
      * @return int               0 < on error, 0 on success, 1 to replace standard code
@@ -3585,6 +3637,19 @@ EOT;
                 $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
                 $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
                 $this->resprints .= $widgetHtml;
+            }
+        }
+
+        // "I just hung up" chip of the objects linked to Pocket, printed beside the title of the
+        // banner. The banner parameters are handed over by reference, so the chip is appended to
+        // the ref block rather than to resprints, which the branches above overwrite.
+        if (is_object($object) && !empty($object->id) && !empty($parameters['context']) && isset($parameters['morehtmlref'])) {
+            require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
+
+            if (!empty(reedcrm_pocket_get_object_metadata_from_card_context($parameters['context']))) {
+                $langs->load('reedcrm@reedcrm');
+
+                $parameters['morehtmlref'] = reedcrm_pocket_insert_hangup_button($parameters['morehtmlref'], $object);
             }
         }
 
