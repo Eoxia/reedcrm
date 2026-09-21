@@ -2816,7 +2816,8 @@ class ActionsReedcrm
                 // Second row: Ref, Date start, Date end
                 $refLine = '<div style="margin-top: 5px;">';
                 if (isset($data['ref'])) {
-                    $refLine .= '<b>' . $langs->trans('Ref') . '.:</b> ' . $object->ref;
+                    // trans('Ref') already carries its own dot in French ("Réf."), so no extra one here
+                    $refLine .= '<b>' . $langs->trans('Ref') . ':</b> ' . $object->ref;
                 }
                 if (!empty($object->date_start)) {
                     $refLine .= ' - <b>' . $langs->trans('DateStart') . ':</b> ' . dol_print_date($object->date_start, 'day');

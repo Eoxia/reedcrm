@@ -246,7 +246,7 @@ ProductLastSellList = Dernières ventes du produit (Commande et Facture)
 Opportunities = Opportunités
 OpenedPropals = PR ouvertes
 RecurringInvoices = Factures récurrentes
-GravityFormLink                        = Lien GravityForm
+GravityFormLink                        = Lien du formulaire web
 
 # Libellés des extrafields projet du module (llx_extrafields.label sert de clé de traduction,
 # et showOptionals() ne charge que le langfile de l'extrafield, ici reedcrm@reedcrm).
@@ -255,7 +255,7 @@ GravityFormLink                        = Lien GravityForm
 LastName                               = Nom
 FirstName                              = Prénom
 Website                                = Site web
-ReedCRMGravityForm                     = Lien GravityForm
+ReedCRMGravityForm                     = Formulaire web
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall = Appel entrant
