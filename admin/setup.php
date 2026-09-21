@@ -197,6 +197,26 @@ print load_fiche_titre($title, $linkback, 'reedcrm_color@reedcrm');
 $head = reedcrm_admin_prepare_head();
 print dol_get_fiche_head($head, 'settings', $title, -1, 'reedcrm_color@reedcrm');
 
+// Optional features, left off on a fresh install until an admin turns them on.
+print load_fiche_titre($langs->trans('OptionalFeatures'), '', '');
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>' . $langs->trans('Name') . '</td>';
+print '<td>' . $langs->trans('Description') . '</td>';
+print '<td class="center">' . $langs->trans('Status') . '</td>';
+print '</tr>';
+
+// Client DU follow-up: reload the page so the left menu picks the new state up right away.
+print '<tr class="oddeven"><td>';
+print $langs->trans('DuFollowupEnabled');
+print '</td><td>';
+print $langs->trans('DuFollowupEnabledDescription');
+print '</td>';
+print '<td class="center">' . ajax_constantonoff('REEDCRM_DU_FOLLOWUP_ENABLED', [], null, 0, 0, 1) . '</td>';
+print '</tr>';
+print '</table>';
+
 print load_fiche_titre($langs->trans('Configs', $langs->trans('QuickCreations')), '', '');
 
 print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '" name="quickcreation_data">';

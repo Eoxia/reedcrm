@@ -239,6 +239,11 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_RECURRINGINVOICEFOLLOWUP_ADDON', 'chaine', 'mod_recurringinvoicefollowup_standard', '', 0, 'current'],
             $i++ => ['REEDCRM_DU_ALERT_OFFSET_MONTHS', 'integer', 1, '', 0, 'current'],
 
+            // CONST DU FOLLOW-UP
+            // Off by default: the DU audit board is wired to Evarisk's own references (products
+            // DU_A%, D1 to D5, digirisk.com projects), so it means nothing on a customer install.
+            $i++ => ['REEDCRM_DU_FOLLOWUP_ENABLED', 'integer', 0, '', 0, 'current'],
+
             // CONST INTERVENTION DATE
             $i++ => ['REEDCRM_INTERVENTION_DATE_ENABLED', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_INTERVENTION_DATE_CREATE_EVENT', 'integer', 1, '', 0, 'current'],
@@ -871,7 +876,7 @@ class modReedCRM extends DolibarrModules
             'url'      => '',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\') && getDolGlobalInt(\'REEDCRM_DU_FOLLOWUP_ENABLED\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
             'target'   => '',
             'user'     => 0,
@@ -887,7 +892,7 @@ class modReedCRM extends DolibarrModules
             'url'      => '/reedcrm/view/duaudit_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\') && getDolGlobalInt(\'REEDCRM_DU_FOLLOWUP_ENABLED\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
             'target'   => '',
             'user'     => 0,
