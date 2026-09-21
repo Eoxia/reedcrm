@@ -275,11 +275,13 @@ if ($show == 'transcript') {
     print '<br>';
     print load_fiche_titre($langs->trans('PocketActionItems'), '', '');
     print '<div class="div-table-responsive-no-min">';
-    print '<table class="noborder centpercent pocket-action-table">';
+    // The wordings the script needs once a row is created or dropped: it rebuilds the cell rather
+    // than reloading the card, and a translation does not travel in a bundled file
+    print '<table class="noborder centpercent pocket-action-table" data-empty-label="' . dol_escape_htmltag($langs->trans('PocketNoActionItem')) . '">';
     print '<tr class="liste_titre">';
     print '<td class="pocket-action-col-text">' . $langs->trans('Label') . '</td>';
-    print '<td class="center pocket-action-col-date">' . img_picto('', 'calendar', 'class="pictofixedwidth"') . $langs->trans('Deadline') . '</td>';
-    print '<td class="pocket-action-col-assign">' . img_picto('', 'user', 'class="pictofixedwidth"') . $langs->trans('PocketAssignedUser') . '</td>';
+    print '<td class="center pocket-action-col-date">' . $langs->trans('PocketActionDueDate') . '</td>';
+    print '<td class="pocket-action-col-assign">' . $langs->trans('PocketAssignedUser') . '</td>';
     print '<td class="center pocket-action-col-event">' . $langs->trans('Event') . '</td>';
     print '</tr>';
 
@@ -318,22 +320,50 @@ if ($show == 'transcript') {
                 $assignedUser->fetch($actionItem->fk_user_assign);
                 print $assignedUser->getNomUrl(1);
             }
-            // Pocket also names an assignee, kept as a hint since it is free text, not a Dolibarr user
-            if (!empty($actionItem->pocket_assignee)) {
-                print '<br><span class="opacitymedium small">' . $langs->trans('PocketAssignee') . ': ' . dol_escape_htmltag($actionItem->pocket_assignee) . '</span>';
-            }
             print '</td>';
 
             print '<td class="center pocket-action-col-event">';
             if ($actionItem->fk_actioncomm > 0 && $eventStatic->fetch($actionItem->fk_actioncomm) > 0) {
-                // The picto carries the event: its label is the wording of the row, already printed
-                // three columns to the left, and the tooltip tells the rest
+                // The event is read here as it is read on the to-do board: the picto opens it, the
+                // bar and the percentage say where it stands, and the percentage of an unfinished
+                // event is the quick close trigger, the same one the board and the lists carry
+                $eventPercent    = (int) $eventStatic->percentage;
+                $hasPercent      = $eventPercent >= 0;
+                $percentText     = $hasPercent ? $eventPercent . '%' : $langs->trans('StatusNotApplicable');
+                $quickCloseEvent = $permissiontoadd && $hasPercent && $eventPercent < 100;
+
+                print '<div class="pocket-action-event">';
                 print $eventStatic->getNomUrl(2);
-            } elseif ($permissiontoadd && isModEnabled('agenda')) {
-                // One action on a narrow column: the icon says it without the room a worded button takes
-                print '<span class="pocket-action-create-event classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketCreateEvent')) . '" data-created-label="' . dol_escape_htmltag($langs->trans('Event')) . '">';
-                print '<i class="fas fa-plus"></i>';
+                print '<span class="pocket-action-progress">';
+                print '<span class="pocket-action-progress-bar"><span class="pocket-action-progress-fill" style="width: ' . ($hasPercent ? $eventPercent : 0) . '%"></span></span>';
+                // The cell is rebuilt by the card, not by the list renderer the modal answers with:
+                // the trigger asks for the reload the banner one already asks for
+                print '<span class="pocket-action-progress-text' . ($quickCloseEvent ? ' reedcrm-quick-close-trigger reedcrm-quick-close-trigger-reload' : '') . '"';
+                if ($quickCloseEvent) {
+                    print ' data-event-id="' . $eventStatic->id . '" title="' . dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')) . '"';
+                }
+                print '>' . dol_escape_htmltag($percentText);
+                if ($quickCloseEvent) {
+                    print '<i class="fas fa-check-circle reedcrm-quick-close-icon"></i>';
+                }
                 print '</span>';
+                print '</span>';
+                print '</div>';
+            } elseif ($permissiontoadd) {
+                print '<div class="pocket-action-event">';
+                if (isModEnabled('agenda')) {
+                    // The calendar says what the click makes of the action, where a bare plus left
+                    // the column to be guessed
+                    print '<span class="pocket-action-create-event classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketCreateEvent')) . '" data-created-label="' . dol_escape_htmltag($langs->trans('Event')) . '" data-quick-close-label="' . dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')) . '">';
+                    print '<i class="fas fa-calendar-plus"></i>';
+                    print '</span>';
+                }
+                // An action Pocket extracted from the conversation is not always one: it is dropped
+                // from here, and the deletion holds against the synchronisations that follow
+                print '<span class="pocket-action-delete classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketDeleteActionItem')) . '" data-confirm="' . dol_escape_htmltag($langs->trans('PocketConfirmDeleteActionItem')) . '">';
+                print '<i class="fas fa-trash"></i>';
+                print '</span>';
+                print '</div>';
             }
             print '</td>';
 

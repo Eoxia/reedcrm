@@ -390,8 +390,10 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
         return;
       }
 
-      // On the card the action buttons and the dates follow the status, only a reload renders them again
-      if ($trigger.hasClass('reedcrm-quick-close-trigger-banner')) {
+      // On the card the action buttons and the dates follow the status, only a reload renders them
+      // again. A trigger sitting in a cell the module draws itself asks for the same treatment: the
+      // status HTML below is what a native list row expects, it would wipe that cell.
+      if ($trigger.hasClass('reedcrm-quick-close-trigger-banner') || $trigger.hasClass('reedcrm-quick-close-trigger-reload')) {
         window.reedcrm.eventQuickClose.close();
         window.reedcrm.eventQuickClose.notify(response.message, 'success');
         setTimeout(function () {

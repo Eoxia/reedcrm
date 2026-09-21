@@ -1516,8 +1516,9 @@ class ActionsReedcrm
         }
 
         // Quick close of the to-do events listed by show_actions_done(), on every page displaying that list,
-        // of the event shown alone on its own card (actioncard) and of the cards of the to-do board
-        $quickCloseContexts = 'agenda|actioncard|thirdpartycomm|thirdpartysupplier|projectcardinfo|call_list_card|thirdpartycalls|address|reedcrmtodolist';
+        // of the event shown alone on its own card (actioncard), of the cards of the to-do board and
+        // of the events created from the action items of a Pocket recording
+        $quickCloseContexts = 'agenda|actioncard|thirdpartycomm|thirdpartysupplier|projectcardinfo|call_list_card|thirdpartycalls|address|reedcrmtodolist|pocketrecordingcard';
         if (isModEnabled('agenda') && preg_match('/' . $quickCloseContexts . '/', $parameters['context'])
             && ($user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create'))) {
             $langs->load('reedcrm@reedcrm');

@@ -225,6 +225,12 @@ class PocketSync
             $actionItem = new PocketActionItem($this->db);
             $isNewItem  = $actionItem->fetchByPocketActionId($pocketRecording->id, $pocketActionId) <= 0;
 
+            // An action dropped from the card stays dropped: Pocket keeps sending it, and rewriting
+            // its wording or closing it on what Pocket says would put it back under the eyes
+            if (!$isNewItem && (int) $actionItem->status === PocketActionItem::STATUS_DISMISSED) {
+                continue;
+            }
+
             if ($isNewItem) {
                 $actionItem->fk_pocket_recording = $pocketRecording->id;
                 $actionItem->pocket_action_id    = $pocketActionId;
