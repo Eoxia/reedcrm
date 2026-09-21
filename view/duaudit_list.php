@@ -70,6 +70,11 @@ $propalStatic  = new Propal($db);
 $factureStatic = new Facture($db);
 $hookmanager->initHooks(['duauditlist']);
 
+// Opt-in feature: the board stays unreachable, even by direct URL, while it is turned off.
+if (!reedcrmFollowupDuIsEnabled()) {
+    accessforbidden($langs->trans('DuFollowupDisabled'));
+}
+
 // Security check (reuse the followup permissions).
 $permissiontoread   = $user->hasRight('reedcrm', 'followup', 'read');
 $permissiontoadd    = $user->hasRight('reedcrm', 'followup', 'write');
