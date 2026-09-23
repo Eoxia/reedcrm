@@ -36,3 +36,50 @@ insert into llx_c_type_contact (element, source, code, libelle, active, module )
 insert into llx_c_type_contact (element, source, code, libelle, active ) values ('product', 'internal', 'SALESREPINTERNAL', 'Commercial affecté au produit', 1);
 insert into llx_c_type_contact (element, source, code, libelle, active ) values ('conferenceorbooth', 'internal', 'SALESREPINTERNAL', 'Commercial affecté à l''événement', 1);
 insert into llx_c_type_contact (element, source, code, libelle, active ) values ('project_task', 'internal', 'SALESREPINTERNAL', 'Commercial affecté à la tâche', 1);
+
+-- v23.0.0 CallList
+CREATE TABLE IF NOT EXISTS llx_reedcrm_call_list(
+    rowid          integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    ref            varchar(128) DEFAULT '(PROV)' NOT NULL,
+    ref_ext        varchar(128),
+    entity         integer DEFAULT 1 NOT NULL,
+    date_creation  datetime NOT NULL,
+    tms            timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    import_key     varchar(14),
+    status         smallint DEFAULT 0 NOT NULL,
+    label          varchar(255) NOT NULL,
+    note_public    text,
+    note_private   text,
+    fk_user_assign integer,
+    date_start     datetime,
+    date_end       datetime,
+    fk_user_creat  integer NOT NULL,
+    fk_user_modif  integer
+) ENGINE=innodb;
+
+CREATE TABLE IF NOT EXISTS llx_reedcrm_call_list_line(
+    rowid          integer AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    entity         integer DEFAULT 1 NOT NULL,
+    date_creation  datetime NOT NULL,
+    tms            timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    fk_call_list   integer NOT NULL,
+    element_type   varchar(255) NOT NULL,
+    element_id     integer NOT NULL,
+    fk_contact     integer,
+    status         smallint DEFAULT 0 NOT NULL,
+    note           text,
+    fk_user_creat  integer NOT NULL,
+    fk_user_modif  integer
+) ENGINE=innodb;
+-- 23.0.1 - Recurring invoice & DU audit follow-up: proposal link, assignee, real audit date
+ALTER TABLE `llx_reedcrm_du_audit` ADD `proposal_sent_date` date DEFAULT NULL AFTER `source`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_propal` integer DEFAULT NULL AFTER `proposal_sent_date`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_user_assign` integer DEFAULT NULL AFTER `fk_propal`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `date_done` date DEFAULT NULL AFTER `next_audit_date`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_facture` integer DEFAULT NULL AFTER `fk_propal`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `date_rdv` date DEFAULT NULL AFTER `next_audit_date`;
+ALTER TABLE `llx_reedcrm_du_audit` ADD `fk_intervention_date` integer DEFAULT NULL AFTER `fk_facture`;
+
+-- 23.0.1 - Pocket recordings: keep what the user rewrote out of the reach of the next synchronisation
+ALTER TABLE `llx_reedcrm_pocket_recording` ADD `summary_edited` smallint DEFAULT 0 NOT NULL AFTER `summary`;
+ALTER TABLE `llx_reedcrm_pocket_action_item` ADD `user_edited` smallint DEFAULT 0 NOT NULL AFTER `priority`;

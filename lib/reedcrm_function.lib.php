@@ -33,7 +33,8 @@ function set_notation_object_contact(CommonObject $object): int
     $notationObjectContacts = get_notation_object_contacts($object);
     $notationObjectContact  = array_shift($notationObjectContacts);
     $object->fetch_optionals();
-    $object->array_options['options_notation_' . $object->element . '_contact'] = ($notationObjectContact['percentage'] ?: 0) . ' %';
+    $percentage = is_array($notationObjectContact) && isset($notationObjectContact['percentage']) ? $notationObjectContact['percentage'] : 0;
+    $object->array_options['options_notation_' . $object->element . '_contact'] = ($percentage ?: 0) . ' %';
     return $object->updateExtraField('notation_' . $object->element . '_contact');
 }
 
@@ -467,4 +468,220 @@ function reedcrm_count_csv_lines(string $filePath): ?int
     fclose($handle);
 
     return $count;
+}
+
+/**
+ * Get (and lazily create) the actioncomm category used to tag automatic call reminders.
+ *
+ * The reminder events created from the ProCard/EventPro checkbox must NOT reuse the commercial
+ * relaunch tag, otherwise they would inflate relaunch counts. They get their own dedicated tag,
+ * stored in the REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG constant and created on demand if missing.
+ *
+ * @param  DoliDB $db   Database handler
+ * @param  User   $user User creating the category when it does not exist yet
+ * @return int          Category id (> 0), or 0 on failure
+ */
+function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
+{
+    global $conf, $langs;
+
+    $categoryID = getDolGlobalInt('REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG');
+    if ($categoryID > 0) {
+        return $categoryID;
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+
+    $category        = new Categorie($db);
+    $category->label = $langs->transnoentities('CallReminderCategory');
+    $category->type  = 'actioncomm';
+
+    $categoryID = $category->create($user);
+    if ($categoryID > 0) {
+        dolibarr_set_const($db, 'REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+        return $categoryID;
+    }
+
+    return 0;
+}
+
+/**
+ * Resolve the person to call for an opportunity.
+ *
+ * A project carries its caller in three mutually exclusive ways, in decreasing priority:
+ * a real contact referenced by the projectaddress extrafield, the free-text ReedCRM
+ * extrafields (lastname/firstname/phone/email) or, as a last resort, the linked thirdparty.
+ * The call list, its mobile view and the opportunity App pages all need the same resolution,
+ * hence this shared helper.
+ *
+ * @param  Project $project Project to resolve the contact of (optionals are fetched on demand)
+ * @return array            ['contact_id', 'lastname', 'firstname', 'phone', 'email'] — raw values, NOT escaped
+ */
+function reedcrm_get_project_contact_details(Project $project): array
+{
+    $details = ['contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '', 'email' => ''];
+
+    if (empty($project->id)) {
+        return $details;
+    }
+
+    if (!is_array($project->array_options) || empty($project->array_options)) {
+        $project->fetch_optionals();
+    }
+
+    if (!empty($project->array_options['options_projectaddress'])) {
+        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+
+        $contact = new Contact($project->db);
+        if ($contact->fetch($project->array_options['options_projectaddress']) > 0) {
+            $details['contact_id'] = $contact->id;
+            $details['lastname']   = $contact->lastname;
+            $details['firstname']  = $contact->firstname;
+            $details['phone']      = $contact->phone_pro ?: $contact->phone_mobile ?: '';
+            $details['email']      = $contact->email;
+
+            return $details;
+        }
+    }
+
+    if (!empty($project->array_options['options_reedcrm_lastname']) || !empty($project->array_options['options_projectphone'])) {
+        $details['lastname']  = (string) ($project->array_options['options_reedcrm_lastname'] ?? '');
+        $details['firstname'] = (string) ($project->array_options['options_reedcrm_firstname'] ?? '');
+        $details['phone']     = (string) ($project->array_options['options_projectphone'] ?? '');
+        $details['email']     = (string) ($project->array_options['options_reedcrm_email'] ?? '');
+
+        return $details;
+    }
+
+    if ($project->socid > 0) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+        $thirdparty = new Societe($project->db);
+        if ($thirdparty->fetch($project->socid) > 0) {
+            $details['lastname'] = $thirdparty->name;
+            $details['phone']    = $thirdparty->phone;
+            $details['email']    = $thirdparty->email;
+        }
+    }
+
+    return $details;
+}
+
+/**
+ * Relaunch types shown on the commercial relaunch widgets (project list, opportunity App page).
+ *
+ * The keys drive the CSS modifiers (reedcrm-plist-relaunch-btn-<key>) and every event whose
+ * type_code is not explicitly mapped falls into 'other'.
+ *
+ * @return array<string, array{picto: string, actioncode: string}>
+ */
+function reedcrm_get_relaunch_types(): array
+{
+    return [
+        'call'  => ['picto' => 'headset',      'actioncode' => 'AC_TEL'],
+        'email' => ['picto' => 'envelope',     'actioncode' => 'AC_EMAIL'],
+        'rdv'   => ['picto' => 'calendar',     'actioncode' => 'AC_RDV'],
+        'other' => ['picto' => 'comment-dots', 'actioncode' => 'AC_OTH'],
+    ];
+}
+
+/**
+ * Map an event type_code to its relaunch bucket.
+ *
+ * @param  string $typeCode ActionComm type code (AC_TEL, AC_EMAIL, ...)
+ * @return string           Bucket key of reedcrm_get_relaunch_types()
+ */
+function reedcrm_get_relaunch_type_key(string $typeCode): string
+{
+    foreach (reedcrm_get_relaunch_types() as $key => $type) {
+        if ($type['actioncode'] === $typeCode) {
+            return $key;
+        }
+    }
+
+    return 'other';
+}
+
+/**
+ * Build the criteria filtering a Dolibarr list on a date range
+ *
+ * A Dolibarr list expects one day, month and year parameter per bound, so a range is spelled out field by field.
+ *
+ * @param  string $prefix Prefix of the search parameters of the list, without its bound suffix
+ * @param  int    $start  Timestamp the range starts at, 0 for an open lower bound
+ * @param  int    $end    Timestamp the range ends at, 0 for an open upper bound
+ * @return string         Criteria, url encoded and ready to be appended to a list URL
+ */
+function reedcrm_get_date_range_filter(string $prefix, int $start = 0, int $end = 0): string
+{
+    $filter = [];
+    foreach (['start' => $start, 'end' => $end] as $bound => $timestamp) {
+        if (empty($timestamp)) {
+            continue;
+        }
+
+        $date     = dol_getdate($timestamp);
+        $filter[] = $prefix . '_' . $bound . 'day=' . $date['mday'];
+        $filter[] = $prefix . '_' . $bound . 'month=' . $date['mon'];
+        $filter[] = $prefix . '_' . $bound . 'year=' . $date['year'];
+    }
+
+    return implode('&', $filter);
+}
+
+/**
+ * Read the user each recurring invoice template hands its relaunches to
+ *
+ * The template carries it in the 'reedcrm_relaunch_user' extrafield. A user since disabled is
+ * left out, so his templates fall back on the owner the relaunch would have had without the
+ * feature rather than filling the board of someone gone.
+ *
+ * @param  DoliDB         $db Database handler
+ * @return array<int,int>     Row ID of the template => row ID of the user
+ */
+function reedcrm_get_template_relaunch_users(DoliDB $db): array
+{
+    $relaunchUsers = [];
+
+    $sql  = 'SELECT ef.fk_object, ef.reedcrm_relaunch_user';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec_extrafields as ef';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'user as u ON u.rowid = ef.reedcrm_relaunch_user AND u.statut = 1';
+    $sql .= ' WHERE ef.reedcrm_relaunch_user > 0';
+
+    // The column only exists once the module has been activated: without it, the relaunches keep
+    // the owner they had before the feature
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_WARNING);
+        return $relaunchUsers;
+    }
+
+    while ($obj = $db->fetch_object($resql)) {
+        $relaunchUsers[(int) $obj->fk_object] = (int) $obj->reedcrm_relaunch_user;
+    }
+    $db->free($resql);
+
+    return $relaunchUsers;
+}
+
+/**
+ * Build the full URL of a module asset, carrying a version derived from the file itself
+ *
+ * A stylesheet printed without a version is a second cache entry for the same file, and the
+ * browser can serve it stale. Suffixing with the modification time follows the convention the
+ * framework already uses for its own bundle.
+ *
+ * @param  string $relativePath Asset path relative to the custom directory, leading slash included
+ * @return string               Full URL, suffixed with the version of the file when it exists
+ */
+function reedcrm_asset_full_url(string $relativePath): string
+{
+    $url = dol_buildpath($relativePath, 1);
+
+    $absolutePath = dol_buildpath($relativePath, 0);
+    if (!file_exists($absolutePath)) {
+        return $url;
+    }
+
+    return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . filemtime($absolutePath);
 }

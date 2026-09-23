@@ -72,6 +72,10 @@ ProjectsImported = %s projects imported out of %s rows.
 ProjectsImportErrors = %s rows could not be imported.
 NbLines = Number of lines
 
+# Relaunch table headers (Date and Status come from main.lang)
+RelaunchWho = Who
+RelaunchWhat = What
+
 # Dashboard graphs
 OpportunitySources = Distribution of opportunity sources
 
@@ -85,9 +89,972 @@ NearMe = Near me
 KeyyoCalls = Keyyo Calls
 
 # Project Extra
-GravityFormLink=GravityForm Link
+GravityFormLink=Web form link
+
+# Module project extrafield labels (llx_extrafields.label doubles as the translation key,
+# and showOptionals() only loads the extrafield langfile, here reedcrm@reedcrm).
+# LastName / FirstName live in users.lang, not loaded on those screens, and the core key
+# is "WebSite" not "Website": without these, the quick creation form shows raw keys.
+LastName=Last name
+FirstName=First name
+Website=Website
+ReedCRMGravityForm=Web form
 
 # Geolocation PWA
 DetectingLocation = Detecting your location
 GeolocationNotSupported = Geolocation is not supported by this browser
 GeolocationDenied = Location access denied
+
+# KPI cards - opportunity project list
+ReedCRMKpiNbOpportunities = Opportunities
+ReedCRMKpiTotalAmount = Total amount
+ReedCRMKpiWeightedAmount = Weighted pipeline
+ReedCRMKpiAvgProbability = Average probability
+
+# List presets - opportunity project list
+ReedCRMPresetMine = My opportunities
+ReedCRMPresetHot = Hot
+ReedCRMPresetOpen = Open
+ReedCRMPresetToRelaunch = To follow up
+
+ReedCRMSaveView = Save view
+
+# KPI banner customization
+ReedCRMKpiCustomize = Customize
+ReedCRMKpiReset = Reset
+
+OpportunityDetails = Opportunity
+
+ReedCRMStatusAsDot = Status: dot
+ReedCRMStatusAsBadge = Status: badge
+#
+# Call List
+#
+
+# Data
+CallList = Call list
+CallLists = Call lists
+NewCallList = New call list
+# Derived keys auto-built by the generic saturne_list.php from the element name (call_list)
+Call_listList = Call lists
+NewCall_list = New call list
+CallListStatus0 = Draft
+CallListStatus1 = Active
+CallListStatus2 = Archived
+CallListStatusShort0 = Draft
+CallListStatusShort1 = Active
+CallListStatusShort2 = Archived
+
+# Lines
+CallListLine = Call list line
+CallListLines = Call list lines
+CallListLineStatus0 = To call
+CallListLineStatus1 = Called
+CallListLineStatus2 = No answer
+CallListLineStatus3 = Callback
+CallListLineStatusShort0 = To call
+CallListLineStatusShort1 = Called
+CallListLineStatusShort2 = No answer
+CallListLineStatusShort3 = Callback
+
+# UI
+AddCallListLine = Add contact
+NoCallListLine = No contacts in this list
+CallListLineDuplicate = This quote / opportunity is already in the list
+SelectElementType = Source type
+ElementTypePropal = Quote
+ElementTypeProject = Opportunity
+ContactToCall = Contact to call
+ContactNoPhone = No phone number
+MobileView = Mobile view
+CallListCreateActioncomm = Create event on call
+CallListCreateActioncommDesc = Automatically creates a phone event in the agenda when clicking the call button from the mobile view
+CallListStatusCreateActioncomm = Create event on status change
+CallListStatusCreateActioncommDesc = Automatically creates a phone event in the agenda (linked to the call list, the related project, the thirdparty and the line contact) when clicking a status button (Called, No answer, Callback) from the mobile call list view
+CallListEventLabels = Wording of the created events
+CallListEventLabelsDesc = Text written into the title of the event created when clicking a status button, so it can carry your own standard codes. The title reads "Call from &lt;list&gt; - &lt;text&gt;". Left empty, the status label is used.
+CallListEventLabelFor = Text for the "%s" status
+CallListEventLabelForDesc = Replaces "%s" in the event title
+CallListStatusCreateTask = Create commercial task on status change
+CallListStatusCreateTaskDesc = Creates the commercial follow-up task on the related project (if missing) and adds the configured time spent when clicking a status button from the mobile call list view
+CallFrom = Call from
+AddToCallList = Add to call list
+SelectCallList = Select a call list
+NoActiveCallList = No active call list
+CallListAddedCount = %d element(s) added to the call list
+CallListSkippedNoContactElement = Element %s was skipped because no contact is associated with it or the phone number is missing
+CallListLineDuplicateElement = Element %s is already in this call list
+CallListNotFound = The selected call list could not be found
+CallListCannotAddToArchivedList = Cannot add elements to an archived call list
+AddToCallListWidget = Add to call list
+CallListWidgetSuccess = Added to list "%s"
+CallListWidgetNoContact = No contact associated with this element or phone number is missing (phone number is mandatory for call lists)
+CallListWidgetNoPhone = The contact has no phone number
+CallListWidgetDuplicate = Already in this call list
+CallListWidgetError = Error while adding
+DefaultCallListLabel = Call list — %s
+AddToMyCallList = Add to my call list
+DefaultCallListNotFound = No default call list for this user
+
+# PWA Documents Bar
+PwaShowPiecesTitle = List of documents to display in the PWA listing
+PwaShowPiecesTitleDesc = Select the document types to display as a progress bar on opportunity cards in the PWA.
+
+REEDCRM_PWA_SHOW_OPP_AMOUNT = Show opportunity amount
+REEDCRM_PWA_SHOW_OPP_AMOUNT_Desc = Shows the estimated amount of the opportunity.
+REEDCRM_PWA_SHOW_PROPAL = Show commercial proposal
+REEDCRM_PWA_SHOW_PROPAL_Desc = Shows the latest commercial proposal (quote) linked to the project.
+REEDCRM_PWA_SHOW_COMMANDE = Show sales order
+REEDCRM_PWA_SHOW_COMMANDE_Desc = Shows the latest sales order linked to the project.
+REEDCRM_PWA_SHOW_COMMANDE_FOURN = Show purchase order
+REEDCRM_PWA_SHOW_COMMANDE_FOURN_Desc = Shows the latest supplier purchase order linked to the project.
+REEDCRM_PWA_SHOW_RECEPTION = Show supplier reception
+REEDCRM_PWA_SHOW_RECEPTION_Desc = Shows the latest supplier reception linked to the project.
+REEDCRM_PWA_SHOW_FACTURE_FOURN = Show supplier invoice
+REEDCRM_PWA_SHOW_FACTURE_FOURN_Desc = Shows the latest supplier invoice linked to the project.
+REEDCRM_PWA_SHOW_EXPEDITION = Show customer shipment
+REEDCRM_PWA_SHOW_EXPEDITION_Desc = Shows the latest customer shipment/delivery linked to the project.
+REEDCRM_PWA_SHOW_FACTURE = Show customer invoice
+REEDCRM_PWA_SHOW_FACTURE_Desc = Shows the latest customer invoice linked to the project.
+REEDCRM_PWA_SHOW_PAYMENT = Show customer payment
+REEDCRM_PWA_SHOW_PAYMENT_Desc = Shows the latest payment linked to the project's customer invoices.
+
+PwaPieceLabel_montant = Amount
+PwaPieceLabel_propal = Quote
+PwaPieceLabel_commande = Sales Order
+PwaPieceLabel_commande_fourn = Purch Order
+PwaPieceLabel_reception = Supp Rec
+PwaPieceLabel_facture_fourn = Supp Inv
+PwaPieceLabel_expedition = Cust Ship
+PwaPieceLabel_facture = Cust Inv
+PwaPieceLabel_payment = Payment
+PwaCurrentStep = CURRENT
+REEDCRM_PWA_PIECES_ICONS_ONLY = Icons-only pieces bar
+REEDCRM_PWA_PIECES_ICONS_ONLY_Desc = Show colored icons only (details on hover)
+PwaIssueAmountMismatch = Amount %s differs from the reference %s
+PwaIssueCancelled = Cancelled/refused document
+PwaIssueMissingStep = Missing step: %s exists without this step
+PwaIssuePaymentIncomplete = Incomplete payment: %s of %s
+PwaPieceStatus_propal_1 = Validated
+PwaPieceStatus_propal_2 = Signed
+PwaPieceStatus_propal_3 = Refused
+PwaPieceStatus_propal_4 = Billed
+PwaPieceStatus_commande_-1 = Cancelled
+PwaPieceStatus_commande_3 = Delivered
+PwaPieceStatus_facture_2 = Paid
+PwaPieceStatus_facture_3 = Abandoned
+
+App-ReedCRM = App-ReedCRM
+
+#
+# --- en_US parity completion (translated from fr_FR, 2026-06-02) ---
+#
+
+# Quick creation
+QuickCreation = Quick add
+QuickCreations = quick adds
+QuickThirdPartyCreation = Quick third-party add
+QuickThirdPartyCreations = quick third-party adds
+QuickProjectCreation = Quick opportunity or project add
+QuickProjectCreations = quick opportunity or project adds
+QuickContactCreation = Quick contact/address add
+QuickContactCreations = quick contact/address adds
+QuickTaskCreations = quick task adds
+QuickEventCreation = Quick event add
+QuickEventCreations = quick event adds
+QuickCreationFrontendSuccess = Opportunity quick add completed successfully
+
+# Commercial / sales
+CommercialFollowUp = Sales follow-up
+CommercialTask = Sales task
+CommercialRelaunching = Sales reminder
+CommercialsRelaunching = Sales reminders
+LastCommercialReminderDate = Last sales reminder date
+ActionCommCreation = Event created
+ReminderActionCommCreation = Reminder created on %s
+ErrorNoProjectAndThirdpartyInformations = Please provide a project name and a third-party name
+LastEvent = Last event
+
+# Project / opportunity fields
+ProjectPhone = Project phone
+ErrorInvalidProjectPhone = The phone number is not valid or is too long (max 20 characters)
+ContactInformations = Contact details
+Vocal = Voice
+AddressContactSameAsThirdPartyContact = Address contact same as third party contact
+ProjectContactSameAsThirdPartyContact = Project contact same as third party contact
+OpportunityStatusDescription = Opportunity status selection <br> Default value: <b> Prospection </b>
+OpportunityAmountDescription = Opportunity amount selection <br> Default value: <b> 3000 € </b>
+ProspectCustomerDescription = Third-party nature selection <br> Default value: <b> Prospect </b>
+
+# Product kit
+ProductKitConf = Fill the quote line description with the kit composition
+ProductKitConfDesc = Independently of the product module setting on description filling. <br> When adding a product/service that has a kit on a quote line, the line description will be replaced with the label and description of the component products.
+ProductInactiveMonths = Number of months of inactivity for a product to be considered inactive
+ProductInactiveMonthsDescription = Number of months of inactivity (no sale or purchase) for a product to be considered inactive in selection lists. <br> Default value: <b> 6 </b>
+
+# Quick event reminder
+ReminderValue = Reminder delay
+ReminderValueDescription = Number of time units before the event to trigger the reminder
+ReminderUnit = Reminder unit
+ReminderUnitDescription = Time unit used for the reminder
+
+# API quick creation
+ApiQuickCreations = quick adds via the API
+ApiUser = API user
+ProjectAffectedUser = User assigned to the project
+ProjectAffectedTag = Tag assigned to the project
+
+# Billing contact management
+UpdateObjectContactManagement = Billing contact update management
+UpdateObjectContact = Billing contact for %s
+UpdateObjectContactDescription = Update of the "billing contacts" role for %d unpaid %s <br> Below is the list of third parties without a "billing contact" role, checked on
+SocietyObjectContactNotDefinedTitle = List of %d third parties without a "billing contact" role
+AddContactNotificationManagement = Contact notification add management
+AddContactNotification = Contact notification for %s
+AddContactNotificationDescription = Add a "validated customer invoice action" contact notification for third parties <br> Below is the list of third parties without a "validated customer invoice action" contact notification, checked on
+SocietyContactNotificationNotDefinedTitle = List of %d third parties without a "validated customer invoice action" contact notification
+
+# Event messages
+ObjectContactUpdated = Contact added on %s %s
+SocietyObjectContactNotDefined = No contact defined on the third party:
+AllObjectHaveContact = The %s have billing contacts
+ContactNotificationAdded = Notification added on:
+SocietyContactNotificationNotDefined = No contact notification defined on the third party:
+AllContactHaveNotification = All third parties have contact notifications
+
+# Addresses
+Addresses = Addresses
+AddAnAddress = Add an address
+ErrorCreateAddress = An error occurred while creating the address
+ErrorUpdateAddress = An error occurred while updating the address
+ErrorDeleteAddress = An error occurred while deleting the address
+CouldntFindDataOnOSM = The address was not found on OpenStreetMap
+DataSuccessfullyRetrieved = The address data was retrieved successfully
+NoAddresses = No address
+Map = Map
+FavoriteAddress = Favorite address
+NewAddress = New address
+EditAddress = Edit address
+AddressType = Address type
+Workplace = Workplace
+PrincipalResidence = Main residence
+SecondaryResidence = Secondary residence
+Office = Office
+BranchOffice = Branch office
+WorkSite = Work site
+Factory = Factory
+Headquarters = Headquarters
+DisplayAllAddress = Display a single address per object
+DisplayAllAddressDescription = Display the main address on the map instead of all addresses linked to the object
+AddressesList = Address list
+ProjectAddress = Project address
+AddressStatus = Address status
+Geolocated = Geolocated
+NotFound = Not geolocated
+
+# Geolocation
+GeolocationError = Possible error during geolocation: %s
+MyPosition = My position
+
+# Dashboard / projects
+LastProjects = The last %s projects
+Sent = Sent
+Reminder1 = Reminder 1
+Reminder2 = Reminder 2
+Reminder3 = Reminder 3
+Abandoned = Abandoned
+Unreachable = Unreachable
+ToCallBack = To call back
+TooHard = Too complicated
+TooCheap = Not expensive enough
+TooExpensive = Too expensive
+ToSignElsewhere = Will sign elsewhere
+NotAProjectAnymore = No longer a project
+GoesBackOnExcel = Going back to Excel
+DontWantToSay = Do not want to say
+Interface = Interface
+Other = Other
+
+# Commercial proposal status
+CommercialStatus = Commercial status
+CommercialStatusHelp = Commercial status of the commercial proposal
+RefusalReason = Refusal reason
+RefusalReasonHelp = Reason for refusing the commercial proposal
+PropalStatusCommRepartition = Distribution of open commercial proposal statuses
+PropalRefusalReasonRepartition = Distribution of commercial proposal refusal reasons
+
+# Billing contact notation
+NotationObjectContact = Billing contact
+NotationObjectContactHelp = Fill rate of the customer billing contact information <ul><li>Name / Label - 5 <li>First name - 5 </li><li>Work phone - 5 </li><li>Mobile phone - 5 </li><li>Email - 40 </li><li>Default contact / address - 40 </li></ul>
+SetNotationObjectContact = Update of the customer billing contact notation
+UpdateNotationObjectContactsJob = Update of billing contact notations on the %s
+UpdateNotationObjectContactsJobComment = Update of the extra attribute for customer billing contact notations on recurring invoices to indicate the fill rate of the customer billing contact information
+NotationObjectContactsUpdated = Customer billing contact notations updated on %d %s
+ReedCRMRelaunchUser = User assigned to the relaunches
+ReedCRMRelaunchUserHelp = User the relaunches of the invoices generated from this template belong to. With no user chosen, a relaunch goes to the one who validated the invoice, then to its author.
+NoObject = No %s
+FactureMin = invoice
+FactureMins = invoices
+FactureRecMin = recurring invoice
+FactureRecMins = recurring invoices
+ThirdPartyMins = third parties
+ObjectAddContactTrigger = Contact added
+UpdateObjectContactTrigger = Update of the "billing contacts" role on invoices
+NoContact = No contact
+AddContactNotificationTrigger = Add a "validated customer invoice action" contact notification to third parties
+
+# Opportunity origin dictionary
+DictionarySource = Origin of opportunities/quotes/orders/invoices
+OpportunityOrigin = Opportunity origin
+SRC_INTE = Internet
+SRC_CAMP_MAIL = Mailing campaign
+SRC_CAMP_EMAIL = Emailing campaign
+SRC_CAMP_PHO = Phone campaign
+SRC_CAMP_FAX = Fax campaign
+SRC_COMM = Sales contact
+SRC_SHOP = In-store contact
+SRC_WOM = Word of mouth
+SRC_PARTNER = Partner
+SRC_EMPLOYEE = Employee
+SRC_SPONSORING = Referral/Sponsorship
+SRC_CUSTOMER = Inbound contact from a customer
+
+# Opportunity status assignment
+AddAssignOppStatus = Add an opportunity status
+SelectOppStatus = Select an opportunity status
+OppStatusAssignedTo = Opportunity status assigned to %s project(s)
+ReloadOppPercent = Compute undefined opportunity probabilities
+
+# Task label
+LabelLength = Label length
+LabelLengthDescription = Maximum size of the label field
+WarningTaskLabelCustom = Warning, you are getting close to the maximum allowed number of characters (%d)
+ProductLastSellList = Latest product sales (Order and Invoice)
+
+# Menu / lists
+Opportunities = Opportunities
+OpenedPropals = Open proposals
+RecurringInvoices = Recurring invoices
+
+# Call notifications widget
+ProjectOpportunitiesList = The last 5 project opportunities
+LatestCreatedOpportunities = Latest created opportunities
+OppPercent = Opportunity percentage
+ButtonActions = Actions
+ContentToBeAdded = Content to add
+CommercialProposalsInProgress = Commercial proposals in progress
+NoCommercialProposalsInProgress = No commercial proposal in progress
+AddEvent = Add an event
+ThirdParty = Third party
+Contact = Contact
+EventType = Event type
+Date = Date
+Project = Project
+SelectProject = Select a project
+NoProjectAvailable = No project available
+ProjectModuleDisabled = Project module disabled
+Type = Type
+ProjectLabel = Project label
+CustomerNotes = Customer notes
+SendMail = Send email
+Title = Title
+Note = Note
+Reminder = Reminder
+PopupBrowser = Browser popup
+EMailTemplate = Email template
+Duration = Duration
+AffectedTo = Assigned to
+Add = Add
+SelectEmailTemplate = Select an email template
+NoEmailTemplate = No email template
+EmailSubject = Email subject
+EmailContent = Email content
+EmailTo = Recipient
+CustomerNote = Customer note
+SendEmail = Send an email
+EventCreated = Event created successfully
+EmailFormReady = Email form ready
+NewThirdparty = New third party
+CreateThirdparty = Create third party
+
+# Opportunities import
+OpportunitiesImport = Opportunities import
+ImportedOpportunityList = List of imported opportunities
+
+# Keyyo tab
+UnknownContact = Unknown contact
+
+# Status objects
+ReedCRMObjectStatus = ReedCRM object status
+ProjectStatusDraft = Draft
+ProjectStatusValidated = Validated (Open)
+ProjectStatusClosed = Closed
+PropalStatusDraft = Draft (Provisional)
+PropalStatusValidated = Validated (Open)
+PropalStatusSigned = Signed / Accepted
+PropalStatusNotSigned = Not signed / Refused
+PropalStatusBilled = Billed
+
+# Expedition
+ShippingDateEqualsCreationDate = Set shipping date equal to creation date
+ShippingDateEqualsCreationDateHelp = When a shipment is created, if no shipping date is entered, it automatically takes the creation date.
+
+ReadMyCallLists=Read my call lists
+ReadSubordinatesCallLists=Read subordinates call lists
+ReadAllCallLists=Read all call lists
+
+# Dashboard - Upcoming reminders
+UpcomingCallReminders = Upcoming reminders
+NoUpcomingCallReminder = No upcoming reminder
+CallReminderCategory = ReedCRM call reminders
+
+# Recurring invoice follow-up
+RecurringInvoiceFollowup = Recurring invoice follow-up
+RecurringInvoiceFollowupMenu = Recurring invoice follow-up
+RecurringInvoiceTemplate = Recurring invoice
+FollowupSubscription = Recurring subscription
+FollowupAmountTTC = Amount incl. tax
+FollowupLastBillingDate = Last billing date
+FollowupInvoiceCreated = Recurring invoice created
+FollowupInvoiceSent = Recurring invoice sent
+FollowupInvoicePaid = Invoice paid
+FollowupPaymentOk = Payment OK / no unpaid
+FollowupRelanceDate = Reminder date
+FollowupRelanceCount = Number of reminders
+FollowupClientContacted = Client contacted
+FollowupContactDate = Contact date
+FollowupSavTime = Support time
+FollowupDigiriskExists = DigiRisk exists
+FollowupDigiriskUpToDate = DigiRisk up to date
+FollowupClientAccessOk = Client DigiRisk access working
+FollowupDolibarrVersion = Dolibarr version
+FollowupDigiriskVersion = DigiRisk version
+FollowupDuUpdateBilledDate = DU update billed on
+FollowupDuUpdateBilledDateHelp = Billing date of the last Document Unique update. Used as the reference for the yearly renewal cycle.
+FollowupDuNextUpdate = Next DU update
+FollowupDuNextUpdateHelp = Automatically computed: billed update date + 1 year. The preparation alert triggers 1 month before (configurable).
+FollowupLastDuAudit = Last DU audit
+FollowupNeed = Identified need
+FollowupProposal = Proposal made
+FollowupClientReaction = Client reaction
+FollowupSalesAmount = Sales amount this month
+FollowupStatusToBill = To bill
+FollowupStatusToSend = To send
+FollowupStatusAwaiting = Awaiting payment
+FollowupStatusPaid = Paid
+FollowupStatusLate = Unpaid / reminder
+FollowupGroupIdentity = Identity
+FollowupGroupBilling = Billing & payment
+FollowupGroupRelance = Reminder & contact
+FollowupGroupDigirisk = DigiRisk health
+FollowupGroupCommercial = Commercial
+FollowupGroupDu = Document Unique - yearly cycle
+FollowupDuPrepareFrom = Prepare from
+FollowupDuToPrepare = To prepare
+FollowupSeeList = See follow-up
+RecordStatus = Record status
+FollowupDuAlertBanner = %s DU to prepare
+
+# Recurring invoice follow-up - cron & reminders
+FollowupCronGenerateLabel = Recurring invoice follow-up - Monthly generation
+FollowupCronGenerateComment = Creates a follow-up record for each active recurring invoice due this month.
+FollowupCronSyncLabel = Recurring invoice follow-up - Invoice synchronisation
+FollowupCronSyncComment = Updates the created/sent/paid flags and amount from the generated Dolibarr invoices.
+FollowupCronRemindersLabel = Recurring invoice follow-up - DU & payment reminders
+FollowupCronRemindersComment = Creates agenda events for DU updates to prepare and payment reminders.
+FollowupCronGenerated = %s follow-up record(s) created, %s already existing.
+FollowupCronSynced = %s follow-up record(s) synced with invoices.
+FollowupCronReminders = %s agenda reminder(s) created.
+FollowupDuReminderLabel = Prepare the Document Unique update - %s
+FollowupRelanceReminderLabel = Send a payment reminder - %s
+FollowupAuditsOfMonth = Audits of the month
+FollowupNextAudit = Next audit due
+FollowupNoAuditThisMonth = No DU audit to prepare this month.
+FollowupAuditOverdue = Overdue
+FollowupAuditToPrepare = To prepare
+FollowupAuditAdded = Audit added
+FollowupAuditAdd = Add audit
+FollowupAuditMove = Move audit date
+FollowupAuditMarkDone = Mark the audit done on this date (rolls the cycle to next year)
+FollowupAuditRealDate = Real audit completion date
+FollowupAuditDoneRolled = Audit done on %s — next audit on %s
+FollowupProposalSent = Proposal sent
+FollowupAuditPrSigned = Quote signed
+FollowupSignedUnbilled = Signed Digirisk / DU quotes not invoiced
+FollowupSignedUnbilledEmpty = No signed Digirisk / DU quote left to invoice
+FollowupSignedUnbilledInvoice = Invoice
+FollowupAuditInvoiced = Invoiced
+FollowupAuditPaid = Paid
+FollowupDuLostCount = Lost DU (>3y)
+FollowupLinkedQuote = Linked quote
+FollowupProposalAmount = Proposal amount
+FollowupProposalSentCount = Proposals sent
+FollowupMarkProposalSent = Check: commercial proposal (quote) sent today
+FollowupProposalSentOn = Proposal sent on %s (click to undo)
+FollowupAssignedTo = Assigned to
+FollowupAssign = Assign the audit to this person
+FollowupAmountPerPerson = DU amount per person
+FollowupDigiriskNoSub = Digirisk clients without a recurring subscription
+FollowupDigiriskNoSubEmpty = All Digirisk clients have a recurring subscription
+FollowupDigiriskInstance = Digirisk instance (active project)
+FollowupDigiriskLastTier = Last Digirisk tier invoiced
+FollowupDigiriskLastInvoice = Last invoice
+FollowupDigiriskCreateSub = Create template invoice
+FollowupDigiriskDismiss = Hide this client from the list
+FollowupDigiriskDismissConfirm = Hide this client from the list? (it will no longer appear here)
+FollowupDigiriskDismissed = Client hidden from the list
+FollowupDigiriskCreateSubHelp = Open the client's invoices, then on an invoice use "Convert to template invoice" to create the recurring subscription
+FollowupAuditCount = Audit count
+FollowupUnassigned = Unassigned
+FollowupAuditManual = Manually planned audit
+FollowupAuditPrepared = Prepared
+FollowupAuditDone = Done
+FollowupLocation = Location
+FollowupCronAuditSyncLabel = Recurring invoice follow-up - DU audits synchronisation
+FollowupCronAuditSyncComment = Creates / refreshes DU audits from the invoiced audit services (DU_AU products).
+FollowupCronAuditsSynced = %s DU audit(s) created, %s updated.
+FollowupTierTpe = TPE
+FollowupTierSmall = Small Company
+FollowupTierCompany = Company
+FollowupTierCompanyPlus = Company Plus
+FollowupTierUnlimited = Unlimited
+FollowupAuditToPrepareCount = To prepare
+FollowupAuditOverdueCount = Overdue
+FollowupAuditTotalMonth = Audits this month
+FollowupAuditDoneCount = Done
+FollowupAuditTotalAmount = DU total
+FollowupAuditsOverdue = Overdue audits
+FollowupFaOverdue = Overdue recurring invoices
+FollowupLate = Late
+FollowupDaysLate = days late
+FollowupNoOverdue = No overdue 🎉
+FollowupDaysLateShort = d
+FollowupLastDuInvoice = Last DU invoice
+SelectMonth = Select month
+FollowupGenerateInvoice = Generate / send the recurring invoice
+FollowupAuditInvoicedAmount = Invoiced amount
+ExportCsv = Export CSV
+FollowupYearlyOverview = Yearly overview
+FollowupChartFaAmount = Recurring invoices amount
+FollowupChartDu = DU to do / lost
+FollowupChartToDo = DU to do
+FollowupChartLost = DU lost
+FollowupAmount = Amount
+DuFollowupMenu = Client DU follow-up
+DuFollowupEnabled = Service portfolio (client DU follow-up)
+DuFollowupEnabledDescription = Shows the "Service portfolio" menu section and its DU audit follow-up board. Evarisk internal feature, wired to the DU_A*, D1 to D5 product references and to digirisk.com projects: leave it off on a customer install. Reactivate the module for the menu to take this setting into account.
+DuFollowupDisabled = The client DU follow-up is disabled on this instance.
+OptionalFeatures = Optional features
+BillingGapsMenu = Billing follow-up
+BillingGapsIntro = Everything signed, ordered or due that has not been invoiced yet.
+BillingGapSignedProposals = Signed quotes not invoiced
+BillingGapOrders = Orders not invoiced
+BillingGapRecurring = Subscriptions to generate (past due)
+BillingGapDrafts = Draft invoices
+BillingGapUnpaid = Overdue unpaid (>30d)
+BillingGapInvoice = Invoice
+BillingGapGenerate = Generate
+BillingGapNone = Nothing to invoice here
+BillingGapDueSince = Past due since
+FollowupChartDuAmount = DU amount (proposed / invoiced / lost)
+FollowupChartProposed = Proposed
+FollowupCreateProposal = Create the quote for this client
+FollowupAuditRenew = Renew: move the line to the next cycle (once the new DU invoice is created)
+FollowupAuditRenewedOn = Line renewed: next audit in %s
+FollowupAuditRenewNoInvoice = No new DU invoice for this client. Create the renewal invoice first: the line will then move to the next cycle (or automatically via the cron).
+FollowupAuditRenewConfirm = Renew this audit? The line will move to the next cycle (next audit in a year) if a new DU invoice exists.
+FollowupChartInvoiced = Invoiced
+PleaseLinkProjectFirst=Please first link a project to the ticket
+
+# PWA nav
+BackToDolibarr = Back to Dolibarr
+MyCallLists = My call lists
+OtherCallLists = Other call lists
+
+# PWA opportunity
+BackToOpportunity = Back to the opportunity
+ContactNotFilled = No contact set
+CopyPhoneNumber = Copy the phone number
+NoPhoneNumber = No phone number
+NoEventOnOpportunity = No event on this opportunity yet
+ToCallShort = to call
+SeeOpportunityTimeline = See the history
+
+#
+# Ticket dashboard
+#
+TicketDashboard = Ticket dashboard
+OpenTicketList = Open tickets
+TicketPeriodFilter = Analysed period
+TicketPeriodLastMonth = 01 last month
+TicketPeriodLastMonths = %s last months
+TicketPeriodAll = Whole history
+TicketAssigneeFilter = Assigned to
+TicketAllAssignees = Every assignee
+TicketClosedFilter = Closed tickets
+TicketWithClosedTickets = Included in the figures
+TicketWithoutClosedTickets = Excluded from the figures
+
+# Ticket dashboard - Widgets
+TicketFlow = Ticket flow
+TicketsCreatedOverPeriod = Created over the period
+TicketsClosedOverPeriod = Closed over the period
+TicketBalanceOverPeriod = Balance
+TicketBalanceOverPeriodDescription = Difference between the tickets created and the tickets closed over the period. A positive balance means the open ticket backlog is growing.
+NbOfOpenedTicket = Open tickets
+TicketsUnassigned = Unassigned
+TicketsNeverRead = Never read
+TicketsUnread = Unread
+TicketDelays = Delays
+MeanTakeOverTime = Mean take over time
+MeanTakeOverTimeDescription = Time between the creation of the ticket and its first read, on the tickets created over the period.
+MeanFirstResponseTime = Mean first response time
+MeanFirstResponseTimeDescription = Time between the creation of the ticket and the first public message written by an internal user. Tickets left unanswered are not counted.
+MedianFirstResponseTime = Median first response time
+MeanResolutionTime = Mean resolution time
+MeanResolutionTimeDescription = Time between the creation and the closing, measured on the tickets closed over the period.
+MedianResolutionTime = Median resolution time
+MeanBacklogAge = Mean backlog age
+MeanBacklogAgeDescription = Mean age of the tickets still open today, whatever the selected period is.
+OldestOpenTicket = Oldest open ticket
+TicketTimeSpent = Logged time
+TotalTimeSpentOverPeriod = Total time
+TotalTimeSpentOverPeriodDescription = Time logged over the period on the ticket tasks, that is the tasks whose label starts with the prefix set in the ReedCRM configuration.
+NbOfTimeEntries = Time entries
+MeanTimePerEntry = Mean time per entry
+MeanTimePerTicket = Mean time per ticket
+NbOfTicketsWithTime = Tickets with logged time
+NbOfTimeContributors = Contributors
+TimeSpentHours = Logged time (h)
+TicketPeople = People
+NbOfAssignees = Assignees
+NbOfAssigneesDescription = Number of users having at least one open ticket assigned to them.
+MeanOpenTicketPerAssignee = Open tickets / assignee
+MostLoadedAssignee = Most loaded assignee
+NbOfExchangesOverPeriod = Messages over the period
+MeanExchangePerTicket = Messages per ticket
+NbOfConcernedSocieties = Third parties involved
+NbOfExchanges = Messages
+
+# Ticket dashboard - Graphs
+TicketRepartitionPerUser = Workload and delays per assignee
+TicketTimeSpentPerUser = Logged time per assignee
+TicketMessagesPerUser = Messages per user
+TicketPublicMessages = Public messages
+TicketPrivateMessages = Private notes
+TicketsCreatedVersusClosedByMonth = Tickets created and closed over the last %s months
+TicketsCreatedByMonth = Tickets created over the last %s months
+TicketsCreated = Tickets created
+TicketsClosed = Tickets closed
+TicketTimeSpentByMonth = Time logged over the last %s months
+TicketOpenByStatus = Open tickets per status
+TicketBacklogAge = Age of the open tickets
+TicketResolutionTimeRepartition = Repartition of the resolution times
+TicketBySeverity = Open tickets per severity
+TicketByType = Open tickets per type
+TicketCreationByWeekday = Creations per weekday
+TicketCreationByHour = Creations per hour
+TopSocietyWithMostOpenTickets = Top %s third parties with the most open tickets
+DurationUnderDays = Under %s d
+DurationBetweenDays = From %s to %s d
+DurationOverDays = Over %s d
+
+# Ticket dashboard - Lists
+TicketWorkloadPerUserList = Detailed workload per assignee
+LastActivity = Last activity
+TicketOldestOpenList = The %s oldest open tickets
+TicketAge = Age
+LastMessage = Last message
+TicketStaleList = The %s open tickets with no message for more than %s days
+NbOfTicketsWithTimeDescription = Number of tickets holding at least one time entry, over the number of analysed tickets: the tickets still open plus the ones created or closed over the period.
+TimeSpentOnAssignedTickets = Time on their tickets
+
+# Signed quotes never invoiced
+SignedUnbilledMenu = Signed quotes not invoiced
+SignedUnbilledIntro = Signed proposals with no invoice linked. Every line is cross-checked against the customer invoices to spot the ones actually billed separately (standalone invoice, via the order or the contract).
+SignedUnbilledToBill = Really to invoice
+SignedUnbilledOver6Months = Signed more than 6 months ago
+SignedUnbilledSuspect = Probably already invoiced
+SignedUnbilledDisplayed = Displayed lines
+SignedUnbilledPeriod = Period
+SignedUnbilledPeriodMonths = Last %s months
+SignedUnbilledVerification = Billing cross-check
+SignedUnbilledFilterAll = Show everything
+SignedUnbilledFilterTodo = To invoice only
+SignedUnbilledFilterSuspect = Doubtful ones only
+SignedUnbilledSalesRep = Sales rep
+SignedUnbilledMinAmount = Min. amount incl. tax
+SignedUnbilledAge = Age
+SignedUnbilledDays = %s d
+SignedUnbilledClientInvoices = Customer invoices since signature
+SignedUnbilledNone = No signed unbilled proposal for this period
+SignedUnbilledMatchNone = To invoice
+SignedUnbilledMatchChain = Invoiced through order / contract
+SignedUnbilledMatchAmount = Invoice with the same amount
+SignedUnbilledMatchProducts = Same products invoiced
+SignedUnbilledInvoice = Create the invoice from this quote
+SignedUnbilledClassifyBilled = Classify as billed (removes the line)
+SignedUnbilledConfirmBilled = Classify quote %s as billed?
+SignedUnbilledMarkedBilled = Quote %s classified as billed
+SignedUnbilledLegend = Cross-check: "Invoiced through order / contract" = an invoice exists through the order or contract created from the quote. "Invoice with the same amount" = a customer invoice dated after the signature (30-day tolerance) has exactly the same amount excl. or incl. tax. "Same products invoiced" = at least half the quote products were invoiced to this customer after the signature. Check these three cases by eye: if it is the same job, classify the quote as billed.
+
+# Recurring invoice follow-up - billing run traceability & portfolio movements
+FollowupRunStatus = Processing
+FollowupRunStatusHelp = Where the month billing stands for this subscription: "To do" while no invoice has been generated, "Done" as soon as an invoice created from this template is dated in the browsed month. Done lines stay visible, so the list no longer empties itself at the end of the month.
+FollowupRunToDo = To do
+FollowupRunDone = Done
+FollowupGeneratedInvoice = Generated invoice
+FollowupTemplateSuspended = Stopped
+FollowupTemplateSuspendedHelp = Template now suspended: it stays visible on the months it was actually billed.
+FollowupMovementsTitle = Recurring subscriptions in / out
+FollowupMovementsInMonth = New subscriptions this month
+FollowupMovementsInAmount = Amount gained (month)
+FollowupMovementsOutMonth = Subscriptions stopped this month
+FollowupMovementsOutAmount = Amount lost (month)
+FollowupMovementsNetMonth = Net balance of the month
+FollowupMovementsNetYear = Net balance of the year
+FollowupMovementsNetYearNb = In / out of the year
+FollowupMovementsChartTitle = In (+) / out (-) per month and cumulative balance
+FollowupMovementsIn = In
+FollowupMovementsOut = Out
+FollowupMovementsCumul = Cumulative balance
+FollowupMovementsNoIn = No new subscription this month
+FollowupMovementsNoOut = No subscription stopped this month
+FollowupRunLate = Late
+FollowupRunLateHelp = The month due date has passed and no invoice has been generated yet.
+FollowupRunToDoHelp = No invoice generated for this month on this subscription: still to generate.
+FollowupRunDoneOn = Invoice generated on %s
+FollowupRunNothingToDo = Nothing to do on %s: the %s invoices of the month have already been generated.
+FollowupRunNothingDone = No invoice generated yet on %s.
+
+#
+# Pocket
+#
+Pocket = Pocket
+PocketRecording = Pocket recording
+PocketRecordings = Pocket recordings
+PocketRecordingId = Pocket identifier
+PocketRecordingDate = Recording date
+PocketFolder = Pocket folder
+PocketFolderId = Pocket folder identifier
+PocketFolderTitle = Imported folder
+PocketFolderHelp = Only the recordings of this folder are imported into Dolibarr. As long as no folder is selected, no synchronisation happens.
+PocketFolderMissing = No Pocket folder selected
+PocketNoFolderSelected = -- No folder --
+PocketTags = Pocket tags
+PocketState = Pocket state
+PocketSummary = Summary
+PocketTranscript = Transcript
+PocketActionItems = Action items
+PocketLastSyncDate = Last synchronisation
+PocketNoSummary = No summary available for this recording
+PocketNoTranscript = No transcript available for this recording
+PocketNoActionItem = No action item detected by Pocket
+PocketChangeStatus = Change the status
+PocketEditSummary = Click to edit the summary
+PocketSummaryEditHelp = Markdown text. Leaving the field saves it, Escape cancels.
+PocketSummaryEditedHint = Summary edited by hand: Pocket will not write it again. Empty it to get the generated summary back.
+PocketRecordingStatusNew = New
+PocketRecordingStatusProcessed = Processed
+PocketRecordingStatusArchived = Archived
+PocketConnection = Pocket connection
+PocketConnectionState = Connection state
+PocketApiKey = Pocket API key
+PocketApiKeyHelp = A pk_... key created from the Pocket application. It grants read access to the recordings, transcripts and audio files of the account.
+PocketApiKeySet = Key stored
+PocketApiKeyMissing = No Pocket API key configured
+PocketApiHttpError = The Pocket API answered HTTP error %s
+PocketApiInvalidResponse = Unreadable answer from the Pocket API
+PocketTestConnection = Test connection
+PocketConnectionFailed = Cannot reach Pocket: %s
+PocketConnectionSucceeded = Connection to Pocket succeeded, %s folders found
+PocketManualSync = Manual synchronisation
+PocketManualSyncHelp = Imports the recordings of the configured folder right away. The scheduled job runs the very same operation.
+PocketSyncNow = Synchronise now
+PocketSyncReport = Pocket synchronisation: %s created, %s updated, %s skipped, %s failed
+PocketSyncCronLabel = Pocket recordings synchronisation
+PocketSyncCronComment = Imports the recordings of the configured Pocket folder, along with their summary, transcript and action items
+PocketRefreshFromApi = Refresh from Pocket
+PocketRefreshDone = Recording refreshed from Pocket
+PocketRefreshFailed = Refreshing from Pocket failed
+PocketDownloadAudio = Download the audio
+PocketAudioUnavailable = Audio unavailable for this recording
+DeletePocketRecording = Delete the Pocket recording
+ConfirmDeletePocketRecording = Are you sure you want to delete this recording? It will be imported again on the next synchronisation if it is still in the Pocket folder.
+
+#
+# Objects a Pocket recording can be linked to
+# These keys are generic (saturne tpl): ReedCRM loads its .lang first, so its wording wins
+#
+LinkableElements = Linkable elements
+LinkedObjectUsage = Usage
+LinkedObjectUsageDetail = %s link(s) to a Pocket recording
+NoLinkedObjectUsage = No link
+EnableAllLinksConfirm = Enable the link towards every element?
+DisableAllLinksConfirm = Disable the link towards every element? The matching tabs disappear, the links already created are kept.
+DisableLinkConfirm = Disable the link towards "%s"? The tab disappears, the links already created are kept.
+CleanUnusedLinks = Realign the tabs on the configuration
+CleanUnusedLinksConfirm = Rebuild the tabs and hooks from the enabled links?
+LinkedObjectSyncDone = Configuration applied: %s tabs and %s hooks registered
+LinkedObjectSyncError = Applying the link configuration failed
+
+#
+# Pocket - audio player and action items
+#
+PocketAudio = Audio
+PocketPlayAudio = Play the recording
+PocketAssignedUser = Assigned to
+PocketAssignee = Pocket assignee
+PocketCreateEvent = Create an event
+PocketActionDueDate = Due date
+PocketDeleteActionItem = Delete this action
+PocketConfirmDeleteActionItem = Delete this action item? It will not come back at the next Pocket synchronisation.
+PocketActionItemId = Pocket action identifier
+PocketActionItemTodo = To do
+PocketActionItemDone = Done
+PocketActionItemDismissed = Deleted
+PocketActionItemEdited = Rewritten action
+PocketChangeStatus = Change the status
+PocketSummaryEdited = Rewritten summary
+PocketSummaryEditedHint = This summary was rewritten in Dolibarr: Pocket synchronisations no longer overwrite it.
+PocketEditSummary = Click to edit the summary
+PocketSummaryEditHelp = The summary is written in markdown, Pocket blocks included. It is saved when the field loses the focus, and is no longer overwritten by the synchronisations: empty it to get the Pocket one back.
+
+#
+# Pocket - attach from the business objects
+#
+PocketLinkedObjects = Linked objects
+PocketNoLinkedObject = No object linked to this recording
+PocketLinkRecording = Attach a recording
+PocketUnlinkRecording = Detach this recording
+PocketNoRecordingToLink = Every available recording is already attached
+PocketRecordingLinked = Recording attached
+PocketRecordingUnlinked = Recording detached
+PocketRecordingLinkFailed = The attach operation failed
+PocketLinkObject = Attach an object
+PocketAllObjectTypes = Every type
+PocketSearchObject = Search by reference or label
+PocketNoObjectFound = No object found
+PocketObjectLinked = Object attached
+PocketObjectUnlinked = Object detached
+PocketUnlinkObject = Detach this object
+PocketLinkObject = Attach an object
+PocketUnlinkObject = Detach this object
+PocketAllObjectTypes = Every type
+PocketSearchObject = Search by reference or label
+PocketNoObjectFound = No object found
+PocketObjectLinked = Object attached
+PocketObjectUnlinked = Object detached
+
+#
+# Menu - Left menu sections
+#
+MenuSectionQuickAccess = Quick access
+MenuSectionCommerce = Sales
+MenuSectionServicePortfolio = Service portfolio
+MenuSectionAdvTechnical = Sales administration / Technical
+MenuSectionBilling = Billing
+MenuSectionTools = Cross-functional tools
+MenuSectionAdministration = Administration
+ShipmentFollowupMenu = Shipment follow-up
+TicketFollowupMenu = Ticket follow-up
+DataManagementMenu = Data management
+
+# Quick close of an event
+QuickCloseEventTitle = Close the event
+QuickCloseEventTooltip = Close this event
+QuickCloseEventDescription = Description
+QuickCloseEventDescriptionPlaceholder = Appended to the event description (optional)
+QuickCloseEventReschedule = Schedule the same event again for later
+QuickCloseEventNewLabel = New event name
+QuickCloseEventNewLabelPlaceholder = Name of the closed event
+QuickCloseEventCurrentLabel = Event name
+QuickCloseEventCurrentLabelPlaceholder = Rename the event if needed
+QuickCloseEventNewType = Reminder type
+QuickCloseEventKeepType = Keep the type of the closed event
+QuickCloseEventTypeDisplay = Reminder type picker
+QuickCloseEventTypeDisplayDescription = Shape of the type picker in the quick close modal
+QuickCloseEventTypeDisplayButtons = Buttons
+QuickCloseEventTypeDisplaySelect = Drop-down list
+
+# Relaunch types, shared by the relaunch chips and the reminder forms
+RelaunchTypeCall = Call
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = Meeting
+RelaunchTypeOther = Other
+QuickCloseEventInMonths = In
+QuickCloseEventInMonthsSuffix = months
+QuickCloseEventInDays = In
+QuickCloseEventInDaysSuffix = days
+QuickCloseEventOnDate = On
+QuickCloseEventDateRequired = Pick the date of the rescheduled event
+QuickCloseEventConfirm = Close
+QuickCloseEventDone = Event closed
+QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
+QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
+QuickCloseEventError = Closing the event failed
+QuickCloseEvents = quick event closures
+QuickCloseEventInMonthsLabel = In a number of months
+QuickCloseEventInDaysLabel = In a number of days
+QuickCloseEventDefaultDelay = Default reschedule delay
+QuickCloseEventDefaultDelayDescription = Choice preselected in the quick close modal when a reschedule is requested
+QuickCloseEventDefaultDays = Default number of days
+QuickCloseEventDefaultDaysDescription = Number of days prefilled for the "In a number of days" delay
+QuickCloseEventDefaultMonths = Default number of months
+QuickCloseEventDefaultMonthsDescription = Number of months prefilled for the "In a number of months" delay
+
+#
+# Intervention dates
+#
+InterventionCalendar = Intervention calendar
+InterventionDates = Intervention dates
+InterventionDate = Intervention date
+InterventionUser = Assignee
+InterventionUsers = Assignees
+InterventionNoUser = Unassigned
+InterventionToPlan = To plan
+InterventionPlanned = Planned
+InterventionDone = Done
+InterventionStatus = Intervention status
+InterventionPropalStatus = Proposal status
+InterventionDurationMinutes = Duration (min)
+InterventionDateHelp = One date per unit of quantity: a quantity of 2.5 asks for 3 interventions. Leaving a date empty removes the intervention and its event.
+InterventionDateNoQuantity = This service line has no quantity, there is no intervention to plan.
+InterventionDatePlanTooltip = Plan the intervention dates of this service line
+InterventionDateSaved = Intervention dates saved
+InterventionDateSaveError = Error while saving the intervention dates
+InterventionDateFeatureDisabled = Intervention dates are not enabled in the ReedCRM setup
+InterventionSeeEvent = See the event in the agenda
+InterventionEventLabel = Intervention %s - %s (%s)
+InterventionsThisMonth = Interventions this month
+InterventionAmountThisMonth = Revenue this month
+InterventionViewMonth = Month
+InterventionViewList = List
+InterventionOnlyMine = My interventions
+InterventionNoneThisMonth = No intervention planned this month
+InterventionToPlanList = Interventions to plan (%s service lines)
+InterventionPlanAction = Plan
+InterventionPlannedCount = Planned
+InterventionRemainingCount = Remaining
+ActionAC_REEDCRM_INTERVENTION = Intervention
+InterventionDateSetupTitle = Intervention dates on the service lines
+InterventionDateEnabled = Enable the intervention dates
+InterventionDateEnabledDescription = Adds a planning button on every service line of the proposals and displays the intervention calendar
+InterventionDateCreateEvent = Create one agenda event per date
+InterventionDateCreateEventDescription = Every intervention date creates an Intervention event assigned to the assignee, updated and deleted along with the date
+InterventionDateDefaultDurationLabel = Default length of an intervention (minutes)
+InterventionDateMaxPerLineLabel = Maximum number of dates per service line
+InterventionDateMaxPerLineDescription = Safeguard for the service lines carrying a very large quantity
+InterventionLocation = Place
+InterventionDateFromLabel = Proposals taken into account from
+InterventionDateFromDescription = Proposals dated before this day are out of scope: no button on their service lines, no interventions to plan. Leave empty to take the whole history.
+InterventionDateProductTagLabel = Tags of the services to plan
+InterventionDateProductTagDescription = Only the service lines whose product carries one of these tags get intervention dates. Free lines, the ones without a product, are out of scope. As long as no tag is chosen, no line can be planned.
+InterventionDateNoProductTagWarning = No service tag is selected: no service line can be planned. Pick the tags in the ReedCRM setup, Proposals tab.
+
+# Card empty fields toggle
+CardHideEmptyFields = Hide the empty fields
+CardShowAllFields = Show every field
+CardEmptyFieldsHiddenCount = %s hidden
+CardEmptyFieldsTooltip = Hides or shows the fields of this card left without a value. The choice is kept for all your cards.
+CardEmptyFieldsUserParam = Empty fields on the cards

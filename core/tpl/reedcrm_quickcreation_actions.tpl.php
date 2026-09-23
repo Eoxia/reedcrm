@@ -27,6 +27,28 @@ if ($action == 'add') {
 			$thirdparty->note_private = GETPOST('note_private');
             $thirdparty->country_id   = $mysoc->country_id;
 
+			// Official company data brought by the SIREN search (module Sirene)
+			if (isModEnabled('sirene') && GETPOSTINT('has_done_sirene_search')) {
+				$thirdparty->name_alias           = GETPOST('name_alias', 'alphanohtml');
+				$thirdparty->address              = GETPOST('address', 'alphanohtml');
+				$thirdparty->zip                  = GETPOST('zipcode', 'alphanohtml');
+				$thirdparty->town                 = GETPOST('town', 'alphanohtml');
+				$thirdparty->state_id             = GETPOSTINT('state_id');
+				$thirdparty->idprof1              = GETPOST('idprof1', 'alphanohtml');
+				$thirdparty->idprof2              = GETPOST('idprof2', 'alphanohtml');
+				$thirdparty->idprof3              = GETPOST('idprof3', 'alphanohtml');
+				$thirdparty->idprof6              = GETPOST('idprof6', 'alphanohtml');
+				$thirdparty->tva_intra            = GETPOST('tva_intra', 'alphanohtml');
+				$thirdparty->effectif_id          = GETPOSTINT('effectif_id');
+				$thirdparty->forme_juridique_code = GETPOST('forme_juridique_code', 'alphanohtml');
+				if (GETPOSTINT('country_id') > 0) {
+					$thirdparty->country_id = GETPOSTINT('country_id');
+				}
+
+				$thirdparty->array_options['options_sirene_company_admin_status'] = GETPOST('options_sirene_company_admin_status', 'alphanohtml');
+				$thirdparty->array_options['options_sirene_update_date']          = dol_now();
+			}
+
 			$thirdpartyID = $thirdparty->create($user);
 			if ($thirdpartyID > 0) {
 				$backtopage = dol_buildpath('/societe/card.php', 1) . '?id=' . $thirdpartyID;
@@ -60,7 +82,17 @@ if ($action == 'add') {
 					$contact->phone_pro = GETPOST('phone_pro', 'alpha');
 
 					$contactID = $contact->create($user);
-					if ($contactID < 0) {
+					if ($contactID > 0) {
+						// Category association
+						$categories = GETPOST('categories_contact', 'array');
+						if (count($categories) > 0) {
+							$result = $contact->setCategories($categories);
+							if ($result < 0) {
+								setEventMessages($contact->error, $contact->errors, 'errors');
+								$error++;
+							}
+						}
+					} else {
 						setEventMessages($contact->error, $contact->errors, 'errors');
 						$error++;
 					}
@@ -102,7 +134,7 @@ if ($action == 'add') {
 			$project->opp_amount        = price2num(GETPOST('opp_amount'));
 			$project->date_c            = dol_now();
 			$project->date_start        = $date_start;
-			$project->statut            = 1;
+			$project->status            = getDolGlobalString('PROJECT_CREATE_NO_DRAFT') ? Project::STATUS_VALIDATED : Project::STATUS_DRAFT;
 			$project->usage_opportunity = 1;
 			$project->usage_task        = 1;
 
@@ -121,6 +153,23 @@ if ($action == 'add') {
 				}
 
 				$project->add_contact($user->id, 'PROJECTLEADER', 'internal');
+
+				// Add commercial to project as SALESREPINTERNAL
+				$salesRepsProject = GETPOST('commercial_project', 'array');
+				$salesRepsThirdParty = GETPOST('commercial', 'array');
+
+				// Héritage: si l'option est cochée, on prend les commerciaux du tiers. Sinon, ceux du projet.
+				if (!empty($conf->global->REEDCRM_PROJECT_COMMERCIAL_INHERIT)) {
+					$salesRepsToAssign = $salesRepsThirdParty;
+				} else {
+					$salesRepsToAssign = $salesRepsProject;
+				}
+
+				if (!empty($salesRepsToAssign) && is_array($salesRepsToAssign) && count($salesRepsToAssign) > 0) {
+					foreach ($salesRepsToAssign as $salesrepId) {
+						$project->add_contact($salesrepId, 'SALESREPINTERNAL', 'internal');
+					}
+				}
 
 				$defaultref = '';
 				$obj        = empty($conf->global->PROJECT_TASK_ADDON) ? 'mod_task_simple' : $conf->global->PROJECT_TASK_ADDON;
@@ -144,6 +193,84 @@ if ($action == 'add') {
 				} else {
 					setEventMessages($task->error, $task->errors, 'errors');
 					$error++;
+				}
+
+				// Address contact: the one carrying the address of the project (PROJECTADDRESS role)
+				$addressContactID = 0;
+				$addressDetail    = trim(GETPOST('address_detail', 'restricthtml'));
+				if (dol_strlen($addressDetail) > 0) {
+					$addressContact = new Contact($db);
+					if (GETPOSTISSET('address_contact_same') && !empty($contactID) && $addressContact->fetch($contactID) > 0) {
+						// Same person as the third party contact, only the address is completed
+						$addressContact->address = $addressDetail;
+						if ($addressContact->update($contactID, $user) > 0) {
+							$addressContactID = $contactID;
+						} else {
+							setEventMessages($addressContact->error, $addressContact->errors, 'errors');
+							$error++;
+						}
+					} else {
+						$addressContact->socid    = !empty($thirdpartyID) ? $thirdpartyID : '';
+						$addressContact->lastname = !empty(GETPOST('lastname_address', 'alpha')) ? GETPOST('lastname_address', 'alpha') : $project->title;
+						$addressContact->address  = $addressDetail;
+
+						$addressContactID = $addressContact->create($user);
+						if ($addressContactID < 0) {
+							setEventMessages($addressContact->error, $addressContact->errors, 'errors');
+							$error++;
+						}
+					}
+				}
+
+				if ($addressContactID > 0) {
+					$project->add_contact($addressContactID, 'PROJECTADDRESS', 'external');
+					$project->array_options['options_projectaddress'] = $addressContactID;
+					$project->updateExtraField('projectaddress');
+
+					if (isModEnabled('categorie') && getDolGlobalInt('REEDCRM_ADDRESS_MAIN_CATEGORY') > 0) {
+						$category->fetch(getDolGlobalInt('REEDCRM_ADDRESS_MAIN_CATEGORY'));
+						$category->add_type($addressContact);
+					}
+
+					// The PROJECT_ADD_CONTACT trigger geolocates from the posted contactid, absent here
+					$addressesList = $geolocation->getDataFromOSM($addressContact);
+					if (!empty($addressesList)) {
+						$geolocation->latitude  = $addressesList[0]->lat;
+						$geolocation->longitude = $addressesList[0]->lon;
+						$geolocation->status    = Geolocation::STATUS_GEOLOCATED;
+					} else {
+						$geolocation->status = Geolocation::STATUS_NOTFOUND;
+					}
+					$geolocation->element_type = 'contact';
+					$geolocation->gis          = 'osm';
+					$geolocation->fk_element   = $addressContactID;
+					$geolocation->create($user);
+
+					$addressContact->array_options['options_address_status'] = $geolocation->status;
+					$addressContact->updateExtraField('address_status');
+				}
+
+				// Project contact (PROJECTCONTRIBUTOR role)
+				$projectContactID = 0;
+				if (GETPOSTISSET('project_contact_same')) {
+					$projectContactID = !empty($contactID) ? $contactID : 0;
+				} elseif (!empty(GETPOST('lastname_project', 'alpha'))) {
+					$projectContact            = new Contact($db);
+					$projectContact->socid     = !empty($thirdpartyID) ? $thirdpartyID : '';
+					$projectContact->lastname  = GETPOST('lastname_project', 'alpha');
+					$projectContact->firstname = GETPOST('firstname_project', 'alpha');
+					$projectContact->phone_pro = GETPOST('phone_pro_project', 'alpha');
+					$projectContact->email     = trim(GETPOST('email_project', 'custom', 0, FILTER_SANITIZE_EMAIL));
+
+					$projectContactID = $projectContact->create($user);
+					if ($projectContactID < 0) {
+						setEventMessages($projectContact->error, $projectContact->errors, 'errors');
+						$error++;
+					}
+				}
+
+				if ($projectContactID > 0) {
+					$project->add_contact($projectContactID, 'PROJECTCONTRIBUTOR', 'external');
 				}
 			} else {
 				$langs->load('errors');

@@ -63,7 +63,7 @@
 
         <tr class="oddeven">
             <td><?php echo $langs->trans("Project"); ?></td><td colspan="3">
-                <?php $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id'); ?>
+                <?php $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id', 64); ?>
             </td>
         </tr>
 

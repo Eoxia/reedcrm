@@ -1,0 +1,489 @@
+/* PWA opportunity detail + relaunch form (view/frontend/pwa_opportunity.php, pwa_relaunch.php) */
+
+.pwa-opportunity-container,
+.pwa-relaunch-container {
+    padding: 15px;
+    /* Room for the sticky relaunch bar / the on-screen keyboard */
+    padding-bottom: 110px;
+}
+
+/* Back link injected in the fixed App header */
+.pwa-opp-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: #e2e8f0;
+    color: #475569 !important;
+    font-size: 13px;
+    font-weight: bold;
+    text-decoration: none !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ------------------------------------------------------------------ Head */
+
+.pwa-opp-head {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+    margin-bottom: 16px;
+
+    .pwa-call-title {
+        /* The label is free text: keep it readable but never let it eat the screen */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+}
+
+.pwa-opp-contact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    .pwa-call-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &--compact .pwa-call-name {
+        font-size: 28px;
+    }
+}
+
+.pwa-opp-contact-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    flex-shrink: 0;
+    height: 52px;
+}
+
+.pwa-call-btn-call--round {
+    flex: 0 0 auto;
+    width: 60px;
+    padding: 0;
+    font-size: 22px;
+}
+
+.pwa-call-phone--empty {
+    color: #94a3b8;
+    font-size: 20px;
+}
+
+/* -------------------------------------------------------------- Timeline */
+
+.pwa-opp-timeline {
+    position: relative;
+    padding-left: 34px;
+
+    /* Vertical rail the avatars sit on */
+    &::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        bottom: 8px;
+        left: 15px;
+        width: 2px;
+        background: #e2e8f0;
+    }
+}
+
+.pwa-opp-timeline-day {
+    /* Sits on top of the rail drawn by .pwa-opp-timeline::before */
+    position: relative;
+    display: inline-block;
+    margin: 4px 0 12px -34px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.pwa-opp-event {
+    position: relative;
+    margin-bottom: 14px;
+}
+
+.pwa-opp-event-bullet {
+    position: absolute;
+    top: 10px;
+    left: -34px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: #94a3b8;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        margin: 0 !important;
+        border: none !important;
+    }
+}
+
+.pwa-opp-event-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.pwa-opp-event-meta {
+    display: flex;
+    padding-right: 24px; /* room for the absolutely placed edit link */
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.pwa-opp-event-user {
+    font-weight: bold;
+    color: #1e293b;
+}
+
+.pwa-opp-event-percent {
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: bold;
+}
+
+.pwa-opp-event-date,
+.pwa-opp-event-id {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.pwa-opp-event-edit {
+    /* Out of the flow: it would otherwise wrap onto an empty line of its own */
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #94a3b8 !important;
+    padding: 4px;
+}
+
+.pwa-opp-event-label {
+    margin-top: 8px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.pwa-opp-event-note {
+    margin-top: 4px;
+    color: #475569;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+/* --------------------------------------------------------- Relaunch bar */
+
+.pwa-opp-relaunch-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 998;
+    padding: 10px 15px calc(10px + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+
+    .reedcrm-relaunch-buttons {
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    /* Bigger hit area than the desktop list widget: this bar is the main action of the page */
+    .reedcrm-relaunch-button {
+        flex: 1;
+        min-width: 0;
+        height: 46px;
+        border-radius: 10px;
+        padding: 0;
+        color: #fff;
+        overflow: visible;
+    }
+
+    .reedcrm-relaunch-btn-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 100%;
+        font-size: 18px;
+    }
+
+    .count-zero .reedcrm-relaunch-btn-content {
+        opacity: 0.75;
+    }
+
+    .reedcrm-relaunch-add {
+        position: absolute;
+        top: -10px;
+        right: -8px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #1e293b;
+        border: 2px solid #fff;
+        color: #fff !important;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+    }
+}
+
+/* --------------------------------------------------------- Relaunch form */
+
+.pwa-relaunch-form {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 16px;
+
+    /* Dolibarr widgets default to inline sizing: stretch them to the phone width */
+    select,
+    input[type="text"],
+    input[type="email"],
+    textarea,
+    .select2-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    textarea,
+    select {
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 16px; /* < 16px makes iOS Safari zoom on focus */
+    }
+
+    textarea {
+        min-height: 120px;
+    }
+
+    label {
+        display: block;
+    }
+
+    /* Dolibarr grids are two dimensional on desktop: one column on a phone */
+    .wpeo-grid {
+        display: block;
+        margin: 0;
+        padding: 0;
+
+        > div {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    /* The tab bar is desktop-sized by default */
+    .tabs {
+        display: flex;
+        margin: 16px 0 12px;
+        border-bottom: 1px solid #e2e8f0;
+        overflow-x: auto;
+
+        .tabsElem {
+            flex: 1 1 0;
+            min-width: 0;
+            text-align: center;
+        }
+
+        .tab {
+            display: block;
+            padding: 8px 2px;
+            /* 11px is what it takes for the three labels to fit a 400px viewport without truncating */
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .pictofixedwidth {
+            width: 16px !important;
+            min-width: 16px !important;
+            padding: 0 !important;
+        }
+
+        /* Below that width the three labels no longer fit alongside their picto, and a readable
+           label beats a decorative icon: drop the icons rather than truncate "Envoyer un email" */
+        @media (max-width: 430px) {
+            .pictofixedwidth {
+                display: none !important;
+            }
+        }
+    }
+
+    /* The ticket tab is a desktop two-column table: stack the label above its field */
+    table.border {
+        display: block;
+        width: 100%;
+
+        tbody,
+        tr,
+        td {
+            display: block;
+            width: 100% !important;
+            max-width: 100% !important;
+            border: none !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        td.titlefield {
+            padding-bottom: 2px !important;
+            font-weight: 600;
+            color: #475569;
+        }
+    }
+
+    /* The rich text editor sizes itself in pixels */
+    .cke,
+    .cke_contents,
+    iframe {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .butAction {
+        display: block;
+        width: 100%;
+        margin: 16px 0 0;
+        padding: 14px;
+        font-size: 16px;
+    }
+}
+
+.pwa-relaunch-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    > label {
+        flex: 0 0 auto;
+        margin: 0;
+    }
+
+    /* select2 wraps the select in a container that must take the remaining room */
+    > .select2-container,
+    > select {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.reedcrm-contact-field-wrapper .reedcrm-add-contact-btn {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 8px;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.pwa-relaunch-form .reedcrm-add-contact-form {
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+
+    label {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #475569;
+    }
+}
+
+.reedcrm-add-contact-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.pwa-relaunch-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .pwa-relaunch-type {
+        flex: 1 1 100%;
+    }
+
+    .pwa-relaunch-date {
+        flex: 1 1 100%;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+
+        input,
+        select {
+            width: auto !important;
+        }
+    }
+}
+
+.pwa-relaunch-form .reminder-fields {
+    margin-top: 12px;
+    padding: 12px;
+    border-left: 3px solid #3b82f6;
+    background: #f8fafc;
+
+    .reminder-date-row,
+    .reminder-user-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+
+        input,
+        select {
+            width: auto !important;
+        }
+    }
+}

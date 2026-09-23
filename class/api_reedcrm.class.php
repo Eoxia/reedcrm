@@ -229,6 +229,204 @@ class ReedCRM extends DolibarrApi
 		];
 	}
 
+	/**
+	 * Get the ticket dashboard of the instance
+	 *
+	 * The dashboard is computed here, on the instance owning the tickets, and comes back ready to be displayed: its
+	 * labels are translated and its links carry the absolute URL of this instance. A caller watching several
+	 * instances has nothing left to compute, and the logged time comes along, which the standard API cannot give:
+	 * the time of a ticket lives on a task only this instance knows how to name.
+	 *
+	 * @param  string $period   Number of days the flow indicators cover, 0 for the whole history
+	 * @param  int    $userid   Id of the assignee the dashboard is restricted to, 0 for every assignee
+	 * @param  int    $tickets  Number of ticket rows to return alongside the dashboard, 0 for none, -1 for all
+	 * @param  int    $openonly 1 to keep only the tickets still open in those rows
+	 * @param  string $lang     Language the labels are rendered in, empty for the language of the instance
+	 * @return array            Dashboard of the instance: widgets, graphs, lists, filters, summary and tickets
+	 *
+	 * @url GET /ticketdashboard
+	 *
+	 * @throws RestException 403 Not allowed
+	 * @throws RestException 501 Ticket module not enabled on the instance
+	 */
+	public function ticketDashboard($period = '365', $userid = 0, $tickets = 0, $openonly = 0, $lang = '', $includeclosed = 1)
+	{
+		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang, $includeclosed);
+
+		$data = $dashboard->load_dashboard();
+		if ((int) $tickets != 0) {
+			$data['tickets'] = $dashboard->getTicketRows((int) $openonly, max(0, (int) $tickets));
+		}
+		$data['instance'] = $this->getInstanceInfo();
+
+		return $this->absolutizeUrls($data, $this->getInstanceUrl());
+	}
+
+	/**
+	 * Get the counters of the ticket dashboard, without the dashboard itself
+	 *
+	 * A caller comparing several instances puts their counters side by side and only opens the dashboard of one of
+	 * them: the summary answers that first screen without rendering any graph.
+	 *
+	 * @param  string $period Number of days the flow indicators cover, 0 for the whole history
+	 * @param  int    $userid Id of the assignee the counters are restricted to, 0 for every assignee
+	 * @return array          Counters of the instance and what identifies it
+	 *
+	 * @url GET /ticketsummary
+	 *
+	 * @throws RestException 403 Not allowed
+	 * @throws RestException 501 Ticket module not enabled on the instance
+	 */
+	public function ticketSummary($period = '365', $userid = 0, $lang = '', $includeclosed = 1)
+	{
+		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang, $includeclosed);
+
+		return [
+			'summary'  => $dashboard->load_summary(),
+			'instance' => $this->getInstanceInfo()
+		];
+	}
+
+	/**
+	 * Get the tickets the ticket dashboard is built on
+	 *
+	 * The rows carry the third party, the assignee, the exchanges and the logged time the dashboard already
+	 * gathered, so a caller listing the tickets of the instance needs this single call.
+	 *
+	 * @param  string $period   Number of days the flow indicators cover, 0 for the whole history
+	 * @param  int    $userid   Id of the assignee the list is restricted to, 0 for every assignee
+	 * @param  int    $openonly 1 to keep only the tickets still open
+	 * @param  int    $limit    Maximum number of rows, 0 for every ticket of the period
+	 * @param  string $lang     Language the labels are rendered in, empty for the language of the instance
+	 * @return array            Tickets of the instance, the most recently created first
+	 *
+	 * @url GET /tickets
+	 *
+	 * @throws RestException 403 Not allowed
+	 * @throws RestException 501 Ticket module not enabled on the instance
+	 */
+	public function ticketList($period = '365', $userid = 0, $openonly = 0, $limit = 100, $lang = '', $includeclosed = 1)
+	{
+		$dashboard = $this->prepareTicketDashboard($period, $userid, $lang, $includeclosed);
+		$dashboard->load_dashboard();
+
+		$data = [
+			'tickets'  => $dashboard->getTicketRows((int) $openonly, max(0, (int) $limit)),
+			'instance' => $this->getInstanceInfo()
+		];
+
+		return $this->absolutizeUrls($data, $this->getInstanceUrl());
+	}
+
+	/**
+	 * Build the ticket dashboard of the instance, with the environment its widgets expect
+	 *
+	 * @param  string $period        Number of days the flow indicators cover, 0 for the whole history
+	 * @param  int    $userid        Id of the assignee the dashboard is restricted to, 0 for every assignee
+	 * @param  string $lang          Language the labels are rendered in, empty for the language of the instance
+	 * @param  int    $includeclosed 1 to count the closed tickets, 0 to read the tickets still open only
+	 * @return ReedcrmTicketDashboard
+	 *
+	 * @throws RestException 403 Not allowed
+	 * @throws RestException 501 Ticket module not enabled on the instance
+	 */
+	private function prepareTicketDashboard($period, $userid, $lang = '', $includeclosed = 1): ReedcrmTicketDashboard
+	{
+		global $db, $langs;
+
+		if (!DolibarrApiAccess::$user->hasRight('reedcrm', 'read') || !DolibarrApiAccess::$user->hasRight('ticket', 'read')) {
+			throw new RestException(403);
+		}
+		if (!isModEnabled('ticket')) {
+			throw new RestException(501, 'Ticket module not enabled on this instance');
+		}
+
+		require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+		require_once __DIR__ . '/reedcrmticketdashboard.class.php';
+
+		// The labels belong to the caller reading them, not to the user whose token was used: the language it
+		// asks for wins over the one of the instance
+		if (!empty($lang) && preg_match('/^[a-z]{2}_[A-Z]{2}$/', $lang)) {
+			$langs->setDefaultLang($lang);
+		}
+
+		// The dashboard renders translated labels: an API request loads none of the language files a page loads
+		$langs->loadLangs(['reedcrm@reedcrm', 'ticket', 'projects', 'companies', 'users', 'other']);
+
+		// The widgets ask the shared form object for their tooltips, an API request has none of the globals of a page
+		if (!isset($GLOBALS['form']) || !is_object($GLOBALS['form'])) {
+			$GLOBALS['form'] = new Form($db);
+		}
+
+		$dashboard = new ReedcrmTicketDashboard($this->db);
+		$dashboard->setFilters((string) $period, (int) $userid, (int) $includeclosed);
+		$dashboard->setUrlRoot($this->getInstanceUrl());
+
+		return $dashboard;
+	}
+
+	/**
+	 * Get what identifies the instance answering the call
+	 *
+	 * @return array Name, URL, entity and ReedCRM version of the instance
+	 */
+	private function getInstanceInfo(): array
+	{
+		global $conf, $mysoc;
+
+		return [
+			'name'    => $mysoc->name,
+			'url'     => $this->getInstanceUrl(),
+			'entity'  => (int) $conf->entity,
+			'version' => getDolGlobalString('REEDCRM_VERSION'),
+			'date'    => dol_now()
+		];
+	}
+
+	/**
+	 * Get the URL the instance is reached at from the outside
+	 *
+	 * DOL_MAIN_URL_ROOT is what the instance knows of itself. An instance published behind a reverse proxy answers
+	 * on another URL, which REEDCRM_API_PUBLIC_URL overrides.
+	 *
+	 * @return string Absolute root URL, without its trailing slash
+	 */
+	private function getInstanceUrl(): string
+	{
+		return rtrim(getDolGlobalString('REEDCRM_API_PUBLIC_URL', DOL_MAIN_URL_ROOT), '/');
+	}
+
+	/**
+	 * Rewrite the links of a payload with the absolute URL of the instance
+	 *
+	 * The dashboard carries rendered HTML, and every link Dolibarr renders is relative to the instance that
+	 * rendered it. Displayed on another instance those links would point at pages of the caller, so they are
+	 * rewritten once, here, rather than being guessed at the other end. Only the links Dolibarr rendered are
+	 * concerned: the dashboard builds its own from the absolute root it was given.
+	 *
+	 * @param  mixed  $data         Payload to walk through
+	 * @param  string $absoluteRoot Absolute root URL of the instance
+	 * @return mixed                Payload whose links are absolute
+	 */
+	private function absolutizeUrls($data, string $absoluteRoot)
+	{
+		if (is_array($data)) {
+			foreach ($data as $key => $value) {
+				$data[$key] = $this->absolutizeUrls($value, $absoluteRoot);
+			}
+
+			return $data;
+		}
+
+		if (!is_string($data) || $data === '') {
+			return $data;
+		}
+
+		// The URLs the dashboard builds itself are already absolute: matching on the attribute leaves them alone,
+		// since what follows it is then the scheme and not the root of the instance
+		return preg_replace('#(href|src)="' . preg_quote(DOL_URL_ROOT, '#') . '/#', '$1="' . $absoluteRoot . '/', $data);
+	}
+
 	// END ALL UNIQUE OBJECT API ROUTE
 
 }

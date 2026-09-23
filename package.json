@@ -1,9 +1,9 @@
 {
   "private": true,
   "scripts": {
-    "build": "cross-env MODULE_NAME=reedcrm node ../saturne/node_modules/gulp/bin/gulp.js --gulpfile ../saturne/gulpfile-shared.js build",
-    "watch": "cross-env MODULE_NAME=reedcrm node ../saturne/node_modules/gulp/bin/gulp.js --gulpfile ../saturne/gulpfile-shared.js watch",
-    "start": "cross-env MODULE_NAME=reedcrm node ../saturne/node_modules/gulp/bin/gulp.js --gulpfile ../saturne/gulpfile-shared.js"
+    "build": "node ../saturne/build-assets.js --module=reedcrm",
+    "watch": "node ../saturne/build-assets.js --module=reedcrm --watch",
+    "start": "node ../saturne/build-assets.js --module=reedcrm --watch"
   },
   "author": "Evarisk",
   "contributors": [
@@ -12,8 +12,5 @@
       "email": "technique@evarisk.com"
     }
   ],
-  "devDependencies": {
-    "cross-env": "^10.1.0"
-  },
   "license": "GPLv3"
 }

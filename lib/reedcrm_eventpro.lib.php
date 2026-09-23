@@ -21,7 +21,16 @@
  * \brief   Library files with common functions for ReedCRM eventPro
  */
 
-function showEventProTabs($id, $fromType, $currentTab): string
+/**
+ * Render the eventPro tab bar (customer note / email / ticket).
+ *
+ * @param  int    $id          Id of the object the events belong to
+ * @param  string $fromType    Element type of that object (project, societe, ...)
+ * @param  string $currentTab  Active tab key
+ * @param  string $extraParams Extra query string (starting with &) kept across tab switches
+ * @return string              HTML output
+ */
+function showEventProTabs($id, $fromType, $currentTab, string $extraParams = ''): string
 {
     global $langs;
 
@@ -45,7 +54,7 @@ function showEventProTabs($id, $fromType, $currentTab): string
         $isActive = ($currentTab == $tabKey);
         $out .= '<div class="inline-block tabsElem' . ($isActive ? ' tabsElemActive' : '') . '">';
             $out .= '<div class="tab tab' . ($isActive ? 'active' : 'unactive') . '">';
-                $out .= '<a class="tab inline-block valignmiddle" href="' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=' . $tabKey . '" title="' . $langs->trans($tabInfos['label']) . '">';
+                $out .= '<a class="tab inline-block valignmiddle" href="' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=' . $tabKey . $extraParams . '" title="' . $langs->trans($tabInfos['label']) . '">';
                     $out .= img_picto($langs->trans($tabInfos['label']), $tabInfos['picto'], 'class="pictofixedwidth"');
                     $out .= $langs->trans($tabInfos['label']);
                 $out .= '</a>';
@@ -306,6 +315,67 @@ function showEventProInfos(CommonObject $object): string
 
     $out .= showLatestProposals($object, $maxSizeShortListLimit);
     $out .= showLatestProjects($object, $maxSizeShortListLimit);
+
+    return $out;
+}
+
+/**
+ * Render a compact opportunity summary header for the project preview modal.
+ *
+ * Shows the project ref + thirdparty, the opportunity amount, the weighted pipeline
+ * (amount x probability / 100), the probability and the opportunity status.
+ *
+ * @param  CommonObject $object Project object
+ * @return string               HTML summary header (empty for non-project objects)
+ */
+function reedcrm_project_summary_header(CommonObject $object): string
+{
+    global $conf, $db, $langs;
+
+    if ($object->element !== 'project') {
+        return '';
+    }
+
+    $langs->load('projects');
+
+    $socName = '';
+    if (!empty($object->socid)) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+        $thirdparty = new Societe($db);
+        if ($thirdparty->fetch($object->socid) > 0) {
+            $socName = $thirdparty->name;
+        }
+    }
+
+    $oppAmount  = (float) $object->opp_amount;
+    $oppPercent = (float) $object->opp_percent;
+    $weighted   = $oppAmount * $oppPercent / 100;
+
+    $statusLabel = '';
+    if (!empty($object->fk_opp_status)) {
+        $statusLabel = $langs->trans(dol_getIdFromCode($db, $object->fk_opp_status, 'c_lead_status', 'rowid', 'label'));
+    }
+
+    $metrics = [
+        ['label' => $langs->trans('OpportunityAmount'),           'value' => price($oppAmount, 0, $langs, 1, -1, -1, $conf->currency)],
+        ['label' => $langs->trans('ReedCRMKpiWeightedAmount'),    'value' => price($weighted, 0, $langs, 1, -1, -1, $conf->currency)],
+        ['label' => $langs->trans('OpportunityProbabilityShort'), 'value' => price2num($oppPercent, 1) . ' %'],
+    ];
+    if ($statusLabel !== '') {
+        $metrics[] = ['label' => $langs->trans('OpportunityStatus'), 'value' => dol_escape_htmltag($statusLabel)];
+    }
+
+    $out  = '<div class="reedcrm-preview-summary">';
+    $out .= '<div class="reedcrm-preview-summary-title">' . dol_escape_htmltag($object->ref) . ($socName !== '' ? ' — ' . dol_escape_htmltag($socName) : '') . '</div>';
+    $out .= '<div class="reedcrm-preview-summary-metrics">';
+    foreach ($metrics as $metric) {
+        $out .= '<div class="reedcrm-preview-metric">';
+        $out .= '<span class="reedcrm-preview-metric-label">' . $metric['label'] . '</span>';
+        $out .= '<span class="reedcrm-preview-metric-value">' . $metric['value'] . '</span>';
+        $out .= '</div>';
+    }
+    $out .= '</div>';
+    $out .= '</div>';
 
     return $out;
 }

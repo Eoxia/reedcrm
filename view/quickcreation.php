@@ -48,6 +48,9 @@ if (isModEnabled('categorie')) {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 }
 
+// Load ReedCRM librairies
+require_once __DIR__ . '/../class/geolocation.class.php';
+
 // Global variables definitions
 global $conf, $db, $hookmanager, $mysoc, $langs, $user;
 
@@ -73,6 +76,7 @@ if (isModEnabled('societe')) {
     $thirdparty = new Societe($db);
     $contact    = new Contact($db);
 }
+$geolocation = new Geolocation($db);
 
 // Initialize view objects
 $form = new Form($db);
@@ -88,10 +92,10 @@ $hookmanager->initHooks(['reedcrm_quickcreation']); // Note that conf->hooks_mod
 $date_start = dol_mktime(0, 0, 0, GETPOST('projectstartmonth', 'int'), GETPOST('projectstartday', 'int'), GETPOST('projectstartyear', 'int'));
 
 // Security check - Protection if external user
-$permissiontoread          = $user->rights->reedcrm->read;
-$permissiontoaddproject    = $user->rights->projet->creer;
-$permissiontoaddthirdparty = $user->rights->societe->creer;
-$permissiontoaddcontact    = $user->rights->societe->contact->creer;
+$permissiontoread          = $user->hasRight('reedcrm', 'read');
+$permissiontoaddproject    = $user->hasRight('projet', 'creer');
+$permissiontoaddthirdparty = $user->hasRight('societe', 'creer');
+$permissiontoaddcontact    = $user->hasRight('societe', 'contact', 'creer');
 saturne_check_access($permissiontoread);
 
 /*
@@ -111,6 +115,12 @@ if (empty($reshook)) {
         header('Location: ' . dol_buildpath('/reedcrm/reedcrmindex.php', 1));
         exit;
     }
+    // Prefill the third party form with the company selected in the SIREN search (module Sirene)
+    if ($action == 'sirene_set_company_infos' && isModEnabled('societe') && isModEnabled('sirene') && dol_include_once('/sirene/class/actions_sirene.class.php')) {
+        $actionsSirene = new ActionsSirene($db);
+        $actionsSirene->doActions(['context' => 'thirdpartycard'], $thirdparty, $action, $hookmanager);
+    }
+
 	require_once __DIR__ . '/../core/tpl/reedcrm_quickcreation_actions.tpl.php';
 }
 

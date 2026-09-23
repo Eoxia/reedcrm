@@ -98,6 +98,16 @@ if ($action == 'import_projects') {
 
         $resUpload = dol_move_uploaded_file($uploadedFile['tmp_name'], $destPath, 1, 0, $uploadedFile['error'], $uploadedFile['size']);
         if ($resUpload > 0) {
+            // Build existing project categories for native multiselect
+            $existingCats = [];
+            $catTmp = new Categorie($db);
+            $catList = $catTmp->rechercher(0, '', Categorie::TYPE_PROJECT, true);
+            if (is_array($catList)) {
+                foreach ($catList as $cat) {
+                    $existingCats[$cat->id] = $cat->label;
+                }
+            }
+
             $formquestion = [
                 [
                     'type'  => 'hidden',
@@ -105,11 +115,18 @@ if ($action == 'import_projects') {
                     'value' => $uniqueName
                 ],
                 [
-                    'type'     => 'text',
-                    'label'    => $langs->trans('CategoryName'),
-                    'name'     => 'category_name',
-                    'required' => 1
-                ]
+                    'type'    => 'multiselect',
+                    'label'   => $langs->trans('ChooseExistingTag'),
+                    'name'    => 'existing_category_ids',
+                    'values'  => $existingCats,
+                    'default' => [],
+                    'morecss' => 'minwidth300',
+                ],
+                [
+                    'type'  => 'text',
+                    'label' => $langs->trans('OrCreateNewTag'),
+                    'name'  => 'category_name',
+                ],
             ];
             $formconfirm = $form->formconfirm(
                 $_SERVER['PHP_SELF'],
@@ -132,9 +149,13 @@ if ($action == 'import_projects') {
 
 if ($action == 'confirm_import_projects') {
     $importFile = GETPOST('import_file', 'alpha');
+    $existingCategoryIds = GETPOST('existing_category_ids', 'array');
     $categoryName = trim(GETPOST('category_name', 'alphanohtml'));
 
-    if (empty($importFile) || empty($categoryName)) {
+    // Clean existing IDs
+    $existingCategoryIds = array_filter(array_map('intval', $existingCategoryIds));
+
+    if (empty($importFile) || (empty($existingCategoryIds) && empty($categoryName))) {
         setEventMessages($langs->trans('ImportParametersMissing'), null, 'errors');
         $action = 'view';
     } else {
@@ -143,20 +164,71 @@ if ($action == 'confirm_import_projects') {
             setEventMessages($langs->trans('ImportFileNotFound'), null, 'errors');
             $action = 'view';
         } else {
-            $category = new Categorie($db);
-            $resCat = $category->fetch(0, $categoryName, 'project');
-            if ($resCat <= 0) {
-                $category->type = Categorie::TYPE_PROJECT;
-                $category->label = $categoryName;
-                $resCat = $category->create($user);
-            }
-            list($modProject) = saturne_require_objects_mod(['project' => $conf->global->PROJECT_ADDON]);
+            $categoryIds = [];
+            $categoryNameForArchive = '';
 
-            if ($resCat > 0) {
-                $categoryId = $category->id;
+            // Fetch all selected existing categories
+            foreach ($existingCategoryIds as $eCatId) {
+                $catTmp = new Categorie($db);
+                if ($catTmp->fetch($eCatId) > 0) {
+                    $categoryIds[] = $catTmp->id;
+                    if (empty($categoryNameForArchive)) {
+                        $categoryNameForArchive = $catTmp->label;
+                    }
+                }
+            }
+
+            // Handle new category name
+            if (!empty($categoryName)) {
+                $catNew = new Categorie($db);
+                $resCat = $catNew->fetch(0, $categoryName, 'project');
+                if ($resCat > 0 && !GETPOSTINT('confirm_use_existing')) {
+                    $formquestion = [
+                        ['type' => 'hidden', 'name' => 'import_file', 'value' => $importFile],
+                        ['type' => 'hidden', 'name' => 'category_name', 'value' => $categoryName],
+                        ['type' => 'hidden', 'name' => 'confirm_use_existing', 'value' => 1],
+                    ];
+                    // Re-pass existing category IDs as hidden fields
+                    foreach ($existingCategoryIds as $hidCatId) {
+                        $formquestion[] = ['type' => 'hidden', 'name' => 'existing_category_ids[]', 'value' => $hidCatId];
+                    }
+                    $formconfirm = $form->formconfirm(
+                        $_SERVER['PHP_SELF'],
+                        $langs->trans('TagAlreadyExistsTitle'),
+                        $langs->trans('TagAlreadyExistsQuestion', $categoryName),
+                        'confirm_import_projects',
+                        $formquestion,
+                        '',
+                        1,
+                        300
+                    );
+                    $action = 'view';
+                    goto skipImport;
+                }
+                if ($resCat <= 0) {
+                    $catNew->type = Categorie::TYPE_PROJECT;
+                    $catNew->label = $categoryName;
+                    $resCat = $catNew->create($user);
+                }
+                if ($catNew->id > 0) {
+                    $categoryIds[] = $catNew->id;
+                    if (empty($categoryNameForArchive)) {
+                        $categoryNameForArchive = $catNew->label;
+                    }
+                }
+            }
+
+            if (empty($categoryIds)) {
+                setEventMessages($langs->trans('CategoryCreationError'), null, 'errors');
+                dol_delete_file($fullPath);
+            } else {
+                list($modProject) = saturne_require_objects_mod(['project' => getDolGlobalString('PROJECT_ADDON')]);
+                $categoryId = $categoryIds[0];
                 $handle = fopen($fullPath, 'r');
                 if ($handle) {
                     $firstLine = fgets($handle);
+                    $firstLine = preg_replace('/^\x{FEFF}/u', '', $firstLine);
+                    $firstLine = str_replace("\xEF\xBB\xBF", '', $firstLine);
                     $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
                     $headers = array_map('trim', str_getcsv($firstLine, $delimiter));
                     $map = [];
@@ -204,7 +276,7 @@ if ($action == 'confirm_import_projects') {
                             $resCreate = $proj->create($user);
 
                             if ($resCreate > 0) {
-                                $resSetCat = $proj->setCategories(array($categoryId), Categorie::TYPE_PROJECT);
+                                $resSetCat = $proj->setCategories($categoryIds, Categorie::TYPE_PROJECT);
                                 if ($resSetCat <= 0) {
                                     $errors++;
                                     continue;
@@ -217,7 +289,7 @@ if ($action == 'confirm_import_projects') {
 
                         fclose($handle);
 
-                        reedcrm_archive_import_file($fullPath, $categoryName, $importHistoryDir, $categoryId);
+                        reedcrm_archive_import_file($fullPath, $categoryNameForArchive, $importHistoryDir, $categoryId);
 
                         if ($created > 0) {
                             setEventMessages($langs->trans('ProjectsImported', $created, $total), null, 'mesgs');
@@ -230,9 +302,6 @@ if ($action == 'confirm_import_projects') {
                     setEventMessages($langs->trans('ImportFileNotReadable'), null, 'errors');
                     dol_delete_file($fullPath);
                 }
-            } else {
-                setEventMessages($langs->trans('CategoryCreationError'), $category->errors, 'errors');
-                dol_delete_file($fullPath);
             }
         }
     }
@@ -240,6 +309,7 @@ if ($action == 'confirm_import_projects') {
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
 }
+skipImport:
 
 
 /*
@@ -283,8 +353,71 @@ print '</td></tr>';
 print '</table>';
 print '</form>';
 
+// Import history inline
 print '<br>';
-print '<a href="' . dol_buildpath('/custom/reedcrm/view/reedcrm_imported_projects.php', 1) . '" class="butAction">' . $langs->trans('ViewImportHistory') . '</a>';
+print load_fiche_titre($langs->trans('ImportHistory'), '', '');
+
+$historyFiles = [];
+if (is_dir($importHistoryDir)) {
+    $historyFiles = dol_dir_list($importHistoryDir, 'files', 1, '', '', 'date', SORT_DESC);
+}
+
+if (empty($historyFiles)) {
+    print '<div class="opacitymedium">' . $langs->trans('None') . '</div>';
+} else {
+    print '<div class="div-table-responsive-no-min">';
+    print '<table class="noborder centpercent">';
+    print '<tr class="liste_titre">';
+    print '<td>' . $langs->trans('Tag') . '</td>';
+    print '<td>' . $langs->trans('File') . '</td>';
+    print '<td class="center">' . $langs->trans('Date') . '</td>';
+    print '<td class="center">' . $langs->trans('NbLines') . '</td>';
+    print '</tr>';
+
+    $categoryCache = [];
+    foreach ($historyFiles as $fileInfo) {
+        $relative = ltrim(str_replace($importHistoryDir, '', $fileInfo['fullname']), '/\\');
+        $parts = preg_split('#[\\\\/]+#', $relative, 2);
+        $folderName = $parts[0] ?: '';
+        $catId = 0;
+
+        if (is_numeric($folderName) && (int) $folderName > 0) {
+            $catId = (int) $folderName;
+        }
+
+        $fileName = $fileInfo['name'];
+        $downloadPath = 'import/project/' . $folderName . '/' . $fileName;
+        $downloadUrl = DOL_URL_ROOT . '/document.php?modulepart=reedcrm&attachment=1&file=' . urlencode($downloadPath);
+
+        $tagDisplay = '-';
+        if ($catId > 0) {
+            if (!array_key_exists($catId, $categoryCache)) {
+                $catObj = new Categorie($db);
+                if ($catObj->fetch($catId) > 0) {
+                    $categoryCache[$catId] = $catObj;
+                } else {
+                    $categoryCache[$catId] = null;
+                }
+            }
+            if (!empty($categoryCache[$catId])) {
+                $label = $categoryCache[$catId]->label;
+                $listUrl = DOL_URL_ROOT . '/projet/list.php?search_category_project_list[]=' . $catId;
+                $tagDisplay = '<a class="badge badge-status4" href="' . $listUrl . '">' . dol_escape_htmltag($label) . '</a>';
+            }
+        }
+
+        print '<tr class="oddeven">';
+        print '<td>' . $tagDisplay . '</td>';
+        print '<td><a href="' . $downloadUrl . '">' . dol_escape_htmltag($fileName) . '</a></td>';
+        $lineCount = reedcrm_count_csv_lines($fileInfo['fullname']);
+        print '<td class="center">' . dol_print_date($fileInfo['date'] ?: dol_now(), 'dayhour') . '</td>';
+        print '<td class="center">' . ($lineCount !== null ? (int) $lineCount : '-') . '</td>';
+        print '</tr>';
+    }
+
+    print '</table>';
+    print '</div>';
+}
 
 llxFooter();
 $db->close();

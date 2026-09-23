@@ -21,8 +21,11 @@ saturne_load_langs(['projects', 'users', 'companies', 'main']);
 
 $title    = $langs->trans('Projects');
 $help_url = 'FR:Module_ReedCRM';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS  = ['/custom/reedcrm/css/reedcrm.min.css'];
+$moreJS   = [
+    '/custom/saturne/js/saturne.min.js',
+    '/custom/reedcrm/js/reedcrm.min.js'
+];
+$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -36,13 +39,37 @@ if (!empty($action)) {
     $task    = new Task($db);
     $extraFields = new ExtraFields($db);
     $extraFields->fetch_name_optionals_label($project->table_element);
-    $permissionToAddProject = $user->rights->projet->creer;
+    $permissionToAddProject = $user->hasRight('projet', 'creer');
     require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_quickcreation_actions_frontend.tpl.php';
 }
 
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-projets-list');
 
-if (!$user->rights->projet->lire) {
+print '<style>
+.gmail-pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: #475569 !important;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+}
+.gmail-pagination-btn:hover {
+    background-color: #e2e8f0;
+    color: #1e293b !important;
+}
+.gmail-pagination-btn.disabled {
+    color: #cbd5e0 !important;
+    cursor: not-allowed;
+    background: transparent;
+}
+</style>';
+
+if (!$user->hasRight('projet', 'lire')) {
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);
     exit;
 }
@@ -95,9 +122,36 @@ if (!empty($searchStr)) {
 }
 $searchHtml .= '  </form>';
 
-$pwaHeaderCenterHtml = '<div style="display: flex; align-items: center; width: 100%; justify-content: center;">';
-$pwaHeaderCenterHtml .= '  <div style="white-space: nowrap; background: #e2e8f0; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: bold; color: #475569;"><i class="fas fa-project-diagram"></i> ' . $totalProjects . '</div>';
+$startItem = $totalProjects > 0 ? $offset + 1 : 0;
+$endItem = min($offset + $nbResults, $totalProjects);
+
+$paginationHtml = '';
+$totalPages = ceil($totalProjects / $limit);
+if ($totalPages > 1) {
+    $paginationHtml .= '<div class="gmail-pagination" style="display: flex; align-items: center; gap: 4px; font-size: 13px; color: #475569; font-weight: 500; margin-left: 10px; white-space: nowrap;">';
+    $paginationHtml .= '<span>' . $startItem . '-' . $endItem . ' sur ' . $totalProjects . '</span>';
+    
+    // Prev Button
+    if ($page > 0) {
+        $prevUrl = $_SERVER['PHP_SELF'] . '?page=' . ($page - 1) . (!empty($searchStr) ? '&s=' . urlencode($searchStr) : '');
+        $paginationHtml .= '<a href="' . $prevUrl . '" class="gmail-pagination-btn"><i class="fas fa-chevron-left"></i></a>';
+    } else {
+        $paginationHtml .= '<span class="gmail-pagination-btn disabled"><i class="fas fa-chevron-left"></i></span>';
+    }
+    
+    // Next Button
+    if ($page < ($totalPages - 1)) {
+        $nextUrl = $_SERVER['PHP_SELF'] . '?page=' . ($page + 1) . (!empty($searchStr) ? '&s=' . urlencode($searchStr) : '');
+        $paginationHtml .= '<a href="' . $nextUrl . '" class="gmail-pagination-btn"><i class="fas fa-chevron-right"></i></a>';
+    } else {
+        $paginationHtml .= '<span class="gmail-pagination-btn disabled"><i class="fas fa-chevron-right"></i></span>';
+    }
+    $paginationHtml .= '</div>';
+}
+
+$pwaHeaderCenterHtml = '<div style="display: flex; align-items: center; width: 100%; justify-content: center; gap: 8px;">';
 $pwaHeaderCenterHtml .=    $searchHtml;
+$pwaHeaderCenterHtml .=    $paginationHtml;
 $pwaHeaderCenterHtml .= '</div>';
 
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
@@ -117,37 +171,15 @@ if (!empty($latestProjects)) {
     print '</div>';
 }
 
-// --- PAGINATION ---
-$totalPages = ceil($totalProjects / $limit);
-if ($totalPages > 1) {
-    print '<div class="pwa-pagination" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; margin-bottom: 10px;">';
-    
-    // Prev Button
-    if ($page > 0) {
-        $prevUrl = $_SERVER['PHP_SELF'] . '?page=' . ($page - 1) . (!empty($searchStr) ? '&s=' . urlencode($searchStr) : '');
-        print '<a href="' . $prevUrl . '" style="background: #fff; border: 1px solid #cbd5e0; border-radius: 20px; padding: 6px 14px; text-decoration: none; color: #475569; font-weight: 500; font-size: 0.9em;"><i class="fas fa-chevron-left" style="margin-right: 6px;"></i> Précédent</a>';
-    } else {
-        print '<span style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 14px; color: #94a3b8; font-weight: 500; font-size: 0.9em; cursor: not-allowed;"><i class="fas fa-chevron-left" style="margin-right: 6px;"></i> Précédent</span>';
-    }
-    
-    // Middle Info
-    print '<span style="color: #64748b; font-size: 0.9em; font-weight: bold;">' . ($page + 1) . ' / ' . $totalPages . '</span>';
-    
-    // Next Button
-    if ($page < ($totalPages - 1)) {
-        $nextUrl = $_SERVER['PHP_SELF'] . '?page=' . ($page + 1) . (!empty($searchStr) ? '&s=' . urlencode($searchStr) : '');
-        print '<a href="' . $nextUrl . '" style="background: #fff; border: 1px solid #cbd5e0; border-radius: 20px; padding: 6px 14px; text-decoration: none; color: #475569; font-weight: 500; font-size: 0.9em;">Suivant <i class="fas fa-chevron-right" style="margin-left: 6px;"></i></a>';
-    } else {
-        print '<span style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 14px; color: #94a3b8; font-weight: 500; font-size: 0.9em; cursor: not-allowed;">Suivant <i class="fas fa-chevron-right" style="margin-left: 6px;"></i></span>';
-    }
-    
-    print '</div>';
-}
+
 
 print '</div>';
 
 // Include the Bottom Navigation Bar for App
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
+
+// Include Saturne Photo Editor Modal (Required for photo uploads)
+include dol_buildpath('/saturne/core/tpl/medias/photo_editor_modal.tpl.php');
 
 llxFooter();
 $db->close();

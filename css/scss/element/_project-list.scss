@@ -1,3 +1,195 @@
+// Quick-access actions in the project ref cell (call / email / preview)
+.reedcrm-ref-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.reedcrm-row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.reedcrm-row-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-size: 12px;
+    color: #6c7a89;
+    background: #fff;
+    border: 1px solid #d4d8dd;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+        color: #2c7be5;
+        border-color: #2c7be5;
+        text-decoration: none;
+    }
+}
+
+// Inline-editable text spans inside merged cells (coordonnées, etc.) — clickable even when empty
+.reedcrm-ce-inline {
+    display: inline-block;
+    min-width: 40px;
+    min-height: 1em;
+}
+
+// Status shown as a single colored dot (per-user display preference)
+.reedcrm-status-dot {
+    position: relative;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #b0b6bd;
+    vertical-align: middle;
+}
+
+// Small custom tooltip on hover
+.reedcrm-status-dot[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 7px;
+    font-size: 11px;
+    line-height: 1.2;
+    color: #fff;
+    background: #2b2b2b;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.reedcrm-status-dot[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: #2b2b2b;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.reedcrm-status-dot-0 {
+    background: #b0b6bd;
+}
+
+.reedcrm-status-dot-1 {
+    background: #27ae60;
+}
+
+.reedcrm-status-dot-2 {
+    background: #6c7a89;
+}
+
+// Density: tighten the merged cells and rows so more opportunities fit without scrolling.
+// Applied only in "compact" mode (per-user toggle in the customize bar); "comfortable" keeps the
+// roomier default. Scoped via :has on the customize bar's data-density marker.
+body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
+    table.liste tbody { font-size: 12px; }
+
+    .reedcrm-opp-cell,
+    .reedcrm-dates-cell {
+        gap: 0;
+        font-size: 12px;
+        line-height: 1.15;
+    }
+
+    .reedcrm-opp-cell-amount i { margin-right: 2px; }
+
+    .reedcrm-dates-cell .reedcrm-dates-row > i {
+        font-size: 11px;
+    }
+
+    .reedcrm-plist-coordonnees {
+        padding: 0 3px;
+        gap: 5px;
+        font-size: 11px;
+
+        .reedcrm-plist-coordonnees-name,
+        .reedcrm-plist-coordonnees-email,
+        .reedcrm-plist-coordonnees-website {
+            margin-bottom: 0;
+            line-height: 1.15;
+            font-size: 11px;
+        }
+
+        .reedcrm-plist-coordonnees-avatar { display: none; }
+    }
+
+    // Smaller relaunch buttons (they were the tallest element in each row)
+    .reedcrm-plist-relaunch-wrapper .reedcrm-plist-relaunch-buttons .reedcrm-relaunch-button .reedcrm-plist-relaunch-btn-content {
+        width: 34px;
+        height: 26px;
+        font-size: 0.8em;
+    }
+
+    // Compact the inline opportunity status select
+    .reedcrm-opp-status-select,
+    .saturne-inline-select {
+        height: 22px;
+        padding: 0 2px;
+        font-size: 11px;
+    }
+}
+
+// Merged dates cell (start + end)
+.reedcrm-dates-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    white-space: nowrap;
+
+    .reedcrm-dates-row {
+        display: flex;
+        align-items: center;
+
+        > i {
+            color: #6c7a89;
+            margin-right: 4px;
+            width: 14px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        // Keep the empty datepicker target clickable
+        .contenteditable {
+            min-width: 70px;
+        }
+    }
+}
+
+// Merged opportunity cell (status + probability + amount)
+.reedcrm-opp-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reedcrm-opp-cell-amount {
+    font-weight: 600;
+    color: #2b2b2b;
+    white-space: nowrap;
+
+    i {
+        color: #6c7a89;
+        margin-right: 3px;
+    }
+}
+
 .reedcrm-plist-relaunch-wrapper {
     display: flex;
     align-items: center;
@@ -5,13 +197,13 @@
     gap: 15px;
 
     .reedcrm-plist-relaunch-buttons {
-        display: flex;
-        align-items: center;
+        display: flex !important;
+        align-items: center !important;
         gap: 10px;
 
         // Reset the global styling provided by event-pro.scss to adhere to custom look
         .reedcrm-relaunch-button {
-            position: relative;
+            position: relative !important;
             background: transparent !important;
             border: none;
             padding: 0;
@@ -19,70 +211,93 @@
             width: auto;
             height: auto;
             min-width: auto;
+            overflow: visible !important;
 
             &:nth-child(n) {
                 background: transparent !important;
             }
 
             .reedcrm-plist-relaunch-btn-content {
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
                 width: 44px;
                 height: 36px;
-                color: white;
+                color: white !important;
                 border-radius: 4px;
                 font-size: 0.9em;
                 cursor: pointer;
 
-                i {
-                    margin-right: 4px;
+                i, i.fas, i.fa, span.fa, span.fas, svg.svg-inline--fa {
+                    display: inline-block !important;
+                    margin-right: 4px !important;
+                    font-style: normal !important;
+                    font-weight: 900 !important;
+                    font-family: 'Font Awesome 5 Free', 'Font Awesome 5 Brands', 'FontAwesome' !important;
+                    -webkit-font-smoothing: antialiased;
                 }
 
                 .reedcrm-plist-relaunch-count {
-                    font-weight: 600;
+                    display: inline-block !important;
+                    font-weight: 600 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
             }
 
             &.reedcrm-plist-relaunch-btn-call .reedcrm-plist-relaunch-btn-content {
-                background-color: #648FFF;
+                background-color: #648FFF !important;
             }
             &.reedcrm-plist-relaunch-btn-email .reedcrm-plist-relaunch-btn-content {
-                background-color: #DC267F;
+                background-color: #DC267F !important;
             }
             &.reedcrm-plist-relaunch-btn-rdv .reedcrm-plist-relaunch-btn-content {
-                background-color: #FE6100;
+                background-color: #FE6100 !important;
             }
             &.reedcrm-plist-relaunch-btn-other .reedcrm-plist-relaunch-btn-content {
-                background-color: #FFB000;
+                background-color: #FFB000 !important;
             }
 
             .reedcrm-plist-relaunch-btn-content.count-zero {
-                filter: grayscale(0.3) opacity(0.8);
+                filter: grayscale(0.3) opacity(0.8) !important;
             }
 
             // The 'plus' quick add button
             .reedcrm-plist-relaunch-add {
-                position: absolute;
-                top: -9px;
-                right: -9px;
-                width: 20px;
-                height: 20px;
-                background-color: #9283ba;
-                color: white;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 0.85em;
+                position: absolute !important;
+                top: -9px !important;
+                right: -9px !important;
+                width: 20px !important;
+                height: 20px !important;
+                background-color: #9283ba !important;
+                color: white !important;
+                border-radius: 50% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 0.85em !important;
                 cursor: pointer;
-                border: 1.5px solid white;
-                line-height: 1;
+                border: 1.5px solid white !important;
+                line-height: 1 !important;
+                z-index: 2 !important;
+                margin: 0 !important;
+                padding: 0 !important;
 
                 &:hover {
-                    background-color: #aa9cd0;
+                    background-color: #aa9cd0 !important;
                     transform: scale(1.1);
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                }
+
+                // Ensure the plus icon inside also renders with proper FontAwesome overrides
+                i, i.fas, i.fa, span.fa, span.fas, svg.svg-inline--fa, &::before {
+                    display: inline-block !important;
+                    font-style: normal !important;
+                    font-weight: 900 !important;
+                    font-family: 'Font Awesome 5 Free', 'Font Awesome 5 Brands', 'FontAwesome' !important;
+                    -webkit-font-smoothing: antialiased;
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
             }
         }
@@ -119,6 +334,12 @@
             }
         }
     }
+}
+
+// The list title's total-record count (e.g. "(302)") duplicates the KPI count card, so hide it
+// on lists that show the KPI banner (scoped via :has so other lists keep their count).
+body:has(.saturne-kpi-cards) .totalnboflines {
+    display: none;
 }
 
 // Contact Coordinates specific logic
@@ -189,4 +410,9 @@
             }
         }
     }
+}
+
+// Fix z-index for jQuery UI datepicker in Saturne dropdowns
+#ui-datepicker-div {
+    z-index: 9999 !important;
 }

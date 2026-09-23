@@ -81,7 +81,7 @@ class modReedCRM extends DolibarrModules
         //$this->editor_squarred_logo = ''; // Must be image filename into the reedcrm/img directory followed with @reedcrm. Example: 'reedcrm.png@reedcrm'
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '23.0.0';
+        $this->version = '23.3.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -116,28 +116,13 @@ class modReedCRM extends DolibarrModules
             // Set this to 1 if module has its own theme directory (theme)
             'theme' => 0,
             // Set this to relative path of css file if module has its own css file
-            'css' => [],
+            'css' => ['/reedcrm/css/reedcrm_menu.css'],
             // Set this to relative path of js file if module must load a js on all pages
             'js' => [],
             // Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all')
             /* BEGIN MODULEBUILDER HOOKSCONTEXTS */
             'hooks' => [
-                'thirdpartycomm',
-                'projectcard',
-                'projectlist',
-                'projectdao',
-                'propalcard',
-                'propallist',
-                'invoicereccard',
-                'invoicereccontact',
-                'invoicereclist',
-                'invoicelist',
-                'invoicecard',
-                'contactcard',
-                'thirdpartycard',
-                'thirdpartylist',
-                'main',
-                'pwaadmin'
+                'all'
             ],
             /* END MODULEBUILDER HOOKSCONTEXTS */
             // Set this to 1 if features of module are opened to external users
@@ -149,7 +134,7 @@ class modReedCRM extends DolibarrModules
         ];
 
         // Data directories to create when module is enabled
-        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/project'];
+        $this->dirs = ['/reedcrm/temp', '/reedcrm/import', '/reedcrm/import/project', '/reedcrm/call_list'];
 
         // Config pages. Put here list of php page, stored into reedcrm/admin directory, to use to set up module
         $this->config_page_url = ['setup.php@reedcrm'];
@@ -202,6 +187,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_CONTACT_JOB_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_CONTACT_PHONEPRO_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_CONTACT_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_CONTACT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
 
             // CONST PROJECT
             $i++ => ['REEDCRM_PROJECT_LABEL_VISIBLE', 'integer', 1, '', 0, 'current'],
@@ -209,6 +195,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_STATUS_VALUE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE', 'integer', 3000, '', 0, 'current'],
+            $i++ => ['REEDCRM_PROJECT_COMMERCIAL_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_DATE_START_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE', 'integer', 1, '', 0, 'current'],
@@ -231,6 +218,11 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_EVENT_STATUS_VALUE', 'integer', -1, '', 0, 'current'],
             $i++ => ['REEDCRM_EVENT_DESCRIPTION_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_EVENT_CATEGORIES_VISIBLE', 'integer', 1, '', 0, 'current'],
+            // CONST QUICK CLOSE EVENT
+            $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'chaine', 'm', '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_VALUE', 'integer', 7, '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', 'chaine', 'buttons', '', 0, 'current'],
 
             // QUICK CREATION
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],
@@ -243,18 +235,60 @@ class modReedCRM extends DolibarrModules
             //$i++ => ['REEDCRM_DISPLAY_MAIN_ADDRESS', 'integer', 0, '', 0, 'current'],
             $i++ => ['REEDCRM_ADDRESS_ADDON', 'chaine', 'mod_address_standard', '', 0, 'current'],
 
+            // CONST RECURRING INVOICE FOLLOW-UP
+            $i++ => ['REEDCRM_RECURRINGINVOICEFOLLOWUP_ADDON', 'chaine', 'mod_recurringinvoicefollowup_standard', '', 0, 'current'],
+            $i++ => ['REEDCRM_DU_ALERT_OFFSET_MONTHS', 'integer', 1, '', 0, 'current'],
+
+            // CONST DU FOLLOW-UP
+            // Off by default: the DU audit board is wired to Evarisk's own references (products
+            // DU_A%, D1 to D5, digirisk.com projects), so it means nothing on a customer install.
+            $i++ => ['REEDCRM_DU_FOLLOWUP_ENABLED', 'integer', 0, '', 0, 'current'],
+
+            // CONST INTERVENTION DATE
+            $i++ => ['REEDCRM_INTERVENTION_DATE_ENABLED', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_INTERVENTION_DATE_CREATE_EVENT', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_INTERVENTION_DATE_DEFAULT_DURATION', 'integer', 60, '', 0, 'current'],
+            $i++ => ['REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', 'integer', 24, '', 0, 'current'],
+            $i++ => ['REEDCRM_INTERVENTION_DATE_FROM', 'chaine', '2026-08-15', '', 0, 'current'],
+            // Comma separated list of product category rowids
+            $i++ => ['REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', 'chaine', '', '', 0, 'current'],
+
+            // CONST CALL LIST
+            $i++ => ['REEDCRM_CALL_LIST_ADDON', 'chaine', 'mod_call_list_standard', '', 0, 'current'],
+            $i++ => ['REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'chaine', 'pdf_calllist_standard', '', 0, 'current'],
+
+            // CONST POCKET
+            // The API key and the imported folder are deliberately left empty: nothing is fetched
+            // from Pocket until an admin fills them in admin/pocket.php
+            $i++ => ['REEDCRM_POCKET_API_KEY', 'chaine', '', '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_FOLDER_ID', 'chaine', '', '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_FOLDER_LABEL', 'chaine', '', '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_THIRDPARTY', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_PROJECT', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_TICKET', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_INVOICE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_PROPAL', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_CONTACT', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_ORDER', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_CONTRACT', 'integer', 0, '', 0, 'current'],
+            $i++ => ['REEDCRM_POCKET_LINK_TASK', 'integer', 0, '', 0, 'current'],
+
             // CONST MODULE
             $i++ => ['REEDCRM_VERSION','chaine', $this->version, '', 0, 'current'],
             $i++ => ['REEDCRM_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
             $i++ => ['REEDCRM_SHOW_PATCH_NOTE', 'integer', 1, '', 0, 'current'],
-            $i   => ['REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current']
+            $i++ => ['REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', 'integer', 0, '', 0, 'current'],
+            $i   => ['REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', 'integer', 0, '', 0, 'current']
         ];
 
         // Some keys to add into the overwriting translation tables
         $this->overwrite_translation = [
             'fr_FR:ActionAC_EMAIL_IN' => 'Email entrant',
             'fr_FR:ActionAC_EMAIL'    => 'Email sortant',
-            'fr_FR:ActionAC_RDV'      => 'Rendez-vous physique ou visioconférence'
+            'fr_FR:ActionAC_RDV'      => 'Rendez-vous physique ou visioconférence',
+            'fr_FR:ReadMyCallLists'   => 'Voir mes listes d\'appel',
+            'fr_FR:ReadSubordinatesCallLists' => 'Voir les listes d\'appel de mes subordonnés',
+            'fr_FR:ReadAllCallLists'  => 'Voir toutes les listes d\'appel'
         ];
 
         if (!isModEnabled('reedcrm')) {
@@ -272,6 +306,30 @@ class modReedCRM extends DolibarrModules
         $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
         $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=societe'];
         $this->tabs[] = ['data' => 'thirdparty:+keyyo:' . $pictoReedcrm . $langs->transnoentities('KeyyoCalls') . ':reedcrm@reedcrm:$user->hasRight(\'societe\', \'lire\'):/custom/reedcrm/view/thirdparty_calls.php?id=__ID__'];
+
+        // Pocket recording tabs, driven by the REEDCRM_POCKET_LINK_* constants set in admin/pocket.php.
+        // This loop belongs to the constructor: saturne_refresh_module_registrations() instantiates the
+        // descriptor and calls insert_tabs() without going through init(), a loop left in init() would
+        // register nothing and wipe the existing tabs.
+        dol_include_once('/reedcrm/lib/reedcrm_pocketrecording.lib.php');
+
+        if (function_exists('reedcrm_pocket_get_linkable_objects')) {
+            $pocketLinkableObjects = reedcrm_pocket_get_linkable_objects();
+
+            foreach (reedcrm_pocket_get_enabled_linked_object_types() as $objectType) {
+                $objectMetadata = $pocketLinkableObjects[$objectType];
+
+                // An object contributed by another module is reached through its own tab type
+                if (preg_match('/_/', $objectType)) {
+                    $splittedElementType = explode('_', $objectType);
+                    $tabType             = dol_strtolower($objectMetadata['class_name']) . '@' . $splittedElementType[0];
+                } else {
+                    $tabType = $objectMetadata['tab_type'];
+                }
+
+                $this->tabs[] = ['data' => $tabType . ':+pocketrecording:' . $pictoReedcrm . $langs->transnoentities('PocketRecordings') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'pocketrecording\', \'read\'):/custom/reedcrm/view/pocketrecording/pocketrecording_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+            }
+        }
         /* END MODULEBUILDER TABS */
 
         // Dictionaries
@@ -385,6 +443,105 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',
                 'priority'      => 50
+            ],
+            3 => [
+                'label'         => $langs->transnoentities('FollowupCronGenerateLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'generateMonthlyFollowups',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronGenerateComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
+                'priority'      => 51
+            ],
+            4 => [
+                'label'         => $langs->transnoentities('FollowupCronSyncLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'syncInvoiceStatus',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronSyncComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
+                'priority'      => 52
+            ],
+            5 => [
+                'label'         => $langs->transnoentities('FollowupCronRemindersLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'createReminders',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronRemindersComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+                'priority'      => 53
+            ],
+            6 => [
+                'label'         => $langs->transnoentities('FollowupCronAuditSyncLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/recurringinvoicefollowupcron.class.php',
+                'objectname'    => 'RecurringInvoiceFollowupCron',
+                'method'        => 'syncDuAudits',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('FollowupCronAuditSyncComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',
+                'priority'      => 54
+            ],
+            7 => [
+                'label'         => $langs->transnoentities('TodoPropalRelaunchCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmtodocron.class.php',
+                'objectname'    => 'ReedcrmTodoCron',
+                'method'        => 'createProposalRelaunchEvents',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('TodoPropalRelaunchCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && isModEnabled(\'agenda\')',
+                'priority'      => 55
+            ],
+            8 => [
+                'label'         => $langs->transnoentities('TodoInvoiceRelaunchCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmtodocron.class.php',
+                'objectname'    => 'ReedcrmTodoCron',
+                'method'        => 'createInvoiceRelaunchEvents',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('TodoInvoiceRelaunchCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\') && isModEnabled(\'agenda\')',
+                'priority'      => 56
+            ],
+            9 => [
+                'label'         => $langs->transnoentities('PocketSyncCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/pocketcron.class.php',
+                'objectname'    => 'PocketCron',
+                'method'        => 'syncPocketRecordings',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('PocketSyncCronComment'),
+                'frequency'     => 1,
+                'unitfrequency' => 86400,
+                'datenextrun'   => dol_mktime(20, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
+                'status'        => 0,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && getDolGlobalString(\'REEDCRM_POCKET_API_KEY\') != \'\'',
+                'priority'      => 57
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -434,6 +591,67 @@ class modReedCRM extends DolibarrModules
         $this->rights[$r][5] = 'delete';
         $r++;
 
+        /* CALL LIST PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadMyCallLists');
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadSubordinatesCallLists');
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'read_subordinates';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadAllCallLists');
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'read_all';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('CallList'));
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('CallList'));
+        $this->rights[$r][4] = 'call_list';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* RECURRING INVOICE FOLLOW-UP PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('RecurringInvoiceFollowup'));
+        $this->rights[$r][4] = 'followup';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('RecurringInvoiceFollowup'));
+        $this->rights[$r][4] = 'followup';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('RecurringInvoiceFollowup'));
+        $this->rights[$r][4] = 'followup';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
+        /* POCKET RECORDING PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadObjects', $langs->transnoentities('PocketRecording'));
+        $this->rights[$r][4] = 'pocketrecording';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('CreateObjects', $langs->transnoentities('PocketRecording'));
+        $this->rights[$r][4] = 'pocketrecording';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('DeleteObjects', $langs->transnoentities('PocketRecording'));
+        $this->rights[$r][4] = 'pocketrecording';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+
         /* ADMINPAGE PANEL ACCESS PERMISSIONS */
         $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
         $this->rights[$r][1] = $langs->transnoentities('ReadAdminPage', $this->name);
@@ -445,6 +663,8 @@ class modReedCRM extends DolibarrModules
         // Main menu entries to add
         $this->menu = [];
         $r = 0;
+
+        $menuEnabled = ($conf->browser->layout != 'classic') ? 1 : 0;
 
         // Add here entries to declare new menus
         $this->menu[$r++] = [
@@ -459,6 +679,40 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* SECTION QUICK ACCESS */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionQuickAccess',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-bolt pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_quickaccess',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('TodoBoard'),
+            'prefix'   => '<i class="fas fa-clipboard-check pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmtodo',
+            'url'      => '/reedcrm/view/todo_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'agenda\', \'myactions\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -479,8 +733,6 @@ class modReedCRM extends DolibarrModules
             'user'     => 0,
         ];
 
-        $menuEnabled = ($conf->browser->layout != 'classic') ? 1 : 0;
-
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
@@ -497,6 +749,57 @@ class modReedCRM extends DolibarrModules
             'user'     => 0,
         ];
 
+        // Thin rule to set the App entry apart : it is the only link that leaves the ReedCRM back office.
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => '',
+            'prefix'   => '<span class="reedcrm-menu-separator"></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'separator_quickaccess',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'App',
+            'prefix'   => '<i class="fa fa-mobile pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'quickcreationfrontendpwa',
+            'url'      => '/custom/reedcrm/view/frontend/quickcreation.php?source=pwa',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0
+        ];
+
+        /* SECTION COMMERCE */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionCommerce',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-handshake pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_commerce',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
@@ -504,7 +807,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'opportunities',
-            'url'      => '/saturne/view/saturne_list.php?object_type=project&search_usage_opportunity=1',
+            'url'      => '/custom/saturne/view/saturne_list.php?object_type=project&search_usage_opportunity=1',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -516,15 +819,15 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=opportunities',
             'type'     => 'left',
-            'titre'    => $langs->trans('ImportedOpportunityList'),
-            'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
+            'titre'    => $langs->transnoentities('CallLists'),
+            'prefix'   => '<i class="fas fa-phone pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
-            'leftmenu' => 'importedopportunities',
-            'url'      => '/reedcrm/view/reedcrm_imported_projects.php',
+            'leftmenu' => 'call_list',
+            'url'      => '/custom/saturne/view/saturne_list.php?object_type=call_list',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'call_list\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -552,11 +855,161 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-file-signature pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'openedpropals',
-            'url'      => '/saturne/view/saturne_list.php?object_type=propal&search_fk_statut[]=0&search_fk_statut[]=1',
+            'url'      => '/custom/saturne/view/saturne_list.php?object_type=propal&search_fk_statut[]=0&search_fk_statut[]=1',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* SECTION SERVICE PORTFOLIO */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionServicePortfolio',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-briefcase pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_serviceportfolio',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && getDolGlobalInt(\'REEDCRM_DU_FOLLOWUP_ENABLED\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('DuFollowupMenu'),
+            'prefix'   => '<i class="fas fa-shield-alt pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'duaudit',
+            'url'      => '/reedcrm/view/duaudit_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && getDolGlobalInt(\'REEDCRM_DU_FOLLOWUP_ENABLED\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* SECTION SALES ADMINISTRATION / TECHNICAL */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionAdvTechnical',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-headset pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_advtechnical',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && (isModEnabled(\'expedition\') || isModEnabled(\'ticket\') || getDolGlobalInt(\'REEDCRM_INTERVENTION_DATE_ENABLED\'))',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('ShipmentFollowupMenu'),
+            'prefix'   => '<i class="fas fa-truck pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'expeditions',
+            'url'      => '/custom/reedcrm/expedition_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'expedition\')',
+            'perms'    => '$user->hasRight(\'expedition\', \'lire\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('InterventionCalendar'),
+            'prefix'   => '<i class="fas fa-calendar-alt pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'interventioncalendar',
+            'url'      => '/reedcrm/view/intervention_calendar.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && getDolGlobalInt(\'REEDCRM_INTERVENTION_DATE_ENABLED\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'propal\', \'lire\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('TicketFollowupMenu'),
+            'prefix'   => '<i class="fas fa-ticket-alt pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmticketdashboard',
+            'url'      => '/reedcrm/view/ticket_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'ticket\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* SECTION BILLING */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionBilling',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-euro-sign pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_billing',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('BillingGapsMenu'),
+            'prefix'   => '<i class="fas fa-file-invoice-dollar pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'billinggaps',
+            'url'      => '/reedcrm/view/billinggaps_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=billinggaps',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('SignedUnbilledMenu'),
+            'prefix'   => '<i class="fas fa-file-signature pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'signedunbilled',
+            'url'      => '/reedcrm/view/signedunbilled_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -580,15 +1033,33 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
-            'titre'    => $langs->trans('Tools'),
-            'prefix'   => '<i class="fas fa-wrench pictofixedwidth"></i>',
+            'titre'    => $langs->transnoentities('RecurringInvoiceFollowupMenu'),
+            'prefix'   => '<i class="fas fa-clipboard-list pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
-            'leftmenu' => 'reedcrmtools',
-            'url'      => '/reedcrm/view/reedcrmtools.php',
+            'leftmenu' => 'recurringinvoicefollowup',
+            'url'      => '/reedcrm/view/recurringinvoicefollowup_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* SECTION CROSS-FUNCTIONAL TOOLS */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionTools',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-wrench pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_tools',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -596,23 +1067,24 @@ class modReedCRM extends DolibarrModules
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
-            'titre'    => 'App',
-            'prefix'   => '<i class="fa fa-mobile pictofixedwidth"></i>',
+            'titre'    => $langs->transnoentities('PocketRecordings'),
+            'prefix'   => '<i class="fas fa-microphone pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
-            'leftmenu' => 'quickcreationfrontendpwa',
-            'url'      => '/custom/reedcrm/view/frontend/quickcreation.php?source=pwa',
+            'leftmenu' => 'pocketrecording',
+            'url'      => '/reedcrm/view/pocketrecording/pocketrecording_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'pocketrecording\', \'read\')',
             'target'   => '',
-            'user'     => 0
+            'user'     => 0,
         ];
 
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
-            'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
+            'titre'    => $langs->transnoentities('Map'),
+            'prefix'   => '<i class="fas fa-map-marked-alt pictofixedwidth"></i>',
             'leftmenu' => 'map',
             'url'      => 'reedcrm/view/map.php?from_type=project',
             'langs'    => 'reedcrm@reedcrm',
@@ -624,9 +1096,62 @@ class modReedCRM extends DolibarrModules
         ];
 
         $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('DataManagementMenu'),
+            'prefix'   => '<i class="fas fa-cogs pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmtools',
+            'url'      => '/reedcrm/view/reedcrmtools.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* SECTION ADMINISTRATION : the configuration entries themselves are declared by Saturne at position 2000 and above */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionAdministration',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-sliders-h pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_administration',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1999,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'adminpage\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* ENTRIES ADDED TO OTHER MAIN MENUS */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=ticket',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('TicketDashboard'),
+            'prefix'   => '<i class="fas fa-chart-line pictofixedwidth"></i>',
+            'mainmenu' => 'ticket',
+            'leftmenu' => 'reedcrmticketdashboard',
+            'url'      => '/reedcrm/view/ticket_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'ticket\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=project,fk_leftmenu=projects',
             'type'     => 'left',
-            'titre'    => '<i class="fas fa-map-marked-alt pictofixedwidth" style="padding-right: 4px; color: #63ACC9;"></i>' . $langs->transnoentities('Map'),
+            'titre'    => $langs->transnoentities('Map'),
+            'prefix'   => '<i class="fas fa-map-marked-alt pictofixedwidth"></i>',
             'leftmenu' => 'map',
             'url'      => 'reedcrm/view/map.php?from_type=project',
             'langs'    => 'reedcrm@reedcrm',
@@ -648,6 +1173,22 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => '$conf->projet->enabled',
             'perms'    => '$user->rights->projet->lire',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=commercial,fk_leftmenu=propals',
+            'type'     => 'left',
+            'titre'    => 'Modèle de proposition',
+            'prefix'   => '',
+            'mainmenu' => 'commercial',
+            'leftmenu' => 'propals_model',
+            'url'      => '/custom/reedcrm/view/propal_model_list.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 11,
+            'enabled'  => 'isModEnabled(\'propal\')',
+            'perms'    => '$user->hasRight(\'propal\', \'lire\')',
             'target'   => '',
             'user'     => 0,
         ];
@@ -701,10 +1242,13 @@ class modReedCRM extends DolibarrModules
             'opprefusal'           => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 85, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
             'commrefusal'          => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['propal'], 'position' => $this->numero . 90, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
 
+            'reedcrm_propal_label' => ['Label' => 'ReedCRMPropalLabel',     'type' => 'varchar', 'length' => 255, 'elementtype' => ['propal'], 'position' => $this->numero . 95, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1],
 
             'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
+
+            'reedcrm_relaunch_user' => ['Label' => 'ReedCRMRelaunchUser', 'type' => 'link', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 20, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')', 'alwayseditable' => 1, 'help' => 'ReedCRMRelaunchUserHelp', 'params' => ['User:user/class/user.class.php:0:(t.statut:=:1)' => null], 'moreparams' => ['css' => 'minwidth200 maxwidth300 widthcentpercentminusx', 'csslist' => 'tdoverflowmax125']],
 
             'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']],
 
@@ -768,7 +1312,26 @@ class modReedCRM extends DolibarrModules
             $category->type  = 'actioncomm';
             $categoryID      = $category->create($user);
 
-            dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            // Only store a real id: create() returns a negative error code, and storing that would
+            // make the "== 0" guard above never retry, leaving the tag permanently broken
+            if ($categoryID > 0) {
+                dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            }
+        }
+
+        if (getDolGlobalInt('REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG') == 0) {
+            require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+
+            $category = new Categorie($this->db);
+
+            $category->label = $langs->transnoentities('CallReminderCategory');
+            $category->type  = 'actioncomm';
+            $categoryID      = $category->create($user);
+
+            // Same as above: never store the negative error code create() returns on failure
+            if ($categoryID > 0) {
+                dolibarr_set_const($this->db, 'REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG', $categoryID, 'integer', 0, '', $conf->entity);
+            }
         }
 
         if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') < 2) {
@@ -870,7 +1433,60 @@ class modReedCRM extends DolibarrModules
             }
         }
 
-        return $this->_init([], $options);
+        delDocumentModel('pdf_calllist_standard', 'calllist');
+        addDocumentModel('pdf_calllist_standard', 'calllist', $langs->transnoentities('CallListPDF'));
+
+        // Backward compatibility: validate all call lists still having a provisional ref (PROV…)
+        if (getDolGlobalInt('REEDCRM_CALL_LIST_PROV_REF_MIGRATED') == 0) {
+            require_once __DIR__ . '/../../class/calllist.class.php';
+
+            $callList  = new CallList($this->db);
+            $callLists = $callList->fetchAll('', '', 0, 0, ['customsql' => "ref LIKE '(PROV%'"]);
+
+            if (is_array($callLists) && !empty($callLists)) {
+                foreach ($callLists as $objCallList) {
+                    // validate() aborts when status is already validated: lists activated by the legacy
+                    // code kept their (PROV…) ref with an active status, reset it in memory first
+                    if ($objCallList->status != CallList::STATUS_DRAFT) {
+                        $objCallList->status = CallList::STATUS_DRAFT;
+                    }
+                    $objCallList->validate($user, 1);
+                }
+            }
+
+            dolibarr_set_const($this->db, 'REEDCRM_CALL_LIST_PROV_REF_MIGRATED', 1, 'integer', 0, '', $conf->entity);
+        }
+
+        // Ensure every active employee owns a default call list. External users (client contacts
+        // holding a login) are skipped: nobody calls their list and they flood the PWA selector
+        require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+        require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
+
+        $userStatic = new User($this->db);
+        $userStatic->fetchAll('', '', 0, 0, '(statut:=:1) AND (employee:=:1)', 'AND', true);
+        if (!empty($userStatic->users)) {
+            foreach ($userStatic->users as $targetUser) {
+                reedcrm_get_or_create_user_default_call_list($this->db, $targetUser);
+            }
+        }
+
+        // Show product/service description inline under each document line (quotes, orders, invoices, purchase orders, shipments; reception is handled by the ReedCRM JS hook).
+        // Migration-safe: do not overwrite a deliberate non-default client choice (0 = Dolibarr default = unconfigured).
+        if (getDolGlobalInt('PRODUIT_DESC_IN_FORM') <= 0) {
+            dolibarr_set_const($this->db, 'PRODUIT_DESC_IN_FORM', '2', 'chaine', 0, '', $conf->entity);
+        }
+
+        // Pocket linked objects. Order matters: the constructor read the constants before _init()
+        // wrote them, so the backward runs first and the tabs are rebuilt afterwards, from a fresh
+        // descriptor that sees the final configuration.
+        require_once __DIR__ . '/../../lib/reedcrm_pocketrecording.lib.php';
+        reedcrm_pocket_run_linked_object_backward();
+
+        $result = $this->_init([], $options);
+
+        reedcrm_pocket_sync_linked_objects();
+
+        return $result;
     }
 
     /**

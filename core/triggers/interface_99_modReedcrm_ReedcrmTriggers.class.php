@@ -49,7 +49,7 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'ReedCRM triggers';
-        $this->version     = '23.0.0';
+        $this->version     = '23.3.0';
         $this->picto       = 'reedcrm@reedcrm';
     }
 
@@ -159,10 +159,30 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
         $actioncomm->percentage  = -1;
 
         switch ($action) {
+            case 'SHIPPING_CREATE':
+                // ReedCRM : si aucune date d'expédition n'a été saisie, l'aligner sur la date de création.
+                if (getDolGlobalInt('REEDCRM_EXPEDITION_SHIPPING_DATE_AS_CREATION_DATE') > 0
+                    && empty($object->date_shipping) && empty($object->date_expedition)
+                    && !empty($object->date_creation) && $object->id > 0) {
+                    if ($object->setShippingDate($user, $object->date_creation) < 0) {
+                        $this->errors[] = $object->error;
+                        return -1;
+                    }
+                }
+                break;
+
             case 'BILL_CREATE' :
             case 'BILLREC_CREATE' :
                 $object->fetch($object->id);
                 set_notation_object_contact($object);
+                break;
+
+            case 'USER_CREATE':
+                require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
+                // Employees only: an external user (client contact with a login) gets no call list
+                if ($object instanceof User && $object->id > 0 && !empty($object->employee)) {
+                    reedcrm_get_or_create_user_default_call_list($this->db, $object);
+                }
                 break;
                 
             // ReedCRM Object Status Extrafield Tracking
@@ -263,6 +283,40 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                             $this->errors   = array_merge($this->errors, $object->errors);
                             return -1;
                         }
+                    }
+                }
+                break;
+            case 'LINEPROPAL_DELETE':
+                // A deleted service line takes its intervention dates and their events with it
+                require_once __DIR__ . '/../../class/interventiondate.class.php';
+
+                $interventionDate = new InterventionDate($this->db);
+                foreach ($interventionDate->fetchAllByLine('propal', (int) $object->id) as $lineInterventionDate) {
+                    $lineInterventionDate->delete($user);
+                }
+                break;
+            case 'LINEPROPAL_MODIFY':
+                // A quantity brought down leaves dates beyond the last unit of the line
+                require_once __DIR__ . '/../../class/interventiondate.class.php';
+
+                $expected         = InterventionDate::getExpectedCount((float) $object->qty);
+                $interventionDate = new InterventionDate($this->db);
+                foreach ($interventionDate->fetchAllByLine('propal', (int) $object->id) as $position => $lineInterventionDate) {
+                    if ($position > $expected) {
+                        $lineInterventionDate->delete($user);
+                    }
+                }
+                break;
+            case 'PROPAL_DELETE':
+                require_once __DIR__ . '/../../class/interventiondate.class.php';
+
+                $interventionDate        = new InterventionDate($this->db);
+                $propalInterventionDates = $interventionDate->fetchAll('', '', 0, 0, [
+                    'customsql' => "t.element_type = 'propal' AND t.element_id = " . (int) $object->id
+                ]);
+                if (is_array($propalInterventionDates)) {
+                    foreach ($propalInterventionDates as $propalInterventionDate) {
+                        $propalInterventionDate->delete($user);
                     }
                 }
                 break;

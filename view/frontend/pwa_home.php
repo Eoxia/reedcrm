@@ -15,6 +15,8 @@ if (file_exists('../reedcrm.main.inc.php')) {
 
 global $conf, $db, $hookmanager, $langs, $user;
 
+saturne_load_langs();
+
 $title    = $langs->trans('Home');
 $help_url = 'FR:Module_ReedCRM';
 $moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];

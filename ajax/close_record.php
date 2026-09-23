@@ -6,7 +6,14 @@
 
 // define('NOCSRFCHECK', 1); // We now pass the token natively
 
-require '../../../main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
+} else {
+    die('Include of reedcrm main fails');
+}
 
 header('Content-Type: application/json; charset=utf-8');
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';

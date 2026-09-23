@@ -1,5 +1,13 @@
 <?php
-require '../../../main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
+} else {
+    die('Include of reedcrm main fails');
+}
+
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
 header('Content-Type: application/json');
