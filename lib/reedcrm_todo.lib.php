@@ -424,6 +424,10 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
     $originInfos = reedcrmTodoGetOriginInfos($db, $events);
 
     $now       = dol_now();
+    // An event planned for a later day is still to come. Today is the pivot the two badges
+    // leave alone: an event of the day is neither late until its hour has passed, nor to come.
+    $today     = dol_getdate($now);
+    $todayEnd  = dol_mktime(23, 59, 59, $today['mon'], $today['mday'], $today['year']);
     $todoCards = [];
     foreach ($events as $eventId => $obj) {
         $percent = (int) $obj->percent;
@@ -470,6 +474,7 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             'date_end'       => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), $rawFormat) : '',
             'date_end_fmt'   => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), empty($obj->fulldayevent) ? 'dayhour' : 'day') : '',
             'late'           => ($obj->datep && $db->jdate($obj->datep) < $now && $percent >= 0 && $percent < 100) ? 1 : 0,
+            'upcoming'       => ($obj->datep && $db->jdate($obj->datep) > $todayEnd && $percent >= 0 && $percent < 100) ? 1 : 0,
             'type_id'        => (int) $obj->type_id,
             'type_code'      => $obj->type_code,
             'type_label'     => reedcrmTodoGetTypeLabel((string) $obj->type_code, (string) $obj->type_label),
@@ -500,9 +505,12 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
  * one the note of the card prints: it is what the relaunch backlogs are sorted on, their
  * events carrying no start date.
  *
+ * Each source also carries the third party and the project it belongs to, which is what its
+ * number of relaunches is read on, see reedcrmTodoCountRelaunches().
+ *
  * @param  DoliDB $db     Database handler
  * @param  array  $events Rows of the board, indexed by event ID
- * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => ]]
+ * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => , 'soc_id' => , 'project' => , 'relaunch_count' => ]]
  */
 function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 {
@@ -522,7 +530,7 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 
     $origins = [];
     foreach ($idsByType as $elementType => $elementIds) {
-        $sql   = 'SELECT rowid, ref, ' . $sources[$elementType]['date'] . ' as date_reference';
+        $sql   = 'SELECT rowid, ref, fk_soc, fk_projet, ' . $sources[$elementType]['date'] . ' as date_reference';
         $sql  .= ' FROM ' . MAIN_DB_PREFIX . $sources[$elementType]['table'];
         $sql  .= ' WHERE rowid IN (' . implode(',', array_keys($elementIds)) . ')';
         $resql = $db->query($sql);
@@ -537,13 +545,93 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
                     'ref'     => $obj->ref,
                     'url'     => DOL_URL_ROOT . $sources[$elementType]['url'] . (int) $obj->rowid,
                     'date_ts' => $obj->date_reference ? (int) $db->jdate($obj->date_reference) : 0,
+                    'soc_id'  => (int) $obj->fk_soc,
+                    'project' => (int) $obj->fk_projet,
                 ];
             }
         }
         $db->free($resql);
     }
 
+    // How many relaunches each object has already been through, read in one go for the board
+    $relaunchCounts = reedcrmTodoCountRelaunches($db, $origins);
+    foreach ($origins as $eventId => $origin) {
+        $origins[$eventId]['relaunch_count'] = (int) ($relaunchCounts[$eventId] ?? 0);
+    }
+
     return $origins;
+}
+
+/**
+ * Return how many relaunches each origin object has already been through, indexed by event ID
+ *
+ * A relaunch is what the rest of the module calls one: an event tagged with the commercial
+ * relaunch category, read on the third party and the project of the object, exactly the rule
+ * the relaunch counters of the project list and of the mobile opportunity view apply
+ * (ActionComm::getActions() with the same filter). An object without a project falls back on
+ * every relaunch of its third party, the way those counters do.
+ *
+ * The whole board is counted in a single query: the events are grouped by third party and
+ * project, then each object reads the group it belongs to.
+ *
+ * @param  DoliDB $db      Database handler
+ * @param  array  $origins Origins resolved by reedcrmTodoGetOriginInfos(), indexed by event ID
+ * @return array           [event id => number of relaunches]
+ */
+function reedcrmTodoCountRelaunches(DoliDB $db, array $origins): array
+{
+    $relaunchTag = getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG');
+    if ($relaunchTag <= 0 || empty($origins)) {
+        return [];
+    }
+
+    // A relaunch is only ever read on a third party, the filter of the counters carries it
+    $socIds = [];
+    foreach ($origins as $origin) {
+        if (!empty($origin['soc_id'])) {
+            $socIds[(int) $origin['soc_id']] = (int) $origin['soc_id'];
+        }
+    }
+    if (empty($socIds)) {
+        return [];
+    }
+
+    $sql  = 'SELECT a.fk_soc, a.fk_project, COUNT(a.id) as nb';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+    $sql .= ' WHERE a.entity IN (' . getEntity('agenda') . ')';
+    $sql .= ' AND a.fk_soc IN (' . implode(',', $socIds) . ')';
+    $sql .= ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $relaunchTag . ')';
+    $sql .= ' GROUP BY a.fk_soc, a.fk_project';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $byProject = [];
+    $bySoc     = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $socId = (int) $obj->fk_soc;
+        $byProject[$socId][(int) $obj->fk_project] = (int) $obj->nb;
+        $bySoc[$socId]                             = ($bySoc[$socId] ?? 0) + (int) $obj->nb;
+    }
+    $db->free($resql);
+
+    $counts = [];
+    foreach ($origins as $eventId => $origin) {
+        $socId = (int) ($origin['soc_id'] ?? 0);
+        if (empty($socId)) {
+            continue;
+        }
+        if (!empty($origin['project'])) {
+            $counts[$eventId] = (int) ($byProject[$socId][(int) $origin['project']] ?? 0);
+        } else {
+            $counts[$eventId] = (int) ($bySoc[$socId] ?? 0);
+        }
+    }
+
+    return $counts;
 }
 
 /**

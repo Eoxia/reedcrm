@@ -81,7 +81,7 @@ class modReedCRM extends DolibarrModules
         //$this->editor_squarred_logo = ''; // Must be image filename into the reedcrm/img directory followed with @reedcrm. Example: 'reedcrm.png@reedcrm'
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '23.2.0';
+        $this->version = '23.3.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
@@ -221,6 +221,8 @@ class modReedCRM extends DolibarrModules
             // CONST QUICK CLOSE EVENT
             $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'chaine', 'm', '', 0, 'current'],
             $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_VALUE', 'integer', 7, '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', 'chaine', 'buttons', '', 0, 'current'],
 
             // QUICK CREATION
             $i++ => ['REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 'integer', 30, '', 0, 'current'],
@@ -237,13 +239,19 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_RECURRINGINVOICEFOLLOWUP_ADDON', 'chaine', 'mod_recurringinvoicefollowup_standard', '', 0, 'current'],
             $i++ => ['REEDCRM_DU_ALERT_OFFSET_MONTHS', 'integer', 1, '', 0, 'current'],
 
+            // CONST DU FOLLOW-UP
+            // Off by default: the DU audit board is wired to Evarisk's own references (products
+            // DU_A%, D1 to D5, digirisk.com projects), so it means nothing on a customer install.
+            $i++ => ['REEDCRM_DU_FOLLOWUP_ENABLED', 'integer', 0, '', 0, 'current'],
+
             // CONST INTERVENTION DATE
             $i++ => ['REEDCRM_INTERVENTION_DATE_ENABLED', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_INTERVENTION_DATE_CREATE_EVENT', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_INTERVENTION_DATE_DEFAULT_DURATION', 'integer', 60, '', 0, 'current'],
             $i++ => ['REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', 'integer', 24, '', 0, 'current'],
             $i++ => ['REEDCRM_INTERVENTION_DATE_FROM', 'chaine', '2026-08-15', '', 0, 'current'],
-            $i++ => ['REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', 'integer', 0, '', 0, 'current'],
+            // Comma separated list of product category rowids
+            $i++ => ['REEDCRM_INTERVENTION_DATE_PRODUCT_TAG', 'chaine', '', '', 0, 'current'],
 
             // CONST CALL LIST
             $i++ => ['REEDCRM_CALL_LIST_ADDON', 'chaine', 'mod_call_list_standard', '', 0, 'current'],
@@ -529,7 +537,8 @@ class modReedCRM extends DolibarrModules
                 'parameters'    => '',
                 'comment'       => $langs->transnoentities('PocketSyncCronComment'),
                 'frequency'     => 1,
-                'unitfrequency' => 3600,
+                'unitfrequency' => 86400,
+                'datenextrun'   => dol_mktime(20, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
                 'status'        => 0,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && getDolGlobalString(\'REEDCRM_POCKET_API_KEY\') != \'\'',
                 'priority'      => 57
@@ -867,7 +876,7 @@ class modReedCRM extends DolibarrModules
             'url'      => '',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\') && getDolGlobalInt(\'REEDCRM_DU_FOLLOWUP_ENABLED\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
             'target'   => '',
             'user'     => 0,
@@ -883,7 +892,7 @@ class modReedCRM extends DolibarrModules
             'url'      => '/reedcrm/view/duaudit_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'enabled'  => 'isModEnabled(\'reedcrm\') && getDolGlobalInt(\'REEDCRM_DU_FOLLOWUP_ENABLED\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
             'target'   => '',
             'user'     => 0,
@@ -1238,6 +1247,8 @@ class modReedCRM extends DolibarrModules
             'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
+
+            'reedcrm_relaunch_user' => ['Label' => 'ReedCRMRelaunchUser', 'type' => 'link', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 20, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')', 'alwayseditable' => 1, 'help' => 'ReedCRMRelaunchUserHelp', 'params' => ['User:user/class/user.class.php:0:(t.statut:=:1)' => null], 'moreparams' => ['css' => 'minwidth200 maxwidth300 widthcentpercentminusx', 'csslist' => 'tdoverflowmax125']],
 
             'address_status' => ['Label' => 'AddressStatus', 'type' => 'select', 'elementtype' => ['contact'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')', 'params' => ['NotFound', 'Geolocated']],
 

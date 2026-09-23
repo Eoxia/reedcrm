@@ -49,7 +49,7 @@ require_once __DIR__ . '/../../lib/reedcrm_pocketrecording.lib.php';
 global $conf, $db, $hookmanager, $langs, $user;
 
 // Load translation files required by the page
-saturne_load_langs(['agenda']);
+saturne_load_langs(['agenda', 'errors']);
 
 // Get parameters
 $id      = GETPOSTINT('id');
@@ -275,12 +275,14 @@ if ($show == 'transcript') {
     print '<br>';
     print load_fiche_titre($langs->trans('PocketActionItems'), '', '');
     print '<div class="div-table-responsive-no-min">';
-    print '<table class="noborder centpercent">';
+    // The wordings the script needs once a row is created or dropped: it rebuilds the cell rather
+    // than reloading the card, and a translation does not travel in a bundled file
+    print '<table class="noborder centpercent pocket-action-table" data-empty-label="' . dol_escape_htmltag($langs->trans('PocketNoActionItem')) . '">';
     print '<tr class="liste_titre">';
-    print '<td>' . $langs->trans('Label') . '</td>';
-    print '<td class="center">' . $langs->trans('Deadline') . '</td>';
-    print '<td>' . $langs->trans('PocketAssignedUser') . '</td>';
-    print '<td class="center">' . $langs->trans('Event') . '</td>';
+    print '<td class="pocket-action-col-text">' . $langs->trans('Label') . '</td>';
+    print '<td class="center pocket-action-col-date">' . $langs->trans('PocketActionDueDate') . '</td>';
+    print '<td class="pocket-action-col-assign">' . $langs->trans('PocketAssignedUser') . '</td>';
+    print '<td class="center pocket-action-col-event">' . $langs->trans('Event') . '</td>';
     print '</tr>';
 
     if (is_array($actionItems)) {
@@ -290,10 +292,10 @@ if ($show == 'transcript') {
 
             // The wording extracted by Pocket is rarely usable as is, so both the label and its
             // description are edited in place: each field saves itself when it loses the focus
-            print '<td class="pocket-action-text">';
+            print '<td class="pocket-action-text pocket-action-col-text">';
             if ($permissiontoadd) {
                 print '<input type="text" class="pocket-action-label" value="' . dol_escape_htmltag((string) $actionItem->label) . '" placeholder="' . dol_escape_htmltag($langs->trans('Label')) . '">';
-                print '<textarea class="pocket-action-description" rows="2" placeholder="' . dol_escape_htmltag($langs->trans('Description')) . '">' . dol_escape_htmltag((string) $actionItem->description) . '</textarea>';
+                print '<textarea class="pocket-action-description" rows="3" placeholder="' . dol_escape_htmltag($langs->trans('Description')) . '">' . dol_escape_htmltag((string) $actionItem->description) . '</textarea>';
             } else {
                 print dol_escape_htmltag((string) $actionItem->label);
                 if (!empty($actionItem->description)) {
@@ -302,15 +304,15 @@ if ($show == 'transcript') {
             }
             print '</td>';
 
-            print '<td class="center nowraponall">';
+            print '<td class="center nowraponall pocket-action-col-date">';
             if ($permissiontoadd) {
-                print '<input type="date" class="flat pocket-action-due-date" value="' . (!empty($actionItem->due_date) ? dol_print_date($actionItem->due_date, '%Y-%m-%d') : '') . '">';
+                print '<input type="date" class="pocket-action-due-date" value="' . (!empty($actionItem->due_date) ? dol_print_date($actionItem->due_date, '%Y-%m-%d') : '') . '">';
             } else {
                 print !empty($actionItem->due_date) ? dol_print_date($actionItem->due_date, 'day') : '';
             }
             print '</td>';
 
-            print '<td>';
+            print '<td class="pocket-action-col-assign">';
             if ($permissiontoadd) {
                 print $form->select_dolusers($actionItem->fk_user_assign, 'fk_user_assign_' . $actionItem->id, 1, null, 0, '', '', 0, 0, 0, '', 0, '', 'pocket-action-assign minwidth150');
             } elseif ($actionItem->fk_user_assign > 0) {
@@ -318,19 +320,50 @@ if ($show == 'transcript') {
                 $assignedUser->fetch($actionItem->fk_user_assign);
                 print $assignedUser->getNomUrl(1);
             }
-            // Pocket also names an assignee, kept as a hint since it is free text, not a Dolibarr user
-            if (!empty($actionItem->pocket_assignee)) {
-                print '<br><span class="opacitymedium small">' . $langs->trans('PocketAssignee') . ': ' . dol_escape_htmltag($actionItem->pocket_assignee) . '</span>';
-            }
             print '</td>';
 
-            print '<td class="center">';
+            print '<td class="center pocket-action-col-event">';
             if ($actionItem->fk_actioncomm > 0 && $eventStatic->fetch($actionItem->fk_actioncomm) > 0) {
-                print $eventStatic->getNomUrl(1);
-            } elseif ($permissiontoadd && isModEnabled('agenda')) {
-                print '<span class="butAction butActionSmall pocket-action-create-event" data-created-label="' . dol_escape_htmltag($langs->trans('Event')) . '">';
-                print $langs->trans('PocketCreateEvent');
+                // The event is read here as it is read on the to-do board: the picto opens it, the
+                // bar and the percentage say where it stands, and the percentage of an unfinished
+                // event is the quick close trigger, the same one the board and the lists carry
+                $eventPercent    = (int) $eventStatic->percentage;
+                $hasPercent      = $eventPercent >= 0;
+                $percentText     = $hasPercent ? $eventPercent . '%' : $langs->trans('StatusNotApplicable');
+                $quickCloseEvent = $permissiontoadd && $hasPercent && $eventPercent < 100;
+
+                print '<div class="pocket-action-event">';
+                print $eventStatic->getNomUrl(2);
+                print '<span class="pocket-action-progress">';
+                print '<span class="pocket-action-progress-bar"><span class="pocket-action-progress-fill" style="width: ' . ($hasPercent ? $eventPercent : 0) . '%"></span></span>';
+                // The cell is rebuilt by the card, not by the list renderer the modal answers with:
+                // the trigger asks for the reload the banner one already asks for
+                print '<span class="pocket-action-progress-text' . ($quickCloseEvent ? ' reedcrm-quick-close-trigger reedcrm-quick-close-trigger-reload' : '') . '"';
+                if ($quickCloseEvent) {
+                    print ' data-event-id="' . $eventStatic->id . '" title="' . dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')) . '"';
+                }
+                print '>' . dol_escape_htmltag($percentText);
+                if ($quickCloseEvent) {
+                    print '<i class="fas fa-check-circle reedcrm-quick-close-icon"></i>';
+                }
                 print '</span>';
+                print '</span>';
+                print '</div>';
+            } elseif ($permissiontoadd) {
+                print '<div class="pocket-action-event">';
+                if (isModEnabled('agenda')) {
+                    // The calendar says what the click makes of the action, where a bare plus left
+                    // the column to be guessed
+                    print '<span class="pocket-action-create-event classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketCreateEvent')) . '" data-created-label="' . dol_escape_htmltag($langs->trans('Event')) . '" data-quick-close-label="' . dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')) . '">';
+                    print '<i class="fas fa-calendar-plus"></i>';
+                    print '</span>';
+                }
+                // An action Pocket extracted from the conversation is not always one: it is dropped
+                // from here, and the deletion holds against the synchronisations that follow
+                print '<span class="pocket-action-delete classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketDeleteActionItem')) . '" data-confirm="' . dol_escape_htmltag($langs->trans('PocketConfirmDeleteActionItem')) . '">';
+                print '<i class="fas fa-trash"></i>';
+                print '</span>';
+                print '</div>';
             }
             print '</td>';
 
@@ -375,17 +408,27 @@ print '</div>';
 if ($show != 'transcript') {
     $object->fetchObjectLinked();
 
+    // The theme desaturates the title of a table-fiche-title printed as a direct child of the fiche,
+    // so the block lives in its own fichecenter, where the title keeps the colour of the others
+    print '<div class="fichecenter">';
     print load_fiche_titre($langs->trans('PocketLinkedObjects'), '', '');
 
     // Attach form. The objects are searched by the module and not through the native link block:
     // the search runs on the types enabled for the recordings, across every thirdparty, and the
     // list opens already filled with the objects of the thirdparty of the recording.
     if ($permissiontoadd) {
+        // The picto of the type travels in labelhtml, which select2 draws in the list: the plain
+        // label is kept next to it, it is what a native select and the selected value show
         $linkableObjectTypes = [];
         foreach (reedcrm_pocket_get_enabled_linked_object_types() as $linkableType) {
             $linkableMetadata = reedcrm_pocket_get_linkable_objects()[$linkableType] ?? [];
             if (!empty($linkableMetadata['langs'])) {
-                $linkableObjectTypes[$linkableType] = $langs->trans($linkableMetadata['langs']);
+                $linkableTypeLabel = $langs->trans($linkableMetadata['langs']);
+
+                $linkableObjectTypes[$linkableType] = [
+                    'label'     => $linkableTypeLabel,
+                    'labelhtml' => (!empty($linkableMetadata['picto']) ? img_picto('', $linkableMetadata['picto'], 'class="pictofixedwidth"') : '') . $linkableTypeLabel
+                ];
             }
         }
 
@@ -399,7 +442,8 @@ if ($show != 'transcript') {
         print ' data-recording-id="' . $object->id . '" data-token="' . newToken() . '">';
 
         print '<span>' . $langs->trans('PocketLinkObject') . '</span>';
-        print $form->selectarray('object_type', $linkableObjectTypes, '', $langs->trans('PocketAllObjectTypes'), 0, 0, '', 0, 0, 0, '', 'reedcrm-pocket-object-type minwidth150', 0);
+        // Drawn by select2: a native select shows no picto, whatever the option carries
+        print $form->selectarray('object_type', $linkableObjectTypes, '', $langs->trans('PocketAllObjectTypes'), 0, 0, '', 0, 0, 0, '', 'reedcrm-pocket-object-type minwidth150', 1);
 
         print '<div class="reedcrm-pocket-object-search-wrapper">';
         print '<input type="text" class="reedcrm-pocket-object-search minwidth300" autocomplete="off" placeholder="' . dol_escape_htmltag($langs->trans('PocketSearchObject')) . '">';
@@ -407,7 +451,10 @@ if ($show != 'transcript') {
         // The list is printed already filled, so it is usable before a single key is pressed
         print '<ul class="reedcrm-pocket-object-results" hidden data-empty-label="' . dol_escape_htmltag($langs->trans('PocketNoObjectFound')) . '">';
         foreach ($initialObjects as $initialObject) {
-            print '<li data-key="' . dol_escape_htmltag($initialObject['key']) . '">' . dol_escape_htmltag(reedcrm_pocket_format_object_choice($initialObject)) . '</li>';
+            print '<li data-key="' . dol_escape_htmltag($initialObject['key']) . '">';
+            print !empty($initialObject['picto']) ? img_picto('', $initialObject['picto'], 'class="pictofixedwidth"') : '';
+            print '<span>' . dol_escape_htmltag(reedcrm_pocket_format_object_choice($initialObject)) . '</span>';
+            print '</li>';
         }
         if (empty($initialObjects)) {
             print '<li class="opacitymedium reedcrm-pocket-object-empty">' . $langs->trans('PocketNoObjectFound') . '</li>';
@@ -439,7 +486,7 @@ if ($show != 'transcript') {
             $linkedData = reedcrm_pocket_get_object_date_and_amount($linkedInstance);
 
             print '<tr class="oddeven">';
-            print '<td class="minwidth100">' . dol_escape_htmltag($typeLabel) . '</td>';
+            print '<td class="minwidth100">' . (!empty($linkedMetadata['picto']) ? img_picto('', $linkedMetadata['picto'], 'class="pictofixedwidth"') : '') . dol_escape_htmltag($typeLabel) . '</td>';
             print '<td>' . $linkedInstance->getNomUrl(1) . '</td>';
             print '<td class="center nowraponall">' . (!empty($linkedData['date']) ? dol_print_date($linkedData['date'], 'day') : '') . '</td>';
             print '<td class="right nowraponall">' . ($linkedData['amount'] !== null ? price($linkedData['amount'], 0, $langs, 1, -1, -1, $conf->currency) : '') . '</td>';
@@ -460,6 +507,7 @@ if ($show != 'transcript') {
     }
 
     print '</table>';
+    print '</div>';
     print '</div>';
 }
 

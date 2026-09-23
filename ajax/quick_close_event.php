@@ -18,8 +18,8 @@
 /**
  * \file    ajax/quick_close_event.php
  * \ingroup reedcrm
- * \brief   Closes a to-do event (progress set to 100%, ended today) with an optional comment, and optionally clones it
- *          as a new to-do event, renamed at will and postponed by one month, X days, or to a picked day.
+ * \brief   Closes a to-do event (progress set to 100%, ended today), renaming it if asked, with an optional comment, and optionally clones it
+ *          as a new to-do event, renamed at will and postponed by X months, X days, or to a picked day.
  */
 
 if (!defined('NOTOKENRENEWAL')) {
@@ -36,7 +36,11 @@ if (file_exists('../reedcrm.main.inc.php')) {
 
 // Load Dolibarr libraries
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+require_once DOL_DOCUMENT_ROOT . '/comm/action/class/cactioncomm.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+// Load ReedCRM libraries
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 global $db, $langs, $user;
 
@@ -45,13 +49,16 @@ $langs->loadLangs(['agenda', 'errors', 'reedcrm@reedcrm']);
 
 header('Content-Type: application/json');
 
-$eventID    = GETPOSTINT('event_id');
-$comment    = GETPOST('comment', 'alphanohtml');
-$reschedule = GETPOSTINT('reschedule');
-$delayUnit  = GETPOST('delay_unit', 'aZ09');
-$delayValue = GETPOSTINT('delay_value');
-$delayDate  = GETPOST('delay_date', 'aZ09');
-$newLabel   = GETPOST('new_label', 'alphanohtml');
+$eventID     = GETPOSTINT('event_id');
+$comment     = GETPOST('comment', 'alphanohtml');
+$eventLabel  = GETPOST('event_label', 'alphanohtml');
+$reschedule  = GETPOSTINT('reschedule');
+$delayUnit   = GETPOST('delay_unit', 'aZ09');
+$delayValue  = GETPOSTINT('delay_value');
+$delayMonths = GETPOSTINT('delay_months');
+$delayDate   = GETPOST('delay_date', 'aZ09');
+$newLabel    = GETPOST('new_label', 'alphanohtml');
+$newType     = GETPOST('new_type', 'aZ09');
 
 if ($eventID <= 0) {
     echo json_encode(['success' => false, 'error' => $langs->trans('ErrorRecordNotFound')]);
@@ -83,11 +90,19 @@ if ($actionComm->percentage >= 100 || $actionComm->percentage < 0) {
 $originalDatep = $actionComm->datep;
 $originalDatef = $actionComm->datef;
 $originalNote  = $actionComm->note_private;
+$originalLabel = $actionComm->label;
 
 $db->begin();
 
 $actionComm->oldcopy    = clone $actionComm;
 $actionComm->percentage = 100;
+
+// The name is often only settled once the call is over, the modal lets it be rewritten here.
+// An emptied field is not a rename, the event keeps the name it already carries.
+$eventLabel = trim($eventLabel);
+if ($eventLabel !== '') {
+    $actionComm->label = dol_trunc($eventLabel, 255, 'right', 'UTF-8', 1);
+}
 
 // Finishing an event records when it was done: its end date is today
 $actionComm->datef = dol_now();
@@ -121,6 +136,9 @@ if ($reschedule > 0) {
     if ($delayValue < 1) {
         $delayValue = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_VALUE', 7);
     }
+    if ($delayMonths < 1) {
+        $delayMonths = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 1);
+    }
 
     if ($delayUnit === 'date') {
         // The picked day keeps the hour of the closed event, the current one when it had no date
@@ -138,7 +156,8 @@ if ($reschedule > 0) {
         $delayValue = max(1, min(3650, $delayValue));
         $newDatep   = dol_time_plus_duree(dol_now(), $delayValue, 'd');
     } else {
-        $newDatep = dol_time_plus_duree(dol_now(), 1, 'm');
+        $delayMonths = max(1, min(120, $delayMonths));
+        $newDatep    = dol_time_plus_duree(dol_now(), $delayMonths, 'm');
     }
 
     $clone = new ActionComm($db);
@@ -150,11 +169,22 @@ if ($reschedule > 0) {
 
     // The clone repeats the event as it was, the closure comment belongs to the closed one only
     $clone->percentage   = 0;
-    // A name typed in the modal renames the clone, an empty one keeps the name of the closed event
-    $newLabel = trim($newLabel);
-    if ($newLabel !== '') {
-        $clone->label = dol_trunc($newLabel, 255, 'right', 'UTF-8', 1);
+    // A name typed in the modal renames the clone. An empty one keeps the name the event carried
+    // before this closure: renaming the closed event says what was done, not what is left to do.
+    $newLabel            = trim($newLabel);
+    $clone->label        = ($newLabel !== '') ? dol_trunc($newLabel, 255, 'right', 'UTF-8', 1) : $originalLabel;
+
+    // A type picked in the modal is the type of the reminder. Nothing picked keeps the type of the
+    // closed event, which is what the clone already carries. Only the four types of the relaunch
+    // chips are accepted, so the endpoint never writes a type the widgets cannot render.
+    if (!empty($newType) && in_array($newType, array_column(reedcrm_get_relaunch_types(), 'actioncode'), true)) {
+        $cActionComm = new CActionComm($db);
+        if ($cActionComm->fetch($newType) > 0) {
+            $clone->type_id   = $cActionComm->id;
+            $clone->type_code = $cActionComm->code;
+        }
     }
+
     $clone->datep        = $newDatep;
     $clone->datef        = (!empty($originalDatef) && !empty($originalDatep)) ? $newDatep + ($originalDatef - $originalDatep) : null;
     // create() falls back on the deprecated note property when note_private is empty, both must be reset
@@ -183,6 +213,9 @@ $db->commit();
 echo json_encode([
     'success'     => true,
     'status_html' => $actionComm->LibStatut(100, 2, 0, $actionComm->datep),
+    // A renamed event still shows its former name wherever the closure repaints in place
+    'label'       => $actionComm->label,
+    'renamed'     => $actionComm->label !== $originalLabel ? 1 : 0,
     'new_event'   => $newEvent,
     'message'     => $newEvent['id'] > 0 ? $langs->trans('QuickCloseEventDoneAndRescheduled', $newEvent['date']) : $langs->trans('QuickCloseEventDone')
 ]);

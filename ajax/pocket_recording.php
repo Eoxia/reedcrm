@@ -127,9 +127,15 @@ if ($subAction === 'search_objects') {
         20
     );
 
+    // The picto travels ready to print: it is the one of the type, drawn by Dolibarr, and the list
+    // of the card is built the same way when it is printed with the page
     $choices = [];
     foreach (array_slice($objects, 0, 20) as $object) {
-        $choices[] = ['key' => $object['key'], 'label' => reedcrm_pocket_format_object_choice($object)];
+        $choices[] = [
+            'key'   => $object['key'],
+            'label' => reedcrm_pocket_format_object_choice($object),
+            'picto' => !empty($object['picto']) ? img_picto('', $object['picto'], 'class="pictofixedwidth"') : ''
+        ];
     }
 
     echo json_encode(['success' => true, 'objects' => $choices]);

@@ -24,6 +24,7 @@
 // dol_time_plus_duree() is not loaded by default, the cron runner would fatal on it
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 require_once __DIR__ . '/../lib/reedcrm_todo.lib.php';
 
 /**
@@ -130,7 +131,7 @@ class ReedcrmTodoCron
         $threshold = dol_time_plus_duree(dol_now(), -$days, 'd');
 
         // fk_statut = 1 is the validated invoice, paye = 0 the unpaid one, type 2 a credit note
-        $sql  = 'SELECT f.rowid, f.ref, f.fk_soc, f.fk_projet, f.total_ttc, f.fk_user_author, f.fk_user_valid,';
+        $sql  = 'SELECT f.rowid, f.ref, f.fk_soc, f.fk_projet, f.total_ttc, f.fk_user_author, f.fk_user_valid, f.fk_fac_rec_source,';
         $sql .= ' COALESCE(f.date_lim_reglement, f.datef) as date_reference, s.nom as soc_name';
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture as f';
         $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = f.fk_soc';
@@ -146,11 +147,16 @@ class ReedcrmTodoCron
             return -1;
         }
 
+        $relaunchUsers = reedcrm_get_template_relaunch_users($this->db);
+
         $created = 0;
         while ($row = $this->db->fetch_object($resql)) {
             if ($this->relaunchExists('invoice', (int) $row->rowid, REEDCRM_TODO_CODE_INVOICE_RELAUNCH, $days)) {
                 continue;
             }
+
+            // An invoice generated from a template hands its relaunch to the user the template names
+            $row->fk_user_relaunch = $relaunchUsers[(int) $row->fk_fac_rec_source] ?? 0;
 
             $referenceDate = $this->db->jdate($row->date_reference);
             $label         = $langs->transnoentities('TodoInvoiceRelaunchLabel', $row->ref);
@@ -231,8 +237,12 @@ class ReedcrmTodoCron
 
         require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
-        // The one who validated the object owns the relaunch, the author otherwise
-        $ownerId = (int) $row->fk_user_valid;
+        // The user named on the recurring invoice template owns the relaunch, then the one who
+        // validated the object, the author otherwise
+        $ownerId = (int) ($row->fk_user_relaunch ?? 0);
+        if (empty($ownerId)) {
+            $ownerId = (int) $row->fk_user_valid;
+        }
         if (empty($ownerId)) {
             $ownerId = (int) $row->fk_user_author;
         }

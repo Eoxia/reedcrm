@@ -20,8 +20,8 @@
  * \file    js/modules/event_quick_close.js
  * \ingroup reedcrm
  * \brief   Turns the status badge of every to-do event, listed by show_actions_done() or shown in the
- *          banner of its own card, into a quick close trigger : optional comment, and optional clone
- *          renamed at will and postponed by 1 month or X days.
+ *          banner of its own card, into a quick close trigger : the event renamed if needed, an optional
+ *          comment, and an optional clone renamed at will and postponed by X months, X days, or to a picked day.
  */
 
 if (!window.reedcrm) {
@@ -168,6 +168,7 @@ window.reedcrm.eventQuickClose.decorateCard = function () {
   $badge.addClass('reedcrm-quick-close-trigger reedcrm-quick-close-trigger-banner')
     .attr('data-event-id', eventId)
     .attr('data-event-label', window.reedcrm.eventQuickClose.config('card-event-label'))
+    .attr('data-event-type', window.reedcrm.eventQuickClose.config('card-event-type'))
     .attr('title', window.reedcrm.eventQuickClose.config('trans-tooltip'))
     .append('<i class="fas fa-check-circle reedcrm-quick-close-icon"></i>');
 };
@@ -210,6 +211,10 @@ window.reedcrm.eventQuickClose.event = function () {
   // Typing a number of days is meaningless while another choice is selected, picking a day too
   $(document).on('focus.reedcrmQuickClose', '#reedcrm-quick-close-delay-value', function () {
     $('input[name="reedcrm-quick-close-delay-unit"][value="d"]').prop('checked', true);
+  });
+
+  $(document).on('focus.reedcrmQuickClose', '#reedcrm-quick-close-delay-months', function () {
+    $('input[name="reedcrm-quick-close-delay-unit"][value="m"]').prop('checked', true);
   });
 
   $(document).on('focus.reedcrmQuickClose', '#reedcrm-quick-close-delay-date', function () {
@@ -257,19 +262,35 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   window.reedcrm.eventQuickClose.currentEventId = parseInt($trigger.attr('data-event-id'), 10);
 
   // The postponement always reopens on the delay configured for the module
-  var defaultUnit = window.reedcrm.eventQuickClose.config('default-unit') || 'm';
-  var defaultDays = window.reedcrm.eventQuickClose.config('default-days') || 7;
+  var defaultUnit   = window.reedcrm.eventQuickClose.config('default-unit') || 'm';
+  var defaultDays   = window.reedcrm.eventQuickClose.config('default-days') || 7;
+  var defaultMonths = window.reedcrm.eventQuickClose.config('default-months') || 1;
 
   $('#reedcrm-quick-close-comment').val('');
   $('#reedcrm-quick-close-reschedule').prop('checked', false);
   $('#reedcrm-quick-close-delay').removeClass('reedcrm-quick-close-delay-visible');
   $('input[name="reedcrm-quick-close-delay-unit"][value="' + defaultUnit + '"]').prop('checked', true);
   $('#reedcrm-quick-close-delay-value').val(defaultDays);
+  $('#reedcrm-quick-close-delay-months').val(defaultMonths);
   $('#reedcrm-quick-close-delay-date').val('');
+
+  // The reminder starts on the type of the event being closed, so picking one is a deliberate
+  // change. A list row cannot tell that type: nothing is checked there, and the reminder keeps it
+  // Only one of the two controls is rendered, whichever the module configuration asks for, so
+  // both are reset and filled here and the missing one is simply an empty selection
+  var currentType = ($trigger.attr('data-event-type') || '').trim() || ($card.attr('data-event-type') || '').trim();
+  $('input[name="reedcrm-quick-close-new-type"]').prop('checked', false);
+  $('#reedcrm-quick-close-new-type-select').val('');
+  if (currentType) {
+    $('input[name="reedcrm-quick-close-new-type"][value="' + currentType + '"]').prop('checked', true);
+    $('#reedcrm-quick-close-new-type-select').val(currentType);
+  }
   // The rescheduled event repeats the closed one, its name stays editable
   $('#reedcrm-quick-close-new-label').val(label);
 
-  $('#reedcrm-quick-close-modal .reedcrm-quick-close-event').text(label);
+  // The closed event is renamed from the same modal, so a name settled during the call is
+  // written down where it belongs rather than in the comment
+  $('#reedcrm-quick-close-event-label').val(label);
   $('#reedcrm-quick-close-modal').addClass('modal-active');
   $('#reedcrm-quick-close-comment').trigger('focus');
 };
@@ -327,11 +348,14 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       token: window.reedcrm.eventQuickClose.config('token'),
       event_id: eventId,
       comment: $('#reedcrm-quick-close-comment').val(),
+      event_label: $('#reedcrm-quick-close-event-label').val(),
       reschedule: $('#reedcrm-quick-close-reschedule').is(':checked') ? 1 : 0,
       delay_unit: delayUnit,
       delay_value: $('#reedcrm-quick-close-delay-value').val(),
+      delay_months: $('#reedcrm-quick-close-delay-months').val(),
       delay_date: delayDate,
-      new_label: $('#reedcrm-quick-close-new-label').val()
+      new_label: $('#reedcrm-quick-close-new-label').val(),
+      new_type: $('input[name="reedcrm-quick-close-new-type"]:checked').val() || $('#reedcrm-quick-close-new-type-select').val() || ''
     },
     success: function (response) {
       $button.removeClass('button-disable');
@@ -346,6 +370,10 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
 
       // On the to-do board the closed event is repainted at 100% and moves to the column it now belongs to
       if ($card.length && window.reedcrm.todoKanban) {
+        // A card stays on screen after the closure, a renamed event would keep its former name
+        if (response.renamed) {
+          $card.find('.todo-card-label').first().text(response.label);
+        }
         window.reedcrm.todoKanban.paintCard($card, 100);
         window.reedcrm.todoKanban.moveToColumn($card, 100);
         window.reedcrm.todoKanban.flag($card, 'todo-card-saved', 2000);
@@ -362,8 +390,10 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
         return;
       }
 
-      // On the card the action buttons and the dates follow the status, only a reload renders them again
-      if ($trigger.hasClass('reedcrm-quick-close-trigger-banner')) {
+      // On the card the action buttons and the dates follow the status, only a reload renders them
+      // again. A trigger sitting in a cell the module draws itself asks for the same treatment: the
+      // status HTML below is what a native list row expects, it would wipe that cell.
+      if ($trigger.hasClass('reedcrm-quick-close-trigger-banner') || $trigger.hasClass('reedcrm-quick-close-trigger-reload')) {
         window.reedcrm.eventQuickClose.close();
         window.reedcrm.eventQuickClose.notify(response.message, 'success');
         setTimeout(function () {
@@ -378,7 +408,9 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       window.reedcrm.eventQuickClose.close();
       window.reedcrm.eventQuickClose.notify(response.message, 'success');
 
-      if (response.new_event && response.new_event.id > 0) {
+      // A list row is rendered by a core function, the name sits in a column this module does not
+      // own: a reload is what puts a renamed event back in agreement with what is on screen
+      if (response.renamed || (response.new_event && response.new_event.id > 0)) {
         setTimeout(function () {
           window.location.reload();
         }, 1500);

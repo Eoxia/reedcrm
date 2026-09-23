@@ -404,6 +404,26 @@ class ActionsReedcrm
      */
     public function doActions(array $parameters, $object, string $action): int
     {
+        // "Empty fields on the cards" preference, saved from the display setup of a user.
+        // The page saves its own parameters afterwards, so the hook only adds ours and returns 0.
+        if (strpos($parameters['context'], 'userihm') !== false && $action == 'update' && !GETPOST('cancel')) {
+            global $conf, $user;
+
+            require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
+
+            $editedId     = is_object($object) ? (int) $object->id : 0;
+            $caneditfield = (($user->id == $editedId && $user->hasRight('user', 'self', 'write'))
+                || ($user->id != $editedId && $user->hasRight('user', 'user', 'write')));
+
+            if ($editedId > 0 && ($caneditfield || !empty($user->admin))) {
+                $mode = GETPOST('check_REEDCRM_CARD_FIELDS_DISPLAY') === 'on' ? GETPOST('REEDCRM_CARD_FIELDS_DISPLAY', 'aZ09') : '';
+
+                // Only "filled" is worth storing : an empty value deletes the parameter, and the
+                // user falls back on the default of the module, every field shown
+                dol_set_user_param($this->db, $conf, $object, ['REEDCRM_CARD_FIELDS_DISPLAY' => ($mode === 'filled' ? 'filled' : '')]);
+            }
+        }
+
         // Auto-log time when a ticket message is sent and the checkbox is checked
         if (strpos($parameters['context'], 'ticketcard') !== false && $action == 'add_message') {
             if (GETPOSTISSET('reedcrm_log_time') && GETPOSTINT('reedcrm_log_time') == 1) {
@@ -1496,8 +1516,9 @@ class ActionsReedcrm
         }
 
         // Quick close of the to-do events listed by show_actions_done(), on every page displaying that list,
-        // of the event shown alone on its own card (actioncard) and of the cards of the to-do board
-        $quickCloseContexts = 'agenda|actioncard|thirdpartycomm|thirdpartysupplier|projectcardinfo|call_list_card|thirdpartycalls|address|reedcrmtodolist';
+        // of the event shown alone on its own card (actioncard), of the cards of the to-do board and
+        // of the events created from the action items of a Pocket recording
+        $quickCloseContexts = 'agenda|actioncard|thirdpartycomm|thirdpartysupplier|projectcardinfo|call_list_card|thirdpartycalls|address|reedcrmtodolist|pocketrecordingcard';
         if (isModEnabled('agenda') && preg_match('/' . $quickCloseContexts . '/', $parameters['context'])
             && ($user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create'))) {
             $langs->load('reedcrm@reedcrm');
@@ -1510,6 +1531,19 @@ class ActionsReedcrm
             && $user->hasRight('propal', 'lire') && is_object($object) && $object->id > 0) {
             $langs->load('reedcrm@reedcrm');
             require __DIR__ . '/../core/tpl/reedcrm_intervention_date_modal.tpl.php';
+        }
+
+        // Hide or show the fields left empty, on every card: the Dolibarr ones, the saturne ones and ours.
+        // globalcard is the hook context every card page declares, whatever the object it displays.
+        if (strpos($parameters['context'], 'globalcard') !== false && !empty($user->id)) {
+            $langs->load('reedcrm@reedcrm');
+            require __DIR__ . '/../core/tpl/reedcrm_card_empty_fields_toggle.tpl.php';
+        }
+
+        // Same preference, offered as a setting in the display setup of a user
+        if (strpos($parameters['context'], 'userihm') !== false && is_object($object) && $object->id > 0) {
+            $langs->load('reedcrm@reedcrm');
+            require __DIR__ . '/../core/tpl/reedcrm_user_param_card_fields.tpl.php';
         }
 
         return 0; // or return 1 to replace standard code
@@ -2783,7 +2817,8 @@ class ActionsReedcrm
                 // Second row: Ref, Date start, Date end
                 $refLine = '<div style="margin-top: 5px;">';
                 if (isset($data['ref'])) {
-                    $refLine .= '<b>' . $langs->trans('Ref') . '.:</b> ' . $object->ref;
+                    // trans('Ref') already carries its own dot in French ("Réf."), so no extra one here
+                    $refLine .= '<b>' . $langs->trans('Ref') . ':</b> ' . $object->ref;
                 }
                 if (!empty($object->date_start)) {
                     $refLine .= ' - <b>' . $langs->trans('DateStart') . ':</b> ' . dol_print_date($object->date_start, 'day');

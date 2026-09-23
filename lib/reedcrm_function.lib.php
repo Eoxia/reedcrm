@@ -628,3 +628,60 @@ function reedcrm_get_date_range_filter(string $prefix, int $start = 0, int $end 
 
     return implode('&', $filter);
 }
+
+/**
+ * Read the user each recurring invoice template hands its relaunches to
+ *
+ * The template carries it in the 'reedcrm_relaunch_user' extrafield. A user since disabled is
+ * left out, so his templates fall back on the owner the relaunch would have had without the
+ * feature rather than filling the board of someone gone.
+ *
+ * @param  DoliDB         $db Database handler
+ * @return array<int,int>     Row ID of the template => row ID of the user
+ */
+function reedcrm_get_template_relaunch_users(DoliDB $db): array
+{
+    $relaunchUsers = [];
+
+    $sql  = 'SELECT ef.fk_object, ef.reedcrm_relaunch_user';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture_rec_extrafields as ef';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'user as u ON u.rowid = ef.reedcrm_relaunch_user AND u.statut = 1';
+    $sql .= ' WHERE ef.reedcrm_relaunch_user > 0';
+
+    // The column only exists once the module has been activated: without it, the relaunches keep
+    // the owner they had before the feature
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_WARNING);
+        return $relaunchUsers;
+    }
+
+    while ($obj = $db->fetch_object($resql)) {
+        $relaunchUsers[(int) $obj->fk_object] = (int) $obj->reedcrm_relaunch_user;
+    }
+    $db->free($resql);
+
+    return $relaunchUsers;
+}
+
+/**
+ * Build the full URL of a module asset, carrying a version derived from the file itself
+ *
+ * A stylesheet printed without a version is a second cache entry for the same file, and the
+ * browser can serve it stale. Suffixing with the modification time follows the convention the
+ * framework already uses for its own bundle.
+ *
+ * @param  string $relativePath Asset path relative to the custom directory, leading slash included
+ * @return string               Full URL, suffixed with the version of the file when it exists
+ */
+function reedcrm_asset_full_url(string $relativePath): string
+{
+    $url = dol_buildpath($relativePath, 1);
+
+    $absolutePath = dol_buildpath($relativePath, 0);
+    if (!file_exists($absolutePath)) {
+        return $url;
+    }
+
+    return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . filemtime($absolutePath);
+}

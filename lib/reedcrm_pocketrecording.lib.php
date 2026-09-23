@@ -676,7 +676,7 @@ function reedcrm_pocket_summary_to_html(string $summary): string
 
     $parts = preg_split(REEDCRM_POCKET_BLOCK_PATTERN, $summary, -1, PREG_SPLIT_DELIM_CAPTURE);
     if (!is_array($parts)) {
-        return dolMd2Html($summary);
+        return dolMd2Html(reedcrm_pocket_latex_to_text($summary));
     }
 
     $html = '';
@@ -688,11 +688,90 @@ function reedcrm_pocket_summary_to_html(string $summary): string
         if (preg_match('#^<pocket:([a-z0-9-]+)\b([^>]*)>(.*)</pocket:[a-z0-9-]+>$#is', $part, $match)) {
             $html .= reedcrm_pocket_render_block($match[1], $match[2], $match[3]);
         } else {
-            $html .= dolMd2Html($part);
+            $html .= dolMd2Html(reedcrm_pocket_latex_to_text($part));
         }
     }
 
     return $html;
+}
+
+/**
+ * Turn the LaTeX formulas of a summary into the sentence they were written for.
+ *
+ * The model behind Pocket sometimes states a plain rule as a formula, and no markdown parser knows
+ * LaTeX: the summary then showed its source, '$$\text{A} \land \text{B}$$' where it meant
+ * 'A ∧ B'. The delimited formulas are unwrapped and their commands read back as text.
+ *
+ * Only the delimited forms are touched. A lone dollar sign is money far more often than it is
+ * mathematics, and an amount quoted in a summary must not be eaten as the start of a formula.
+ *
+ * @param  string $text Part of a summary, as Pocket wrote it.
+ * @return string       Same text with its formulas written out.
+ */
+function reedcrm_pocket_latex_to_text(string $text): string
+{
+    if (strpos($text, '$$') === false && strpos($text, '\\[') === false && strpos($text, '\\(') === false) {
+        return $text;
+    }
+
+    $delimiters = [
+        '/\$\$(.+?)\$\$/s',
+        '/\\\\\[(.+?)\\\\\]/s',
+        '/\\\\\((.+?)\\\\\)/s'
+    ];
+
+    foreach ($delimiters as $delimiter) {
+        $text = preg_replace_callback(
+            $delimiter,
+            static function (array $match): string {
+                return reedcrm_pocket_latex_expression_to_text($match[1]);
+            },
+            $text
+        );
+    }
+
+    return $text;
+}
+
+/**
+ * Read one LaTeX expression back as text.
+ *
+ * A command that is not in the table is left as it is: printed as source it says what the model
+ * meant, dropped it would take its meaning with it.
+ *
+ * @param  string $expression Content of a formula, without its delimiters.
+ * @return string             Plain text of that formula.
+ */
+function reedcrm_pocket_latex_expression_to_text(string $expression): string
+{
+    // The wrappers carry no meaning of their own, only the typeface they ask for
+    $expression = preg_replace('/\\\\(?:text|textrm|textbf|textit|mathrm|mathbf|mathit|mathsf|operatorname)\s*\{([^{}]*)\}/', '$1', $expression);
+    $expression = preg_replace('/\\\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}/', '$1/$2', $expression);
+
+    $symbols = [
+        '\\land' => '∧', '\\wedge' => '∧', '\\lor' => '∨', '\\vee' => '∨',
+        '\\lnot' => '¬', '\\neg' => '¬', '\\oplus' => '⊕',
+        '\\leq' => '≤', '\\le' => '≤', '\\geq' => '≥', '\\ge' => '≥',
+        '\\neq' => '≠', '\\ne' => '≠', '\\approx' => '≈', '\\equiv' => '≡', '\\sim' => '∼',
+        '\\times' => '×', '\\div' => '÷', '\\pm' => '±', '\\cdot' => '·',
+        '\\Rightarrow' => '⇒', '\\Leftrightarrow' => '⇔', '\\rightarrow' => '→', '\\to' => '→',
+        '\\Leftarrow' => '⇐', '\\leftarrow' => '←', '\\mapsto' => '↦',
+        '\\forall' => '∀', '\\exists' => '∃', '\\notin' => '∉', '\\in' => '∈',
+        '\\subseteq' => '⊆', '\\subset' => '⊂', '\\cup' => '∪', '\\cap' => '∩',
+        '\\emptyset' => '∅', '\\infty' => '∞', '\\sum' => '∑', '\\prod' => '∏', '\\sqrt' => '√',
+        '\\ldots' => '…', '\\dots' => '…', '\\cdots' => '…',
+        '\\%' => '%', '\\&' => '&', '\\_' => '_', '\\#' => '#', '\\$' => '$',
+        '\\,' => ' ', '\\;' => ' ', '\\:' => ' ', '\\!' => '', '\\quad' => ' ', '\\qquad' => ' ',
+        '\\left' => '', '\\right' => '', '\\\\' => ' '
+    ];
+
+    // strtr() tries the longest key first, so \leq is never read as \le followed by a q
+    $expression = strtr($expression, $symbols);
+
+    // The braces left by a command that took an argument, ex. \sqrt{2} now reading √{2}
+    $expression = str_replace(['{', '}'], '', $expression);
+
+    return trim(preg_replace('/[ \t]+/', ' ', $expression));
 }
 
 /**

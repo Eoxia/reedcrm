@@ -41,6 +41,7 @@ window.reedcrm.pocketRecording = {
 
     $(document).on('change.pocketRecording', '.pocket-action-assign', window.reedcrm.pocketRecording.assignUser);
     $(document).on('click.pocketRecording', '.pocket-action-create-event', window.reedcrm.pocketRecording.createEvent);
+    $(document).on('click.pocketRecording', '.pocket-action-delete', window.reedcrm.pocketRecording.deleteActionItem);
     $(document).on('click.pocketRecording', '.reedcrm-pocket-audio-load', window.reedcrm.pocketRecording.loadAudio);
     $(document).on('change.pocketRecording', '.pocket-action-due-date', window.reedcrm.pocketRecording.setDueDate);
     $(document).on('change.pocketRecording', '.pocket-action-label, .pocket-action-description', window.reedcrm.pocketRecording.setText);
@@ -112,7 +113,12 @@ window.reedcrm.pocketRecording = {
         }
 
         $.each(data.objects, function(index, object) {
-          $result.append($('<li></li>').attr('data-key', object.key).text(object.label));
+          var $choice = $('<li></li>').attr('data-key', object.key);
+          // The picto is drawn by the server, the label is text and stays escaped
+          if (object.picto) {
+            $choice.append(object.picto);
+          }
+          $result.append($choice.append($('<span></span>').text(object.label)));
         });
       }).fail(function() {
         $result.removeClass('opacitymedium');
@@ -414,12 +420,64 @@ window.reedcrm.pocketRecording = {
     }, null, 'json').done(function(data) {
       $button.removeClass('loading');
       if (data && data.success && data.url) {
-        $button.replaceWith('<a href="' + data.url + '"><i class="fas fa-calendar-check pictofixedwidth"></i>' + $button.data('created-label') + '</a>');
+        // The cell becomes what the card prints for an action that already carries an event: the
+        // link, then the progress of that event. A new event is a to-do at 0%, so it carries the
+        // empty bar and the quick close trigger, exactly as the card would render it
+        var created = '<a href="' + data.url + '" title="' + ($button.data('created-label') || '') + '"><i class="fas fa-calendar-check"></i></a>'
+          + '<span class="pocket-action-progress">'
+          + '<span class="pocket-action-progress-bar"><span class="pocket-action-progress-fill" style="width: 0%"></span></span>'
+          + '<span class="pocket-action-progress-text reedcrm-quick-close-trigger reedcrm-quick-close-trigger-reload"'
+          + ' data-event-id="' + data.event_id + '" title="' + ($button.data('quick-close-label') || '') + '">0%'
+          + '<i class="fas fa-check-circle reedcrm-quick-close-icon"></i></span>'
+          + '</span>';
+
+        // The trash goes with the button: an action carrying an event is dropped from that event
+        $button.closest('.pocket-action-event').html(created);
       } else {
-        $button.addClass('butActionRefused').attr('title', (data && data.error) ? data.error : 'KO');
+        $button.addClass('error').attr('title', (data && data.error) ? data.error : 'KO');
       }
     }).fail(function() {
-      $button.removeClass('loading').addClass('butActionRefused');
+      $button.removeClass('loading').addClass('error');
+    });
+  },
+
+  /**
+   * Drop an action item Pocket extracted from the conversation.
+   *
+   * The row is marked as dropped rather than deleted, so the next synchronisation does not bring
+   * it back. The deletion is asked for out loud: the wording and the deadline the user may have
+   * written on the row go with it.
+   */
+  deleteActionItem: function(event) {
+    event.preventDefault();
+
+    var $button = $(this);
+    var $row    = $button.closest('tr');
+    var $table  = $row.closest('table');
+    if ($button.hasClass('loading') || !window.confirm($button.data('confirm'))) {
+      return;
+    }
+    $button.addClass('loading');
+
+    $.post($row.data('url'), {
+      subaction:      'dismiss',
+      action_item_id: $row.data('action-item-id'),
+      token:          $row.data('token')
+    }, null, 'json').done(function(data) {
+      if (data && data.success) {
+        $row.fadeOut(200, function() {
+          $row.remove();
+          // The table still has its header, the empty state is the row the card prints when Pocket
+          // extracted nothing
+          if (!$table.find('.pocket-action-row').length) {
+            $table.append('<tr><td colspan="4" class="opacitymedium center">' + ($table.data('empty-label') || '') + '</td></tr>');
+          }
+        });
+      } else {
+        $button.removeClass('loading').addClass('error').attr('title', (data && data.error) ? data.error : 'KO');
+      }
+    }).fail(function() {
+      $button.removeClass('loading').addClass('error');
     });
   }
 

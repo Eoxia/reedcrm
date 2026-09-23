@@ -47,9 +47,9 @@ $ownerInitials = !empty($t['owner']) ? $t['owner']['initials'] : '';
 // Full day events are picked on a plain date, the others carry an hour
 $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
 ?>
-<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
+<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?><?php echo !empty($t['upcoming']) ? ' todo-card-upcoming' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-event-type="<?php echo dol_escape_htmltag($t['type_code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
 
-    <!-- Header: type of event + reference + late flag -->
+    <!-- Header: type of event + reference + late or upcoming flag -->
     <div class="todo-card-header">
         <span class="todo-card-type" <?php echo !empty($t['type_color']) ? 'style="background: ' . dol_escape_htmltag($t['type_color']) . '"' : ''; ?>
               title="<?php echo dol_escape_htmltag($t['type_label']); ?>">
@@ -63,6 +63,10 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
             <span class="todo-card-late-badge" title="<?php echo dol_escape_htmltag($langs->trans('TodoLateEvent')); ?>">
                 <i class="fas fa-exclamation-circle"></i> <?php echo $langs->trans('TodoLateEvent'); ?>
             </span>
+        <?php elseif (!empty($t['upcoming'])) : ?>
+            <span class="todo-card-upcoming-badge" title="<?php echo dol_escape_htmltag($langs->trans('TodoUpcomingEvent')); ?>">
+                <i class="fas fa-clock"></i> <?php echo $langs->trans('TodoUpcomingEvent'); ?>
+            </span>
         <?php endif; ?>
     </div>
 
@@ -73,10 +77,22 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
     <?php if (!empty($t['soc_id']) || !empty($t['project_id']) || !empty($t['origin'])) : ?>
         <div class="todo-card-links">
             <?php if (!empty($t['origin'])) : ?>
-                <a class="todo-link-badge todo-link-origin" target="_blank" href="<?php echo $t['origin']['url']; ?>">
-                    <i class="fas <?php echo $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar'; ?>"></i>
-                    <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
-                </a>
+                <?php
+                // The counter is glued to the reference it counts: the badge gives up its right
+                // corners so the two read as a single chip, and the wrapper keeps them on one line
+                $originRelaunchCount = (int) ($t['origin']['relaunch_count'] ?? 0);
+                ?>
+                <span class="todo-origin-wrapper">
+                    <a class="todo-link-badge todo-link-origin<?php echo $originRelaunchCount > 0 ? ' todo-link-origin-counted' : ''; ?>" target="_blank" href="<?php echo $t['origin']['url']; ?>">
+                        <i class="fas <?php echo $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar'; ?>"></i>
+                        <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
+                    </a>
+                    <?php if ($originRelaunchCount > 0) : ?>
+                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoRelaunchCount', $originRelaunchCount)); ?>">
+                            <i class="fas fa-headset"></i> <?php echo $originRelaunchCount; ?>
+                        </span>
+                    <?php endif; ?>
+                </span>
             <?php endif; ?>
             <?php if (!empty($t['soc_id'])) : ?>
                 <a class="todo-link-badge todo-link-soc" target="_blank"

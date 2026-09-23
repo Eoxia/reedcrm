@@ -322,6 +322,18 @@ button.reedcrm-btn {
     font-size: 0.95em;
   }
 
+  // What the intervention brings in, read next to its hour
+  .reedcrm-chip-amount {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #3f7a53;
+    font-weight: 700;
+    font-size: 0.95em;
+  }
+
   // The third party is what a planner reads first
   .reedcrm-chip-soc {
     color: #2d3748;
@@ -350,6 +362,7 @@ button.reedcrm-btn {
 
   .reedcrm-chip-link {
     flex: 0 0 auto;
+    margin-left: auto;
     color: #a8bcc9;
 
     &:hover {

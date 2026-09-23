@@ -62,14 +62,14 @@ tr.reedcrm-quick-close-flash > td {
     padding: 14px 24px 0;
   }
 
-  // Label of the event being closed, recalled above the form.
-  .reedcrm-quick-close-event {
-    margin: 0 0 14px;
-    padding: 8px 10px;
+  // Name of the event being closed: it recalls which one is on the table, and stays editable.
+  // The accent keeps it read as the subject of the modal rather than as one field among others.
+  .reedcrm-quick-close-event-label {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 14px;
     border-left: 3px solid $reedcrm-quick-close-accent;
-    background: #f5f8f9;
     font-weight: 600;
-    word-break: break-word;
   }
 
   .reedcrm-quick-close-label {
@@ -89,6 +89,78 @@ tr.reedcrm-quick-close-flash > td {
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 12px;
+  }
+
+  // Type of the reminder being raised. The four pills carry the colours the relaunch chips already
+  // give each type, so a type is recognised here the same way it is on a project list.
+  .reedcrm-quick-close-type-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .reedcrm-quick-close-type-choice {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 7px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    background: #fff;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+
+    // The radio stays the control, it is only taken out of the flow
+    input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    &:hover {
+      border-color: #94a3b8;
+    }
+
+    // Keyboard users need the focused pill to show, the radio itself being invisible
+    input[type="radio"]:focus-visible + i {
+      outline: 2px solid #94a3b8;
+      outline-offset: 3px;
+    }
+  }
+
+  // Same slot as the pills, for the installs that ask for a drop-down list instead
+  .reedcrm-quick-close-type-select {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+  }
+
+  .reedcrm-quick-close-type-call {
+    > i { color: #4a90e2; }
+    &:has(input:checked) { border-color: #4a90e2; background: #eff6ff; color: #1d4ed8; }
+  }
+
+  .reedcrm-quick-close-type-email {
+    > i { color: #3ea85e; }
+    &:has(input:checked) { border-color: #3ea85e; background: #f0fdf4; color: #15803d; }
+  }
+
+  .reedcrm-quick-close-type-rdv {
+    > i { color: #e6732e; }
+    &:has(input:checked) { border-color: #e6732e; background: #fff7ed; color: #c2410c; }
+  }
+
+  .reedcrm-quick-close-type-other {
+    > i { color: #7d5fa3; }
+    &:has(input:checked) { border-color: #7d5fa3; background: #f5f3ff; color: #6d28d9; }
   }
 
   .reedcrm-quick-close-toggle {
