@@ -31,13 +31,10 @@ if (empty($conf) || !is_object($conf)) {
 
 global $langs, $object, $user;
 
-// The four relaunch types the module works with, shared with the relaunch chips
+// The four relaunch types the module works with, shared with the relaunch chips, and
+// reedcrm_asset_full_url() used by the assets printed below: without a version, the same
+// stylesheet is a second cache entry the browser may serve stale.
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
-
-// Content hash of the assets printed below. The page already carries the bundle in its head, with
-// that hash: printed here without it, the same file is a second URL, cached on its own and served
-// stale, and being printed later it wins the cascade over the one the head loaded.
-require_once __DIR__ . '/../../../saturne/lib/asset.lib.php';
 
 // Postponement preselected in the reschedule block, set in the module configuration
 $quickCloseDelayUnit   = getDolGlobalString('REEDCRM_QUICK_CLOSE_DELAY_UNIT', 'm') === 'd' ? 'd' : 'm';
@@ -68,8 +65,8 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
 
 // The wpeo framework is not loaded on native Dolibarr pages, the modal needs it to display
 ?>
-<link rel="stylesheet" href="<?php echo dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/temp-framework.css')); ?>">
-<link rel="stylesheet" href="<?php echo dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
+<link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/temp-framework.css')); ?>">
+<link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
 
 <div id="reedcrm-quick-close-config"
      data-url="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/quick_close_event.php', 1)); ?>"
@@ -159,4 +156,4 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo dol_escape_htmltag(saturne_asset_full_url('/reedcrm/js/modules/event_quick_close.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/js/modules/event_quick_close.js')); ?>"></script>
