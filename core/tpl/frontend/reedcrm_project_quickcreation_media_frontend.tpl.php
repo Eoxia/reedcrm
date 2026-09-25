@@ -21,7 +21,7 @@
  * \brief   Template page for quick creation project media frontend
  */
 
-require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+dol_include_once('/saturne/lib/medias.lib.php');
 $uploadContext = 'reedcrm_quickcreation_' . $user->id;
 $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
 ?>
