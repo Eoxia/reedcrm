@@ -1,69 +1,34 @@
-# [ReedCRM] [23.3.0] - Suivi DU enrichi - Clôture rapide paramétrable - Calendrier chiffré
+# [ReedCRM] [23.3.1] - Conformité du paquet Dolistore - Dolibarr 24 - Contrôles qualité
 
-Description : Cette version étoffe le **suivi du document unique** — rendez-vous client dans le calendrier des interventions, audits faits visibles et facturables, lignes manuelles liées, saisie allégée des autres engagements. La **modale de clôture rapide** devient paramétrable : type de relance choisi sur des pastilles ou dans une liste, renommage de l'événement clôturé, délai de report saisi comme un nombre. Le **calendrier des interventions** affiche le montant apporté par chaque intervention, le **tableau Todo** signale les cartes à venir et le nombre de relances, et les relances d'une facture récurrente peuvent être confiées à un utilisateur choisi.
-
-## Nouvelles fonctionnalités et innovations
-
-### Suivi du document unique
-
-* Les **rendez-vous client** apparaissent dans le calendrier des interventions, aux côtés du suivi des autres engagements.
-* Les **audits déjà réalisés** sont visibles et peuvent être facturés depuis le suivi.
-* Les lignes saisies à la main sont rattachées à leur objet, et la saisie des autres suivis est allégée.
-* La section « Portefeuille service » est désormais masquée par défaut.
-
-### Clôture rapide d'un événement
-
-* Le **type de relance** se choisit directement dans la modale, sur quatre pastilles ou dans une liste déroulante — au choix dans la configuration du module.
-* L'événement clôturé peut être **renommé** depuis la modale.
-* Le délai de report en mois est saisi comme un nombre.
-
-### Tableau Todo
-
-* Badge **« à venir »** sur les cartes planifiées après aujourd'hui.
-* **Compteur de relances** sur le badge d'objet des cartes.
-* La barre de défilement horizontale reste accessible en bas de l'écran.
-
-### Interventions
-
-* Le **montant apporté** par chaque intervention s'affiche sur le calendrier.
-* La configuration du calendrier accepte **plusieurs étiquettes de produit**.
-
-### Facturation
-
-* Les relances d'un **modèle de facture récurrente** se confient à un utilisateur choisi.
-* Le graphique annuel du suivi FA est coloré par avancement de facturation.
-
-### Fiches
-
-* Les champs vides sont masqués sur les fiches.
+Description : Cette version corrige les deux motifs qui faisaient **refuser le paquet par le Dolistore** et empêchaient la mise à jour du module sur la boutique. Elle élargit la **compatibilité à Dolibarr 24**, ajoute une **chaîne de contrôles qualité** sur les pull requests — analyse statique, lint PHP et parité des fichiers de langue — et supprime cinq clés de traduction mortes qui laissaient des libellés en anglais.
 
 ## Améliorations & corrections
 
-### Modale de clôture rapide
+### Conformité du paquet Dolistore
 
-* **Trois écrans partaient en erreur fatale** — Todo, Opportunités et Outils : le template exigeait un fichier du socle qui n'existe pas. Les feuilles de style et le script de la modale sont désormais servis par un utilitaire local, avec une version prise sur le fichier pour ne plus être servis périmés depuis le cache.
+* Le contrôle de paquet du Dolistore refusait le zip : quatre fichiers chargeaient l'environnement Dolibarr par un `require` unique, alors que la règle demande **au moins deux tentatives** — une pour le module à la racine de Dolibarr, une pour le module dans `custom`. Les trois points d'entrée Pocket, le manifeste de l'application web et le script de clients de test sont alignés sur le bootstrap utilisé par les 39 autres fichiers du module.
+* Les points d'entrée Pocket passaient directement par le socle Saturne, sans définir `$moduleNameLowerCase` au préalable. Ils entrent désormais par `reedcrm.main.inc.php` comme les autres.
+* Second motif de refus : six **libs du socle** étaient incluses par un chemin `/custom` en dur, qui ne résout pas si les modules sont installés à la racine de Dolibarr. Elles passent par `dol_include_once`, qui cherche dans les deux racines de documents.
 
-### Suivi du document unique
+### Compatibilité
 
-* La facture d'un audit clôturé sans devis sur la ligne est retrouvée.
-* Un audit facturé avant sa réalisation restait affiché « À facturer ».
+* Le module déclare **Dolibarr 23 au minimum et 24 au maximum**.
 
-### Pocket
+### Traductions
 
-* Carte d'enregistrement : titre lisible des objets liés, formulation des actions plus aérée, pictogrammes de type, et correction des éléments d'action et du résumé.
-* La synchronisation des enregistrements tourne une fois par jour, le soir, au lieu de repasser en continu.
-
-### Listes d'appel
-
-* La bannière de la fiche navigue par identifiant et ignore les listes supprimées.
-
-### Divers
-
-* Formulation française du champ du formulaire web, et plus de point doublé sur « Réf. ».
-* Le suivi FA ne parcourt plus la table des factures une fois par modèle récurrent.
+* Cinq clés mortes sont retirées du fichier anglais : elles n'avaient pas d'équivalent français, ce qui faisait basculer en anglais l'ensemble des libellés d'une même requête.
 
 ### Intégration continue
 
-* Les assets sont vérifiés sur les pull requests au lieu d'un commit automatique devenu impossible, et les scripts npm pointent sur la nouvelle chaîne de build du socle.
+* Les pull requests passent désormais **PHPStan**, un **lint PHP** et un contrôle de **parité des fichiers de langue** français / anglais.
+* La baseline PHPStan figeait le numéro de version du module dans un message d'erreur : toute release cassait la chaîne qualité. Le motif est désormais ignoré indépendamment du numéro.
 
-## Comparaison des versions [23.2.0](https://github.com/Eoxia/reedcrm/compare/23.2.0...23.3.0) et 23.3.0
+## Comparaison des versions [23.3.0](https://github.com/Eoxia/reedcrm/compare/23.3.0...23.3.1) et 23.3.1
+
+* [#1016] [CI] fix: ignorer par motif la version des triggers, figée dans la baseline [`cdfddf5`](https://github.com/Eoxia/reedcrm/commit/cdfddf5)
+* [#1013] [Module] fix: inclure les libs de Saturne par dol_include_once [`f7ab1c4`](https://github.com/Eoxia/reedcrm/commit/f7ab1c4)
+* [#1011] [Lang] fix: retirer cinq clés mortes de en_US [`1de64ff`](https://github.com/Eoxia/reedcrm/commit/1de64ff)
+* [#1009] [Module] fix: bootstrap main.inc.php à deux tentatives, exigé par le Dolistore [`e2295b3`](https://github.com/Eoxia/reedcrm/commit/e2295b3)
+* [CI] fix: compléter les dossiers du coeur vus par PHPStan [`e95d936`](https://github.com/Eoxia/reedcrm/commit/e95d936)
+* [#1007] [CI] feat: PHPStan, lint PHP et parité des langues [`9d43ffc`](https://github.com/Eoxia/reedcrm/commit/9d43ffc)
+* [#1005] [Module] rework: bornes de version Dolibarr 23 minimum, 24 maximum [`c87859b`](https://github.com/Eoxia/reedcrm/commit/c87859b)

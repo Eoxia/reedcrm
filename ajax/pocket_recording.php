@@ -31,11 +31,13 @@ if (!defined('NOREQUIREHTML')) {
     define('NOREQUIREHTML', '1');
 }
 
-// Load main Dolibarr environment
-if (file_exists(__DIR__ . '/../../saturne/saturne.main.inc.php')) {
-    require_once __DIR__ . '/../../saturne/saturne.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of saturne main fails');
+    die('Include of reedcrm main fails');
 }
 
 require_once __DIR__ . '/../class/pocketrecording.class.php';
