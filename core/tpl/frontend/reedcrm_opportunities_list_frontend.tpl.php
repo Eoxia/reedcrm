@@ -23,7 +23,7 @@
  * Required vars: $conf, $langs, $db, $latestProjects
  */
 
-require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+dol_include_once('/saturne/lib/medias.lib.php');
 dol_include_once('/reedcrm/lib/reedcrm.lib.php');
 
 $pwaProjectIds = [];
