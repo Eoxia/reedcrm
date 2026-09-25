@@ -20,6 +20,12 @@ parameters:
             - documents/ (?)
             - langs/ (?)
             - dev/ (?)
+            # Le bootstrap PHPUnit de saturne declare des stubs DoliDB, Conf, Translate,
+            # User et HookManager. Scannes, ils gagnent sur les vraies classes du coeur et
+            # chaque appel de methode remonte en « undefined method ». Saturne exclut deja
+            # ce fichier de sa propre analyse, mais scanDirectories prend ../saturne/ en
+            # entier. NE PAS retirer en alignant ce fichier sur le gabarit commun.
+            - ../saturne/tests/ (?)
             # « test/ » au singulier est le squelette du gabarit de module Dolibarr : un
             # harnais Selenium qui etend PHPUnit_Extensions_Selenium2TestCase, extension
             # retiree de PHPUnit depuis des annees. Ces fichiers ne peuvent plus s'executer

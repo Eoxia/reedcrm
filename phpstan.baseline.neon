@@ -2789,3 +2789,243 @@ parameters:
 			identifier: missingType.parameter
 			count: 1
 			path: webhook/keyyo_webhook.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Project\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ajax/close_record.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fk_project \(int\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: ajax/close_record.php
+
+		-
+			message: '#^Parameter \#1 \$id of method ActionComm\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ajax/update_action_label.php
+
+		-
+			message: '#^Cannot access property \$nb on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Parameter \#2 \$fk_element of method ActionComm\:\:getActions\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Cannot access property \$id on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Contact\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Parameter \#3 \$id of function getDictionaryValue expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Property Geolocation\:\:\$fk_element \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Cannot access property \$nbtotalofrecords on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Cannot access property \$rowid on object\|false\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Expedition\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: expedition_list.php
+
+		-
+			message: '#^Parameter \#2 \$origin_id of method CommonObject\:\:add_object_linked\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Contact\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: view/address_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Contact\:\:update\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/address_card.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Project\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/address_card.php
+
+		-
+			message: '#^Property Geolocation\:\:\$fk_element \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: view/address_card.php
+
+		-
+			message: '#^Parameter \#1 \$projectid of method CommonObject\:\:setProject\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/contact.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Project\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/frontend/pwa_geoloc.php
+
+		-
+			message: '#^Parameter \#4 \$month of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/frontend/pwa_geoloc.php
+
+		-
+			message: '#^Parameter \#5 \$day of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/frontend/pwa_geoloc.php
+
+		-
+			message: '#^Parameter \#6 \$year of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/frontend/pwa_geoloc.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Categorie\:\:getListForItem\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/frontend/pwa_tickets.php
+
+		-
+			message: '#^Parameter \#1 \$id of method Ticket\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/frontend/pwa_tickets.php
+
+		-
+			message: '#^Parameter \#4 \$month of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#5 \$day of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#6 \$year of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#4 \$month of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickcreation.php
+
+		-
+			message: '#^Parameter \#5 \$day of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickcreation.php
+
+		-
+			message: '#^Parameter \#6 \$year of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickcreation.php
+
+		-
+			message: '#^Parameter \#1 \$categories of method ActionComm\:\:setCategories\(\) expects array\<int\>\|int, array\<string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#1 \$hour of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#1 \$rowid of method Societe\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#2 \$minute of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#3 \$second of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#4 \$month of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#5 \$day of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#6 \$year of function dol_mktime expects int, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: view/quickevent.php
+
+		-
+			message: '#^Property ActionComm\:\:\$socid \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: view/quickevent.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fk_project \(int\|null\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: view/quickevent.php
