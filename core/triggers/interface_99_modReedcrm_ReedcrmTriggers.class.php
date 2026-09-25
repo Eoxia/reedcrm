@@ -38,6 +38,11 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
     protected $db;
 
     /**
+     * @var string Trigger version.
+     */
+    public $version;
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
