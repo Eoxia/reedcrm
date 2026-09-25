@@ -3029,3 +3029,14 @@ parameters:
 			identifier: assign.propertyType
 			count: 1
 			path: view/quickevent.php
+		-
+			message: '#^Property DolibarrModules\:\:\$dictionaries \(array\{\}\|array\{langs\: string, tabname\: array\<string\>, tablib\: array\<string\>, tabsql\: array\<string\>, tabsqlsort\: array\<string\>, tabfield\: array\<string\>, tabfieldvalue\: array\<string\>, tabfieldinsert\: array\<string\>, \.\.\.\}\) does not accept array\{langs\: ''reedcrm@reedcrm'', tabname\: array\{''llx_c_commercial…'', ''llx_c_refusal_reason'', ''llx_c_address_type''\}, tablib\: array\{''CommercialStatus'', ''RefusalReason'', ''AddressType''\}, tabsql\: array\{non\-falsy\-string, non\-falsy\-string, non\-falsy\-string\}, tabsqlsort\: array\{''position ASC'', ''position ASC'', ''position ASC''\}, tabfield\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldvalue\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldinsert\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, \.\.\.\}\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Property DolibarrModules\:\:\$menu \(1\|array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\>\) does not accept non\-empty\-array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\|array\{fk_menu\: ''fk_mainmenu\=reedcrm'', type\: ''top'', titre\: ''ReedCRM'', prefix\: ''\<i class\="fas fa…'', mainmenu\: ''reedcrm'', leftmenu\: '''', url\: ''/reedcrm…'', langs\: ''reedcrm@reedcrm'', \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modReedCRM.class.php
