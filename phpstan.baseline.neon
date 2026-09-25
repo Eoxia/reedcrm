@@ -1873,6 +1873,12 @@ parameters:
 			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
 
 		-
+			message: '#^Property DolibarrTriggers\:\:\$version \(''''\|''development''\|''dolibarr''\|''experimental''\) does not accept ''23\.3\.1''\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
 			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
 			identifier: method.notFound
 			count: 1
