@@ -1,0 +1,2797 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Parameter \#3 \$selected of static method Form\:\:multiselectarray\(\) expects array\<string\>, array\<int\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: admin/propal.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: admin/setup.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: admin/setup.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: admin/setup.php
+
+		-
+			message: '#^Method User\:\:fetchAll\(\) invoked with 5 parameters, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: admin/setup.php
+
+		-
+			message: '#^Variable \$formactions might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: admin/setup.php
+
+		-
+			message: '#^Variable \$langs might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: ajax/check_call_events.php
+
+		-
+			message: '#^Property Project\:\:\$opp_percent \(''''\|float\) does not accept null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: ajax/close_record.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 22
+			path: ajax/close_record.php
+
+		-
+			message: '#^Variable \$objStatus might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: ajax/close_record.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: ajax/get_relaunches_list.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: ajax/get_relaunches_list.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: ajax/get_relaunches_list.php
+
+		-
+			message: '#^Parameter \#2 \$fk_element of method ActionComm\:\:getActions\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: ajax/get_relaunches_list.php
+
+		-
+			message: '#^Property ActionComm\:\:\$userassigned \(array\<int, array\{id\: int, transparency\: int\<0, 1\>\}\>\) does not accept non\-empty\-array\<int, array\{id\: int, mandatory\: 0\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: ajax/pocket_action_item.php
+
+		-
+			message: '#^Function dol_escape_htmltag invoked with 3 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: ajax/quick_close_event.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: ajax/update_action_label.php
+
+		-
+			message: '#^Variable \$user might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: ajax/update_action_label.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getFullName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Function dol_escape_htmltag invoked with 4 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Function json_encode invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:addMoreMassActions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:doMassActions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:doPreMassActions\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:formDolBanner\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:formDolBanner\(\) has parameter \$action with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:formDolBanner\(\) has parameter \$hookmanager with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:formDolBanner\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:formDolBanner\(\) has parameter \$parameters with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:formObjectOptions\(\) has parameter \$action with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:formObjectOptions\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:tabContentCreateThirdparty\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:tabContentCreateThirdparty\(\) has parameter \$action with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:tabContentCreateThirdparty\(\) has parameter \$hookmanager with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:tabContentCreateThirdparty\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Method ActionsReedcrm\:\:tabContentCreateThirdparty\(\) has parameter \$parameters with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int                \< 0 on error, 0 on success, 1 to replace standard code\)\: Unexpected token "on", expected ''\>'' at offset 192 on line 6$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int               \< 0 on error, 0 on success, 1 to replace standard code\)\: Unexpected token "on", expected ''\>'' at offset 165 on line 5$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int               \< 0 on error, 0 on success, 1 to replace standard code\)\: Unexpected token "on", expected ''\>'' at offset 167 on line 5$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Parameter \#1 \$file of method FormFile\:\:showPreview\(\) expects array\{name\: string, path\?\: string, level1name\?\: string, relativename\?\: string, fullname\: string, date\?\: string, size\?\: int, perm\?\: int, \.\.\.\}, array\<array\{name\: string, path\: string, level1name\: string, relativename\: string, fullname\: string, date\: string, size\: int, perm\: int, \.\.\.\}\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Parameter \#1 \$iSecond of function convertSecondToTime expects int, float given\.$#'
+			identifier: argument.type
+			count: 2
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Parameter \#2 \$preselected of method FormProjets\:\:selectOpportunityStatus\(\) expects ''all''\|''none''\|''notopenedopp''\|int, '''' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Parameter \#3 \$user of function dol_set_user_param expects User, CommonObject given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''Categories'', enabled\: 1, position\: 18, visible\: 1, csslist\: ''minwidth150'', disablesort\: 1, disablesearch\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''CommercialsRelaunch…'', enabled\: 1, position\: 160, visible\: 1, csslist\: ''center'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''ContactDetails'', enabled\: 1, position\: 151, visible\: 1, csslist\: ''center'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''ContactInformations'', enabled\: 1, position\: 161, visible\: 1, csslist\: ''minwidth200'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''RelauchCommercial'', enabled\: 1, position\: 150, visible\: 1, csslist\: ''center'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''Statut Opp\.'', enabled\: 1, position\: 75, visible\: 1, csslist\: ''minwidth150'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$out might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$out2 might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$out3 might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$out4 might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$out5 might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$out6 might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$task_duration_effective might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$task_planned_workload might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Variable \$task_ref might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: class/actions_reedcrm.class.php
+
+		-
+			message: '#^Class DoliDB referenced with incorrect case\: DoliDb\.$#'
+			identifier: class.nameCase
+			count: 1
+			path: class/address.class.php
+
+		-
+			message: '#^PHPDoc type array of property Address\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/address.class.php
+
+		-
+			message: '#^PHPDoc type int of property Address\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/address.class.php
+
+		-
+			message: '#^PHPDoc type int of property Address\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/address.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Address\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/address.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Address\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/address.class.php
+
+		-
+			message: '#^Parameter \#3 \$dbtouse of function getState expects DoliDB\|null, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/address.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: class/api_reedcrm.class.php
+
+		-
+			message: '#^Method ReedCRM\:\:createProject\(\) has parameter \$request_data with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/api_reedcrm.class.php
+
+		-
+			message: '#^Method ReedCRM\:\:ticketDashboard\(\) has parameter \$includeclosed with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/api_reedcrm.class.php
+
+		-
+			message: '#^Method ReedCRM\:\:ticketList\(\) has parameter \$includeclosed with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/api_reedcrm.class.php
+
+		-
+			message: '#^Method ReedCRM\:\:ticketSummary\(\) has parameter \$includeclosed with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/api_reedcrm.class.php
+
+		-
+			message: '#^Method ReedCRM\:\:ticketSummary\(\) has parameter \$lang with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/api_reedcrm.class.php
+
+		-
+			message: '#^Function dol_escape_htmltag invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$morecss$#'
+			identifier: parameter.notFound
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$notooltip$#'
+			identifier: parameter.notFound
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$save_lastsearch_value$#'
+			identifier: parameter.notFound
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$withpicto$#'
+			identifier: parameter.notFound
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc type array of property CallList\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc type int of property CallList\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc type int of property CallList\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc type string of property CallList\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^PHPDoc type string of property CallList\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllist.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/calllistline.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/calllistline.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:prefix\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/calllistline.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/calllistline.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int             \<0 if KO, Id of created object if OK\)\: Unexpected token "if", expected ''\>'' at offset 204 on line 6$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/calllistline.class.php
+
+		-
+			message: '#^PHPDoc type array of property CallListLine\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllistline.class.php
+
+		-
+			message: '#^PHPDoc type int of property CallListLine\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllistline.class.php
+
+		-
+			message: '#^PHPDoc type int of property CallListLine\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/calllistline.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/clienttracking.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int                 \<\= 0 if KO, id if OK\.\)\: Unexpected token "\=", expected type at offset 230 on line 6$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/clienttracking.class.php
+
+		-
+			message: '#^PHPDoc type array\<string, array\<string, mixed\>\> of property ClientTracking\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/clienttracking.class.php
+
+		-
+			message: '#^PHPDoc type int of property ClientTracking\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/clienttracking.class.php
+
+		-
+			message: '#^PHPDoc type int of property ClientTracking\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/clienttracking.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int                 \<\= 0 if KO, id if OK\.\)\: Unexpected token "\=", expected type at offset 230 on line 6$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/duaudit.class.php
+
+		-
+			message: '#^PHPDoc type array\<string, array\<string, mixed\>\> of property DuAudit\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/duaudit.class.php
+
+		-
+			message: '#^PHPDoc type int of property DuAudit\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/duaudit.class.php
+
+		-
+			message: '#^PHPDoc type int of property DuAudit\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/duaudit.class.php
+
+		-
+			message: '#^Class DoliDB referenced with incorrect case\: DoliDb\.$#'
+			identifier: class.nameCase
+			count: 1
+			path: class/geolocation.class.php
+
+		-
+			message: '#^PHPDoc type array of property Geolocation\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/geolocation.class.php
+
+		-
+			message: '#^PHPDoc type int of property Geolocation\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/geolocation.class.php
+
+		-
+			message: '#^PHPDoc type int of property Geolocation\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/geolocation.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Geolocation\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/geolocation.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property Geolocation\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/geolocation.class.php
+
+		-
+			message: '#^Parameter \#2 \$chunkSize of method Geolocation\:\:injectMapFeatures\(\) expects int, float given\.$#'
+			identifier: argument.type
+			count: 1
+			path: class/geolocation.class.php
+
+		-
+			message: '#^Parameter \#2 \$options of function curl_setopt_array expects array\{19913\: bool, 13\: int, 64\: bool, 81\: 0\|2, 10023\: array\<int, string\>\}, array\{19913\: true, 13\: 10, 64\: false, 81\: false, 10023\: array\{''User\-Agent\:…'', non\-falsy\-string, ''Accept\: application…''\}\} given\.$#'
+			identifier: argument.type
+			count: 2
+			path: class/geolocation.class.php
+
+		-
+			message: '#^Parameter \#2 \$withcode of function getCountry expects ''''\|''0''\|''1''\|''2''\|''3''\|''all'', 3 given\.$#'
+			identifier: argument.type
+			count: 2
+			path: class/geolocation.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:prefix\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int                  \< 0 on error, \>\= 0 on success\)\: Unexpected token "on", expected ''\>'' at offset 410 on line 8$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int              \< 0 on error, \> 0 on success\)\: Unexpected token "on", expected ''\>'' at offset 341 on line 7$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int        \< 0 on error, \>\= 0 on success\)\: Unexpected token "on", expected ''\>'' at offset 162 on line 5$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^PHPDoc type array of property InterventionDate\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^PHPDoc type int of property InterventionDate\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^PHPDoc type int of property InterventionDate\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/interventiondate.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int                    \< 0 if KO, 0 if not found, \> 0 if OK\.\)\: Unexpected token "if", expected ''\>'' at offset 254 on line 6$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/pocketactionitem.class.php
+
+		-
+			message: '#^PHPDoc type array\<string, array\<string, mixed\>\> of property PocketActionItem\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/pocketactionitem.class.php
+
+		-
+			message: '#^PHPDoc type int of property PocketActionItem\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/pocketactionitem.class.php
+
+		-
+			message: '#^PHPDoc type int of property PocketActionItem\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/pocketactionitem.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int                 \<\= 0 if KO, id if OK\.\)\: Unexpected token "\=", expected type at offset 426 on line 9$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/pocketrecording.class.php
+
+		-
+			message: '#^PHPDoc tag @return has invalid value \(int              \< 0 if KO, 0 if not found, \> 0 if OK\.\)\: Unexpected token "if", expected ''\>'' at offset 154 on line 5$#'
+			identifier: phpDoc.parseError
+			count: 1
+			path: class/pocketrecording.class.php
+
+		-
+			message: '#^PHPDoc type array\<string, array\<string, mixed\>\> of property PocketRecording\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/pocketrecording.class.php
+
+		-
+			message: '#^PHPDoc type int of property PocketRecording\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/pocketrecording.class.php
+
+		-
+			message: '#^PHPDoc type int of property PocketRecording\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/pocketrecording.class.php
+
+		-
+			message: '#^PHPDoc type array\<string, array\<string, mixed\>\> of property RecurringInvoiceFollowup\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/recurringinvoicefollowup.class.php
+
+		-
+			message: '#^PHPDoc type int of property RecurringInvoiceFollowup\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/recurringinvoicefollowup.class.php
+
+		-
+			message: '#^PHPDoc type int of property RecurringInvoiceFollowup\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/recurringinvoicefollowup.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: class/recurringinvoicefollowupcron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/recurringinvoicefollowupcron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 7
+			path: class/recurringinvoicefollowupcron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:lasterror\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/recurringinvoicefollowupcron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/recurringinvoicefollowupcron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/recurringinvoicefollowupcron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 9
+			path: class/recurringinvoicefollowupcron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:prefix\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Method ReedcrmDashboard\:\:getOpportunitySources\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Method ReedcrmDashboard\:\:getOpportunitySources\(\) has parameter \$title with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: class/reedcrmdashboard.class.php
+
+		-
+			message: '#^Class DoliDB referenced with incorrect case\: DoliDb\.$#'
+			identifier: class.nameCase
+			count: 1
+			path: class/reedcrmnotifiy.class.php
+
+		-
+			message: '#^PHPDoc type array of property ReedcrmNotify\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/reedcrmnotifiy.class.php
+
+		-
+			message: '#^PHPDoc type int\|string of property ReedcrmNotify\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: class/reedcrmnotifiy.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:lasterror\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getFullName\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: class/reedcrmticketdashboard.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:lasterror\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Property ActionComm\:\:\$datef \(int\) does not accept null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Property ActionComm\:\:\$datep \(int\) does not accept null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: class/reedcrmtodocron.class.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/ajax/ticket_assign.php
+
+		-
+			message: '#^Variable \$user might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: core/ajax/ticket_assign.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 3
+			path: core/ajax/ticket_severity.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 8
+			path: core/ajax/ticket_time.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$boxes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$config_page_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$conflictwith\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$const\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$const_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$cronjobs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$db\.$#'
+			identifier: property.notFound
+			count: 26
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$depends\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$descriptionlong\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$dictionaries\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$dirs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$editor_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$error\.$#'
+			identifier: property.notFound
+			count: 2
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$errors\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$family\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$familyinfo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$hidden\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$langfiles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$max_dolibarr_version\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$menu\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$module_parts\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$module_position\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$need_dolibarr_version\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$need_javascript_ajax\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$overwrite_translation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$phpmin\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$picto\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$requiredby\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$rights\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$rights_class\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$tabs\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$warnings_activation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Access to an undefined property modReedCRM\:\:\$warnings_activation_ext\.$#'
+			identifier: property.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Call to an undefined method modReedCRM\:\:_init\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Call to an undefined method modReedCRM\:\:_load_tables\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Call to an undefined method modReedCRM\:\:_remove\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Method User\:\:fetchAll\(\) invoked with 7 parameters, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getFullName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method AddPage\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 2
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method Cell\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method Output\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method SetAuthor\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method SetAutoPageBreak\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method SetCreator\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method SetFont\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method SetMargins\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method SetTitle\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method SetXY\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method setPrintFooter\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to method setPrintHeader\(\) on an unknown class TCPDI\.$#'
+			identifier: class.notFound
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:cols\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:cols\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:draw\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:draw\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$amount with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$fill with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$firstname with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$lastname with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$line with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$phone with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$sourceRef with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawDataRow\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawFooter\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawFooter\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawFooter\(\) has parameter \$pageNum with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawFooter\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawHeader\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawHeader\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawHeader\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawHeader\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawHeader\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawInfoGrid\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawInfoGrid\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawInfoGrid\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawInfoGrid\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawInfoGrid\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawPublicNote\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawPublicNote\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawPublicNote\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawPublicNote\(\) has parameter \$pageNum with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawPublicNote\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawPublicNote\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawSectionBanner\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawSectionBanner\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawSectionBanner\(\) has parameter \$title with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawSectionBanner\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawTableHeader\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawTableHeader\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawTableHeader\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:drawTableHeader\(\) has parameter \$y with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:fill\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:fill\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:text\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:text\(\) has parameter \$pdf with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:write_file\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:write_file\(\) has parameter \$hidedesc with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:write_file\(\) has parameter \$hidedetails with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:write_file\(\) has parameter \$hideref with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:write_file\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:write_file\(\) has parameter \$outputlangs with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Method pdf_calllist_standard\:\:write_file\(\) has parameter \$srctemplatepath with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$cBlack has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$cGray has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$cLight has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$cNavy has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$cTeal has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$cWhite has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$footerY has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$mLeft has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$mRight has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$mTop has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$pWidth has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Property pdf_calllist_standard\:\:\$rowH has no type specified\.$#'
+			identifier: missingType.property
+			count: 1
+			path: core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Method InterfaceReedCRMTriggers\:\:tagStateEvent\(\) has parameter \$elementId with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Method InterfaceReedCRMTriggers\:\:tagStateEvent\(\) has parameter \$elementType with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Method InterfaceReedCRMTriggers\:\:tagStateEvent\(\) has parameter \$label with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Method InterfaceReedCRMTriggers\:\:tagStateEvent\(\) has parameter \$statusTag with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Method InterfaceReedCRMTriggers\:\:tagStateEvent\(\) should return int but empty return statement found\.$#'
+			identifier: return.empty
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Method InterfaceReedCRMTriggers\:\:tagStateEvent\(\) should return int but return statement is missing\.$#'
+			identifier: return.missing
+			count: 2
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$action$#'
+			identifier: parameter.notFound
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$conf$#'
+			identifier: parameter.notFound
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$langs$#'
+			identifier: parameter.notFound
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$object$#'
+			identifier: parameter.notFound
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Parameter \#4 \$id of method CommonObject\:\:setValueFrom\(\) expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Property DolibarrTriggers\:\:\$version \(''''\|''development''\|''dolibarr''\|''experimental''\) does not accept ''23\.3\.0''\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/triggers/interface_99_modReedcrm_ReedcrmTriggers.class.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:begin\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:close\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:commit\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 6
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:num_rows\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:order\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:rollback\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:sanitize\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:getLabelFromKey\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:load\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method Translate\:\:loadLangs\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
+			identifier: method.notFound
+			count: 14
+			path: expedition_list.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Expedition and ''fetch_lines'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: expedition_list.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$firstname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/reedcrm_call_list.lib.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$lastname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/reedcrm_call_list.lib.php
+
+		-
+			message: '#^Call to an undefined method User\:\:loadPersonalConf\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/reedcrm_call_list.lib.php
+
+		-
+			message: '#^Function showLatestProjects\(\) has parameter \$maxSizeShortListLimit with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_eventpro.lib.php
+
+		-
+			message: '#^Function showLatestProjects\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_eventpro.lib.php
+
+		-
+			message: '#^Function showLatestProposals\(\) has parameter \$maxSizeShortListLimit with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_eventpro.lib.php
+
+		-
+			message: '#^Function showLatestProposals\(\) has parameter \$object with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_eventpro.lib.php
+
+		-
+			message: '#^Undefined variable\: \$societe$#'
+			identifier: variable.undefined
+			count: 1
+			path: lib/reedcrm_eventpro.lib.php
+
+		-
+			message: '#^Property CommonObject\:\:\$element \(string\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: lib/reedcrm_fields.lib.php
+
+		-
+			message: '#^Property CommonObject\:\:\$table_element \(string\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: lib/reedcrm_fields.lib.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: lib/reedcrm_fields.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 25
+			path: lib/reedcrm_followup.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 16
+			path: lib/reedcrm_followup.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 38
+			path: lib/reedcrm_followup.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: lib/reedcrm_followup.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 25
+			path: lib/reedcrm_followup.lib.php
+
+		-
+			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/reedcrm_followup.lib.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$login\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:lasterror\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function count_thirdparty_calls\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function count_thirdparty_calls\(\) has parameter \$socid with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_pending_call_events\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_pending_call_events\(\) has parameter \$user_id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_thirdparty_calls\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_thirdparty_calls\(\) has parameter \$filters with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_thirdparty_calls\(\) has parameter \$limit with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_thirdparty_calls\(\) has parameter \$offset with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_thirdparty_calls\(\) has parameter \$socid with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_thirdparty_calls\(\) has parameter \$sortfield with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function get_thirdparty_calls\(\) has parameter \$sortorder with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function mark_call_event_processed\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function mark_call_event_processed\(\) has parameter \$event_id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function store_call_event\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function store_call_event\(\) has parameter \$callee with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function store_call_event\(\) has parameter \$caller with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function store_call_event\(\) has parameter \$contact_id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Function store_call_event\(\) has parameter \$user_id with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Parameter \#3 \$newmask of function dol_move expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Variable \$s on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: lib/reedcrm_function.lib.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$entity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/reedcrm_interventiondate.lib.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$gender\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/reedcrm_interventiondate.lib.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$photo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: lib/reedcrm_interventiondate.lib.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: lib/reedcrm_interventiondate.lib.php
+
+		-
+			message: '#^Function dol_escape_htmltag invoked with 3 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: lib/reedcrm_pocketrecording.lib.php
+
+		-
+			message: '#^Parameter \#2 \$callback of function array_filter expects \(callable\(string\)\: bool\)\|null, ''strlen'' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: lib/reedcrm_pocketrecording.lib.php
+
+		-
+			message: '#^Parameter \#3 \$check of function dol_htmlwithnojs expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: lib/reedcrm_pocketrecording.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:escapeforlike\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:fetch_object\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:free\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:idate\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:jdate\(\)\.$#'
+			identifier: method.notFound
+			count: 10
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:lasterror\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:plimit\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:query\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Call to an undefined method User\:\:hasRight\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: lib/reedcrm_todo.lib.php
+
+		-
+			message: '#^Parameter \#1 \$id of method SaturneObject\:\:fetch\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/address_card.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:delete\(\) expects int\<0, 1\>, false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/address_card.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/call_list_card.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/call_list_card.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/call_list_card.php
+
+		-
+			message: '#^Parameter \#10 \$mode of method FormProjets\:\:select_projects\(\) expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/call_list_card.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$firstname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: view/duaudit_list.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$lastname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: view/duaudit_list.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: view/duaudit_list.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: view/duaudit_list.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 3
+			path: view/duaudit_list.php
+
+		-
+			message: '#^Parameter \#8 \$force_entity of method Form\:\:select_dolusers\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: view/duaudit_list.php
+
+		-
+			message: '#^Offset 1\|2\|3 on array\{''\#3b82f6'', ''\#22c55e'', ''\#ef4444'', ''\#f97316''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: view/frontend/pwa_call_list.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 3
+			path: view/frontend/pwa_call_list.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/frontend/pwa_contacts.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/frontend/pwa_devis.php
+
+		-
+			message: '#^Parameter \#10 \$categoryManagement of function saturne_fetch_all_object_type expects bool, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/frontend/pwa_geoloc.php
+
+		-
+			message: '#^Parameter \#8 \$extraFieldManagement of function saturne_fetch_all_object_type expects bool, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/frontend/pwa_geoloc.php
+
+		-
+			message: '#^Parameter \#9 \$multiEntityManagement of function saturne_fetch_all_object_type expects bool, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/frontend/pwa_geoloc.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: view/frontend/pwa_opportunity.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: view/frontend/pwa_opportunity.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 3
+			path: view/frontend/pwa_opportunity.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/frontend/pwa_projets.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 3
+			path: view/frontend/pwa_relaunch.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/frontend/pwa_tickets.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/frontend/pwa_tiers.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/frontend/quickcreation.php
+
+		-
+			message: '#^Variable \$project might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/frontend/quickcreation.php
+
+		-
+			message: '#^Parameter \#10 \$categoryManagement of function saturne_fetch_all_object_type expects bool, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#10 \$disabled of method Form\:\:selectarray\(\) expects int\<0, 1\>, bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#2 \$page of function print_barre_liste expects int\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#8 \$extraFieldManagement of function saturne_fetch_all_object_type expects bool, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#8 \$num of function print_barre_liste expects int, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Parameter \#9 \$multiEntityManagement of function saturne_fetch_all_object_type expects bool, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Result of method FormCompany\:\:select_region\(\) \(void\) is used\.$#'
+			identifier: method.void
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Variable \$action might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Variable \$contactAddress might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Variable \$contactName might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Variable \$object might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/map.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/pocketrecording/pocketrecording_card.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/pocketrecording/pocketrecording_card.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/pocketrecording/pocketrecording_card.php
+
+		-
+			message: '#^Function dol_escape_htmltag invoked with 3 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/pocketrecording/pocketrecording_card.php
+
+		-
+			message: '#^Parameter \#8 \$force_entity of method Form\:\:select_dolusers\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/pocketrecording/pocketrecording_card.php
+
+		-
+			message: '#^Call to method doActions\(\) on an unknown class ActionsSirene\.$#'
+			identifier: class.notFound
+			count: 1
+			path: view/quickcreation.php
+
+		-
+			message: '#^Instantiated class ActionsSirene not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: view/quickcreation.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/quickcreation.php
+
+		-
+			message: '#^Variable \$project might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: view/quickcreation.php
+
+		-
+			message: '#^Parameter \#4 \$key_in_label of method Form\:\:multiselectarray\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#6 \$showpercent of method FormProjets\:\:selectOpportunityStatus\(\) expects int\<0, 1\>, '''' given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickevent.php
+
+		-
+			message: '#^Parameter \#7 \$morecss of method FormProjets\:\:selectOpportunityStatus\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/quickevent.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: view/quickevent.php
+
+		-
+			message: '#^Function saturne_banner_tab invoked with 12 parameters, 1\-9 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/recurringinvoicefollowup_card.php
+
+		-
+			message: '#^Parameter \#8 \$handlePhoto of function saturne_banner_tab expects bool, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/recurringinvoicefollowup_card.php
+
+		-
+			message: '#^Parameter \#9 \$moreParams of function saturne_banner_tab expects array, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/recurringinvoicefollowup_card.php
+
+		-
+			message: '#^Method Project\:\:setCategories\(\) invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/reedcrmimport.php
+
+		-
+			message: '#^Parameter \#5 \$formquestion of method Form\:\:formconfirm\(\) expects array\<array\{name\?\: string, value\?\: bool\|float\|string, values\?\: array\<string\>, default\?\: string, label\?\: string, type\: string, size\?\: int\|string, morecss\?\: string, \.\.\.\}\|string\>\|string\|null, array\{array\{type\: ''hidden'', name\: ''import_file'', value\: string\}, array\{type\: ''multiselect'', label\: mixed, name\: ''existing_category…'', values\: array\<int, string\>, default\: array\{\}, morecss\: ''minwidth300''\}, array\{type\: ''text'', label\: mixed, name\: ''category_name''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/reedcrmimport.php
+
+		-
+			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:create\(\) expects int\<0, 1\>, true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/reedcrmtools.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$firstname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: view/signedunbilled_list.php
+
+		-
+			message: '#^Access to an undefined property User\:\:\$lastname\.$#'
+			identifier: property.notFound
+			count: 1
+			path: view/signedunbilled_list.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/signedunbilled_list.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/signedunbilled_list.php
+
+		-
+			message: '#^Parameter \#8 \$force_entity of method Form\:\:select_dolusers\(\) expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: view/signedunbilled_list.php
+
+		-
+			message: '#^Call to function is_object\(\) with Societe will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: view/thirdparty_calls.php
+
+		-
+			message: '#^Call to an undefined method User\:\:fetch\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/ticket_reedcrm.php
+
+		-
+			message: '#^Call to an undefined method User\:\:getNomUrl\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/ticket_reedcrm.php
+
+		-
+			message: '#^Class User constructor invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: view/ticket_reedcrm.php
+
+		-
+			message: '#^Function saturne_footer not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: view/ticket_reedcrm.php
+
+		-
+			message: '#^Variable \$db might not be defined\.$#'
+			identifier: variable.undefined
+			count: 4
+			path: view/ticket_reedcrm.php
+
+		-
+			message: '#^Variable \$langs might not be defined\.$#'
+			identifier: variable.undefined
+			count: 5
+			path: view/ticket_reedcrm.php
+
+		-
+			message: '#^Call to an undefined method DoliDB\:\:close\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: view/todo_list.php
+
+		-
+			message: '#^Function json_encode invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 2
+			path: webhook/keyyo_webhook.php
+
+		-
+			message: '#^Function log_to_file\(\) has no return type specified\.$#'
+			identifier: missingType.return
+			count: 1
+			path: webhook/keyyo_webhook.php
+
+		-
+			message: '#^Function log_to_file\(\) has parameter \$msg with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: webhook/keyyo_webhook.php
