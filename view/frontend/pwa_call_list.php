@@ -32,7 +32,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+dol_include_once('/saturne/lib/medias.lib.php');
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
 require_once __DIR__ . '/../../class/calllist.class.php';
 require_once __DIR__ . '/../../class/calllistline.class.php';

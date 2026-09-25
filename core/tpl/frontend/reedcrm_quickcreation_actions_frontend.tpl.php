@@ -89,7 +89,7 @@ if ($action == 'uploadPhoto' && !empty($saturneModule)) {
         }
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-            require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+            dol_include_once('/saturne/lib/medias.lib.php');
             print saturne_render_media_block($saturneModule, $saturneSubDir);
             exit;
         }
@@ -743,7 +743,7 @@ if ($action == 'add') {
         }
 
         // Saturne Media Module Migration
-        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+        dol_include_once('/saturne/lib/medias.lib.php');
         $uploadContext = 'reedcrm_quickcreation_' . $user->id;
         $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
 
