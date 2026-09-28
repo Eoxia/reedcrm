@@ -1,0 +1,33 @@
+-- Copyright (C) 2026 EVARISK <technique@evarisk.com>
+--
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see https://www.gnu.org/licenses/.
+
+-- Index the todo board reads its columns through.
+--
+-- A column of the board is a status, that is a percentage, and its cards come out ordered on
+-- their start date. Dolibarr indexes the entity and the percentage one column each, and
+-- neither of them carries a date: the planner intersects the two, then sorts everything the
+-- criteria matched before keeping the thirty cards of a page. On a base whose agenda is
+-- mostly the automatic log of Dolibarr, that is hundreds of thousands of rows sorted to show
+-- thirty of them.
+--
+-- Laid out in this order the index answers the whole read: the entity and the percentage pin
+-- the column, the date hands the rows over already sorted, and the type of the event lets the
+-- "hide the automatic events" criterion be applied without opening a single row. It is also
+-- what the counters of the columns are read through, which touch no row at all.
+--
+-- Idempotent: re-running the module activation raises DB_ERROR_KEY_NAME_ALREADY_EXISTS, an
+-- error run_sql() accepts.
+
+ALTER TABLE llx_actioncomm ADD INDEX idx_reedcrm_todo (entity, percent, datep, fk_action);

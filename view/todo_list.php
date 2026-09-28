@@ -291,13 +291,11 @@ $helpUrl = 'FR:Module_' . $moduleName;
 // Displayed events criteria (user, period, type of event, text), shared by the board and its counters
 $todoFilters = reedcrmTodoGetFilters();
 $todoColumns = reedcrmTodoGetKanbanColumns();
-// Counted in one query, then read a page at a time: a board of thousands of events weighs
-// the same as a small one, "load more" fetching the rest column by column
+// Counted apart, then read a page at a time: a board of thousands of events weighs the same
+// as a small one, "load more" fetching the rest column by column. The six pages are enriched
+// together, so what the cards display is resolved once for the whole board
 $todoCounts  = reedcrmTodoCountByColumn($db, $todoFilters, $todoColumns);
-$todoPage    = [];
-foreach ($todoColumns as $todoColumn) {
-    $todoPage[$todoColumn['key']] = reedcrmTodoGetEvents($db, $todoFilters, $todoColumn, $todoColumns);
-}
+$todoPage    = reedcrmTodoGetColumnPages($db, $todoFilters, $todoColumns);
 // The user being filtered on travels with the list, so the selector never shows a criteria
 // other than the one the board applied
 $todoUsers   = reedcrmTodoGetSelectableUsers($db, (int) $todoFilters['user']);
