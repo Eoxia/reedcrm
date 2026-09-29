@@ -1053,3 +1053,23 @@ CardShowAllFields = Show every field
 CardEmptyFieldsHiddenCount = %s hidden
 CardEmptyFieldsTooltip = Hides or shows the fields of this card left without a value. The choice is kept for all your cards.
 CardEmptyFieldsUserParam = Empty fields on the cards
+
+# Opportunity stats - Opportunities per month
+OpportunityStatsMenu = Opportunities per month
+OpportunityStatsTitle = Opportunities per month
+OpportunityStatsTag = Tag
+OpportunityStatsEveryTag = Every tag
+OpportunityStatsDepth = Depth
+OpportunityStatsLastYears = Last %s years
+OpportunityStatsDateType = Reference date
+OpportunityStatsDateCreation = Creation date
+OpportunityStatsDateStart = Start date
+OpportunityStatsAverage = Average
+OpportunityStatsAverageHint = The average divides the total by the months elapsed, so the months the running year has not lived yet do not drag it down.
+OpportunityStatsDateStartWarning = The count runs on the start date: the opportunities left without one are missing from the table.
+OpportunityStatsTotalYear = Total %s
+OpportunityStatsPerMonth = Per month
+OpportunityStatsBestMonth = Best month
+OpportunityStatsVersusYear = Against %s
+OpportunityStatsSameWindow = %s over the same window
+OpportunityStatsNoComparison = No comparison

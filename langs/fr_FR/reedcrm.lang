@@ -1190,3 +1190,23 @@ CardShowAllFields = Tout afficher
 CardEmptyFieldsHiddenCount = %s masqués
 CardEmptyFieldsTooltip = Masque ou affiche les champs de cette fiche qui n'ont pas de valeur. Le choix est conservé pour toutes vos fiches.
 CardEmptyFieldsUserParam = Champs vides des fiches
+
+# Opportunity stats - Opportunités par mois
+OpportunityStatsMenu = Opportunités par mois
+OpportunityStatsTitle = Opportunités par mois
+OpportunityStatsTag = Tag
+OpportunityStatsEveryTag = Tous les tags
+OpportunityStatsDepth = Profondeur
+OpportunityStatsLastYears = %s dernières années
+OpportunityStatsDateType = Date de référence
+OpportunityStatsDateCreation = Date de création
+OpportunityStatsDateStart = Date de début
+OpportunityStatsAverage = Moyenne
+OpportunityStatsAverageHint = La moyenne divise le total par les mois écoulés : les mois que l'année en cours n'a pas encore vécus ne la tirent pas vers le bas.
+OpportunityStatsDateStartWarning = Le comptage se fait sur la date de début : les opportunités qui n'en ont pas sont absentes du tableau.
+OpportunityStatsTotalYear = Total %s
+OpportunityStatsPerMonth = Par mois
+OpportunityStatsBestMonth = Meilleur mois
+OpportunityStatsVersusYear = Contre %s
+OpportunityStatsSameWindow = %s sur la même période
+OpportunityStatsNoComparison = Pas de comparaison

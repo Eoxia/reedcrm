@@ -855,6 +855,22 @@ class modReedCRM extends DolibarrModules
         ];
 
         $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=opportunities',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('OpportunityStatsMenu'),
+            'prefix'   => '<i class="fas fa-chart-bar pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'opportunitystats',
+            'url'      => '/reedcrm/view/opportunity_stats.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
             'type'     => 'left',
             'titre'    => $langs->transnoentities('OpenedPropals'),
