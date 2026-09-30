@@ -1455,8 +1455,10 @@ class modReedCRM extends DolibarrModules
             }
         }
 
+        // The key is stored, not its translation: the documents block translates the label for
+        // each viewer, a translated label would stay in the language of whoever enabled the module
         delDocumentModel('pdf_calllist_standard', 'calllist');
-        addDocumentModel('pdf_calllist_standard', 'calllist', $langs->transnoentities('CallListPDF'));
+        addDocumentModel('pdf_calllist_standard', 'calllist', 'CallListPDF');
 
         // Backward compatibility: validate all call lists still having a provisional ref (PROV…)
         if (getDolGlobalInt('REEDCRM_CALL_LIST_PROV_REF_MIGRATED') == 0) {
