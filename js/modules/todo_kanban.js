@@ -377,6 +377,10 @@ window.reedcrm.todoKanban.editDate = function (event) {
       function (response) {
         $date.data('raw', response.raw);
         $date.find('.todo-date-value').text(response.formatted || '-');
+        // The date of the origin object only stood in for a missing one
+        if ($date.hasClass('todo-date-origin')) {
+          $date.removeClass('todo-date-origin').attr('title', $date.data('title-default'));
+        }
       }
     );
   }
