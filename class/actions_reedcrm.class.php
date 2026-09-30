@@ -2802,10 +2802,16 @@ class ActionsReedcrm
      */
     public function getTooltipContent(array $parameters, CommonObject $object, string $action): int
     {
-        if (strpos($parameters['context'], 'projectdao') !== false) {
+        // The contexts of the hook manager pile up over a request: once a project tooltip is built,
+        // for instance the one of the project a proposal belongs to, projectdao stays in the context
+        // of every later tooltip. Only a project carries the fields this layout reads.
+        if (strpos($parameters['context'], 'projectdao') !== false && $object->element == 'project') {
             if (isset($parameters['tooltipcontentarray'])) {
                 global $langs, $conf;
                 $data = &$parameters['tooltipcontentarray'];
+
+                // OpportunityAmount lives in the projects language file, not loaded on every page
+                $langs->load('projects');
 
                 // Top row: Picto / Status and Opportunity Amount (flex layout)
                 if (isset($data['picto'])) {
@@ -2841,7 +2847,6 @@ class ActionsReedcrm
                 // Fourth row (or below): Description
                 unset($data['description']); // ensure no duplication
                 if (!empty($object->description)) {
-                    $langs->load('projects');
                     $data['custom_desc'] = '<div style="margin-top: 5px;"><b>' . $langs->trans('Description') . ':</b> ' . dol_string_nohtmltag($object->description) . '</div>';
                 }
 
