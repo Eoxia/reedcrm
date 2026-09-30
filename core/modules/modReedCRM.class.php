@@ -1479,6 +1479,17 @@ class modReedCRM extends DolibarrModules
             dolibarr_set_const($this->db, 'REEDCRM_CALL_LIST_PROV_REF_MIGRATED', 1, 'integer', 0, '', $conf->entity);
         }
 
+        // Backward compatibility: relaunch events raised by a cron job running in a language whose
+        // file lacked the relaunch keys were saved with the raw key, write their texts again
+        if (getDolGlobalInt('REEDCRM_TODO_RELAUNCH_LABELS_REPAIRED') == 0) {
+            require_once __DIR__ . '/../../class/reedcrmtodocron.class.php';
+
+            $todoCron = new ReedcrmTodoCron($this->db);
+            if ($todoCron->repairUntranslatedRelaunchEvents() >= 0) {
+                dolibarr_set_const($this->db, 'REEDCRM_TODO_RELAUNCH_LABELS_REPAIRED', 1, 'integer', 0, '', $conf->entity);
+            }
+        }
+
         // Ensure every active employee owns a default call list. External users (client contacts
         // holding a login) are skipped: nobody calls their list and they flood the PWA selector
         require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
