@@ -96,7 +96,7 @@ function showLatestProposals($object, $maxSizeShortListLimit = 3): string
                 $out .= '<div class="div-table-responsive-no-min">';
                 $out .= '<table class="noborder centpercent lastrecordtable">';
                 $out .= '<tr class="liste_titre">';
-                $out .= '<td colspan="5"><table width="100%" class="nobordernopadding"><tr><td>' . $langs->trans('LastPropals', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)) . '</td><td class="right"><a class="notasortlink" href="' . DOL_URL_ROOT.'/comm/propal/list.php?socid=' . $societe->id.'"><span class="hideonsmartphone">' . $langs->trans('AllPropals') . '</span><span class="badge marginleftonlyshort">' . $num . '</span></a></td>';
+                $out .= '<td colspan="5"><table width="100%" class="nobordernopadding"><tr><td>' . $langs->trans('LastPropals', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)) . '</td><td class="right"><a class="notasortlink" href="' . DOL_URL_ROOT.'/comm/propal/list.php?socid=' . $object->thirdparty->id . '"><span class="hideonsmartphone">' . $langs->trans('AllPropals') . '</span><span class="badge marginleftonlyshort">' . $num . '</span></a></td>';
                 $out .= '<td width="20px" class="right"><a href="' . DOL_URL_ROOT . '/comm/propal/stats/index.php?socid=' . $object->thirdparty->id . '">' . img_picto($langs->trans("Statistics"), 'stats') . '</a></td>';
                 $out .= '</tr></table></td>';
                 $out .= '</tr>';
