@@ -508,15 +508,20 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
  * Each source also carries the third party and the project it belongs to, which is what its
  * number of relaunches is read on, see reedcrmTodoCountRelaunches().
  *
+ * Its amount excluding tax comes along, rounded to an order of magnitude on the chip and exact
+ * in its tooltip: the card tells at a glance how much a relaunch is worth.
+ *
  * @param  DoliDB $db     Database handler
  * @param  array  $events Rows of the board, indexed by event ID
- * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => , 'soc_id' => , 'project' => , 'relaunch_count' => ]]
+ * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => , 'date_fmt' => , 'date_title' => , 'amount_ht' => , 'amount_ht_short' => , 'amount_ht_full' => , 'soc_id' => , 'project' => , 'relaunch_count' => ]]
  */
 function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 {
+    global $conf, $langs;
+
     $sources = [
-        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id=', 'date' => 'COALESCE(date_valid, datep)'],
-        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id=', 'date' => 'COALESCE(date_lim_reglement, datef)'],
+        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id=', 'date' => 'COALESCE(date_valid, datep)', 'date_label' => 'TodoOriginDatePropal'],
+        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id=', 'date' => 'COALESCE(date_lim_reglement, datef)', 'date_label' => 'TodoOriginDateInvoice'],
     ];
 
     // Group the linked object IDs per element type
@@ -530,7 +535,7 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 
     $origins = [];
     foreach ($idsByType as $elementType => $elementIds) {
-        $sql   = 'SELECT rowid, ref, fk_soc, fk_projet, ' . $sources[$elementType]['date'] . ' as date_reference';
+        $sql   = 'SELECT rowid, ref, fk_soc, fk_projet, total_ht, ' . $sources[$elementType]['date'] . ' as date_reference';
         $sql  .= ' FROM ' . MAIN_DB_PREFIX . $sources[$elementType]['table'];
         $sql  .= ' WHERE rowid IN (' . implode(',', array_keys($elementIds)) . ')';
         $resql = $db->query($sql);
@@ -539,14 +544,21 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
             continue;
         }
         while ($obj = $db->fetch_object($resql)) {
+            $dateTs   = $obj->date_reference ? (int) $db->jdate($obj->date_reference) : 0;
+            $amountHt = (float) $obj->total_ht;
             foreach ($elementIds[(int) $obj->rowid] as $eventId) {
                 $origins[$eventId] = [
-                    'type'    => $elementType,
-                    'ref'     => $obj->ref,
-                    'url'     => DOL_URL_ROOT . $sources[$elementType]['url'] . (int) $obj->rowid,
-                    'date_ts' => $obj->date_reference ? (int) $db->jdate($obj->date_reference) : 0,
-                    'soc_id'  => (int) $obj->fk_soc,
-                    'project' => (int) $obj->fk_projet,
+                    'type'            => $elementType,
+                    'ref'             => $obj->ref,
+                    'url'             => DOL_URL_ROOT . $sources[$elementType]['url'] . (int) $obj->rowid,
+                    'date_ts'         => $dateTs,
+                    'date_fmt'        => $dateTs ? dol_print_date($dateTs, 'day') : '',
+                    'date_title'      => $dateTs ? $langs->trans($sources[$elementType]['date_label'], dol_print_date($dateTs, 'day')) : '',
+                    'amount_ht'       => $amountHt,
+                    'amount_ht_short' => reedcrmTodoFormatAmountMagnitude($amountHt),
+                    'amount_ht_full'  => $langs->trans('TodoOriginAmountHT', price($amountHt, 0, $langs, 1, -1, -1, $conf->currency)),
+                    'soc_id'          => (int) $obj->fk_soc,
+                    'project'         => (int) $obj->fk_projet,
                 ];
             }
         }
@@ -560,6 +572,35 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
     }
 
     return $origins;
+}
+
+/**
+ * Return an amount rounded to its order of magnitude, the way the chip of a card shows it
+ *
+ * Below a thousand the amount keeps its units, above it reads in thousands then in millions,
+ * with one decimal as long as the leading figure is a single digit: 280 €, 3,4 k€, 34 k€, 1,2 M€.
+ *
+ * @param  float  $amount Amount to round
+ * @return string         Rounded amount followed by the currency symbol
+ */
+function reedcrmTodoFormatAmountMagnitude(float $amount): string
+{
+    global $conf, $langs;
+
+    $symbol  = $langs->getCurrencySymbol($conf->currency);
+    $decimal = $langs->transnoentitiesnoconv('SeparatorDecimal');
+    $abs     = abs($amount);
+
+    if ($abs < 1000) {
+        return price(round($amount), 0, $langs, 1, 0, 0) . ' ' . $symbol;
+    }
+
+    $unit     = $abs < 1000000 ? 'k' : 'M';
+    $scaled   = $amount / ($abs < 1000000 ? 1000 : 1000000);
+    // Rounded first, so that 9 990 € reads 10 k€ and not 10,0 k€
+    $decimals = abs(round($scaled, 1)) < 10 ? 1 : 0;
+
+    return number_format($scaled, $decimals, $decimal, ' ') . ' ' . $unit . $symbol;
 }
 
 /**

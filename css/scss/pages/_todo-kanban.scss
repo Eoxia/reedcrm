@@ -726,6 +726,27 @@
     cursor: default;
 }
 
+/* Amount excluding tax of the object, same chip as the counter it may be followed by */
+.todo-origin-amount {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-left: 1px solid rgba(160, 90, 26, 0.25);
+    border-radius: 0 12px 12px 0;
+    background: #fdf1e3;
+    color: #a05a1a;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: default;
+
+    /* The counter then closes the chip */
+    &:not(:last-child) {
+        border-radius: 0;
+    }
+}
+
 /* People: owner and assigned users */
 .todo-card-people {
     display: flex;
@@ -938,6 +959,13 @@
         background: #f0f4ff;
         outline: 1px dashed #b0c4de;
     }
+}
+
+/* Date of the object a dateless relaunch was raised on, standing in for its own */
+.todo-date-origin {
+    color: #8a94a0;
+    font-style: italic;
+    font-weight: 500;
 }
 
 .todo-date-input {
