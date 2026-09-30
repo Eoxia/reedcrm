@@ -1074,3 +1074,21 @@ OpportunityStatsBestMonth = Best month
 OpportunityStatsVersusYear = Against %s
 OpportunityStatsSameWindow = %s over the same window
 OpportunityStatsNoComparison = No comparison
+
+# Todo - automatic relaunches (crons)
+TodoColumnPropalRelaunch = Proposals to relaunch
+TodoColumnInvoiceRelaunch = Invoices to relaunch
+TodoPropalRelaunchLabel = Relaunch proposal %s
+TodoPropalRelaunchNote = Proposal validated on %s, amount %s, still unanswered.
+TodoInvoiceRelaunchLabel = Relaunch unpaid invoice %s
+TodoInvoiceRelaunchNote = Invoice due on %s, amount %s, still unpaid.
+TodoPropalRelaunchCronLabel = ReedCRM - Relaunches of unanswered proposals
+TodoPropalRelaunchCronComment = Creates an event to do for every proposal validated more than 30 days ago (constant REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) that is neither signed nor refused. The event feeds the "Proposals to relaunch" column of the Todo board.
+TodoPropalRelaunchCronResult = %s proposal relaunch(es) created
+TodoInvoiceRelaunchCronLabel = ReedCRM - Relaunches of unpaid invoices
+TodoInvoiceRelaunchCronComment = Creates an event to do for every validated invoice still unpaid more than 30 days after its due date (constant REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). The event feeds the "Invoices to relaunch" column of the Todo board.
+TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created
+TodoRelaunchCount = %s relaunch(es) on this object
+TodoOriginAmountHT = Amount excl. tax: %s
+TodoOriginDatePropal = Proposal validated on %s
+TodoOriginDateInvoice = Invoice due on %s
