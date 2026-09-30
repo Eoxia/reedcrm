@@ -292,7 +292,8 @@ class ReedcrmDashboard
 
         // Graph parameters
         $array['type']   = 'list';
-        $array['labels'] = ['Ref', 'Label', 'OpportunityAmount', 'OppPercent', 'Relance', 'LastName', 'FirstName', 'Phone', 'Email', 'ButtonActions'];
+        // The action comes first: at the far right of a ten column table it was out of sight without scrolling
+        $array['labels'] = ['ButtonActions', 'Ref', 'Label', 'OpportunityAmount', 'OppPercent', 'Relance', 'LastName', 'FirstName', 'Phone', 'Email'];
 
         $arrayProjectOpportunitiesList = [];
         $projects                      = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', 5, 0, [], 'AND', true);
@@ -304,6 +305,8 @@ class ReedcrmDashboard
         foreach ($projects as $project) {
             $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id;
 
+            // The cells are printed in the order they are set, which must follow the one of the labels
+            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '<a class="wpeo-button" href="'. $newThirdPartyUrl .'"><i class="fas fa-plus"></i> '. $langs->trans('NewThirdparty') .'</a>';
             $arrayProjectOpportunitiesList[$project->id]['Ref']['value']               = $project->getNomUrl(1);
             $arrayProjectOpportunitiesList[$project->id]['Ref']['morecss']             = 'left';
             $arrayProjectOpportunitiesList[$project->id]['Label']['value']             = $project->title;
@@ -314,7 +317,6 @@ class ReedcrmDashboard
             $arrayProjectOpportunitiesList[$project->id]['FirstName']['value']         = $project->array_options['options_reedcrm_firstname'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Phone']['value']             = $project->array_options['options_projectphone'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Email']['value']             = $project->array_options['options_reedcrm_email'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '<a class="wpeo-button" href="'. $newThirdPartyUrl .'"><i class="fas fa-plus"></i> '. $langs->trans('NewThirdparty') .'</a>';
         }
 
         $array['data'] = $arrayProjectOpportunitiesList;
