@@ -102,7 +102,7 @@ $object->fetch_thirdparty();
  * Actions
  */
 
-$backUrl  = dol_buildpath('/custom/reedcrm/view/frontend/pwa_opportunity.php', 1);
+$backUrl  = dol_buildpath('/reedcrm/view/frontend/pwa_opportunity.php', 1);
 $backUrl .= '?from_id=' . (int) $object->id . '&from_type=project';
 if ($callListId > 0) {
     $backUrl .= '&call_list_id=' . $callListId;
@@ -129,11 +129,11 @@ if (empty($resHook)) {
 $title   = $langs->trans('QuickEventCreation');
 $helpUrl = 'FR:Module_ReedCRM';
 $moreJS  = [
-    '/custom/saturne/js/saturne.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js',
-    '/custom/reedcrm/js/modules/eventpro.js'
+    '/saturne/js/saturne.min.js',
+    '/reedcrm/js/reedcrm.min.js',
+    '/reedcrm/js/modules/eventpro.js'
 ];
-$moreCSS = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreCSS = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;

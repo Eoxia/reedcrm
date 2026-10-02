@@ -54,18 +54,18 @@ function pocketrecording_prepare_head(PocketRecording $object): array
     $h    = 0;
     $head = [];
 
-    $head[$h][0] = dol_buildpath('/custom/reedcrm/view/pocketrecording/pocketrecording_card.php', 1) . '?id=' . $object->id;
+    $head[$h][0] = dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_card.php', 1) . '?id=' . $object->id;
     $head[$h][1] = $langs->trans('PocketRecording');
     $head[$h][2] = 'card';
     $h++;
 
-    $head[$h][0] = dol_buildpath('/custom/reedcrm/view/pocketrecording/pocketrecording_card.php', 1) . '?id=' . $object->id . '&show=transcript';
+    $head[$h][0] = dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_card.php', 1) . '?id=' . $object->id . '&show=transcript';
     $head[$h][1] = $langs->trans('PocketTranscript');
     $head[$h][2] = 'transcript';
     $h++;
 
     if (isModEnabled('agenda') && ($user->hasRight('agenda', 'myactions', 'read') || $user->hasRight('agenda', 'allactions', 'read'))) {
-        $head[$h][0] = dol_buildpath('/custom/saturne/view/saturne_agenda.php', 1) . '?id=' . $object->id . '&module_name=ReedCRM&object_type=' . $object->element;
+        $head[$h][0] = dol_buildpath('/saturne/view/saturne_agenda.php', 1) . '?id=' . $object->id . '&module_name=ReedCRM&object_type=' . $object->element;
         $head[$h][1] = $langs->trans('Events');
         $head[$h][2] = 'agenda';
         $h++;

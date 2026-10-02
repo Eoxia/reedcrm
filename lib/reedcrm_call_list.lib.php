@@ -36,18 +36,18 @@ function call_list_prepare_head(CallList $object): array
     $h    = 0;
     $head = [];
 
-    $head[$h][0] = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id;
+    $head[$h][0] = dol_buildpath('/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id;
     $head[$h][1] = $langs->trans('CallList');
     $head[$h][2] = 'card';
     $h++;
 
-    $head[$h][0] = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id . '&show=notes';
+    $head[$h][0] = dol_buildpath('/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id . '&show=notes';
     $head[$h][1] = $langs->trans('Notes');
     $head[$h][2] = 'notes';
     $h++;
 
     if (isModEnabled('agenda') && ($user->hasRight('agenda', 'myactions', 'read') || $user->hasRight('agenda', 'allactions', 'read'))) {
-        $head[$h][0] = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id . '&show=agenda';
+        $head[$h][0] = dol_buildpath('/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id . '&show=agenda';
         $head[$h][1] = $langs->trans('Events');
         $head[$h][2] = 'agenda';
         $h++;

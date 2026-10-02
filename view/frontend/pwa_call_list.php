@@ -152,8 +152,8 @@ foreach ($lines as $line) {
 
 $title   = dol_escape_htmltag($object->label);
 $helpUrl = 'FR:Module_ReedCRM';
-$moreJS  = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreJS  = ['/saturne/js/saturne.min.js', '/reedcrm/js/reedcrm.min.js'];
+$moreCSS = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -181,8 +181,8 @@ $statusColors = [
 
 // Page styles live in css/scss/pages/_pwa-call-list.scss (compiled into reedcrm.min.css)
 
-$ajaxUrl          = dol_buildpath('/custom/reedcrm/ajax/update_call_list_line_status.php', 1);
-$actioncommAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/create_call_actioncomm.php', 1);
+$ajaxUrl          = dol_buildpath('/reedcrm/ajax/update_call_list_line_status.php', 1);
+$actioncommAjaxUrl = dol_buildpath('/reedcrm/ajax/create_call_actioncomm.php', 1);
 $createActioncomm  = getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
 $token             = newToken();
 
@@ -367,7 +367,7 @@ if (empty($lines)) {
                 // Drill down to the App opportunity page, keeping the call list in the header.
                 // Rendered as an explicit disclosure row: a plain coloured title reads as decoration
                 // on a card that already holds five buttons, and nobody finds it.
-                $oppUrl = dol_buildpath('/custom/reedcrm/view/frontend/pwa_opportunity.php', 1)
+                $oppUrl = dol_buildpath('/reedcrm/view/frontend/pwa_opportunity.php', 1)
                     . '?from_id=' . (int) $oppProjectId . '&from_type=project&call_list_id=' . (int) $object->id;
                 print '<a class="pwa-call-opp-link" href="' . dol_escape_htmltag($oppUrl) . '">';
                 print '<span class="pwa-call-opp-link-body">';

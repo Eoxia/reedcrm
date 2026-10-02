@@ -36,7 +36,7 @@ if (!defined('REEDCRM_PWA_NAV_MAX_FAVORITES')) {
  */
 function reedcrm_pwa_nav_get_items(): array
 {
-    $urlBase = dol_buildpath('/custom/reedcrm/view/frontend/', 1);
+    $urlBase = dol_buildpath('/reedcrm/view/frontend/', 1);
 
     return [
         'quickcreation' => ['url' => $urlBase . 'quickcreation.php?source=pwa', 'page' => 'quickcreation.php', 'icon' => 'fa-handshake', 'label' => '+ Opp'],

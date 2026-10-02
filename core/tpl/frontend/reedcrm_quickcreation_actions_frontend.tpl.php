@@ -609,7 +609,7 @@ if ($action == 'updateoppcontact') {
             $proj->updateExtraField('reedcrm_website');
             $resUpdateEmail = $proj->updateExtraField('reedcrm_email');
             
-            file_put_contents(DOL_DOCUMENT_ROOT.'/custom/reedcrm/debug_update.log', "Finished extrafields, last result: $resUpdateEmail\n", FILE_APPEND);
+            dol_syslog('reedcrm quickcreation: contact extrafields updated, last result ' . $resUpdateEmail, LOG_DEBUG);
             
             $res['success']      = true;
             $res['firstname']    = dol_escape_htmltag($firstname);

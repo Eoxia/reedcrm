@@ -69,7 +69,7 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
 <link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
 
 <div id="reedcrm-quick-close-config"
-     data-url="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/quick_close_event.php', 1)); ?>"
+     data-url="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/quick_close_event.php', 1)); ?>"
      data-token="<?php echo dol_escape_htmltag(newToken()); ?>"
      data-default-unit="<?php echo dol_escape_htmltag($quickCloseDelayUnit); ?>"
      data-default-days="<?php echo (int) $quickCloseDelayValue; ?>"

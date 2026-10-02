@@ -567,7 +567,7 @@ class ActionsReedcrm
 
         if (empty($conf->global->REEDCRM_CALL_NOTIFICATIONS_DISABLED) && !empty($user->id)) {
             // Inject call notifications config
-            $checkUrl = dol_buildpath('/custom/reedcrm/ajax/check_call_events.php', 1);
+            $checkUrl = dol_buildpath('/reedcrm/ajax/check_call_events.php', 1);
             $frequency = getDolGlobalInt('REEDCRM_CALL_CHECK_FREQUENCY');
             $autoOpen = getDolGlobalInt('REEDCRM_AUTO_OPEN_CONTACT', 0);
             $openNewTab = getDolGlobalInt('REEDCRM_OPEN_IN_NEW_TAB', 1);
@@ -587,7 +587,7 @@ class ActionsReedcrm
             </div>
             <?php
             // Load call notifications module (dev mode - load directly until gulp build)
-            $callNotifJs = dol_buildpath('/custom/reedcrm/js/modules/call_notifications.js', 1);
+            $callNotifJs = dol_buildpath('/reedcrm/js/modules/call_notifications.js', 1);
             if (!empty($callNotifJs)) { ?>
                 <script type="text/javascript" src="<?= dol_escape_htmltag($callNotifJs) ?>"></script>
             <?php }
@@ -637,7 +637,7 @@ class ActionsReedcrm
                 // socid is required by the hover tooltip when there is no project context (propal/thirdparty cards)
                 $socidAttr = !$isProjectContext ? ' data-socid="' . (int) $socid . '"' : '';
                 $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons"' . $socidAttr . ' style="display: inline-flex; align-items: center; gap: 4px;">';
-                $relaunchAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
+                $relaunchAjaxUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
 
                 foreach ($actonComsByType as $actionCommType => $actonComByType) {
                     $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $object->id . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
@@ -658,9 +658,9 @@ class ActionsReedcrm
 
                     if ($user->hasRight('agenda', 'myactions', 'create')) {
                         if ($isProjectContext) {
-                            $cardProUrlFull = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id . '&actioncode=' . $actonComByType['actioncode'];
+                            $cardProUrlFull = dol_buildpath('/reedcrm/view/procard.php', 1) . '?from_id=' . $object->id . '&from_type=project&project_id=' . $object->id . '&actioncode=' . $actonComByType['actioncode'];
                         } else {
-                            $cardProUrlFull = DOL_URL_ROOT . '/custom/reedcrm/view/procard.php?from_id=' . $socid . '&from_type=societe&actioncode=' . $actonComByType['actioncode'];
+                            $cardProUrlFull = dol_buildpath('/reedcrm/view/procard.php', 1) . '?from_id=' . $socid . '&from_type=societe&actioncode=' . $actonComByType['actioncode'];
                         }
                         $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                         $out .= '<i class="fas fa-plus"></i>';
@@ -707,8 +707,8 @@ class ActionsReedcrm
                 <?php
 
                 // Inject CSS for the eventpro side modal
-                $reedcrmMainCssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
-                $reedcrmCssPath = dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1);
+                $reedcrmMainCssPath = dol_buildpath('/reedcrm/css/reedcrm.min.css', 1);
+                $reedcrmCssPath = dol_buildpath('/reedcrm/css/temp-framework.css', 1);
                 print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
                 print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
 
@@ -730,7 +730,7 @@ class ActionsReedcrm
                 <script>
                     // Always load eventpro.js module (overrides minified version with latest changes)
                     var script = document.createElement('script');
-                    script.src = '<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>';
+                    script.src = '<?php echo dol_buildpath('/reedcrm/js/modules/eventpro.js', 1); ?>';
                     script.onload = function() {
                         if (window.reedcrm && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
                             window.reedcrm.eventpro.init();
@@ -796,9 +796,9 @@ class ActionsReedcrm
             if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
                 global $langs;
                 // Load main reedcrm CSS
-                $reedcrmMainCssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
+                $reedcrmMainCssPath = dol_buildpath('/reedcrm/css/reedcrm.min.css', 1);
                 print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
-                $reedcrmCssPath = dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1);
+                $reedcrmCssPath = dol_buildpath('/reedcrm/css/temp-framework.css', 1);
                 print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
                 $jsPath = dol_buildpath('/saturne/js/saturne.min.js', 1);
                 print '<script src="' . $jsPath . '"></script>';
@@ -825,7 +825,7 @@ class ActionsReedcrm
                     jQuery(document).ready(function () {
                         // Load eventpro.js after DOM ready to ensure it overrides reedcrm.min.js definitions
                         var epScript = document.createElement('script');
-                        epScript.src = '<?php echo dol_buildpath('/custom/reedcrm/js/modules/eventpro.js', 1); ?>';
+                        epScript.src = '<?php echo dol_buildpath('/reedcrm/js/modules/eventpro.js', 1); ?>';
                         epScript.onload = function() {
                             if (window.reedcrm && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
                                 window.reedcrm.eventpro.init();
@@ -1009,7 +1009,7 @@ class ActionsReedcrm
                 $tooltipHtml = $langs->trans('ReedCRMNoTimeEntries');
             }
             
-            $logoSrc = dol_buildpath('/custom/reedcrm/img/reedcrm_color.png', 1);
+            $logoSrc = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
             $reedLogoHtml = '<img src="' . dol_escape_htmltag($logoSrc) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
             
             $logoHtml = '<div style="position: relative; margin-right: 8px; padding-right: 8px; border-right: 1px solid #cbd5e0; display: inline-flex; align-items: center;">';
@@ -1125,7 +1125,7 @@ class ActionsReedcrm
                             btn.prop("disabled", true).html("<i class=\'fas fa-spinner fa-spin\'></i>");
 
                             jQuery.ajax({
-                                url: "' . dol_buildpath('/custom/reedcrm/core/ajax/ticket_time.php', 1) . '",
+                                url: "' . dol_buildpath('/reedcrm/core/ajax/ticket_time.php', 1) . '",
                                 method: "POST",
                                 data: {
                                     action: "save_time",
@@ -1268,7 +1268,7 @@ class ActionsReedcrm
                 $assignLabel = dol_escape_htmltag($assignName);
             }
 
-            $logoSrcSev = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+            $logoSrcSev = dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1);
 
             $html .= '
             <div id="reedcrm-ticket-severity-block" class="contact-inline-wrapper" style="display:none; align-self: center; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">
@@ -1390,7 +1390,7 @@ class ActionsReedcrm
                         wrapSev.css("opacity", "0.5");
 
                         jQuery.ajax({
-                            url: "' . dol_buildpath('/custom/reedcrm/core/ajax/ticket_severity.php', 1) . '",
+                            url: "' . dol_buildpath('/reedcrm/core/ajax/ticket_severity.php', 1) . '",
                             method: "POST",
                             data: {
                                 action: "save_severity",
@@ -1465,7 +1465,7 @@ class ActionsReedcrm
                         wrapAssign.css("opacity", "0.5");
 
                         jQuery.ajax({
-                            url: "' . dol_buildpath('/custom/reedcrm/core/ajax/ticket_assign.php', 1) . '",
+                            url: "' . dol_buildpath('/reedcrm/core/ajax/ticket_assign.php', 1) . '",
                             method: "POST",
                             data: {
                                 action: "save_assign",
@@ -1558,7 +1558,7 @@ class ActionsReedcrm
     public function hookSetManifest(array $parameters): int
     {
         if (strpos($_SERVER['PHP_SELF'], 'reedcrm') !== false) {
-            $this->resprints = DOL_URL_ROOT . '/custom/reedcrm/manifest.json.php';
+            $this->resprints = dol_buildpath('/reedcrm/manifest.json.php', 1);
 
             return 1;
         }
@@ -1620,7 +1620,7 @@ class ActionsReedcrm
                     if (!document.getElementById(reedJsId) && (typeof window.saturne === 'undefined' || typeof window.saturne.contact_inline === 'undefined')) {
                         var scriptMain = document.createElement('script');
                         scriptMain.id = reedJsId;
-                        scriptMain.src = '<?php echo dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1); ?>';
+                        scriptMain.src = '<?php echo dol_buildpath('/reedcrm/js/reedcrm.min.js', 1); ?>';
                         document.head.appendChild(scriptMain);
                     }
                 </script>
@@ -1750,12 +1750,12 @@ class ActionsReedcrm
                             }
 
                             $modalId = 'eventproCardModal';
-                            $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $objId . '&from_type=project&project_id=' . $objId;
+                            $cardProUrl = dol_buildpath('/reedcrm/view/procard.php', 1) . '?from_id=' . $objId . '&from_type=project&project_id=' . $objId;
 
                             $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
                             $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
 
-                            $dialogUrl = dol_buildpath('/custom/reedcrm/ajax/get_relaunches_list.php', 1);
+                            $dialogUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
 
                             $out .= '<div class="reedcrm-relaunch-button reedcrm-plist-relaunch-btn-call" data-project-id="' . $objId . '" data-dialog-url="' . $dialogUrl . '" data-relaunch-type="call" data-relaunches="' . dol_escape_htmltag(json_encode($relaunchesByType['call'])) . '">';
                             $out .= '<div class="reedcrm-plist-relaunch-btn-content' . ($countsByType['call'] == 0 ? ' count-zero' : '') . '">';
@@ -1763,7 +1763,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['call'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_TEL';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_TEL';
                                 $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<i class="fas fa-plus"></i>';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
@@ -1777,7 +1777,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['email'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_EMAIL';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_EMAIL';
                                 $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
@@ -1790,7 +1790,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['rdv'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_RDV';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_RDV';
                                 $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
@@ -1803,7 +1803,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['other'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_OTH';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_OTH';
                                 $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
@@ -2035,7 +2035,7 @@ class ActionsReedcrm
             }
             // Append the tab instead of overwriting index 1, which is the native "InvoicesGeneratedFromRec" tab on recurring invoices.
             $rank = count($parameters['head']);
-            $parameters['head'][$rank][0] = DOL_URL_ROOT . '/custom/reedcrm/view/contact.php?id=' . $parameters['object']->id;
+            $parameters['head'][$rank][0] = dol_buildpath('/reedcrm/view/contact.php', 1) . '?id=' . $parameters['object']->id;
             $parameters['head'][$rank][1] = $langs->trans('ContactsAddresses');
             if ($nbContact > 0) {
                 $parameters['head'][$rank][1] .= '<span class="badge marginleftonlyshort">' . $nbContact . '</span>';
@@ -2943,8 +2943,8 @@ class ActionsReedcrm
                 $jsMountDataHtml .= '</div>';
 
                 // Ensure our custom reedcrm assets are injected so the UI logic works
-                $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
-                $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
+                $cssPath = dol_buildpath('/reedcrm/css/reedcrm.min.css', 1);
+                $jsPath  = dol_buildpath('/reedcrm/js/reedcrm.min.js', 1);
                 $assetsHtml = '<link href="' . $cssPath . '" rel="stylesheet">';
                 $assetsHtml .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
                 
@@ -2981,7 +2981,7 @@ class ActionsReedcrm
 
                 // Build exactly like contactHtml wrapper
                 $originHtml = '<div class="contact-inline-wrapper reedcrm-header-origin-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
-                $originHtml .= '<img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+                $originHtml .= '<img src="' . dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
                 $originHtml .= '<i class="fas fa-bullseye" style="color: #64748b; margin-right: 6px;"></i>';
                 $originHtml .= '<a href="#" class="classlink inline-edit-origin-badge" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $oppOriginLabel . '</a>';
                 $originHtml .= '<div class="reedcrm-hidden-origin-selector-wrap" style="display:none; margin-left:6px;">' . $hiddenOriginSelect . '</div>';
@@ -3035,7 +3035,7 @@ class ActionsReedcrm
 
                 // Build Salesrep HTML badge
                 $salesrepHtml = '<div class="contact-inline-wrapper reedcrm-header-salesrep-master" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">';
-                $salesrepHtml .= '<img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
+                $salesrepHtml .= '<img src="' . dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />';
                 $salesrepHtml .= '<i class="fas fa-user-tie" style="color: #64748b; margin-right: 6px;"></i>';
                 $salesrepHtml .= '<a href="#" class="classlink inline-edit-salesrep-badge" style="cursor: pointer; transition: color 0.3s; color: #0f172a; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px;" title="' . dol_escape_htmltag($langs->trans('Edit')) . '">' . $salesrepLabel . '</a>';
                 $salesrepHtml .= '<div class="reedcrm-hidden-salesrep-selector-wrap" style="display:none; margin-left:6px;">' . $hiddenSalesRepSelect . '</div>';
@@ -3237,7 +3237,7 @@ class ActionsReedcrm
                                 var widgetHtml = `
                                     <div id="reedcrm-closure-widget" style="position:absolute; top:calc(100% + 8px); right:0; z-index:50; width:max-content; display:block; background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <img src="' . dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height:24px; width:auto;" alt="ReedCRM" />
+                                            <img src="' . dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height:24px; width:auto;" alt="ReedCRM" />
                                             <select id="rcrm-close-reason" style="border:1px solid #ced4da; border-radius:4px; padding:3px; outline:none; font-size:12px; min-width:130px;" class="flat">
                                                 <option value="" disabled selected>-- Sélectionnez une raison --</option>
                                                 ' . str_replace(["\r", "\n", "'"], ["", "", "\\'"], $reasonOptions) . '
@@ -3322,7 +3322,7 @@ class ActionsReedcrm
                                     $(this).html("<i class=\'fas fa-spinner fa-spin\'></i>");
                                     
                                     $.ajax({
-                                        url: "' . dol_buildpath('/custom/reedcrm/ajax/close_record.php', 1) . '",
+                                        url: "' . dol_buildpath('/reedcrm/ajax/close_record.php', 1) . '",
                                         method: "POST",
                                         data: {
                                             id: objId,
@@ -3402,8 +3402,8 @@ class ActionsReedcrm
                         $btnIconSafe  = dol_escape_js($btnIcon);
                         $objElementSafe = dol_escape_js($object->element);
                         $objIdSecure = (int)$object->id;
-                        $closeAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/close_record.php', 1);
-                        $imgLogo = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+                        $closeAjaxUrl = dol_buildpath('/reedcrm/ajax/close_record.php', 1);
+                        $imgLogo = dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1);
                         $newTokenStr = newToken();
                         $labelSafe = htmlspecialchars($rawLabel, ENT_QUOTES);
                         $labelTruncSafe = htmlspecialchars($truncatedLabel, ENT_QUOTES);
@@ -3469,8 +3469,8 @@ EOT;
                         $btnIconSafe  = dol_escape_js('fa-undo');
                         $objElementSafe = dol_escape_js($object->element);
                         $objIdSecure = (int)$object->id;
-                        $closeAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/close_record.php', 1);
-                        $imgLogo = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+                        $closeAjaxUrl = dol_buildpath('/reedcrm/ajax/close_record.php', 1);
+                        $imgLogo = dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1);
                         $newTokenStr = newToken();
                         
                         $closureWidgetHtml = <<<EOT
@@ -3575,8 +3575,8 @@ EOT;
         if (strpos($parameters['context'], 'propalcard') !== false) {
             $widgetHtml = $this->renderCallListWidget('propal', (int) $object->id);
             if (!empty($widgetHtml)) {
-                $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
-                $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
+                $cssPath = dol_buildpath('/reedcrm/css/reedcrm.min.css', 1);
+                $jsPath  = dol_buildpath('/reedcrm/js/reedcrm.min.js', 1);
                 $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
                 $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
                 $this->resprints .= $widgetHtml;
@@ -3586,8 +3586,8 @@ EOT;
         if (strpos($parameters['context'], 'invoicecard') !== false) {
             $widgetHtml = $this->renderCallListWidget('facture', (int) $object->id);
             if (!empty($widgetHtml)) {
-                $cssPath = dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1);
-                $jsPath  = dol_buildpath('/custom/reedcrm/js/reedcrm.min.js', 1);
+                $cssPath = dol_buildpath('/reedcrm/css/reedcrm.min.css', 1);
+                $jsPath  = dol_buildpath('/reedcrm/js/reedcrm.min.js', 1);
                 $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
                 $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
                 $this->resprints .= $widgetHtml;
@@ -3609,7 +3609,7 @@ EOT;
         global $langs;
 
         if (strpos($parameters['context'], 'call_list_card') !== false) {
-            $mobileUrl        = dol_buildpath('/custom/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . (int) $object->id;
+            $mobileUrl        = dol_buildpath('/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . (int) $object->id;
             $this->resprints  = '<div class="refidno">';
             $this->resprints .= '<a href="' . dol_escape_htmltag($mobileUrl) . '" target="_blank">';
             $this->resprints .= '<i class="fas fa-mobile-alt"></i> ' . $langs->transnoentities('MobileView');
@@ -3647,11 +3647,11 @@ EOT;
             return '';
         }
 
-        $ajaxUrl = dol_buildpath('/custom/reedcrm/ajax/add_to_call_list.php', 1);
+        $ajaxUrl = dol_buildpath('/reedcrm/ajax/add_to_call_list.php', 1);
 
-        $defaultAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/add_to_default_call_list.php', 1);
+        $defaultAjaxUrl = dol_buildpath('/reedcrm/ajax/add_to_default_call_list.php', 1);
 
-        $logoPath = dol_buildpath('/custom/reedcrm/img/object_reedcrm_color.png', 1);
+        $logoPath = dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1);
 
         $html  = '<div class="reedcrm-add-to-call-list-wrapper"';
         $html .= ' data-element-type="' . dol_escape_htmltag($elementType) . '"';

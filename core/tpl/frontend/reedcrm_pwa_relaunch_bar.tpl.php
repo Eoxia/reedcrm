@@ -32,7 +32,7 @@ if (!defined('DOL_DOCUMENT_ROOT')) {
 global $langs, $user;
 
 $canAddEvent   = $user->hasRight('agenda', 'myactions', 'create') && $user->hasRight('reedcrm', 'eventpro', 'write');
-$relaunchUrl   = dol_buildpath('/custom/reedcrm/view/frontend/pwa_relaunch.php', 1);
+$relaunchUrl   = dol_buildpath('/reedcrm/view/frontend/pwa_relaunch.php', 1);
 $relaunchQuery = '?from_id=' . (int) $project->id . '&from_type=project';
 $relaunchQuery .= !empty($callListId) ? '&call_list_id=' . (int) $callListId : '';
 ?>

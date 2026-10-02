@@ -270,7 +270,7 @@ print '<input type="hidden" name="fromid" value="' . $fromId . '">';
 
 $newCardButton = '';
 if ($user->hasRight('reedcrm', 'adminpage', 'read')) {
-    $newCardButton = dolGetButtonTitle($langs->trans('PocketSyncNow'), '', 'fa fa-sync', dol_buildpath('/custom/reedcrm/admin/pocket.php', 1) . '?action=sync_pocket_recordings&token=' . newToken());
+    $newCardButton = dolGetButtonTitle($langs->trans('PocketSyncNow'), '', 'fa fa-sync', dol_buildpath('/reedcrm/admin/pocket.php', 1) . '?action=sync_pocket_recordings&token=' . newToken());
 }
 
 print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $moreUrlParameters, $sortfield, $sortorder, '', $num, $nbtotalofrecords, 'fa-microphone', 0, $newCardButton, '', $limit, 0, 0, 1);

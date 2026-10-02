@@ -65,7 +65,7 @@ $helpUrl = 'FR:Module_ReedCRM';
 
 saturne_header(0, '', $title, $helpUrl);
 
-print load_fiche_titre($title, '<a href="' . dol_buildpath('/custom/reedcrm/view/reedcrmimport.php', 1) . '" class="butAction">' . $langs->trans('NewImport') . '</a>', 'wrench');
+print load_fiche_titre($title, '<a href="' . dol_buildpath('/reedcrm/view/reedcrmimport.php', 1) . '" class="butAction">' . $langs->trans('NewImport') . '</a>', 'wrench');
 
 $historyFiles = [];
 if (is_dir($importHistoryDir)) {

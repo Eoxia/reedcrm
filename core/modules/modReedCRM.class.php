@@ -298,14 +298,14 @@ class modReedCRM extends DolibarrModules
 
         // Array to add new pages in new tabs
         /* BEGIN MODULEBUILDER TABS */
-        $pictoPath    = dol_buildpath('custom/reedcrm/img/reedcrm_color.png', 1);
+        $pictoPath    = dol_buildpath('/reedcrm/img/reedcrm_color.png', 1);
         $pictoReedcrm = img_picto('', $pictoPath, '', 1, 0, 0, '', 'pictoModule');
         $this->tabs   = [];
-        $this->tabs[] = ['data' => 'project' . ':+address:' . $pictoReedcrm . $langs->transnoentities('Addresses') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'address\', \'read\'):/custom/reedcrm/view/address_card.php?from_id=__ID__&from_type=project'];
-        $this->tabs[] = ['data' => 'project' . ':+map:' . $pictoReedcrm . $langs->transnoentities('Map') . ':reedcrm@reedcrm:$user->hasRight(\'project\', \'read\'):/custom/reedcrm/view/map.php?from_id=__ID__&from_type=project'];
-        $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
-        $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/custom/reedcrm/view/procard.php?from_id=__ID__&from_type=societe'];
-        $this->tabs[] = ['data' => 'thirdparty:+keyyo:' . $pictoReedcrm . $langs->transnoentities('KeyyoCalls') . ':reedcrm@reedcrm:$user->hasRight(\'societe\', \'lire\'):/custom/reedcrm/view/thirdparty_calls.php?id=__ID__'];
+        $this->tabs[] = ['data' => 'project' . ':+address:' . $pictoReedcrm . $langs->transnoentities('Addresses') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'address\', \'read\'):/reedcrm/view/address_card.php?from_id=__ID__&from_type=project'];
+        $this->tabs[] = ['data' => 'project' . ':+map:' . $pictoReedcrm . $langs->transnoentities('Map') . ':reedcrm@reedcrm:$user->hasRight(\'project\', \'read\'):/reedcrm/view/map.php?from_id=__ID__&from_type=project'];
+        $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
+        $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/reedcrm/view/procard.php?from_id=__ID__&from_type=societe'];
+        $this->tabs[] = ['data' => 'thirdparty:+keyyo:' . $pictoReedcrm . $langs->transnoentities('KeyyoCalls') . ':reedcrm@reedcrm:$user->hasRight(\'societe\', \'lire\'):/reedcrm/view/thirdparty_calls.php?id=__ID__'];
 
         // Pocket recording tabs, driven by the REEDCRM_POCKET_LINK_* constants set in admin/pocket.php.
         // This loop belongs to the constructor: saturne_refresh_module_registrations() instantiates the
@@ -327,7 +327,7 @@ class modReedCRM extends DolibarrModules
                     $tabType = $objectMetadata['tab_type'];
                 }
 
-                $this->tabs[] = ['data' => $tabType . ':+pocketrecording:' . $pictoReedcrm . $langs->transnoentities('PocketRecordings') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'pocketrecording\', \'read\'):/custom/reedcrm/view/pocketrecording/pocketrecording_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
+                $this->tabs[] = ['data' => $tabType . ':+pocketrecording:' . $pictoReedcrm . $langs->transnoentities('PocketRecordings') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'pocketrecording\', \'read\'):/reedcrm/view/pocketrecording/pocketrecording_list.php?fromid=__ID__&fromtype=' . $objectMetadata['link_name']];
             }
         }
         /* END MODULEBUILDER TABS */
@@ -779,7 +779,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fa fa-mobile pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'quickcreationfrontendpwa',
-            'url'      => '/custom/reedcrm/view/frontend/quickcreation.php?source=pwa',
+            'url'      => '/reedcrm/view/frontend/quickcreation.php?source=pwa',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -813,7 +813,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-project-diagram pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'opportunities',
-            'url'      => '/custom/saturne/view/saturne_list.php?object_type=project&search_usage_opportunity=1',
+            'url'      => '/saturne/view/saturne_list.php?object_type=project&search_usage_opportunity=1',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -829,7 +829,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-phone pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'call_list',
-            'url'      => '/custom/saturne/view/saturne_list.php?object_type=call_list',
+            'url'      => '/saturne/view/saturne_list.php?object_type=call_list',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -877,7 +877,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-file-signature pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'openedpropals',
-            'url'      => '/custom/saturne/view/saturne_list.php?object_type=propal&search_fk_statut[]=0&search_fk_statut[]=1',
+            'url'      => '/saturne/view/saturne_list.php?object_type=propal&search_fk_statut[]=0&search_fk_statut[]=1',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
@@ -945,7 +945,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '<i class="fas fa-truck pictofixedwidth"></i>',
             'mainmenu' => 'reedcrm',
             'leftmenu' => 'expeditions',
-            'url'      => '/custom/reedcrm/expedition_list.php',
+            'url'      => '/reedcrm/expedition_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'expedition\')',
@@ -1206,7 +1206,7 @@ class modReedCRM extends DolibarrModules
             'prefix'   => '',
             'mainmenu' => 'commercial',
             'leftmenu' => 'propals_model',
-            'url'      => '/custom/reedcrm/view/propal_model_list.php',
+            'url'      => '/reedcrm/view/propal_model_list.php',
             'langs'    => 'reedcrm@reedcrm',
             'position' => 11,
             'enabled'  => 'isModEnabled(\'propal\')',
