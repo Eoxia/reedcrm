@@ -199,7 +199,7 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
       };
       postData[dataKey] = newVal;
       $.ajax({
-        url: $('meta[name=reedcrm-quickcreation-url]').attr('content') || '/custom/reedcrm/ajax/quickcreation.php',
+        url: $('meta[name=reedcrm-quickcreation-url]').attr('content') || window.reedcrm.moduleUrl('/ajax/quickcreation.php'),
         type: 'POST',
         data: postData,
         dataType: 'json',
