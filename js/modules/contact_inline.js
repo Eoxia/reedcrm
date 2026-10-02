@@ -224,13 +224,8 @@ window.saturne.contact_inline.startCompanyEdit = function(e) {
             return;
         }
         
-        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
-        if (!url) {
-            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
         
-        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsocid&token=' + token;
+        let ajaxUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateoppsocid&token=') + token;
         
         aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
         hiddenSelectorWrap.hide();
@@ -325,12 +320,7 @@ window.saturne.contact_inline.startOriginEdit = function(e) {
         let projId = $('#reedcrm-inline-data').data('project-id');
         let token = $('input[name="token"]').val() || '';
         
-        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
-        if (!url) {
-            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
-        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateopporigin';
+        let ajaxUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateopporigin');
         
         aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
         hiddenSelectorWrap.hide();
@@ -430,12 +420,7 @@ window.saturne.contact_inline.startSalesRepEdit = function(e) {
         let projId = $('#reedcrm-inline-data').data('project-id');
         let token = $('input[name="token"]').val() || '';
         
-        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
-        if (!url) {
-            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
-        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsalesrep';
+        let ajaxUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateoppsalesrep');
         
         aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
         hiddenSelectorWrap.hide();
@@ -532,13 +517,8 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     }
 
     if (isPhone && typeof window.intlTelInput !== 'undefined') {
-        let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-        if (!baseRoot) {
-            if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
         input[0].iti = window.intlTelInput(input[0], {
-            utilsScript: baseRoot + '/custom/reedcrm/js/intl-tel-input/js/utils.js',
+            utilsScript: window.reedcrm.moduleUrl('/js/intl-tel-input/js/utils.js'),
             initialCountry: "fr",
             preferredCountries: ["fr", "be", "ch", "lu", "ca"],
             nationalMode: false,
@@ -604,12 +584,7 @@ window.saturne.contact_inline.submitTitleDetail = function(span, input, original
     let projectId = span.data('project-id');
     let token = $('input[name="token"]').val() || '';
     
-    let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-    if (!baseRoot) {
-        if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-        else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-    }
-    let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateopptitle';
+    let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateopptitle');
     if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateopptitle';
     
     $.ajax({
@@ -710,12 +685,7 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
     
     let token = $('input[name="token"]').val() || '';
     
-    let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-    if (!baseRoot) {
-        if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-        else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-    }
-    let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppcontact';
+    let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateoppcontact');
     if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateoppcontact';
     
     $.ajax({
@@ -790,12 +760,7 @@ window.saturne.contact_inline.editPercent = function(e) {
         span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6; line-height: 22px;"></i>');
         let token = $('input[name="token"]').val() || '';
         
-        let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-        if (!baseRoot) {
-            if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
-        let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateopppercent';
+        let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateopppercent');
         if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateopppercent';
         
         $.ajax({
@@ -865,12 +830,7 @@ window.saturne.contact_inline.editAmount = function(e) {
         span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6; line-height: 22px;"></i>');
         let token = $('input[name="token"]').val() || '';
         
-        let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-        if (!baseRoot) {
-            if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
-        let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppamount';
+        let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateoppamount');
         if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateoppamount';
         
         $.ajax({
