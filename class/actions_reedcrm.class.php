@@ -1763,7 +1763,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['call'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_TEL';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_TEL';
                                 $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<i class="fas fa-plus"></i>';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
@@ -1777,7 +1777,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['email'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_EMAIL';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_EMAIL';
                                 $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
@@ -1790,7 +1790,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['rdv'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_RDV';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_RDV';
                                 $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
@@ -1803,7 +1803,7 @@ class ActionsReedcrm
                             $out .= '<span class="reedcrm-plist-relaunch-count">' . $countsByType['other'] . '</span>';
                             $out .= '</div>';
                             if ($user->hasRight('agenda', 'myactions', 'create')) {
-                                $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=AC_OTH';
+                                $cardProUrlFull = $cardProUrl . '&actioncode=AC_OTH';
                                 $out .= '<span class="fa fa-plus reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
                                 $out .= '<input type="hidden" class="modal-options" data-modal-to-open="' . $modalId . '">';
                                 $out .= '</span>';
