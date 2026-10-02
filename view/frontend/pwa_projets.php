@@ -22,14 +22,14 @@ saturne_load_langs(['projects', 'users', 'companies', 'main']);
 $title    = $langs->trans('Projects');
 $help_url = 'FR:Module_ReedCRM';
 $moreJS   = [
-    '/custom/saturne/js/saturne.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js'
+    '/saturne/js/saturne.min.js',
+    '/reedcrm/js/reedcrm.min.js'
 ];
-$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreCSS  = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
-$conf->global->MAIN_FAVICON_URL = DOL_URL_ROOT . '/custom/reedcrm/img/reedcrm_color_512.png';
+$conf->global->MAIN_FAVICON_URL = dol_buildpath('/reedcrm/img/reedcrm_color_512.png', 1);
 
 $action = GETPOST('action', 'aZ09');
 if (!empty($action)) {

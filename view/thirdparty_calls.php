@@ -159,7 +159,7 @@ if ((!empty($objthirdparty->id) || !empty($objcon->id)) && $permok) {
 
 $morehtmlright = '';
 
-$messagingUrl = DOL_URL_ROOT . '/custom/reedcrm/view/thirdparty_calls.php?socid=' . $object->id;
+$messagingUrl = dol_buildpath('/reedcrm/view/thirdparty_calls.php', 1) . '?socid=' . $object->id;
 $morehtmlright .= dolGetButtonTitle($langs->trans('ShowAsConversation'), '', 'fa fa-comments imgforviewmode', $messagingUrl, '', 1);
 $messagingUrl = DOL_URL_ROOT . '/societe/agenda.php?socid=' . $object->id . '&actioncode=AC_TEL';
 $morehtmlright .= dolGetButtonTitle($langs->trans('MessageListViewType'), '', 'fa fa-bars imgforviewmode', $messagingUrl, '', 2);

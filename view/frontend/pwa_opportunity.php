@@ -108,8 +108,8 @@ if ($relaunchTagId > 0) {
 
 $title   = $project->ref . ' - ' . $project->title;
 $helpUrl = 'FR:Module_ReedCRM';
-$moreJS  = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreJS  = ['/saturne/js/saturne.min.js', '/reedcrm/js/reedcrm.min.js'];
+$moreCSS = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -131,7 +131,7 @@ if ($callListId > 0) {
                 }
             }
         }
-        $pwaHeaderCenterHtml  = '<a class="pwa-opp-back" href="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . (int) $callList->id) . '">';
+        $pwaHeaderCenterHtml  = '<a class="pwa-opp-back" href="' . dol_escape_htmltag(dol_buildpath('/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . (int) $callList->id) . '">';
         $pwaHeaderCenterHtml .= '<i class="fas fa-arrow-left"></i> <i class="fas fa-phone"></i> ' . dol_escape_htmltag($callList->label);
         $pwaHeaderCenterHtml .= ' — ' . $toCallCount . '/' . (is_array($callListLines) ? count($callListLines) : 0) . ' ' . $langs->trans('ToCallShort');
         $pwaHeaderCenterHtml .= '</a>';

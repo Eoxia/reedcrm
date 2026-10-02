@@ -81,7 +81,7 @@ if (empty($resHook)) {
             header('Location: ' . $backtopage);
             exit;
         }
-        header('Location: ' . dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id);
+        header('Location: ' . dol_buildpath('/reedcrm/view/call_list_card.php', 1) . '?id=' . $object->id);
         exit;
     }
 
@@ -162,7 +162,7 @@ if (empty($resHook)) {
     // Delete
     if ($action === 'confirm_delete' && GETPOST('confirm') === 'yes' && $permissiontodelete) {
         $object->delete($user);
-        header('Location: ' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list');
+        header('Location: ' . dol_buildpath('/saturne/view/saturne_list.php', 1) . '?object_type=call_list');
         exit;
     }
 
@@ -339,7 +339,7 @@ if ($show === 'notes' && $object->id > 0) {
     $head = call_list_prepare_head($object);
     print dol_get_fiche_head($head, 'notes', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
-    $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
+    $morehtml = '<a href="' . dol_buildpath('/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
     saturne_banner_tab($object, 'id', $morehtml, 1, 'rowid', 'ref', '', false, ['moreHtml' => 1, 'bannerTab' => '&show=notes']);
 
     print '<div class="fichecenter">';
@@ -386,7 +386,7 @@ if ($show === 'agenda' && $object->id > 0) {
     $head = call_list_prepare_head($object);
     print dol_get_fiche_head($head, 'agenda', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
-    $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
+    $morehtml = '<a href="' . dol_buildpath('/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
     saturne_banner_tab($object, 'id', $morehtml, 1, 'rowid', 'ref', '', false, ['moreHtml' => 1, 'bannerTab' => '&show=agenda']);
 
     print dol_get_fiche_end();
@@ -419,7 +419,7 @@ if ($object->id > 0) {
     $head = call_list_prepare_head($object);
     print dol_get_fiche_head($head, 'card', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
-    $morehtml = '<a href="' . dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
+    $morehtml = '<a href="' . dol_buildpath('/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
     // Walk the call lists by rowid, as the list does, and hand the card the 'id' it reads first :
     // navigating by ref walked them in alphabetical order, archived and (PROV…) records included
     saturne_banner_tab($object, 'id', $morehtml, 1, 'rowid', 'ref', '', false, ['moreHtml' => 1]);
@@ -494,7 +494,7 @@ if ($object->id > 0) {
 
     $lines   = $lineObject->fetchAllByCallList($object->id);
     $colspan = $permissiontodelete ? 7 : 6;
-    $ajaxUrl = $permissiontoadd ? dol_buildpath('/custom/reedcrm/ajax/get_element_primary_contact.php', 1) : '';
+    $ajaxUrl = $permissiontoadd ? dol_buildpath('/reedcrm/ajax/get_element_primary_contact.php', 1) : '';
 
     // Build propal array for native selectarray() (key = rowid, value = label)
     $propalsArray = [];
@@ -704,7 +704,7 @@ if ($object->id > 0) {
             . ' data-label-no-phone="' . dol_escape_htmltag($langs->trans('ContactNoPhone')) . '"'
             . '></div>';
 
-        print '<script src="' . dol_buildpath('/custom/reedcrm/js/modules/call_list.js', 1) . '"></script>';
+        print '<script src="' . dol_buildpath('/reedcrm/js/modules/call_list.js', 1) . '"></script>';
     }
 
     // =====================================================================

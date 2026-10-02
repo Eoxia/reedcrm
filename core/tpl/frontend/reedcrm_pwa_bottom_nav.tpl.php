@@ -38,7 +38,7 @@ $dolibarrUrl = !empty($landingPage) ? dol_buildpath($landingPage, 1) : DOL_URL_R
 </nav>
 
 <div class="pwa-nav-drawer-overlay" data-action="close-pwa-nav-drawer"></div>
-<div class="pwa-nav-drawer" data-ajax-url="<?= dol_buildpath('/custom/reedcrm/ajax/save_pwa_nav_favorites.php', 1) ?>" data-max-favorites="<?= REEDCRM_PWA_NAV_MAX_FAVORITES ?>">
+<div class="pwa-nav-drawer" data-ajax-url="<?= dol_buildpath('/reedcrm/ajax/save_pwa_nav_favorites.php', 1) ?>" data-max-favorites="<?= REEDCRM_PWA_NAV_MAX_FAVORITES ?>">
     <div class="pwa-nav-drawer-header">
         <span class="pwa-nav-drawer-title">Menu</span>
         <span class="pwa-nav-drawer-hint"><i class="fas fa-star"></i> Favoris affichés en bas (max <?= REEDCRM_PWA_NAV_MAX_FAVORITES ?>)</span>

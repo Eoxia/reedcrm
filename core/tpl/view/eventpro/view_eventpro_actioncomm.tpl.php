@@ -14,7 +14,7 @@
         <?php if ($object->element === 'project' && !empty($object->usage_opportunity)) {
             $oppAmount  = (float) $object->opp_amount;
             $oppPercent = (float) $object->opp_percent;
-            $imgPath    = dol_buildpath('/custom/reedcrm/img/reedcrm.png', 1);
+            $imgPath    = dol_buildpath('/reedcrm/img/reedcrm.png', 1);
         ?>
         <div class="reedcrm-header-stats" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; margin-bottom: 4px; vertical-align: middle; font-weight: 600; font-size: 0.95em;">
             <img src="<?= dol_escape_htmltag($imgPath) ?>" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM">

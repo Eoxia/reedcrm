@@ -19,12 +19,12 @@ saturne_load_langs(['projects', 'users', 'companies']);
 
 $title    = $langs->trans('Contacts');
 $help_url = 'FR:Module_ReedCRM';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS  = ['/custom/reedcrm/css/reedcrm.min.css'];
+$moreJS   = ['/saturne/js/saturne.min.js', '/reedcrm/js/reedcrm.min.js'];
+$moreCSS  = ['/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
-$conf->global->MAIN_FAVICON_URL = DOL_URL_ROOT . '/custom/reedcrm/img/reedcrm_color_512.png';
+$conf->global->MAIN_FAVICON_URL = dol_buildpath('/reedcrm/img/reedcrm_color_512.png', 1);
 
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-contacts-list');
 

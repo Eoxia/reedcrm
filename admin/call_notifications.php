@@ -160,7 +160,7 @@ print '</tr>';
 
 print '<tr class="oddeven">';
 print '<td><strong>' . $langs->trans('WebhookURL') . '</strong></td>';
-print '<td>' . dol_buildpath('/custom/reedcrm/webhook/keyyo_webhook.php', 2);
+print '<td>' . dol_buildpath('/reedcrm/webhook/keyyo_webhook.php', 2);
 if (getDolGlobalString('REEDCRM_KEYYO_EXPECTED_TOKEN')) {
     print '?token=' . getDolGlobalString('REEDCRM_KEYYO_EXPECTED_TOKEN');
 }
