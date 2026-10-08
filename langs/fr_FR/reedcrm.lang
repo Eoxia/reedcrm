@@ -1083,7 +1083,12 @@ DataManagementMenu = Gestion des données
 
 # Clôture rapide d'un événement
 QuickCloseEventTitle = Clôturer l'événement
-QuickCloseEventTooltip = Clôturer cet événement
+QuickCloseEventTooltip = Clôturer cet événement ou changer son avancement
+QuickCloseEventProgressTitle = Mettre à jour l'événement
+QuickCloseEventPercentage = Avancement
+QuickCloseEventPercentageHelp = À 100 %, l'événement est clôturé. En dessous, seul son avancement change.
+QuickCloseEventProgressSaved = Avancement de l'événement passé à %s
+QuickCloseEventProgressSavedAndRescheduled = Avancement de l'événement passé à %s, nouvel événement programmé le %s
 QuickCloseEventDescription = Description
 QuickCloseEventDescriptionPlaceholder = Ajouté à la description de l'événement (facultatif)
 QuickCloseEventReschedule = Reprogrammer un événement identique pour plus tard
@@ -1113,7 +1118,7 @@ QuickCloseEventConfirm = Clôturer
 QuickCloseEventDone = Événement clôturé
 QuickCloseEventDoneAndRescheduled = Événement clôturé, nouvel événement programmé le %s
 QuickCloseEventNotTodo = Cet événement n'est pas à faire, il ne peut pas être clôturé
-QuickCloseEventError = La clôture de l'événement a échoué
+QuickCloseEventError = L'enregistrement de l'événement a échoué
 QuickCloseEvents = clôtures rapides d'événement
 QuickCloseEventInMonthsLabel = Dans un nombre de mois
 QuickCloseEventInDaysLabel = Dans un nombre de jours
