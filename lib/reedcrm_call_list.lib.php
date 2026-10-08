@@ -395,3 +395,191 @@ function reedcrm_call_list_line_record_status_change(DoliDB $db, User $user, Cal
 
     return $warnings;
 }
+
+/**
+ * Return the indicators of the todo cards for the lines of a call list.
+ *
+ * Each line reads like a todo card:
+ * - origin: the object called about, its amount excluding tax rounded to its order of magnitude
+ *   and its number of relaunches, counted with the very rule of the todo (reedcrmTodoCountRelaunches())
+ * - soc_name: the third party of that object
+ * - late / upcoming: same rule as a todo card, applied to the next event still to do on the
+ *   object or on its project, the one the line is about to deal with
+ *
+ * Everything is read in batch, a fixed number of queries whatever the number of lines.
+ *
+ * @param  DoliDB         $db    Database handler
+ * @param  CallListLine[] $lines Lines of the call list
+ * @return array                 [line id => ['origin' => [], 'soc_name' => , 'late' => , 'upcoming' => , 'next_event_title' => ]]
+ */
+function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
+{
+    global $conf, $langs;
+
+    require_once __DIR__ . '/reedcrm_todo.lib.php';
+
+    $sources = [
+        'propal'  => ['table' => 'propal',  'fk_project' => 'fk_projet', 'amount' => 'total_ht',   'url' => '/comm/propal/card.php?id=',    'picto' => 'fa-file-signature',      'event_element' => 'propal',  'module' => 'propale'],
+        'facture' => ['table' => 'facture', 'fk_project' => 'fk_projet', 'amount' => 'total_ht',   'url' => '/compta/facture/card.php?id=', 'picto' => 'fa-file-invoice-dollar', 'event_element' => 'invoice', 'module' => 'facture'],
+        'project' => ['table' => 'projet',  'fk_project' => 'rowid',     'amount' => 'opp_amount', 'url' => '/projet/card.php?id=',         'picto' => 'fa-project-diagram',     'event_element' => '',        'module' => 'project'],
+    ];
+
+    $lineIdsByElement = [];
+    foreach ($lines as $line) {
+        if (!empty($line->element_id) && isset($sources[$line->element_type]) && isModEnabled($sources[$line->element_type]['module'])) {
+            $lineIdsByElement[$line->element_type][(int) $line->element_id][] = (int) $line->id;
+        }
+    }
+
+    // Object of every line, with its third party and its project
+    $origins  = [];
+    $socNames = [];
+    foreach ($lineIdsByElement as $elementType => $lineIdsByObject) {
+        $source = $sources[$elementType];
+
+        $sql  = 'SELECT t.rowid, t.ref, t.fk_soc, t.' . $source['fk_project'] . ' as fk_project, t.' . $source['amount'] . ' as amount, s.nom as soc_name';
+        $sql .= ' FROM ' . $db->prefix() . $source['table'] . ' as t';
+        $sql .= ' LEFT JOIN ' . $db->prefix() . 'societe as s ON s.rowid = t.fk_soc';
+        $sql .= ' WHERE t.rowid IN (' . implode(',', array_keys($lineIdsByObject)) . ')';
+
+        $resql = $db->query($sql);
+        if (!$resql) {
+            dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+            continue;
+        }
+        while ($obj = $db->fetch_object($resql)) {
+            $amount = (float) $obj->amount;
+            foreach ($lineIdsByObject[(int) $obj->rowid] as $lineId) {
+                $origins[$lineId] = [
+                    'type'            => $elementType,
+                    'id'              => (int) $obj->rowid,
+                    'ref'             => $obj->ref,
+                    'url'             => DOL_URL_ROOT . $source['url'] . (int) $obj->rowid,
+                    'picto'           => $source['picto'],
+                    'event_element'   => $source['event_element'],
+                    'amount_ht'       => $amount,
+                    'amount_ht_short' => reedcrmTodoFormatAmountMagnitude($amount),
+                    'amount_ht_full'  => $langs->trans('TodoOriginAmountHT', price($amount, 0, $langs, 1, -1, -1, $conf->currency)),
+                    'soc_id'          => (int) $obj->fk_soc,
+                    'project'         => (int) $obj->fk_project,
+                ];
+                $socNames[$lineId] = (string) $obj->soc_name;
+            }
+        }
+        $db->free($resql);
+    }
+
+    if (empty($origins)) {
+        return [];
+    }
+
+    $relaunchCounts = reedcrmTodoCountRelaunches($db, $origins);
+    $nextEvents     = reedcrm_call_list_get_next_events($db, $origins);
+
+    $now      = dol_now();
+    $today    = dol_getdate($now);
+    $todayEnd = dol_mktime(23, 59, 59, $today['mon'], $today['mday'], $today['year']);
+
+    $indicators = [];
+    foreach ($origins as $lineId => $origin) {
+        $origin['relaunch_count'] = (int) ($relaunchCounts[$lineId] ?? 0);
+
+        $nextEvent = $nextEvents[$lineId] ?? [];
+        $indicators[$lineId] = [
+            'origin'           => $origin,
+            'soc_name'         => $socNames[$lineId] ?? '',
+            'late'             => (!empty($nextEvent) && $nextEvent['datep'] < $now) ? 1 : 0,
+            'upcoming'         => (!empty($nextEvent) && $nextEvent['datep'] > $todayEnd) ? 1 : 0,
+            'next_event_title' => !empty($nextEvent) ? $nextEvent['label'] . ' - ' . dol_print_date($nextEvent['datep'], 'dayhour') : '',
+        ];
+    }
+
+    return $indicators;
+}
+
+/**
+ * Return the next event still to do on the object of each line, or on its project.
+ *
+ * "Still to do" is the todo rule: a percentage between 0 and 99 and a start date. Without the
+ * right on every action, only the events the user owns or is assigned to count, as on the todo.
+ *
+ * @param  DoliDB $db      Database handler
+ * @param  array  $origins Objects of the lines, indexed by line ID (see reedcrm_call_list_get_line_indicators())
+ * @return array           [line id => ['datep' => timestamp, 'label' => string]]
+ */
+function reedcrm_call_list_get_next_events(DoliDB $db, array $origins): array
+{
+    global $user;
+
+    if (!isModEnabled('agenda')) {
+        return [];
+    }
+
+    $objectIds  = [];
+    $projectIds = [];
+    foreach ($origins as $origin) {
+        if (!empty($origin['event_element'])) {
+            $objectIds[$origin['event_element']][$origin['id']] = $origin['id'];
+        }
+        if (!empty($origin['project'])) {
+            $projectIds[$origin['project']] = $origin['project'];
+        }
+    }
+
+    $linkConditions = [];
+    foreach ($objectIds as $eventElement => $ids) {
+        $linkConditions[] = "(a.elementtype = '" . $db->escape($eventElement) . "' AND a.fk_element IN (" . implode(',', $ids) . '))';
+    }
+    if (!empty($projectIds)) {
+        $linkConditions[] = 'a.fk_project IN (' . implode(',', $projectIds) . ')';
+    }
+    if (empty($linkConditions)) {
+        return [];
+    }
+
+    $sql  = 'SELECT a.id, a.label, a.datep, a.elementtype, a.fk_element, a.fk_project';
+    $sql .= ' FROM ' . $db->prefix() . 'actioncomm as a';
+    $sql .= ' WHERE a.entity IN (' . getEntity('agenda') . ')';
+    $sql .= ' AND a.percent >= 0 AND a.percent < 100 AND a.datep IS NOT NULL';
+    $sql .= ' AND (' . implode(' OR ', $linkConditions) . ')';
+    if (!$user->hasRight('agenda', 'allactions', 'read')) {
+        $sql .= ' AND ' . reedcrmTodoGetUserCondition((int) $user->id);
+    }
+    $sql .= ' ORDER BY a.datep ASC, a.id ASC';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $firstByObject  = [];
+    $firstByProject = [];
+    while ($obj = $db->fetch_object($resql)) {
+        // Rows come ordered on the date: the first one met is the next one
+        $event = ['datep' => (int) $db->jdate($obj->datep), 'label' => (string) $obj->label];
+        if (!empty($obj->elementtype) && !isset($firstByObject[$obj->elementtype][(int) $obj->fk_element])) {
+            $firstByObject[$obj->elementtype][(int) $obj->fk_element] = $event;
+        }
+        if (!empty($obj->fk_project) && !isset($firstByProject[(int) $obj->fk_project])) {
+            $firstByProject[(int) $obj->fk_project] = $event;
+        }
+    }
+    $db->free($resql);
+
+    $nextEvents = [];
+    foreach ($origins as $lineId => $origin) {
+        $candidates = array_filter([
+            $firstByObject[$origin['event_element']][$origin['id']] ?? [],
+            $firstByProject[$origin['project']] ?? [],
+        ]);
+        if (!empty($candidates)) {
+            usort($candidates, function ($a, $b) {
+                return $a['datep'] <=> $b['datep'];
+            });
+            $nextEvents[$lineId] = $candidates[0];
+        }
+    }
+
+    return $nextEvents;
+}

@@ -106,12 +106,51 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     padding: 16px;
     margin-bottom: 16px;
+
+    /* Next event late or to come: same flags as the todo cards */
+    &--late {
+        border-left: 4px solid #e05353;
+    }
+
+    &--upcoming {
+        border-left: 4px solid #63acc9;
+    }
 }
 
 .pwa-call-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+
+    .todo-card-late-badge,
+    .todo-card-upcoming-badge {
+        flex-shrink: 0;
+        align-self: flex-start;
+        margin-top: 8px;
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+}
+
+/* Chips of the todo cards (object + amount + relaunches, third party), scaled up for the phone */
+.pwa-call-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .todo-link-badge,
+    .todo-origin-amount,
+    .todo-relaunch-count {
+        padding: 5px 12px;
+        font-size: 15px;
+    }
+
+    .pwa-call-percent {
+        margin-left: auto;
+    }
 }
 
 .pwa-call-name {

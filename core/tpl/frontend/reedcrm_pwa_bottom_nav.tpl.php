@@ -11,6 +11,7 @@ global $langs, $user;
 
 $navItems     = reedcrm_pwa_nav_get_items();
 $navFavorites = reedcrm_pwa_nav_get_favorites($user);
+$navBadges    = reedcrm_pwa_nav_get_badges($user);
 
 // Find active tab based on the current page
 $currentPage = basename($_SERVER['PHP_SELF']);
@@ -27,6 +28,7 @@ $dolibarrUrl = !empty($landingPage) ? dol_buildpath($landingPage, 1) : DOL_URL_R
         <a href="<?= $navItem['url'] ?>" class="pwa-nav-item <?= ($currentPage == $navItem['page']) ? 'active' : '' ?>" data-nav-slug="<?= $navSlug ?>">
             <i class="fas <?= $navItem['icon'] ?>"></i>
             <span><?= $navItem['label'] ?></span>
+            <?= reedcrm_pwa_nav_badge_html($navBadges[$navSlug] ?? 0) ?>
         </a>
         <?php } ?>
     </div>
@@ -50,6 +52,7 @@ $dolibarrUrl = !empty($landingPage) ? dol_buildpath($landingPage, 1) : DOL_URL_R
             <a href="<?= $navItem['url'] ?>" class="pwa-nav-drawer-link">
                 <i class="fas <?= $navItem['icon'] ?>"></i>
                 <span><?= $navItem['label'] ?></span>
+                <?= reedcrm_pwa_nav_badge_html($navBadges[$navSlug] ?? 0) ?>
             </a>
             <button type="button" class="pwa-nav-fav-toggle<?= $isNavFavorite ? ' is-favorite' : '' ?>" data-action="toggle-pwa-nav-favorite" aria-pressed="<?= $isNavFavorite ? 'true' : 'false' ?>" aria-label="<?= $isNavFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' ?>">
                 <i class="fas fa-star"></i>

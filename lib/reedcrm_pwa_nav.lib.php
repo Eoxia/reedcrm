@@ -18,7 +18,7 @@
 /**
  * \file    lib/reedcrm_pwa_nav.lib.php
  * \ingroup reedcrm
- * \brief   Library functions for the PWA bottom navigation (items definition + per-user favorites).
+ * \brief   Library functions for the PWA bottom navigation (items definition + per-user favorites + badges).
  */
 
 // Maximum number of favorite items displayed in the bottom bar
@@ -41,7 +41,7 @@ function reedcrm_pwa_nav_get_items(): array
     return [
         'quickcreation' => ['url' => $urlBase . 'quickcreation.php?source=pwa', 'page' => 'quickcreation.php', 'icon' => 'fa-handshake', 'label' => '+ Opp'],
         'projets'       => ['url' => $urlBase . 'pwa_projets.php?source=pwa', 'page' => 'pwa_projets.php', 'icon' => 'fa-project-diagram', 'label' => 'Opp'],
-        'call_list'     => ['url' => $urlBase . 'pwa_call_list.php?id=1', 'page' => 'pwa_call_list.php', 'icon' => 'fa-headset', 'label' => 'Appel'],
+        'call_list'     => ['url' => $urlBase . 'pwa_call_list.php?source=pwa', 'page' => 'pwa_call_list.php', 'icon' => 'fa-headset', 'label' => 'Appel'],
         'devis'         => ['url' => $urlBase . 'pwa_devis.php?source=pwa', 'page' => 'pwa_devis.php', 'icon' => 'fa-file-invoice-dollar', 'label' => 'Devis'],
         'geoloc'        => ['url' => $urlBase . 'pwa_geoloc.php?source=pwa', 'page' => 'pwa_geoloc.php', 'icon' => 'fa-map-marked-alt', 'label' => 'Carte'],
         'tickets'       => ['url' => $urlBase . 'pwa_tickets.php?source=pwa', 'page' => 'pwa_tickets.php', 'icon' => 'fa-ticket-alt', 'label' => 'Ticket'],
@@ -79,4 +79,56 @@ function reedcrm_pwa_nav_get_favorites(User $user): array
     $favorites = array_values(array_intersect(array_keys($items), $wanted));
 
     return array_slice($favorites, 0, REEDCRM_PWA_NAV_MAX_FAVORITES);
+}
+
+/**
+ * Return the counters displayed as a red badge on the PWA nav items.
+ *
+ * Only the call list has one: the lines still to call in the user's default
+ * call list, the one the "Appel" item opens. The default list is read from the
+ * user personal conf (REEDCRM_DEFAULT_CALL_LIST) and never created here, as the
+ * nav is rendered on every PWA page.
+ *
+ * @param  User              $user User to count for
+ * @return array<string,int>       Counter per nav slug, non-zero values only
+ */
+function reedcrm_pwa_nav_get_badges(User $user): array
+{
+    global $db;
+
+    $badges = [];
+
+    $canReadCallList = $user->hasRight('reedcrm', 'call_list', 'read') || $user->hasRight('reedcrm', 'call_list', 'read_subordinates') || $user->hasRight('reedcrm', 'call_list', 'read_all');
+    $callListId      = isset($user->conf->REEDCRM_DEFAULT_CALL_LIST) ? (int) $user->conf->REEDCRM_DEFAULT_CALL_LIST : 0;
+    if ($canReadCallList && $callListId > 0) {
+        require_once __DIR__ . '/../class/calllistline.class.php';
+
+        $sql  = 'SELECT COUNT(rowid) as nb FROM ' . $db->prefix() . 'reedcrm_call_list_line';
+        $sql .= ' WHERE fk_call_list = ' . $callListId;
+        $sql .= ' AND status = ' . CallListLine::STATUS_TO_CALL;
+
+        $resql = $db->query($sql);
+        if ($resql && ($obj = $db->fetch_object($resql)) && $obj->nb > 0) {
+            $badges['call_list'] = (int) $obj->nb;
+        }
+    }
+
+    return $badges;
+}
+
+/**
+ * Return the HTML of a nav item red badge.
+ *
+ * Mirrored by window.reedcrm.pwaNav.setBadge() for the live updates.
+ *
+ * @param  int    $count Counter value
+ * @return string        Badge HTML, empty when there is nothing to count
+ */
+function reedcrm_pwa_nav_badge_html(int $count): string
+{
+    if ($count <= 0) {
+        return '';
+    }
+
+    return '<span class="pwa-nav-badge">' . ($count > 99 ? '99+' : $count) . '</span>';
 }
