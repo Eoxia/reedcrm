@@ -1997,6 +1997,17 @@ class ActionsReedcrm
             if (empty($object->thirdparty->id)) {
                 $object->fetch_thirdparty();
             }
+
+            // Red banner on top of the card while the proposal carries the "not billed" tag
+            require_once __DIR__ . '/../lib/reedcrm_propal_unbilled.lib.php';
+            if (reedcrmPropalUnbilledHasTag($this->db, (int) $object->id)) {
+                global $conf, $langs;
+
+                $langs->load('reedcrm@reedcrm');
+                ob_start();
+                require __DIR__ . '/../core/tpl/reedcrm_propal_unbilled_banner.tpl.php';
+                $this->resprints = ob_get_clean();
+            }
         }
 
         return 0; // or return 1 to replace standard code
