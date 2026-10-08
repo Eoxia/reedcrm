@@ -958,7 +958,12 @@ DataManagementMenu = Data management
 
 # Quick close of an event
 QuickCloseEventTitle = Close the event
-QuickCloseEventTooltip = Close this event
+QuickCloseEventTooltip = Close this event or change its progress
+QuickCloseEventProgressTitle = Update the event
+QuickCloseEventPercentage = Progress
+QuickCloseEventPercentageHelp = At 100%, the event is closed. Below, only its progress changes.
+QuickCloseEventProgressSaved = Event progress set to %s
+QuickCloseEventProgressSavedAndRescheduled = Event progress set to %s, new event scheduled on %s
 QuickCloseEventDescription = Description
 QuickCloseEventDescriptionPlaceholder = Appended to the event description (optional)
 QuickCloseEventReschedule = Schedule the same event again for later
@@ -988,7 +993,7 @@ QuickCloseEventConfirm = Close
 QuickCloseEventDone = Event closed
 QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
 QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
-QuickCloseEventError = Closing the event failed
+QuickCloseEventError = Saving the event failed
 QuickCloseEvents = quick event closures
 QuickCloseEventInMonthsLabel = In a number of months
 QuickCloseEventInDaysLabel = In a number of days

@@ -6,8 +6,6 @@
 // core/tpl/reedcrm_event_quick_close_modal.tpl.php.
 // =============================================================================
 
-$reedcrm-quick-close-accent: #014751;
-
 // Status badge turned into a trigger. The core badge already carries its own colors,
 // only the affordance is added here.
 .reedcrm-quick-close-trigger {
@@ -62,14 +60,52 @@ tr.reedcrm-quick-close-flash > td {
     padding: 14px 24px 0;
   }
 
-  // Name of the event being closed: it recalls which one is on the table, and stays editable.
-  // The accent keeps it read as the subject of the modal rather than as one field among others.
+  // Name of the event being closed: it recalls which one is on the table, and stays editable
   .reedcrm-quick-close-event-label {
     width: 100%;
     box-sizing: border-box;
     margin-bottom: 14px;
-    border-left: 3px solid $reedcrm-quick-close-accent;
     font-weight: 600;
+  }
+
+  // Progress the event is left at, a slider and the exact figure kept in step. A secondary setting,
+  // closing being what the modal is opened for: it holds on a single compact row
+  .reedcrm-quick-close-percentage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+
+    .reedcrm-quick-close-label {
+      margin: 0;
+    }
+  }
+
+  // The padding, border and rounded white box Dolibarr gives every input would frame the slider:
+  // the thumb then stops short of the end, with a bit of that box left showing past it
+  .reedcrm-quick-close-percentage-range {
+    width: 140px;
+    height: 14px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    accent-color: #014751;
+  }
+
+  .reedcrm-quick-close-percentage-value {
+    width: 52px;
+    height: 24px;
+    padding: 0 4px;
+    font-size: 12px;
+  }
+
+  .reedcrm-quick-close-percentage-help {
+    display: block;
+    margin: 2px 0 12px;
+    color: #64748b;
+    font-size: 11px;
   }
 
   .reedcrm-quick-close-label {

@@ -20,8 +20,9 @@
  * \file    js/modules/event_quick_close.js
  * \ingroup reedcrm
  * \brief   Turns the status badge of every to-do event, listed by show_actions_done() or shown in the
- *          banner of its own card, into a quick close trigger : the event renamed if needed, an optional
- *          comment, and an optional clone renamed at will and postponed by X months, X days, or to a picked day.
+ *          banner of its own card, into a quick close trigger : the event closed or only moved to a lower
+ *          progress, renamed if needed, an optional comment, and an optional clone renamed at will and
+ *          postponed by X months, X days, or to a picked day.
  */
 
 if (!window.reedcrm) {
@@ -204,6 +205,20 @@ window.reedcrm.eventQuickClose.event = function () {
     }
   });
 
+  // The slider and the exact figure move together, and the modal tells whether it closes the event
+  $(document).on('input.reedcrmQuickClose', '#reedcrm-quick-close-percentage-range', function () {
+    window.reedcrm.eventQuickClose.setPercentage($(this).val());
+  });
+
+  $(document).on('input.reedcrmQuickClose', '#reedcrm-quick-close-percentage', function () {
+    // A field being typed in is left alone, only the slider and the wording follow it
+    window.reedcrm.eventQuickClose.setPercentage($(this).val(), true);
+  });
+
+  $(document).on('change.reedcrmQuickClose', '#reedcrm-quick-close-percentage', function () {
+    window.reedcrm.eventQuickClose.setPercentage($(this).val());
+  });
+
   $(document).on('change.reedcrmQuickClose', '#reedcrm-quick-close-reschedule', function () {
     $('#reedcrm-quick-close-delay').toggleClass('reedcrm-quick-close-delay-visible', $(this).is(':checked'));
   });
@@ -266,6 +281,9 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   var defaultDays   = window.reedcrm.eventQuickClose.config('default-days') || 7;
   var defaultMonths = window.reedcrm.eventQuickClose.config('default-months') || 1;
 
+  // The modal is opened to close the event, a lower progress is a deliberate change
+  window.reedcrm.eventQuickClose.setPercentage(100);
+
   $('#reedcrm-quick-close-comment').val('');
   $('#reedcrm-quick-close-reschedule').prop('checked', false);
   $('#reedcrm-quick-close-delay').removeClass('reedcrm-quick-close-delay-visible');
@@ -293,6 +311,49 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   $('#reedcrm-quick-close-event-label').val(label);
   $('#reedcrm-quick-close-modal').addClass('modal-active');
   $('#reedcrm-quick-close-comment').trigger('focus');
+};
+
+/**
+ * Set the progress the event is left at. 100% closes it, below the event only records how far it
+ * went: the title and the confirm button say which of the two is about to happen.
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param  {Number|String} value      Percentage picked
+ * @param  {Boolean}       keepTyping Leave the figure being typed untouched
+ * @return {void}
+ */
+window.reedcrm.eventQuickClose.setPercentage = function (value, keepTyping) {
+  var percent = window.reedcrm.eventQuickClose.getPercentage(value);
+  var closing = percent === 100;
+
+  $('#reedcrm-quick-close-percentage-range').val(percent);
+  if (!keepTyping) {
+    $('#reedcrm-quick-close-percentage').val(percent);
+  }
+
+  $('#reedcrm-quick-close-modal .modal-title').text(window.reedcrm.eventQuickClose.config(closing ? 'trans-title-close' : 'trans-title-progress'));
+  $('#reedcrm-quick-close-modal .reedcrm-quick-close-confirm-label').text(window.reedcrm.eventQuickClose.config(closing ? 'trans-confirm-close' : 'trans-confirm-progress'));
+};
+
+/**
+ * Read a percentage as a whole number between 0 and 100, an empty or unreadable one meaning a closure
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param  {Number|String} value Percentage to read, the field of the modal when omitted
+ * @return {Number}              Percentage
+ */
+window.reedcrm.eventQuickClose.getPercentage = function (value) {
+  var percent = parseInt(value === undefined ? $('#reedcrm-quick-close-percentage').val() : value, 10);
+
+  return isNaN(percent) ? 100 : Math.max(0, Math.min(100, percent));
 };
 
 /**
@@ -349,6 +410,7 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       event_id: eventId,
       comment: $('#reedcrm-quick-close-comment').val(),
       event_label: $('#reedcrm-quick-close-event-label').val(),
+      percentage: window.reedcrm.eventQuickClose.getPercentage(),
       reschedule: $('#reedcrm-quick-close-reschedule').is(':checked') ? 1 : 0,
       delay_unit: delayUnit,
       delay_value: $('#reedcrm-quick-close-delay-value').val(),
@@ -367,15 +429,16 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
 
       var $trigger = $('.reedcrm-quick-close-trigger[data-event-id="' + eventId + '"]');
       var $card    = $trigger.closest('.todo-card');
+      var percent  = window.reedcrm.eventQuickClose.getPercentage(response.percentage);
 
-      // On the to-do board the closed event is repainted at 100% and moves to the column it now belongs to
+      // On the to-do board the event is repainted at its new percentage and moves to the column it now belongs to
       if ($card.length && window.reedcrm.todoKanban) {
         // A card stays on screen after the closure, a renamed event would keep its former name
         if (response.renamed) {
           $card.find('.todo-card-label').first().text(response.label);
         }
-        window.reedcrm.todoKanban.paintCard($card, 100);
-        window.reedcrm.todoKanban.moveToColumn($card, 100);
+        window.reedcrm.todoKanban.paintCard($card, percent);
+        window.reedcrm.todoKanban.moveToColumn($card, percent);
         window.reedcrm.todoKanban.flag($card, 'todo-card-saved', 2000);
 
         window.reedcrm.eventQuickClose.close();
@@ -402,8 +465,14 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
         return;
       }
 
+      // The row is read before its cell is rewritten, the trigger is no longer in the page afterwards
+      var $row = $trigger.closest('tr');
       $trigger.closest('td').html(response.status_html);
-      $trigger.closest('tr').removeClass('reedcrm-quick-close-row').addClass('reedcrm-quick-close-flash');
+      $row.removeClass('reedcrm-quick-close-row').addClass('reedcrm-quick-close-flash');
+      // An event left in progress is still to do, its new badge opens the modal again
+      if (percent < 100) {
+        window.reedcrm.eventQuickClose.decorateList();
+      }
 
       window.reedcrm.eventQuickClose.close();
       window.reedcrm.eventQuickClose.notify(response.message, 'success');

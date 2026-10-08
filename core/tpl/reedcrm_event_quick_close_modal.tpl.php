@@ -79,7 +79,11 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
      data-card-event-type="<?php echo dol_escape_htmltag($quickCloseCardType); ?>"
      data-trans-tooltip="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"
      data-trans-error="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventError')); ?>"
-     data-trans-date-required="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDateRequired')); ?>"></div>
+     data-trans-date-required="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDateRequired')); ?>"
+     data-trans-title-close="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTitle')); ?>"
+     data-trans-title-progress="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventProgressTitle')); ?>"
+     data-trans-confirm-close="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?>"
+     data-trans-confirm-progress="<?php echo dol_escape_htmltag($langs->trans('Save')); ?>"></div>
 
 <div class="wpeo-modal modal-reedcrm-quick-close" id="reedcrm-quick-close-modal">
     <div class="modal-container">
@@ -92,6 +96,16 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
                   // a name is often only settled once the call is over ?>
             <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-event-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventCurrentLabel')); ?></label>
             <input type="text" id="reedcrm-quick-close-event-label" class="reedcrm-quick-close-event-label" maxlength="255" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventCurrentLabelPlaceholder')); ?>">
+
+            <?php // 100% closes the event, which is what the modal is opened for. A lower percentage only
+                  // records how far it went, the event stays to do ?>
+            <div class="reedcrm-quick-close-percentage">
+                <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-percentage"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventPercentage')); ?></label>
+                <input type="range" id="reedcrm-quick-close-percentage-range" class="reedcrm-quick-close-percentage-range" min="0" max="100" step="5" value="100">
+                <input type="number" id="reedcrm-quick-close-percentage" class="reedcrm-quick-close-percentage-value" min="0" max="100" step="1" value="100">
+                <span>%</span>
+            </div>
+            <span class="reedcrm-quick-close-percentage-help"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventPercentageHelp')); ?></span>
 
             <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-comment"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDescription')); ?></label>
             <textarea id="reedcrm-quick-close-comment" class="reedcrm-quick-close-comment" rows="4" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDescriptionPlaceholder')); ?>"></textarea>
@@ -151,7 +165,7 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
         </div>
         <div class="modal-footer">
             <button type="button" class="wpeo-button button-grey reedcrm-quick-close-cancel"><?php echo dol_escape_htmltag($langs->trans('Cancel')); ?></button>
-            <button type="button" class="wpeo-button button-blue reedcrm-quick-close-confirm"><i class="fas fa-check"></i>&nbsp;<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?></button>
+            <button type="button" class="wpeo-button button-blue reedcrm-quick-close-confirm"><i class="fas fa-check"></i>&nbsp;<span class="reedcrm-quick-close-confirm-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?></span></button>
         </div>
     </div>
 </div>

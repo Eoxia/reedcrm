@@ -18,8 +18,9 @@
 /**
  * \file    ajax/quick_close_event.php
  * \ingroup reedcrm
- * \brief   Closes a to-do event (progress set to 100%, ended today), renaming it if asked, with an optional comment, and optionally clones it
- *          as a new to-do event, renamed at will and postponed by X months, X days, or to a picked day.
+ * \brief   Closes a to-do event (progress set to 100%, ended today), or only moves its progress to a lower percentage,
+ *          renaming it if asked, with an optional comment, and optionally clones it as a new to-do event, renamed at will and
+ *          postponed by X months, X days, or to a picked day.
  */
 
 if (!defined('NOTOKENRENEWAL')) {
@@ -59,6 +60,10 @@ $delayMonths = GETPOSTINT('delay_months');
 $delayDate   = GETPOST('delay_date', 'aZ09');
 $newLabel    = GETPOST('new_label', 'alphanohtml');
 $newType     = GETPOST('new_type', 'aZ09');
+// 100% closes the event, what a caller sending nothing still asks for. A lower percentage only
+// records how far the event went, it stays to do.
+$percentage  = GETPOSTISSET('percentage') ? max(0, min(100, GETPOSTINT('percentage'))) : 100;
+$closing     = ($percentage == 100);
 
 if ($eventID <= 0) {
     echo json_encode(['success' => false, 'error' => $langs->trans('ErrorRecordNotFound')]);
@@ -95,7 +100,7 @@ $originalLabel = $actionComm->label;
 $db->begin();
 
 $actionComm->oldcopy    = clone $actionComm;
-$actionComm->percentage = 100;
+$actionComm->percentage = $percentage;
 
 // The name is often only settled once the call is over, the modal lets it be rewritten here.
 // An emptied field is not a rename, the event keeps the name it already carries.
@@ -104,11 +109,14 @@ if ($eventLabel !== '') {
     $actionComm->label = dol_trunc($eventLabel, 255, 'right', 'UTF-8', 1);
 }
 
-// Finishing an event records when it was done: its end date is today
-$actionComm->datef = dol_now();
-// An event that never started, or that was due later, would otherwise end before it begins
-if (empty($originalDatep) || $originalDatep > $actionComm->datef) {
-    $actionComm->datep = $actionComm->datef;
+// Finishing an event records when it was done: its end date is today. An event left in progress
+// keeps its dates, it is not done yet
+if ($closing) {
+    $actionComm->datef = dol_now();
+    // An event that never started, or that was due later, would otherwise end before it begins
+    if (empty($originalDatep) || $originalDatep > $actionComm->datef) {
+        $actionComm->datep = $actionComm->datef;
+    }
 }
 
 if (dol_strlen($comment) > 0) {
@@ -210,12 +218,19 @@ if ($reschedule > 0) {
 
 $db->commit();
 
+if ($closing) {
+    $message = $newEvent['id'] > 0 ? $langs->trans('QuickCloseEventDoneAndRescheduled', $newEvent['date']) : $langs->trans('QuickCloseEventDone');
+} else {
+    $message = $newEvent['id'] > 0 ? $langs->trans('QuickCloseEventProgressSavedAndRescheduled', $percentage . '%', $newEvent['date']) : $langs->trans('QuickCloseEventProgressSaved', $percentage . '%');
+}
+
 echo json_encode([
     'success'     => true,
-    'status_html' => $actionComm->LibStatut(100, 2, 0, $actionComm->datep),
+    'percentage'  => $percentage,
+    'status_html' => $actionComm->LibStatut($percentage, 2, 0, $actionComm->datep),
     // A renamed event still shows its former name wherever the closure repaints in place
     'label'       => $actionComm->label,
     'renamed'     => $actionComm->label !== $originalLabel ? 1 : 0,
     'new_event'   => $newEvent,
-    'message'     => $newEvent['id'] > 0 ? $langs->trans('QuickCloseEventDoneAndRescheduled', $newEvent['date']) : $langs->trans('QuickCloseEventDone')
+    'message'     => $message
 ]);
