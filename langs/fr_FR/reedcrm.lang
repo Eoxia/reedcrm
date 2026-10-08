@@ -1214,3 +1214,17 @@ OpportunityStatsBestMonth = Meilleur mois
 OpportunityStatsVersusYear = Contre %s
 OpportunityStatsSameWindow = %s sur la même période
 OpportunityStatsNoComparison = Pas de comparaison
+
+# Devis non facturés
+PropalUnbilledTag = Non facturé
+PropalUnbilledSetupTitle = Devis non facturés
+PropalUnbilledTagLabel = Tag des devis non facturés
+PropalUnbilledTagDescription = Un bandeau rouge s'affiche en haut de la fiche de tout devis qui porte ce tag, qu'il soit posé par le bouton ci-dessous ou à la main.
+PropalUnbilledTagNotCreated = Pas encore créé : il le sera au premier lancement
+PropalUnbilledSync = Taguer automatiquement les devis non facturés
+PropalUnbilledSyncDescription = Un devis est non facturé quand il est signé et qu'aucune facture ne lui est liée, ni directement ni par la commande ou le contrat créé depuis ce devis (les factures abandonnées ne comptent pas). Le tag est posé sur ces devis et retiré des devis facturés qui le portent encore.
+PropalUnbilledPendingChanges = À taguer : %s devis non facturé(s) - À détaguer : %s devis facturé(s)
+PropalUnbilledSyncButton = Taguer les devis non facturés
+PropalUnbilledSyncDone = Tag posé sur %s devis, retiré de %s devis
+PropalUnbilledSyncError = Impossible de mettre à jour le tag des devis non facturés
+PropalUnbilledBanner = Ce devis n'est pas facturé

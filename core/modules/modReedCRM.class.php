@@ -1356,6 +1356,10 @@ class modReedCRM extends DolibarrModules
             }
         }
 
+        // Tag of the signed proposals still to bill, put on them from the setup, tab Proposals
+        require_once __DIR__ . '/../../lib/reedcrm_propal_unbilled.lib.php';
+        reedcrmPropalUnbilledGetTagID($this->db, $user);
+
         if (getDolGlobalInt('REEDCRM_PROJECT_GEOLOC_TO_CONTACT_COMPAT') < 2) {
             require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';

@@ -1,0 +1,19 @@
+// Red banner on top of a proposal card carrying the "not billed" tag
+
+.reedcrm-propal-unbilled-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    // Printed between the tabs and the banner of the card, it has nothing else to lean on
+    margin: 0 0 12px;
+    padding: 10px 16px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #fff;
+    background: #d63031;
+    border-radius: 4px;
+
+    .reedcrm-propal-unbilled-banner-icon {
+        font-size: 1.2em;
+    }
+}

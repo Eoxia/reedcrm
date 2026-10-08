@@ -1092,3 +1092,17 @@ TodoRelaunchCount = %s relaunch(es) on this object
 TodoOriginAmountHT = Amount excl. tax: %s
 TodoOriginDatePropal = Proposal validated on %s
 TodoOriginDateInvoice = Invoice due on %s
+
+# Not billed proposals
+PropalUnbilledTag = Not billed
+PropalUnbilledSetupTitle = Not billed proposals
+PropalUnbilledTagLabel = Tag of the not billed proposals
+PropalUnbilledTagDescription = A red banner is displayed on top of the card of every proposal carrying this tag, whether it was put by the button below or by hand.
+PropalUnbilledTagNotCreated = Not created yet: it will be on the first run
+PropalUnbilledSync = Automatically tag the not billed proposals
+PropalUnbilledSyncDescription = A proposal is not billed when it is signed and no invoice is linked to it, neither directly nor through the order or the contract created from it (abandoned invoices do not count). The tag is put on these proposals and removed from the billed proposals still carrying it.
+PropalUnbilledPendingChanges = To tag: %s not billed proposal(s) - To untag: %s billed proposal(s)
+PropalUnbilledSyncButton = Tag the not billed proposals
+PropalUnbilledSyncDone = Tag put on %s proposal(s), removed from %s proposal(s)
+PropalUnbilledSyncError = Unable to update the tag of the not billed proposals
+PropalUnbilledBanner = This proposal is not billed
