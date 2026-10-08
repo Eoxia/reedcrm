@@ -505,7 +505,9 @@
         cursor: grabbing;
     }
 
+    // Raised above the cards that follow it, which would otherwise cover the tooltip of its origin
     &:hover {
+        z-index: 3;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
         transform: translateY(-2px);
     }
@@ -646,6 +648,7 @@
 
 /* Third party and project */
 .todo-card-links {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -745,6 +748,83 @@
     &:not(:last-child) {
         border-radius: 0;
     }
+}
+
+/* Lines of the object, shown on hovering its reference, the same tooltip as the risk of a task
+   on the action plan of Digirisk. It spans the row of links rather than the chip: it never spills
+   over the next column nor out of the side of the board */
+.todo-origin-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding: 10px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+    color: #333;
+    font-size: 11px;
+    font-weight: 400;
+    white-space: normal;
+    cursor: default;
+}
+
+.todo-link-origin:hover ~ .todo-origin-tooltip {
+    display: block;
+}
+
+.todo-origin-tooltip-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f0f0f0;
+
+    i {
+        color: #a05a1a;
+    }
+}
+
+.todo-origin-tooltip-total {
+    margin-left: auto;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.todo-origin-tooltip-line {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 0;
+    line-height: 1.35;
+
+    & + & {
+        border-top: 1px dashed #eee;
+    }
+}
+
+.todo-origin-tooltip-label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.todo-origin-tooltip-amount {
+    flex-shrink: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.todo-origin-tooltip-more {
+    display: block;
+    padding-top: 4px;
+    border-top: 1px solid #f0f0f0;
+    color: #888;
+    font-style: italic;
 }
 
 /* People: owner and assigned users */

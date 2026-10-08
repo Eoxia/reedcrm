@@ -87,12 +87,32 @@ $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt'
                 // them on one line
                 $originRelaunchCount = (int) ($t['origin']['relaunch_count'] ?? 0);
                 $originHasAmount     = !empty($t['origin']['amount_ht']);
+                $originPicto         = $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar';
                 ?>
                 <span class="todo-origin-wrapper">
                     <a class="todo-link-badge todo-link-origin<?php echo ($originRelaunchCount > 0 || $originHasAmount) ? ' todo-link-origin-counted' : ''; ?>" target="_blank" href="<?php echo $t['origin']['url']; ?>">
-                        <i class="fas <?php echo $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar'; ?>"></i>
+                        <i class="fas <?php echo $originPicto; ?>"></i>
                         <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
                     </a>
+                    <?php // Lines of the object, shown on hovering its reference the way the risk of a task is on the action plan of Digirisk ?>
+                    <?php if (!empty($t['origin']['lines'])) : ?>
+                        <span class="todo-origin-tooltip">
+                            <span class="todo-origin-tooltip-header">
+                                <i class="fas <?php echo $originPicto; ?>"></i>
+                                <strong><?php echo dol_escape_htmltag($t['origin']['ref']); ?></strong>
+                                <span class="todo-origin-tooltip-total"><?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?></span>
+                            </span>
+                            <?php foreach ($t['origin']['lines'] as $originLine) : ?>
+                                <span class="todo-origin-tooltip-line">
+                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($originLine['label']); ?></span>
+                                    <span class="todo-origin-tooltip-amount"><?php echo dol_escape_htmltag($originLine['amount']); ?></span>
+                                </span>
+                            <?php endforeach; ?>
+                            <?php if (!empty($t['origin']['lines_more'])) : ?>
+                                <span class="todo-origin-tooltip-more"><?php echo dol_escape_htmltag($langs->trans('TodoOriginMoreLines', $t['origin']['lines_more'])); ?></span>
+                            <?php endif; ?>
+                        </span>
+                    <?php endif; ?>
                     <?php if ($originHasAmount) : ?>
                         <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?>">
                             <?php echo dol_escape_htmltag($t['origin']['amount_ht_short']); ?>

@@ -511,17 +511,19 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
  * Its amount excluding tax comes along, rounded to an order of magnitude on the chip and exact
  * in its tooltip: the card tells at a glance how much a relaunch is worth.
  *
+ * So do its lines, for the tooltip of its reference, see reedcrmTodoGetOriginLines().
+ *
  * @param  DoliDB $db     Database handler
  * @param  array  $events Rows of the board, indexed by event ID
- * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => , 'date_fmt' => , 'date_title' => , 'amount_ht' => , 'amount_ht_short' => , 'amount_ht_full' => , 'soc_id' => , 'project' => , 'relaunch_count' => ]]
+ * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => , 'date_fmt' => , 'date_title' => , 'amount_ht' => , 'amount_ht_short' => , 'amount_ht_full' => , 'soc_id' => , 'project' => , 'lines' => , 'lines_more' => , 'relaunch_count' => ]]
  */
 function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 {
-    global $conf, $langs;
+    global $conf, $langs, $user;
 
     $sources = [
-        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id=', 'date' => 'COALESCE(date_valid, datep)', 'date_label' => 'TodoOriginDatePropal'],
-        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id=', 'date' => 'COALESCE(date_lim_reglement, datef)', 'date_label' => 'TodoOriginDateInvoice'],
+        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id=', 'date' => 'COALESCE(date_valid, datep)', 'date_label' => 'TodoOriginDatePropal', 'line_table' => 'propaldet', 'line_parent' => 'fk_propal', 'right' => 'propal'],
+        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id=', 'date' => 'COALESCE(date_lim_reglement, datef)', 'date_label' => 'TodoOriginDateInvoice', 'line_table' => 'facturedet', 'line_parent' => 'fk_facture', 'right' => 'facture'],
     ];
 
     // Group the linked object IDs per element type
@@ -535,6 +537,12 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 
     $origins = [];
     foreach ($idsByType as $elementType => $elementIds) {
+        // What the object is made of is only told to whoever may open it
+        $linesByObject = [];
+        if ($user->hasRight($sources[$elementType]['right'], 'lire')) {
+            $linesByObject = reedcrmTodoGetOriginLines($db, $sources[$elementType]['line_table'], $sources[$elementType]['line_parent'], array_keys($elementIds));
+        }
+
         $sql   = 'SELECT rowid, ref, fk_soc, fk_projet, total_ht, ' . $sources[$elementType]['date'] . ' as date_reference';
         $sql  .= ' FROM ' . MAIN_DB_PREFIX . $sources[$elementType]['table'];
         $sql  .= ' WHERE rowid IN (' . implode(',', array_keys($elementIds)) . ')';
@@ -559,6 +567,8 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
                     'amount_ht_full'  => $langs->trans('TodoOriginAmountHT', price($amountHt, 0, $langs, 1, -1, -1, $conf->currency)),
                     'soc_id'          => (int) $obj->fk_soc,
                     'project'         => (int) $obj->fk_projet,
+                    'lines'           => $linesByObject[(int) $obj->rowid]['lines'] ?? [],
+                    'lines_more'      => $linesByObject[(int) $obj->rowid]['more'] ?? 0,
                 ];
             }
         }
@@ -572,6 +582,72 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
     }
 
     return $origins;
+}
+
+/**
+ * Return the lines of the proposals or the invoices the relaunch events were raised on
+ *
+ * They fill the tooltip of the reference on the card, the way the risk of a task does on the
+ * action plan of Digirisk: what the object is made of, a label and an amount per line, without
+ * leaving the board. Title and subtotal lines (product type 9) carry no amount of their own and
+ * are left out.
+ *
+ * A line is labelled with its own label, then with the one of its product, then with its
+ * description: a free line only carries the latter.
+ *
+ * Only the first lines of an object are kept, the tooltip tells how many more there are.
+ *
+ * @param  DoliDB $db         Database handler
+ * @param  string $table      Table of the lines, without prefix
+ * @param  string $parentKey  Column of the lines pointing to their object
+ * @param  array  $objectIds  IDs of the objects
+ * @return array              [object id => ['lines' => [['label' => , 'amount' => ]], 'more' => ]]
+ */
+function reedcrmTodoGetOriginLines(DoliDB $db, string $table, string $parentKey, array $objectIds): array
+{
+    global $conf, $langs;
+
+    $maxLines = 10;
+
+    $sql  = 'SELECT d.' . $parentKey . ' as fk_object, d.label, d.description, d.total_ht, p.ref as product_ref, p.label as product_label';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . $table . ' as d';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = d.fk_product';
+    $sql .= ' WHERE d.' . $parentKey . ' IN (' . implode(',', $objectIds) . ')';
+    $sql .= ' AND d.product_type <> 9';
+    $sql .= ' ORDER BY d.' . $parentKey . ', d.rang, d.rowid';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $linesByObject = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $objectId = (int) $obj->fk_object;
+        if (!isset($linesByObject[$objectId])) {
+            $linesByObject[$objectId] = ['lines' => [], 'more' => 0];
+        }
+        if (count($linesByObject[$objectId]['lines']) >= $maxLines) {
+            $linesByObject[$objectId]['more']++;
+            continue;
+        }
+
+        $label = '';
+        foreach ([$obj->label, $obj->product_label, $obj->description, $obj->product_ref] as $candidate) {
+            $label = trim(dol_string_nohtmltag((string) $candidate));
+            if ($label !== '') {
+                break;
+            }
+        }
+
+        $linesByObject[$objectId]['lines'][] = [
+            'label'  => dol_trunc($label, 90),
+            'amount' => price((float) $obj->total_ht, 0, $langs, 1, -1, -1, $conf->currency),
+        ];
+    }
+    $db->free($resql);
+
+    return $linesByObject;
 }
 
 /**

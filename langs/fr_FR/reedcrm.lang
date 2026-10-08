@@ -889,6 +889,7 @@ TodoRelaunchCount = %s relance(s) sur cet objet
 TodoOriginAmountHT = Montant HT : %s
 TodoOriginDatePropal = Devis validé le %s
 TodoOriginDateInvoice = Facture échue le %s
+TodoOriginMoreLines = + %s autre(s) ligne(s)
 # Signed quotes never invoiced
 SignedUnbilledMenu = PR signées non facturées
 SignedUnbilledIntro = Propositions commerciales signées sans facture rattachée. Chaque ligne est recoupée avec les factures du client pour repérer celles qui ont en fait été facturées séparément (facture créée à part, via la commande ou le contrat).
