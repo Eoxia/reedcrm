@@ -1092,6 +1092,7 @@ TodoRelaunchCount = %s relaunch(es) on this object
 TodoOriginAmountHT = Amount excl. tax: %s
 TodoOriginDatePropal = Proposal validated on %s
 TodoOriginDateInvoice = Invoice due on %s
+TodoOriginMoreLines = + %s more line(s)
 
 # Not billed proposals
 PropalUnbilledTag = Not billed
