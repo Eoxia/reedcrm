@@ -160,10 +160,12 @@ print '</tr>';
 
 print '<tr class="oddeven">';
 print '<td><strong>' . $langs->trans('WebhookURL') . '</strong></td>';
-print '<td>' . dol_buildpath('/reedcrm/webhook/keyyo_webhook.php', 2);
+// URL to paste in the Keyyo Manager: Keyyo replaces the _KEYWORDS_ on each notification
+print '<td>' . dol_buildpath('/reedcrm/webhook/keyyo_webhook.php', 2) . '?';
 if (getDolGlobalString('REEDCRM_KEYYO_EXPECTED_TOKEN')) {
-    print '?token=' . getDolGlobalString('REEDCRM_KEYYO_EXPECTED_TOKEN');
+    print 'token=' . getDolGlobalString('REEDCRM_KEYYO_EXPECTED_TOKEN') . '&';
 }
+print 'caller=_CALLER_&callee=_CALLEE_&type=_N_TYPE_';
 print '</td></tr>';
 
 print '<tr class="oddeven">';
@@ -172,7 +174,7 @@ print '<td>POST ou GET</td></tr>';
 
 print '<tr class="oddeven">';
 print '<td><strong>' . $langs->trans('Parameters') . '</strong></td>';
-print '<td>caller (numéro appelant), callee (numéro appelé)</td></tr>';
+print '<td>caller (numéro appelant), callee (numéro appelé), type (état de l\'appel : seul SETUP crée un événement)</td></tr>';
 
 print '</table>';
 
