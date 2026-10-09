@@ -191,18 +191,65 @@ function get_and_show_contact(string $caller, string $callee): array
         log_to_file("Found contact: " . $contact->getFullName($langs) . " (ID: " . $contact->id . ")");
     }
 
-    // Si on a trouvé un utilisateur et un contact, on stocke l'événement
-    if ($result['user'] && $result['contact']) {
-        $call_event_id = store_call_event($result['user']->id, $result['contact']->id, $caller, $callee);
-        $result['call_event_id'] = $call_event_id;
-        log_to_file("Stored call event with ID: " . $call_event_id);
-    } else if (empty($result['contact'])) {
-        $call_event_id = store_call_event($result['user']->id, 0, $caller, $callee);
-        $result['call_event_id'] = $call_event_id;
-        log_to_file("No contact found. Stored call event with ID: " . $call_event_id . " for contact ID 0.");
+    // Sans utilisateur appelé, l'événement n'aurait pas de propriétaire : personne ne le verrait
+    if (empty($result['user'])) {
+        log_to_file("No user found for the called number, no call event stored");
+        return $result;
     }
 
+    $recentCallEventId = reedcrm_get_recent_call_event_id((int) $result['user']->id, $caller);
+    if ($recentCallEventId > 0) {
+        $result['call_event_id'] = $recentCallEventId;
+        log_to_file("Same call as event ID: " . $recentCallEventId . ", no new call event stored");
+        return $result;
+    }
+
+    $call_event_id = store_call_event($result['user']->id, $result['contact'] ? $result['contact']->id : 0, $caller, $callee);
+    $result['call_event_id'] = $call_event_id;
+    log_to_file("Stored call event with ID: " . $call_event_id . ($result['contact'] ? '' : " for contact ID 0 (no contact found)"));
+
     return $result;
+}
+
+/**
+ * Find the call event a Keyyo notification belongs to.
+ *
+ * Keyyo notifies one call several times: once per call state (SETUP, CONNECT, RELEASE) when the
+ * notification URL does not filter on the type, and once per ringing line of the same user. A
+ * call event of the same caller created for that user a few minutes ago is that same call.
+ *
+ * @param  int    $userId Row ID of the called user
+ * @param  string $caller Caller number, as sent by Keyyo
+ * @return int            Row ID of the call event, 0 when the notification is a new call
+ */
+function reedcrm_get_recent_call_event_id(int $userId, string $caller): int
+{
+    global $db;
+
+    if ($caller === '') {
+        return 0;
+    }
+
+    $delay = getDolGlobalInt('REEDCRM_KEYYO_SAME_CALL_DELAY', 5) * 60;
+
+    // The caller is matched as a bare string: extraparams is JSON encoded twice by ActionComm
+    $sql  = 'SELECT a.id FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+    $sql .= " WHERE a.code = 'AC_TEL'";
+    $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
+    $sql .= ' AND a.fk_user_action = ' . $userId;
+    $sql .= " AND a.datec >= '" . $db->idate(dol_now() - $delay) . "'";
+    $sql .= " AND a.extraparams LIKE '%" . $db->escape($db->escapeforlike($caller)) . "%'";
+    $sql .= ' ORDER BY a.id DESC';
+    $sql .= $db->plimit(1);
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return 0;
+    }
+    $obj = $db->fetch_object($resql);
+    $db->free($resql);
+
+    return $obj ? (int) $obj->id : 0;
 }
 
 /**
