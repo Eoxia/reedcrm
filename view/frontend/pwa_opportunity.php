@@ -132,8 +132,9 @@ if ($callListId > 0) {
             }
         }
         $pwaHeaderCenterHtml  = '<a class="pwa-opp-back" href="' . dol_escape_htmltag(dol_buildpath('/reedcrm/view/frontend/pwa_call_list.php', 1) . '?id=' . (int) $callList->id) . '">';
-        $pwaHeaderCenterHtml .= '<i class="fas fa-arrow-left"></i> <i class="fas fa-phone"></i> ' . dol_escape_htmltag($callList->label);
-        $pwaHeaderCenterHtml .= ' — ' . $toCallCount . '/' . (is_array($callListLines) ? count($callListLines) : 0) . ' ' . $langs->trans('ToCallShort');
+        $pwaHeaderCenterHtml .= '<span class="pwa-opp-back-arrow"><i class="fas fa-arrow-left"></i></span>';
+        $pwaHeaderCenterHtml .= '<span class="pwa-opp-back-label"><i class="fas fa-phone"></i> ' . dol_escape_htmltag($callList->label);
+        $pwaHeaderCenterHtml .= ' — ' . $toCallCount . '/' . (is_array($callListLines) ? count($callListLines) : 0) . ' ' . $langs->trans('ToCallShort') . '</span>';
         $pwaHeaderCenterHtml .= '</a>';
     }
 }
