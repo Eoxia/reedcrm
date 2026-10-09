@@ -141,7 +141,8 @@ $conf->dol_hide_leftmenu = 1;
 llxHeader('', $title, $helpUrl, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-relaunch');
 
 $pwaHeaderCenterHtml  = '<a class="pwa-opp-back" href="' . dol_escape_htmltag($backUrl) . '">';
-$pwaHeaderCenterHtml .= '<i class="fas fa-arrow-left"></i> ' . dol_escape_htmltag($langs->trans('BackToOpportunity'));
+$pwaHeaderCenterHtml .= '<span class="pwa-opp-back-arrow"><i class="fas fa-arrow-left"></i></span>';
+$pwaHeaderCenterHtml .= '<span class="pwa-opp-back-label">' . dol_escape_htmltag($langs->trans('BackToOpportunity')) . '</span>';
 $pwaHeaderCenterHtml .= '</a>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 

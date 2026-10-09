@@ -153,6 +153,40 @@
     }
 }
 
+/* Next event still to do, in clear (no hover on a phone to read the badge tooltip):
+   red with the warning triangle once its date has passed */
+.pwa-call-next-event {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #475569;
+
+    &--late .pwa-call-next-event-date {
+        color: #e05353;
+    }
+}
+
+.pwa-call-next-event-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pwa-call-next-event-label {
+    /* Free text: readable, but never more than two lines on the card */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-width: 0;
+    word-break: break-word;
+}
+
 .pwa-call-name {
     font-weight: 700;
     font-size: 34px;

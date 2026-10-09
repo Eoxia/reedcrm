@@ -392,6 +392,19 @@ if (empty($lines)) {
             }
             print '</div>';
 
+            // Prochain événement à faire, en clair : un téléphone n'a pas de survol pour lire l'infobulle du badge
+            if (!empty($indicators['next_event_date'])) {
+                $isLate = !empty($indicators['late']);
+                print '<div class="pwa-call-next-event' . ($isLate ? ' pwa-call-next-event--late' : '') . '">';
+                print '<span class="pwa-call-next-event-date"' . ($isLate ? ' title="' . dol_escape_htmltag($langs->trans('TodoLateEvent')) . '"' : '') . '>';
+                print '<i class="fas ' . ($isLate ? 'fa-exclamation-triangle' : 'fa-clock') . '"></i> ' . dol_print_date($indicators['next_event_date'], 'dayhour', 'tzuser');
+                print '</span>';
+                if ($indicators['next_event_label'] !== '') {
+                    print '<span class="pwa-call-next-event-label">' . dol_escape_htmltag($indicators['next_event_label']) . '</span>';
+                }
+                print '</div>';
+            }
+
             if ($oppProjectId > 0) {
                 // Drill down to the App opportunity page, keeping the call list in the header.
                 // Rendered as an explicit disclosure row: a plain coloured title reads as decoration

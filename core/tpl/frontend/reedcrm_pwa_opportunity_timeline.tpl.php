@@ -38,6 +38,7 @@ if (empty($oppEvents)) : ?>
     // One User fetch per owner instead of one per event: a busy opportunity repeats the same few owners
     $timelineUsers = [];
     $currentDayKey = null;
+    $now           = dol_now();
     ?>
     <div class="pwa-opp-timeline">
     <?php foreach ($oppEvents as $event) :
@@ -59,6 +60,8 @@ if (empty($oppEvents)) : ?>
         $percentage = (int) $event->percentage;
         $note       = trim(dol_string_nohtmltag((string) $event->note_private, 0));
         $typeKey    = reedcrm_get_relaunch_type_key((string) $event->type_code);
+        // Still to do and past its date: the "late" rule of the todo cards
+        $isLate     = $percentage >= 0 && $percentage < 100 && !empty($event->datep) && $event->datep < $now;
         ?>
         <div class="pwa-opp-event" data-relaunch-type="<?php echo dol_escape_htmltag($typeKey); ?>">
             <div class="pwa-opp-event-bullet">
@@ -68,7 +71,11 @@ if (empty($oppEvents)) : ?>
                 <div class="pwa-opp-event-meta">
                     <span class="pwa-opp-event-user"><?php echo $owner !== null ? dol_escape_htmltag($owner->firstname ?: $owner->lastname) : $langs->trans('Unknown'); ?></span>
                     <span class="pwa-opp-event-percent"><?php echo $percentage < 0 ? $langs->trans('ActionNotApplicable') : $percentage . ' %'; ?></span>
-                    <span class="pwa-opp-event-date"><i class="fas fa-clock"></i> <?php echo dol_print_date($eventDate, 'dayhour', 'tzuser'); ?></span>
+                    <?php if ($isLate) : ?>
+                        <span class="pwa-opp-event-date pwa-opp-event-date--late" title="<?php echo dol_escape_htmltag($langs->trans('TodoLateEvent')); ?>"><i class="fas fa-exclamation-triangle"></i> <?php echo dol_print_date($eventDate, 'dayhour', 'tzuser'); ?></span>
+                    <?php else : ?>
+                        <span class="pwa-opp-event-date"><i class="fas fa-clock"></i> <?php echo dol_print_date($eventDate, 'dayhour', 'tzuser'); ?></span>
+                    <?php endif; ?>
                     <span class="pwa-opp-event-id"><i class="fas fa-calendar-alt"></i> <?php echo (int) $event->id; ?></span>
                     <?php if ($canEditEvent) : ?>
                         <a class="pwa-opp-event-edit" href="<?php echo dol_buildpath('/comm/action/card.php', 1) . '?id=' . (int) $event->id . '&action=edit&token=' . newToken(); ?>" title="<?php echo dol_escape_htmltag($langs->trans('Modify')); ?>"><i class="fas fa-pencil-alt"></i></a>

@@ -410,7 +410,8 @@ function reedcrm_call_list_line_record_status_change(DoliDB $db, User $user, Cal
  *
  * @param  DoliDB         $db    Database handler
  * @param  CallListLine[] $lines Lines of the call list
- * @return array                 [line id => ['origin' => [], 'soc_name' => , 'late' => , 'upcoming' => , 'next_event_title' => ]]
+ * @return array                 [line id => ['origin' => [], 'soc_name' => , 'late' => , 'upcoming' => , 'next_event_title' => ,
+ *                               'next_event_date' => , 'next_event_label' => ]]
  */
 function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
 {
@@ -491,6 +492,8 @@ function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
             'late'             => (!empty($nextEvent) && $nextEvent['datep'] < $now) ? 1 : 0,
             'upcoming'         => (!empty($nextEvent) && $nextEvent['datep'] > $todayEnd) ? 1 : 0,
             'next_event_title' => !empty($nextEvent) ? $nextEvent['label'] . ' - ' . dol_print_date($nextEvent['datep'], 'dayhour') : '',
+            'next_event_date'  => !empty($nextEvent) ? $nextEvent['datep'] : 0,
+            'next_event_label' => !empty($nextEvent) ? $nextEvent['label'] : '',
         ];
     }
 

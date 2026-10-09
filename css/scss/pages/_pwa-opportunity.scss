@@ -7,22 +7,48 @@
     padding-bottom: 110px;
 }
 
-/* Back link injected in the fixed App header */
+/* Back link injected in the fixed App header: the arrow is a round button sized for a thumb,
+   the label wraps on two lines (as the header of the call list) so the "x/y to call" count stays visible */
+.pwa-header-center {
+    min-width: 0;
+}
+
 .pwa-opp-back {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     max-width: 100%;
-    padding: 4px 10px;
-    border-radius: 12px;
+    min-width: 0;
+    padding: 4px 12px 4px 4px;
+    border-radius: 22px;
     background: #e2e8f0;
     color: #475569 !important;
     font-size: 13px;
     font-weight: bold;
+    line-height: 1.25;
     text-decoration: none !important;
-    white-space: nowrap;
+}
+
+.pwa-opp-back-arrow {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    color: #1e293b;
+    font-size: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.pwa-opp-back-label {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 /* ------------------------------------------------------------------ Head */
@@ -181,6 +207,12 @@
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+}
+
+/* Event still to do and past its date: red, as the late flag of the todo cards */
+.pwa-opp-event-date--late {
+    color: #e05353;
+    font-weight: 700;
 }
 
 .pwa-opp-event-edit {
