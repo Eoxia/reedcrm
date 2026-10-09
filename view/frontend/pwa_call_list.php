@@ -34,6 +34,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 dol_include_once('/saturne/lib/medias.lib.php');
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
+require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
 require_once __DIR__ . '/../../class/calllist.class.php';
 require_once __DIR__ . '/../../class/calllistline.class.php';
 
@@ -56,6 +57,12 @@ if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcr
     accessforbidden($langs->trans('NotEnoughPermissions'), 0);
     exit;
 }
+
+// Without an explicit id (PWA nav), open the user's own default call list
+if ($id <= 0) {
+    $id = reedcrm_get_or_create_user_default_call_list($db, $user);
+}
+$defaultCallListId = isset($user->conf->REEDCRM_DEFAULT_CALL_LIST) ? (int) $user->conf->REEDCRM_DEFAULT_CALL_LIST : 0;
 
 $object     = new CallList($db);
 $lineObject = new CallListLine($db);
@@ -143,6 +150,9 @@ if ($action === 'delete_audio') {
 
 $lines = $lineObject->fetchAllByCallList($object->id);
 
+// Same indicators as the todo cards: object + amount + relaunches, third party, late / upcoming
+$lineIndicators = reedcrm_call_list_get_line_indicators($db, $lines);
+
 $toCallCount = 0;
 foreach ($lines as $line) {
     if ((int) $line->status === CallListLine::STATUS_TO_CALL) {
@@ -190,6 +200,7 @@ print '<div class="pwa-call-list-container"'
     . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
     . ' data-actioncomm-url="' . dol_escape_htmltag($actioncommAjaxUrl) . '"'
     . ' data-create-actioncomm="' . (int) $createActioncomm . '"'
+    . ' data-default-list="' . ((int) $object->id === $defaultCallListId ? 1 : 0) . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
 
 // Saturne expects an input named "token" in the DOM for AJAX uploads
@@ -279,10 +290,8 @@ if (empty($lines)) {
             $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
         }
 
-        $sourceRefHtml = '';
         $sourceTitleHtml = '';
         $oppPercent = null;
-        $oppAmount  = null;
         $oppProjectId = 0;
         $saturneModule = 'reedcrm';
         $saturneSubdir = 'calllistline/' . (int) $line->id;
@@ -291,7 +300,6 @@ if (empty($lines)) {
             require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
             $propal = new Propal($db);
             if ($propal->fetch($line->element_id) > 0) {
-                $sourceRefHtml = $propal->getNomUrl(1);
                 $saturneModule = 'propal';
                 $saturneSubdir = dol_sanitizeFileName($propal->ref);
                 if ($propal->fk_project > 0) {
@@ -303,18 +311,15 @@ if (empty($lines)) {
                         $oppProjectId = $project->id;
                     }
                 }
-                $oppAmount = $propal->total_ttc;
             }
         } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
             $project = new Project($db);
             if ($project->fetch($line->element_id) > 0) {
-                $sourceRefHtml = $project->getNomUrl(1);
                 $saturneModule = 'projet';
                 $saturneSubdir = dol_sanitizeFileName($project->ref);
                 $sourceTitleHtml = $project->title;
                 $oppPercent = $project->opp_percent;
-                $oppAmount  = $project->opp_amount;
                 $oppProjectId = $project->id;
 
                 if (empty($line->fk_contact) || empty($lastname)) {
@@ -329,15 +334,29 @@ if (empty($lines)) {
         }
 
         $currentStatus = (int) $line->status;
+        $indicators    = $lineIndicators[(int) $line->id] ?? [];
+        $origin        = $indicators['origin'] ?? [];
 
-        print '<div class="pwa-call-card" data-line-id="' . (int) $line->id . '" data-status="' . $currentStatus . '">';
+        $cardClass = 'pwa-call-card';
+        if (!empty($indicators['late'])) {
+            $cardClass .= ' pwa-call-card--late';
+        } elseif (!empty($indicators['upcoming'])) {
+            $cardClass .= ' pwa-call-card--upcoming';
+        }
 
-        // Ligne 1 : Nom et % opp
+        print '<div class="' . $cardClass . '" data-line-id="' . (int) $line->id . '" data-status="' . $currentStatus . '">';
+
+        // Ligne 1 : Nom + prochain événement en retard ou à venir, comme sur la todo
         print '<div class="pwa-call-card-header">';
         if ($lastname || $firstname) {
             print '<span class="pwa-call-name"><i class="fas fa-user" style="color:#94a3b8;"></i> ' . $lastname . ' ' . $firstname . '</span>';
         } else {
             print '<span class="pwa-call-name pwa-call-name--empty"><i class="fas fa-user-slash" style="color:#cbd5e1;"></i> Contact non renseigné</span>';
+        }
+        if (!empty($indicators['late'])) {
+            print '<span class="todo-card-late-badge" title="' . dol_escape_htmltag($indicators['next_event_title']) . '"><i class="fas fa-exclamation-circle"></i> ' . $langs->trans('TodoLateEvent') . '</span>';
+        } elseif (!empty($indicators['upcoming'])) {
+            print '<span class="todo-card-upcoming-badge" title="' . dol_escape_htmltag($indicators['next_event_title']) . '"><i class="fas fa-clock"></i> ' . $langs->trans('TodoUpcomingEvent') . '</span>';
         }
         print '</div>';
 
@@ -351,18 +370,28 @@ if (empty($lines)) {
             print '<div><span class="pwa-call-phone" style="color:#94a3b8;"><i class="fas fa-phone-slash" style="color:#94a3b8;"></i> Pas de téléphone</span></div>';
         }
 
-        // Ligne 3 : Picto + Objet + Montant
-        if ($sourceRefHtml) {
-            $amountStr = ($oppAmount !== null) ? price($oppAmount, 0, $langs, 0, 0, -1, $conf->currency) : '';
-            print '<div class="pwa-call-ref">' . $sourceRefHtml;
-            if ($amountStr) {
-                print '<span class="pwa-call-sep">|</span><strong>' . $amountStr . '</strong>';
+        // Ligne 3 : puces des cartes de la todo (objet + montant HT arrondi + relances, tiers) puis % opp
+        if (!empty($origin)) {
+            $originCounted = !empty($origin['amount_ht']) || !empty($origin['relaunch_count']);
+            print '<div class="pwa-call-indicators">';
+            print '<span class="todo-origin-wrapper">';
+            print '<a class="todo-link-badge todo-link-origin' . ($originCounted ? ' todo-link-origin-counted' : '') . '" href="' . dol_escape_htmltag($origin['url']) . '">';
+            print '<i class="fas ' . $origin['picto'] . '"></i> ' . dol_escape_htmltag($origin['ref']) . '</a>';
+            if (!empty($origin['amount_ht'])) {
+                print '<span class="todo-origin-amount" title="' . dol_escape_htmltag($origin['amount_ht_full']) . '">' . dol_escape_htmltag($origin['amount_ht_short']) . '</span>';
+            }
+            if (!empty($origin['relaunch_count'])) {
+                print '<span class="todo-relaunch-count" title="' . dol_escape_htmltag($langs->trans('TodoRelaunchCount', $origin['relaunch_count'])) . '"><i class="fas fa-headset"></i> ' . $origin['relaunch_count'] . '</span>';
+            }
+            print '</span>';
+            if (!empty($indicators['soc_name'])) {
+                print '<span class="todo-link-badge todo-link-soc" title="' . dol_escape_htmltag($indicators['soc_name']) . '"><i class="fas fa-building"></i> ' . dol_escape_htmltag($indicators['soc_name']) . '</span>';
             }
             if ($oppPercent !== null) {
-                print '<span class="pwa-call-sep">|</span><span class="pwa-call-percent">' . round($oppPercent) . ' %</span>';
+                print '<span class="pwa-call-percent">' . round($oppPercent) . ' %</span>';
             }
             print '</div>';
-            
+
             if ($oppProjectId > 0) {
                 // Drill down to the App opportunity page, keeping the call list in the header.
                 // Rendered as an explicit disclosure row: a plain coloured title reads as decoration
