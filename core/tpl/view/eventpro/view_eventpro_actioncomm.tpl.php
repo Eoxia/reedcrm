@@ -91,11 +91,16 @@
                     <div class="select2-container" style="display: flex; align-items: center;"><?php echo $form->selectDate(dol_now(), 'event_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?></div>
                 </label>
             </div>
-            <div>
+            <div class="reedcrm-project-field-wrapper">
                 <label for="project_id">
                     <?php echo img_picto('', 'project'); ?>
                     <div class="select2-container"><?php echo $formProject->select_projects(!empty($object->thirdparty) ? $object->thirdparty->id : 0, $object->id, 'project_id', 64); ?></div>
                 </label>
+                <?php
+                $eventProProjectFormKey    = 'event';
+                $eventProProjectSocidField = 'socid';
+                require __DIR__ . '/eventpro_add_project.tpl.php';
+                ?>
             </div>
         </div>
 

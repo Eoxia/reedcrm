@@ -76,6 +76,7 @@ window.reedcrm.eventpro.init = function () {
   window.reedcrm.eventpro.event();
   window.reedcrm.eventpro.modalCloseWatcher();
   window.reedcrm.eventpro.initAddContact();
+  window.reedcrm.eventpro.initAddProject();
   window.reedcrm.eventpro.initRelaunchTooltips();
 };
 
@@ -523,6 +524,111 @@ window.reedcrm.eventpro.submitAddContact = function ($button) {
       if (typeof window.saturne !== 'undefined' && window.saturne.notification) {
         window.saturne.notification.error(errorMsg);
       }
+    },
+    complete: function () {
+      $button.prop('disabled', false);
+    }
+  });
+};
+
+/**
+ * Initialize add project functionality ("+" button next to a project select)
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.2.0
+ * @version 1.2.0
+ */
+window.reedcrm.eventpro.initAddProject = function () {
+  $(document).on('click', '.reedcrm-add-project-btn', function (e) {
+    e.preventDefault();
+    var $form = $(this).closest('.reedcrm-project-field-wrapper').find('.reedcrm-add-project-form');
+    $form.slideDown(function () {
+      $form.find('.reedcrm-add-project-title').trigger('focus');
+    });
+  });
+
+  $(document).on('click', '.reedcrm-add-project-cancel', function (e) {
+    e.preventDefault();
+    var $form = $(this).closest('.reedcrm-add-project-form');
+    $form.slideUp();
+    $form.find('input').val('');
+  });
+
+  $(document).on('click', '.reedcrm-add-project-submit', function (e) {
+    e.preventDefault();
+    window.reedcrm.eventpro.submitAddProject($(this));
+  });
+
+  // Enter in the inline form must create the project, not submit the eventPro form around it
+  $(document).on('keydown', '.reedcrm-add-project-form input', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      window.reedcrm.eventpro.submitAddProject($(this).closest('.reedcrm-add-project-form').find('.reedcrm-add-project-submit'));
+    }
+  });
+};
+
+/**
+ * Submit add project form
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.2.0
+ * @version 1.2.0
+ *
+ * @param {jQuery} $button The submit button element
+ */
+window.reedcrm.eventpro.submitAddProject = function ($button) {
+  var $form = $button.closest('.reedcrm-add-project-form');
+  var $mainForm = $form.closest('form');
+  var $projectSelect = $form.closest('.reedcrm-project-field-wrapper').find('select[name="project_id"]');
+  var notify = window.reedcrm.eventQuickClose.notify;
+
+  var title = $form.find('.reedcrm-add-project-title').val().trim();
+  if (!title) {
+    notify($form.data('error-required'), 'error');
+    return;
+  }
+
+  var baseUrl = $mainForm.attr('action');
+  baseUrl = baseUrl ? baseUrl.split('?')[0] : window.location.href.split('?')[0];
+
+  $button.prop('disabled', true);
+
+  $.ajax({
+    url: baseUrl,
+    type: 'POST',
+    data: {
+      action: 'create_project',
+      token: $mainForm.find('input[name="token"]').val(),
+      from_id: $mainForm.find('input[name="from_id"]').val(),
+      from_type: $mainForm.find('input[name="from_type"]').val(),
+      socid: $mainForm.find('select[name="' + $form.data('socid-field') + '"]').val() || '',
+      new_project_title: title,
+      new_project_amount: ($form.find('.reedcrm-add-project-amount').val() || '').trim()
+    },
+    dataType: 'json',
+    success: function (response) {
+      if (response && response.success) {
+        // Offer the new project in every project select of the form, select it in the one of the button
+        $mainForm.find('select[name="project_id"]').each(function () {
+          var isTarget = $projectSelect.is(this);
+          $(this).append(new Option(response.project_label, response.project_id, isTarget, isTarget));
+          if (isTarget) {
+            $(this).trigger('change');
+          }
+        });
+
+        $form.slideUp();
+        $form.find('input').val('');
+        notify(response.message, 'success');
+      } else {
+        notify(response && response.error ? response.error : 'Error', 'error');
+      }
+    },
+    error: function (xhr) {
+      notify(xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error', 'error');
     },
     complete: function () {
       $button.prop('disabled', false);

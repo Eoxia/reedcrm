@@ -63,7 +63,16 @@
 
         <tr class="oddeven">
             <td><?php echo $langs->trans("Project"); ?></td><td colspan="3">
-                <?php $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id', 64); ?>
+                <div class="reedcrm-project-field-wrapper">
+                    <?php
+                    // Own id: the eventPro form above the tabs already has a #project_id, select2 would skip this one
+                    $formProject->select_projects($object->thirdparty->id, $object->id, 'project_id', 64, 0, 1, 0, 0, 0, 0, '', 0, 0, 'minwidth300', 'ticket_project_id');
+
+                    $eventProProjectFormKey    = 'ticket';
+                    $eventProProjectSocidField = 'ticket_socid';
+                    require __DIR__ . '/eventpro_add_project.tpl.php';
+                    ?>
+                </div>
             </td>
         </tr>
 

@@ -410,7 +410,8 @@
     }
 }
 
-.reedcrm-contact-field-wrapper .reedcrm-add-contact-btn {
+// Scoped to the mobile form: the desktop eventPro card has its own button style (pages/_event-pro.scss)
+.pwa-relaunch-form .reedcrm-add-contact-btn {
     flex: 0 0 auto;
     width: 42px;
     height: 42px;
@@ -420,6 +421,17 @@
     color: #fff;
     font-size: 16px;
     cursor: pointer;
+}
+
+// Ticket tab: a null flex basis beats the forced 100% width of the PWA selects, which would push the "+"
+// on its own line. The button keeps the desktop style, as high as the select: the stacked ticket rows
+// have a fixed height, a 42px button would overflow on the next one.
+.pwa-relaunch-form .reedcrm-project-field-wrapper {
+    > select,
+    > .select2-container {
+        flex: 1;
+        min-width: 0;
+    }
 }
 
 .pwa-relaunch-form .reedcrm-add-contact-form {

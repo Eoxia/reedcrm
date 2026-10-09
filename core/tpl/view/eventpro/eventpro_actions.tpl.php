@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/view/eventpro/eventpro_actions.tpl.php
  * \ingroup reedcrm
- * \brief   eventPro action handlers (create_contact, add_event, create_ticket), shared by the
+ * \brief   eventPro action handlers (create_contact, create_project, add_event, create_ticket), shared by the
  *          desktop card (view/procard.php) and the mobile App form (view/frontend/pwa_relaunch.php).
  *          Expects $action, $id, $fromType, $object, $actionComm, $category, $isModal, $currentTab,
  *          $langs, $user and $db to be in scope, exactly as the desktop card sets them up.
@@ -93,6 +93,70 @@ if (empty($eventProRedirectAfterTicket)) {
             ]);
             exit;
         }
+    }
+
+    // Action to create a project from the "+" button of a project select (JSON response for AJAX)
+    if ($action == 'create_project') {
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+
+        $langs->load('projects');
+
+        header('Content-Type: application/json');
+
+        if (!isModEnabled('project') || !$user->hasRight('projet', 'creer')) {
+            echo json_encode(['success' => false, 'error' => $langs->transnoentities('NotEnoughPermissions')]);
+            exit;
+        }
+
+        $project        = new Project($db);
+        $project->title = GETPOST('new_project_title', 'alphanohtml');
+        $project->socid = GETPOSTINT('socid') ?: (isset($object->thirdparty->id) ? $object->thirdparty->id : 0);
+        if (empty($project->title)) {
+            echo json_encode(['success' => false, 'error' => $langs->transnoentities('ErrorFieldRequired', $langs->transnoentities('ProjectLabel'))]);
+            exit;
+        }
+
+        list($refProjectMod) = saturne_require_objects_mod(['project' => getDolGlobalString('PROJECT_ADDON', 'mod_project_simple')]);
+
+        $thirdparty = new Societe($db);
+        if ($project->socid > 0) {
+            $thirdparty->fetch($project->socid);
+        }
+
+        $project->ref        = $refProjectMod->getNextValue($thirdparty, $project);
+        $project->date_c     = dol_now();
+        $project->date_start = dol_now();
+        $project->status     = Project::STATUS_VALIDATED; // The project select disables draft projects: a draft could not be picked
+        $project->usage_task = 1;
+        if (getDolGlobalInt('PROJECT_USE_OPPORTUNITIES')) {
+            // Same default opportunity status as the quick creation
+            $project->usage_opportunity = 1;
+            $project->opp_status        = getDolGlobalInt('REEDCRM_PROJECT_OPPORTUNITY_STATUS_VALUE');
+            $project->opp_percent       = $project->opp_status > 0 ? (float) dol_getIdFromCode($db, $project->opp_status, 'c_lead_status', 'rowid', 'percent') : 0;
+            $project->opp_amount        = price2num(GETPOST('new_project_amount', 'alpha'));
+        }
+
+        $result = $project->create($user);
+        if ($result > 0) {
+            $project->add_contact($user->id, 'PROJECTLEADER', 'internal');
+
+            // Same label as the options of the project select (FormProjets::select_projects_list)
+            $projectLabel = dol_trunc($project->ref, 18) . ', ' . dol_trunc($project->title, 64);
+            if ($thirdparty->id > 0) {
+                $projectLabel .= ' - ' . $thirdparty->name . ($thirdparty->name_alias ? ' (' . $thirdparty->name_alias . ')' : '');
+            }
+
+            echo json_encode([
+                'success'       => true,
+                'project_id'    => $result,
+                'project_label' => $projectLabel,
+                'message'       => $langs->transnoentities('ProjectCreatedInDolibarr', $project->ref)
+            ]);
+        } else {
+            $errorMsg = $project->error ?: implode(', ', $project->errors);
+            echo json_encode(['success' => false, 'error' => $errorMsg ?: $langs->transnoentities('Error')]);
+        }
+        exit;
     }
 
     // Action to add commercial relaunch event

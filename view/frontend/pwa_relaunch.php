@@ -118,7 +118,7 @@ if ($resHook < 0) {
 }
 
 if (empty($resHook)) {
-    // create_contact / add_event / create_ticket, shared with the desktop card (view/procard.php)
+    // create_contact / create_project / add_event / create_ticket, shared with the desktop card (view/procard.php)
     require __DIR__ . '/../../core/tpl/view/eventpro/eventpro_actions.tpl.php';
 }
 

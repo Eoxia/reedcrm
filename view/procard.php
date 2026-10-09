@@ -108,7 +108,7 @@ if ($resHook < 0) {
 }
 
 if (empty($resHook)) {
-    // create_contact / add_event / create_ticket, shared with the mobile App form (view/frontend/pwa_relaunch.php)
+    // create_contact / create_project / add_event / create_ticket, shared with the mobile App form (view/frontend/pwa_relaunch.php)
     require __DIR__ . '/../core/tpl/view/eventpro/eventpro_actions.tpl.php';
 }
 
