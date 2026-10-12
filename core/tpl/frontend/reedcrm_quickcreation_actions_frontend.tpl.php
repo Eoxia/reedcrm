@@ -35,10 +35,15 @@ if (empty($permissionToAddProject)) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+require_once __DIR__ . '/../../../lib/reedcrm_function.lib.php';
+dol_include_once('/saturne/lib/medias.lib.php');
 
 // --- Début des actions de la brique média Saturne ---
 $saturneModule = GETPOST('module_name', 'alpha');
 $saturneSubDir = GETPOST('sub_dir', 'alphanohtml');
+
+// Upload folder of the quick creation block, the only one whose photos can be analysed
+$quickCreationSubDir = 'tmp/' . saturne_get_upload_token('reedcrm_quickcreation_' . $user->id);
 
 if ($action == 'uploadPhoto' && !empty($saturneModule)) {
 
@@ -89,8 +94,11 @@ if ($action == 'uploadPhoto' && !empty($saturneModule)) {
         }
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-            dol_include_once('/saturne/lib/medias.lib.php');
-            print saturne_render_media_block($saturneModule, $saturneSubDir);
+            if ($saturneModule === 'project' && $saturneSubDir === $quickCreationSubDir) {
+                print reedcrm_quickcreation_media_block($saturneSubDir);
+            } else {
+                print saturne_render_media_block($saturneModule, $saturneSubDir);
+            }
             exit;
         }
     }
@@ -927,7 +935,6 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
     require_once DOL_DOCUMENT_ROOT.'/ai/class/ai.class.php';
     saturne_load_langs(['medias']);
 
-    $data = json_decode(file_get_contents('php://input'), true);
     $result = array();
 
     // GET AUTH INFO & ENDPOINT
@@ -935,9 +942,16 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
     $aiToken = getDolGlobalString('AI_API_'.$activeAI.'_KEY');
     $aiEndpoint = getDolGlobalString('AI_API_'.$activeAI.'_URL');
 
+    // The browser only names the photo: it is looked for in the quick creation folder of the user, nowhere else
+    $fileName = dol_sanitizeFileName(basename(GETPOST('filename', 'alphanohtml')));
+    $fullPath = $conf->project->dir_output . '/' . $quickCreationSubDir . '/' . $fileName;
+
     if (empty($activeAI) || empty($aiToken) || empty($aiEndpoint)) {
         $result['success'] = false;
         $result['error'] = 'AiConfigError - Token or Endpoint is empty';
+    } elseif ($saturneModule !== 'project' || $saturneSubDir !== $quickCreationSubDir || empty($fileName) || !dol_is_file($fullPath) || image_format_supported($fileName) < 0) {
+        $result['success'] = false;
+        $result['error'] = 'AiFileError - Not a photo of the quick creation';
     } else {
 
         // HEADERS
@@ -954,9 +968,6 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
         $fullEndpoint .= 'chat/completions';
 
         // FILE
-        $filePath = $data['filepath'];
-        $fileName = $data['filename'];
-        $fullPath = $filePath . '/' . $fileName;
         $type = pathinfo($fullPath, PATHINFO_EXTENSION);
         $data = file_get_contents($fullPath);
         $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
@@ -990,10 +1001,18 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
         if (is_null($aiResponse)) {
             $result['success'] = false;
             $result['error'] = 'AiResponseError - Ai response return NULL';
+        } elseif (empty($aiResponse->choices[0]->message->content)) {
+            // A refused call (wrong key, quota...) still answers in JSON, with an error instead of a choice
+            $result['success'] = false;
+            $result['error'] = 'AiResponseError - ' . (!empty($aiResponse->error->message) ? $aiResponse->error->message : 'No answer');
         } else {
 
             $aiResponseMessage = $aiResponse->choices[0]->message->content;
             $aiResponseDecoded = json_decode($aiResponseMessage);
+            // An answer that is not the JSON asked for is still a description of the image
+            if (!is_object($aiResponseDecoded)) {
+                $aiResponseDecoded = (object) ['type' => 'read', 'content' => $aiResponseMessage];
+            }
 
             $result['success'] = true;
             $result['type'] = $aiResponseDecoded->type;

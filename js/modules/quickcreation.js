@@ -89,6 +89,45 @@ window.reedcrm.quickcreation.event = function() {
   $(document).on('change', '#add_reminder', window.reedcrm.quickcreation.toggleReminder);
   $(document).on('click', '.quickcreation-reminder__preset', window.reedcrm.quickcreation.applyReminderPreset);
   $(document).on('input', '#reminder_date', window.reedcrm.quickcreation.clearReminderPreset);
+
+  // Photo read by the AI (wand of the media block)
+  $(document).on('saturne:media-analysed', window.reedcrm.quickcreation.fillFromPhotoAnalysis);
+};
+
+/**
+ * Fill the form with what the AI read on a photo: the contact details it found, and its analysis
+ * appended to the description
+ *
+ * @since   23.3.1
+ * @version 23.3.1
+ *
+ * @param  {Event}  event    saturne:media-analysed event
+ * @param  {Object} response Answer of the readFileAI action
+ * @return {void}
+ */
+window.reedcrm.quickcreation.fillFromPhotoAnalysis = function(event, response) {
+  if (response.type === 'contact' && response.contact) {
+    var contactFields = {
+      reedcrm_lastname : response.contact.nom,
+      reedcrm_firstname: response.contact.prenom,
+      projectphone     : response.contact.telephone,
+      reedcrm_email    : response.contact.email
+    };
+
+    // A detail the AI did not find leaves what the user typed alone
+    $.each(contactFields, function(fieldId, value) {
+      value = String(value || '').trim();
+      if (value !== '') {
+        $('#' + fieldId).val(value);
+      }
+    });
+  }
+
+  var description = $('textarea#description');
+  if (description.length && response.text) {
+    var currentDescription = description.val();
+    description.val(currentDescription !== '' ? currentDescription + '\n' + response.text : response.text);
+  }
 };
 
 /**
