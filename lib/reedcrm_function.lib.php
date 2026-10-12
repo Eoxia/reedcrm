@@ -808,3 +808,22 @@ function reedcrm_asset_full_url(string $relativePath): string
 
     return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . filemtime($absolutePath);
 }
+
+/**
+ * Render the media block of the quick creation form
+ *
+ * The block is rendered again after each photo upload: going through here keeps its options, the
+ * photo wand included.
+ *
+ * @param  string $subDir Upload folder of the user, under the project directory
+ * @return string         HTML of the block
+ */
+function reedcrm_quickcreation_media_block(string $subDir): string
+{
+    dol_include_once('/saturne/lib/medias.lib.php');
+
+    // The readFileAI action of the quick creation only knows how to query ChatGPT
+    $showAi = getDolGlobalString('AI_API_SERVICE') == 'chatgpt';
+
+    return saturne_render_media_block('project', $subDir, 'quickcreation_', '', ['show_photo' => true, 'show_audio' => true, 'show_ai' => $showAi]);
+}
