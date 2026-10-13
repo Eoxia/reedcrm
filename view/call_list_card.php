@@ -477,13 +477,13 @@ if ($object->id > 0) {
         print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=edit" class="butAction">' . $langs->trans('Modify') . '</a>';
     }
     if ($permissiontoadd && $object->status == CallList::STATUS_DRAFT) {
-        print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=validate" class="butAction">' . $langs->trans('Validate') . '</a>';
+        print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=validate&token=' . newToken() . '" class="butAction">' . $langs->trans('Validate') . '</a>';
     }
     if ($permissiontoadd && $object->status == CallList::STATUS_ACTIVE) {
-        print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=archive" class="butAction">' . $langs->trans('Archive') . '</a>';
+        print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=archive&token=' . newToken() . '" class="butAction">' . $langs->trans('Archive') . '</a>';
     }
     if ($permissiontodelete) {
-        print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete" class="butActionDelete">' . $langs->trans('Delete') . '</a>';
+        print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete&token=' . newToken() . '" class="butActionDelete">' . $langs->trans('Delete') . '</a>';
     }
     print '</div>';
 
