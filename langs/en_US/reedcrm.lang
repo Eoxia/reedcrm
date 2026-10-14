@@ -1127,3 +1127,38 @@ PropalUnbilledBanner = This proposal is not billed
 
 # Not billed contracts
 ContractUnbilledBanner = This contract is not billed
+
+# Lifecycle timeline
+LifecycleStepCreation = Creation
+LifecycleStepValidation = Validation
+LifecycleStepSending = Sending
+LifecycleStepReception = Reception
+LifecycleStepRelaunch = Follow-ups
+LifecycleStepValidityEnd = Validity
+LifecycleStepSignature = Signature
+LifecycleStepRefusal = Refusal
+LifecycleStepBilling = Billing
+LifecycleStepDelivery = Delivery
+LifecycleStepShipping = Shipping
+LifecycleStepClosing = Closing
+LifecycleStepCancellation = Cancellation
+LifecycleStepDueDate = Due date
+LifecycleStepPayment = Payment
+LifecycleStepAbandon = Abandon
+LifecycleStepProjectStart = Start
+LifecycleStepProjectEnd = Planned end
+LifecycleStepFirstProposal = Proposal
+LifecycleStepFirstOrder = Order
+LifecycleStepFirstInvoice = Invoice
+LifecycleTooltipPending = Step not reached yet
+LifecycleTooltipOverdue = Date is past
+LifecycleTooltipBy = By %s
+LifecycleTooltipSentCount = %s mails sent
+LifecycleTooltipLastSending = Last sending on %s
+LifecycleTooltipLinkedCount = %s linked documents
+LifecycleTooltipPaymentCount = %s payments
+LifecycleTooltipPaidAmount = %s paid out of %s
+LifecycleTooltipCommercialStatus = Commercial status: %s
+LifecycleTooltipNoStatusDate = The commercial status keeps no date
+LifecycleTooltipRelaunchCount = %s ReedCRM follow-ups
+LifecycleTooltipFirstRelaunch = First follow-up on %s
