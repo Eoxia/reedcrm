@@ -1,0 +1,199 @@
+// Lifecycle timeline of an object, printed in the banner of the proposal, order, invoice and project cards
+
+.reedcrm-lifecycle {
+    display: flex;
+    align-items: flex-start;
+    max-width: 100%;
+    // The banner already carries the ref, the status and the actions: the timeline stays a thin band.
+    // The top padding is what keeps room for the halo of the current step
+    margin: 2px 0 0;
+    padding: 4px 0 0;
+    // The banner prints the ref big and bold, the timeline sets its own type back
+    font-size: 11px;
+    font-weight: normal;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.reedcrm-lifecycle-step {
+    position: relative;
+    // A fixed basis keeps every step the same width, which is what the rail below measures itself against
+    flex: 1 1 0;
+    box-sizing: border-box;
+    min-width: 78px;
+    max-width: 120px;
+    padding: 0 3px;
+    text-align: center;
+
+    // Rail reaching back to the dot of the previous step: it belongs to the step it leads to,
+    // so it is coloured as soon as that milestone is reached
+    &::before {
+        content: "";
+        position: absolute;
+        // Centred on an 18px dot, then held clear of it on both ends
+        top: 8px;
+        right: 50%;
+        left: -50%;
+        height: 2px;
+        margin: 0 11px;
+        background: #dfe3e8;
+    }
+
+    &:first-child::before {
+        display: none;
+    }
+}
+
+.reedcrm-lifecycle-dot {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // Border included: the rail above is placed against a dot exactly 18px tall
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #dfe3e8;
+    border-radius: 50%;
+    background: #fff;
+    color: #a6aeb8;
+    font-size: 9px;
+    cursor: default;
+}
+
+.reedcrm-lifecycle-label {
+    // One line only, which is what keeps the band thin: the captions are short enough for it,
+    // and the tooltip carries the full wording anyway
+    display: block;
+    overflow: hidden;
+    margin-top: 2px;
+    color: #6b7580;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.reedcrm-lifecycle-date {
+    display: block;
+    color: #98a1ab;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+// Riding in the right hand block of the banner, under the status badge
+.statusref .reedcrm-lifecycle {
+    max-width: 640px;
+    margin: 6px 0 0;
+    // The block is right aligned for the badge, the timeline keeps its own steps left to right
+    text-align: left;
+}
+
+// Milestone reached
+.reedcrm-lifecycle-step-done {
+    &::before {
+        background: #2c7be5;
+    }
+
+    .reedcrm-lifecycle-dot {
+        border-color: #2c7be5;
+        background: #2c7be5;
+        color: #fff;
+    }
+
+    .reedcrm-lifecycle-label {
+        color: #2f3640;
+    }
+
+    .reedcrm-lifecycle-date {
+        color: #4a5563;
+        font-weight: 600;
+    }
+}
+
+// Milestone still ahead
+.reedcrm-lifecycle-step-todo {
+    .reedcrm-lifecycle-dot {
+        border-style: dashed;
+    }
+}
+
+// Deadline gone while the object is still waiting on it
+.reedcrm-lifecycle-step-late {
+    .reedcrm-lifecycle-dot {
+        border-color: #e2574c;
+        color: #e2574c;
+    }
+
+    .reedcrm-lifecycle-label {
+        color: #e2574c;
+    }
+
+    .reedcrm-lifecycle-date {
+        color: #e2574c;
+        font-weight: 600;
+    }
+}
+
+// Dead end of the lifecycle: refused, cancelled or abandoned
+.reedcrm-lifecycle-step-ko {
+    &::before {
+        background: #e2574c;
+    }
+
+    .reedcrm-lifecycle-dot {
+        border-color: #e2574c;
+        background: #e2574c;
+        color: #fff;
+    }
+
+    .reedcrm-lifecycle-label {
+        color: #e2574c;
+    }
+
+    .reedcrm-lifecycle-date {
+        color: #e2574c;
+        font-weight: 600;
+    }
+}
+
+// Where the object stands right now
+.reedcrm-lifecycle-step-current {
+    .reedcrm-lifecycle-dot {
+        box-shadow: 0 0 0 3px rgba(44, 123, 229, 0.18);
+    }
+
+    .reedcrm-lifecycle-label {
+        font-weight: 600;
+    }
+
+    &.reedcrm-lifecycle-step-ko .reedcrm-lifecycle-dot {
+        box-shadow: 0 0 0 3px rgba(226, 87, 76, 0.18);
+    }
+}
+
+// Below this width the banner no longer holds the ref block and a full rail side by side: the rail
+// would push the ref of the card down onto its own line. The steps fold into a narrow grid of chips
+// instead, which fits next to the ref, and the rail joining them goes. A Dolibarr card cannot scroll
+// sideways on its own, so folding is the only way out
+@media (max-width: 1499px) {
+    .reedcrm-lifecycle {
+        flex-wrap: wrap;
+        row-gap: 6px;
+    }
+
+    .reedcrm-lifecycle-step {
+        // 32% rather than 33%: three columns then always fit on a row, whatever the rounding
+        flex: 1 0 32%;
+        min-width: 74px;
+        max-width: none;
+
+        &::before {
+            display: none;
+        }
+    }
+
+    // Held narrow on purpose, so the ref of the card keeps its place on the left
+    .statusref .reedcrm-lifecycle {
+        max-width: 250px;
+    }
+}

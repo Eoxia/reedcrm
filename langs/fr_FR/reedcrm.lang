@@ -1247,3 +1247,38 @@ PropalUnbilledBanner = Ce devis n'est pas facturé
 
 # Contrats non facturés
 ContractUnbilledBanner = Ce contrat n'est pas facturé
+
+# Lifecycle timeline
+LifecycleStepCreation = Création
+LifecycleStepValidation = Validation
+LifecycleStepSending = Envoi
+LifecycleStepReception = Réception
+LifecycleStepRelaunch = Relances
+LifecycleStepValidityEnd = Fin validité
+LifecycleStepSignature = Signature
+LifecycleStepRefusal = Refus
+LifecycleStepBilling = Facturation
+LifecycleStepDelivery = Livraison
+LifecycleStepShipping = Expédition
+LifecycleStepClosing = Clôture
+LifecycleStepCancellation = Annulation
+LifecycleStepDueDate = Échéance
+LifecycleStepPayment = Règlement
+LifecycleStepAbandon = Abandon
+LifecycleStepProjectStart = Démarrage
+LifecycleStepProjectEnd = Fin prévue
+LifecycleStepFirstProposal = Devis
+LifecycleStepFirstOrder = Commande
+LifecycleStepFirstInvoice = Facture
+LifecycleTooltipPending = Étape non atteinte
+LifecycleTooltipOverdue = Date dépassée
+LifecycleTooltipBy = Par %s
+LifecycleTooltipSentCount = %s envois par mail
+LifecycleTooltipLastSending = Dernier envoi le %s
+LifecycleTooltipLinkedCount = %s documents liés
+LifecycleTooltipPaymentCount = %s règlements
+LifecycleTooltipPaidAmount = %s réglés sur %s
+LifecycleTooltipCommercialStatus = Statut commercial : %s
+LifecycleTooltipNoStatusDate = Le statut commercial ne conserve pas de date
+LifecycleTooltipRelaunchCount = %s relances ReedCRM
+LifecycleTooltipFirstRelaunch = Première relance le %s

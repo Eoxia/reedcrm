@@ -1555,6 +1555,25 @@ class ActionsReedcrm
      * @param  array $parameters Hook metadata (context, etc...)
      * @return int               0 < on error, 0 on success, 1 to replace standard code
      */
+    public function addHtmlHeader(array $parameters): int
+    {
+        require_once __DIR__ . '/../../saturne/lib/asset.lib.php';
+
+        // The native cards carrying a lifecycle timeline never load the module stylesheet on their own
+        if (preg_match('/propalcard|ordercard|invoicecard|projectcard/', $parameters['context'] ?? '')) {
+            $this->resprints  = '<!-- Includes CSS added by module reedcrm -->';
+            $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
+        }
+
+        return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the hookSetManifest function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
     public function hookSetManifest(array $parameters): int
     {
         if (strpos($_SERVER['PHP_SELF'], 'reedcrm') !== false) {
@@ -3617,6 +3636,21 @@ EOT;
                 $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
                 $this->resprints .= '<script src="' . $jsPath . '?v=' . time() . '"></script>';
                 $this->resprints .= $widgetHtml;
+            }
+        }
+
+        // Lifecycle timeline of the proposal, order, invoice and project banners. It goes into the right
+        // hand block of the banner, above the status badge: that side is empty on a wide screen, where
+        // stacking the timeline under the ref would only make the banner taller
+        require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
+        if (is_object($object) && !empty($object->id) && in_array($object->element, REEDCRM_LIFECYCLE_ELEMENTS)) {
+            $langs->load('reedcrm@reedcrm');
+            $lifecycleElement = $object->element;
+            $lifecycleSteps   = reedcrm_get_lifecycle_steps($object);
+            if (!empty($lifecycleSteps)) {
+                ob_start();
+                require __DIR__ . '/../core/tpl/reedcrm_lifecycle_timeline.tpl.php';
+                $parameters['morehtmlstatus'] .= ob_get_clean();
             }
         }
 
