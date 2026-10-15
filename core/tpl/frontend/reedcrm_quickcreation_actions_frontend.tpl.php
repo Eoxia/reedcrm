@@ -810,7 +810,9 @@ if ($action == 'add') {
         $taskID = $task->create($user);
         if ($taskID > 0) {
             $task->add_contact($user->id, 'TASKEXECUTIVE', 'internal');
-            $project->array_options['commtask'] = $taskID;
+            // updateExtraField() only reads the prefixed key: without it the task was never linked, and a
+            // second one was created later on by the quick event and the call lists
+            $project->array_options['options_commtask'] = $taskID;
             $project->updateExtraField('commtask');
         } else {
             setEventMessages($task->error, $task->errors, 'errors');
