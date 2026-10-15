@@ -2475,6 +2475,8 @@ class ActionsReedcrm
             'list_url'       => 'custom/reedcrm/view/call_list_list.php',
             'defaultsort'    => 't.rowid',
             'defaultorder'   => 'DESC',
+            // The call lists are ordered by hand (1 - Hot, 2 - Negotiation...): the sort chosen must stay
+            'remember_sort'  => 1,
             'class_path'     => 'custom/reedcrm/class/calllist.class.php',
             'lib_path'       => 'custom/reedcrm/lib/reedcrm_call_list.lib.php',
         ];
