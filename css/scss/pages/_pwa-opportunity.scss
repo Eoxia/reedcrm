@@ -511,12 +511,24 @@
     }
 }
 
+.pwa-relaunch-form .event-status-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    select {
+        width: auto !important;
+    }
+}
+
 .pwa-relaunch-form .reminder-fields {
     margin-top: 12px;
     padding: 12px;
     border-left: 3px solid #3b82f6;
     background: #f8fafc;
 
+    .reminder-type-row,
     .reminder-date-row,
     .reminder-user-row {
         display: flex;

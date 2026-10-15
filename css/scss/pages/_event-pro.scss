@@ -771,3 +771,10 @@ body > .select2-drop.select2-drop-active {
     }
 }
 
+
+// Status chosen for the event of the eventPro form (desktop panel and mobile App)
+.event-status-row__label {
+    flex-shrink: 0;
+    margin-right: 6px;
+    white-space: nowrap;
+}

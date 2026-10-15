@@ -162,10 +162,15 @@ if (empty($eventProRedirectAfterTicket)) {
     // Action to add commercial relaunch event
     if ($action == 'add_event') {
         $actionComm->socid             = GETPOSTINT('socid');
-        $actionComm->socpeopleassigned = [GETPOSTINT('contactid') => GETPOSTINT('contactid')];
+        if (GETPOSTINT('contactid') > 0) {
+            $actionComm->socpeopleassigned = [GETPOSTINT('contactid') => GETPOSTINT('contactid')];
+        }
         $actionComm->type_code         = GETPOST('actioncode', 'aZ09');
-        $actionComm->percentage        = 100;
-        
+
+        // Done unless another status was chosen: the form mostly logs what has just happened
+        $eventPercentage        = GETPOSTISSET('event_percentage') ? GETPOSTINT('event_percentage') : 100;
+        $actionComm->percentage = array_key_exists($eventPercentage, reedcrm_get_event_statuses()) ? $eventPercentage : 100;
+
         $datep = dol_mktime(GETPOSTINT('event_hour'), GETPOSTINT('event_min'), 0, GETPOSTINT('event_month'), GETPOSTINT('event_day'), GETPOSTINT('event_year'), 'tzuserrel');
         if ($datep > 0) {
             $actionComm->datep = $datep;
@@ -185,55 +190,23 @@ if (empty($eventProRedirectAfterTicket)) {
         $category->fetch(getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG'));
         $category->add_type($actionComm, 'actioncomm');
 
-        if ($result > 0 && !empty(GETPOST('reminder_title'))) {
-            $date_reminder = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
+        // The ticked box is what asks for the reminder: an empty title used to drop it without a word
+        if ($result > 0 && GETPOSTINT('add_reminder') > 0) {
+            $dateReminder = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
 
-            $actionComm->type_code    = 'AC_OTH';
-            $actionComm->percentage   = 0; // Reminder is a future "to do", not the completed event reused above
-
-            $actionComm->datep        = $date_reminder;
-
-            $actionComm->label        = GETPOST('reminder_title');
-            $actionComm->note_private = '';
-            
-            $reminderUserId = GETPOSTINT('reminder_user_id') ?: $user->id;
-            $actionComm->userownerid  = $reminderUserId;
-            $actionComm->userassigned = [$reminderUserId => ['id' => $reminderUserId]];
-
-            $result = $actionComm->create($user);
-
-            // Tag the reminder event with its own category so it can be listed on the dashboard
-            // (dedicated tag, not the commercial relaunch one, to avoid inflating relaunch counts)
-            if ($result > 0) {
-                $reminderCategoryID = reedcrm_get_call_reminder_category_id($db, $user);
-                if ($reminderCategoryID > 0) {
-                    $reminderCategory = new Categorie($db);
-                    $reminderCategory->fetch($reminderCategoryID);
-                    $reminderCategory->add_type($actionComm, 'actioncomm');
-                }
+            $reminderLabel = trim(GETPOST('reminder_title', 'alphanohtml'));
+            if ($reminderLabel === '') {
+                $reminderLabel = $langs->transnoentities('QuickCreationReminderDefaultLabel', $object->title ?? $object->name ?? $object->ref);
             }
 
-            $actionCommReminder = new ActionCommReminder($db);
+            $reminderType = GETPOST('reminder_actioncode', 'aZ09');
+            if (!array_key_exists($reminderType, reedcrm_get_relaunch_type_options())) {
+                $reminderType = 'AC_OTH';
+            }
 
-
-            $offsetvalue = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_OFFSET');
-            $offsetunit  = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT');
-
-            $dateremind = dol_time_plus_duree($date_reminder, -1 * $offsetvalue, $offsetunit);
-
-            $actionCommReminder->dateremind = $dateremind;
-            $actionCommReminder->typeremind = 'browser';
-
-            $actionCommReminder->offsetvalue = $offsetvalue;
-            $actionCommReminder->offsetunit  = $offsetunit;
-
-            $actionCommReminder->fk_actioncomm = $result;
-
-            $actionCommReminder->fk_user = GETPOSTINT('reminder_user_id') ?: $user->id;
-
-            $actionCommReminder->status = $actionCommReminder::STATUS_TODO;
-
-            $result = $actionCommReminder->create($user);
+            // A new event, owned by the user to remind: reusing the event created above kept its type
+            $reminderUserId = GETPOSTINT('reminder_user_id') ?: $user->id;
+            $result         = reedcrm_create_call_reminder($db, $user, $reminderLabel, $dateReminder > 0 ? $dateReminder : dol_now(), $reminderUserId, (int) $actionComm->fk_project, (int) $actionComm->socid, GETPOSTINT('contactid'), $reminderType);
         }
 
         $newOpportunityPercent = GETPOST('new_opportunity_percent');
