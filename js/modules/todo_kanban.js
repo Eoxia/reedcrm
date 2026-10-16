@@ -798,6 +798,60 @@ window.reedcrm.todoKanban.removeAssigned = function (event) {
 };
 
 /**
+ * Whether a card dropped in a column would stay there.
+ *
+ * A relaunch backlog holds cards on their code, no percentage puts a card in it, and a
+ * relaunch only leaves its backlog once done or dropped: the same rule as the receive
+ * callback, shared with the highlight of the columns while a card is dragged.
+ *
+ * @param  {jQuery} $card   Dragged card
+ * @param  {jQuery} $column Column the card would be dropped in
+ * @returns {boolean}       True if the card would stay in the column
+ */
+window.reedcrm.todoKanban.canLand = function ($card, $column) {
+  var minimum = parseInt($column.data('percent-min'), 10);
+  var maximum = parseInt($column.data('percent-max'), 10);
+  var percent = parseInt($card.data('percent'), 10);
+
+  if (isNaN(minimum)) {
+    return false;
+  }
+  if (isNaN(percent) || percent < minimum || percent > maximum) {
+    percent = minimum;
+  }
+
+  var $wouldLand = window.reedcrm.todoKanban.findColumn($card, percent);
+
+  return !!$wouldLand && $wouldLand[0] === $column[0];
+};
+
+/**
+ * Tell why a dropped card went back to where it came from.
+ *
+ * A refused move used to be silent: on a board made of relaunches, the drag & drop looked
+ * broken to the user.
+ *
+ * @param  {jQuery} $column Column the card was dropped in
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.notifyRefusedMove = function ($column) {
+  // A relaunch backlog only takes the relaunches the cron creates; any other refusal is a
+  // relaunch leaving its backlog for a column other than done or not applicable
+  var key     = $column.data('code') ? 'move-refused-backlog-label' : 'move-refused-relaunch-label';
+  var message = String($('.todo-board').data(key) || '');
+
+  if (!message) {
+    return;
+  }
+  // jnotify is loaded by main.inc.php unless it has been disabled
+  if (typeof $.jnotify !== 'function') {
+    alert(message);
+    return;
+  }
+  $.jnotify(message, 'warning', false, { remove: function () {} });
+};
+
+/**
  * Make the columns of the board sortable and save the status a dropped card lands on.
  *
  * @returns {void}
@@ -814,6 +868,19 @@ window.reedcrm.todoKanban.initSortable = function () {
     tolerance: 'pointer',
     cursor: 'grabbing',
     cancel: '.todo-editable-label, .todo-inline-edit, .todo-editable-date, .todo-date-input, .todo-card-progress, .todo-progress-bar, .todo-initial-owner, .todo-owner-dropdown, .todo-owner-search, .todo-assigned-dropdown, .todo-assigned-search, .todo-user-option, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge',
+    // While a card is dragged, the columns that would keep it stand out and the others fade
+    start: function (event, ui) {
+      var $card = ui.item;
+      var $from = $card.closest('.todo-column');
+
+      $('.todo-column').not($from).each(function () {
+        var allowed = window.reedcrm.todoKanban.canLand($card, $(this));
+        $(this).toggleClass('todo-column-drop-allowed', allowed).toggleClass('todo-column-drop-refused', !allowed);
+      });
+    },
+    stop: function () {
+      $('.todo-column').removeClass('todo-column-drop-allowed todo-column-drop-refused');
+    },
     receive: function (event, ui) {
       var $card   = ui.item;
       var $column = $(this).closest('.todo-column');
@@ -827,12 +894,11 @@ window.reedcrm.todoKanban.initSortable = function () {
         percent = minimum;
       }
 
-      // A relaunch backlog holds cards on their code, no percentage puts a card in it, and
-      // a relaunch only leaves its backlog once done or dropped. Any other move would be
-      // undone by the next reload: send the card back where it came from instead.
-      var $wouldLand = window.reedcrm.todoKanban.findColumn($card, percent);
-      if (isNaN(minimum) || !$wouldLand || $wouldLand[0] !== $column[0]) {
+      // A move the next reload would undo (see canLand): send the card back where it came
+      // from, and say why
+      if (!window.reedcrm.todoKanban.canLand($card, $column)) {
         ui.sender.sortable('cancel');
+        window.reedcrm.todoKanban.notifyRefusedMove($column);
         return;
       }
 

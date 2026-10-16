@@ -104,7 +104,9 @@
      data-na-label="<?php echo dol_escape_htmltag($langs->trans('StatusNotApplicable')); ?>"
      data-empty-label="<?php echo dol_escape_htmltag($langs->trans('TodoNoEvent')); ?>"
      data-load-more-label="<?php echo dol_escape_htmltag($langs->trans('TodoLoadMore', '%s')); ?>"
-     data-quick-close-label="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>">
+     data-quick-close-label="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"
+     data-move-refused-relaunch-label="<?php echo dol_escape_htmltag($langs->transnoentitiesnoconv('TodoMoveRefusedRelaunch', $langs->transnoentitiesnoconv('StatusActionDone'), $langs->transnoentitiesnoconv('StatusNotApplicable'))); ?>"
+     data-move-refused-backlog-label="<?php echo dol_escape_htmltag($langs->transnoentitiesnoconv('TodoMoveRefusedBacklog')); ?>">
     <?php foreach ($todoColumns as $columnDefinition) :
         $columnKey       = $columnDefinition['key'];
         $columnCards     = $todoPage[$columnKey] ?? [];
