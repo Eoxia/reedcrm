@@ -657,6 +657,24 @@ class modReedCRM extends DolibarrModules
         $this->rights[$r][1] = $langs->transnoentities('ReadAdminPage', $this->name);
         $this->rights[$r][4] = 'adminpage';
         $this->rights[$r][5] = 'read';
+        $r++;
+
+        /* STEERING DASHBOARDS PERMISSIONS */
+        // The ids are positional: new permissions go after the existing ones, never between them
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadSalesDashboard');
+        $this->rights[$r][4] = 'dashboard';
+        $this->rights[$r][5] = 'sales';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadSalesDashboardOfTeam');
+        $this->rights[$r][4] = 'dashboard';
+        $this->rights[$r][5] = 'sales_all';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('ReadDirectionDashboard');
+        $this->rights[$r][4] = 'dashboard';
+        $this->rights[$r][5] = 'direction';
 
         /* END MODULEBUILDER PERMISSIONS */
 
@@ -1046,6 +1064,56 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'followup\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        /* SECTION STEERING */
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'MenuSectionSteering',
+            'prefix'   => '<span class="reedcrm-menu-section"><i class="fas fa-tachometer-alt pictofixedwidth"></i></span>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'section_steering',
+            'url'      => '',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'dashboard\', \'sales\') || $user->hasRight(\'reedcrm\', \'dashboard\', \'direction\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('SalesDashboard'),
+            'prefix'   => '<i class="fas fa-chart-line pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmsalesdashboard',
+            'url'      => '/reedcrm/view/sales_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'dashboard\', \'sales\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('DirectionDashboard'),
+            'prefix'   => '<i class="fas fa-chess-king pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'reedcrmdirectiondashboard',
+            'url'      => '/reedcrm/view/direction_dashboard.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'dashboard\', \'direction\')',
             'target'   => '',
             'user'     => 0,
         ];

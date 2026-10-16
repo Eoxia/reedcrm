@@ -78,6 +78,11 @@ function reedcrm_admin_prepare_head(): array
     $head[$h][2] = 'pocket';
     $h++;
 
+    $head[$h][0] = dol_buildpath('/reedcrm/admin/sales_goals.php', 1);
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-bullseye pictofixedwidth"></i>' . $langs->trans('SalesGoals') : '<i class="fas fa-bullseye"></i>';
+    $head[$h][2] = 'sales_goals';
+    $h++;
+
     $head[$h][0] = dol_buildpath('/reedcrm/admin/ticket.php', 1);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-ticket-alt pictofixedwidth"></i>' . $langs->trans('Ticket') : '<i class="fas fa-ticket-alt"></i>';
     $head[$h][2] = 'ticket';
