@@ -358,6 +358,11 @@ ImportParametersMissing = Paramètres d'import manquants.
 CategoryCreationError = Erreur lors de la création de la catégorie.
 ProjectsImported = %s projets importés sur %s lignes.
 ProjectsImportErrors = %s lignes n'ont pas pu être importées.
+CSVAssigneesColumn = Facultatif : une colonne des personnes à assigner, choisie au moment de l'import.
+AssigneesColumn = Colonne des personnes assignées
+AssigneesColumnHelp = Chaque personne de cette colonne est ajoutée à l'opportunité comme « Commercial affecté au projet ». Elle est reconnue par son identifiant (id), son login, son email, son nom complet, son prénom seul ou son prénom suivi de l'initiale du nom. Plusieurs personnes se séparent par une virgule, « / », « & » ou « et ».
+ImportAssigneesNotFound = Personnes non reconnues (inconnues ou homonymes), opportunités importées sans elles : %s
+ImportAssignmentErrors = %s affectations n'ont pas pu être enregistrées.
 OpportunitiesImport = Import d'opportunités
 ImportedOpportunityList = Liste des opportunités importés
 

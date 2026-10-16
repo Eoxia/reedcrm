@@ -108,6 +108,24 @@ if ($action == 'import_projects') {
                 }
             }
 
+            // Columns of the file, the user picks the one listing the people to assign (keyed by column number, 1 = first column)
+            $columns                = [];
+            $defaultAssigneesColumn = '';
+            $handle                 = fopen($destPath, 'r');
+            if ($handle) {
+                list(, $headers) = reedcrm_read_import_csv_header($handle);
+                fclose($handle);
+                foreach ($headers as $idx => $headerLabel) {
+                    if ($headerLabel === '') {
+                        continue;
+                    }
+                    $columns[$idx + 1] = $headerLabel;
+                    if ($defaultAssigneesColumn === '' && preg_match('/^assigne|^affecte|qui qualifie/', reedcrm_normalize_import_key($headerLabel))) {
+                        $defaultAssigneesColumn = (string) ($idx + 1);
+                    }
+                }
+            }
+
             $formquestion = [
                 [
                     'type'  => 'hidden',
@@ -119,13 +137,21 @@ if ($action == 'import_projects') {
                     'label'   => $langs->trans('ChooseExistingTag'),
                     'name'    => 'existing_category_ids',
                     'values'  => $existingCats,
-                    'default' => [],
+                    'default' => '',
                     'morecss' => 'minwidth300',
                 ],
                 [
                     'type'  => 'text',
                     'label' => $langs->trans('OrCreateNewTag'),
                     'name'  => 'category_name',
+                ],
+                [
+                    'type'    => 'select',
+                    'label'   => $form->textwithpicto($langs->trans('AssigneesColumn'), $langs->trans('AssigneesColumnHelp')),
+                    'name'    => 'assignees_column',
+                    'values'  => $columns,
+                    'default' => $defaultAssigneesColumn,
+                    'morecss' => 'minwidth300 maxwidth300',
                 ],
             ];
             $formconfirm = $form->formconfirm(
@@ -151,6 +177,7 @@ if ($action == 'confirm_import_projects') {
     $importFile = GETPOST('import_file', 'alpha');
     $existingCategoryIds = GETPOST('existing_category_ids', 'array');
     $categoryName = trim(GETPOST('category_name', 'alphanohtml'));
+    $assigneesColumn = GETPOSTINT('assignees_column');
 
     // Clean existing IDs
     $existingCategoryIds = array_filter(array_map('intval', $existingCategoryIds));
@@ -187,6 +214,7 @@ if ($action == 'confirm_import_projects') {
                         ['type' => 'hidden', 'name' => 'import_file', 'value' => $importFile],
                         ['type' => 'hidden', 'name' => 'category_name', 'value' => $categoryName],
                         ['type' => 'hidden', 'name' => 'confirm_use_existing', 'value' => 1],
+                        ['type' => 'hidden', 'name' => 'assignees_column', 'value' => $assigneesColumn],
                     ];
                     // Re-pass existing category IDs as hidden fields
                     foreach ($existingCategoryIds as $hidCatId) {
@@ -226,15 +254,15 @@ if ($action == 'confirm_import_projects') {
                 $categoryId = $categoryIds[0];
                 $handle = fopen($fullPath, 'r');
                 if ($handle) {
-                    $firstLine = fgets($handle);
-                    $firstLine = preg_replace('/^\x{FEFF}/u', '', $firstLine);
-                    $firstLine = str_replace("\xEF\xBB\xBF", '', $firstLine);
-                    $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
-                    $headers = array_map('trim', str_getcsv($firstLine, $delimiter));
+                    list($delimiter, $headers) = reedcrm_read_import_csv_header($handle);
                     $map = [];
                     foreach ($headers as $idx => $headerLabel) {
-                        $map[strtolower($headerLabel)] = $idx;
+                        $map[reedcrm_normalize_import_key($headerLabel)] = $idx;
                     }
+
+                    // Column number posted by the confirmation form, 0 or less when no column was chosen
+                    $assigneesIdx = ($assigneesColumn > 0 && isset($headers[$assigneesColumn - 1])) ? $assigneesColumn - 1 : null;
+                    $usersIndex   = ($assigneesIdx !== null) ? reedcrm_get_import_users_index() : [];
 
                     $required = ['prenom', 'nom', 'email', 'tel', 'note'];
                     $missing = array_diff($required, array_keys($map));
@@ -246,11 +274,14 @@ if ($action == 'confirm_import_projects') {
                         $total = 0;
                         $created = 0;
                         $errors = 0;
+                        $unresolvedAssignees = [];
+                        $assignmentErrors = 0;
 
                         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
                             if (count($row) == 1 && trim($row[0]) === '') {
                                 continue;
                             }
+                            $row = reedcrm_import_csv_row_to_utf8($row);
                             $total++;
                             $description = dol_htmlentitiesbr(trim($row[$map['note']] ?? ''));
                             $mail = dol_htmlentitiesbr(trim($row[$map['email']] ?? ''));
@@ -276,6 +307,18 @@ if ($action == 'confirm_import_projects') {
                             $resCreate = $proj->create($user);
 
                             if ($resCreate > 0) {
+                                if ($assigneesIdx !== null) {
+                                    list($assigneeIds, $unresolved) = reedcrm_resolve_import_users((string) ($row[$assigneesIdx] ?? ''), $usersIndex);
+                                    foreach ($assigneeIds as $assigneeId) {
+                                        if ($proj->add_contact($assigneeId, 'SALESREPINTERNAL', 'internal') < 0) {
+                                            $assignmentErrors++;
+                                        }
+                                    }
+                                    foreach ($unresolved as $unresolvedValue) {
+                                        $unresolvedAssignees[$unresolvedValue] = $unresolvedValue;
+                                    }
+                                }
+
                                 $resSetCat = $proj->setCategories($categoryIds, Categorie::TYPE_PROJECT);
                                 if ($resSetCat <= 0) {
                                     $errors++;
@@ -296,6 +339,12 @@ if ($action == 'confirm_import_projects') {
                         }
                         if ($errors > 0) {
                             setEventMessages($langs->trans('ProjectsImportErrors', $errors), null, 'warnings');
+                        }
+                        if (!empty($unresolvedAssignees)) {
+                            setEventMessages($langs->transnoentities('ImportAssigneesNotFound', dol_escape_htmltag(implode(', ', $unresolvedAssignees))), null, 'warnings');
+                        }
+                        if ($assignmentErrors > 0) {
+                            setEventMessages($langs->trans('ImportAssignmentErrors', $assignmentErrors), null, 'warnings');
                         }
                     }
                 } else {
@@ -343,7 +392,7 @@ print '</tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('ImportProjectsFromCSV');
 print '</td><td>';
-print $langs->trans('ImportProjectsDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '</span>';
+print $langs->trans('ImportProjectsDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '<br>' . $langs->trans('CSVAssigneesColumn') . '</span>';
 print '</td>';
 print '<td class="center">';
 print '<input type="file" name="import_file" accept=".csv" required class="flat">';
