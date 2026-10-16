@@ -3181,6 +3181,12 @@ class ActionsReedcrm
                             return \'<span style="display:inline-flex; align-items:center; height:24px; padding:0 8px; border-radius:3px; font-size:11.5px; font-weight:normal; background-color:\'+c.bg+\'; color:\'+c.color+\'; box-shadow: 0 1px 1px rgba(0,0,0,0.1);"><i class="\'+c.icon+\'" style="margin-right:5px;"></i>\' + text + \'</span>\';
                         }
 
+                        // Only the refusal reason lists: "Autre" is also an event type, whose lists keep their look
+                        function isRefusalSelect2(el) {
+                            var owner = el.closest ? el.closest("[id^=\'select2-\']") : null;
+                            return !!owner && /refusal|close-reason/.test(owner.id);
+                        }
+
                         // 1. Static viewing (Project & Propal card fields)
                         function styleStaticBadges() {
                             var nodes = document.querySelectorAll("td[class*=\'_extras_opprefusal\'], td[class*=\'_extras_commrefusal\']");
@@ -3201,7 +3207,7 @@ class ActionsReedcrm
                                         if (node.nodeType === 1) {
                                             if (node.classList && node.classList.contains("select2-results__option")) {
                                                 var t = node.textContent.trim();
-                                                if (badgesConfig[t]) {
+                                                if (badgesConfig[t] && isRefusalSelect2(node)) {
                                                     node.innerHTML = wrapBadge(t);
                                                     node.style.padding = "2px 6px";
                                                 }
@@ -3212,7 +3218,7 @@ class ActionsReedcrm
                                                     if (opt.querySelector("span[style]")) return; 
                                                     var t = opt.textContent.trim();
                                                     // Ensure we are inside a refusal dropdown context or the generic option string exactly matches
-                                                    if (badgesConfig[t]) {
+                                                    if (badgesConfig[t] && isRefusalSelect2(opt)) {
                                                         opt.innerHTML = wrapBadge(t);
                                                         opt.style.padding = "2px 6px";
                                                     }
@@ -3220,9 +3226,9 @@ class ActionsReedcrm
                                                 
                                                 var selOpts = node.querySelectorAll(".select2-selection__rendered");
                                                 selOpts.forEach(function(opt) {
-                                                    if (opt.querySelector("span[style]")) return; 
+                                                    if (opt.querySelector("span[style]")) return;
                                                     var t = opt.textContent.trim();
-                                                    if (badgesConfig[t]) {
+                                                    if (badgesConfig[t] && isRefusalSelect2(opt)) {
                                                         opt.innerHTML = wrapBadge(t);
                                                     }
                                                 });
@@ -3230,7 +3236,7 @@ class ActionsReedcrm
                                             
                                             if (node.classList && node.classList.contains("select2-selection__rendered")) {
                                                 var rt = node.textContent.trim();
-                                                if (badgesConfig[rt]) node.innerHTML = wrapBadge(rt);
+                                                if (badgesConfig[rt] && isRefusalSelect2(node)) node.innerHTML = wrapBadge(rt);
                                             }
                                         }
                                     });
@@ -3243,7 +3249,7 @@ class ActionsReedcrm
                                     if (target && target.classList && target.classList.contains("select2-selection__rendered")) {
                                         if (target.querySelector("span[style]")) return;
                                         var txt = target.textContent.trim();
-                                        if (badgesConfig[txt]) {
+                                        if (badgesConfig[txt] && isRefusalSelect2(target)) {
                                             target.innerHTML = wrapBadge(txt);
                                         }
                                     }
