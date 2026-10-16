@@ -69,6 +69,11 @@ ImportParametersMissing = Missing import parameters.
 CategoryCreationError = Unable to create category.
 ProjectsImported = %s projects imported out of %s rows.
 ProjectsImportErrors = %s rows could not be imported.
+CSVAssigneesColumn = Optional: a column listing the people to assign, chosen when importing.
+AssigneesColumn = Assignees column
+AssigneesColumnHelp = Each person of this column is added to the opportunity as "Sales representative assigned to the project". A person is recognized by ID, login, email, full name, first name alone or first name followed by the initial of the last name. Separate several people with a comma, "/", "&" or "and".
+ImportAssigneesNotFound = Unrecognized people (unknown or homonyms), opportunities imported without them: %s
+ImportAssignmentErrors = %s assignments could not be saved.
 NbLines = Number of lines
 
 # Relaunch table headers (Date and Status come from main.lang)

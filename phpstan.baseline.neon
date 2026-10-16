@@ -1723,12 +1723,6 @@ parameters:
 			path: view/reedcrmimport.php
 
 		-
-			message: '#^Parameter \#5 \$formquestion of method Form\:\:formconfirm\(\) expects array\<array\{name\?\: string, value\?\: bool\|float\|string, values\?\: array\<string\>, default\?\: string, label\?\: string, type\: string, size\?\: int\|string, morecss\?\: string, \.\.\.\}\|string\>\|string\|null, array\{array\{type\: ''hidden'', name\: ''import_file'', value\: string\}, array\{type\: ''multiselect'', label\: mixed, name\: ''existing_category…'', values\: array\<int, string\>, default\: array\{\}, morecss\: ''minwidth300''\}, array\{type\: ''text'', label\: mixed, name\: ''category_name''\}\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: view/reedcrmimport.php
-
-		-
 			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:create\(\) expects int\<0, 1\>, true given\.$#'
 			identifier: argument.type
 			count: 1

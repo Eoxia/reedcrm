@@ -518,6 +518,127 @@ function reedcrm_count_csv_lines(string $filePath): ?int
 }
 
 /**
+ * Convert the cells of an imported CSV row to UTF-8, spreadsheets often save CSV files in Windows-1252
+ *
+ * @param  string[] $row CSV row
+ * @return string[]      Same row in UTF-8
+ */
+function reedcrm_import_csv_row_to_utf8(array $row): array
+{
+    foreach ($row as $key => $cell) {
+        if (is_string($cell) && !utf8_check($cell)) {
+            $row[$key] = mb_convert_encoding($cell, 'UTF-8', 'Windows-1252');
+        }
+    }
+
+    return $row;
+}
+
+/**
+ * Read the header line of an imported CSV file
+ *
+ * @param  resource $handle Handle of the CSV file, at its beginning
+ * @return array{0: string, 1: string[]} Delimiter, then the column labels
+ */
+function reedcrm_read_import_csv_header($handle): array
+{
+    $firstLine = str_replace("\xEF\xBB\xBF", '', (string) fgets($handle));
+    $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
+    $headers   = reedcrm_import_csv_row_to_utf8(array_map('trim', str_getcsv($firstLine, $delimiter)));
+
+    return [$delimiter, $headers];
+}
+
+/**
+ * Normalize a CSV header or a user reference so that it matches whatever its case and accents
+ *
+ * @param  string $value Raw value
+ * @return string        Lowercase value without accents nor repeated spaces
+ */
+function reedcrm_normalize_import_key(string $value): string
+{
+    return strtolower(trim(preg_replace('/\s+/', ' ', dol_string_unaccent($value))));
+}
+
+/**
+ * Index the active internal users that can be assigned to an imported opportunity
+ *
+ * ID, login, email and full name identify a user ('strong' keys). First name alone, last name alone and first
+ * name followed by the initial of the last name ('weak' keys) are only used when no strong key matches.
+ *
+ * @return array{strong: array<string, int[]>, weak: array<string, int[]>} Normalized key => user IDs, several IDs for homonyms
+ */
+function reedcrm_get_import_users_index(): array
+{
+    global $db;
+
+    // Superadmins (entity 0) reach every entity, the other users are those of the current entity
+    $sql = 'SELECT u.rowid, u.login, u.email, u.firstname, u.lastname FROM ' . MAIN_DB_PREFIX . 'user as u WHERE (u.entity = 0 OR ';
+    if (isModEnabled('multicompany') && getDolGlobalInt('MULTICOMPANY_TRANSVERSE_MODE')) {
+        $sql .= 'u.rowid IN (SELECT ug.fk_user FROM ' . MAIN_DB_PREFIX . 'usergroup_user as ug WHERE ug.entity IN (' . getEntity('usergroup') . ')))';
+    } else {
+        $sql .= 'u.entity IN (' . getEntity('user') . '))';
+    }
+    $sql .= ' AND u.statut = 1 AND (u.fk_soc IS NULL OR u.fk_soc = 0)';
+
+    $usersIndex = ['strong' => [], 'weak' => []];
+    $resql      = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $firstname = reedcrm_normalize_import_key((string) $obj->firstname);
+            $lastname  = reedcrm_normalize_import_key((string) $obj->lastname);
+            $keys      = [
+                'strong' => [(string) $obj->rowid, reedcrm_normalize_import_key((string) $obj->login), reedcrm_normalize_import_key((string) $obj->email)],
+                'weak'   => [$firstname, $lastname]
+            ];
+            if ($firstname !== '' && $lastname !== '') {
+                array_push($keys['strong'], $firstname . ' ' . $lastname, $lastname . ' ' . $firstname);
+                array_push($keys['weak'], $firstname . ' ' . $lastname[0], $firstname . $lastname[0]);
+            }
+            foreach ($keys as $level => $levelKeys) {
+                foreach (array_unique($levelKeys) as $key) {
+                    if ($key !== '') {
+                        $usersIndex[$level][$key][] = (int) $obj->rowid;
+                    }
+                }
+            }
+        }
+        $db->free($resql);
+    }
+
+    return $usersIndex;
+}
+
+/**
+ * Resolve the users listed in the assignees cell of an imported CSV row
+ *
+ * @param  string $cell       Logins, emails or names, separated by a comma, a semicolon, |, /, &, +, "et" or "and"
+ * @param  array  $usersIndex Index built by reedcrm_get_import_users_index()
+ * @return array{0: int[], 1: string[]} IDs of the users found, then the values matching no user or several users
+ */
+function reedcrm_resolve_import_users(string $cell, array $usersIndex): array
+{
+    $userIds    = [];
+    $unresolved = [];
+    foreach (preg_split('/\s*[|,;\/&+\r\n]\s*|\s+(?:et|and)\s+/i', $cell) as $value) {
+        $value = trim($value);
+        if ($value === '') {
+            continue;
+        }
+
+        $key             = reedcrm_normalize_import_key($value);
+        $matchingUserIds = $usersIndex['strong'][$key] ?? ($usersIndex['weak'][$key] ?? []);
+        if (count($matchingUserIds) == 1) {
+            $userIds[] = $matchingUserIds[0];
+        } else {
+            $unresolved[] = $value;
+        }
+    }
+
+    return [array_values(array_unique($userIds)), $unresolved];
+}
+
+/**
  * Get (and lazily create) the actioncomm category used to tag automatic call reminders.
  *
  * The reminder events created from the ProCard/EventPro checkbox must NOT reuse the commercial
