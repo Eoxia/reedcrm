@@ -1098,6 +1098,8 @@ OpportunityStatsNoComparison = No comparison
 # Todo - automatic relaunches (crons)
 TodoColumnPropalRelaunch = Proposals to relaunch
 TodoColumnInvoiceRelaunch = Invoices to relaunch
+TodoMoveRefusedRelaunch = A relaunch stays in its column until it is handled: drop it in "%s" or "%s".
+TodoMoveRefusedBacklog = This column only takes the relaunches created automatically.
 TodoPropalRelaunchLabel = Relaunch proposal %s
 TodoPropalRelaunchNote = Proposal validated on %s, amount %s, still unanswered.
 TodoInvoiceRelaunchLabel = Relaunch unpaid invoice %s

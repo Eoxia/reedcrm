@@ -350,6 +350,15 @@
     &.todo-column-hidden {
         display: none;
     }
+
+    // While a card is dragged: the columns that would keep it, and those that would send it back
+    &.todo-column-drop-allowed {
+        box-shadow: 0 0 0 2px rgba(99, 172, 201, 0.9);
+    }
+
+    &.todo-column-drop-refused {
+        opacity: 0.4;
+    }
 }
 
 .todo-column-header {
