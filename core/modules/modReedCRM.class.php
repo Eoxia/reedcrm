@@ -1402,10 +1402,14 @@ class modReedCRM extends DolibarrModules
 
             $contact     = new Contact($this->db);
             $category    = new Categorie($this->db);
-            $address     = new Address($this->db);
+            $address     = new ReedcrmAddress($this->db);
             $geolocation = new Geolocation($this->db);
 
             $addresses = $address->fetchAll('', '', 0, 0, ['customsql' => ' status > 0 AND latitude > 0 AND longitude > 0']);
+            // Nothing to migrate is done too: otherwise every init reloads the legacy class
+            if (is_array($addresses) && empty($addresses)) {
+                dolibarr_set_const($this->db, 'REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
+            }
             if (is_array($addresses) && !empty($addresses)) {
                 $categoryId = saturne_create_category($langs->transnoentities('ProjectAddress'), 'contact', 0, '', '', $langs->transnoentities('ProjectAddress'));
                 $category->fetch($categoryId);
