@@ -670,8 +670,6 @@ class modReedCRM extends DolibarrModules
         $this->menu = [];
         $r = 0;
 
-        $menuEnabled = ($conf->browser->layout != 'classic') ? 1 : 0;
-
         // Add here entries to declare new menus
         $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=reedcrm',
@@ -734,22 +732,6 @@ class modReedCRM extends DolibarrModules
             'langs'    => 'reedcrm@reedcrm',
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
-            'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
-            'target'   => '',
-            'user'     => 0,
-        ];
-
-        $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=reedcrm',
-            'type'     => 'left',
-            'titre'    => $langs->transnoentities('QuickCreation'),
-            'prefix'   => '<i class="fas fa-plus-circle pictofixedwidth"></i>',
-            'mainmenu' => 'reedcrm',
-            'leftmenu' => 'quickcreationfrontend',
-            'url'      => '/reedcrm/view/frontend/quickcreation.php',
-            'langs'    => 'reedcrm@reedcrm',
-            'position' => 1000 + $r,
-            'enabled'  => 'isModEnabled(\'reedcrm\') && ' . $menuEnabled,
             'perms'    => '$user->hasRight(\'reedcrm\', \'read\')',
             'target'   => '',
             'user'     => 0,
