@@ -54,7 +54,7 @@ file_put_contents($debugFile, "ACTION: " . $action . "\n", FILE_APPEND);
 
 
 if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcrm', 'call_list', 'read_subordinates') && !$user->hasRight('reedcrm', 'call_list', 'read_all')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
@@ -72,7 +72,7 @@ if ($id > 0) {
 }
 
 if (empty($object->id)) {
-    accessforbidden($langs->trans('RecordNotFound'), 0);
+    accessforbidden($langs->trans('ErrorRecordNotFound'));
     exit;
 }
 
@@ -91,7 +91,7 @@ if ($user->hasRight('reedcrm', 'call_list', 'read_all') || $user->admin) {
 }
 
 if (!$canRead) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 

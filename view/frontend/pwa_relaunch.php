@@ -86,13 +86,13 @@ saturne_check_access($permissiontoread);
 
 // Only opportunities (projects) are exposed in the App for now; the desktop card handles the other types
 if ($fromType !== 'project' || !isModEnabled('project')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
 $object = new Project($db);
 if ($id <= 0 || $object->fetch($id) <= 0) {
-    accessforbidden($langs->trans('RecordNotFound'), 0);
+    accessforbidden($langs->trans('ErrorRecordNotFound'));
     exit;
 }
 $object->fetch_optionals();
@@ -147,7 +147,7 @@ $pwaHeaderCenterHtml .= '</a>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
 if (empty($permissiontoadd)) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
