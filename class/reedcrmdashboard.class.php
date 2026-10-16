@@ -61,6 +61,23 @@ class ReedcrmDashboard
             return ['ticket' => $ticketDashboard->load_dashboard()];
         }
 
+        // The sales and direction dashboards are pages of their own as well
+        if (!empty($moreParams['LoadSalesDashboard'])) {
+            require_once __DIR__ . '/reedcrmsalesdashboard.class.php';
+
+            $salesDashboard = new ReedcrmSalesDashboard($this->db);
+
+            return ['sales' => $salesDashboard->load_dashboard()];
+        }
+
+        if (!empty($moreParams['LoadDirectionDashboard'])) {
+            require_once __DIR__ . '/reedcrmdirectiondashboard.class.php';
+
+            $directionDashboard = new ReedcrmDirectionDashboard($this->db);
+
+            return ['direction' => $directionDashboard->load_dashboard()];
+        }
+
         $confName        = 'REEDCRM_DASHBOARD_CONFIG';
         $dashboardConfig = isset($user->conf->$confName) ? json_decode($user->conf->$confName) : null;
         $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
