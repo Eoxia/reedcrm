@@ -1586,6 +1586,11 @@ class ActionsReedcrm
             $this->resprints .= '<script nonce="' . getNonce() . '" src="' . dol_buildpath('/reedcrm/js/reedcrm_opp_percent.js', 1) . '"></script>';
         }
 
+        // Project creation form: what was typed must survive the creation of a thirdparty from its "+"
+        if (strpos($parameters['context'] ?? '', 'projectcard') !== false && in_array(GETPOST('action', 'aZ09'), ['create', 'add'])) {
+            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . dol_buildpath('/reedcrm/js/reedcrm_project_create_thirdparty.js', 1) . '"></script>';
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
