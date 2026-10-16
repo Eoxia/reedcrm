@@ -112,9 +112,9 @@ $nbResults = count($latestProjects);
 // --- SEARCH BAR HTML FOR HEADER ---
 $searchHtml = '
   <form method="GET" action="' . dol_escape_htmltag($_SERVER['PHP_SELF']) . '" style="display: flex; gap: 6px; justify-content: center; margin-left: 10px; flex: 1; max-width: 400px;">
-    <div style="position: relative; flex: 1; min-width: 40px;">
-      <i class="fas fa-search" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85em;"></i>
-      <input type="text" name="s" value="' . dol_escape_htmltag($searchStr) . '" style="width: 100%; padding: 6px 10px 6px 28px; border: 1px solid #cbd5e0; border-radius: 20px; font-size: 14px; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); transition: border-color 0.2s;">
+    <div class="pwa-projects-search__field">
+      <i class="fas fa-search pwa-projects-search__icon"></i>
+      <input type="text" name="s" class="pwa-projects-search__input" value="' . dol_escape_htmltag($searchStr) . '">
     </div>
     <button type="submit" style="background: #3b82f6; color: white; border: none; border-radius: 20px; padding: 0 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(59,130,246,0.3);"><i class="fas fa-arrow-right"></i></button>';
 if (!empty($searchStr)) {
@@ -129,7 +129,7 @@ $paginationHtml = '';
 $totalPages = ceil($totalProjects / $limit);
 if ($totalPages > 1) {
     $paginationHtml .= '<div class="gmail-pagination" style="display: flex; align-items: center; gap: 4px; font-size: 13px; color: #475569; font-weight: 500; margin-left: 10px; white-space: nowrap;">';
-    $paginationHtml .= '<span>' . $startItem . '-' . $endItem . ' sur ' . $totalProjects . '</span>';
+    $paginationHtml .= '<span class="pwa-projects-pagination__count">' . $startItem . '-' . $endItem . ' sur ' . $totalProjects . '</span>';
     
     // Prev Button
     if ($page > 0) {
