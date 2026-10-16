@@ -53,7 +53,7 @@ saturne_load_langs(['categories']);
 
 // Get map filters parameters
 $fromId        = GETPOST('from_id');
-$objectType    = GETPOST('from_type', 'alpha');
+$objectType    = GETPOST('from_type', 'alpha') ?: 'project'; // the menu and the project tab always pass it, a cut link must not end in a fatal error
 $filterId      = GETPOST('filter_id');
 $filterCountry = GETPOST('filter_country');
 $filterRegion  = GETPOST('filter_region');
@@ -67,7 +67,13 @@ $source            = GETPOSTISSET('source') ? GETPOST('source') : '';
 
 // Initialize technical object
 $objectInfos  = saturne_get_objects_metadata($objectType);
-$className    = $objectInfos['class_name'];
+$className    = $objectInfos['class_name'] ?? '';
+if (!empty($className) && !class_exists($className) && !empty($objectInfos['class_path'])) {
+    dol_include_once('/' . ltrim($objectInfos['class_path'], '/'));
+}
+if (empty($className) || !class_exists($className)) {
+    accessforbidden($langs->trans('ErrorBadParameters'));
+}
 $objectLinked = new $className($db);
 $geolocation  = new Geolocation($db);
 $project      = new Project($db);
