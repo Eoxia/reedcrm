@@ -92,6 +92,22 @@ window.reedcrm.quickcreation.event = function() {
 
   // Photo read by the AI (wand of the media block)
   $(document).on('saturne:media-analysed', window.reedcrm.quickcreation.fillFromPhotoAnalysis);
+
+  // Drop-down of the tags and sales representatives fitted to its field on a phone
+  $(document).on('select2:open', '.category-select-container select', window.reedcrm.quickcreation.fitSelectDropdown);
+};
+
+/**
+ * Fit the open drop-down to its field: on a phone the theme sizes every widthcentpercentminusxx span,
+ * the drop-down included, which then opened narrower than its field and off to the left
+ *
+ * @since   23.4.0
+ * @version 23.4.0
+ *
+ * @returns {void}
+ */
+window.reedcrm.quickcreation.fitSelectDropdown = function() {
+  $('.select2-container--open .select2-dropdown').removeClass('widthcentpercentminusxx');
 };
 
 /**
