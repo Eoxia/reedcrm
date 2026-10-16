@@ -194,6 +194,24 @@ function reedcrm_sales_team_get_user_ids(DoliDB $db): array
 }
 
 /**
+ * Midnight GMT of the calendar day a timestamp falls on, in the server time zone.
+ *
+ * num_open_day() and num_public_holiday() count whole days between GMT dates: two midnights of the server time zone
+ * are not a multiple of 86400 s apart across a daylight saving change (October, March), and the core then returns an
+ * error string instead of a number. A server midnight is also the day before in GMT, where the public holidays are
+ * looked up.
+ *
+ * @param  int $timestamp Timestamp of any hour of the day
+ * @return int            Midnight GMT of the same calendar day
+ */
+function reedcrm_sales_gmt_day(int $timestamp): int
+{
+    $date = dol_getdate($timestamp);
+
+    return (int) dol_mktime(0, 0, 0, $date['mon'], $date['mday'], $date['year'], 'gmt');
+}
+
+/**
  * Count the working days between two dates, both included.
  *
  * Weekends and the public holidays of the company country are left out, so a goal set per day is not asked for on
@@ -207,8 +225,8 @@ function reedcrm_sales_count_working_days(int $start, int $end): int
 {
     require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 
-    $start = dol_get_first_hour($start);
-    $end   = dol_get_first_hour($end);
+    $start = reedcrm_sales_gmt_day($start);
+    $end   = reedcrm_sales_gmt_day($end);
     if ($end < $start) {
         return 0;
     }
@@ -228,7 +246,7 @@ function reedcrm_sales_is_working_day(int $day): bool
 {
     require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 
-    $day = dol_get_first_hour($day);
+    $day = reedcrm_sales_gmt_day($day);
 
     // The public holidays are cached by Dolibarr after the first call, checking a month day by day stays cheap
     return num_public_holiday($day, $day, '', 1) == 0;
