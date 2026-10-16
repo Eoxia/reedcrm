@@ -307,31 +307,31 @@ parameters:
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type array of property Address\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			message: '#^PHPDoc type array of property ReedcrmAddress\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int of property Address\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			message: '#^PHPDoc type int of property ReedcrmAddress\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int of property Address\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			message: '#^PHPDoc type int of property ReedcrmAddress\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int\|string of property Address\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			message: '#^PHPDoc type int\|string of property ReedcrmAddress\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int\|string of property Address\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			message: '#^PHPDoc type int\|string of property ReedcrmAddress\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
