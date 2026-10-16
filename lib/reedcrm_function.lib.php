@@ -567,9 +567,10 @@ function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
  * @param  int    $projectId Linked project id (0 = none)
  * @param  int    $socId     Linked thirdparty id (0 = none)
  * @param  int    $contactId Linked contact id (0 = none)
+ * @param  string $typeCode  Type of the reminder event, one of reedcrm_get_relaunch_types()
  * @return int               Id of the reminder event (> 0), or -1 on error
  */
-function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int $date, int $userId, int $projectId = 0, int $socId = 0, int $contactId = 0): int
+function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int $date, int $userId, int $projectId = 0, int $socId = 0, int $contactId = 0, string $typeCode = 'AC_OTH'): int
 {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
@@ -579,7 +580,7 @@ function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int
     $db->begin();
 
     $actionComm               = new ActionComm($db);
-    $actionComm->type_code    = 'AC_OTH';
+    $actionComm->type_code    = $typeCode;
     $actionComm->percentage   = 0; // A reminder is a future "to do"
     $actionComm->datep        = $date;
     $actionComm->label        = $label;
@@ -705,6 +706,39 @@ function reedcrm_get_relaunch_types(): array
         'email' => ['picto' => 'envelope',     'actioncode' => 'AC_EMAIL'],
         'rdv'   => ['picto' => 'calendar',     'actioncode' => 'AC_RDV'],
         'other' => ['picto' => 'comment-dots', 'actioncode' => 'AC_OTH'],
+    ];
+}
+
+/**
+ * Relaunch types as select options, the type code as key and its translated label as value.
+ *
+ * @return array<string, string> Translated labels indexed by type code (AC_TEL, AC_EMAIL, ...)
+ */
+function reedcrm_get_relaunch_type_options(): array
+{
+    global $langs;
+
+    $langs->load('commercial');
+
+    $options = [];
+    foreach (reedcrm_get_relaunch_types() as $type) {
+        $options[$type['actioncode']] = $langs->trans('Action' . $type['actioncode']);
+    }
+
+    return $options;
+}
+
+/**
+ * Statuses offered when an event is created, the event percentage as key and its label key as value.
+ *
+ * @return array<int, string> Translation keys indexed by percentage
+ */
+function reedcrm_get_event_statuses(): array
+{
+    return [
+        0   => 'ActionsToDoShort',
+        50  => 'ActionRunningShort',
+        100 => 'ActionDoneShort',
     ];
 }
 
