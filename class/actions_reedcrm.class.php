@@ -424,6 +424,21 @@ class ActionsReedcrm
             }
         }
 
+        // Deleting projects, from their card or in mass from the list. Dolibarr announces that their tasks
+        // and time spent go with them, yet refuses, without a message, to delete a task holding time spent:
+        // the commercial follow-up task ReedCRM creates and logs time on blocked every project deletion
+        global $user;
+        $deletedProjectIds = [];
+        if (strpos($parameters['context'], 'projectcard') !== false && $action == 'confirm_delete' && GETPOST('confirm', 'alpha') == 'yes' && is_object($object)) {
+            $deletedProjectIds = [(int) $object->id];
+        } elseif (strpos($parameters['context'], 'projectlist') !== false && (GETPOST('massaction', 'alpha') == 'delete' || ($action == 'delete' && GETPOST('confirm', 'alpha') == 'yes'))) {
+            $deletedProjectIds = GETPOST('toselect', 'array');
+        }
+        if (!empty($deletedProjectIds) && $user->hasRight('projet', 'supprimer')) {
+            require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
+            reedcrm_delete_projects_time_spent($this->db, $deletedProjectIds);
+        }
+
         // Auto-log time when a ticket message is sent and the checkbox is checked
         if (strpos($parameters['context'], 'ticketcard') !== false && $action == 'add_message') {
             if (GETPOSTISSET('reedcrm_log_time') && GETPOSTINT('reedcrm_log_time') == 1) {

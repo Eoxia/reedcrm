@@ -861,3 +861,35 @@ function reedcrm_quickcreation_media_block(string $subDir): string
 
     return saturne_render_media_block('project', $subDir, 'quickcreation_', '', ['show_photo' => true, 'show_audio' => true, 'show_ai' => $showAi]);
 }
+
+/**
+ * Delete the time spent on the tasks of projects about to be deleted, as Dolibarr announces it will.
+ *
+ * Task::delete() refuses a task holding time spent, so the deletion of its project fails without a
+ * message. The time already invoiced is kept: those projects still cannot be deleted.
+ *
+ * @param  DoliDB            $db         Database handler
+ * @param  array<int|string> $projectIds Ids of the projects about to be deleted
+ * @return int                           Number of time spent lines deleted, -1 on error
+ */
+function reedcrm_delete_projects_time_spent(DoliDB $db, array $projectIds): int
+{
+    $projectIds = array_filter(array_map('intval', $projectIds));
+    if (empty($projectIds)) {
+        return 0;
+    }
+
+    $sql  = 'DELETE FROM ' . MAIN_DB_PREFIX . "element_time WHERE elementtype = 'task'";
+    $sql .= ' AND (invoice_id IS NULL OR invoice_id = 0)';
+    $sql .= ' AND fk_element IN (SELECT pt.rowid FROM ' . MAIN_DB_PREFIX . 'projet_task AS pt';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'projet AS p ON p.rowid = pt.fk_projet';
+    $sql .= ' WHERE p.rowid IN (' . $db->sanitize(implode(',', $projectIds)) . ') AND p.entity IN (' . getEntity('project') . '))';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ' ' . $db->lasterror(), LOG_ERR);
+        return -1;
+    }
+
+    return $db->affected_rows($resql);
+}
