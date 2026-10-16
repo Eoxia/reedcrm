@@ -36,7 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 require_once __DIR__ . '/../class/calllist.class.php';
 require_once __DIR__ . '/../class/calllistline.class.php';
 require_once __DIR__ . '/../lib/reedcrm_call_list.lib.php';
-require_once __DIR__ . '/../../saturne/lib/documents.lib.php';
+dol_include_once('/saturne/lib/documents.lib.php');
 
 global $conf, $db, $hookmanager, $langs, $user;
 

@@ -31,7 +31,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 }
 
 // Load Saturne librairies
-require_once __DIR__ . '/../../../saturne/lib/object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
 
 // Load Dolibarr librairies
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';

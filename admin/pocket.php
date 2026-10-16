@@ -304,7 +304,7 @@ $enabledObjectTypes         = reedcrm_pocket_get_enabled_linked_object_types();
 $linkedObjectUsage          = reedcrm_pocket_get_linked_object_usage();
 $linkedObjectExtraFieldName = REEDCRM_POCKET_LINK_ELEMENT_TYPE;
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/linked_object_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/linked_object_view.tpl.php');
 
 // Page end
 print dol_get_fiche_end();
