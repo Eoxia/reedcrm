@@ -1565,6 +1565,12 @@ class ActionsReedcrm
             $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
         }
 
+        // Forms of the project card where the opportunity status is chosen (add and update when they
+        // display the form again after an error): the probability must follow it
+        if (strpos($parameters['context'] ?? '', 'projectcard') !== false && in_array(GETPOST('action', 'aZ09'), ['create', 'add', 'edit', 'update', 'edit_opp_status'])) {
+            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . dol_buildpath('/reedcrm/js/reedcrm_opp_percent.js', 1) . '"></script>';
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
