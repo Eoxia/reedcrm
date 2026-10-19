@@ -236,8 +236,13 @@ function reedcrm_field_photo(array $parameters, CommonObject $object): string
     $projectDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($object->ref) . '/';
 
     // A project has no favorite media : 'ref' names no file of its directory, and an empty field name
-    // would be read as a property for each file found. No placeholder either, most rows have no photo
-    return saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 30, 30, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, 'ref', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpe?g|gif|webp)$', 'hideNoPhoto' => 1]);
+    // would be read as a property for each file found. No placeholder either, most rows have no photo.
+    // 66px is the height of the Coordonnées block of the same row
+    $out  = '<div class="reedcrm-list-photo">';
+    $out .= saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 66, 66, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, 'ref', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpe?g|gif|webp)$', 'hideNoPhoto' => 1]);
+    $out .= '</div>';
+
+    return $out;
 }
 
 /**
