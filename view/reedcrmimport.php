@@ -109,9 +109,11 @@ if ($action == 'import_projects') {
             }
 
             // Columns of the file, the user picks the one listing the people to assign (keyed by column number, 1 = first column)
-            $columns                = [];
-            $defaultAssigneesColumn = '';
-            $handle                 = fopen($destPath, 'r');
+            $columns                    = [];
+            $defaultAssigneesColumn     = '';
+            $defaultReminderLabelColumn = '';
+            $defaultReminderDateColumn  = '';
+            $handle                     = fopen($destPath, 'r');
             if ($handle) {
                 list(, $headers) = reedcrm_read_import_csv_header($handle);
                 fclose($handle);
@@ -120,10 +122,23 @@ if ($action == 'import_projects') {
                         continue;
                     }
                     $columns[$idx + 1] = $headerLabel;
-                    if ($defaultAssigneesColumn === '' && preg_match('/^assigne|^affecte|qui qualifie/', reedcrm_normalize_import_key($headerLabel))) {
+                    $headerKey         = reedcrm_normalize_import_key($headerLabel);
+                    if ($defaultAssigneesColumn === '' && preg_match('/^assigne|^affecte|qui qualifie/', $headerKey)) {
                         $defaultAssigneesColumn = (string) ($idx + 1);
                     }
+                    if (preg_match('/rappel|relance|evenement|event|action a realiser/', $headerKey)) {
+                        if (strpos($headerKey, 'date') !== false) {
+                            $defaultReminderDateColumn = $defaultReminderDateColumn ?: (string) ($idx + 1);
+                        } else {
+                            $defaultReminderLabelColumn = $defaultReminderLabelColumn ?: (string) ($idx + 1);
+                        }
+                    }
                 }
+            }
+            // A reminder needs both its text and its date, a file offering only one of them gets none preselected
+            if ($defaultReminderLabelColumn === '' || $defaultReminderDateColumn === '') {
+                $defaultReminderLabelColumn = '';
+                $defaultReminderDateColumn  = '';
             }
 
             $formquestion = [
@@ -153,6 +168,22 @@ if ($action == 'import_projects') {
                     'default' => $defaultAssigneesColumn,
                     'morecss' => 'minwidth300 maxwidth300',
                 ],
+                [
+                    'type'    => 'select',
+                    'label'   => $form->textwithpicto($langs->trans('ReminderLabelColumn'), $langs->trans('ReminderLabelColumnHelp')),
+                    'name'    => 'reminder_label_column',
+                    'values'  => $columns,
+                    'default' => $defaultReminderLabelColumn,
+                    'morecss' => 'minwidth300 maxwidth300',
+                ],
+                [
+                    'type'    => 'select',
+                    'label'   => $form->textwithpicto($langs->trans('ReminderDateColumn'), $langs->trans('ReminderDateColumnHelp')),
+                    'name'    => 'reminder_date_column',
+                    'values'  => $columns,
+                    'default' => $defaultReminderDateColumn,
+                    'morecss' => 'minwidth300 maxwidth300',
+                ],
             ];
             $formconfirm = $form->formconfirm(
                 $_SERVER['PHP_SELF'],
@@ -178,12 +209,18 @@ if ($action == 'confirm_import_projects') {
     $existingCategoryIds = GETPOST('existing_category_ids', 'array');
     $categoryName = trim(GETPOST('category_name', 'alphanohtml'));
     $assigneesColumn = GETPOSTINT('assignees_column');
+    $reminderLabelColumn = GETPOSTINT('reminder_label_column');
+    $reminderDateColumn = GETPOSTINT('reminder_date_column');
 
     // Clean existing IDs
     $existingCategoryIds = array_filter(array_map('intval', $existingCategoryIds));
 
     if (empty($importFile) || (empty($existingCategoryIds) && empty($categoryName))) {
         setEventMessages($langs->trans('ImportParametersMissing'), null, 'errors');
+        $action = 'view';
+    } elseif (($reminderLabelColumn > 0) !== ($reminderDateColumn > 0)) {
+        // Stopped before importing anything: importing the file again would duplicate its opportunities
+        setEventMessages($langs->trans('ImportReminderColumnsIncomplete'), null, 'errors');
         $action = 'view';
     } else {
         $fullPath = $uploadDir . '/' . $importFile;
@@ -215,6 +252,8 @@ if ($action == 'confirm_import_projects') {
                         ['type' => 'hidden', 'name' => 'category_name', 'value' => $categoryName],
                         ['type' => 'hidden', 'name' => 'confirm_use_existing', 'value' => 1],
                         ['type' => 'hidden', 'name' => 'assignees_column', 'value' => $assigneesColumn],
+                        ['type' => 'hidden', 'name' => 'reminder_label_column', 'value' => $reminderLabelColumn],
+                        ['type' => 'hidden', 'name' => 'reminder_date_column', 'value' => $reminderDateColumn],
                     ];
                     // Re-pass existing category IDs as hidden fields
                     foreach ($existingCategoryIds as $hidCatId) {
@@ -264,6 +303,11 @@ if ($action == 'confirm_import_projects') {
                     $assigneesIdx = ($assigneesColumn > 0 && isset($headers[$assigneesColumn - 1])) ? $assigneesColumn - 1 : null;
                     $usersIndex   = ($assigneesIdx !== null) ? reedcrm_get_import_users_index() : [];
 
+                    // Reminders need both columns, checked before the import started
+                    $hasReminders     = ($reminderLabelColumn > 0 && isset($headers[$reminderLabelColumn - 1]) && $reminderDateColumn > 0 && isset($headers[$reminderDateColumn - 1]));
+                    $reminderLabelIdx = $hasReminders ? $reminderLabelColumn - 1 : null;
+                    $reminderDateIdx  = $hasReminders ? $reminderDateColumn - 1 : null;
+
                     $required = ['prenom', 'nom', 'email', 'tel', 'note'];
                     $missing = array_diff($required, array_keys($map));
                     if (!empty($missing)) {
@@ -276,6 +320,10 @@ if ($action == 'confirm_import_projects') {
                         $errors = 0;
                         $unresolvedAssignees = [];
                         $assignmentErrors = 0;
+                        $remindersCreated = 0;
+                        $remindersInvalid = 0;
+                        $remindersPast = 0;
+                        $reminderErrors = 0;
 
                         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
                             if (count($row) == 1 && trim($row[0]) === '') {
@@ -307,15 +355,42 @@ if ($action == 'confirm_import_projects') {
                             $resCreate = $proj->create($user);
 
                             if ($resCreate > 0) {
+                                $assigneeIds = [];
                                 if ($assigneesIdx !== null) {
-                                    list($assigneeIds, $unresolved) = reedcrm_resolve_import_users((string) ($row[$assigneesIdx] ?? ''), $usersIndex);
-                                    foreach ($assigneeIds as $assigneeId) {
-                                        if ($proj->add_contact($assigneeId, 'SALESREPINTERNAL', 'internal') < 0) {
+                                    list($resolvedIds, $unresolved) = reedcrm_resolve_import_users((string) ($row[$assigneesIdx] ?? ''), $usersIndex);
+                                    foreach ($resolvedIds as $resolvedId) {
+                                        if ($proj->add_contact($resolvedId, 'SALESREPINTERNAL', 'internal') < 0) {
                                             $assignmentErrors++;
+                                        } else {
+                                            $assigneeIds[] = $resolvedId;
                                         }
                                     }
                                     foreach ($unresolved as $unresolvedValue) {
                                         $unresolvedAssignees[$unresolvedValue] = $unresolvedValue;
+                                    }
+                                }
+
+                                if ($hasReminders) {
+                                    $reminderLabel     = dol_string_nohtmltag(trim((string) ($row[$reminderLabelIdx] ?? '')));
+                                    $reminderDateValue = trim((string) ($row[$reminderDateIdx] ?? ''));
+                                    if ($reminderLabel !== '' || $reminderDateValue !== '') {
+                                        $reminderDate = reedcrm_parse_import_date($reminderDateValue);
+                                        if ($reminderLabel === '' || $reminderDate <= 0) {
+                                            $remindersInvalid++;
+                                        } elseif ($reminderDate < dol_now()) {
+                                            // A past reminder would only pop its browser notification at once, for every line of the file
+                                            $remindersPast++;
+                                        } else {
+                                            // The people assigned to the opportunity are the ones to remind, the importer when nobody is
+                                            $reminderUserIds = !empty($assigneeIds) ? $assigneeIds : [(int) $user->id];
+                                            $reminderOwnerId = (int) array_shift($reminderUserIds);
+                                            $reminderId      = reedcrm_create_call_reminder($db, $user, dol_substr($reminderLabel, 0, 255), $reminderDate, $reminderOwnerId, (int) $proj->id, max(0, (int) $proj->socid), 0, 'AC_OTH', $reminderUserIds);
+                                            if ($reminderId > 0) {
+                                                $remindersCreated++;
+                                            } else {
+                                                $reminderErrors++;
+                                            }
+                                        }
                                     }
                                 }
 
@@ -345,6 +420,18 @@ if ($action == 'confirm_import_projects') {
                         }
                         if ($assignmentErrors > 0) {
                             setEventMessages($langs->trans('ImportAssignmentErrors', $assignmentErrors), null, 'warnings');
+                        }
+                        if ($remindersCreated > 0) {
+                            setEventMessages($langs->trans('ImportRemindersCreated', $remindersCreated), null, 'mesgs');
+                        }
+                        if ($remindersInvalid > 0) {
+                            setEventMessages($langs->trans('ImportRemindersInvalid', $remindersInvalid), null, 'warnings');
+                        }
+                        if ($remindersPast > 0) {
+                            setEventMessages($langs->trans('ImportRemindersPast', $remindersPast), null, 'warnings');
+                        }
+                        if ($reminderErrors > 0) {
+                            setEventMessages($langs->trans('ImportReminderErrors', $reminderErrors), null, 'warnings');
                         }
                     }
                 } else {
@@ -392,7 +479,7 @@ print '</tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('ImportProjectsFromCSV');
 print '</td><td>';
-print $langs->trans('ImportProjectsDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '<br>' . $langs->trans('CSVAssigneesColumn') . '</span>';
+print $langs->trans('ImportProjectsDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '<br>' . $langs->trans('CSVAssigneesColumn') . '<br>' . $langs->trans('CSVReminderColumns') . '</span>';
 print '</td>';
 print '<td class="center">';
 print '<input type="file" name="import_file" accept=".csv" required class="flat">';

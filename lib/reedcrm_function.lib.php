@@ -639,6 +639,38 @@ function reedcrm_resolve_import_users(string $cell, array $usersIndex): array
 }
 
 /**
+ * Read the date of an imported CSV cell, as a spreadsheet writes it
+ *
+ * Day first (25/10/2026, 25-10-26, 25.10.2026) or ISO (2026-10-25), then an optional time (14:30, 14h30, 14h).
+ * A date without time is set at 9:00, in the timezone of the user importing the file.
+ *
+ * @param  string $value Raw cell
+ * @return int           Timestamp, 0 when the cell holds no valid date
+ */
+function reedcrm_parse_import_date(string $value): int
+{
+    $value = trim($value);
+    $time  = '(?:[ T]+(\d{1,2})(?:[:hH](\d{2})?)?(?::(\d{2}))?)?';
+    if (preg_match('/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4}|\d{2})' . $time . '$/', $value, $matches)) {
+        list(, $day, $month, $year) = $matches;
+    } elseif (preg_match('/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})' . $time . '$/', $value, $matches)) {
+        list(, $year, $month, $day) = $matches;
+    } else {
+        return 0;
+    }
+
+    $year   = (int) $year < 100 ? 2000 + (int) $year : (int) $year;
+    $hour   = (isset($matches[4]) && $matches[4] !== '') ? (int) $matches[4] : 9;
+    $minute = (int) ($matches[5] ?? 0);
+    $second = (int) ($matches[6] ?? 0);
+    if (!checkdate((int) $month, (int) $day, $year) || $hour > 23 || $minute > 59 || $second > 59) {
+        return 0;
+    }
+
+    return (int) dol_mktime($hour, $minute, $second, (int) $month, (int) $day, $year, 'tzuserrel');
+}
+
+/**
  * Get (and lazily create) the actioncomm category used to tag automatic call reminders.
  *
  * The reminder events created from the ProCard/EventPro checkbox must NOT reuse the commercial
@@ -689,9 +721,10 @@ function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
  * @param  int    $socId     Linked thirdparty id (0 = none)
  * @param  int    $contactId Linked contact id (0 = none)
  * @param  string $typeCode  Type of the reminder event, one of reedcrm_get_relaunch_types()
+ * @param  int[]  $otherUserIds Other users to remind, assigned to the same event and notified too
  * @return int               Id of the reminder event (> 0), or -1 on error
  */
-function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int $date, int $userId, int $projectId = 0, int $socId = 0, int $contactId = 0, string $typeCode = 'AC_OTH'): int
+function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int $date, int $userId, int $projectId = 0, int $socId = 0, int $contactId = 0, string $typeCode = 'AC_OTH', array $otherUserIds = []): int
 {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
@@ -708,6 +741,13 @@ function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int
     $actionComm->fk_project   = $projectId;
     $actionComm->socid        = $socId;
     $actionComm->userownerid  = $userId; // create() assigns the event to its owner
+    // A single event for every user to remind: whoever calls back marks it done for all of them
+    $remindedUserIds = array_values(array_unique(array_merge([$userId], array_map('intval', $otherUserIds))));
+    if (count($remindedUserIds) > 1) {
+        foreach ($remindedUserIds as $remindedUserId) {
+            $actionComm->userassigned[$remindedUserId] = ['id' => $remindedUserId, 'transparency' => 0];
+        }
+    }
     if ($contactId > 0) {
         $actionComm->socpeopleassigned = [$contactId => $contactId];
     }
@@ -730,19 +770,21 @@ function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int
     $offsetValue = getDolGlobalInt('REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 30);
     $offsetUnit  = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT', 'i');
 
-    $actionCommReminder                = new ActionCommReminder($db);
-    $actionCommReminder->dateremind    = dol_time_plus_duree($date, -1 * $offsetValue, $offsetUnit);
-    $actionCommReminder->typeremind    = 'browser';
-    $actionCommReminder->offsetvalue   = $offsetValue;
-    $actionCommReminder->offsetunit    = $offsetUnit;
-    $actionCommReminder->fk_actioncomm = $actionCommID;
-    $actionCommReminder->fk_user       = $userId;
-    $actionCommReminder->status        = ActionCommReminder::STATUS_TODO;
+    foreach ($remindedUserIds as $remindedUserId) {
+        $actionCommReminder                = new ActionCommReminder($db);
+        $actionCommReminder->dateremind    = dol_time_plus_duree($date, -1 * $offsetValue, $offsetUnit);
+        $actionCommReminder->typeremind    = 'browser';
+        $actionCommReminder->offsetvalue   = $offsetValue;
+        $actionCommReminder->offsetunit    = $offsetUnit;
+        $actionCommReminder->fk_actioncomm = $actionCommID;
+        $actionCommReminder->fk_user       = $remindedUserId;
+        $actionCommReminder->status        = ActionCommReminder::STATUS_TODO;
 
-    if ($actionCommReminder->create($user) <= 0) {
-        dol_syslog(__FUNCTION__ . ' ' . $actionCommReminder->error . ' ' . implode(', ', $actionCommReminder->errors), LOG_ERR);
-        $db->rollback();
-        return -1;
+        if ($actionCommReminder->create($user) <= 0) {
+            dol_syslog(__FUNCTION__ . ' ' . $actionCommReminder->error . ' ' . implode(', ', $actionCommReminder->errors), LOG_ERR);
+            $db->rollback();
+            return -1;
+        }
     }
 
     $db->commit();
