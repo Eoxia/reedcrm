@@ -1,3 +1,22 @@
+// Photo column of the opportunity list: same size and corners as the Coordonnées block of the row.
+// The thumb is rendered inline by Saturne, it sits on the text baseline and leaves a gap under it
+.reedcrm-list-photo {
+    display: flex;
+    justify-content: center;
+
+    .inline-block,
+    a,
+    img {
+        display: block;
+    }
+
+    img.photo {
+        width: 66px;
+        height: 66px;
+        border-radius: 4px;
+    }
+}
+
 // Quick-access actions in the project ref cell (call / email / preview)
 .reedcrm-ref-cell {
     display: flex;
