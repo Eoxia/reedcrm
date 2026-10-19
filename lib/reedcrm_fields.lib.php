@@ -235,7 +235,39 @@ function reedcrm_field_photo(array $parameters, CommonObject $object): string
 
     $projectDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($object->ref) . '/';
 
-    return saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 30, 30, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, '', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpg|gif)$']);
+    // A project has no favorite media : 'ref' names no file of its directory, and an empty field name
+    // would be read as a property for each file found. No placeholder either, most rows have no photo
+    return saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 30, 30, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, 'ref', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpe?g|gif|webp)$', 'hideNoPhoto' => 1]);
+}
+
+/**
+ * Render the vocal field: a play button on the last voice note of the project.
+ *
+ * @param  array        $parameters Hook parameters (key, context, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_vocal(array $parameters, CommonObject $object): string
+{
+    global $conf;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+
+    $projectRef = dol_sanitizeFileName($object->ref);
+    $audioFiles = dol_dir_list($conf->project->multidir_output[$conf->entity] . '/' . $projectRef, 'files', 0, '\.(mp3|ogg|wav|m4a|aac|webm|opus)$', null, 'date', SORT_DESC);
+
+    // Never an empty string: the list would fall back on its generic rendering of a field that does not exist
+    $out = '<div class="reedcrm-vocal-cell">';
+    if (!empty($audioFiles)) {
+        $lastAudio = $audioFiles[0];
+        $fileUrl   = DOL_URL_ROOT . '/document.php?modulepart=projet&file=' . urlencode($projectRef . '/' . $lastAudio['name']);
+        $out .= '<div class="reedcrm-vocal-player reedcrm-vocal-player-purple" data-audio-url="' . dol_escape_htmltag($fileUrl) . '" title="' . dol_escape_htmltag($lastAudio['name']) . '">';
+        $out .= '<i class="fas fa-play"></i><span class="reedcrm-vocal-time"></span>';
+        $out .= '</div>';
+    }
+    $out .= '</div>';
+
+    return $out;
 }
 /**
  * Render the status field as a colored badge (pastille).
