@@ -423,6 +423,9 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
     // Proposal or invoice a relaunch event was raised on
     $originInfos = reedcrmTodoGetOriginInfos($db, $events);
 
+    // Budget, probability and relaunches of the projects the events are linked to
+    $projectInfos = reedcrmTodoGetProjectInfos($db, $events);
+
     $now       = dol_now();
     // An event planned for a later day is still to come. Today is the pivot the two badges
     // leave alone: an event of the day is neither late until its hour has passed, nor to come.
@@ -488,6 +491,7 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             'project_id'     => (int) $obj->fk_project,
             'project_ref'    => $obj->project_ref,
             'project_title'  => $obj->project_title,
+            'project_infos'  => $projectInfos[(int) $obj->fk_project] ?? [],
             'owner'          => $owner,
             'assigned'       => array_values($assigned),
             'url'            => DOL_URL_ROOT . '/comm/action/card.php?id=' . $eventId,
@@ -752,6 +756,91 @@ function reedcrmTodoCountRelaunches(DoliDB $db, array $origins): array
     }
 
     return $counts;
+}
+
+/**
+ * Return what the cards tell about the projects of their events: budget, probability and relaunches
+ *
+ * The amount is the budget of the project once it has one (a won opportunity gets it), its
+ * opportunity amount otherwise, rounded like the amount of a proposal on its chip and exact in its
+ * tooltip. The probability is the one of the opportunity, none for a project followed without one.
+ *
+ * Its relaunches are counted the way the project list does (ActionComm::getActions() on the
+ * project): the events tagged as commercial relaunches linked to the project, restricted to its
+ * third party when it has one.
+ *
+ * Only told to whoever may read projects. The whole board takes two queries, one for the projects
+ * and one for their relaunches.
+ *
+ * @param  DoliDB $db     Database handler
+ * @param  array  $events Rows of the board, indexed by event ID
+ * @return array          [project id => ['amount_short' => , 'amount_full' => , 'percent' => , 'relaunch_count' => ]]
+ */
+function reedcrmTodoGetProjectInfos(DoliDB $db, array $events): array
+{
+    global $conf, $langs, $user;
+
+    $projectIds = [];
+    foreach ($events as $obj) {
+        if ($obj->fk_project > 0) {
+            $projectIds[(int) $obj->fk_project] = (int) $obj->fk_project;
+        }
+    }
+    if (empty($projectIds) || !$user->hasRight('projet', 'lire')) {
+        return [];
+    }
+
+    $sql   = 'SELECT rowid, fk_soc, budget_amount, opp_amount, opp_percent FROM ' . MAIN_DB_PREFIX . 'projet';
+    $sql  .= ' WHERE rowid IN (' . implode(',', $projectIds) . ')';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $infos      = [];
+    $projectSoc = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $projectId = (int) $obj->rowid;
+        $budget    = (float) $obj->budget_amount;
+        $amount    = $budget > 0 ? $budget : (float) $obj->opp_amount;
+
+        $projectSoc[$projectId] = (int) $obj->fk_soc;
+        $infos[$projectId]      = [
+            'amount_short'   => $amount > 0 ? reedcrmTodoFormatAmountMagnitude($amount) : '',
+            'amount_full'    => $amount > 0 ? $langs->trans($budget > 0 ? 'TodoProjectBudget' : 'TodoProjectOpportunityAmount', price($amount, 0, $langs, 1, -1, -1, $conf->currency)) : '',
+            'percent'        => ($obj->opp_percent !== null && $obj->opp_percent !== '') ? (int) round((float) $obj->opp_percent) : null,
+            'relaunch_count' => 0,
+        ];
+    }
+    $db->free($resql);
+
+    $relaunchTag = getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG');
+    if ($relaunchTag <= 0 || empty($infos)) {
+        return $infos;
+    }
+
+    $sql  = 'SELECT a.fk_project, a.fk_soc, COUNT(a.id) as nb';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+    $sql .= ' WHERE a.entity IN (' . getEntity('agenda') . ')';
+    $sql .= ' AND a.fk_project IN (' . implode(',', array_keys($infos)) . ')';
+    $sql .= ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $relaunchTag . ')';
+    $sql .= ' GROUP BY a.fk_project, a.fk_soc';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return $infos;
+    }
+    while ($obj = $db->fetch_object($resql)) {
+        $projectId = (int) $obj->fk_project;
+        if (empty($projectSoc[$projectId]) || $projectSoc[$projectId] === (int) $obj->fk_soc) {
+            $infos[$projectId]['relaunch_count'] += (int) $obj->nb;
+        }
+    }
+    $db->free($resql);
+
+    return $infos;
 }
 
 /**

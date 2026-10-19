@@ -759,6 +759,17 @@
     }
 }
 
+/* Budget, probability and relaunches of the project glued to its badge: the chips of a proposal,
+   in the colours of the project */
+.todo-project-wrapper {
+    .todo-origin-amount,
+    .todo-relaunch-count {
+        border-left-color: rgba(94, 74, 150, 0.25);
+        background: #f1eef8;
+        color: #5e4a96;
+    }
+}
+
 /* Lines of the object, shown on hovering its reference, the same tooltip as the risk of a task
    on the action plan of Digirisk. It spans the row of links rather than the chip: it never spills
    over the next column nor out of the side of the board */

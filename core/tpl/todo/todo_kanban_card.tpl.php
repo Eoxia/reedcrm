@@ -133,11 +133,37 @@ $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt'
                 </a>
             <?php endif; ?>
             <?php if (!empty($t['project_id'])) : ?>
-                <a class="todo-link-badge todo-link-project" target="_blank"
-                   href="<?php echo DOL_URL_ROOT . '/projet/card.php?id=' . $t['project_id']; ?>"
-                   title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>">
-                    <i class="fas fa-project-diagram"></i> <?php echo dol_escape_htmltag($t['project_title'] ?: $t['project_ref']); ?>
-                </a>
+                <?php
+                // Budget, probability and relaunches of the project are glued to its badge, the way the
+                // amount and the counter of a proposal are to its reference
+                $projectInfos         = $t['project_infos'] ?? [];
+                $projectHasAmount     = !empty($projectInfos['amount_short']);
+                $projectHasPercent    = isset($projectInfos['percent']);
+                $projectRelaunchCount = (int) ($projectInfos['relaunch_count'] ?? 0);
+                $projectCounted       = $projectHasAmount || $projectHasPercent || $projectRelaunchCount > 0;
+                ?>
+                <span class="todo-origin-wrapper todo-project-wrapper">
+                    <a class="todo-link-badge todo-link-project<?php echo $projectCounted ? ' todo-link-origin-counted' : ''; ?>" target="_blank"
+                       href="<?php echo DOL_URL_ROOT . '/projet/card.php?id=' . $t['project_id']; ?>"
+                       title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>">
+                        <i class="fas fa-project-diagram"></i> <?php echo dol_escape_htmltag($t['project_title'] ?: $t['project_ref']); ?>
+                    </a>
+                    <?php if ($projectHasAmount) : ?>
+                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($projectInfos['amount_full']); ?>">
+                            <?php echo dol_escape_htmltag($projectInfos['amount_short']); ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($projectHasPercent) : ?>
+                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectProbability', $projectInfos['percent'] . '%')); ?>">
+                            <?php echo (int) $projectInfos['percent']; ?>%
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($projectRelaunchCount > 0) : ?>
+                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectRelaunchCount', $projectRelaunchCount)); ?>">
+                            <i class="fas fa-headset"></i> <?php echo $projectRelaunchCount; ?>
+                        </span>
+                    <?php endif; ?>
+                </span>
             <?php endif; ?>
         </div>
     <?php endif; ?>
