@@ -915,7 +915,8 @@ class ActionsReedcrm
                 <script>
                     $('table tr.oddeven td').css('padding', 2);
 
-                    var titles = ["Réf.", "Date fin", "Assigné à", "Statut opportunité", "Relances commerciales", "Montant pondéré opp.", "Montant opportunité", "Vocal"];
+                    // No "Vocal" here: its tdoverflowmax class makes Saturne lay the player of the column out inline
+                    var titles = ["Réf.", "Date fin", "Assigné à", "Statut opportunité", "Relances commerciales", "Montant pondéré opp.", "Montant opportunité"];
 
                     // Récupère les index correspondants
                     var indexes = [];
