@@ -294,6 +294,20 @@ QuickCreationReminderCreated = Reminder scheduled for %s
 ErrorQuickCreationReminderDateInPast = The reminder date must be in the future
 ErrorQuickCreationReminder = The opportunity was created, but not its reminder
 
+# Voice description - Description written by the AI from the voice note
+VoiceDescription = Description written from the voice note
+VoiceDescriptionHelp = After each voice note of the quick add, the AI transcribes it then writes the description. The voice note is sent to OpenAI, with the ChatGPT key of the AI module.
+VoiceDescriptionNeedsChatGPT = Unavailable: enable the AI module with the ChatGPT service and fill in its key
+VoiceDescriptionWriting = The AI is writing the description from the voice note…
+VoiceDescriptionError = The description could not be written
+VoiceDescriptionEmpty = This voice note holds nothing to add to the description
+VoiceDescriptionNotConfigured = Writing the description from the voice note is not enabled
+VoiceDescriptionNoRecording = No voice note to transcribe
+VoiceDescriptionRecordingTooLong = The voice note is over 25 MB, the transcription limit
+VoiceDescriptionInvalidAnswer = Unexpected answer from the AI service
+VoiceDescriptionHttpError = The AI service answered with HTTP error %s
+VoiceDescriptionNotWritten = The AI did not write the description (%s)
+
 # Commercial / sales
 CommercialFollowUp = Sales follow-up
 CommercialTask = Sales task
