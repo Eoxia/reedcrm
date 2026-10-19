@@ -60,6 +60,11 @@
     color: #a6aeb8;
     font-size: 9px;
     cursor: default;
+
+    // Eldy colours some pictos on their own (.fa-play is dark grey): the picto follows the state of its dot
+    i {
+        color: inherit;
+    }
 }
 
 .reedcrm-lifecycle-label {
@@ -196,4 +201,56 @@
     .statusref .reedcrm-lifecycle {
         max-width: 250px;
     }
+}
+
+// Compact form printed in the rows of the opportunity list: the dots only, the step reached written once
+// underneath. Every step keeps the same narrow width whatever the screen, so the dots of a row line up
+// with those of the next one and the column reads as a board of where each deal stands. Doubling the
+// class is what keeps the rail in place under the media query folding the banner timeline
+.reedcrm-lifecycle.reedcrm-lifecycle-compact {
+    flex-wrap: wrap;
+    row-gap: 3px;
+    margin: 0;
+    // Room for the halo of the current step, which the cell would otherwise crop on the left
+    padding: 3px 3px 0;
+
+    .reedcrm-lifecycle-step {
+        flex: 0 0 22px;
+        min-width: 0;
+        max-width: none;
+        padding: 0;
+
+        // Centred on a 16px dot, then held clear of it on both ends
+        &::before {
+            display: block;
+            top: 7px;
+            margin: 0 8px;
+        }
+
+        &:first-child::before {
+            display: none;
+        }
+    }
+
+    // A block of its own rather than an inline one: the dot then sits at the very top of its step,
+    // where the rail is measured from, instead of on the baseline of the text
+    .reedcrm-lifecycle-dot {
+        display: flex;
+        width: 16px;
+        height: 16px;
+        margin: 0 auto;
+        font-size: 8px;
+    }
+}
+
+.reedcrm-lifecycle-caption {
+    // Its own row under the dots
+    flex: 0 0 100%;
+    color: #98a1ab;
+    white-space: nowrap;
+}
+
+.reedcrm-lifecycle-caption-label {
+    color: #2f3640;
+    font-weight: 600;
 }

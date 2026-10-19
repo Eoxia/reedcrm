@@ -463,26 +463,21 @@ function reedcrm_field_date_details(array $parameters, CommonObject $object): st
 }
 
 /**
- * Load, for a whole page of listed objects, the categories carried by each of them.
+ * Ids of the objects shown on the current page of a saturne list.
  *
- * The categories live in llx_categorie_<element>, so rendering them row by row would cost one
- * query per line. The page ids are read back from the list query ($sqlForList, exposed by the
- * saturne list TPL) and every tag of the page is loaded in a single query.
+ * The loop renders the rows one by one: a column reading data stored elsewhere loads it for the
+ * whole page on the first row instead. The page is read back from the list query ($sqlForList,
+ * exposed by the saturne list TPL) with the sort and the pagination of the list.
  *
- * @param  CommonObject $object The listed object (gives the element, hence the link table)
- * @return array                Categories (id, label, color) indexed by object id
+ * @return int[] Ids of the objects of the page, empty outside a saturne list
  */
-function reedcrm_load_list_categories(CommonObject $object): array
+function reedcrm_load_list_page_ids(): array
 {
     global $db, $limit, $offset, $sortfield, $sortorder, $sqlForList;
 
     if (empty($sqlForList)) {
         return [];
     }
-
-    $element   = $object->element;
-    $linkTable = MAIN_DB_PREFIX . 'categorie_' . $element;
-    $linkField = 'fk_' . $element;
 
     $sql   = 'SELECT listpage.rowid FROM (' . $sqlForList;
     $sql  .= $db->order($sortfield, $sortorder);
@@ -499,6 +494,27 @@ function reedcrm_load_list_categories(CommonObject $object): array
     }
     $db->free($resql);
 
+    return $objectIds;
+}
+
+/**
+ * Load, for a whole page of listed objects, the categories carried by each of them.
+ *
+ * The categories live in llx_categorie_<element>, so rendering them row by row would cost one
+ * query per line. Every tag of the page is loaded in a single query instead.
+ *
+ * @param  CommonObject $object The listed object (gives the element, hence the link table)
+ * @return array                Categories (id, label, color) indexed by object id
+ */
+function reedcrm_load_list_categories(CommonObject $object): array
+{
+    global $db;
+
+    $element   = $object->element;
+    $linkTable = MAIN_DB_PREFIX . 'categorie_' . $element;
+    $linkField = 'fk_' . $element;
+
+    $objectIds = reedcrm_load_list_page_ids();
     if (empty($objectIds)) {
         return [];
     }
@@ -569,4 +585,39 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
     }
 
     return $out;
+}
+
+/**
+ * Render the lifecycle cell: the timeline of the project card, in its compact form.
+ *
+ * The timeline is built from the documents the project carries: they are read for the projects of
+ * the whole page on the first row. The column is sorted and filtered on the current step by the
+ * printFieldListSelect and printFieldListSearch hooks.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_lifecycle(array $parameters, CommonObject $object): string
+{
+    global $conf;
+
+    require_once __DIR__ . '/reedcrm_lifecycle.lib.php';
+
+    if (!isset($conf->cache['reedcrmListLifecycle'])) {
+        $conf->cache['reedcrmListLifecycle'] = reedcrm_lifecycle_fetch_projects(reedcrm_load_list_page_ids());
+    }
+
+    $project          = $conf->cache['reedcrmListLifecycle'][(int) $object->id] ?? [];
+    $lifecycleSteps   = !empty($project) ? reedcrm_lifecycle_mark_current(reedcrm_build_project_lifecycle_steps($project)) : [];
+    $lifecycleElement = $object->element;
+    $lifecycleCompact = true;
+
+    // Never an empty string: the list would fall back on its generic rendering of a field that does not exist
+    ob_start();
+    print '<div class="reedcrm-lifecycle-cell">';
+    require __DIR__ . '/../core/tpl/reedcrm_lifecycle_timeline.tpl.php';
+    print '</div>';
+
+    return ob_get_clean();
 }

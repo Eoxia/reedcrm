@@ -1194,6 +1194,8 @@ LifecycleTooltipCommercialStatus = Commercial status: %s
 LifecycleTooltipNoStatusDate = The commercial status keeps no date
 LifecycleTooltipRelaunchCount = %s ReedCRM follow-ups
 LifecycleTooltipFirstRelaunch = First follow-up on %s
+LifecycleStep = Step
+LifecycleStepHelp = Last milestone the opportunity reached on its timeline: the column is sorted and filtered on it. Hover a dot for the detail of its step.
 
 #
 # Steering dashboards: sales and management (#694)

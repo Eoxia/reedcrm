@@ -20,7 +20,9 @@
  * \ingroup reedcrm
  * \brief   Lifecycle timeline of one object, printed in the banner of its card by the
  *          formDolBanner hook. Expects $lifecycleSteps as returned by reedcrm_get_lifecycle_steps()
- *          and $lifecycleElement, the element of the object it describes.
+ *          and $lifecycleElement, the element of the object it describes. With $lifecycleCompact set,
+ *          as in the rows of the opportunity list, only the dots are printed, the current step
+ *          being written once underneath.
  */
 
 // The template is required from a hook method, the globals it leans on have to be imported first
@@ -35,8 +37,10 @@ if (empty($conf) || !is_object($conf)) {
 if (empty($lifecycleSteps)) {
     return;
 }
+
+$lifecycleCompact = !empty($lifecycleCompact);
 ?>
-<div class="reedcrm-lifecycle" data-element="<?php echo dol_escape_htmltag($lifecycleElement); ?>">
+<div class="reedcrm-lifecycle<?php echo $lifecycleCompact ? ' reedcrm-lifecycle-compact' : ''; ?>" data-element="<?php echo dol_escape_htmltag($lifecycleElement); ?>">
     <?php foreach ($lifecycleSteps as $lifecycleStep) :
         $tooltipLines = [$lifecycleStep['label']];
         if (!empty($lifecycleStep['date'])) {
@@ -54,8 +58,25 @@ if (empty($lifecycleSteps)) {
         ?>
         <div class="reedcrm-lifecycle-step reedcrm-lifecycle-step-<?php echo dol_escape_htmltag($lifecycleStep['state']); ?><?php echo !empty($lifecycleStep['current']) ? ' reedcrm-lifecycle-step-current' : ''; ?>" data-step="<?php echo dol_escape_htmltag($lifecycleStep['key']); ?>">
             <span class="reedcrm-lifecycle-dot classfortooltip" title="<?php echo $stepTooltip; ?>"><i class="fas <?php echo dol_escape_htmltag($lifecycleStep['picto']); ?>"></i></span>
-            <span class="reedcrm-lifecycle-label"><?php echo dol_escape_htmltag($lifecycleStep['label']); ?></span>
-            <span class="reedcrm-lifecycle-date"><?php echo !empty($lifecycleStep['date']) ? dol_print_date($lifecycleStep['date'], 'day') : '&ndash;'; ?></span>
+            <?php if (!$lifecycleCompact) : ?>
+                <span class="reedcrm-lifecycle-label"><?php echo dol_escape_htmltag($lifecycleStep['label']); ?></span>
+                <span class="reedcrm-lifecycle-date"><?php echo !empty($lifecycleStep['date']) ? dol_print_date($lifecycleStep['date'], 'day') : '&ndash;'; ?></span>
+            <?php endif; ?>
         </div>
     <?php endforeach; ?>
+    <?php if ($lifecycleCompact) :
+        $currentSteps = array_filter($lifecycleSteps, function ($lifecycleStep) {
+            return !empty($lifecycleStep['current']);
+        });
+        $currentStep = reset($currentSteps);
+        ?>
+        <div class="reedcrm-lifecycle-caption">
+            <?php if (!empty($currentStep)) : ?>
+                <span class="reedcrm-lifecycle-caption-label"><?php echo dol_escape_htmltag($currentStep['label']); ?></span>
+                <span class="reedcrm-lifecycle-caption-date"><?php echo dol_print_date($currentStep['date'], 'day'); ?></span>
+            <?php else : ?>
+                &ndash;
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 </div>
