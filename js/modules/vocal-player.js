@@ -45,7 +45,11 @@ window.reedcrm.vocalPlayer = {
   },
 
   init: function() {
-    $(document).on('click', '.reedcrm-vocal-player', function() {
+    // init() runs twice, once from the end of this file and once from load_list_script(): bound twice,
+    // the second handler pauses what the first one has just started, so a click never plays anything
+    $(document).off('click.vocalPlayer');
+
+    $(document).on('click.vocalPlayer', '.reedcrm-vocal-player', function() {
       var $btn     = $(this);
       var url      = $btn.data('audio-url');
       var audioObj = $btn.data('rc-audio');
