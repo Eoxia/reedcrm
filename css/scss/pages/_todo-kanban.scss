@@ -86,6 +86,12 @@
     min-width: 200px;
 }
 
+// A probability test is a few characters long: ">= 50"
+.tdf-text.tdf-probability {
+    min-width: 0;
+    width: 110px;
+}
+
 // The user criteria is a select2: line its box up on the plain fields beside it
 .tdf-field .select2-container {
     .select2-selection--single {
