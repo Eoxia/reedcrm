@@ -84,6 +84,10 @@ ImportRemindersCreated = %s reminders added to the todo.
 ImportRemindersInvalid = %s reminders not created: missing text or date, or unreadable date (accepted formats: DD/MM/YYYY or YYYY-MM-DD, time optional).
 ImportRemindersPast = %s reminders not created: their date is past.
 ImportReminderErrors = %s reminders could not be saved.
+CSVNoteColumn = Optional: a column of notes from 0 to 10 giving the probability of the opportunity (1 = 10%), chosen when importing.
+NoteColumn = Note column (probability)
+NoteColumnHelp = Note from 0 to 10 turned into the probability of the opportunity: 1 = 10%, 2 = 20%… 10 = 100% (2.5 = 25%). The opportunity also gets the matching status of the dictionary (prospection, qualification…). An empty cell leaves the row without probability. When it is the "Note" column expected by the import, a note no longer fills the description; a text still does.
+ImportNotesInvalid = %s notes not used: unreadable value or out of 0 to 10.
 NbLines = Number of lines
 
 # Relaunch table headers (Date and Status come from main.lang)

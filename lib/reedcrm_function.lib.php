@@ -671,6 +671,60 @@ function reedcrm_parse_import_date(string $value): int
 }
 
 /**
+ * Turn the note of an imported CSV cell into an opportunity probability, ten percent per point
+ *
+ * @param  string   $value Raw cell, a note from 0 to 10 (2,5 and 2.5 are accepted)
+ * @return int|null        Probability from 0 to 100, null when the cell holds no valid note
+ */
+function reedcrm_parse_import_note(string $value): ?int
+{
+    $value = str_replace(',', '.', trim($value));
+    if (!preg_match('/^\d{1,2}(?:\.\d+)?$/', $value) || (float) $value > 10) {
+        return null;
+    }
+
+    return (int) round((float) $value * 10);
+}
+
+/**
+ * Opportunity status matching a probability: the active status of the highest probability not above it,
+ * the lowest one when all of them are above it
+ *
+ * Won and lost close an opportunity, a probability alone never leads to them.
+ *
+ * @param  int $percent Probability from 0 to 100
+ * @return int          Row ID of the status in c_lead_status, 0 when the dictionary has none
+ */
+function reedcrm_get_opp_status_for_percent(int $percent): int
+{
+    global $db;
+
+    // Read once per request, an import asks for it on every row
+    static $statuses = null;
+    if ($statuses === null) {
+        $statuses = [];
+        $sql      = 'SELECT rowid, percent FROM ' . MAIN_DB_PREFIX . "c_lead_status WHERE active = 1 AND code NOT IN ('WON', 'LOST') ORDER BY percent ASC, position ASC";
+        $resql    = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $statuses[] = ['id' => (int) $obj->rowid, 'percent' => (float) $obj->percent];
+            }
+            $db->free($resql);
+        }
+    }
+
+    $statusId = $statuses[0]['id'] ?? 0;
+    foreach ($statuses as $status) {
+        if ($status['percent'] > $percent) {
+            break;
+        }
+        $statusId = $status['id'];
+    }
+
+    return $statusId;
+}
+
+/**
  * Get (and lazily create) the actioncomm category used to tag automatic call reminders.
  *
  * The reminder events created from the ProCard/EventPro checkbox must NOT reuse the commercial

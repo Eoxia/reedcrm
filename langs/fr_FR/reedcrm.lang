@@ -373,6 +373,10 @@ ImportRemindersCreated = %s rappels ajoutés à la todo.
 ImportRemindersInvalid = %s rappels non créés : texte ou date manquant, ou date illisible (formats acceptés : JJ/MM/AAAA ou AAAA-MM-JJ, heure facultative).
 ImportRemindersPast = %s rappels non créés : leur date est passée.
 ImportReminderErrors = %s rappels n'ont pas pu être enregistrés.
+CSVNoteColumn = Facultatif : une colonne de note de 0 à 10 qui donne la probabilité de l'opportunité (1 = 10 %), choisie au moment de l'import.
+NoteColumn = Colonne de la note (probabilité)
+NoteColumnHelp = Note de 0 à 10 transformée en probabilité de l'opportunité : 1 = 10 %, 2 = 20 %… 10 = 100 % (2,5 = 25 %). L'opportunité prend aussi l'étape du dictionnaire qui correspond (prospection, qualification…). Une case vide laisse la ligne sans probabilité. Si c'est la colonne « Note » attendue par l'import, une note n'y sert plus de description ; un texte, si.
+ImportNotesInvalid = %s notes non reprises : valeur illisible ou hors de 0 à 10.
 OpportunitiesImport = Import d'opportunités
 ImportedOpportunityList = Liste des opportunités importés
 
