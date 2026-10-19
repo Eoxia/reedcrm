@@ -214,6 +214,12 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
             <div class="form-group">
                 <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
+                <?php if (ReedcrmVoiceDescription::isEnabled()) : ?>
+                    <!-- Shown while the AI writes the description from the last voice note -->
+                    <div class="quickcreation-voice-description" data-error="<?php echo dol_escape_htmltag($langs->trans('VoiceDescriptionError')); ?>" data-empty="<?php echo dol_escape_htmltag($langs->trans('VoiceDescriptionEmpty')); ?>">
+                        <i class="fas fa-circle-notch fa-spin"></i> <?php echo $langs->trans('VoiceDescriptionWriting'); ?>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
