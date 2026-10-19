@@ -113,10 +113,10 @@ if ($action == 'import_projects') {
             $defaultAssigneesColumn     = '';
             $defaultReminderLabelColumn = '';
             $defaultReminderDateColumn  = '';
+            $defaultNoteColumn          = '';
             $handle                     = fopen($destPath, 'r');
             if ($handle) {
-                list(, $headers) = reedcrm_read_import_csv_header($handle);
-                fclose($handle);
+                list($delimiter, $headers) = reedcrm_read_import_csv_header($handle);
                 foreach ($headers as $idx => $headerLabel) {
                     if ($headerLabel === '') {
                         continue;
@@ -133,7 +133,18 @@ if ($action == 'import_projects') {
                             $defaultReminderLabelColumn = $defaultReminderLabelColumn ?: (string) ($idx + 1);
                         }
                     }
+                    if ($defaultNoteColumn === '' && preg_match('/^note\b|^score|probabilit|pourcentage/', $headerKey)) {
+                        $defaultNoteColumn = (string) ($idx + 1);
+                    }
                 }
+                // A "Note" column may as well hold free comments: it is only preselected when every value is a note from 0 to 10
+                while ($defaultNoteColumn !== '' && ($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+                    $noteValue = trim((string) ($row[(int) $defaultNoteColumn - 1] ?? ''));
+                    if ($noteValue !== '' && reedcrm_parse_import_note($noteValue) === null) {
+                        $defaultNoteColumn = '';
+                    }
+                }
+                fclose($handle);
             }
             // A reminder needs both its text and its date, a file offering only one of them gets none preselected
             if ($defaultReminderLabelColumn === '' || $defaultReminderDateColumn === '') {
@@ -170,6 +181,14 @@ if ($action == 'import_projects') {
                 ],
                 [
                     'type'    => 'select',
+                    'label'   => $form->textwithpicto($langs->trans('NoteColumn'), $langs->trans('NoteColumnHelp')),
+                    'name'    => 'note_column',
+                    'values'  => $columns,
+                    'default' => $defaultNoteColumn,
+                    'morecss' => 'minwidth300 maxwidth300',
+                ],
+                [
+                    'type'    => 'select',
                     'label'   => $form->textwithpicto($langs->trans('ReminderLabelColumn'), $langs->trans('ReminderLabelColumnHelp')),
                     'name'    => 'reminder_label_column',
                     'values'  => $columns,
@@ -193,7 +212,7 @@ if ($action == 'import_projects') {
                 $formquestion,
                 '',
                 1,
-                400
+                460
             );
         } else {
             setEventMessages($langs->trans('ImportFileUploadError'), null, 'errors');
@@ -211,6 +230,7 @@ if ($action == 'confirm_import_projects') {
     $assigneesColumn = GETPOSTINT('assignees_column');
     $reminderLabelColumn = GETPOSTINT('reminder_label_column');
     $reminderDateColumn = GETPOSTINT('reminder_date_column');
+    $noteColumn = GETPOSTINT('note_column');
 
     // Clean existing IDs
     $existingCategoryIds = array_filter(array_map('intval', $existingCategoryIds));
@@ -254,6 +274,7 @@ if ($action == 'confirm_import_projects') {
                         ['type' => 'hidden', 'name' => 'assignees_column', 'value' => $assigneesColumn],
                         ['type' => 'hidden', 'name' => 'reminder_label_column', 'value' => $reminderLabelColumn],
                         ['type' => 'hidden', 'name' => 'reminder_date_column', 'value' => $reminderDateColumn],
+                        ['type' => 'hidden', 'name' => 'note_column', 'value' => $noteColumn],
                     ];
                     // Re-pass existing category IDs as hidden fields
                     foreach ($existingCategoryIds as $hidCatId) {
@@ -307,6 +328,7 @@ if ($action == 'confirm_import_projects') {
                     $hasReminders     = ($reminderLabelColumn > 0 && isset($headers[$reminderLabelColumn - 1]) && $reminderDateColumn > 0 && isset($headers[$reminderDateColumn - 1]));
                     $reminderLabelIdx = $hasReminders ? $reminderLabelColumn - 1 : null;
                     $reminderDateIdx  = $hasReminders ? $reminderDateColumn - 1 : null;
+                    $noteIdx          = ($noteColumn > 0 && isset($headers[$noteColumn - 1])) ? $noteColumn - 1 : null;
 
                     $required = ['prenom', 'nom', 'email', 'tel', 'note'];
                     $missing = array_diff($required, array_keys($map));
@@ -324,6 +346,7 @@ if ($action == 'confirm_import_projects') {
                         $remindersInvalid = 0;
                         $remindersPast = 0;
                         $reminderErrors = 0;
+                        $notesInvalid = 0;
 
                         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
                             if (count($row) == 1 && trim($row[0]) === '') {
@@ -331,7 +354,10 @@ if ($action == 'confirm_import_projects') {
                             }
                             $row = reedcrm_import_csv_row_to_utf8($row);
                             $total++;
-                            $description = dol_htmlentitiesbr(trim($row[$map['note']] ?? ''));
+                            $noteValue = ($noteIdx !== null) ? trim((string) ($row[$noteIdx] ?? '')) : '';
+                            $oppPercent = ($noteValue !== '') ? reedcrm_parse_import_note($noteValue) : null;
+                            // The "Note" column is no description when it holds the probability of the opportunity, a comment stays one
+                            $description = ($noteIdx === $map['note'] && $oppPercent !== null) ? '' : dol_htmlentitiesbr(trim($row[$map['note']] ?? ''));
                             $mail = dol_htmlentitiesbr(trim($row[$map['email']] ?? ''));
                             $phone = dol_htmlentitiesbr(trim($row[$map['tel']] ?? ''));
                             $nom = dol_htmlentitiesbr(trim($row[$map['nom']] ?? ''));
@@ -351,6 +377,14 @@ if ($action == 'confirm_import_projects') {
                             $proj->status = Project::STATUS_DRAFT;
                             $proj->date_start = dol_now();
                             $proj->public = 1;
+
+                            if ($oppPercent !== null) {
+                                $proj->usage_opportunity = 1;
+                                $proj->opp_percent       = (float) $oppPercent;
+                                $proj->opp_status        = reedcrm_get_opp_status_for_percent($oppPercent);
+                            } elseif ($noteValue !== '') {
+                                $notesInvalid++;
+                            }
 
                             $resCreate = $proj->create($user);
 
@@ -421,6 +455,9 @@ if ($action == 'confirm_import_projects') {
                         if ($assignmentErrors > 0) {
                             setEventMessages($langs->trans('ImportAssignmentErrors', $assignmentErrors), null, 'warnings');
                         }
+                        if ($notesInvalid > 0) {
+                            setEventMessages($langs->trans('ImportNotesInvalid', $notesInvalid), null, 'warnings');
+                        }
                         if ($remindersCreated > 0) {
                             setEventMessages($langs->trans('ImportRemindersCreated', $remindersCreated), null, 'mesgs');
                         }
@@ -479,7 +516,7 @@ print '</tr>';
 print '<tr class="oddeven"><td>';
 print $langs->trans('ImportProjectsFromCSV');
 print '</td><td>';
-print $langs->trans('ImportProjectsDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '<br>' . $langs->trans('CSVAssigneesColumn') . '<br>' . $langs->trans('CSVReminderColumns') . '</span>';
+print $langs->trans('ImportProjectsDescription') . '<br><span class="opacitymedium">' . $langs->trans('CSVExpectedColumns') . '<br>' . $langs->trans('CSVAssigneesColumn') . '<br>' . $langs->trans('CSVNoteColumn') . '<br>' . $langs->trans('CSVReminderColumns') . '</span>';
 print '</td>';
 print '<td class="center">';
 print '<input type="file" name="import_file" accept=".csv" required class="flat">';
