@@ -939,6 +939,7 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
 
   var offset    = replace ? 0 : (parseInt($body.attr('data-offset'), 10) || 0);
   var direction = $column.find('.todo-column-sort').attr('data-direction') === 'desc' ? 'desc' : 'asc';
+  var sortKey   = $column.find('.todo-column-sort').attr('data-sort') === 'probability' ? 'probability' : 'date';
   var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
 
   $button.addClass('todo-load-more-loading');
@@ -949,6 +950,7 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
       column: columnKey,
       offset: offset,
       direction: direction,
+      sort: sortKey,
       token: window.saturne.toolbox.getToken()
     }),
     type: 'POST',
@@ -1019,7 +1021,8 @@ window.reedcrm.todoKanban.syncLoadMore = function ($column, remaining) {
 };
 
 /**
- * Turn the way a column is sorted, on a click on its title.
+ * Turn the way a column is sorted, on a click on its title: the column stays sorted on what
+ * its menu last picked, its date or the probability of its opportunities.
  *
  * @param  {Event} event Click event
  * @returns {void}
@@ -1032,7 +1035,8 @@ window.reedcrm.todoKanban.toggleColumnSort = function (event) {
 
   window.reedcrm.todoKanban.applyColumnSort(
     $button.attr('data-column'),
-    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc'
+    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc',
+    $button.attr('data-sort')
   );
 };
 
@@ -1041,17 +1045,21 @@ window.reedcrm.todoKanban.toggleColumnSort = function (event) {
  * asked for it: a click on the title or the column menu.
  *
  * @param  {string} columnKey Key of the column
- * @param  {string} direction 'asc' (oldest first) or 'desc' (newest first)
+ * @param  {string} direction 'asc' (oldest or least likely first) or 'desc' (newest or most likely first)
+ * @param  {string} sortKey   'date' or 'probability'
  * @returns {void}
  */
-window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction) {
+window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction, sortKey) {
   var $button = $('.todo-column-sort[data-column="' + columnKey + '"]');
+
+  sortKey = sortKey === 'probability' ? 'probability' : 'date';
 
   // The cards move under an open selector, close it first
   window.reedcrm.todoKanban.closeDropdowns();
 
-  // The stylesheet reads the way off the button to darken the matching arrow
-  $button.attr('data-direction', direction);
+  // The stylesheet reads the way and the key off the button to darken the matching arrow and
+  // show the percent sign, its tooltip tells what a click on it sorts on
+  $button.attr('data-direction', direction).attr('data-sort', sortKey).attr('title', $button.attr('data-title-' + sortKey) || '');
 
   window.reedcrm.todoKanban.sortColumn(columnKey);
 };
@@ -1172,15 +1180,17 @@ window.reedcrm.todoKanban.initColumnMenu = function () {
     window.reedcrm.todoKanban.toggleColumnMenu($(this));
   });
 
-  $popover.on('click', '.action-sort-asc, .action-sort-desc', function (event) {
+  $popover.on('click', '.action-sort-asc, .action-sort-desc, .action-sort-probability-asc, .action-sort-probability-desc', function (event) {
     event.preventDefault();
     event.stopPropagation();
 
     var columnKey = window.reedcrm.todoKanban.openMenuColumn;
-    var direction = $(this).hasClass('action-sort-asc') ? 'asc' : 'desc';
+    var $action   = $(this);
+    var direction = ($action.hasClass('action-sort-asc') || $action.hasClass('action-sort-probability-asc')) ? 'asc' : 'desc';
+    var sortKey   = ($action.hasClass('action-sort-probability-asc') || $action.hasClass('action-sort-probability-desc')) ? 'probability' : 'date';
 
     window.reedcrm.todoKanban.closeColumnMenu();
-    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction);
+    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction, sortKey);
   });
 
   $popover.on('click', '.action-hide', function (event) {

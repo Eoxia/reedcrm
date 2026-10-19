@@ -398,6 +398,17 @@
     &[data-direction="desc"] .todo-column-sort-icon .fa-sort-down {
         color: #2c3e50;
     }
+
+    // A column sorted on the probability of its opportunities says so next to its arrows
+    &[data-sort="probability"] .todo-column-sort-key {
+        display: inline-flex;
+    }
+}
+
+.todo-column-sort-key {
+    display: none;
+    color: #2c3e50;
+    font-size: 10px;
 }
 
 /* Caret of the column menu, same cue as the one the saturne lists put on a column title */
