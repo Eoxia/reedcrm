@@ -117,7 +117,7 @@ if ($resql) {
             print '<td class="right">' . price($obj->total_ht) . '</td>';
             print '<td class="center">' . $propal->getLibStatut(5) . '</td>';
             print '<td class="center">';
-            print '<a class="butAction" href="' . DOL_URL_ROOT . '/comm/propal/card.php?id=' . $propal->id . '&action=clone">' . $langs->trans('Create') . '</a>';
+            print '<a class="butAction" href="' . DOL_URL_ROOT . '/comm/propal/card.php?id=' . $propal->id . '&action=clone&token=' . newToken() . '">' . $langs->trans('Create') . '</a>';
             print '</td>';
             print '</tr>';
             $i++;

@@ -1627,7 +1627,7 @@ class ActionsReedcrm
             if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
                 $out = '';
                 if ($user->hasRight('projet', 'creer')) {
-                    $out .= '<a title="' . $langs->transnoentities('ReloadOppPercent') . '" class="reposition" href="' . $_SERVER['PHP_SELF'] . '?action=reload_opp_percent">';
+                    $out .= '<a title="' . $langs->transnoentities('ReloadOppPercent') . '" class="reposition" href="' . $_SERVER['PHP_SELF'] . '?action=reload_opp_percent&token=' . newToken() . '">';
                     $out .= dolGetBadge(img_picto('', 'refresh'));
                     $out .= '</a>';
                 }
