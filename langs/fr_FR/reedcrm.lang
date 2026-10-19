@@ -881,6 +881,9 @@ TodoAllTypes = Tous les types
 TodoSearchPlaceholder = Libellé, lieu ou tiers
 TodoFilterHideAuto = Masquer les événements automatiques
 TodoFilterHideAutoHelp = Les événements tracés par Dolibarr lui-même ne sont pas des actions à mener
+TodoFilterProbability = Probabilité
+TodoFilterProbabilityPlaceholder = ex. >= 50
+TodoFilterProbabilityHelp = Probabilité de l'opportunité du projet, avec un opérateur comme dans les listes Dolibarr : >= 50, < 20, 30, ou plusieurs conditions séparées par un espace (>= 20 <= 60). Les événements sans probabilité sont alors masqués.
 TodoFilterCount = %s événement(s)
 TodoNoEvent = Aucun événement
 TodoMoveRefusedRelaunch = Une relance reste dans sa colonne tant qu'elle n'est pas traitée : déposez-la dans « %s » ou « %s ».

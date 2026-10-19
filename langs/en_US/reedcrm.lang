@@ -1135,6 +1135,9 @@ TodoProjectProbability = Opportunity probability: %s
 TodoSortByProbability = Sort by opportunity probability
 TodoSortProbabilityAsc = Sort by increasing probability
 TodoSortProbabilityDesc = Sort by decreasing probability
+TodoFilterProbability = Probability
+TodoFilterProbabilityPlaceholder = e.g. >= 50
+TodoFilterProbabilityHelp = Probability of the opportunity of the project, with an operator as in the Dolibarr lists: >= 50, < 20, 30, or several conditions separated by a space (>= 20 <= 60). Events without probability are then hidden.
 TodoOriginAmountHT = Amount excl. tax: %s
 TodoOriginDatePropal = Proposal validated on %s
 TodoOriginDateInvoice = Invoice due on %s

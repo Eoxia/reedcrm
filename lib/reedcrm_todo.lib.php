@@ -118,9 +118,10 @@ function reedcrmTodoGetFilters(): array
         'user'       => (int) $user->id,
         'date_start' => 0,
         'date_end'   => 0,
-        'type'       => 0,
-        'search'     => '',
-        'hide_auto'  => 1,
+        'type'        => 0,
+        'probability' => '',
+        'search'      => '',
+        'hide_auto'   => 1,
     ];
 
     $sessionKey = reedcrmTodoGetFilterSessionKey();
@@ -142,9 +143,11 @@ function reedcrmTodoGetFilters(): array
         'user'       => GETPOSTINT('search_user'),
         'date_start' => !empty($dateStart) ? (int) strtotime($dateStart . ' 00:00:00') : 0,
         'date_end'   => !empty($dateEnd) ? (int) strtotime($dateEnd . ' 23:59:59') : 0,
-        'type'       => GETPOSTINT('search_type'),
-        'search'     => GETPOST('search_text', 'alphanohtml'),
-        'hide_auto'  => GETPOSTINT('search_hide_auto'),
+        'type'        => GETPOSTINT('search_type'),
+        // Same reading as the numeric search fields of the Dolibarr lists: ">= 50", "< 20", ">= 20 <= 60"
+        'probability' => trim(GETPOST('search_probability', 'alpha')),
+        'search'      => GETPOST('search_text', 'alphanohtml'),
+        'hide_auto'   => GETPOSTINT('search_hide_auto'),
     ];
 
     $_SESSION[$sessionKey] = $filters;
@@ -173,8 +176,9 @@ function reedcrmTodoNormalizeFilters(array $filters, array $defaults): array
         $normalized[$key] = array_key_exists($key, $filters) ? $filters[$key] : $default;
     }
 
-    // The searched text is the only criterion that is not a number
-    $normalized['search'] = (string) $normalized['search'];
+    // The searched text and the probability test are the only criteria that are not a number
+    $normalized['search']      = (string) $normalized['search'];
+    $normalized['probability'] = (string) $normalized['probability'];
     foreach (['user', 'date_start', 'date_end', 'type', 'hide_auto'] as $key) {
         $normalized[$key] = (int) $normalized[$key];
     }
@@ -316,6 +320,10 @@ function reedcrmTodoBuildEventsFrom(DoliDB $db, array $filters): string
     if (!empty($filters['search'])) {
         $searchValue = $db->escape($db->escapeforlike($filters['search']));
         $sql .= " AND (a.label LIKE '%" . $searchValue . "%' OR a.location LIKE '%" . $searchValue . "%' OR s.nom LIKE '%" . $searchValue . "%')";
+    }
+    // "0" is a test of its own, an empty() check would drop it. An event without probability matches no test.
+    if (($filters['probability'] ?? '') !== '') {
+        $sql .= natural_search('p.opp_percent', $filters['probability'], 1);
     }
 
     return $sql;
