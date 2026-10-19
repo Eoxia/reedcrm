@@ -2612,9 +2612,10 @@ class ActionsReedcrm
             $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
 
             // Photos and voice note taken with the opportunity (quick creation, PWA), read from the
-            // project documents directory : neither sortable nor searchable
-            $object->fields['photo'] = ['label' => 'Photos', 'enabled' => 1, 'position' => 162, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
-            $object->fields['vocal'] = ['label' => 'Vocal',  'enabled' => 1, 'position' => 163, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
+            // project documents directory : neither sortable nor searchable. The type is only there
+            // for the shape of $fields, the cell is always rendered by the hook
+            $object->fields['photo'] = ['type' => 'varchar(255)', 'label' => 'Photos', 'enabled' => 1, 'position' => 162, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
+            $object->fields['vocal'] = ['type' => 'varchar(255)', 'label' => 'Vocal',  'enabled' => 1, 'position' => 163, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
 
             // Tags/categories column, like the ticket list has : a project carries its tags in
             // llx_categorie_project, and the tag filter of the list header does the filtering,
