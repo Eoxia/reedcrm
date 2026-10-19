@@ -1314,6 +1314,8 @@ LifecycleTooltipCommercialStatus = Statut commercial : %s
 LifecycleTooltipNoStatusDate = Le statut commercial ne conserve pas de date
 LifecycleTooltipRelaunchCount = %s relances ReedCRM
 LifecycleTooltipFirstRelaunch = Première relance le %s
+LifecycleStep = Étape
+LifecycleStepHelp = Dernière étape franchie par l'opportunité sur son fil d'Ariane : la colonne est triée et filtrée sur elle. Le détail d'une étape s'affiche au survol de son point.
 
 #
 # Tableaux de bord de pilotage : commercial et Direction (#694)

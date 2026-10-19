@@ -2618,10 +2618,16 @@ class ActionsReedcrm
             $object->fields['photo'] = ['type' => 'varchar(255)', 'label' => 'Photos', 'enabled' => 1, 'position' => 162, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
             $object->fields['vocal'] = ['type' => 'varchar(255)', 'label' => 'Vocal',  'enabled' => 1, 'position' => 163, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
 
+            // Lifecycle timeline of the card, in a compact form. The column sorts and filters on the
+            // current step, whose rank the printFieldListSelect hook selects under the name of the
+            // column: the empty otheralias makes the title sort on that name rather than on t.lifecycle
+            require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
+            $object->fields['lifecycle'] = ['type' => 'integer', 'label' => 'LifecycleStep', 'helplist' => 'LifecycleStepHelp', 'enabled' => 1, 'position' => 76, 'visible' => 1, 'csslist' => 'minwidth200', 'noedit' => 1, 'otheralias' => '', 'searchmulti' => 1, 'arrayofkeyval' => reedcrm_lifecycle_project_step_labels()];
+
             // Tags/categories column, like the ticket list has : a project carries its tags in
             // llx_categorie_project, and the tag filter of the list header does the filtering,
             // so the column is neither sortable nor searchable on its own
-            $virtualFields = ['contact_details', 'opportunity_details', 'relauch_commercial', 'photo', 'vocal'];
+            $virtualFields = ['contact_details', 'opportunity_details', 'relauch_commercial', 'photo', 'vocal', 'lifecycle'];
             if (isModEnabled('categorie')) {
                 $object->fields['categories'] = ['label' => 'Categories', 'enabled' => 1, 'position' => 18, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1, 'disablesearch' => 1];
                 $virtualFields[]              = 'categories';
@@ -2674,6 +2680,71 @@ class ActionsReedcrm
         return 0;
     }
 
+    /**
+     * Overloading the printFieldListSelect hook : select the current lifecycle step of the opportunity list
+     *
+     * @param  array             $parameters Hook metadatas (context, ...)
+     * @param  CommonObject|null $object     The object to process
+     * @param  string            $action     Current action
+     * @return int                           0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printFieldListSelect(array $parameters, ?CommonObject $object, string $action): int
+    {
+        // The value would otherwise be carried over from the previous hook method of this instance
+        $this->resprints = '';
+
+        // Selected under the name of the column, which is what the sort guard of the saturne list accepts
+        if ($this->isLifecycleColumn($parameters, $object)) {
+            require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
+
+            $this->resprints = ', ' . reedcrm_lifecycle_project_current_step_sql('t') . ' AS lifecycle';
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step
+     *
+     * @param  array             $parameters Hook metadatas (context, key, val, ...)
+     * @param  CommonObject|null $object     The object to process
+     * @param  string            $action     Current action
+     * @return int                           0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printFieldListSearch(array $parameters, ?CommonObject $object, string $action): int
+    {
+        $this->resprints = '';
+
+        if (($parameters['key'] ?? '') !== 'lifecycle' || !$this->isLifecycleColumn($parameters, $object)) {
+            return 0;
+        }
+
+        require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
+
+        $ranks = array_map('intval', array_filter((array) $parameters['val'], 'is_numeric'));
+        if (!empty($ranks)) {
+            $this->resprints = ' AND ' . reedcrm_lifecycle_project_current_step_sql('t') . ' IN (' . implode(',', $ranks) . ')';
+        }
+
+        // The column holds no t.lifecycle the generic filter could read
+        return 1;
+    }
+
+    /**
+     * Check whether the list is the opportunity list carrying the lifecycle column
+     *
+     * The column is declared by saturneListAddCustomFields on the generic Saturne list only, the
+     * native project list has none to fill
+     *
+     * @param  array             $parameters Hook metadatas (context, ...)
+     * @param  CommonObject|null $object     Object of the list
+     * @return bool                          True when the lifecycle column is to be filled
+     */
+    protected function isLifecycleColumn(array $parameters, ?CommonObject $object): bool
+    {
+        return is_object($object) && $object->element === 'project' && isset($object->fields['lifecycle']) && $this->isContext($parameters, ['saturnelist']);
+    }
+
     public function saturnePrintFieldListLoopObject(array $parameters, CommonObject $object): int
     {
         if (preg_match('/propallist|projectlist/', $parameters['context'])) {
@@ -2687,6 +2758,7 @@ class ActionsReedcrm
                 'contact_details'     => 'reedcrm_field_contact_details',
                 'photo'              => 'reedcrm_field_photo',
                 'vocal'              => 'reedcrm_field_vocal',
+                'lifecycle'          => 'reedcrm_field_lifecycle',
                 'fk_opp_status'      => 'reedcrm_field_opp_status',
                 'fk_statut'          => 'reedcrm_field_status_badge',
                 'opp_percent'        => 'reedcrm_field_opp_percent',

@@ -19,13 +19,30 @@
  * \file    lib/reedcrm_lifecycle.lib.php
  * \ingroup reedcrm
  * \brief   Library building the lifecycle timeline printed in the banner of the proposal,
- *          order, invoice and project cards
+ *          order, invoice and project cards, and in the rows of the opportunity list
  */
 
 /**
  * Elements carrying a lifecycle timeline
  */
 const REEDCRM_LIFECYCLE_ELEMENTS = ['propal', 'commande', 'facture', 'project'];
+
+/**
+ * Milestones of the project timeline in the order they are reached, with the caption of each
+ *
+ * The position of a milestone is its rank: the opportunity list sorts and filters its rows on the
+ * rank of the last milestone reached, computed in SQL by reedcrm_lifecycle_project_current_step_sql()
+ */
+const REEDCRM_LIFECYCLE_PROJECT_STEPS = [
+    'creation'  => 'LifecycleStepCreation',
+    'start'     => 'LifecycleStepProjectStart',
+    'proposal'  => 'LifecycleStepFirstProposal',
+    'signature' => 'LifecycleStepSignature',
+    'order'     => 'LifecycleStepFirstOrder',
+    'billing'   => 'LifecycleStepFirstInvoice',
+    'end'       => 'LifecycleStepProjectEnd',
+    'closing'   => 'LifecycleStepClosing'
+];
 
 /**
  * Build the lifecycle steps of an object
@@ -238,50 +255,201 @@ function reedcrm_get_invoice_lifecycle_steps(CommonObject $object): array
  */
 function reedcrm_get_project_lifecycle_steps(CommonObject $object): array
 {
-    global $langs;
-
-    $row = reedcrm_lifecycle_fetch_row('projet', (int) $object->id, ['datec', 'dateo', 'datee', 'date_close', 'fk_statut', 'fk_user_creat', 'fk_user_close']);
-    if (empty($row)) {
+    $projects = reedcrm_lifecycle_fetch_projects([(int) $object->id]);
+    if (empty($projects[(int) $object->id])) {
         return [];
     }
 
-    $isClosed = ((int) $row['fk_statut'] == Project::STATUS_CLOSED);
+    return reedcrm_build_project_lifecycle_steps($projects[(int) $object->id]);
+}
+
+/**
+ * Build the lifecycle steps of a project from what reedcrm_lifecycle_fetch_projects() read of it
+ *
+ * Any change to the milestones has to be carried over to reedcrm_lifecycle_project_current_step_sql(),
+ * which tells the opportunity list where each project stands
+ *
+ * @param  array $project Row of the project, the summaries of its documents under 'documents'
+ * @return array          Ordered steps
+ */
+function reedcrm_build_project_lifecycle_steps(array $project): array
+{
+    global $langs;
+
+    $isClosed = ((int) $project['fk_statut'] == Project::STATUS_CLOSED);
+    $captions = REEDCRM_LIFECYCLE_PROJECT_STEPS;
 
     $steps   = [];
-    $steps[] = reedcrm_lifecycle_step('creation', $langs->transnoentities('LifecycleStepCreation'), reedcrm_lifecycle_date($row, 'datec'), 'fa-plus', reedcrm_lifecycle_user_detail((int) $row['fk_user_creat']));
+    $steps[] = reedcrm_lifecycle_step('creation', $langs->transnoentities($captions['creation']), reedcrm_lifecycle_date($project, 'datec'), 'fa-plus', reedcrm_lifecycle_user_detail((int) $project['fk_user_creat']));
 
     // The start of a project can be planned ahead: the milestone is only reached once the day has come
-    $startDate = reedcrm_lifecycle_date($row, 'dateo');
-    $steps[]   = reedcrm_lifecycle_step('start', $langs->transnoentities('LifecycleStepProjectStart'), $startDate, 'fa-play', [], reedcrm_lifecycle_deadline_state($startDate, true));
+    $startDate = reedcrm_lifecycle_date($project, 'dateo');
+    $steps[]   = reedcrm_lifecycle_step('start', $langs->transnoentities($captions['start']), $startDate, 'fa-play', [], reedcrm_lifecycle_deadline_state($startDate, true));
 
-    if (isModEnabled('propal')) {
-        // The project card does not load the proposal class on its own, and its statuses are read below
-        require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-
-        $proposals = reedcrm_lifecycle_project_summary('propal', (int) $object->id, 'datec');
-        $steps[]   = reedcrm_lifecycle_step('proposal', $langs->transnoentities('LifecycleStepFirstProposal'), $proposals['first'], 'fa-file-alt', reedcrm_lifecycle_count_detail($proposals['count']));
-
-        $signed  = reedcrm_lifecycle_project_summary('propal', (int) $object->id, 'date_signature', 'fk_statut IN (' . Propal::STATUS_SIGNED . ', ' . Propal::STATUS_BILLED . ')');
-        $steps[] = reedcrm_lifecycle_step('signature', $langs->transnoentities('LifecycleStepSignature'), $signed['first'], 'fa-file-signature', reedcrm_lifecycle_count_detail($signed['count']));
-    }
-
-    if (isModEnabled('order')) {
-        $orders  = reedcrm_lifecycle_project_summary('commande', (int) $object->id, 'date_creation');
-        $steps[] = reedcrm_lifecycle_step('order', $langs->transnoentities('LifecycleStepFirstOrder'), $orders['first'], 'fa-shopping-cart', reedcrm_lifecycle_count_detail($orders['count']));
-    }
-
-    if (isModEnabled('invoice')) {
-        $invoices = reedcrm_lifecycle_project_summary('facture', (int) $object->id, 'datec');
-        $steps[]  = reedcrm_lifecycle_step('billing', $langs->transnoentities('LifecycleStepFirstInvoice'), $invoices['first'], 'fa-file-invoice-dollar', reedcrm_lifecycle_count_detail($invoices['count']));
+    // A document milestone is only read, hence only shown, when the module of the document is enabled
+    $documentPictos = ['proposal' => 'fa-file-alt', 'signature' => 'fa-file-signature', 'order' => 'fa-shopping-cart', 'billing' => 'fa-file-invoice-dollar'];
+    foreach ($documentPictos as $stepKey => $picto) {
+        if (isset($project['documents'][$stepKey])) {
+            $documents = $project['documents'][$stepKey];
+            $steps[]   = reedcrm_lifecycle_step($stepKey, $langs->transnoentities($captions[$stepKey]), $documents['first'], $picto, reedcrm_lifecycle_count_detail($documents['count']));
+        }
     }
 
     // Planned end turns red once the date is gone while the project is still open
-    $endDate = reedcrm_lifecycle_date($row, 'datee');
-    $steps[] = reedcrm_lifecycle_step('end', $langs->transnoentities('LifecycleStepProjectEnd'), $endDate, 'fa-hourglass-half', [], reedcrm_lifecycle_deadline_state($endDate, $isClosed));
+    $endDate = reedcrm_lifecycle_date($project, 'datee');
+    $steps[] = reedcrm_lifecycle_step('end', $langs->transnoentities($captions['end']), $endDate, 'fa-hourglass-half', [], reedcrm_lifecycle_deadline_state($endDate, $isClosed));
 
-    $steps[] = reedcrm_lifecycle_step('closing', $langs->transnoentities('LifecycleStepClosing'), $isClosed ? reedcrm_lifecycle_date($row, 'date_close') : null, 'fa-flag-checkered', reedcrm_lifecycle_user_detail((int) $row['fk_user_close']));
+    $steps[] = reedcrm_lifecycle_step('closing', $langs->transnoentities($captions['closing']), $isClosed ? reedcrm_lifecycle_date($project, 'date_close') : null, 'fa-flag-checkered', reedcrm_lifecycle_user_detail((int) $project['fk_user_close']));
 
     return $steps;
+}
+
+/**
+ * Read what the timeline of several projects is built from
+ *
+ * The opportunity list prints one timeline per row: each kind of document is read once for the
+ * projects of the whole page, which keeps the cost of the column flat whatever the number of rows
+ *
+ * @param  int[] $projectIds Ids of the projects
+ * @return array             Row of each project indexed by its id, the summaries of its documents
+ *                           under 'documents', indexed by the milestone they stand for
+ */
+function reedcrm_lifecycle_fetch_projects(array $projectIds): array
+{
+    global $db;
+
+    $projectIds = array_filter(array_map('intval', $projectIds));
+    if (empty($projectIds)) {
+        return [];
+    }
+
+    $sql   = 'SELECT rowid, datec, dateo, datee, date_close, fk_statut, fk_user_creat, fk_user_close';
+    $sql  .= ' FROM ' . MAIN_DB_PREFIX . 'projet';
+    $sql  .= ' WHERE rowid IN (' . implode(',', $projectIds) . ')';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('reedcrm_lifecycle_fetch_projects ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $projects = [];
+    while ($row = $db->fetch_array($resql)) {
+        $row['documents']              = [];
+        $projects[(int) $row['rowid']] = $row;
+    }
+    $db->free($resql);
+
+    $documents = [];
+    if (isModEnabled('propal')) {
+        // Neither the project card nor the list load the proposal class on their own, and its statuses are read below
+        require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+
+        $documents['proposal']  = reedcrm_lifecycle_project_summaries('propal', $projectIds, 'datec');
+        $documents['signature'] = reedcrm_lifecycle_project_summaries('propal', $projectIds, 'date_signature', 'fk_statut IN (' . Propal::STATUS_SIGNED . ', ' . Propal::STATUS_BILLED . ')');
+    }
+    if (isModEnabled('order')) {
+        $documents['order'] = reedcrm_lifecycle_project_summaries('commande', $projectIds, 'date_creation');
+    }
+    if (isModEnabled('invoice')) {
+        $documents['billing'] = reedcrm_lifecycle_project_summaries('facture', $projectIds, 'datec');
+    }
+
+    foreach (array_keys($projects) as $projectId) {
+        foreach ($documents as $stepKey => $summaries) {
+            $projects[$projectId]['documents'][$stepKey] = $summaries[$projectId] ?? ['count' => 0, 'first' => null, 'last' => null];
+        }
+    }
+
+    return $projects;
+}
+
+/**
+ * SQL expression giving the rank of the last milestone a project reached, -1 when it reached none
+ *
+ * It mirrors reedcrm_build_project_lifecycle_steps() and reedcrm_lifecycle_mark_current(), so the
+ * opportunity list sorts and filters its rows on the very step their timeline flags as current:
+ * the milestones are checked from the last one back to the first one, the first one reached wins
+ *
+ * @param  string $alias Alias of the project table in the query
+ * @return string        SQL expression, between brackets
+ */
+function reedcrm_lifecycle_project_current_step_sql(string $alias): string
+{
+    global $db;
+
+    $ranks    = array_flip(array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS));
+    $now      = "'" . $db->idate(dol_now()) . "'";
+    $isClosed = $alias . '.fk_statut = ' . Project::STATUS_CLOSED;
+
+    $conditions            = [];
+    $conditions['closing'] = $isClosed . ' AND ' . $alias . '.date_close IS NOT NULL';
+    $conditions['end']     = $isClosed . ' AND ' . $alias . '.datee <= ' . $now;
+    if (isModEnabled('invoice')) {
+        $conditions['billing'] = reedcrm_lifecycle_project_document_sql('facture', $alias, 'datec');
+    }
+    if (isModEnabled('order')) {
+        $conditions['order'] = reedcrm_lifecycle_project_document_sql('commande', $alias, 'date_creation');
+    }
+    if (isModEnabled('propal')) {
+        require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+
+        $conditions['signature'] = reedcrm_lifecycle_project_document_sql('propal', $alias, 'date_signature', 'fk_statut IN (' . Propal::STATUS_SIGNED . ', ' . Propal::STATUS_BILLED . ')');
+        $conditions['proposal']  = reedcrm_lifecycle_project_document_sql('propal', $alias, 'datec');
+    }
+    // A start or an end still ahead is not reached yet, see reedcrm_lifecycle_deadline_state()
+    $conditions['start']    = $alias . '.dateo <= ' . $now;
+    $conditions['creation'] = $alias . '.datec IS NOT NULL';
+
+    $sql = '(CASE';
+    foreach ($conditions as $stepKey => $condition) {
+        $sql .= ' WHEN ' . $condition . ' THEN ' . $ranks[$stepKey];
+    }
+    $sql .= ' ELSE -1 END)';
+
+    return $sql;
+}
+
+/**
+ * SQL condition true when a project carries a document dating a milestone
+ *
+ * @param  string $table      Table of the documents, without the Dolibarr prefix
+ * @param  string $alias      Alias of the project table in the query
+ * @param  string $dateField  Column of the documents dating the milestone
+ * @param  string $extraWhere Additional condition on that table, without the leading AND
+ * @return string             SQL condition
+ */
+function reedcrm_lifecycle_project_document_sql(string $table, string $alias, string $dateField, string $extraWhere = ''): string
+{
+    $sql  = 'EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . $table . ' AS lcd';
+    $sql .= ' WHERE lcd.fk_projet = ' . $alias . '.rowid';
+    $sql .= ' AND lcd.entity IN (' . getEntity($table) . ')';
+    $sql .= ' AND lcd.' . $dateField . ' IS NOT NULL';
+    if (!empty($extraWhere)) {
+        $sql .= ' AND lcd.' . $extraWhere;
+    }
+    $sql .= ')';
+
+    return $sql;
+}
+
+/**
+ * Captions of the project milestones the opportunity list can be filtered on, indexed by their rank
+ *
+ * @return string[] Translation keys of the captions
+ */
+function reedcrm_lifecycle_project_step_labels(): array
+{
+    // A document milestone is left out with the module of its document, as the timeline does
+    $modules = ['proposal' => 'propal', 'signature' => 'propal', 'order' => 'order', 'billing' => 'invoice'];
+
+    $labels = [];
+    foreach (array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS) as $rank => $stepKey) {
+        if (!isset($modules[$stepKey]) || isModEnabled($modules[$stepKey])) {
+            $labels[$rank] = REEDCRM_LIFECYCLE_PROJECT_STEPS[$stepKey];
+        }
+    }
+
+    return $labels;
 }
 
 /**
@@ -586,27 +754,41 @@ function reedcrm_lifecycle_linked_summary(string $sourceType, int $sourceId, str
 }
 
 /**
- * Summary of the documents attached to a project
+ * Summary of the documents attached to each of several projects
  *
  * @param  string $table      Table of the documents, without the Dolibarr prefix
- * @param  int    $projectId  Id of the project
+ * @param  int[]  $projectIds Ids of the projects
  * @param  string $dateField  Column holding the date to read
  * @param  string $extraWhere Additional condition on that table, without the leading AND
- * @return array              count, first and last document
+ * @return array              count, first and last document, indexed by project id; a project
+ *                            carrying no document is left out
  */
-function reedcrm_lifecycle_project_summary(string $table, int $projectId, string $dateField, string $extraWhere = ''): array
+function reedcrm_lifecycle_project_summaries(string $table, array $projectIds, string $dateField, string $extraWhere = ''): array
 {
     global $db;
 
-    $sql  = 'SELECT COUNT(t.rowid) AS nb, MIN(t.' . $dateField . ') AS datemin, MAX(t.' . $dateField . ') AS datemax';
+    $sql  = 'SELECT t.fk_projet, COUNT(t.rowid) AS nb, MIN(t.' . $dateField . ') AS datemin, MAX(t.' . $dateField . ') AS datemax';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . $table . ' AS t';
-    $sql .= ' WHERE t.fk_projet = ' . $projectId;
+    $sql .= ' WHERE t.fk_projet IN (' . implode(',', array_map('intval', $projectIds)) . ')';
     $sql .= ' AND t.entity IN (' . getEntity($table) . ')';
     if (!empty($extraWhere)) {
         $sql .= ' AND t.' . $extraWhere;
     }
+    $sql .= ' GROUP BY t.fk_projet';
 
-    return reedcrm_lifecycle_read_summary($sql);
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog('reedcrm_lifecycle_project_summaries ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $summaries = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $summaries[(int) $obj->fk_projet] = reedcrm_lifecycle_summary_from_row($obj);
+    }
+    $db->free($resql);
+
+    return $summaries;
 }
 
 /**
@@ -656,18 +838,29 @@ function reedcrm_lifecycle_read_summary(string $sql): array
 {
     global $db;
 
-    $summary = ['count' => 0, 'first' => null, 'last' => null];
-
     $resql = $db->query($sql);
     if (!$resql) {
         dol_syslog('reedcrm_lifecycle_read_summary ' . $db->lasterror(), LOG_ERR);
-        return $summary;
+        return ['count' => 0, 'first' => null, 'last' => null];
     }
     $obj = $db->fetch_object($resql);
     $db->free($resql);
 
+    return reedcrm_lifecycle_summary_from_row($obj);
+}
+
+/**
+ * Turn one row selecting nb, datemin and datemax into a summary
+ *
+ * @param  object|false|null $obj Row read from the database, false or null when there is none
+ * @return array                  count, first and last row
+ */
+function reedcrm_lifecycle_summary_from_row($obj): array
+{
+    global $db;
+
     if (empty($obj) || empty($obj->nb)) {
-        return $summary;
+        return ['count' => 0, 'first' => null, 'last' => null];
     }
 
     return [
@@ -687,16 +880,22 @@ function reedcrm_lifecycle_user_detail(int $userId): array
 {
     global $db, $langs;
 
+    // The opportunity list prints a timeline per row, mostly carried by the same handful of users
+    static $userNames = [];
+
     if ($userId <= 0) {
         return [];
     }
 
-    $milestoneUser = new User($db);
-    if ($milestoneUser->fetch($userId) <= 0) {
+    if (!array_key_exists($userId, $userNames)) {
+        $milestoneUser      = new User($db);
+        $userNames[$userId] =($milestoneUser->fetch($userId) > 0) ? $milestoneUser->getFullName($langs) : '';
+    }
+    if ($userNames[$userId] === '') {
         return [];
     }
 
-    return [$langs->transnoentities('LifecycleTooltipBy', $milestoneUser->getFullName($langs))];
+    return [$langs->transnoentities('LifecycleTooltipBy', $userNames[$userId])];
 }
 
 /**
