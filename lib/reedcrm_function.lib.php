@@ -687,6 +687,17 @@ function reedcrm_parse_import_note(string $value): ?int
 }
 
 /**
+ * Tell whether an imported CSV cell says there is nothing, "Aucune" in an action column for instance
+ *
+ * @param  string $value Raw cell
+ * @return bool          True for an empty cell or a value meaning none or unknown
+ */
+function reedcrm_is_import_empty_value(string $value): bool
+{
+    return (bool) preg_match('/^(|-+|\?+|aucun|aucune|rien|non|none|n\/?a|inconnu|inconnue|unknown|nsp|je ne sais pas|ne sais pas|i don\'?t know)$/', reedcrm_normalize_import_key($value));
+}
+
+/**
  * Opportunity status matching a probability: the active status of the highest probability not above it,
  * the lowest one when all of them are above it
  *
@@ -776,14 +787,19 @@ function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
  * @param  int    $contactId Linked contact id (0 = none)
  * @param  string $typeCode  Type of the reminder event, one of reedcrm_get_relaunch_types()
  * @param  int[]  $otherUserIds Other users to remind, assigned to the same event and notified too
+ * @param  array{due_date?: int, note?: string, notify?: bool} $options 'due_date': deadline of the event (its end date),
+ *                           notified before it rather than before $date; 'note': private note of the event;
+ *                           'notify': false to create no browser notification
  * @return int               Id of the reminder event (> 0), or -1 on error
  */
-function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int $date, int $userId, int $projectId = 0, int $socId = 0, int $contactId = 0, string $typeCode = 'AC_OTH', array $otherUserIds = []): int
+function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int $date, int $userId, int $projectId = 0, int $socId = 0, int $contactId = 0, string $typeCode = 'AC_OTH', array $otherUserIds = [], array $options = []): int
 {
     require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncommreminder.class.php';
     require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+    $dueDate = (int) ($options['due_date'] ?? 0);
 
     $db->begin();
 
@@ -791,6 +807,12 @@ function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int
     $actionComm->type_code    = $typeCode;
     $actionComm->percentage   = 0; // A reminder is a future "to do"
     $actionComm->datep        = $date;
+    if ($dueDate > 0) {
+        $actionComm->datef = $dueDate;
+    }
+    if (!empty($options['note'])) {
+        $actionComm->note_private = $options['note'];
+    }
     $actionComm->label        = $label;
     $actionComm->fk_project   = $projectId;
     $actionComm->socid        = $socId;
@@ -824,9 +846,9 @@ function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int
     $offsetValue = getDolGlobalInt('REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 30);
     $offsetUnit  = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT', 'i');
 
-    foreach ($remindedUserIds as $remindedUserId) {
+    foreach (($options['notify'] ?? true) ? $remindedUserIds : [] as $remindedUserId) {
         $actionCommReminder                = new ActionCommReminder($db);
-        $actionCommReminder->dateremind    = dol_time_plus_duree($date, -1 * $offsetValue, $offsetUnit);
+        $actionCommReminder->dateremind    = dol_time_plus_duree($dueDate > 0 ? $dueDate : $date, -1 * $offsetValue, $offsetUnit);
         $actionCommReminder->typeremind    = 'browser';
         $actionCommReminder->offsetvalue   = $offsetValue;
         $actionCommReminder->offsetunit    = $offsetUnit;

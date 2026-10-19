@@ -219,17 +219,19 @@ class ReedcrmSalesDashboard extends ReedcrmSalesIndicators
     {
         $todayStart = "'" . $this->db->idate(dol_get_first_hour($this->now)) . "'";
         $todayEnd   = "'" . $this->db->idate(dol_get_last_hour($this->now)) . "'";
+        // An action is due on its end date when it has one, on its start date otherwise
+        $dueDate    = 'COALESCE(a.datep2, a.datep)';
 
         $from  = ' FROM ' . MAIN_DB_PREFIX . 'actioncomm AS a';
         $from .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_actioncomm AS ca ON ca.id = a.fk_action';
         $where  = ' WHERE a.entity IN (' . getEntity('agenda') . ')';
         $where .= ' AND a.percent >= 0 AND a.percent < 100';
         $where .= " AND (ca.type IS NULL OR ca.type <> 'systemauto')";
-        $where .= ' AND (a.datep IS NULL OR a.datep <= ' . $todayEnd . ')';
+        $where .= ' AND (a.datep IS NULL OR ' . $dueDate . ' <= ' . $todayEnd . ')';
 
         $sql  = 'SELECT a.fk_user_action,';
-        $sql .= ' SUM(CASE WHEN a.datep >= ' . $todayStart . ' THEN 1 ELSE 0 END) AS nb_today,';
-        $sql .= ' SUM(CASE WHEN a.datep < ' . $todayStart . ' THEN 1 ELSE 0 END) AS nb_late,';
+        $sql .= ' SUM(CASE WHEN ' . $dueDate . ' >= ' . $todayStart . ' THEN 1 ELSE 0 END) AS nb_today,';
+        $sql .= ' SUM(CASE WHEN ' . $dueDate . ' < ' . $todayStart . ' THEN 1 ELSE 0 END) AS nb_late,';
         $sql .= ' SUM(CASE WHEN a.datep IS NULL THEN 1 ELSE 0 END) AS nb_undated';
         $sql .= $from . $where;
         $sql .= ' GROUP BY a.fk_user_action';
@@ -245,7 +247,7 @@ class ReedcrmSalesDashboard extends ReedcrmSalesIndicators
         }
 
         // Today's actions come first, then the late ones from the most recent: the oldest are rarely the most urgent
-        $sql  = 'SELECT a.id, a.ref, a.label, a.datep, a.code, a.percent, a.fk_user_action, a.fk_soc, s.nom AS soc_name,';
+        $sql  = 'SELECT a.id, a.ref, a.label, ' . $dueDate . ' AS datep, a.code, a.percent, a.fk_user_action, a.fk_soc, s.nom AS soc_name,';
         $sql .= ' a.fk_project, p.ref AS project_ref, p.title AS project_title, ca.code AS type_code, ca.libelle AS type_label';
         $sql .= $from;
         $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe AS s ON s.rowid = a.fk_soc';
@@ -255,7 +257,7 @@ class ReedcrmSalesDashboard extends ReedcrmSalesIndicators
         if ($this->filterUserId > 0) {
             $sql .= ' AND a.fk_user_action = ' . $this->filterUserId;
         }
-        $sql .= ' ORDER BY CASE WHEN a.datep >= ' . $todayStart . ' THEN 0 ELSE 1 END, a.datep DESC';
+        $sql .= ' ORDER BY CASE WHEN ' . $dueDate . ' >= ' . $todayStart . ' THEN 0 ELSE 1 END, ' . $dueDate . ' DESC';
         $sql .= $this->db->plimit(self::LIST_LIMIT);
 
         $resql = $this->db->query($sql);

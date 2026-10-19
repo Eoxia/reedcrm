@@ -254,7 +254,8 @@ class ReedcrmDashboard
             return $reminders;
         }
 
-        $sql  = 'SELECT a.id, a.label, a.datep, a.fk_soc, s.nom AS thirdparty_name';
+        // A reminder with a deadline (an imported one) is due on it rather than on its start date
+        $sql  = 'SELECT a.id, a.label, COALESCE(a.datep2, a.datep) AS datep, a.fk_soc, s.nom AS thirdparty_name';
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm AS a';
         $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'actioncomm_reminder AS r ON r.fk_actioncomm = a.id';
         $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'categorie_actioncomm AS c ON c.fk_actioncomm = a.id';
@@ -262,9 +263,9 @@ class ReedcrmDashboard
         $sql .= ' WHERE c.fk_categorie = ' . ((int) $reminderTag);
         $sql .= ' AND r.fk_user = ' . ((int) $user->id);
         $sql .= ' AND r.status = ' . ActionCommReminder::STATUS_TODO;
-        $sql .= " AND a.datep >= '" . $this->db->idate(dol_now()) . "'";
+        $sql .= " AND COALESCE(a.datep2, a.datep) >= '" . $this->db->idate(dol_now()) . "'";
         $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
-        $sql .= ' ORDER BY a.datep ASC';
+        $sql .= ' ORDER BY COALESCE(a.datep2, a.datep) ASC';
         $sql .= $this->db->plimit($limit);
 
         $resql = $this->db->query($sql);

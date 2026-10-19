@@ -456,6 +456,9 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             $dateSortTs = (int) $db->jdate($obj->datec);
         }
 
+        // An event is late once its deadline is past: its end date when it has one, its start date otherwise
+        $dueTs = $obj->datep2 ? (int) $db->jdate($obj->datep2) : ($obj->datep ? (int) $db->jdate($obj->datep) : 0);
+
         $todoCards[] = [
             'id'             => $eventId,
             'ref'            => !empty($obj->ref) ? $obj->ref : (string) $eventId,
@@ -473,7 +476,7 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             'date_start_fmt' => $obj->datep ? dol_print_date($db->jdate($obj->datep), empty($obj->fulldayevent) ? 'dayhour' : 'day') : '',
             'date_end'       => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), $rawFormat) : '',
             'date_end_fmt'   => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), empty($obj->fulldayevent) ? 'dayhour' : 'day') : '',
-            'late'           => ($obj->datep && $db->jdate($obj->datep) < $now && $percent >= 0 && $percent < 100) ? 1 : 0,
+            'late'           => ($dueTs && $dueTs < $now && $percent >= 0 && $percent < 100) ? 1 : 0,
             'upcoming'       => ($obj->datep && $db->jdate($obj->datep) > $todayEnd && $percent >= 0 && $percent < 100) ? 1 : 0,
             'type_id'        => (int) $obj->type_id,
             'type_code'      => $obj->type_code,
