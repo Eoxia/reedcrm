@@ -206,9 +206,10 @@ function reedcrmTodoGetUserCondition(int $userId): string
  * @param  DoliDB $db      Database handler
  * @param  array  $filters Criteria from reedcrmTodoGetFilters()
  * @param  int    $limit   Maximum number of events, 0 to use the module configuration
- * @return array           Enriched events, ordered by start date
+ * @param  string $sortKey 'date' for the start date, 'probability' for the one of the opportunity of the project
+ * @return array           Enriched events, ordered by start date or by probability
  */
-function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $columns, string $direction = 'asc', int $offset = 0, int $limit = 0): array
+function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $columns, string $direction = 'asc', int $offset = 0, int $limit = 0, string $sortKey = 'date'): array
 {
     if ($limit <= 0) {
         $limit = reedcrmTodoGetPageSize();
@@ -221,7 +222,13 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $
     $sql .= ' s.nom as soc_name, p.ref as project_ref, p.title as project_title';
     $sql .= reedcrmTodoBuildEventsFrom($db, $filters);
     $sql .= ' AND ' . reedcrmTodoGetColumnSqlCondition($column, $columns);
-    $sql .= ' ORDER BY ' . reedcrmTodoGetSortExpression() . ' ' . $order . ', a.id ' . $order;
+    if ($sortKey === 'probability') {
+        // Events without a probability (no project, or a project followed without opportunity) come last either way,
+        // the oldest first among those of a same probability
+        $sql .= ' ORDER BY CASE WHEN p.opp_percent IS NULL THEN 1 ELSE 0 END, p.opp_percent ' . $order . ', ' . reedcrmTodoGetSortExpression() . ' ASC, a.id ASC';
+    } else {
+        $sql .= ' ORDER BY ' . reedcrmTodoGetSortExpression() . ' ' . $order . ', a.id ' . $order;
+    }
     $sql .= $db->plimit($limit, $offset);
 
     $resql = $db->query($sql);

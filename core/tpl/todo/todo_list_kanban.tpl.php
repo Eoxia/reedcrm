@@ -70,6 +70,12 @@
         <div class="popover-action action-sort-desc">
             <i class="fas fa-arrow-down"></i> <?php echo $langs->trans('TodoSortDateDesc'); ?>
         </div>
+        <div class="popover-action action-sort-probability-asc">
+            <i class="fas fa-sort-numeric-up"></i> <?php echo $langs->trans('TodoSortProbabilityAsc'); ?>
+        </div>
+        <div class="popover-action action-sort-probability-desc">
+            <i class="fas fa-sort-numeric-down-alt"></i> <?php echo $langs->trans('TodoSortProbabilityDesc'); ?>
+        </div>
         <div class="popover-divider"></div>
         <div class="popover-action is-disabled" title="<?php echo dol_escape_htmltag($langs->trans('TodoComingSoon')); ?>">
             <i class="fas fa-layer-group"></i> <?php echo $langs->trans('TodoGroup'); ?>
@@ -126,11 +132,14 @@
              data-color="<?php echo dol_escape_htmltag($columnDefinition['color']); ?>">
             <div class="todo-column-header" style="border-top: 3px solid <?php echo dol_escape_htmltag($columnDefinition['color']); ?>">
                 <span class="todo-column-icon"><i class="fas <?php echo dol_escape_htmltag($columnDefinition['icon']); ?>"></i></span>
-                <?php // Clicking the title sorts the cards of the column on their date. Both arrows
-                      // stay up, the way in force is the one the stylesheet darkens ?>
-                <button type="button" class="todo-column-sort" data-column="<?php echo dol_escape_htmltag($columnKey); ?>" data-direction=""
+                <?php // Clicking the title turns the way the column is sorted, on its date or on the probability
+                      // picked in its menu. Both arrows stay up, the way in force is the one the stylesheet darkens ?>
+                <button type="button" class="todo-column-sort" data-column="<?php echo dol_escape_htmltag($columnKey); ?>" data-direction="" data-sort="date"
+                        data-title-date="<?php echo dol_escape_htmltag($langs->trans('TodoSortByDate')); ?>"
+                        data-title-probability="<?php echo dol_escape_htmltag($langs->trans('TodoSortByProbability')); ?>"
                         title="<?php echo dol_escape_htmltag($langs->trans('TodoSortByDate')); ?>">
                     <span class="todo-column-title"><?php echo dol_escape_htmltag($columnDefinition['label']); ?></span>
+                    <span class="todo-column-sort-key"><i class="fas fa-percent"></i></span>
                     <span class="todo-column-sort-icon">
                         <i class="fas fa-sort-up"></i>
                         <i class="fas fa-sort-down"></i>
