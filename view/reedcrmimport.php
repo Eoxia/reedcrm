@@ -126,7 +126,9 @@ if ($action == 'import_projects') {
                     if ($defaultAssigneesColumn === '' && preg_match('/^assigne|^affecte|qui qualifie/', $headerKey)) {
                         $defaultAssigneesColumn = (string) ($idx + 1);
                     }
-                    if (preg_match('/rappel|relance|evenement|event|action a realiser/', $headerKey)) {
+                    if (strpos($headerKey, 'echeance') !== false) {
+                        $defaultReminderDateColumn = $defaultReminderDateColumn ?: (string) ($idx + 1);
+                    } elseif (preg_match('/rappel|relance|evenement|event|action a realiser/', $headerKey)) {
                         if (strpos($headerKey, 'date') !== false) {
                             $defaultReminderDateColumn = $defaultReminderDateColumn ?: (string) ($idx + 1);
                         } else {
@@ -145,11 +147,6 @@ if ($action == 'import_projects') {
                     }
                 }
                 fclose($handle);
-            }
-            // A reminder needs both its text and its date, a file offering only one of them gets none preselected
-            if ($defaultReminderLabelColumn === '' || $defaultReminderDateColumn === '') {
-                $defaultReminderLabelColumn = '';
-                $defaultReminderDateColumn  = '';
             }
 
             $formquestion = [
@@ -238,10 +235,6 @@ if ($action == 'confirm_import_projects') {
     if (empty($importFile) || (empty($existingCategoryIds) && empty($categoryName))) {
         setEventMessages($langs->trans('ImportParametersMissing'), null, 'errors');
         $action = 'view';
-    } elseif (($reminderLabelColumn > 0) !== ($reminderDateColumn > 0)) {
-        // Stopped before importing anything: importing the file again would duplicate its opportunities
-        setEventMessages($langs->trans('ImportReminderColumnsIncomplete'), null, 'errors');
-        $action = 'view';
     } else {
         $fullPath = $uploadDir . '/' . $importFile;
         if (!is_readable($fullPath)) {
@@ -324,11 +317,12 @@ if ($action == 'confirm_import_projects') {
                     $assigneesIdx = ($assigneesColumn > 0 && isset($headers[$assigneesColumn - 1])) ? $assigneesColumn - 1 : null;
                     $usersIndex   = ($assigneesIdx !== null) ? reedcrm_get_import_users_index() : [];
 
-                    // Reminders need both columns, checked before the import started
-                    $hasReminders     = ($reminderLabelColumn > 0 && isset($headers[$reminderLabelColumn - 1]) && $reminderDateColumn > 0 && isset($headers[$reminderDateColumn - 1]));
-                    $reminderLabelIdx = $hasReminders ? $reminderLabelColumn - 1 : null;
-                    $reminderDateIdx  = $hasReminders ? $reminderDateColumn - 1 : null;
+                    // Either reminder column is enough: a missing text gets a default label, a missing date leaves the reminder without deadline
+                    $reminderLabelIdx = ($reminderLabelColumn > 0 && isset($headers[$reminderLabelColumn - 1])) ? $reminderLabelColumn - 1 : null;
+                    $reminderDateIdx  = ($reminderDateColumn > 0 && isset($headers[$reminderDateColumn - 1])) ? $reminderDateColumn - 1 : null;
+                    $hasReminders     = ($reminderLabelIdx !== null || $reminderDateIdx !== null);
                     $noteIdx          = ($noteColumn > 0 && isset($headers[$noteColumn - 1])) ? $noteColumn - 1 : null;
+                    $now              = dol_now();
 
                     $required = ['prenom', 'nom', 'email', 'tel', 'note'];
                     $missing = array_diff($required, array_keys($map));
@@ -343,8 +337,9 @@ if ($action == 'confirm_import_projects') {
                         $unresolvedAssignees = [];
                         $assignmentErrors = 0;
                         $remindersCreated = 0;
-                        $remindersInvalid = 0;
-                        $remindersPast = 0;
+                        $remindersWithoutText = 0;
+                        $remindersWithoutDueDate = 0;
+                        $remindersOverdue = 0;
                         $reminderErrors = 0;
                         $notesInvalid = 0;
 
@@ -405,25 +400,40 @@ if ($action == 'confirm_import_projects') {
                                 }
 
                                 if ($hasReminders) {
-                                    $reminderLabel     = dol_string_nohtmltag(trim((string) ($row[$reminderLabelIdx] ?? '')));
-                                    $reminderDateValue = trim((string) ($row[$reminderDateIdx] ?? ''));
+                                    $reminderLabel     = ($reminderLabelIdx !== null) ? dol_string_nohtmltag(trim((string) ($row[$reminderLabelIdx] ?? ''))) : '';
+                                    $reminderDateValue = ($reminderDateIdx !== null) ? trim((string) ($row[$reminderDateIdx] ?? '')) : '';
+                                    $reminderLabel     = reedcrm_is_import_empty_value($reminderLabel) ? '' : $reminderLabel;
+                                    $reminderDateValue = reedcrm_is_import_empty_value($reminderDateValue) ? '' : $reminderDateValue;
                                     if ($reminderLabel !== '' || $reminderDateValue !== '') {
-                                        $reminderDate = reedcrm_parse_import_date($reminderDateValue);
-                                        if ($reminderLabel === '' || $reminderDate <= 0) {
-                                            $remindersInvalid++;
-                                        } elseif ($reminderDate < dol_now()) {
-                                            // A past reminder would only pop its browser notification at once, for every line of the file
-                                            $remindersPast++;
-                                        } else {
-                                            // The people assigned to the opportunity are the ones to remind, the importer when nobody is
-                                            $reminderUserIds = !empty($assigneeIds) ? $assigneeIds : [(int) $user->id];
-                                            $reminderOwnerId = (int) array_shift($reminderUserIds);
-                                            $reminderId      = reedcrm_create_call_reminder($db, $user, dol_substr($reminderLabel, 0, 255), $reminderDate, $reminderOwnerId, (int) $proj->id, max(0, (int) $proj->socid), 0, 'AC_OTH', $reminderUserIds);
-                                            if ($reminderId > 0) {
-                                                $remindersCreated++;
-                                            } else {
-                                                $reminderErrors++;
+                                        $dueDate         = reedcrm_parse_import_date($reminderDateValue);
+                                        // Only a deadline still to come is notified: a past one would pop at once, for every line of the file
+                                        $reminderOptions = ['due_date' => $dueDate, 'notify' => $dueDate > $now];
+                                        if ($reminderLabel === '') {
+                                            $remindersWithoutText++;
+                                            $contactName   = dol_string_nohtmltag(trim(($row[$map['prenom']] ?? '') . ' ' . ($row[$map['nom']] ?? '')));
+                                            $reminderLabel = $langs->transnoentities('QuickCreationReminderDefaultLabel', $contactName !== '' ? $contactName : $proj->ref);
+                                        }
+                                        if ($dueDate <= 0) {
+                                            $remindersWithoutDueDate++;
+                                            // "3-6 mois" is no date but still tells when to call back
+                                            if ($reminderDateValue !== '') {
+                                                $reminderOptions['note'] = $langs->transnoentities('ImportReminderDueDateAsWritten', dol_string_nohtmltag($reminderDateValue));
                                             }
+                                        } elseif ($dueDate < $now) {
+                                            $remindersOverdue++;
+                                        }
+
+                                        // The reminder starts when it is imported and ends on the date of the file, its deadline. An
+                                        // overdue one starts on its deadline, Dolibarr would otherwise move the deadline to the start.
+                                        $reminderStart   = ($dueDate > 0) ? min($now, $dueDate) : $now;
+                                        // The people assigned to the opportunity are the ones to remind, the importer when nobody is
+                                        $reminderUserIds = !empty($assigneeIds) ? $assigneeIds : [(int) $user->id];
+                                        $reminderOwnerId = (int) array_shift($reminderUserIds);
+                                        $reminderId      = reedcrm_create_call_reminder($db, $user, dol_substr($reminderLabel, 0, 255), $reminderStart, $reminderOwnerId, (int) $proj->id, max(0, (int) $proj->socid), 0, 'AC_OTH', $reminderUserIds, $reminderOptions);
+                                        if ($reminderId > 0) {
+                                            $remindersCreated++;
+                                        } else {
+                                            $reminderErrors++;
                                         }
                                     }
                                 }
@@ -461,11 +471,14 @@ if ($action == 'confirm_import_projects') {
                         if ($remindersCreated > 0) {
                             setEventMessages($langs->trans('ImportRemindersCreated', $remindersCreated), null, 'mesgs');
                         }
-                        if ($remindersInvalid > 0) {
-                            setEventMessages($langs->trans('ImportRemindersInvalid', $remindersInvalid), null, 'warnings');
+                        if ($remindersWithoutText > 0) {
+                            setEventMessages($langs->trans('ImportRemindersWithoutText', $remindersWithoutText), null, 'warnings');
                         }
-                        if ($remindersPast > 0) {
-                            setEventMessages($langs->trans('ImportRemindersPast', $remindersPast), null, 'warnings');
+                        if ($remindersWithoutDueDate > 0) {
+                            setEventMessages($langs->trans('ImportRemindersWithoutDueDate', $remindersWithoutDueDate), null, 'warnings');
+                        }
+                        if ($remindersOverdue > 0) {
+                            setEventMessages($langs->trans('ImportRemindersOverdue', $remindersOverdue), null, 'warnings');
                         }
                         if ($reminderErrors > 0) {
                             setEventMessages($langs->trans('ImportReminderErrors', $reminderErrors), null, 'warnings');
