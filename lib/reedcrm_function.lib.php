@@ -999,6 +999,25 @@ function reedcrm_get_relaunch_type_key(string $typeCode): string
 }
 
 /**
+ * Duration offered beside the date of the quick event form, set in the module setup for each relaunch bucket.
+ *
+ * @return array<string, int> Minutes indexed by bucket key of reedcrm_get_relaunch_types()
+ */
+function reedcrm_get_event_default_durations(): array
+{
+    // Same values as the constants of the module descriptor, for an instance that has not been reactivated since
+    $defaults = ['call' => 15, 'email' => 5, 'rdv' => 60, 'other' => 15];
+
+    $durations = [];
+    foreach ($defaults as $key => $minutes) {
+        $constName       = 'REEDCRM_EVENT_DURATION_' . strtoupper($key);
+        $durations[$key] = getDolGlobalString($constName) !== '' ? getDolGlobalInt($constName) : $minutes;
+    }
+
+    return $durations;
+}
+
+/**
  * Build the criteria filtering a Dolibarr list on a date range
  *
  * A Dolibarr list expects one day, month and year parameter per bound, so a range is spelled out field by field.

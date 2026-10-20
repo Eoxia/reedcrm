@@ -561,12 +561,38 @@ TicketTimeTitleMaxLength=Longueur max du titre de l'événement
 TicketTimeTitleMaxLengthDescription=Nombre maximum de caractères conservés pour le titre de l'événement dans l'agenda (tronqué automatiquement, max recommandé : 255).
 
 TicketTimeDefaultMinutes=Temps par défaut (minutes)
-TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le bloc de saisie rapide sur le ticket.
+TicketTimeDefaultMinutesDescription=Le temps par défaut pré-rempli dans le bloc de saisie rapide des tickets et des projets.
 
 PleaseLinkProjectFirst=Veuillez d'abord lier un projet au ticket
 ReedCRMLogTimeWithMessage=Enregistrer le temps passé avec ce message
 ReedCRMTimeEntriesLatest=Derniers temps pointés (%s/%s) :
-ReedCRMNoTimeEntries=Aucun temps pointé sur cette tâche.
+ReedCRMNoTimeEntries=Aucun temps pointé pour l'instant.
+TicketTimeTaskDescription=Tâche générée automatiquement pour le ticket %s
+ReedCRMTimeSpentEventLabel=Temps consigné (%s min)
+ReedCRMTimeSpentEventDuration=Temps : %s min
+ReedCRMTimeSpentEventComment=Commentaire :
+ReedCRMTimeSpentPerUser=Temps passé par intervenant
+ReedCRMTimeSpentPerTask=Temps passé par tâche
+ReedCRMTimeSpentTotalTicket=Total temps passé :
+ReedCRMTimeSpentTotalProject=Total temps passé sur le projet :
+ReedCRMTimeSpentSaveError=Le temps passé n'a pas pu être enregistré
+ReedCRMTimeSpentInvalidMinutes=Veuillez saisir un temps supérieur à 0
+EventDefaultDuration=Durée par défaut des événements
+EventDefaultDurationDescription=Durée en minutes proposée à côté de la date dans l'ajout rapide d'événement. Elle fixe la date de fin et, une fois l'événement fait, est pointée en temps passé sur le projet associé.
+EventDurationHelp=Durée en minutes : fixe la date de fin et, si l'événement est fait, est pointée en temps passé sur le projet associé
+ReedCRMProjectTimeTitle=Temps du projet
+ReedCRMProjectTimePlanned=Temps prévu
+ReedCRMProjectTimePlannedShort=Prévu
+ReedCRMProjectTimePlannedHelp=Charge prévue des tâches, répartie sur les jours entre leur date de début et leur date de fin
+ReedCRMProjectTimeSpent=Temps passé
+ReedCRMProjectTimeSpentShort=Passé
+ReedCRMProjectTimeGap=Écart (passé - prévu)
+ReedCRMProjectTimeGapShort=Écart
+ReedCRMProjectTimeYearTotal=Total annuel
+ReedCRMProjectTimeMonthlyAverage=Moyenne mensuelle
+ReedCRMProjectTimeMonthlyAverageShort=Moy.
+ReedCRMProjectTimeBarTitle=%s : prévu %s, passé %s
+ReedCRMProjectTimeChartTitle=Comparaison mensuelle : temps prévu / temps passé
 
 
 ReadMyCallLists=Voir mes listes d'appel

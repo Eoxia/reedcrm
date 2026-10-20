@@ -86,6 +86,7 @@ $thirdpartyId = !empty($object->thirdparty) ? $object->thirdparty->id : 0;
         </div>
         <div class="pwa-relaunch-date">
             <?php echo $form->selectDate(dol_now(), 'event_', 1, 1, 0, 'addeventform', 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?>
+            <?php require __DIR__ . '/../view/eventpro/eventpro_event_duration.tpl.php'; ?>
         </div>
     </div>
 
