@@ -33,7 +33,8 @@ if (!$sortfield) $sortfield = "p.ref";
 if (!$sortorder) $sortorder = "DESC";
 
 // View
-llxHeader('', 'Modèles de propositions', '');
+// Modern back office theme of Saturne, as on the pages built with saturne_header()
+llxHeader('', 'Modèles de propositions', '', '', 0, 0, '', ['/saturne/css/saturne.min.css'], '', 'saturne-theme');
 
 $form = new Form($db);
 

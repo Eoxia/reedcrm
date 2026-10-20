@@ -1,0 +1,113 @@
+/* ReedCRM modern theme: design tokens.
+   The generic restyle of the back office (titles, tabs, lists, forms, buttons, modals) is the shared
+   theme of Saturne. saturne_header() puts its saturne-theme class on the logged-in pages only: the
+   PWA screens (view/frontend) and the public pages, which have their own design, never get it.
+   The ReedCRM components below aim at the same scope. */
+$rc-scope: 'body#mainbody.saturne-theme';
+
+/* ReedCRM is compiled apart from Saturne: the shared theme exposes its tokens as CSS custom
+   properties on that scope, read them rather than copying the values */
+$rc-bg: var(--saturne-bg);
+$rc-surface: var(--saturne-surface);
+$rc-surface-soft: var(--saturne-surface-soft);
+$rc-border: var(--saturne-border);
+$rc-border-soft: var(--saturne-border-soft);
+$rc-border-strong: var(--saturne-border-strong);
+$rc-text: var(--saturne-text);
+$rc-text-soft: var(--saturne-text-soft);
+$rc-muted: var(--saturne-muted);
+$rc-faint: var(--saturne-faint);
+
+$rc-primary: var(--saturne-primary);
+$rc-primary-strong: var(--saturne-primary-strong);
+$rc-primary-soft: var(--saturne-primary-soft);
+$rc-navy: var(--saturne-navy);
+$rc-success: var(--saturne-success);
+$rc-success-soft: var(--saturne-success-soft);
+$rc-warning: var(--saturne-warning);
+$rc-warning-soft: var(--saturne-warning-soft);
+$rc-danger: var(--saturne-danger);
+$rc-danger-soft: var(--saturne-danger-soft);
+
+$rc-radius-lg: var(--saturne-radius-lg);
+$rc-radius: var(--saturne-radius);
+$rc-radius-sm: var(--saturne-radius-sm);
+$rc-radius-pill: var(--saturne-radius-pill);
+
+$rc-shadow-sm: var(--saturne-shadow-sm);
+$rc-shadow: var(--saturne-shadow);
+$rc-shadow-hover: var(--saturne-shadow-hover);
+$rc-shadow-lg: var(--saturne-shadow-lg);
+$rc-ring: var(--saturne-ring);
+
+$rc-font: var(--saturne-font);
+$rc-transition: 0.15s ease;
+
+/* Text colours of the tinted pills, darker than the accents so that they read on their soft
+   background (same values as the badges of the shared theme) */
+$rc-success-ink: #15803d;
+$rc-warning-ink: #a16207;
+$rc-danger-ink: #b91c1c;
+
+/* Uppercase micro label, used for table headers and field labels */
+@mixin rc-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $rc-muted;
+}
+
+/* White rounded surface */
+@mixin rc-card {
+  background: $rc-surface;
+  border: 1px solid $rc-border;
+  border-radius: $rc-radius-lg;
+  box-shadow: $rc-shadow-sm;
+}
+
+/* Secondary button: white, slate border, blue on hover */
+@mixin rc-button {
+  border: 1px solid $rc-border-strong;
+  border-radius: $rc-radius;
+  background: $rc-surface;
+  box-shadow: none;
+  color: $rc-text-soft;
+  font-family: $rc-font;
+  font-weight: 600;
+  text-transform: none;
+  transition: background-color $rc-transition, border-color $rc-transition, color $rc-transition;
+
+  &:hover {
+    border-color: $rc-primary;
+    background: $rc-surface;
+    color: $rc-primary-strong;
+    text-decoration: none;
+  }
+}
+
+/* Primary button: Saturne blue */
+@mixin rc-button-primary {
+  border-color: $rc-primary;
+  background: $rc-primary;
+  box-shadow: 0 1px 2px rgba(13, 138, 255, 0.35);
+  color: #ffffff;
+
+  &:hover {
+    border-color: $rc-primary-strong;
+    background: $rc-primary-strong;
+    color: #ffffff;
+  }
+}
+
+/* A link styled .button.button-cancel: the shared theme forces the white label of its blue buttons
+   and eldy the grey background of the cancel buttons, both with !important */
+@mixin rc-button-cancel-force {
+  background: $rc-surface !important;
+  color: $rc-text-soft !important;
+
+  &:hover {
+    background: $rc-surface !important;
+    color: $rc-primary-strong !important;
+  }
+}

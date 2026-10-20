@@ -1,0 +1,388 @@
+@use 'tokens' as *;
+
+/* ReedCRM modern theme: todo board (view/todo_list.php), criteria bar, columns and cards */
+
+#{$rc-scope} {
+  /* ---- Toolbar and criteria bar ---- */
+
+  .todo-toolbar-btn {
+    height: 34px;
+    padding: 0 14px;
+    @include rc-button;
+    font-size: 13px;
+  }
+
+  .todo-filter-bar {
+    gap: 14px 18px;
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    @include rc-card;
+  }
+
+  .tdf-field label {
+    @include rc-label;
+
+    i {
+      color: $rc-faint;
+      opacity: 1;
+    }
+  }
+
+  .tdf-select,
+  .tdf-date,
+  .tdf-text {
+    box-sizing: border-box;
+    height: 34px;
+    padding: 4px 10px;
+    border: 1px solid $rc-border-strong;
+    border-radius: $rc-radius-sm;
+    background: $rc-surface;
+    color: $rc-text;
+    font-family: $rc-font;
+    transition: border-color $rc-transition, box-shadow $rc-transition;
+
+    &:hover {
+      border-color: $rc-faint;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: $rc-primary;
+      box-shadow: $rc-ring;
+    }
+
+    &::placeholder {
+      color: $rc-faint;
+    }
+  }
+
+  .tdf-field .select2-container {
+    .select2-selection--single {
+      height: 34px;
+      border-color: $rc-border-strong;
+      border-radius: $rc-radius-sm;
+
+      .select2-selection__rendered {
+        height: 32px;
+        padding-left: 10px;
+        line-height: 32px;
+        color: $rc-text;
+      }
+
+      .select2-selection__arrow {
+        height: 32px;
+      }
+    }
+
+    &.select2-container--focus .select2-selection--single,
+    &.select2-container--open .select2-selection--single {
+      border-color: $rc-primary;
+    }
+  }
+
+  .tdf-toggle {
+    height: 34px;
+    color: $rc-text-soft;
+  }
+
+  .tdf-btn {
+    height: 34px;
+    padding: 0 14px;
+    @include rc-button;
+    font-size: 13px;
+  }
+
+  .tdf-btn-search {
+    @include rc-button-primary;
+  }
+
+  .tdf-count {
+    color: $rc-muted;
+
+    i {
+      color: $rc-faint;
+    }
+  }
+
+  /* ---- Board settings ---- */
+
+  .todo-settings-btn {
+    width: 34px;
+    height: 34px;
+    @include rc-button;
+    color: $rc-muted;
+  }
+
+  .todo-settings-popover {
+    top: 40px;
+    padding: 14px;
+    border: 1px solid $rc-border;
+    border-radius: $rc-radius;
+    box-shadow: $rc-shadow-hover;
+  }
+
+  .tds-row label,
+  .tds-column-toggle {
+    color: $rc-text-soft;
+  }
+
+  .tds-val {
+    color: $rc-muted;
+  }
+
+  .todo-board-scrollbar {
+    border-top-color: $rc-border;
+    background: $rc-surface;
+  }
+
+  /* ---- Columns ---- */
+
+  .todo-column {
+    border: 1px solid $rc-border;
+    border-radius: $rc-radius-lg;
+    background: $rc-surface-soft;
+    box-shadow: none;
+
+    &.todo-column-drop-allowed {
+      box-shadow: 0 0 0 2px $rc-primary;
+    }
+  }
+
+  /* The coloured top rule of each column stays (inline style): it is the identity of the column */
+  .todo-column-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid $rc-border;
+    border-radius: 13px 13px 0 0;
+    background: $rc-surface;
+    color: $rc-text;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .todo-column-icon {
+    color: $rc-muted;
+    opacity: 1;
+  }
+
+  .todo-column-sort {
+    &[data-direction="asc"] .todo-column-sort-icon .fa-sort-up,
+    &[data-direction="desc"] .todo-column-sort-icon .fa-sort-down {
+      color: $rc-primary;
+    }
+  }
+
+  .todo-column-sort-key {
+    color: $rc-primary;
+  }
+
+  .todo-column-sort-icon i {
+    color: $rc-border-strong;
+  }
+
+  .todo-column-menu {
+    color: $rc-faint;
+
+    &:hover {
+      color: $rc-text;
+    }
+  }
+
+  .todo-column-count {
+    padding: 2px 9px;
+    border-radius: $rc-radius-pill;
+    background: $rc-bg;
+    color: $rc-text-soft;
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .todo-column-body {
+    padding: 10px;
+  }
+
+  .todo-empty {
+    color: $rc-faint;
+  }
+
+  .todo-load-more {
+    border: 1px dashed $rc-border-strong;
+    border-radius: $rc-radius;
+    background: $rc-surface;
+    color: $rc-text-soft;
+
+    &:hover {
+      border-color: $rc-primary;
+      background: $rc-surface;
+      color: $rc-primary-strong;
+    }
+  }
+
+  /* ---- Cards ---- */
+
+  .todo-card {
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border: 1px solid $rc-border;
+    border-radius: 12px;
+    box-shadow: $rc-shadow-sm;
+
+    &:hover {
+      box-shadow: $rc-shadow-hover;
+    }
+
+    &.todo-card-late {
+      border-left: 3px solid $rc-danger;
+    }
+
+    &.todo-card-upcoming {
+      border-left: 3px solid $rc-primary;
+    }
+  }
+
+  .todo-card-placeholder {
+    border-color: $rc-primary;
+    border-radius: 12px;
+    background: $rc-primary-soft;
+  }
+
+  .todo-card-type {
+    border-radius: $rc-radius-pill;
+  }
+
+  /* No colour of its own: the slate pill of the shared theme */
+  .todo-card-type:not([style]) {
+    background: $rc-bg;
+    color: $rc-text-soft;
+  }
+
+  .todo-card-ref {
+    color: $rc-primary-strong;
+  }
+
+  .todo-card-late-badge,
+  .todo-card-upcoming-badge {
+    border-radius: $rc-radius-pill;
+  }
+
+  .todo-card-late-badge {
+    background: $rc-danger-soft;
+    color: $rc-danger-ink;
+  }
+
+  .todo-card-upcoming-badge {
+    background: $rc-primary-soft;
+    color: $rc-primary-strong;
+  }
+
+  .todo-card-label {
+    color: $rc-text;
+  }
+
+  .todo-editable-label:hover,
+  .todo-editable-date:hover {
+    background: $rc-primary-soft;
+    outline: 1px dashed rgba(13, 138, 255, 0.4);
+  }
+
+  .todo-inline-edit,
+  .todo-date-input {
+    border-color: $rc-primary;
+    border-radius: $rc-radius-sm;
+    box-shadow: $rc-ring;
+  }
+
+  .todo-link-badge {
+    background: $rc-bg;
+    color: $rc-text-soft;
+
+    &:hover {
+      background: $rc-border;
+      color: $rc-text;
+    }
+  }
+
+  .todo-origin-tooltip {
+    border-color: $rc-border;
+    border-radius: $rc-radius;
+    box-shadow: $rc-shadow-hover;
+    color: $rc-text;
+  }
+
+  .todo-origin-tooltip-header,
+  .todo-origin-tooltip-more {
+    border-color: $rc-border-soft;
+  }
+
+  .todo-card-people {
+    border-top-color: $rc-border-soft;
+    border-bottom-color: $rc-border-soft;
+  }
+
+  .todo-separator {
+    color: $rc-border-strong;
+  }
+
+  .todo-initial-owner:hover {
+    box-shadow: $rc-ring;
+  }
+
+  .todo-initial-assigned {
+    background: $rc-faint;
+  }
+
+  .todo-add-assigned-btn {
+    border-color: $rc-border-strong;
+    color: $rc-faint;
+
+    &:hover {
+      border-color: $rc-primary;
+      color: $rc-primary;
+    }
+  }
+
+  .todo-owner-dropdown,
+  .todo-assigned-dropdown {
+    border-color: $rc-border;
+    border-radius: $rc-radius;
+    box-shadow: $rc-shadow-hover;
+  }
+
+  .todo-owner-search,
+  .todo-assigned-search {
+    height: 30px;
+    border-color: $rc-border-strong;
+    border-radius: $rc-radius-sm;
+  }
+
+  .todo-user-option {
+    border-radius: 6px;
+
+    &:hover {
+      background: $rc-surface-soft;
+    }
+  }
+
+  .todo-date {
+    border-radius: 6px;
+    background: $rc-surface-soft;
+    color: $rc-text-soft;
+  }
+
+  .todo-progress-bar {
+    background: $rc-border-soft;
+  }
+
+  .todo-progress-text {
+    color: $rc-text-soft;
+  }
+
+  .todo-progress-text.reedcrm-quick-close-trigger:hover {
+    background: $rc-primary-soft;
+    color: $rc-primary-strong;
+  }
+
+  .todo-card-footer {
+    border-top-color: $rc-border-soft;
+    color: $rc-muted;
+  }
+}
