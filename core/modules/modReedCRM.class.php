@@ -1068,6 +1068,23 @@ class modReedCRM extends DolibarrModules
             'user'     => 0,
         ];
 
+        // The page shows bank data: the direct debit module and its read permission are required on top of ReedCRM
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('SepaMandateCheckTitle'),
+            'prefix'   => '<i class="fas fa-university pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'sepamandatecheck',
+            'url'      => '/reedcrm/view/sepamandate_check.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'prelevement\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'prelevement\', \'bons\', \'lire\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
         /* SECTION STEERING */
 
         $this->menu[$r++] = [
