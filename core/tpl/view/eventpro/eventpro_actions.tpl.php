@@ -178,6 +178,12 @@ if (empty($eventProRedirectAfterTicket)) {
             $actionComm->datep = dol_now();
         }
 
+        // Duration typed beside the date: the event ends that long after it starts
+        $eventDuration = max(0, GETPOSTINT('event_duration'));
+        if ($eventDuration > 0) {
+            $actionComm->datef = $actionComm->datep + $eventDuration * 60;
+        }
+
         $actionComm->fk_project   = GETPOST('project_id', 'int');
         $actionComm->userownerid  = $user->id;
         $actionComm->userassigned = [$user->id => ['id' => $user->id]];
@@ -189,6 +195,18 @@ if (empty($eventProRedirectAfterTicket)) {
 
         $category->fetch(getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG'));
         $category->add_type($actionComm, 'actioncomm');
+
+        // The duration of a done event is time spent on its project, logged on the commercial follow-up task.
+        // An event still to do has not taken any time yet.
+        $timeSpentError = '';
+        if ($result > 0 && $eventDuration > 0 && $actionComm->percentage == 100 && $actionComm->fk_project > 0) {
+            require_once __DIR__ . '/../../../../lib/reedcrm_timespent.lib.php';
+
+            $eventProject = new Project($db);
+            if (reedcrm_timespent_user_can_log($user) && $eventProject->fetch((int) $actionComm->fk_project) > 0) {
+                $timeSpentError = reedcrm_timespent_add($db, $user, $eventProject, $eventDuration, (string) $actionComm->label, (int) $actionComm->datep, false);
+            }
+        }
 
         // The ticked box is what asks for the reminder: an empty title used to drop it without a word
         if ($result > 0 && GETPOSTINT('add_reminder') > 0) {
@@ -220,10 +238,13 @@ if (empty($eventProRedirectAfterTicket)) {
         if ($result > 0) {
             if ($isModal) {
                 header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => $langs->trans('EventCreated')]);
+                echo json_encode(['success' => true, 'message' => $langs->trans('EventCreated'), 'warning' => $timeSpentError]);
                 exit;
             }
             setEventMessages($langs->trans('EventCreated'), null);
+            if ($timeSpentError !== '') {
+                setEventMessages($timeSpentError, null, 'warnings');
+            }
             header('Location: ' . $eventProRedirectAfterEvent);
             exit;
         } else {

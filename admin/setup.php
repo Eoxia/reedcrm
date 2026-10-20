@@ -45,6 +45,7 @@ if (isModEnabled('agenda')) {
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -108,6 +109,11 @@ if ($action == 'set_config') {
         dolibarr_set_const($db, 'REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE', $quickEventLabelLength, 'integer', 0, '', $conf->entity);
     }
     dolibarr_set_const($db, 'REEDCRM_EVENT_STATUS_VALUE', $statusEvent, 'integer', 0, '', $conf->entity);
+    foreach (array_keys(reedcrm_get_event_default_durations()) as $relaunchTypeKey) {
+        if (GETPOSTISSET('event_duration_' . $relaunchTypeKey)) {
+            dolibarr_set_const($db, 'REEDCRM_EVENT_DURATION_' . strtoupper($relaunchTypeKey), max(0, GETPOSTINT('event_duration_' . $relaunchTypeKey)), 'integer', 0, '', $conf->entity);
+        }
+    }
 
     $projectCommercialInherit = GETPOST('project_commercial_inherit', 'int');
     dolibarr_set_const($db, 'REEDCRM_PROJECT_COMMERCIAL_INHERIT', $projectCommercialInherit, 'integer', 0, '', $conf->entity);
@@ -607,6 +613,25 @@ print '</td>';
 print '<td class="center">';
 print ajax_constantonoff('REEDCRM_EVENT_DATE_END_VISIBLE');
 print '</td></td><td></td></tr>';
+
+// Default duration of each type of event
+print '<tr class="oddeven"><td>';
+print $langs->trans('EventDefaultDuration');
+print '</td><td>';
+print $langs->trans('EventDefaultDurationDescription');
+print '</td>';
+
+print '<td class="center"></td>';
+
+print '<td>';
+$relaunchTypeOptions = reedcrm_get_relaunch_type_options();
+foreach (reedcrm_get_event_default_durations() as $relaunchTypeKey => $relaunchTypeDuration) {
+    print '<div class="nowraponall paddingbottom">';
+    print '<input type="number" id="event_duration_' . $relaunchTypeKey . '" name="event_duration_' . $relaunchTypeKey . '" class="width50 right" min="0" value="' . $relaunchTypeDuration . '"> ' . $langs->trans('MinuteShort');
+    print ' <label for="event_duration_' . $relaunchTypeKey . '">' . $relaunchTypeOptions[reedcrm_get_relaunch_types()[$relaunchTypeKey]['actioncode']] . '</label>';
+    print '</div>';
+}
+print '</td></tr>';
 
 // Status
 print '<tr class="oddeven"><td>';

@@ -778,3 +778,35 @@ body > .select2-drop.select2-drop-active {
     margin-right: 6px;
     white-space: nowrap;
 }
+
+// Duration beside the date of the event: it sets the end of the event and the time spent on its project
+.reedcrm-event-duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    color: #64748b;
+
+    // Targeted by its id: the modal and the mobile form stretch every input of the form
+    #event_duration {
+        width: 60px !important;
+        text-align: right;
+    }
+}
+
+// The modal stretches every input to the full width of its column: the duration keeps its own width beside the hour
+#eventproCardModal #eventproCardModal-content #event_duration {
+    width: 60px !important;
+}
+
+// The date keeps its own width, so that the duration follows the hour instead of the end of the line
+#eventproCardModal #eventproCardModal-content .template-pwa label > div.reedcrm-event-date {
+    flex: 0 0 auto !important;
+    width: auto !important;
+}
+
+// In the label of the date, on the desktop card and in its modal
+label > .reedcrm-event-duration {
+    flex-shrink: 0;
+    padding-left: 14px;
+}

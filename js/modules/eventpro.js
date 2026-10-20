@@ -78,6 +78,39 @@ window.reedcrm.eventpro.init = function () {
   window.reedcrm.eventpro.initAddContact();
   window.reedcrm.eventpro.initAddProject();
   window.reedcrm.eventpro.initRelaunchTooltips();
+  window.reedcrm.eventpro.initEventDuration();
+};
+
+/**
+ * Follow the type of event with the duration offered beside its date, as long as it was not typed by hand
+ *
+ * The file is both bundled into reedcrm.min.js and loaded alone on the native cards, hence the namespaced handlers
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   23.4.0
+ * @version 23.4.0
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventpro.initEventDuration = function () {
+  $(document).off('input.reedcrmEventDuration').on('input.reedcrmEventDuration', '#event_duration', function () {
+    $(this).attr('data-edited', '1');
+  });
+
+  $(document).off('change.reedcrmEventDuration').on('change.reedcrmEventDuration', '#addeventform select[name="actioncode"]', function () {
+    var $duration = $(this).closest('form').find('#event_duration');
+    if (!$duration.length || $duration.attr('data-edited') === '1') {
+      return;
+    }
+
+    var durations = $duration.data('durations') || {};
+    var typeKeys  = $duration.data('type-keys') || {};
+    var typeKey   = typeKeys[$(this).val()] || 'other';
+    if (durations[typeKey] !== undefined) {
+      $duration.val(durations[typeKey]);
+    }
+  });
 };
 
 /**
@@ -254,6 +287,10 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
 
           if (response.message && typeof window.saturne !== 'undefined' && window.saturne.notification) {
             window.saturne.notification.success(response.message);
+          }
+          // The event is saved, only the time spent on its project could not be logged
+          if (response.warning && typeof $.jnotify === 'function') {
+            $.jnotify(response.warning, 'warning', true);
           }
         } else {
           var errorMsg = (response && response.error) ? response.error : 'Erreur';

@@ -88,7 +88,8 @@
             <div>
                 <label>
                     <?php //echo img_picto('', 'agenda'); ?>
-                    <div class="select2-container" style="display: flex; align-items: center;"><?php echo $form->selectDate(dol_now(), 'event_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?></div>
+                    <div class="select2-container reedcrm-event-date" style="display: flex; align-items: center;"><?php echo $form->selectDate(dol_now(), 'event_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?></div>
+                    <?php require __DIR__ . '/eventpro_event_duration.tpl.php'; ?>
                 </label>
             </div>
             <div class="reedcrm-project-field-wrapper">
