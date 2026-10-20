@@ -285,8 +285,7 @@
     display: flex;
     gap: 26px;
     padding: 16px 0;
-    // scroll rather than auto: the track stays drawn instead of fading in and out
-    overflow-x: scroll;
+    overflow-x: auto;
     min-height: 400px;
     align-items: flex-start;
 }
@@ -294,9 +293,16 @@
 /* ---- Sideways scrolling ----
  * The board is as tall as its longest column, so its own scrollbar ends up below the fold and
  * users fall back on shift + wheel. A second bar rides at the bottom of the screen and drives it.
- * Both wear the same visible track, so a board that does fit reads the same as one that does not.
+ * The board's own bar is hidden, the one that follows the screen is the only one shown.
  */
-.todo-board,
+.todo-board {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
 .todo-board-scrollbar {
     scrollbar-width: auto;
     scrollbar-color: #b4bcc8 #eef1f5;
