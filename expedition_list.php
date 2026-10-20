@@ -997,7 +997,8 @@ if ($socid > 0) {
 // Output page
 // --------------------------------------------------------------------
 
-llxHeader('', $title, $help_url, '', 0, 0, '', '', '', 'bodyforlist mod-expedition page-list');
+// Modern back office theme of Saturne, as on the pages built with saturne_header()
+llxHeader('', $title, $help_url, '', 0, 0, '', ['/saturne/css/saturne.min.css'], '', 'saturne-theme bodyforlist mod-expedition page-list');
 
 $arrayofselected = is_array($toselect) ? $toselect : array();
 
