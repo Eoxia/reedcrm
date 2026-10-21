@@ -64,13 +64,13 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
         }
     }
 
-    $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId;
+    $cardProUrl = dol_buildpath('/reedcrm/view/procard.php', 1) . '?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId;
 
     $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
     $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
 
     foreach ($actonComsByType as $actionCommType => $actonComByType) {
-        $dialogUrl = dol_buildpath('custom/reedcrm/ajax/get_relaunches_list.php', 1);
+        $dialogUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
 
         $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $projectId . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
         $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '"';
@@ -84,7 +84,7 @@ function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $obje
         $out .= '</div>';
 
         if ($user->hasRight('agenda', 'myactions', 'create')) {
-            $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=' . $actonComByType['actioncode'];
+            $cardProUrlFull = $cardProUrl . '&actioncode=' . $actonComByType['actioncode'];
             $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
             $out .= '<i class="fas fa-plus"></i>';
             $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
@@ -235,7 +235,44 @@ function reedcrm_field_photo(array $parameters, CommonObject $object): string
 
     $projectDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($object->ref) . '/';
 
-    return saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 30, 30, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, '', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpg|gif)$']);
+    // A project has no favorite media : 'ref' names no file of its directory, and an empty field name
+    // would be read as a property for each file found. No placeholder either, most rows have no photo.
+    // 66px is the height of the Coordonnées block of the same row
+    $out  = '<div class="reedcrm-list-photo">';
+    $out .= saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 66, 66, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, 'ref', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpe?g|gif|webp)$', 'hideNoPhoto' => 1]);
+    $out .= '</div>';
+
+    return $out;
+}
+
+/**
+ * Render the vocal field: a play button on the last voice note of the project.
+ *
+ * @param  array        $parameters Hook parameters (key, context, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_vocal(array $parameters, CommonObject $object): string
+{
+    global $conf;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+
+    $projectRef = dol_sanitizeFileName($object->ref);
+    $audioFiles = dol_dir_list($conf->project->multidir_output[$conf->entity] . '/' . $projectRef, 'files', 0, '\.(mp3|ogg|wav|m4a|aac|webm|opus)$', null, 'date', SORT_DESC);
+
+    // Never an empty string: the list would fall back on its generic rendering of a field that does not exist
+    $out = '<div class="reedcrm-vocal-cell">';
+    if (!empty($audioFiles)) {
+        $lastAudio = $audioFiles[0];
+        $fileUrl   = DOL_URL_ROOT . '/document.php?modulepart=projet&file=' . urlencode($projectRef . '/' . $lastAudio['name']);
+        $out .= '<div class="reedcrm-vocal-player reedcrm-vocal-player-purple" data-audio-url="' . dol_escape_htmltag($fileUrl) . '" title="' . dol_escape_htmltag($lastAudio['name']) . '">';
+        $out .= '<i class="fas fa-play"></i><span class="reedcrm-vocal-time"></span>';
+        $out .= '</div>';
+    }
+    $out .= '</div>';
+
+    return $out;
 }
 /**
  * Render the status field as a colored badge (pastille).
@@ -426,26 +463,21 @@ function reedcrm_field_date_details(array $parameters, CommonObject $object): st
 }
 
 /**
- * Load, for a whole page of listed objects, the categories carried by each of them.
+ * Ids of the objects shown on the current page of a saturne list.
  *
- * The categories live in llx_categorie_<element>, so rendering them row by row would cost one
- * query per line. The page ids are read back from the list query ($sqlForList, exposed by the
- * saturne list TPL) and every tag of the page is loaded in a single query.
+ * The loop renders the rows one by one: a column reading data stored elsewhere loads it for the
+ * whole page on the first row instead. The page is read back from the list query ($sqlForList,
+ * exposed by the saturne list TPL) with the sort and the pagination of the list.
  *
- * @param  CommonObject $object The listed object (gives the element, hence the link table)
- * @return array                Categories (id, label, color) indexed by object id
+ * @return int[] Ids of the objects of the page, empty outside a saturne list
  */
-function reedcrm_load_list_categories(CommonObject $object): array
+function reedcrm_load_list_page_ids(): array
 {
     global $db, $limit, $offset, $sortfield, $sortorder, $sqlForList;
 
     if (empty($sqlForList)) {
         return [];
     }
-
-    $element   = $object->element;
-    $linkTable = MAIN_DB_PREFIX . 'categorie_' . $element;
-    $linkField = 'fk_' . $element;
 
     $sql   = 'SELECT listpage.rowid FROM (' . $sqlForList;
     $sql  .= $db->order($sortfield, $sortorder);
@@ -462,6 +494,27 @@ function reedcrm_load_list_categories(CommonObject $object): array
     }
     $db->free($resql);
 
+    return $objectIds;
+}
+
+/**
+ * Load, for a whole page of listed objects, the categories carried by each of them.
+ *
+ * The categories live in llx_categorie_<element>, so rendering them row by row would cost one
+ * query per line. Every tag of the page is loaded in a single query instead.
+ *
+ * @param  CommonObject $object The listed object (gives the element, hence the link table)
+ * @return array                Categories (id, label, color) indexed by object id
+ */
+function reedcrm_load_list_categories(CommonObject $object): array
+{
+    global $db;
+
+    $element   = $object->element;
+    $linkTable = MAIN_DB_PREFIX . 'categorie_' . $element;
+    $linkField = 'fk_' . $element;
+
+    $objectIds = reedcrm_load_list_page_ids();
     if (empty($objectIds)) {
         return [];
     }
@@ -532,4 +585,39 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
     }
 
     return $out;
+}
+
+/**
+ * Render the lifecycle cell: the timeline of the project card, in its compact form.
+ *
+ * The timeline is built from the documents the project carries: they are read for the projects of
+ * the whole page on the first row. The column is sorted and filtered on the current step by the
+ * printFieldListSelect and printFieldListSearch hooks.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_lifecycle(array $parameters, CommonObject $object): string
+{
+    global $conf;
+
+    require_once __DIR__ . '/reedcrm_lifecycle.lib.php';
+
+    if (!isset($conf->cache['reedcrmListLifecycle'])) {
+        $conf->cache['reedcrmListLifecycle'] = reedcrm_lifecycle_fetch_projects(reedcrm_load_list_page_ids());
+    }
+
+    $project          = $conf->cache['reedcrmListLifecycle'][(int) $object->id] ?? [];
+    $lifecycleSteps   = !empty($project) ? reedcrm_lifecycle_mark_current(reedcrm_build_project_lifecycle_steps($project)) : [];
+    $lifecycleElement = $object->element;
+    $lifecycleCompact = true;
+
+    // Never an empty string: the list would fall back on its generic rendering of a field that does not exist
+    ob_start();
+    print '<div class="reedcrm-lifecycle-cell">';
+    require __DIR__ . '/../core/tpl/reedcrm_lifecycle_timeline.tpl.php';
+    print '</div>';
+
+    return ob_get_clean();
 }

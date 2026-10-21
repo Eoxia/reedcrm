@@ -46,10 +46,14 @@ $ownerInitials = !empty($t['owner']) ? $t['owner']['initials'] : '';
 
 // Full day events are picked on a plain date, the others carry an hour
 $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
-?>
-<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
 
-    <!-- Header: type of event + reference + late flag -->
+// A relaunch carries no start date on purpose: its slot shows the date of the object it was
+// raised on, greyed out, until a real date is picked
+$startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt']);
+?>
+<div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?><?php echo !empty($t['upcoming']) ? ' todo-card-upcoming' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-event-type="<?php echo dol_escape_htmltag($t['type_code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
+
+    <!-- Header: type of event + reference + late or upcoming flag -->
     <div class="todo-card-header">
         <span class="todo-card-type" <?php echo !empty($t['type_color']) ? 'style="background: ' . dol_escape_htmltag($t['type_color']) . '"' : ''; ?>
               title="<?php echo dol_escape_htmltag($t['type_label']); ?>">
@@ -63,6 +67,10 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
             <span class="todo-card-late-badge" title="<?php echo dol_escape_htmltag($langs->trans('TodoLateEvent')); ?>">
                 <i class="fas fa-exclamation-circle"></i> <?php echo $langs->trans('TodoLateEvent'); ?>
             </span>
+        <?php elseif (!empty($t['upcoming'])) : ?>
+            <span class="todo-card-upcoming-badge" title="<?php echo dol_escape_htmltag($langs->trans('TodoUpcomingEvent')); ?>">
+                <i class="fas fa-clock"></i> <?php echo $langs->trans('TodoUpcomingEvent'); ?>
+            </span>
         <?php endif; ?>
     </div>
 
@@ -74,15 +82,42 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
         <div class="todo-card-links">
             <?php if (!empty($t['origin'])) : ?>
                 <?php
-                // The counter is glued to the reference it counts: the badge gives up its right
-                // corners so the two read as a single chip, and the wrapper keeps them on one line
+                // The amount and the counter are glued to the reference they describe: the badge
+                // gives up its right corners so they read as a single chip, and the wrapper keeps
+                // them on one line
                 $originRelaunchCount = (int) ($t['origin']['relaunch_count'] ?? 0);
+                $originHasAmount     = !empty($t['origin']['amount_ht']);
+                $originPicto         = $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar';
                 ?>
                 <span class="todo-origin-wrapper">
-                    <a class="todo-link-badge todo-link-origin<?php echo $originRelaunchCount > 0 ? ' todo-link-origin-counted' : ''; ?>" target="_blank" href="<?php echo $t['origin']['url']; ?>">
-                        <i class="fas <?php echo $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar'; ?>"></i>
+                    <a class="todo-link-badge todo-link-origin<?php echo ($originRelaunchCount > 0 || $originHasAmount) ? ' todo-link-origin-counted' : ''; ?>" target="_blank" href="<?php echo $t['origin']['url']; ?>">
+                        <i class="fas <?php echo $originPicto; ?>"></i>
                         <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
                     </a>
+                    <?php // Lines of the object, shown on hovering its reference the way the risk of a task is on the action plan of Digirisk ?>
+                    <?php if (!empty($t['origin']['lines'])) : ?>
+                        <span class="todo-origin-tooltip">
+                            <span class="todo-origin-tooltip-header">
+                                <i class="fas <?php echo $originPicto; ?>"></i>
+                                <strong><?php echo dol_escape_htmltag($t['origin']['ref']); ?></strong>
+                                <span class="todo-origin-tooltip-total"><?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?></span>
+                            </span>
+                            <?php foreach ($t['origin']['lines'] as $originLine) : ?>
+                                <span class="todo-origin-tooltip-line">
+                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($originLine['label']); ?></span>
+                                    <span class="todo-origin-tooltip-amount"><?php echo dol_escape_htmltag($originLine['amount']); ?></span>
+                                </span>
+                            <?php endforeach; ?>
+                            <?php if (!empty($t['origin']['lines_more'])) : ?>
+                                <span class="todo-origin-tooltip-more"><?php echo dol_escape_htmltag($langs->trans('TodoOriginMoreLines', $t['origin']['lines_more'])); ?></span>
+                            <?php endif; ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($originHasAmount) : ?>
+                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?>">
+                            <?php echo dol_escape_htmltag($t['origin']['amount_ht_short']); ?>
+                        </span>
+                    <?php endif; ?>
                     <?php if ($originRelaunchCount > 0) : ?>
                         <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoRelaunchCount', $originRelaunchCount)); ?>">
                             <i class="fas fa-headset"></i> <?php echo $originRelaunchCount; ?>
@@ -98,11 +133,37 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
                 </a>
             <?php endif; ?>
             <?php if (!empty($t['project_id'])) : ?>
-                <a class="todo-link-badge todo-link-project" target="_blank"
-                   href="<?php echo DOL_URL_ROOT . '/projet/card.php?id=' . $t['project_id']; ?>"
-                   title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>">
-                    <i class="fas fa-project-diagram"></i> <?php echo dol_escape_htmltag($t['project_title'] ?: $t['project_ref']); ?>
-                </a>
+                <?php
+                // Budget, probability and relaunches of the project are glued to its badge, the way the
+                // amount and the counter of a proposal are to its reference
+                $projectInfos         = $t['project_infos'] ?? [];
+                $projectHasAmount     = !empty($projectInfos['amount_short']);
+                $projectHasPercent    = isset($projectInfos['percent']);
+                $projectRelaunchCount = (int) ($projectInfos['relaunch_count'] ?? 0);
+                $projectCounted       = $projectHasAmount || $projectHasPercent || $projectRelaunchCount > 0;
+                ?>
+                <span class="todo-origin-wrapper todo-project-wrapper">
+                    <a class="todo-link-badge todo-link-project<?php echo $projectCounted ? ' todo-link-origin-counted' : ''; ?>" target="_blank"
+                       href="<?php echo DOL_URL_ROOT . '/projet/card.php?id=' . $t['project_id']; ?>"
+                       title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>">
+                        <i class="fas fa-project-diagram"></i> <?php echo dol_escape_htmltag($t['project_title'] ?: $t['project_ref']); ?>
+                    </a>
+                    <?php if ($projectHasAmount) : ?>
+                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($projectInfos['amount_full']); ?>">
+                            <?php echo dol_escape_htmltag($projectInfos['amount_short']); ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($projectHasPercent) : ?>
+                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectProbability', $projectInfos['percent'] . '%')); ?>">
+                            <?php echo (int) $projectInfos['percent']; ?>%
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($projectRelaunchCount > 0) : ?>
+                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectRelaunchCount', $projectRelaunchCount)); ?>">
+                            <i class="fas fa-headset"></i> <?php echo $projectRelaunchCount; ?>
+                        </span>
+                    <?php endif; ?>
+                </span>
             <?php endif; ?>
         </div>
     <?php endif; ?>
@@ -152,11 +213,12 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
 
     <!-- Dates row -->
     <div class="todo-dates-row">
-        <span class="todo-date todo-date-start<?php echo $permissionToWrite ? ' todo-editable-date' : ''; ?>"
+        <span class="todo-date todo-date-start<?php echo $permissionToWrite ? ' todo-editable-date' : ''; ?><?php echo $startFromOrigin ? ' todo-date-origin' : ''; ?>"
               data-event-id="<?php echo $t['id']; ?>" data-field="date_start"
               data-raw="<?php echo dol_escape_htmltag($t['date_start']); ?>" data-input-type="<?php echo $dateInputType; ?>"
-              title="<?php echo dol_escape_htmltag($langs->trans('DateActionStart')); ?>">
-            <i class="fas fa-calendar-plus"></i> <span class="todo-date-value"><?php echo !empty($t['date_start_fmt']) ? dol_escape_htmltag($t['date_start_fmt']) : '-'; ?></span>
+              data-title-default="<?php echo dol_escape_htmltag($langs->trans('DateActionStart')); ?>"
+              title="<?php echo dol_escape_htmltag($startFromOrigin ? $t['origin']['date_title'] : $langs->trans('DateActionStart')); ?>">
+            <i class="fas fa-calendar-plus"></i> <span class="todo-date-value"><?php echo !empty($t['date_start_fmt']) ? dol_escape_htmltag($t['date_start_fmt']) : ($startFromOrigin ? dol_escape_htmltag($t['origin']['date_fmt']) : '-'); ?></span>
         </span>
         <span class="todo-date todo-date-end<?php echo $permissionToWrite ? ' todo-editable-date' : ''; ?>"
               data-event-id="<?php echo $t['id']; ?>" data-field="date_end"

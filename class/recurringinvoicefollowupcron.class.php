@@ -272,6 +272,12 @@ class RecurringInvoiceFollowupCron
         $langs->loadLangs(['reedcrm@reedcrm']);
         require_once __DIR__ . '/duaudit.class.php';
 
+        // Opt-in feature: no audit is created while the DU follow-up is turned off.
+        if (!reedcrmFollowupDuIsEnabled()) {
+            $this->output = $langs->trans('DuFollowupDisabled');
+            return 0;
+        }
+
         $created = 0;
         $updated = 0;
         $seen    = [];

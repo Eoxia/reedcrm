@@ -127,7 +127,7 @@ $filelist = [];
 require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
 
 // Document Model
-$dir = dol_buildpath('/custom/reedcrm/core/modules/reedcrm/call_list/doc/');
+$dir = dol_buildpath('/reedcrm/core/modules/reedcrm/call_list/doc/');
 $filelist = [];
 if (is_dir($dir)) {
     $handle = opendir($dir);

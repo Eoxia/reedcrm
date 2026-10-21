@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
 require_once __DIR__ . '/../lib/reedcrm_interventiondate.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_propal_unbilled.lib.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -50,6 +51,8 @@ $backtopage = GETPOST('backtopage', 'alpha');
 // Security check - Protection if external user
 $permissiontoread = $user->hasRight('reedcrm','adminpage','read');
 saturne_check_access($permissiontoread);
+
+$permissiontowrite = saturne_check_admin_write_access();
 
 /*
  * Actions
@@ -114,6 +117,20 @@ if ($action == 'update_intervention') {
     dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_DEFAULT_DURATION', $defaultDuration > 0 ? $defaultDuration : 60, 'integer', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', $maxPerLine > 0 ? $maxPerLine : 24, 'integer', 0, '', $conf->entity);
     setEventMessages($langs->trans('SetupSaved'), null, 'mesgs');
+}
+
+// Tag the signed proposals still to bill and untag the billed ones. The tag is created on the fly
+// when the module was activated before it existed, or when it was deleted since.
+if ($action == 'update_propal_unbilled_tag' && $permissiontowrite) {
+    $result = reedcrmPropalUnbilledSync($db, reedcrmPropalUnbilledGetTagID($db, $user));
+    if (is_array($result)) {
+        setEventMessages($langs->trans('PropalUnbilledSyncDone', (string) $result['tagged'], (string) $result['untagged']), null, 'mesgs');
+    } else {
+        setEventMessages($langs->trans('PropalUnbilledSyncError'), null, 'errors');
+    }
+
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
 }
 
 /*
@@ -252,6 +269,50 @@ print '<br><small class="opacitymedium">' . $langs->trans('InterventionDateMaxPe
 print '</td>';
 print '<td class="right"><input type="number" min="1" max="365" name="reedcrm_intervention_max_per_line" value="' . getDolGlobalInt('REEDCRM_INTERVENTION_DATE_MAX_PER_LINE', 24) . '">';
 print '&nbsp;<input type="submit" class="button" value="' . $langs->trans('Save') . '">';
+print '</td>';
+print '</tr>';
+
+print '</table>';
+print '</form>';
+
+// Signed proposals not billed yet: the tag drives the red banner of the proposal card
+$unbilledTagID   = reedcrmPropalUnbilledGetTagID($db);
+$unbilledChanges = reedcrmPropalUnbilledCountChanges($db, $unbilledTagID);
+
+print '<br>';
+print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
+print '<input type="hidden" name="token" value="' . newToken() . '">';
+print '<input type="hidden" name="action" value="update_propal_unbilled_tag">';
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td colspan="2">' . $langs->trans('PropalUnbilledSetupTitle') . '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('PropalUnbilledTagLabel');
+print '<br><small class="opacitymedium">' . $langs->trans('PropalUnbilledTagDescription') . '</small>';
+print '</td>';
+print '<td class="right">';
+if ($unbilledTagID > 0) {
+    // Not getNomUrl(): it writes the label in white, for a tag drawn on its colored badge
+    $unbilledTag = new Categorie($db);
+    $unbilledTag->fetch($unbilledTagID);
+    print '<a href="' . DOL_URL_ROOT . '/categories/viewcat.php?id=' . $unbilledTagID . '&type=' . urlencode((string) $unbilledTag->type) . '">';
+    print img_picto('', 'category', 'class="paddingright"') . dol_escape_htmltag($unbilledTag->label) . '</a>';
+} else {
+    print '<span class="opacitymedium">' . $langs->trans('PropalUnbilledTagNotCreated') . '</span>';
+}
+print '</td>';
+print '</tr>';
+
+print '<tr class="oddeven"><td>';
+print $langs->trans('PropalUnbilledSync');
+print '<br><small class="opacitymedium">' . $langs->trans('PropalUnbilledSyncDescription') . '</small>';
+print '<br><small>' . $langs->trans('PropalUnbilledPendingChanges', (string) $unbilledChanges['to_tag'], (string) $unbilledChanges['to_untag']) . '</small>';
+print '</td>';
+print '<td class="right">';
+print '<input type="submit" class="button" value="' . $langs->trans('PropalUnbilledSyncButton') . '"' . ($permissiontowrite ? '' : ' disabled') . '>';
 print '</td>';
 print '</tr>';
 

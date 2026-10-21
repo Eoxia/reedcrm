@@ -42,13 +42,13 @@ $interventionElementID = (isset($object) && is_object($object) && $object->eleme
 $interventionModalLoadAssets = !isset($interventionModalLoadAssets) || $interventionModalLoadAssets;
 ?>
 <?php if ($interventionModalLoadAssets) { ?>
-    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1)); ?>">
-    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1)); ?>">
+    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/css/temp-framework.css', 1)); ?>">
+    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/css/reedcrm.min.css', 1)); ?>">
 <?php } ?>
 
 <div id="reedcrm-intervention-date-config"
-     data-get-url="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/get_intervention_dates.php', 1)); ?>"
-     data-save-url="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/save_intervention_dates.php', 1)); ?>"
+     data-get-url="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/get_intervention_dates.php', 1)); ?>"
+     data-save-url="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/save_intervention_dates.php', 1)); ?>"
      data-token="<?php echo dol_escape_htmltag(newToken()); ?>"
      data-element-type="propal"
      data-element-id="<?php echo $interventionElementID; ?>"
@@ -78,5 +78,5 @@ $interventionModalLoadAssets = !isset($interventionModalLoadAssets) || $interven
 </div>
 
 <?php if ($interventionModalLoadAssets) { ?>
-    <script type="text/javascript" src="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/js/modules/intervention_date.js', 1)); ?>"></script>
+    <script type="text/javascript" src="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/js/modules/intervention_date.js', 1)); ?>"></script>
 <?php } ?>

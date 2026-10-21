@@ -36,10 +36,10 @@ $cardFieldsDisplay = (isset($user->conf->REEDCRM_CARD_FIELDS_DISPLAY) && $user->
 
 // The native Dolibarr cards never load reedcrm.min.css nor the module bundle, both are needed here
 ?>
-<link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1)); ?>">
+<link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/css/reedcrm.min.css', 1)); ?>">
 
 <div id="reedcrm-card-fields-config"
-     data-url="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/save_kpi_layout.php', 1)); ?>"
+     data-url="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/save_kpi_layout.php', 1)); ?>"
      data-token="<?php echo dol_escape_htmltag(newToken()); ?>"
      data-mode="<?php echo dol_escape_htmltag($cardFieldsDisplay); ?>"
      data-trans-hide-empty="<?php echo dol_escape_htmltag($langs->trans('CardHideEmptyFields')); ?>"
@@ -54,4 +54,4 @@ $cardFieldsDisplay = (isset($user->conf->REEDCRM_CARD_FIELDS_DISPLAY) && $user->
     </button>
 </div>
 
-<script type="text/javascript" src="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/js/modules/card_empty_fields.js', 1)); ?>"></script>
+<script type="text/javascript" src="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/js/modules/card_empty_fields.js', 1)); ?>"></script>

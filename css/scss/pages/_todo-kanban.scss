@@ -86,6 +86,12 @@
     min-width: 200px;
 }
 
+// A probability test is a few characters long: ">= 50"
+.tdf-text.tdf-probability {
+    min-width: 0;
+    width: 110px;
+}
+
 // The user criteria is a select2: line its box up on the plain fields beside it
 .tdf-field .select2-container {
     .select2-selection--single {
@@ -284,6 +290,64 @@
     align-items: flex-start;
 }
 
+/* ---- Sideways scrolling ----
+ * The board is as tall as its longest column, so its own scrollbar ends up below the fold and
+ * users fall back on shift + wheel. A second bar rides at the bottom of the screen and drives it.
+ * The board's own bar is hidden, the one that follows the screen is the only one shown.
+ */
+.todo-board {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.todo-board-scrollbar {
+    scrollbar-width: auto;
+    scrollbar-color: #b4bcc8 #eef1f5;
+
+    &::-webkit-scrollbar {
+        height: 12px;
+    }
+
+    &::-webkit-scrollbar-track {
+        border-radius: 6px;
+        background: #eef1f5;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: 6px;
+        background: #b4bcc8;
+
+        &:hover {
+            background: #97a1b0;
+        }
+    }
+}
+
+.todo-board-scrollbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    // Left where it is until the JS has measured a board wider than the screen
+    display: none;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    padding-top: 4px;
+    background: #fff;
+    border-top: 1px solid #e6e9ee;
+
+    &.todo-board-scrollbar-visible {
+        display: block;
+    }
+
+    // Only there to give the bar something to scroll
+    .todo-board-scrollbar-inner {
+        height: 1px;
+    }
+}
+
 .todo-column {
     flex: 1;
     min-width: 300px;
@@ -297,6 +361,15 @@
     // Masked from its own menu, brought back from the settings popover
     &.todo-column-hidden {
         display: none;
+    }
+
+    // While a card is dragged: the columns that would keep it, and those that would send it back
+    &.todo-column-drop-allowed {
+        box-shadow: 0 0 0 2px rgba(99, 172, 201, 0.9);
+    }
+
+    &.todo-column-drop-refused {
+        opacity: 0.4;
     }
 }
 
@@ -337,6 +410,17 @@
     &[data-direction="desc"] .todo-column-sort-icon .fa-sort-down {
         color: #2c3e50;
     }
+
+    // A column sorted on the probability of its opportunities says so next to its arrows
+    &[data-sort="probability"] .todo-column-sort-key {
+        display: inline-flex;
+    }
+}
+
+.todo-column-sort-key {
+    display: none;
+    color: #2c3e50;
+    font-size: 10px;
 }
 
 /* Caret of the column menu, same cue as the one the saturne lists put on a column title */
@@ -453,13 +537,19 @@
         cursor: grabbing;
     }
 
+    // Raised above the cards that follow it, which would otherwise cover the tooltip of its origin
     &:hover {
+        z-index: 3;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
         transform: translateY(-2px);
     }
 
     &.todo-card-late {
         border-left: 3px solid #e05353;
+    }
+
+    &.todo-card-upcoming {
+        border-left: 3px solid #63acc9;
     }
 
     &.todo-card-saving {
@@ -490,7 +580,7 @@
     background: rgba(99, 172, 201, 0.1);
 }
 
-/* Header: type of event, reference, late flag */
+/* Header: type of event, reference, late or upcoming flag */
 .todo-card-header {
     display: flex;
     align-items: center;
@@ -529,18 +619,27 @@
     }
 }
 
-.todo-card-late-badge {
+.todo-card-late-badge,
+.todo-card-upcoming-badge {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     margin-left: auto;
     padding: 2px 8px;
     border-radius: 4px;
-    background: #fdecec;
-    color: #e05353;
     font-size: 10px;
     font-weight: 700;
     white-space: nowrap;
+}
+
+.todo-card-late-badge {
+    background: #fdecec;
+    color: #e05353;
+}
+
+.todo-card-upcoming-badge {
+    background: #ecf5f9;
+    color: #3d8daf;
 }
 
 /* Label */
@@ -581,6 +680,7 @@
 
 /* Third party and project */
 .todo-card-links {
+    position: relative;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -659,6 +759,115 @@
     font-weight: 800;
     white-space: nowrap;
     cursor: default;
+}
+
+/* Amount excluding tax of the object, same chip as the counter it may be followed by */
+.todo-origin-amount {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-left: 1px solid rgba(160, 90, 26, 0.25);
+    border-radius: 0 12px 12px 0;
+    background: #fdf1e3;
+    color: #a05a1a;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: default;
+
+    /* The counter then closes the chip */
+    &:not(:last-child) {
+        border-radius: 0;
+    }
+}
+
+/* Budget, probability and relaunches of the project glued to its badge: the chips of a proposal,
+   in the colours of the project */
+.todo-project-wrapper {
+    .todo-origin-amount,
+    .todo-relaunch-count {
+        border-left-color: rgba(94, 74, 150, 0.25);
+        background: #f1eef8;
+        color: #5e4a96;
+    }
+}
+
+/* Lines of the object, shown on hovering its reference, the same tooltip as the risk of a task
+   on the action plan of Digirisk. It spans the row of links rather than the chip: it never spills
+   over the next column nor out of the side of the board */
+.todo-origin-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 50;
+    padding: 10px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+    color: #333;
+    font-size: 11px;
+    font-weight: 400;
+    white-space: normal;
+    cursor: default;
+}
+
+.todo-link-origin:hover ~ .todo-origin-tooltip {
+    display: block;
+}
+
+.todo-origin-tooltip-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f0f0f0;
+
+    i {
+        color: #a05a1a;
+    }
+}
+
+.todo-origin-tooltip-total {
+    margin-left: auto;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.todo-origin-tooltip-line {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 5px 0;
+    line-height: 1.35;
+
+    & + & {
+        border-top: 1px dashed #eee;
+    }
+}
+
+.todo-origin-tooltip-label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.todo-origin-tooltip-amount {
+    flex-shrink: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.todo-origin-tooltip-more {
+    display: block;
+    padding-top: 4px;
+    border-top: 1px solid #f0f0f0;
+    color: #888;
+    font-style: italic;
 }
 
 /* People: owner and assigned users */
@@ -873,6 +1082,13 @@
         background: #f0f4ff;
         outline: 1px dashed #b0c4de;
     }
+}
+
+/* Date of the object a dateless relaunch was raised on, standing in for its own */
+.todo-date-origin {
+    color: #8a94a0;
+    font-style: italic;
+    font-weight: 500;
 }
 
 .todo-date-input {

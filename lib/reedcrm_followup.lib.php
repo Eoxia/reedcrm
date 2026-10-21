@@ -22,6 +22,18 @@
  */
 
 /**
+ * Is the Document Unique follow-up (service portfolio board) turned on ?
+ * Off by default: the board only makes sense on the Evarisk instance, whose product
+ * references it is wired to, so a customer install never shows it until an admin opts in.
+ *
+ * @return bool
+ */
+function reedcrmFollowupDuIsEnabled(): bool
+{
+    return isModEnabled('reedcrm') && getDolGlobalInt('REEDCRM_DU_FOLLOWUP_ENABLED') > 0;
+}
+
+/**
  * Guess the subscription tier from a recurring invoice title.
  *
  * @param  string $title Recurring invoice title.

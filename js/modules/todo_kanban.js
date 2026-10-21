@@ -41,10 +41,74 @@ window.reedcrm.todoKanban.init = function () {
   }
 
   window.reedcrm.todoKanban.event();
+  window.reedcrm.todoKanban.initScrollbar();
   window.reedcrm.todoKanban.initSortable();
   window.reedcrm.todoKanban.initSettings();
   window.reedcrm.todoKanban.initColumnMenu();
   window.reedcrm.todoKanban.initUserSelect();
+};
+
+/**
+ * Drive the board sideways from a bar pinned at the bottom of the screen.
+ *
+ * The board carries its own horizontal scrollbar, but it sits under the longest column, often
+ * far below the fold: reaching it means scrolling the page down first, which is why sideways
+ * moves end up done with shift + wheel. The bar here is a plain scroller whose content is as
+ * wide as the board, kept in step with it both ways.
+ *
+ * It is shown only while the board really overflows, and re-measured whenever the columns
+ * change: their width and the gap are set inline by the settings popover, a column can be
+ * hidden from its own menu, and a page of cards can be loaded into a column.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initScrollbar = function () {
+  var board = $('.todo-board').get(0);
+  var bar   = $('#todoBoardScrollbar').get(0);
+
+  if (!board || !bar) {
+    return;
+  }
+
+  var inner = $(bar).find('.todo-board-scrollbar-inner').get(0);
+
+  var measure = function () {
+    // The bar is the same width as the board, so an identical scrollLeft means the same column
+    $(inner).width(board.scrollWidth);
+    $(bar).toggleClass('todo-board-scrollbar-visible', board.scrollWidth > board.clientWidth + 1);
+    bar.scrollLeft = board.scrollLeft;
+  };
+
+  // Each side moves the other. Writing a value a scroller already holds raises no event, so
+  // comparing before writing is what stops the echo: the answering handler finds the two equal
+  // and does nothing. A flag would not do, scroll events land too late to be paired up.
+  $(bar).on('scroll', function () {
+    if (board.scrollLeft !== bar.scrollLeft) {
+      board.scrollLeft = bar.scrollLeft;
+    }
+  });
+
+  $(board).on('scroll', function () {
+    if (bar.scrollLeft !== board.scrollLeft) {
+      bar.scrollLeft = board.scrollLeft;
+    }
+  });
+
+  // Measured on the spot rather than on the next frame: reading scrollWidth settles the layout
+  // the change just queued, while a deferred read can still answer on the previous one and leave
+  // the bar showing the state before last. A handful of columns makes that read cheap.
+  $(window).on('resize.reedcrmTodoScrollbar', measure);
+
+  if (typeof window.MutationObserver !== 'undefined') {
+    new MutationObserver(measure).observe(board, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+      attributeFilter: ['style', 'class']
+    });
+  }
+
+  measure();
 };
 
 /**
@@ -313,6 +377,10 @@ window.reedcrm.todoKanban.editDate = function (event) {
       function (response) {
         $date.data('raw', response.raw);
         $date.find('.todo-date-value').text(response.formatted || '-');
+        // The date of the origin object only stood in for a missing one
+        if ($date.hasClass('todo-date-origin')) {
+          $date.removeClass('todo-date-origin').attr('title', $date.data('title-default'));
+        }
       }
     );
   }
@@ -730,6 +798,60 @@ window.reedcrm.todoKanban.removeAssigned = function (event) {
 };
 
 /**
+ * Whether a card dropped in a column would stay there.
+ *
+ * A relaunch backlog holds cards on their code, no percentage puts a card in it, and a
+ * relaunch only leaves its backlog once done or dropped: the same rule as the receive
+ * callback, shared with the highlight of the columns while a card is dragged.
+ *
+ * @param  {jQuery} $card   Dragged card
+ * @param  {jQuery} $column Column the card would be dropped in
+ * @returns {boolean}       True if the card would stay in the column
+ */
+window.reedcrm.todoKanban.canLand = function ($card, $column) {
+  var minimum = parseInt($column.data('percent-min'), 10);
+  var maximum = parseInt($column.data('percent-max'), 10);
+  var percent = parseInt($card.data('percent'), 10);
+
+  if (isNaN(minimum)) {
+    return false;
+  }
+  if (isNaN(percent) || percent < minimum || percent > maximum) {
+    percent = minimum;
+  }
+
+  var $wouldLand = window.reedcrm.todoKanban.findColumn($card, percent);
+
+  return !!$wouldLand && $wouldLand[0] === $column[0];
+};
+
+/**
+ * Tell why a dropped card went back to where it came from.
+ *
+ * A refused move used to be silent: on a board made of relaunches, the drag & drop looked
+ * broken to the user.
+ *
+ * @param  {jQuery} $column Column the card was dropped in
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.notifyRefusedMove = function ($column) {
+  // A relaunch backlog only takes the relaunches the cron creates; any other refusal is a
+  // relaunch leaving its backlog for a column other than done or not applicable
+  var key     = $column.data('code') ? 'move-refused-backlog-label' : 'move-refused-relaunch-label';
+  var message = String($('.todo-board').data(key) || '');
+
+  if (!message) {
+    return;
+  }
+  // jnotify is loaded by main.inc.php unless it has been disabled
+  if (typeof $.jnotify !== 'function') {
+    alert(message);
+    return;
+  }
+  $.jnotify(message, 'warning', false, { remove: function () {} });
+};
+
+/**
  * Make the columns of the board sortable and save the status a dropped card lands on.
  *
  * @returns {void}
@@ -746,6 +868,19 @@ window.reedcrm.todoKanban.initSortable = function () {
     tolerance: 'pointer',
     cursor: 'grabbing',
     cancel: '.todo-editable-label, .todo-inline-edit, .todo-editable-date, .todo-date-input, .todo-card-progress, .todo-progress-bar, .todo-initial-owner, .todo-owner-dropdown, .todo-owner-search, .todo-assigned-dropdown, .todo-assigned-search, .todo-user-option, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge',
+    // While a card is dragged, the columns that would keep it stand out and the others fade
+    start: function (event, ui) {
+      var $card = ui.item;
+      var $from = $card.closest('.todo-column');
+
+      $('.todo-column').not($from).each(function () {
+        var allowed = window.reedcrm.todoKanban.canLand($card, $(this));
+        $(this).toggleClass('todo-column-drop-allowed', allowed).toggleClass('todo-column-drop-refused', !allowed);
+      });
+    },
+    stop: function () {
+      $('.todo-column').removeClass('todo-column-drop-allowed todo-column-drop-refused');
+    },
     receive: function (event, ui) {
       var $card   = ui.item;
       var $column = $(this).closest('.todo-column');
@@ -759,12 +894,11 @@ window.reedcrm.todoKanban.initSortable = function () {
         percent = minimum;
       }
 
-      // A relaunch backlog holds cards on their code, no percentage puts a card in it, and
-      // a relaunch only leaves its backlog once done or dropped. Any other move would be
-      // undone by the next reload: send the card back where it came from instead.
-      var $wouldLand = window.reedcrm.todoKanban.findColumn($card, percent);
-      if (isNaN(minimum) || !$wouldLand || $wouldLand[0] !== $column[0]) {
+      // A move the next reload would undo (see canLand): send the card back where it came
+      // from, and say why
+      if (!window.reedcrm.todoKanban.canLand($card, $column)) {
         ui.sender.sortable('cancel');
+        window.reedcrm.todoKanban.notifyRefusedMove($column);
         return;
       }
 
@@ -805,6 +939,7 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
 
   var offset    = replace ? 0 : (parseInt($body.attr('data-offset'), 10) || 0);
   var direction = $column.find('.todo-column-sort').attr('data-direction') === 'desc' ? 'desc' : 'asc';
+  var sortKey   = $column.find('.todo-column-sort').attr('data-sort') === 'probability' ? 'probability' : 'date';
   var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
 
   $button.addClass('todo-load-more-loading');
@@ -815,6 +950,7 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
       column: columnKey,
       offset: offset,
       direction: direction,
+      sort: sortKey,
       token: window.saturne.toolbox.getToken()
     }),
     type: 'POST',
@@ -885,7 +1021,8 @@ window.reedcrm.todoKanban.syncLoadMore = function ($column, remaining) {
 };
 
 /**
- * Turn the way a column is sorted, on a click on its title.
+ * Turn the way a column is sorted, on a click on its title: the column stays sorted on what
+ * its menu last picked, its date or the probability of its opportunities.
  *
  * @param  {Event} event Click event
  * @returns {void}
@@ -898,7 +1035,8 @@ window.reedcrm.todoKanban.toggleColumnSort = function (event) {
 
   window.reedcrm.todoKanban.applyColumnSort(
     $button.attr('data-column'),
-    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc'
+    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc',
+    $button.attr('data-sort')
   );
 };
 
@@ -907,17 +1045,21 @@ window.reedcrm.todoKanban.toggleColumnSort = function (event) {
  * asked for it: a click on the title or the column menu.
  *
  * @param  {string} columnKey Key of the column
- * @param  {string} direction 'asc' (oldest first) or 'desc' (newest first)
+ * @param  {string} direction 'asc' (oldest or least likely first) or 'desc' (newest or most likely first)
+ * @param  {string} sortKey   'date' or 'probability'
  * @returns {void}
  */
-window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction) {
+window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction, sortKey) {
   var $button = $('.todo-column-sort[data-column="' + columnKey + '"]');
+
+  sortKey = sortKey === 'probability' ? 'probability' : 'date';
 
   // The cards move under an open selector, close it first
   window.reedcrm.todoKanban.closeDropdowns();
 
-  // The stylesheet reads the way off the button to darken the matching arrow
-  $button.attr('data-direction', direction);
+  // The stylesheet reads the way and the key off the button to darken the matching arrow and
+  // show the percent sign, its tooltip tells what a click on it sorts on
+  $button.attr('data-direction', direction).attr('data-sort', sortKey).attr('title', $button.attr('data-title-' + sortKey) || '');
 
   window.reedcrm.todoKanban.sortColumn(columnKey);
 };
@@ -1038,15 +1180,17 @@ window.reedcrm.todoKanban.initColumnMenu = function () {
     window.reedcrm.todoKanban.toggleColumnMenu($(this));
   });
 
-  $popover.on('click', '.action-sort-asc, .action-sort-desc', function (event) {
+  $popover.on('click', '.action-sort-asc, .action-sort-desc, .action-sort-probability-asc, .action-sort-probability-desc', function (event) {
     event.preventDefault();
     event.stopPropagation();
 
     var columnKey = window.reedcrm.todoKanban.openMenuColumn;
-    var direction = $(this).hasClass('action-sort-asc') ? 'asc' : 'desc';
+    var $action   = $(this);
+    var direction = ($action.hasClass('action-sort-asc') || $action.hasClass('action-sort-probability-asc')) ? 'asc' : 'desc';
+    var sortKey   = ($action.hasClass('action-sort-probability-asc') || $action.hasClass('action-sort-probability-desc')) ? 'probability' : 'date';
 
     window.reedcrm.todoKanban.closeColumnMenu();
-    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction);
+    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction, sortKey);
   });
 
   $popover.on('click', '.action-hide', function (event) {

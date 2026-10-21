@@ -118,9 +118,10 @@ function reedcrmTodoGetFilters(): array
         'user'       => (int) $user->id,
         'date_start' => 0,
         'date_end'   => 0,
-        'type'       => 0,
-        'search'     => '',
-        'hide_auto'  => 1,
+        'type'        => 0,
+        'probability' => '',
+        'search'      => '',
+        'hide_auto'   => 1,
     ];
 
     $sessionKey = reedcrmTodoGetFilterSessionKey();
@@ -142,9 +143,11 @@ function reedcrmTodoGetFilters(): array
         'user'       => GETPOSTINT('search_user'),
         'date_start' => !empty($dateStart) ? (int) strtotime($dateStart . ' 00:00:00') : 0,
         'date_end'   => !empty($dateEnd) ? (int) strtotime($dateEnd . ' 23:59:59') : 0,
-        'type'       => GETPOSTINT('search_type'),
-        'search'     => GETPOST('search_text', 'alphanohtml'),
-        'hide_auto'  => GETPOSTINT('search_hide_auto'),
+        'type'        => GETPOSTINT('search_type'),
+        // Same reading as the numeric search fields of the Dolibarr lists: ">= 50", "< 20", ">= 20 <= 60"
+        'probability' => trim(GETPOST('search_probability', 'alpha')),
+        'search'      => GETPOST('search_text', 'alphanohtml'),
+        'hide_auto'   => GETPOSTINT('search_hide_auto'),
     ];
 
     $_SESSION[$sessionKey] = $filters;
@@ -173,8 +176,9 @@ function reedcrmTodoNormalizeFilters(array $filters, array $defaults): array
         $normalized[$key] = array_key_exists($key, $filters) ? $filters[$key] : $default;
     }
 
-    // The searched text is the only criterion that is not a number
-    $normalized['search'] = (string) $normalized['search'];
+    // The searched text and the probability test are the only criteria that are not a number
+    $normalized['search']      = (string) $normalized['search'];
+    $normalized['probability'] = (string) $normalized['probability'];
     foreach (['user', 'date_start', 'date_end', 'type', 'hide_auto'] as $key) {
         $normalized[$key] = (int) $normalized[$key];
     }
@@ -206,9 +210,10 @@ function reedcrmTodoGetUserCondition(int $userId): string
  * @param  DoliDB $db      Database handler
  * @param  array  $filters Criteria from reedcrmTodoGetFilters()
  * @param  int    $limit   Maximum number of events, 0 to use the module configuration
- * @return array           Enriched events, ordered by start date
+ * @param  string $sortKey 'date' for the start date, 'probability' for the one of the opportunity of the project
+ * @return array           Enriched events, ordered by start date or by probability
  */
-function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $columns, string $direction = 'asc', int $offset = 0, int $limit = 0): array
+function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $columns, string $direction = 'asc', int $offset = 0, int $limit = 0, string $sortKey = 'date'): array
 {
     if ($limit <= 0) {
         $limit = reedcrmTodoGetPageSize();
@@ -221,7 +226,13 @@ function reedcrmTodoGetEvents(DoliDB $db, array $filters, array $column, array $
     $sql .= ' s.nom as soc_name, p.ref as project_ref, p.title as project_title';
     $sql .= reedcrmTodoBuildEventsFrom($db, $filters);
     $sql .= ' AND ' . reedcrmTodoGetColumnSqlCondition($column, $columns);
-    $sql .= ' ORDER BY ' . reedcrmTodoGetSortExpression() . ' ' . $order . ', a.id ' . $order;
+    if ($sortKey === 'probability') {
+        // Events without a probability (no project, or a project followed without opportunity) come last either way,
+        // the oldest first among those of a same probability
+        $sql .= ' ORDER BY CASE WHEN p.opp_percent IS NULL THEN 1 ELSE 0 END, p.opp_percent ' . $order . ', ' . reedcrmTodoGetSortExpression() . ' ASC, a.id ASC';
+    } else {
+        $sql .= ' ORDER BY ' . reedcrmTodoGetSortExpression() . ' ' . $order . ', a.id ' . $order;
+    }
     $sql .= $db->plimit($limit, $offset);
 
     $resql = $db->query($sql);
@@ -309,6 +320,10 @@ function reedcrmTodoBuildEventsFrom(DoliDB $db, array $filters): string
     if (!empty($filters['search'])) {
         $searchValue = $db->escape($db->escapeforlike($filters['search']));
         $sql .= " AND (a.label LIKE '%" . $searchValue . "%' OR a.location LIKE '%" . $searchValue . "%' OR s.nom LIKE '%" . $searchValue . "%')";
+    }
+    // "0" is a test of its own, an empty() check would drop it. An event without probability matches no test.
+    if (($filters['probability'] ?? '') !== '') {
+        $sql .= natural_search('p.opp_percent', $filters['probability'], 1);
     }
 
     return $sql;
@@ -423,7 +438,14 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
     // Proposal or invoice a relaunch event was raised on
     $originInfos = reedcrmTodoGetOriginInfos($db, $events);
 
+    // Budget, probability and relaunches of the projects the events are linked to
+    $projectInfos = reedcrmTodoGetProjectInfos($db, $events);
+
     $now       = dol_now();
+    // An event planned for a later day is still to come. Today is the pivot the two badges
+    // leave alone: an event of the day is neither late until its hour has passed, nor to come.
+    $today     = dol_getdate($now);
+    $todayEnd  = dol_mktime(23, 59, 59, $today['mon'], $today['mday'], $today['year']);
     $todoCards = [];
     foreach ($events as $eventId => $obj) {
         $percent = (int) $obj->percent;
@@ -452,6 +474,9 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             $dateSortTs = (int) $db->jdate($obj->datec);
         }
 
+        // An event is late once its deadline is past: its end date when it has one, its start date otherwise
+        $dueTs = $obj->datep2 ? (int) $db->jdate($obj->datep2) : ($obj->datep ? (int) $db->jdate($obj->datep) : 0);
+
         $todoCards[] = [
             'id'             => $eventId,
             'ref'            => !empty($obj->ref) ? $obj->ref : (string) $eventId,
@@ -469,7 +494,8 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             'date_start_fmt' => $obj->datep ? dol_print_date($db->jdate($obj->datep), empty($obj->fulldayevent) ? 'dayhour' : 'day') : '',
             'date_end'       => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), $rawFormat) : '',
             'date_end_fmt'   => $obj->datep2 ? dol_print_date($db->jdate($obj->datep2), empty($obj->fulldayevent) ? 'dayhour' : 'day') : '',
-            'late'           => ($obj->datep && $db->jdate($obj->datep) < $now && $percent >= 0 && $percent < 100) ? 1 : 0,
+            'late'           => ($dueTs && $dueTs < $now && $percent >= 0 && $percent < 100) ? 1 : 0,
+            'upcoming'       => ($obj->datep && $db->jdate($obj->datep) > $todayEnd && $percent >= 0 && $percent < 100) ? 1 : 0,
             'type_id'        => (int) $obj->type_id,
             'type_code'      => $obj->type_code,
             'type_label'     => reedcrmTodoGetTypeLabel((string) $obj->type_code, (string) $obj->type_label),
@@ -480,6 +506,7 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
             'project_id'     => (int) $obj->fk_project,
             'project_ref'    => $obj->project_ref,
             'project_title'  => $obj->project_title,
+            'project_infos'  => $projectInfos[(int) $obj->fk_project] ?? [],
             'owner'          => $owner,
             'assigned'       => array_values($assigned),
             'url'            => DOL_URL_ROOT . '/comm/action/card.php?id=' . $eventId,
@@ -503,15 +530,22 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events, array $eventIds, arr
  * Each source also carries the third party and the project it belongs to, which is what its
  * number of relaunches is read on, see reedcrmTodoCountRelaunches().
  *
+ * Its amount excluding tax comes along, rounded to an order of magnitude on the chip and exact
+ * in its tooltip: the card tells at a glance how much a relaunch is worth.
+ *
+ * So do its lines, for the tooltip of its reference, see reedcrmTodoGetOriginLines().
+ *
  * @param  DoliDB $db     Database handler
  * @param  array  $events Rows of the board, indexed by event ID
- * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => , 'soc_id' => , 'project' => , 'relaunch_count' => ]]
+ * @return array          [event id => ['ref' => , 'url' => , 'type' => , 'date_ts' => , 'date_fmt' => , 'date_title' => , 'amount_ht' => , 'amount_ht_short' => , 'amount_ht_full' => , 'soc_id' => , 'project' => , 'lines' => , 'lines_more' => , 'relaunch_count' => ]]
  */
 function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 {
+    global $conf, $langs, $user;
+
     $sources = [
-        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id=', 'date' => 'COALESCE(date_valid, datep)'],
-        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id=', 'date' => 'COALESCE(date_lim_reglement, datef)'],
+        'propal'  => ['table' => 'propal',  'url' => '/comm/propal/card.php?id=', 'date' => 'COALESCE(date_valid, datep)', 'date_label' => 'TodoOriginDatePropal', 'line_table' => 'propaldet', 'line_parent' => 'fk_propal', 'right' => 'propal'],
+        'invoice' => ['table' => 'facture', 'url' => '/compta/facture/card.php?id=', 'date' => 'COALESCE(date_lim_reglement, datef)', 'date_label' => 'TodoOriginDateInvoice', 'line_table' => 'facturedet', 'line_parent' => 'fk_facture', 'right' => 'facture'],
     ];
 
     // Group the linked object IDs per element type
@@ -525,7 +559,13 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
 
     $origins = [];
     foreach ($idsByType as $elementType => $elementIds) {
-        $sql   = 'SELECT rowid, ref, fk_soc, fk_projet, ' . $sources[$elementType]['date'] . ' as date_reference';
+        // What the object is made of is only told to whoever may open it
+        $linesByObject = [];
+        if ($user->hasRight($sources[$elementType]['right'], 'lire')) {
+            $linesByObject = reedcrmTodoGetOriginLines($db, $sources[$elementType]['line_table'], $sources[$elementType]['line_parent'], array_keys($elementIds));
+        }
+
+        $sql   = 'SELECT rowid, ref, fk_soc, fk_projet, total_ht, ' . $sources[$elementType]['date'] . ' as date_reference';
         $sql  .= ' FROM ' . MAIN_DB_PREFIX . $sources[$elementType]['table'];
         $sql  .= ' WHERE rowid IN (' . implode(',', array_keys($elementIds)) . ')';
         $resql = $db->query($sql);
@@ -534,14 +574,23 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
             continue;
         }
         while ($obj = $db->fetch_object($resql)) {
+            $dateTs   = $obj->date_reference ? (int) $db->jdate($obj->date_reference) : 0;
+            $amountHt = (float) $obj->total_ht;
             foreach ($elementIds[(int) $obj->rowid] as $eventId) {
                 $origins[$eventId] = [
-                    'type'    => $elementType,
-                    'ref'     => $obj->ref,
-                    'url'     => DOL_URL_ROOT . $sources[$elementType]['url'] . (int) $obj->rowid,
-                    'date_ts' => $obj->date_reference ? (int) $db->jdate($obj->date_reference) : 0,
-                    'soc_id'  => (int) $obj->fk_soc,
-                    'project' => (int) $obj->fk_projet,
+                    'type'            => $elementType,
+                    'ref'             => $obj->ref,
+                    'url'             => DOL_URL_ROOT . $sources[$elementType]['url'] . (int) $obj->rowid,
+                    'date_ts'         => $dateTs,
+                    'date_fmt'        => $dateTs ? dol_print_date($dateTs, 'day') : '',
+                    'date_title'      => $dateTs ? $langs->trans($sources[$elementType]['date_label'], dol_print_date($dateTs, 'day')) : '',
+                    'amount_ht'       => $amountHt,
+                    'amount_ht_short' => reedcrmTodoFormatAmountMagnitude($amountHt),
+                    'amount_ht_full'  => $langs->trans('TodoOriginAmountHT', price($amountHt, 0, $langs, 1, -1, -1, $conf->currency)),
+                    'soc_id'          => (int) $obj->fk_soc,
+                    'project'         => (int) $obj->fk_projet,
+                    'lines'           => $linesByObject[(int) $obj->rowid]['lines'] ?? [],
+                    'lines_more'      => $linesByObject[(int) $obj->rowid]['more'] ?? 0,
                 ];
             }
         }
@@ -555,6 +604,101 @@ function reedcrmTodoGetOriginInfos(DoliDB $db, array $events): array
     }
 
     return $origins;
+}
+
+/**
+ * Return the lines of the proposals or the invoices the relaunch events were raised on
+ *
+ * They fill the tooltip of the reference on the card, the way the risk of a task does on the
+ * action plan of Digirisk: what the object is made of, a label and an amount per line, without
+ * leaving the board. Title and subtotal lines (product type 9) carry no amount of their own and
+ * are left out.
+ *
+ * A line is labelled with its own label, then with the one of its product, then with its
+ * description: a free line only carries the latter.
+ *
+ * Only the first lines of an object are kept, the tooltip tells how many more there are.
+ *
+ * @param  DoliDB $db         Database handler
+ * @param  string $table      Table of the lines, without prefix
+ * @param  string $parentKey  Column of the lines pointing to their object
+ * @param  array  $objectIds  IDs of the objects
+ * @return array              [object id => ['lines' => [['label' => , 'amount' => ]], 'more' => ]]
+ */
+function reedcrmTodoGetOriginLines(DoliDB $db, string $table, string $parentKey, array $objectIds): array
+{
+    global $conf, $langs;
+
+    $maxLines = 10;
+
+    $sql  = 'SELECT d.' . $parentKey . ' as fk_object, d.label, d.description, d.total_ht, p.ref as product_ref, p.label as product_label';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . $table . ' as d';
+    $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = d.fk_product';
+    $sql .= ' WHERE d.' . $parentKey . ' IN (' . implode(',', $objectIds) . ')';
+    $sql .= ' AND d.product_type <> 9';
+    $sql .= ' ORDER BY d.' . $parentKey . ', d.rang, d.rowid';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $linesByObject = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $objectId = (int) $obj->fk_object;
+        if (!isset($linesByObject[$objectId])) {
+            $linesByObject[$objectId] = ['lines' => [], 'more' => 0];
+        }
+        if (count($linesByObject[$objectId]['lines']) >= $maxLines) {
+            $linesByObject[$objectId]['more']++;
+            continue;
+        }
+
+        $label = '';
+        foreach ([$obj->label, $obj->product_label, $obj->description, $obj->product_ref] as $candidate) {
+            $label = trim(dol_string_nohtmltag((string) $candidate));
+            if ($label !== '') {
+                break;
+            }
+        }
+
+        $linesByObject[$objectId]['lines'][] = [
+            'label'  => dol_trunc($label, 90),
+            'amount' => price((float) $obj->total_ht, 0, $langs, 1, -1, -1, $conf->currency),
+        ];
+    }
+    $db->free($resql);
+
+    return $linesByObject;
+}
+
+/**
+ * Return an amount rounded to its order of magnitude, the way the chip of a card shows it
+ *
+ * Below a thousand the amount keeps its units, above it reads in thousands then in millions,
+ * with one decimal as long as the leading figure is a single digit: 280 €, 3,4 k€, 34 k€, 1,2 M€.
+ *
+ * @param  float  $amount Amount to round
+ * @return string         Rounded amount followed by the currency symbol
+ */
+function reedcrmTodoFormatAmountMagnitude(float $amount): string
+{
+    global $conf, $langs;
+
+    $symbol  = $langs->getCurrencySymbol($conf->currency);
+    $decimal = $langs->transnoentitiesnoconv('SeparatorDecimal');
+    $abs     = abs($amount);
+
+    if ($abs < 1000) {
+        return price(round($amount), 0, $langs, 1, 0, 0) . ' ' . $symbol;
+    }
+
+    $unit     = $abs < 1000000 ? 'k' : 'M';
+    $scaled   = $amount / ($abs < 1000000 ? 1000 : 1000000);
+    // Rounded first, so that 9 990 € reads 10 k€ and not 10,0 k€
+    $decimals = abs(round($scaled, 1)) < 10 ? 1 : 0;
+
+    return number_format($scaled, $decimals, $decimal, ' ') . ' ' . $unit . $symbol;
 }
 
 /**
@@ -627,6 +771,91 @@ function reedcrmTodoCountRelaunches(DoliDB $db, array $origins): array
     }
 
     return $counts;
+}
+
+/**
+ * Return what the cards tell about the projects of their events: budget, probability and relaunches
+ *
+ * The amount is the budget of the project once it has one (a won opportunity gets it), its
+ * opportunity amount otherwise, rounded like the amount of a proposal on its chip and exact in its
+ * tooltip. The probability is the one of the opportunity, none for a project followed without one.
+ *
+ * Its relaunches are counted the way the project list does (ActionComm::getActions() on the
+ * project): the events tagged as commercial relaunches linked to the project, restricted to its
+ * third party when it has one.
+ *
+ * Only told to whoever may read projects. The whole board takes two queries, one for the projects
+ * and one for their relaunches.
+ *
+ * @param  DoliDB $db     Database handler
+ * @param  array  $events Rows of the board, indexed by event ID
+ * @return array          [project id => ['amount_short' => , 'amount_full' => , 'percent' => , 'relaunch_count' => ]]
+ */
+function reedcrmTodoGetProjectInfos(DoliDB $db, array $events): array
+{
+    global $conf, $langs, $user;
+
+    $projectIds = [];
+    foreach ($events as $obj) {
+        if ($obj->fk_project > 0) {
+            $projectIds[(int) $obj->fk_project] = (int) $obj->fk_project;
+        }
+    }
+    if (empty($projectIds) || !$user->hasRight('projet', 'lire')) {
+        return [];
+    }
+
+    $sql   = 'SELECT rowid, fk_soc, budget_amount, opp_amount, opp_percent FROM ' . MAIN_DB_PREFIX . 'projet';
+    $sql  .= ' WHERE rowid IN (' . implode(',', $projectIds) . ')';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $infos      = [];
+    $projectSoc = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $projectId = (int) $obj->rowid;
+        $budget    = (float) $obj->budget_amount;
+        $amount    = $budget > 0 ? $budget : (float) $obj->opp_amount;
+
+        $projectSoc[$projectId] = (int) $obj->fk_soc;
+        $infos[$projectId]      = [
+            'amount_short'   => $amount > 0 ? reedcrmTodoFormatAmountMagnitude($amount) : '',
+            'amount_full'    => $amount > 0 ? $langs->trans($budget > 0 ? 'TodoProjectBudget' : 'TodoProjectOpportunityAmount', price($amount, 0, $langs, 1, -1, -1, $conf->currency)) : '',
+            'percent'        => ($obj->opp_percent !== null && $obj->opp_percent !== '') ? (int) round((float) $obj->opp_percent) : null,
+            'relaunch_count' => 0,
+        ];
+    }
+    $db->free($resql);
+
+    $relaunchTag = getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG');
+    if ($relaunchTag <= 0 || empty($infos)) {
+        return $infos;
+    }
+
+    $sql  = 'SELECT a.fk_project, a.fk_soc, COUNT(a.id) as nb';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+    $sql .= ' WHERE a.entity IN (' . getEntity('agenda') . ')';
+    $sql .= ' AND a.fk_project IN (' . implode(',', array_keys($infos)) . ')';
+    $sql .= ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $relaunchTag . ')';
+    $sql .= ' GROUP BY a.fk_project, a.fk_soc';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return $infos;
+    }
+    while ($obj = $db->fetch_object($resql)) {
+        $projectId = (int) $obj->fk_project;
+        if (empty($projectSoc[$projectId]) || $projectSoc[$projectId] === (int) $obj->fk_soc) {
+            $infos[$projectId]['relaunch_count'] += (int) $obj->nb;
+        }
+    }
+    $db->free($resql);
+
+    return $infos;
 }
 
 /**

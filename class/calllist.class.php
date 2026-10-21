@@ -226,7 +226,7 @@ class CallList extends SaturneObject
         $label .= '<br><b>' . $langs->trans('Ref') . ':</b> ' . $this->ref;
         $label .= '<br><b>' . $langs->trans('Label') . ':</b> ' . dol_htmlentities($this->label);
 
-        $url = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $this->id;
+        $url = dol_buildpath('/reedcrm/view/call_list_card.php', 1) . '?id=' . $this->id;
 
         $linkclose = '';
         if (empty($noToolTip)) {

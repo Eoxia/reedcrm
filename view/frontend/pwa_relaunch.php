@@ -102,7 +102,7 @@ $object->fetch_thirdparty();
  * Actions
  */
 
-$backUrl  = dol_buildpath('/custom/reedcrm/view/frontend/pwa_opportunity.php', 1);
+$backUrl  = dol_buildpath('/reedcrm/view/frontend/pwa_opportunity.php', 1);
 $backUrl .= '?from_id=' . (int) $object->id . '&from_type=project';
 if ($callListId > 0) {
     $backUrl .= '&call_list_id=' . $callListId;
@@ -118,7 +118,7 @@ if ($resHook < 0) {
 }
 
 if (empty($resHook)) {
-    // create_contact / add_event / create_ticket, shared with the desktop card (view/procard.php)
+    // create_contact / create_project / add_event / create_ticket, shared with the desktop card (view/procard.php)
     require __DIR__ . '/../../core/tpl/view/eventpro/eventpro_actions.tpl.php';
 }
 
@@ -129,11 +129,11 @@ if (empty($resHook)) {
 $title   = $langs->trans('QuickEventCreation');
 $helpUrl = 'FR:Module_ReedCRM';
 $moreJS  = [
-    '/custom/saturne/js/saturne.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js',
-    '/custom/reedcrm/js/modules/eventpro.js'
+    '/saturne/js/saturne.min.js',
+    '/reedcrm/js/reedcrm.min.js',
+    '/reedcrm/js/modules/eventpro.js'
 ];
-$moreCSS = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreCSS = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -141,7 +141,8 @@ $conf->dol_hide_leftmenu = 1;
 llxHeader('', $title, $helpUrl, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-relaunch');
 
 $pwaHeaderCenterHtml  = '<a class="pwa-opp-back" href="' . dol_escape_htmltag($backUrl) . '">';
-$pwaHeaderCenterHtml .= '<i class="fas fa-arrow-left"></i> ' . dol_escape_htmltag($langs->trans('BackToOpportunity'));
+$pwaHeaderCenterHtml .= '<span class="pwa-opp-back-arrow"><i class="fas fa-arrow-left"></i></span>';
+$pwaHeaderCenterHtml .= '<span class="pwa-opp-back-label">' . dol_escape_htmltag($langs->trans('BackToOpportunity')) . '</span>';
 $pwaHeaderCenterHtml .= '</a>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 

@@ -47,6 +47,16 @@ ProjectContactSameAsThirdPartyContact = Contact du projet identique au contact d
 
 # Frontend - Frontend
 QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
+QuickCreationRemindMeLater = Me rappeler plus tard
+QuickCreationReminderDate = Date du rappel
+QuickCreationReminderIn3Days = Dans 3 jours
+QuickCreationReminderIn1Week = Dans 1 semaine
+QuickCreationReminderIn1Month = Dans 1 mois
+QuickCreationReminderTitlePlaceholder = Objet du rappel (facultatif)
+QuickCreationReminderDefaultLabel = Rappel : %s
+QuickCreationReminderCreated = Rappel programmé le %s
+ErrorQuickCreationReminderDateInPast = La date du rappel doit être dans le futur
+ErrorQuickCreationReminder = L'opportunité a bien été créée, mais pas son rappel
 
 
 
@@ -246,7 +256,7 @@ ProductLastSellList = Dernières ventes du produit (Commande et Facture)
 Opportunities = Opportunités
 OpenedPropals = PR ouvertes
 RecurringInvoices = Factures récurrentes
-GravityFormLink                        = Lien GravityForm
+GravityFormLink                        = Lien du formulaire web
 
 # Libellés des extrafields projet du module (llx_extrafields.label sert de clé de traduction,
 # et showOptionals() ne charge que le langfile de l'extrafield, ici reedcrm@reedcrm).
@@ -255,7 +265,7 @@ GravityFormLink                        = Lien GravityForm
 LastName                               = Nom
 FirstName                              = Prénom
 Website                                = Site web
-ReedCRMGravityForm                     = Lien GravityForm
+ReedCRMGravityForm                     = Formulaire web
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall = Appel entrant
@@ -348,6 +358,26 @@ ImportParametersMissing = Paramètres d'import manquants.
 CategoryCreationError = Erreur lors de la création de la catégorie.
 ProjectsImported = %s projets importés sur %s lignes.
 ProjectsImportErrors = %s lignes n'ont pas pu être importées.
+CSVAssigneesColumn = Facultatif : une colonne des personnes à assigner, choisie au moment de l'import.
+AssigneesColumn = Colonne des personnes assignées
+AssigneesColumnHelp = Chaque personne de cette colonne est ajoutée à l'opportunité comme « Commercial affecté au projet ». Elle est reconnue par son identifiant (id), son login, son email, son nom complet, son prénom seul ou son prénom suivi de l'initiale du nom. Plusieurs personnes se séparent par une virgule, « / », « & » ou « et ».
+ImportAssigneesNotFound = Personnes non reconnues (inconnues ou homonymes), opportunités importées sans elles : %s
+ImportAssignmentErrors = %s affectations n'ont pas pu être enregistrées.
+CSVReminderColumns = Facultatif : une colonne de texte et une colonne d'échéance pour ajouter un rappel à la todo, choisies au moment de l'import.
+ReminderLabelColumn = Colonne du texte du rappel
+ReminderLabelColumnHelp = Le texte de cette colonne devient le libellé d'un événement de rappel « À faire » lié à l'opportunité. Il apparaît dans la todo des personnes assignées à l'opportunité, ou dans la vôtre si personne ne l'est. Sans texte, le rappel s'appelle « Rappel : Prénom Nom ». « Aucune », « - » ou « Je ne sais pas » valent une case vide.
+ReminderDateColumn = Colonne de l'échéance du rappel
+ReminderDateColumnHelp = Date d'échéance (date de fin) du rappel, au format JJ/MM/AAAA ou AAAA-MM-JJ, suivie ou non d'une heure (14:30 ou 14h30) ; sans heure, 9 h. Le rappel commence à l'import. Une échéance absente ou illisible donne un rappel sans échéance, la valeur du fichier (« 3-6 mois »…) est reprise dans sa note. Une échéance passée donne un rappel en retard, sans notification.
+ImportRemindersCreated = %s rappels ajoutés à la todo.
+ImportRemindersWithoutText = %s rappels créés sans texte, avec le libellé « Rappel : Prénom Nom ».
+ImportRemindersWithoutDueDate = %s rappels créés sans échéance : date absente ou illisible (formats acceptés : JJ/MM/AAAA ou AAAA-MM-JJ, heure facultative). La valeur du fichier est reprise dans la note du rappel.
+ImportRemindersOverdue = %s rappels créés avec une échéance déjà passée : ils sont en retard dans la todo, sans notification.
+ImportReminderDueDateAsWritten = Échéance indiquée dans le fichier d'import : %s
+ImportReminderErrors = %s rappels n'ont pas pu être enregistrés.
+CSVNoteColumn = Facultatif : une colonne de note de 0 à 10 qui donne la probabilité de l'opportunité (1 = 10 %), choisie au moment de l'import.
+NoteColumn = Colonne de la note (probabilité)
+NoteColumnHelp = Note de 0 à 10 transformée en probabilité de l'opportunité : 1 = 10 %, 2 = 20 %… 10 = 100 % (2,5 = 25 %). L'opportunité prend aussi l'étape du dictionnaire qui correspond (prospection, qualification…). Une case vide laisse la ligne sans probabilité. Si c'est la colonne « Note » attendue par l'import, une note n'y sert plus de description ; un texte, si.
+ImportNotesInvalid = %s notes non reprises : valeur illisible ou hors de 0 à 10.
 OpportunitiesImport = Import d'opportunités
 ImportedOpportunityList = Liste des opportunités importés
 
@@ -401,6 +431,7 @@ ReedCRMStatusAsBadge = État : pastille
 CallList = Liste d'appel
 CallLists = Listes d'appel
 NewCallList = Nouvelle liste d'appel
+CallListPDF = Liste d'appel (PDF)
 # Derived keys auto-built by the generic saturne_list.php from the element name (call_list)
 Call_listList = Listes d'appel
 NewCall_list = Nouvelle liste d'appel
@@ -717,6 +748,10 @@ FollowupChartToDo = DU à faire
 FollowupChartLost = DU perdus
 FollowupAmount = Montant
 DuFollowupMenu = Suivi client DU
+DuFollowupEnabled = Portefeuille service (suivi client DU)
+DuFollowupEnabledDescription = Affiche la section de menu « Portefeuille service » et son tableau de suivi des audits DU. Fonctionnalité interne Evarisk, adossée aux références produits DU_A*, D1 à D5 et aux projets digirisk.com : à laisser désactivée sur une installation client. Réactiver le module pour que le menu prenne ce réglage en compte.
+DuFollowupDisabled = Le suivi client DU est désactivé sur cette instance.
+OptionalFeatures = Fonctionnalités optionnelles
 BillingGapsMenu = Suivi facturation
 BillingGapsIntro = Tout ce qui a été signé, commandé ou dû mais qui n'a pas encore été facturé.
 BillingGapSignedProposals = Devis signés non facturés
@@ -846,10 +881,16 @@ TodoAllTypes = Tous les types
 TodoSearchPlaceholder = Libellé, lieu ou tiers
 TodoFilterHideAuto = Masquer les événements automatiques
 TodoFilterHideAutoHelp = Les événements tracés par Dolibarr lui-même ne sont pas des actions à mener
+TodoFilterProbability = Probabilité
+TodoFilterProbabilityPlaceholder = ex. >= 50
+TodoFilterProbabilityHelp = Probabilité de l'opportunité du projet, avec un opérateur comme dans les listes Dolibarr : >= 50, < 20, 30, ou plusieurs conditions séparées par un espace (>= 20 <= 60). Les événements sans probabilité sont alors masqués.
 TodoFilterCount = %s événement(s)
 TodoNoEvent = Aucun événement
+TodoMoveRefusedRelaunch = Une relance reste dans sa colonne tant qu'elle n'est pas traitée : déposez-la dans « %s » ou « %s ».
+TodoMoveRefusedBacklog = Cette colonne ne reçoit que les relances créées automatiquement.
 TodoNoLabel = Sans libellé
 TodoLateEvent = En retard
+TodoUpcomingEvent = À venir
 TodoUnassigned = Non affecté
 TodoAddAssigned = Affecter un utilisateur
 TodoRemoveAssigned = Retirer l'affectation
@@ -861,6 +902,9 @@ TodoVisibleColumns = Colonnes affichées
 TodoColumnOptions = Options de la colonne
 TodoSortDateAsc = Trier par date croissante
 TodoSortDateDesc = Trier par date décroissante
+TodoSortByProbability = Trier par probabilité de l'opportunité
+TodoSortProbabilityAsc = Trier par probabilité croissante
+TodoSortProbabilityDesc = Trier par probabilité décroissante
 TodoGroup = Grouper
 TodoFreeze = Figer
 TodoHideColumn = Masquer
@@ -880,6 +924,14 @@ TodoInvoiceRelaunchCronLabel = ReedCRM - Relances des factures impayées
 TodoInvoiceRelaunchCronComment = Crée un événement à faire pour chaque facture validée impayée depuis plus de 30 jours après son échéance (constante REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). L'événement alimente la colonne « Factures à relancer » du tableau Todo.
 TodoInvoiceRelaunchCronResult = %s relance(s) de facture créée(s)
 TodoRelaunchCount = %s relance(s) sur cet objet
+TodoProjectRelaunchCount = %s relance(s) sur ce projet
+TodoProjectBudget = Budget du projet : %s
+TodoProjectOpportunityAmount = Montant de l'opportunité : %s
+TodoProjectProbability = Probabilité de l'opportunité : %s
+TodoOriginAmountHT = Montant HT : %s
+TodoOriginDatePropal = Devis validé le %s
+TodoOriginDateInvoice = Facture échue le %s
+TodoOriginMoreLines = + %s autre(s) ligne(s)
 # Signed quotes never invoiced
 SignedUnbilledMenu = PR signées non facturées
 SignedUnbilledIntro = Propositions commerciales signées sans facture rattachée. Chaque ligne est recoupée avec les factures du client pour repérer celles qui ont en fait été facturées séparément (facture créée à part, via la commande ou le contrat).
@@ -1017,9 +1069,13 @@ PocketPlayAudio = Écouter l'enregistrement
 PocketAssignedUser = Affecté à
 PocketAssignee = Interlocuteur Pocket
 PocketCreateEvent = Créer un événement
+PocketActionDueDate = Date d'échéance
+PocketDeleteActionItem = Supprimer cette action
+PocketConfirmDeleteActionItem = Supprimer cette action à faire ? Elle ne reviendra pas à la prochaine synchronisation Pocket.
 PocketActionItemId = Identifiant de l'action Pocket
 PocketActionItemTodo = À faire
 PocketActionItemDone = Faite
+PocketActionItemDismissed = Supprimée
 PocketActionItemEdited = Action réécrite
 PocketChangeStatus = Changer l'état
 PocketSummaryEdited = Résumé réécrit
@@ -1069,13 +1125,33 @@ DataManagementMenu = Gestion des données
 
 # Clôture rapide d'un événement
 QuickCloseEventTitle = Clôturer l'événement
-QuickCloseEventTooltip = Clôturer cet événement
+QuickCloseEventTooltip = Clôturer cet événement ou changer son avancement
+QuickCloseEventProgressTitle = Mettre à jour l'événement
+QuickCloseEventPercentage = Avancement
+QuickCloseEventPercentageHelp = À 100 %, l'événement est clôturé. En dessous, seul son avancement change.
+QuickCloseEventProgressSaved = Avancement de l'événement passé à %s
+QuickCloseEventProgressSavedAndRescheduled = Avancement de l'événement passé à %s, nouvel événement programmé le %s
 QuickCloseEventDescription = Description
 QuickCloseEventDescriptionPlaceholder = Ajouté à la description de l'événement (facultatif)
 QuickCloseEventReschedule = Reprogrammer un événement identique pour plus tard
 QuickCloseEventNewLabel = Nom du nouvel événement
 QuickCloseEventNewLabelPlaceholder = Nom de l'événement clôturé
-QuickCloseEventInOneMonth = Dans 1 mois
+QuickCloseEventCurrentLabel = Nom de l'événement
+QuickCloseEventCurrentLabelPlaceholder = Renommez l'événement si besoin
+QuickCloseEventNewType = Type de rappel
+QuickCloseEventKeepType = Garder le type de l'événement clôturé
+QuickCloseEventTypeDisplay = Choix du type de rappel
+QuickCloseEventTypeDisplayDescription = Forme du sélecteur de type dans la modale de clôture rapide
+QuickCloseEventTypeDisplayButtons = Boutons
+QuickCloseEventTypeDisplaySelect = Liste déroulante
+
+# Types de relance, partagés par les pastilles de relance et les formulaires de rappel
+RelaunchTypeCall = Appel
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = RDV
+RelaunchTypeOther = Autre
+QuickCloseEventInMonths = Dans
+QuickCloseEventInMonthsSuffix = mois
 QuickCloseEventInDays = Dans
 QuickCloseEventInDaysSuffix = jours
 QuickCloseEventOnDate = Le
@@ -1084,13 +1160,16 @@ QuickCloseEventConfirm = Clôturer
 QuickCloseEventDone = Événement clôturé
 QuickCloseEventDoneAndRescheduled = Événement clôturé, nouvel événement programmé le %s
 QuickCloseEventNotTodo = Cet événement n'est pas à faire, il ne peut pas être clôturé
-QuickCloseEventError = La clôture de l'événement a échoué
+QuickCloseEventError = L'enregistrement de l'événement a échoué
 QuickCloseEvents = clôtures rapides d'événement
+QuickCloseEventInMonthsLabel = Dans un nombre de mois
 QuickCloseEventInDaysLabel = Dans un nombre de jours
 QuickCloseEventDefaultDelay = Délai de reprogrammation par défaut
 QuickCloseEventDefaultDelayDescription = Choix présélectionné dans la modale de clôture rapide quand la reprogrammation est demandée
 QuickCloseEventDefaultDays = Nombre de jours par défaut
 QuickCloseEventDefaultDaysDescription = Nombre de jours prérempli pour le délai « Dans un nombre de jours »
+QuickCloseEventDefaultMonths = Nombre de mois par défaut
+QuickCloseEventDefaultMonthsDescription = Nombre de mois prérempli pour le délai « Dans un nombre de mois »
 
 #
 # Dates d'intervention
@@ -1163,6 +1242,310 @@ CardShowAllFields = Tout afficher
 CardEmptyFieldsHiddenCount = %s masqués
 CardEmptyFieldsTooltip = Masque ou affiche les champs de cette fiche qui n'ont pas de valeur. Le choix est conservé pour toutes vos fiches.
 CardEmptyFieldsUserParam = Champs vides des fiches
+
+# Opportunity stats - Opportunités par mois
+OpportunityStatsMenu = Opportunités par mois
+OpportunityStatsTitle = Opportunités par mois
+OpportunityStatsTag = Tag
+OpportunityStatsEveryTag = Tous les tags
+OpportunityStatsDepth = Profondeur
+OpportunityStatsLastYears = %s dernières années
+OpportunityStatsDateType = Date de référence
+OpportunityStatsDateCreation = Date de création
+OpportunityStatsDateStart = Date de début
+OpportunityStatsAverage = Moyenne
+OpportunityStatsAverageHint = La moyenne divise le total par les mois écoulés : les mois que l'année en cours n'a pas encore vécus ne la tirent pas vers le bas.
+OpportunityStatsDateStartWarning = Le comptage se fait sur la date de début : les opportunités qui n'en ont pas sont absentes du tableau.
+OpportunityStatsTotalYear = Total %s
+OpportunityStatsPerMonth = Par mois
+OpportunityStatsBestMonth = Meilleur mois
+OpportunityStatsVersusYear = Contre %s
+OpportunityStatsSameWindow = %s sur la même période
+OpportunityStatsNoComparison = Pas de comparaison
+
+# Devis non facturés
+PropalUnbilledTag = Non facturé
+PropalUnbilledSetupTitle = Devis non facturés
+PropalUnbilledTagLabel = Tag des devis non facturés
+PropalUnbilledTagDescription = Un bandeau rouge s'affiche en haut de la fiche de tout devis qui porte ce tag, qu'il soit posé par le bouton ci-dessous ou à la main.
+PropalUnbilledTagNotCreated = Pas encore créé : il le sera au premier lancement
+PropalUnbilledSync = Taguer automatiquement les devis non facturés
+PropalUnbilledSyncDescription = Un devis est non facturé quand il est signé et qu'aucune facture ne lui est liée, ni directement ni par la commande ou le contrat créé depuis ce devis (les factures abandonnées ne comptent pas). Le tag est posé sur ces devis et retiré des devis facturés qui le portent encore. Une tâche planifiée fait aussi la mise à jour 4 fois par jour.
+PropalUnbilledPendingChanges = À taguer : %s devis non facturé(s) - À détaguer : %s devis facturé(s)
+PropalUnbilledSyncButton = Taguer les devis non facturés
+PropalUnbilledSyncDone = Tag posé sur %s devis, retiré de %s devis
+PropalUnbilledSyncError = Impossible de mettre à jour le tag des devis non facturés
+PropalUnbilledBanner = Ce devis n'est pas facturé
+PropalUnbilledCronLabel = ReedCRM - Tag des devis non facturés
+PropalUnbilledCronComment = Pose le tag « Non facturé » sur les devis signés sans facture liée et le retire des devis facturés, comme le bouton de la page de configuration des propositions commerciales. Lancée 4 fois par jour (0h, 6h, 12h et 18h).
+
+# Contrats non facturés
+ContractUnbilledBanner = Ce contrat n'est pas facturé
+
+# Lifecycle timeline
+LifecycleStepCreation = Création
+LifecycleStepValidation = Validation
+LifecycleStepSending = Envoi
+LifecycleStepReception = Réception
+LifecycleStepRelaunch = Relances
+LifecycleStepValidityEnd = Fin validité
+LifecycleStepSignature = Signature
+LifecycleStepRefusal = Refus
+LifecycleStepBilling = Facturation
+LifecycleStepDelivery = Livraison
+LifecycleStepShipping = Expédition
+LifecycleStepClosing = Clôture
+LifecycleStepCancellation = Annulation
+LifecycleStepDueDate = Échéance
+LifecycleStepPayment = Règlement
+LifecycleStepAbandon = Abandon
+LifecycleStepProjectStart = Démarrage
+LifecycleStepProjectEnd = Fin prévue
+LifecycleStepFirstProposal = Devis
+LifecycleStepFirstOrder = Commande
+LifecycleStepFirstInvoice = Facture
+LifecycleTooltipPending = Étape non atteinte
+LifecycleTooltipOverdue = Date dépassée
+LifecycleTooltipBy = Par %s
+LifecycleTooltipSentCount = %s envois par mail
+LifecycleTooltipLastSending = Dernier envoi le %s
+LifecycleTooltipLinkedCount = %s documents liés
+LifecycleTooltipPaymentCount = %s règlements
+LifecycleTooltipPaidAmount = %s réglés sur %s
+LifecycleTooltipCommercialStatus = Statut commercial : %s
+LifecycleTooltipNoStatusDate = Le statut commercial ne conserve pas de date
+LifecycleTooltipRelaunchCount = %s relances ReedCRM
+LifecycleTooltipFirstRelaunch = Première relance le %s
+LifecycleStep = Étape
+LifecycleStepHelp = Dernière étape franchie par l'opportunité sur son fil d'Ariane : la colonne est triée et filtrée sur elle. Le détail d'une étape s'affiche au survol de son point.
+
+#
+# Tableaux de bord de pilotage : commercial et Direction (#694)
+#
+MenuSectionSteering = Pilotage
+SalesDashboard = Tableau de bord commercial
+DirectionDashboard = Tableau de bord Direction
+ReadSalesDashboard = Consulter le tableau de bord commercial (ses propres chiffres)
+ReadSalesDashboardOfTeam = Consulter les chiffres commerciaux de toute l'équipe
+ReadDirectionDashboard = Consulter le tableau de bord Direction
+
+# Objectifs commerciaux
+SalesGoals = Objectifs commerciaux
+SalesTeam = Équipe commerciale
+SalesTeamGroup = Groupe de l'équipe commerciale
+SalesTeamGroupDescription = Les membres de ce groupe forment l'équipe décrite par les tableaux de bord et peuvent recevoir des objectifs individuels. Sans groupe, l'équipe regroupe toute personne ayant une activité commerciale (appels, opportunités, devis).
+SalesGoalCallsPerDay = Appels par jour ouvré
+SalesGoalCallsPerDayDescription = Nombre d'appels sortants attendu chaque jour ouvré, week-ends et jours fériés exclus. Laisser vide pour ne fixer aucun objectif.
+SalesGoalSignedPerMonth = Devis signés par mois
+SalesGoalSignedPerMonthDescription = Nombre de devis passés au statut signé attendu chaque mois.
+SalesGoalSignedAmountPerMonth = Montant signé par mois (HT)
+SalesGoalSignedAmountPerMonthDescription = Montant hors taxe des devis signés attendu chaque mois.
+SalesGoalOpportunitiesPerMonth = Opportunités créées par mois
+SalesGoalOpportunitiesPerMonthDescription = Nombre de nouvelles opportunités attendu chaque mois.
+SalesPersonalGoals = Objectifs individuels
+SalesPersonalGoalsDescription = Un champ vide garde l'objectif de l'équipe, affiché en grisé.
+SalesPersonalGoalsNeedGroup = Choisissez d'abord le groupe de l'équipe commerciale pour fixer des objectifs individuels.
+SalesGoal = Objectif
+SalesGoalProgressReached = Objectif atteint (%s)
+SalesGoalProgressOntrack = Dans le rythme attendu (%s de l'objectif)
+SalesGoalProgressLate = En retard sur le rythme attendu (%s de l'objectif)
+SalesComparedWith = Évolution par rapport à la période du %s au %s
+
+# Filtres
+SalesPeriodFilter = Période
+SalesPeriodWeek = Semaine en cours
+SalesPeriodMonth = Mois en cours
+SalesPeriodPreviousMonth = Mois précédent
+SalesPeriodPreviousQuarter = Trimestre précédent
+SalesPeriodPreviousYear = Exercice précédent
+SalesPeriodQuarter = Trimestre en cours
+SalesPeriodYear = Exercice en cours
+SalesPeriodLastTwelveMonths = 12 derniers mois
+SalesUserFilter = Commercial
+SalesWholeTeam = Toute l'équipe
+DirectionWholeCompany = Toute l'entreprise
+
+# Tableau de bord commercial
+SalesToday = Aujourd'hui
+SalesCallsMadeToday = Appels passés aujourd'hui
+SalesCallsMadeDescription = Événements « Appel téléphonique » datés dans le passé et terminés, sans objet ou saisis après coup. Un appel planifié n'est compté qu'une fois fait ; les appels entrants Keyyo sont comptés à part.
+SalesCallsMadeThisWeek = Appels passés cette semaine
+SalesIncomingCallsToday = Appels entrants aujourd'hui
+SalesIncomingCallsDescription = Appels reçus enregistrés par la téléphonie Keyyo : ils ne comptent pas dans l'objectif d'appels.
+SalesActionsDueToday = Actions prévues aujourd'hui
+SalesActionsLate = Actions en retard
+SalesRelaunchesWaiting = Relances à traiter
+SalesRelaunchesWaitingDescription = Événements à faire sans date, comme les relances automatiques de devis et de factures.
+SalesCallListLinesToCall = Contacts à appeler (listes d'appel)
+SalesGoalsOfPeriod = Objectifs : %s
+SalesCallsMade = Appels passés
+SalesCallsPerWorkingDay = Appels par jour ouvré
+SalesCallsPerWorkingDayDescription = Moyenne sur les jours ouvrés déjà écoulés de la période, comparée à l'objectif journalier.
+SalesProposalsSignedDescription = Devis passés au statut signé sur la période, à leur date de signature.
+SalesSignedAmount = Montant signé HT
+SalesOpportunitiesCreated = Opportunités créées
+SalesEffortLeft = Effort restant
+SalesEffortLeftDescription = Ce qu'il reste à faire pour atteindre les objectifs de la période, réparti sur les %s jours ouvrés restants, aujourd'hui compris.
+SalesEffortCallsPerDay = %s appels par jour
+SalesEffortProposals = %s devis à signer
+SalesWorkingDaysLeft = %s jours ouvrés restants
+SalesPipeline = Pipeline
+SalesOpenOpportunities = Opportunités ouvertes
+SalesWeightedPipeline = Pipeline pondéré
+SalesWeightedPipelineDescription = Somme des montants des opportunités ouvertes multipliés par leur probabilité.
+SalesProposalsAwaitingSignature = Devis en attente de signature
+SalesOpportunitiesWithoutAction = Opportunités sans prochaine action
+SalesOpportunitiesWithoutActionDescription = Opportunités ouvertes sans aucun événement à faire : personne n'a prévu de les relancer.
+SalesStaleOpportunities = Sans activité depuis %s jours
+SalesConversion = Transformation
+SalesCallsPerOpportunity = Appels par opportunité créée
+SalesCallsPerOpportunityDescription = Nombre d'appels passés sur la période pour chaque opportunité créée sur la même période.
+SalesOpportunityToProposalRate = Opportunités transformées en devis
+SalesOpportunityToProposalRateDescription = Part des opportunités créées sur la période ayant déjà au moins un devis rattaché.
+SalesSignatureRate = Taux de signature des devis
+SalesSignatureRateDescription = Devis signés sur la période, rapportés aux devis signés ou refusés sur la même période.
+SalesWinRate = Taux de gain des opportunités
+SalesWinRateDescription = Opportunités gagnées sur la période, rapportées aux opportunités gagnées ou perdues sur la même période.
+SalesMeanSignatureDelay = Délai moyen de signature
+SalesAverageSignedDeal = Panier moyen signé
+SalesNbDays = %s j
+SalesCallsPerDay = Appels par jour ouvré
+SalesCallsPerWeek = Appels par semaine
+SalesWeekOf = Sem. du %s
+SalesSignaturesPerMonth = Devis signés par mois
+SalesFunnel = Entonnoir commercial de la période
+SalesProposalsIssued = Devis émis
+SalesProposalsSigned = Devis signés
+SalesOpenOpportunitiesStatus = Opportunités ouvertes par étape
+NbOfOpportunities = Nombre d'opportunités
+NoStatus = Sans statut
+SalesTeamBoard = Tableau de l'équipe commerciale
+SalesCallsOfPeriod = Appels de la période
+SalesTodoList = Actions du jour et en retard
+SalesLateBy = Retard
+SalesOpportunitiesToFollowUp = Opportunités à relancer
+SalesPendingProposals = Devis en attente de signature
+SalesWaitingFor = En attente depuis
+
+# Tableau de bord Direction
+DirectionRevenue = Chiffre d'affaires : %s
+DirectionBilledRevenue = CA facturé HT
+DirectionBilledRevenueDescription = Montant hors taxe des factures validées de la période, avoirs déduits, acomptes exclus. Évolution comparée à la même durée de la période précédente.
+DirectionRecurringPart = Part récurrente
+DirectionRecurringPartDescription = Part du CA facturé issue d'un modèle de facture récurrente.
+DirectionSignedRevenue = CA signé HT
+DirectionSignedUnbilled = Signé non facturé
+DirectionSignedUnbilledDescription = Devis signés sans facture liée, avec la même règle que le tag « non facturé » des devis.
+DirectionRecurring = Facturation récurrente
+DirectionMonthlyRecurringRevenue = Revenu récurrent mensuel (MRR)
+DirectionMonthlyRecurringRevenueDescription = Montant HT des modèles de facture récurrente actifs, ramené à un mois selon leur fréquence.
+DirectionAnnualRecurringRevenue = Revenu récurrent annuel (ARR)
+DirectionActiveSubscriptions = Abonnements actifs
+DirectionNbCustomers = %s clients
+DirectionRecurringToBill = À facturer sous %s jours
+DirectionRecurringLate = Modèles en retard de génération
+DirectionRecurringLateDescription = Modèles actifs dont la date de prochaine facture est dépassée : une facture aurait dû être générée.
+DirectionNewSubscriptions = Nouveaux abonnements sur la période
+DirectionPipeline = Pipeline
+DirectionReceivables = Encaissements et impayés
+DirectionOutstanding = Encours clients TTC
+DirectionOutstandingDescription = Reste à payer des factures validées non soldées, paiements et avoirs imputés déduits.
+DirectionOverdue = Dont échu
+DirectionInvoicesVeryLate = Factures en retard de plus de %s jours
+DirectionCollected = Encaissé sur la période
+DirectionMeanPaymentDelay = Délai moyen de paiement
+DirectionMeanPaymentDelayDescription = Pour les factures soldées sur la période, temps écoulé entre la date de facture et le dernier paiement.
+DirectionSalesTeam = Équipe commerciale
+DirectionSalesRepresentatives = Commerciaux
+DirectionSalesRepresentativesDescription = Membres du groupe de l'équipe commerciale, ou à défaut toute personne ayant une activité commerciale.
+DirectionCallsPerDayPerRepresentative = Appels par jour et par commercial
+DirectionNewCustomers = Nouveaux clients
+DirectionNewCustomersDescription = Tiers ayant signé leur tout premier devis sur la période.
+DirectionRevenuePerMonth = CA facturé HT par mois, par exercice
+DirectionRecurringRevenueShare = CA récurrent et ponctuel par mois
+DirectionRecurringRevenue = Récurrent
+DirectionOneOffRevenue = Ponctuel
+DirectionSignedPerMonth = Montant signé HT par mois, par exercice
+DirectionOpportunitiesPerMonth = Opportunités créées par mois, par exercice
+DirectionPipelineFunnel = Entonnoir : pipeline brut, pondéré et signé
+DirectionGrossPipeline = Pipeline brut
+DirectionPipelineByStage = Pipeline ouvert par étape (montant HT)
+DirectionOpportunitySources = Origine des opportunités sur la période
+DirectionOpportunitiesWon = Opportunités gagnées
+DirectionUnknownOrigin = Origine non renseignée
+DirectionLostReasons = Motifs de perte et de refus sur la période
+DirectionNoReason = Motif non renseigné
+DirectionUnpaidAge = Ancienneté des impayés (TTC)
+DirectionNotDueYet = Non échu
+DirectionOutstandingEvolution = Évolution de l'encours clients
+DirectionSignedPerUser = Signatures par commercial sur la période
+DirectionTeamPerformance = Performance de l'équipe commerciale sur la période
+DirectionTopOpportunities = Plus grosses opportunités ouvertes
+DirectionNextAction = Prochaine action
+DirectionRecurringFollowUp = Suivi de la facturation récurrente
+DirectionRecurringTemplate = Modèle
+DirectionMonthlyAmount = Mensualisé HT
+DirectionNextInvoice = Prochaine facture
+DirectionLastInvoice = Dernière facture
+DirectionInvoicesGenerated = Factures générées
+DirectionUnpaidInvoices = Factures impayées les plus en retard
+
+#
+# Contrôle des mandats SEPA
+#
+SepaMandateCheckTitle = Contrôle des mandats SEPA
+SepaMandateRuleIntro = Cette page dit, RIB par RIB, ce qui empêchera un prélèvement SEPA de partir correctement. Elle ne modifie rien : chaque ligne renvoie vers l'onglet RIB du tiers pour corriger.
+SepaMandateRuleFallback = Avec votre version de Dolibarr (%s), la date de signature écrite dans le fichier est la date de signature du mandat, ou à défaut la date de création du RIB.
+SepaMandateRuleNofallback = Attention : avec votre version de Dolibarr (%s), quand une demande de prélèvement désigne un RIB précis, le fichier reprend la date de signature du mandat sans aucun repli. Si elle n'est pas renseignée, la date part vide et la banque rejette le fichier, sauf si le correctif Dolibarr #42020 est installé.
+SepaMandateRuleUncertain = Avec votre version de Dolibarr (%s), il n'est pas certain que le correctif Dolibarr #42020 soit inclus : un RIB désigné par une demande et sans date de signature du mandat est donc signalé comme bloquant par prudence.
+SepaMandateCheckedAccounts = RIB contrôlés
+SepaMandateAccountsBlocking = RIB avec un point bloquant
+SepaMandateAccountsWarning = RIB à surveiller
+SepaMandateFailingRequests = Demandes en attente qui partiront en erreur
+SepaMandateFailingRequestsHint = sur l'ensemble des demandes de prélèvement en attente
+SepaMandateThirdpartiesInError = Tiers sans RIB utilisable
+SepaMandateSeverity = Gravité
+SepaMandateSeverityBlocking = Bloquant
+SepaMandateSeverityWarning = À surveiller
+SepaMandateSeverityOk = Correct
+SepaMandateFilterAll = Toutes les lignes
+SepaMandateFilterIssues = Bloquant ou à surveiller
+SepaMandateFilterPending = Uniquement les RIB avec une demande en attente
+SepaMandateBankAccount = RIB
+SepaMandateRum = RUM
+SepaMandateDateRum = Date de signature du mandat
+SepaMandateDateWritten = Date écrite dans le fichier
+SepaMandatePendingRequests = Demandes en attente
+SepaMandateIssues = Ce qu'il faut corriger
+SepaMandateNone = Aucun RIB ne correspond à ces filtres.
+SepaMandateNoUsableAccount = Aucun RIB utilisable
+SepaMandateNoLabel = RIB sans libellé
+SepaMandateNoIban = IBAN absent
+SepaMandateNoIssue = Rien à signaler
+SepaMandateDateEmpty = vide
+SepaMandateDateReasonMandate = date de signature du mandat
+SepaMandateDateReasonCreation = date de création du RIB, faute de date de signature
+SepaMandateDateReasonEmpty = aucune date à écrire
+SepaMandateDateReasonEmptyunlessfix = vide, sauf si le correctif Dolibarr #42020 est installé
+SepaMandateFix = Corriger
+SepaMandateFixOnThirdparty = Ouvrir l'onglet RIB du tiers
+SepaMandateReadOnlyNote = Les IBAN ne sont jamais affichés en entier. Le contrôle reprend les règles de Dolibarr au moment de la création d'un ordre de prélèvement : une facture validée, impayée, avec une demande en attente.
+SepaMandateIssueDateMissingEmpty = Date de signature du mandat absente. Ce RIB est désigné par une demande en attente : avec Dolibarr %s, le fichier partira avec une date de signature vide et la banque le rejettera, sauf si le correctif Dolibarr #42020 est installé. Renseignez la date de signature du mandat sur le RIB.
+SepaMandateIssueDateMissingUncertain = Date de signature du mandat absente. Ce RIB est désigné par une demande en attente : si votre version de Dolibarr (%s) n'inclut pas le correctif #42020, le fichier partira avec une date de signature vide et la banque le rejettera. Renseignez la date de signature du mandat sur le RIB.
+SepaMandateIssueDateMissingNoDate = Date de signature du mandat absente, et le RIB n'a pas de date de création : le fichier partira avec une date de signature vide. Renseignez la date de signature du mandat sur le RIB.
+SepaMandateIssueDateMissingFallback = Date de signature du mandat absente : Dolibarr écrira à la place la date de création du RIB (%s), qui n'est pas la date à laquelle le client a signé. Renseignez la vraie date de signature.
+SepaMandateIssueDateFuture = Date de signature du mandat dans le futur (%s) : un prélèvement ne peut pas s'appuyer sur un mandat qui n'est pas encore signé, la banque rejettera la ligne. Corrigez la date de signature.
+SepaMandateIssueRumMissing = Référence unique de mandat (RUM) absente : Dolibarr en fabriquera une automatiquement, qui ne correspondra pas au mandat signé par le client. Reportez la RUM du mandat signé.
+SepaMandateIssueRumDuplicate = Même référence de mandat (RUM) que %s : chaque mandat doit avoir sa propre référence, sinon la banque confond les deux. Corrigez la RUM de l'un des RIB.
+SepaMandateIssueIbanMissing = IBAN absent : aucun prélèvement ne peut partir sur ce RIB. Recopiez l'IBAN depuis le mandat signé.
+SepaMandateIssueIbanInvalid = IBAN invalide (sa clé de contrôle ne correspond pas) : Dolibarr écartera la facture du fichier de prélèvement. Recopiez l'IBAN depuis le mandat signé.
+SepaMandateIssueBicMissing = BIC absent : Dolibarr écartera la facture du fichier de prélèvement. Renseignez le BIC de la banque du client.
+SepaMandateIssueBicInvalid = BIC mal formé (%s) : il compte 8 ou 11 caractères, lettres et chiffres, sans espace. Dolibarr écartera la facture du fichier de prélèvement.
+SepaMandateIssueDuplicateDefault = Ce tiers a plusieurs RIB par défaut : Dolibarr arrêtera la création de l'ordre de prélèvement. N'en gardez qu'un seul par défaut.
+SepaMandateIssueDesignatedInactive = Ce RIB est désactivé, mais une demande en attente le désigne : Dolibarr prélèvera quand même sur ce compte. Réactivez-le s'il est bon, sinon supprimez la demande et refaites-la sur le bon RIB.
+SepaMandateIssueDesignatedMissing = La demande de la facture %s désigne un RIB qui n'existe plus : Dolibarr prélèvera à la place sur le RIB par défaut du tiers. Vérifiez que c'est bien le bon compte.
+SepaMandateIssueNoAccount = %s demande(s) de prélèvement en attente, mais aucun RIB n'est enregistré pour ce tiers : impossible de prélever. Ajoutez le RIB du mandat signé.
+SepaMandateIssueNoDefault = %s demande(s) de prélèvement en attente, mais aucun RIB n'est marqué par défaut : Dolibarr ne mettra pas ces factures dans le fichier. Marquez le RIB du mandat comme RIB par défaut.
 
 #
 # Pocket - bouton « Je viens de raccrocher »

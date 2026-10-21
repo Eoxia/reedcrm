@@ -1,0 +1,40 @@
+/* PWA opportunity list (view/frontend/pwa_projets.php): search field of the App header */
+
+.pwa-projets-list {
+    .pwa-projects-search__field {
+        position: relative;
+        flex: 1;
+        /* Below this width the input has no room left for its text: Chrome then puts the caret back
+           at the start after each character typed on a phone keyboard, and the search reads backwards */
+        min-width: 70px;
+    }
+
+    /* Drawn over the input: taps must go through it to focus the field */
+    .pwa-projects-search__icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.85em;
+        pointer-events: none;
+    }
+
+    .pwa-projects-search__input {
+        width: 100%;
+        padding: 6px 6px 6px 28px;
+        border: 1px solid #cbd5e0;
+        border-radius: 20px;
+        font-size: 14px;
+        outline: none;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: border-color 0.2s;
+    }
+
+    /* On a phone the arrows are enough, the "1-15 of 42" count would squeeze the search field */
+    @media (max-width: 600px) {
+        .pwa-projects-pagination__count {
+            display: none;
+        }
+    }
+}

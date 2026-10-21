@@ -25,19 +25,19 @@ saturne_load_langs(['ticket', 'users', 'companies', 'main', 'categories']);
 $title    = $langs->trans('Tickets');
 $help_url = 'FR:Module_ReedCRM';
 $moreJS   = [
-    '/custom/saturne/js/saturne.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js',
-    '/custom/reedcrm/js/reedcrm_tickets_kanban.js'
+    '/saturne/js/saturne.min.js',
+    '/reedcrm/js/reedcrm.min.js',
+    '/reedcrm/js/reedcrm_tickets_kanban.js'
 ];
 $moreCSS  = [
-    '/custom/saturne/css/saturne.min.css',
-    '/custom/reedcrm/css/reedcrm.min.css',
-    '/custom/reedcrm/css/reedcrm_tickets_kanban.css'
+    '/saturne/css/saturne.min.css',
+    '/reedcrm/css/reedcrm.min.css',
+    '/reedcrm/css/reedcrm_tickets_kanban.css'
 ];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
-$conf->global->MAIN_FAVICON_URL = DOL_URL_ROOT . '/custom/reedcrm/img/reedcrm_color_512.png';
+$conf->global->MAIN_FAVICON_URL = dol_buildpath('/reedcrm/img/reedcrm_color_512.png', 1);
 
 // --- SERVER-SIDE SORT ---
 $sortfield = GETPOST('sortfield', 'aZ09') ?: 'datec';

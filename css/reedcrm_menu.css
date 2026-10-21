@@ -151,3 +151,37 @@
     border-radius: 4px;
     cursor: pointer;
 }
+
+/* ------------------------------------------------------------------ */
+/* Minimized menu                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Saturne shrinks the left menu to a column of pictos (js/modules/menu.js): it hides
+ * the labels and clips every row at 40px, but sets no class on the menu. The chevron
+ * of the toggle entry, which turns right, is the only marker of that state.
+ * Without these rules the section bands keep the margins of a full width band and cut
+ * their picto in half, the sub entries (eldy prints no picto below level 0) stay as
+ * blank rows, and eldy shifts every picto 8px right of the rows it sits in.
+ */
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right):has(.reedcrm-menu-section) .menu_titre > .vmenu {
+    margin-left: 0;
+}
+
+/* Centre every picto on the rows, so the bands, the hairlines and the pictos share one axis. */
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right):has(.reedcrm-menu-section) .menu_titre .pictofixedwidth {
+    width: 28px;
+    text-align: center;
+}
+
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) .blockvmenu:has(.reedcrm-menu-section) {
+    margin-right: 0;
+    margin-left: 2px;
+}
+
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right):has(.reedcrm-menu-section) .menu_contenu {
+    display: none;
+}
+
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) .menu_titre .reedcrm-menu-separator {
+    margin-right: 0;
+}

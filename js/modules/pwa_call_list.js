@@ -19,7 +19,7 @@
 /**
  * \file    js/modules/pwa_call_list.js
  * \ingroup reedcrm
- * \brief   PWA call list view: copy phone number to clipboard with visual feedback
+ * \brief   PWA call list view: copy phone number to clipboard with visual feedback, nav badge sync
  */
 
 if (!window.reedcrm) {
@@ -35,6 +35,28 @@ window.reedcrm.pwaCallList = {};
  */
 window.reedcrm.pwaCallList.init = function () {
   window.reedcrm.pwaCallList.event();
+  window.reedcrm.pwaCallList.watchToCallCount();
+};
+
+/**
+ * Keep the nav badge in sync while lines of the user's default call list change status.
+ *
+ * The status buttons only update the card data-status attribute, so watch it
+ * instead of hooking into their AJAX call.
+ *
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.watchToCallCount = function () {
+  var container = document.querySelector('.pwa-call-list-container[data-default-list="1"]');
+  if (!container || !window.MutationObserver) {
+    return;
+  }
+
+  new MutationObserver(function () {
+    if (window.reedcrm.pwaNav) {
+      window.reedcrm.pwaNav.setBadge('call_list', container.querySelectorAll('.pwa-call-card[data-status="0"]').length);
+    }
+  }).observe(container, {attributes: true, attributeFilter: ['data-status'], subtree: true});
 };
 
 /**

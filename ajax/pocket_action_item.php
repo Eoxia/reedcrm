@@ -31,11 +31,13 @@ if (!defined('NOREQUIREHTML')) {
     define('NOREQUIREHTML', '1');
 }
 
-// Load main Dolibarr environment
-if (file_exists(__DIR__ . '/../../saturne/saturne.main.inc.php')) {
-    require_once __DIR__ . '/../../saturne/saturne.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of saturne main fails');
+    die('Include of reedcrm main fails');
 }
 
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
@@ -156,8 +158,11 @@ if ($subAction === 'create_event') {
     $event->note_private = $actionItem->description;
     $event->datep       = !empty($actionItem->due_date) ? (int) $actionItem->due_date : dol_now();
     $event->datef       = $event->datep;
-    // -1 keeps the event in the "to do" board, like the other ReedCRM follow-up events
-    $event->percentage  = -1;
+    // 0 is what Dolibarr reads as "to do", and what reedcrmTodoGetKanbanColumns() puts in the
+    // column of that name. -1 is the percentage of an event that does not apply: it used to be set
+    // here for the to-do board, which is the one column it never reaches, and it left the action
+    // showing "not applicable" and beyond the reach of the quick close
+    $event->percentage  = 0;
     $event->userownerid = $ownerId;
     $event->socid       = $recording->fk_soc > 0 ? (int) $recording->fk_soc : 0;
     $event->fk_element  = (int) $recording->id;
@@ -180,6 +185,22 @@ if ($subAction === 'create_event') {
         'event_id' => (int) $event->id,
         'url'      => dol_buildpath('/comm/action/card.php', 1) . '?id=' . ((int) $event->id)
     ]);
+    exit;
+}
+
+if ($subAction === 'dismiss') {
+    // The row is kept and marked instead of being deleted: Pocket still holds the action, and
+    // importActionItems() recreates every action it does not find in base. A deleted row would
+    // therefore come back at the next refresh of the recording or at the next run of the cron.
+    $actionItem->status      = PocketActionItem::STATUS_DISMISSED;
+    $actionItem->user_edited = 1;
+
+    if ($actionItem->update($user) <= 0) {
+        echo json_encode(['success' => false, 'error' => $actionItem->error]);
+        exit;
+    }
+
+    echo json_encode(['success' => true]);
     exit;
 }
 

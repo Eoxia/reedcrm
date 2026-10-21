@@ -181,23 +181,104 @@
         .select2-container {
             max-width: 100%;
         }
+
+        // The assignee is drawn by select2, whose border comes from the overrides the module
+        // applies everywhere and lands lighter than the three fields of the row. Aligned here
+        // only, so the selects of the other pages keep the colour they share.
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #b4bcc5;
+        }
     }
 
+    // The column holds either two icons or the event and its progress, both of which need more
+    // room than the single button it used to carry
     .pocket-action-col-event {
-        width: 60px;
+        width: 130px;
+    }
+}
+
+// Event cell: the two icons of an action without event, or the event and where it stands
+.pocket-action-event {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+// Progress of the event, read as it is read on the cards of the to-do board: a bar, then the
+// percentage, which is also the quick close trigger when the event is not finished
+.pocket-action-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    .pocket-action-progress-bar {
+        display: inline-block;
+        width: 46px;
+        height: 6px;
+        background: #e3e6ea;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .pocket-action-progress-fill {
+        display: block;
+        height: 100%;
+        background: #63acc9;
+    }
+
+    .pocket-action-progress-text {
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+}
+
+// Dropping an action item: the same round icon as the one creating the event, in the colour the
+// theme keeps for what removes
+.pocket-action-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    color: #c0392b;
+    border: 1px solid #c0392b;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+
+    &:hover {
+        background: #c0392b;
+        color: #ffffff;
+    }
+
+    &.loading {
+        opacity: 0.5;
+        cursor: progress;
+    }
+
+    i {
+        font-size: 12px;
+        pointer-events: none;
     }
 }
 
 // The deadline is a native date field: every input of a tab is flattened by the theme, which left
-// it looking like an empty box instead of a date to pick
+// it looking like an empty box instead of a date to pick. It wears the frame of the label and of
+// the description, on the same row: three fields of one line, three identical greys
 .pocket-action-row td.pocket-action-col-date .pocket-action-due-date {
     padding: 3px 6px;
     background: #ffffff;
-    border: 1px solid #e3e6ea;
+    border: 1px solid #b4bcc5;
     border-radius: 4px;
     font-size: 12px;
 
-    &:hover,
+    &:hover {
+        border-color: #8e99a4;
+    }
+
     &:focus {
         border-color: #63acc9;
     }
@@ -247,20 +328,28 @@
     }
 }
 
-// The label and its description are edited in place, so the fields stay flat until the row is
-// hovered, otherwise the table would read as a form instead of a summary
+// The label and its description are edited in place, and both wear their frame at all times: they
+// are the fields the card is read from, and nothing said they could be written on until the mouse
+// went over them.
+//
+// The colour is darker than the #e3e6ea the rest of the card uses for its separators, which is
+// lighter still than the border colour of the theme and did not read as a frame on white. The
+// frame then darkens on hover and takes the colour of the focus, in that order.
 .pocket-action-row td.pocket-action-text {
 
     .pocket-action-label,
     .pocket-action-description {
         width: 100%;
+        // The theme boxes the inputs but not the textareas, which made the description wider than
+        // the label by its padding and its border. Invisible while the frames were, precisely.
+        box-sizing: border-box;
         background: transparent;
-        border: 1px solid transparent;
+        border: 1px solid #b4bcc5;
         border-radius: 4px;
         padding: 2px 4px;
 
         &:hover {
-            border-color: #e3e6ea;
+            border-color: #8e99a4;
         }
 
         &:focus {

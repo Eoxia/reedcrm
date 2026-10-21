@@ -12,7 +12,7 @@
 <div id="id-top" class="page-header-tabs" style="position: fixed; top: 0; left: 0; right: 0; z-index: 999; width: 100%; box-sizing: border-box; margin: 0; border-radius: 0; background-color: #ffffff; padding: 0 15px; height: 60px; border-bottom: 2px solid #3b82f6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between;">
     
     <!-- Left: Logo -->
-    <a href="<?php echo dol_buildpath('/custom/reedcrm/view/frontend/pwa_home.php?source=pwa', 1); ?>" class="company-logo-wrapper" style="display: flex; align-items: center; text-decoration: none;">
+    <a href="<?php echo dol_buildpath('/reedcrm/view/frontend/pwa_home.php?source=pwa', 1); ?>" class="company-logo-wrapper" style="display: flex; align-items: center; text-decoration: none;">
         <?php
         global $mysoc, $db, $conf, $user;
         if (empty($mysoc)) {

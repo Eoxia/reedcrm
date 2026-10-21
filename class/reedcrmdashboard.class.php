@@ -61,6 +61,23 @@ class ReedcrmDashboard
             return ['ticket' => $ticketDashboard->load_dashboard()];
         }
 
+        // The sales and direction dashboards are pages of their own as well
+        if (!empty($moreParams['LoadSalesDashboard'])) {
+            require_once __DIR__ . '/reedcrmsalesdashboard.class.php';
+
+            $salesDashboard = new ReedcrmSalesDashboard($this->db);
+
+            return ['sales' => $salesDashboard->load_dashboard()];
+        }
+
+        if (!empty($moreParams['LoadDirectionDashboard'])) {
+            require_once __DIR__ . '/reedcrmdirectiondashboard.class.php';
+
+            $directionDashboard = new ReedcrmDirectionDashboard($this->db);
+
+            return ['direction' => $directionDashboard->load_dashboard()];
+        }
+
         $confName        = 'REEDCRM_DASHBOARD_CONFIG';
         $dashboardConfig = isset($user->conf->$confName) ? json_decode($user->conf->$confName) : null;
         $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
@@ -237,7 +254,8 @@ class ReedcrmDashboard
             return $reminders;
         }
 
-        $sql  = 'SELECT a.id, a.label, a.datep, a.fk_soc, s.nom AS thirdparty_name';
+        // A reminder with a deadline (an imported one) is due on it rather than on its start date
+        $sql  = 'SELECT a.id, a.label, COALESCE(a.datep2, a.datep) AS datep, a.fk_soc, s.nom AS thirdparty_name';
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm AS a';
         $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'actioncomm_reminder AS r ON r.fk_actioncomm = a.id';
         $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'categorie_actioncomm AS c ON c.fk_actioncomm = a.id';
@@ -245,9 +263,9 @@ class ReedcrmDashboard
         $sql .= ' WHERE c.fk_categorie = ' . ((int) $reminderTag);
         $sql .= ' AND r.fk_user = ' . ((int) $user->id);
         $sql .= ' AND r.status = ' . ActionCommReminder::STATUS_TODO;
-        $sql .= " AND a.datep >= '" . $this->db->idate(dol_now()) . "'";
+        $sql .= " AND COALESCE(a.datep2, a.datep) >= '" . $this->db->idate(dol_now()) . "'";
         $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
-        $sql .= ' ORDER BY a.datep ASC';
+        $sql .= ' ORDER BY COALESCE(a.datep2, a.datep) ASC';
         $sql .= $this->db->plimit($limit);
 
         $resql = $this->db->query($sql);
@@ -292,7 +310,8 @@ class ReedcrmDashboard
 
         // Graph parameters
         $array['type']   = 'list';
-        $array['labels'] = ['Ref', 'Label', 'OpportunityAmount', 'OppPercent', 'Relance', 'LastName', 'FirstName', 'Phone', 'Email', 'ButtonActions'];
+        // The action comes first: at the far right of a ten column table it was out of sight without scrolling
+        $array['labels'] = ['ButtonActions', 'Ref', 'Label', 'OpportunityAmount', 'OppPercent', 'Relance', 'LastName', 'FirstName', 'Phone', 'Email'];
 
         $arrayProjectOpportunitiesList = [];
         $projects                      = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', 5, 0, [], 'AND', true);
@@ -304,6 +323,8 @@ class ReedcrmDashboard
         foreach ($projects as $project) {
             $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id;
 
+            // The cells are printed in the order they are set, which must follow the one of the labels
+            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '<a class="wpeo-button" href="'. $newThirdPartyUrl .'"><i class="fas fa-plus"></i> '. $langs->trans('NewThirdparty') .'</a>';
             $arrayProjectOpportunitiesList[$project->id]['Ref']['value']               = $project->getNomUrl(1);
             $arrayProjectOpportunitiesList[$project->id]['Ref']['morecss']             = 'left';
             $arrayProjectOpportunitiesList[$project->id]['Label']['value']             = $project->title;
@@ -314,7 +335,6 @@ class ReedcrmDashboard
             $arrayProjectOpportunitiesList[$project->id]['FirstName']['value']         = $project->array_options['options_reedcrm_firstname'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Phone']['value']             = $project->array_options['options_projectphone'] ?? '-';
             $arrayProjectOpportunitiesList[$project->id]['Email']['value']             = $project->array_options['options_reedcrm_email'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '<a class="wpeo-button" href="'. $newThirdPartyUrl .'"><i class="fas fa-plus"></i> '. $langs->trans('NewThirdparty') .'</a>';
         }
 
         $array['data'] = $arrayProjectOpportunitiesList;

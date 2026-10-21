@@ -43,7 +43,7 @@ function reedcrm_admin_prepare_head(): array
     $head[$h][2] = 'settings';
     $h++;
 
-    $head[$h][0] = dol_buildpath('/saturne/admin/pwa.php', 1). '?module_name=ReedCRM&start_url=' . dol_buildpath('custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 3);
+    $head[$h][0] = dol_buildpath('/saturne/admin/pwa.php', 1). '?module_name=ReedCRM&start_url=' . dol_buildpath('/reedcrm/view/frontend/quickcreation.php?source=pwa', 3);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-mobile pictofixedwidth"></i>' . $langs->trans('App') : '<i class="fas fa-mobile"></i>';
     $head[$h][2] = 'pwa';
     $h++;
@@ -76,6 +76,11 @@ function reedcrm_admin_prepare_head(): array
     $head[$h][0] = dol_buildpath('/reedcrm/admin/pocket.php', 1);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-microphone pictofixedwidth"></i>' . $langs->trans('Pocket') : '<i class="fas fa-microphone"></i>';
     $head[$h][2] = 'pocket';
+    $h++;
+
+    $head[$h][0] = dol_buildpath('/reedcrm/admin/sales_goals.php', 1);
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-bullseye pictofixedwidth"></i>' . $langs->trans('SalesGoals') : '<i class="fas fa-bullseye"></i>';
+    $head[$h][2] = 'sales_goals';
     $h++;
 
     $head[$h][0] = dol_buildpath('/reedcrm/admin/ticket.php', 1);

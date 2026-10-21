@@ -2,12 +2,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (typeof jQuery === 'undefined' || typeof Swal === 'undefined') return;
     
     // Base AJAX URL
-    let url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-    if (!url) {
-        if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-        else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-    }
-    let baseAjaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php';
+    let baseAjaxUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php');
 
     // Client Selector Logic using SweetAlert2 + AJAX
     $(document).on('click', '.pwa-client-selector', function(e) {

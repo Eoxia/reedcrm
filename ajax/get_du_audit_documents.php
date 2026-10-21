@@ -36,7 +36,7 @@ global $conf, $db, $langs, $user;
 
 header('Content-Type: application/json');
 
-if (!$user->hasRight('reedcrm', 'followup', 'read')) {
+if (!reedcrmFollowupDuIsEnabled() || !$user->hasRight('reedcrm', 'followup', 'read')) {
     echo json_encode(['success' => false, 'error' => 'Forbidden']);
     exit;
 }

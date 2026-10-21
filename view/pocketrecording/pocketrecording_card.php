@@ -155,7 +155,7 @@ if ($action == 'play_audio' && $permissiontoread) {
 if ($action == 'confirm_delete' && $confirm == 'yes' && $permissiontodelete) {
     if ($object->delete($user) > 0) {
         setEventMessage($langs->trans('RecordDeleted'));
-        header('Location: ' . dol_buildpath('/custom/reedcrm/view/pocketrecording/pocketrecording_list.php', 1));
+        header('Location: ' . dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_list.php', 1));
         exit;
     }
 
@@ -184,7 +184,7 @@ if (!empty($object->pocket_folder_label)) {
 }
 $moreHtmlRef .= '</div>';
 
-$linkBack = '<a href="' . dol_buildpath('/custom/reedcrm/view/pocketrecording/pocketrecording_list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans('BackToList') . '</a>';
+$linkBack = '<a href="' . dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans('BackToList') . '</a>';
 saturne_banner_tab($object, 'id', $linkBack, 1, 'rowid', 'ref', $moreHtmlRef);
 
 // The status is changed on the badge of the banner, where it is read, instead of taking a row of
@@ -197,7 +197,7 @@ if ($permissiontoadd) {
     }
 
     print '<span class="reedcrm-pocket-status-picker" hidden';
-    print ' data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_recording.php', 1)) . '"';
+    print ' data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_recording.php', 1)) . '"';
     print ' data-recording-id="' . $object->id . '"';
     print ' data-token="' . newToken() . '"';
     print ' data-title="' . dol_escape_htmltag($langs->trans('PocketChangeStatus')) . '"';
@@ -227,7 +227,7 @@ if ($show == 'transcript') {
     // The URL Pocket signs expires within the hour, so the player carries the endpoint that
     // resolves it rather than the URL itself: the native <audio> is injected on the first play
     print '<tr><td>' . $langs->trans('PocketAudio') . '</td><td>';
-    print '<div class="reedcrm-pocket-audio" data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_audio_url.php', 1) . '?id=' . $object->id) . '">';
+    print '<div class="reedcrm-pocket-audio" data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_audio_url.php', 1) . '?id=' . $object->id) . '">';
     print '<span class="reedcrm-pocket-audio-load"><i class="fas fa-play"></i>' . $langs->trans('PocketPlayAudio') . '</span>';
     print '</div>';
     print '</td></tr>';
@@ -245,7 +245,7 @@ if ($show == 'transcript') {
 
     print '<div class="reedcrm-pocket-summary-block"';
     if ($permissiontoadd) {
-        print ' data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_recording.php', 1)) . '"';
+        print ' data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_recording.php', 1)) . '"';
         print ' data-recording-id="' . $object->id . '"';
         print ' data-token="' . newToken() . '"';
     }
@@ -269,17 +269,19 @@ if ($show == 'transcript') {
     // and the created event belong to Dolibarr and must survive a re-import from Pocket.
     $actionItemStatic = new PocketActionItem($db);
     $actionItems      = $actionItemStatic->fetchAllByRecording($object->id);
-    $actionItemUrl    = dol_buildpath('/custom/reedcrm/ajax/pocket_action_item.php', 1);
+    $actionItemUrl    = dol_buildpath('/reedcrm/ajax/pocket_action_item.php', 1);
     $eventStatic      = new ActionComm($db);
 
     print '<br>';
     print load_fiche_titre($langs->trans('PocketActionItems'), '', '');
     print '<div class="div-table-responsive-no-min">';
-    print '<table class="noborder centpercent pocket-action-table">';
+    // The wordings the script needs once a row is created or dropped: it rebuilds the cell rather
+    // than reloading the card, and a translation does not travel in a bundled file
+    print '<table class="noborder centpercent pocket-action-table" data-empty-label="' . dol_escape_htmltag($langs->trans('PocketNoActionItem')) . '">';
     print '<tr class="liste_titre">';
     print '<td class="pocket-action-col-text">' . $langs->trans('Label') . '</td>';
-    print '<td class="center pocket-action-col-date">' . img_picto('', 'calendar', 'class="pictofixedwidth"') . $langs->trans('Deadline') . '</td>';
-    print '<td class="pocket-action-col-assign">' . img_picto('', 'user', 'class="pictofixedwidth"') . $langs->trans('PocketAssignedUser') . '</td>';
+    print '<td class="center pocket-action-col-date">' . $langs->trans('PocketActionDueDate') . '</td>';
+    print '<td class="pocket-action-col-assign">' . $langs->trans('PocketAssignedUser') . '</td>';
     print '<td class="center pocket-action-col-event">' . $langs->trans('Event') . '</td>';
     print '</tr>';
 
@@ -318,22 +320,50 @@ if ($show == 'transcript') {
                 $assignedUser->fetch($actionItem->fk_user_assign);
                 print $assignedUser->getNomUrl(1);
             }
-            // Pocket also names an assignee, kept as a hint since it is free text, not a Dolibarr user
-            if (!empty($actionItem->pocket_assignee)) {
-                print '<br><span class="opacitymedium small">' . $langs->trans('PocketAssignee') . ': ' . dol_escape_htmltag($actionItem->pocket_assignee) . '</span>';
-            }
             print '</td>';
 
             print '<td class="center pocket-action-col-event">';
             if ($actionItem->fk_actioncomm > 0 && $eventStatic->fetch($actionItem->fk_actioncomm) > 0) {
-                // The picto carries the event: its label is the wording of the row, already printed
-                // three columns to the left, and the tooltip tells the rest
+                // The event is read here as it is read on the to-do board: the picto opens it, the
+                // bar and the percentage say where it stands, and the percentage of an unfinished
+                // event is the quick close trigger, the same one the board and the lists carry
+                $eventPercent    = (int) $eventStatic->percentage;
+                $hasPercent      = $eventPercent >= 0;
+                $percentText     = $hasPercent ? $eventPercent . '%' : $langs->trans('StatusNotApplicable');
+                $quickCloseEvent = $permissiontoadd && $hasPercent && $eventPercent < 100;
+
+                print '<div class="pocket-action-event">';
                 print $eventStatic->getNomUrl(2);
-            } elseif ($permissiontoadd && isModEnabled('agenda')) {
-                // One action on a narrow column: the icon says it without the room a worded button takes
-                print '<span class="pocket-action-create-event classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketCreateEvent')) . '" data-created-label="' . dol_escape_htmltag($langs->trans('Event')) . '">';
-                print '<i class="fas fa-plus"></i>';
+                print '<span class="pocket-action-progress">';
+                print '<span class="pocket-action-progress-bar"><span class="pocket-action-progress-fill" style="width: ' . ($hasPercent ? $eventPercent : 0) . '%"></span></span>';
+                // The cell is rebuilt by the card, not by the list renderer the modal answers with:
+                // the trigger asks for the reload the banner one already asks for
+                print '<span class="pocket-action-progress-text' . ($quickCloseEvent ? ' reedcrm-quick-close-trigger reedcrm-quick-close-trigger-reload' : '') . '"';
+                if ($quickCloseEvent) {
+                    print ' data-event-id="' . $eventStatic->id . '" title="' . dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')) . '"';
+                }
+                print '>' . dol_escape_htmltag($percentText);
+                if ($quickCloseEvent) {
+                    print '<i class="fas fa-check-circle reedcrm-quick-close-icon"></i>';
+                }
                 print '</span>';
+                print '</span>';
+                print '</div>';
+            } elseif ($permissiontoadd) {
+                print '<div class="pocket-action-event">';
+                if (isModEnabled('agenda')) {
+                    // The calendar says what the click makes of the action, where a bare plus left
+                    // the column to be guessed
+                    print '<span class="pocket-action-create-event classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketCreateEvent')) . '" data-created-label="' . dol_escape_htmltag($langs->trans('Event')) . '" data-quick-close-label="' . dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')) . '">';
+                    print '<i class="fas fa-calendar-plus"></i>';
+                    print '</span>';
+                }
+                // An action Pocket extracted from the conversation is not always one: it is dropped
+                // from here, and the deletion holds against the synchronisations that follow
+                print '<span class="pocket-action-delete classfortooltip" title="' . dol_escape_htmltag($langs->trans('PocketDeleteActionItem')) . '" data-confirm="' . dol_escape_htmltag($langs->trans('PocketConfirmDeleteActionItem')) . '">';
+                print '<i class="fas fa-trash"></i>';
+                print '</span>';
+                print '</div>';
             }
             print '</td>';
 
@@ -408,7 +438,7 @@ if ($show != 'transcript') {
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="link_object">';
         print '<input type="hidden" name="object_to_link" value="">';
-        print '<div class="reedcrm-pocket-link-form" data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_recording.php', 1)) . '"';
+        print '<div class="reedcrm-pocket-link-form" data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_recording.php', 1)) . '"';
         print ' data-recording-id="' . $object->id . '" data-token="' . newToken() . '">';
 
         print '<span>' . $langs->trans('PocketLinkObject') . '</span>';

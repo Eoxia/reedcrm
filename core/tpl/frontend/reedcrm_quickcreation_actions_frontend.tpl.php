@@ -35,10 +35,15 @@ if (empty($permissionToAddProject)) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+require_once __DIR__ . '/../../../lib/reedcrm_function.lib.php';
+dol_include_once('/saturne/lib/medias.lib.php');
 
 // --- Début des actions de la brique média Saturne ---
 $saturneModule = GETPOST('module_name', 'alpha');
 $saturneSubDir = GETPOST('sub_dir', 'alphanohtml');
+
+// Upload folder of the quick creation block, the only one whose photos can be analysed
+$quickCreationSubDir = 'tmp/' . saturne_get_upload_token('reedcrm_quickcreation_' . $user->id);
 
 if ($action == 'uploadPhoto' && !empty($saturneModule)) {
 
@@ -89,8 +94,11 @@ if ($action == 'uploadPhoto' && !empty($saturneModule)) {
         }
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
-            require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
-            print saturne_render_media_block($saturneModule, $saturneSubDir);
+            if ($saturneModule === 'project' && $saturneSubDir === $quickCreationSubDir) {
+                print reedcrm_quickcreation_media_block($saturneSubDir);
+            } else {
+                print saturne_render_media_block($saturneModule, $saturneSubDir);
+            }
             exit;
         }
     }
@@ -609,7 +617,7 @@ if ($action == 'updateoppcontact') {
             $proj->updateExtraField('reedcrm_website');
             $resUpdateEmail = $proj->updateExtraField('reedcrm_email');
             
-            file_put_contents(DOL_DOCUMENT_ROOT.'/custom/reedcrm/debug_update.log', "Finished extrafields, last result: $resUpdateEmail\n", FILE_APPEND);
+            dol_syslog('reedcrm quickcreation: contact extrafields updated, last result ' . $resUpdateEmail, LOG_DEBUG);
             
             $res['success']      = true;
             $res['firstname']    = dol_escape_htmltag($firstname);
@@ -721,6 +729,23 @@ if ($action == 'add') {
         }
     }
 
+    // Checked before creating anything: the opportunity must not be saved without the reminder the user asked for
+    $reminderDate = 0;
+    $reminderID   = 0;
+    if (GETPOSTINT('add_reminder') > 0) {
+        // datetime-local value (Y-m-d\TH:i), typed in the user's own timezone
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/', GETPOST('reminder_date', 'alphanohtml'), $reminderDateParts)) {
+            $reminderDate = (int) dol_mktime((int) $reminderDateParts[4], (int) $reminderDateParts[5], 0, (int) $reminderDateParts[2], (int) $reminderDateParts[3], (int) $reminderDateParts[1], 'tzuserrel');
+        }
+        if ($reminderDate <= 0) {
+            setEventMessages($langs->trans('ErrorFieldRequired', $langs->transnoentities('QuickCreationReminderDate')), null, 'errors');
+            $error++;
+        } elseif ($reminderDate <= dol_now()) {
+            setEventMessages($langs->trans('ErrorQuickCreationReminderDateInPast'), null, 'errors');
+            $error++;
+        }
+    }
+
     $projectID = 0;
     if ($error == 0) {
         $projectID = $project->create($user);
@@ -743,7 +768,7 @@ if ($action == 'add') {
         }
 
         // Saturne Media Module Migration
-        require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/medias.lib.php';
+        dol_include_once('/saturne/lib/medias.lib.php');
         $uploadContext = 'reedcrm_quickcreation_' . $user->id;
         $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
 
@@ -785,7 +810,9 @@ if ($action == 'add') {
         $taskID = $task->create($user);
         if ($taskID > 0) {
             $task->add_contact($user->id, 'TASKEXECUTIVE', 'internal');
-            $project->array_options['commtask'] = $taskID;
+            // updateExtraField() only reads the prefixed key: without it the task was never linked, and a
+            // second one was created later on by the quick event and the call lists
+            $project->array_options['options_commtask'] = $taskID;
             $project->updateExtraField('commtask');
         } else {
             setEventMessages($task->error, $task->errors, 'errors');
@@ -844,6 +871,20 @@ if ($action == 'add') {
                 setEventMessages($contact->error, $contact->errors, 'errors');
             }
         }
+
+        if ($reminderDate > 0) {
+            $reminderLabel = trim(GETPOST('reminder_title', 'alphanohtml'));
+            if ($reminderLabel === '') {
+                $reminderLabel = $langs->transnoentities('QuickCreationReminderDefaultLabel', $project->title);
+            }
+            $reminderContactID = $contactid > 0 ? $contactid : (!empty($contactID) && $contactID > 0 ? $contactID : 0);
+
+            $reminderID = reedcrm_create_call_reminder($db, $user, $reminderLabel, $reminderDate, $user->id, $projectID, max(0, (int) $project->socid), (int) $reminderContactID);
+            // The opportunity is already saved: a warning only, an error would keep the form filled and invite a duplicate
+            if ($reminderID <= 0) {
+                setEventMessages($langs->trans('ErrorQuickCreationReminder'), null, 'warnings');
+            }
+        }
     } else {
         $langs->load('errors');
         setEventMessages($project->error, $project->errors, 'errors');
@@ -852,7 +893,10 @@ if ($action == 'add') {
 
     if (!$error) {
         setEventMessage($langs->transnoentities('QuickCreationFrontendSuccess') . ' : <a href="' . DOL_URL_ROOT . '/projet/card.php?id=' . $projectID . '" target="_blank">'  . $project->ref . '</a>');
-        
+        if ($reminderID > 0) {
+            setEventMessages($langs->trans('QuickCreationReminderCreated', dol_print_date($reminderDate, 'dayhourtext', 'tzuserrel')), null);
+        }
+
         if (GETPOST('ajax_submission') == '1') {
             header('Content-Type: application/json');
             echo json_encode(['success' => true, 'redirect_url' => $_SERVER["PHP_SELF"]]);
@@ -893,7 +937,6 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
     require_once DOL_DOCUMENT_ROOT.'/ai/class/ai.class.php';
     saturne_load_langs(['medias']);
 
-    $data = json_decode(file_get_contents('php://input'), true);
     $result = array();
 
     // GET AUTH INFO & ENDPOINT
@@ -901,9 +944,16 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
     $aiToken = getDolGlobalString('AI_API_'.$activeAI.'_KEY');
     $aiEndpoint = getDolGlobalString('AI_API_'.$activeAI.'_URL');
 
+    // The browser only names the photo: it is looked for in the quick creation folder of the user, nowhere else
+    $fileName = dol_sanitizeFileName(basename(GETPOST('filename', 'alphanohtml')));
+    $fullPath = $conf->project->dir_output . '/' . $quickCreationSubDir . '/' . $fileName;
+
     if (empty($activeAI) || empty($aiToken) || empty($aiEndpoint)) {
         $result['success'] = false;
         $result['error'] = 'AiConfigError - Token or Endpoint is empty';
+    } elseif ($saturneModule !== 'project' || $saturneSubDir !== $quickCreationSubDir || empty($fileName) || !dol_is_file($fullPath) || image_format_supported($fileName) < 0) {
+        $result['success'] = false;
+        $result['error'] = 'AiFileError - Not a photo of the quick creation';
     } else {
 
         // HEADERS
@@ -920,9 +970,6 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
         $fullEndpoint .= 'chat/completions';
 
         // FILE
-        $filePath = $data['filepath'];
-        $fileName = $data['filename'];
-        $fullPath = $filePath . '/' . $fileName;
         $type = pathinfo($fullPath, PATHINFO_EXTENSION);
         $data = file_get_contents($fullPath);
         $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
@@ -956,10 +1003,18 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
         if (is_null($aiResponse)) {
             $result['success'] = false;
             $result['error'] = 'AiResponseError - Ai response return NULL';
+        } elseif (empty($aiResponse->choices[0]->message->content)) {
+            // A refused call (wrong key, quota...) still answers in JSON, with an error instead of a choice
+            $result['success'] = false;
+            $result['error'] = 'AiResponseError - ' . (!empty($aiResponse->error->message) ? $aiResponse->error->message : 'No answer');
         } else {
 
             $aiResponseMessage = $aiResponse->choices[0]->message->content;
             $aiResponseDecoded = json_decode($aiResponseMessage);
+            // An answer that is not the JSON asked for is still a description of the image
+            if (!is_object($aiResponseDecoded)) {
+                $aiResponseDecoded = (object) ['type' => 'read', 'content' => $aiResponseMessage];
+            }
 
             $result['success'] = true;
             $result['type'] = $aiResponseDecoded->type;

@@ -191,18 +191,65 @@ function get_and_show_contact(string $caller, string $callee): array
         log_to_file("Found contact: " . $contact->getFullName($langs) . " (ID: " . $contact->id . ")");
     }
 
-    // Si on a trouvé un utilisateur et un contact, on stocke l'événement
-    if ($result['user'] && $result['contact']) {
-        $call_event_id = store_call_event($result['user']->id, $result['contact']->id, $caller, $callee);
-        $result['call_event_id'] = $call_event_id;
-        log_to_file("Stored call event with ID: " . $call_event_id);
-    } else if (empty($result['contact'])) {
-        $call_event_id = store_call_event($result['user']->id, 0, $caller, $callee);
-        $result['call_event_id'] = $call_event_id;
-        log_to_file("No contact found. Stored call event with ID: " . $call_event_id . " for contact ID 0.");
+    // Sans utilisateur appelé, l'événement n'aurait pas de propriétaire : personne ne le verrait
+    if (empty($result['user'])) {
+        log_to_file("No user found for the called number, no call event stored");
+        return $result;
     }
 
+    $recentCallEventId = reedcrm_get_recent_call_event_id((int) $result['user']->id, $caller);
+    if ($recentCallEventId > 0) {
+        $result['call_event_id'] = $recentCallEventId;
+        log_to_file("Same call as event ID: " . $recentCallEventId . ", no new call event stored");
+        return $result;
+    }
+
+    $call_event_id = store_call_event($result['user']->id, $result['contact'] ? $result['contact']->id : 0, $caller, $callee);
+    $result['call_event_id'] = $call_event_id;
+    log_to_file("Stored call event with ID: " . $call_event_id . ($result['contact'] ? '' : " for contact ID 0 (no contact found)"));
+
     return $result;
+}
+
+/**
+ * Find the call event a Keyyo notification belongs to.
+ *
+ * Keyyo notifies one call several times: once per call state (SETUP, CONNECT, RELEASE) when the
+ * notification URL does not filter on the type, and once per ringing line of the same user. A
+ * call event of the same caller created for that user a few minutes ago is that same call.
+ *
+ * @param  int    $userId Row ID of the called user
+ * @param  string $caller Caller number, as sent by Keyyo
+ * @return int            Row ID of the call event, 0 when the notification is a new call
+ */
+function reedcrm_get_recent_call_event_id(int $userId, string $caller): int
+{
+    global $db;
+
+    if ($caller === '') {
+        return 0;
+    }
+
+    $delay = getDolGlobalInt('REEDCRM_KEYYO_SAME_CALL_DELAY', 5) * 60;
+
+    // The caller is matched as a bare string: extraparams is JSON encoded twice by ActionComm
+    $sql  = 'SELECT a.id FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+    $sql .= " WHERE a.code = 'AC_TEL'";
+    $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
+    $sql .= ' AND a.fk_user_action = ' . $userId;
+    $sql .= " AND a.datec >= '" . $db->idate(dol_now() - $delay) . "'";
+    $sql .= " AND a.extraparams LIKE '%" . $db->escape($db->escapeforlike($caller)) . "%'";
+    $sql .= ' ORDER BY a.id DESC';
+    $sql .= $db->plimit(1);
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return 0;
+    }
+    $obj = $db->fetch_object($resql);
+    $db->free($resql);
+
+    return $obj ? (int) $obj->id : 0;
 }
 
 /**
@@ -471,6 +518,224 @@ function reedcrm_count_csv_lines(string $filePath): ?int
 }
 
 /**
+ * Convert the cells of an imported CSV row to UTF-8, spreadsheets often save CSV files in Windows-1252
+ *
+ * @param  string[] $row CSV row
+ * @return string[]      Same row in UTF-8
+ */
+function reedcrm_import_csv_row_to_utf8(array $row): array
+{
+    foreach ($row as $key => $cell) {
+        if (is_string($cell) && !utf8_check($cell)) {
+            $row[$key] = mb_convert_encoding($cell, 'UTF-8', 'Windows-1252');
+        }
+    }
+
+    return $row;
+}
+
+/**
+ * Read the header line of an imported CSV file
+ *
+ * @param  resource $handle Handle of the CSV file, at its beginning
+ * @return array{0: string, 1: string[]} Delimiter, then the column labels
+ */
+function reedcrm_read_import_csv_header($handle): array
+{
+    $firstLine = str_replace("\xEF\xBB\xBF", '', (string) fgets($handle));
+    $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
+    $headers   = reedcrm_import_csv_row_to_utf8(array_map('trim', str_getcsv($firstLine, $delimiter)));
+
+    return [$delimiter, $headers];
+}
+
+/**
+ * Normalize a CSV header or a user reference so that it matches whatever its case and accents
+ *
+ * @param  string $value Raw value
+ * @return string        Lowercase value without accents nor repeated spaces
+ */
+function reedcrm_normalize_import_key(string $value): string
+{
+    return strtolower(trim(preg_replace('/\s+/', ' ', dol_string_unaccent($value))));
+}
+
+/**
+ * Index the active internal users that can be assigned to an imported opportunity
+ *
+ * ID, login, email and full name identify a user ('strong' keys). First name alone, last name alone and first
+ * name followed by the initial of the last name ('weak' keys) are only used when no strong key matches.
+ *
+ * @return array{strong: array<string, int[]>, weak: array<string, int[]>} Normalized key => user IDs, several IDs for homonyms
+ */
+function reedcrm_get_import_users_index(): array
+{
+    global $db;
+
+    // Superadmins (entity 0) reach every entity, the other users are those of the current entity
+    $sql = 'SELECT u.rowid, u.login, u.email, u.firstname, u.lastname FROM ' . MAIN_DB_PREFIX . 'user as u WHERE (u.entity = 0 OR ';
+    if (isModEnabled('multicompany') && getDolGlobalInt('MULTICOMPANY_TRANSVERSE_MODE')) {
+        $sql .= 'u.rowid IN (SELECT ug.fk_user FROM ' . MAIN_DB_PREFIX . 'usergroup_user as ug WHERE ug.entity IN (' . getEntity('usergroup') . ')))';
+    } else {
+        $sql .= 'u.entity IN (' . getEntity('user') . '))';
+    }
+    $sql .= ' AND u.statut = 1 AND (u.fk_soc IS NULL OR u.fk_soc = 0)';
+
+    $usersIndex = ['strong' => [], 'weak' => []];
+    $resql      = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $firstname = reedcrm_normalize_import_key((string) $obj->firstname);
+            $lastname  = reedcrm_normalize_import_key((string) $obj->lastname);
+            $keys      = [
+                'strong' => [(string) $obj->rowid, reedcrm_normalize_import_key((string) $obj->login), reedcrm_normalize_import_key((string) $obj->email)],
+                'weak'   => [$firstname, $lastname]
+            ];
+            if ($firstname !== '' && $lastname !== '') {
+                array_push($keys['strong'], $firstname . ' ' . $lastname, $lastname . ' ' . $firstname);
+                array_push($keys['weak'], $firstname . ' ' . $lastname[0], $firstname . $lastname[0]);
+            }
+            foreach ($keys as $level => $levelKeys) {
+                foreach (array_unique($levelKeys) as $key) {
+                    if ($key !== '') {
+                        $usersIndex[$level][$key][] = (int) $obj->rowid;
+                    }
+                }
+            }
+        }
+        $db->free($resql);
+    }
+
+    return $usersIndex;
+}
+
+/**
+ * Resolve the users listed in the assignees cell of an imported CSV row
+ *
+ * @param  string $cell       Logins, emails or names, separated by a comma, a semicolon, |, /, &, +, "et" or "and"
+ * @param  array  $usersIndex Index built by reedcrm_get_import_users_index()
+ * @return array{0: int[], 1: string[]} IDs of the users found, then the values matching no user or several users
+ */
+function reedcrm_resolve_import_users(string $cell, array $usersIndex): array
+{
+    $userIds    = [];
+    $unresolved = [];
+    foreach (preg_split('/\s*[|,;\/&+\r\n]\s*|\s+(?:et|and)\s+/i', $cell) as $value) {
+        $value = trim($value);
+        if ($value === '') {
+            continue;
+        }
+
+        $key             = reedcrm_normalize_import_key($value);
+        $matchingUserIds = $usersIndex['strong'][$key] ?? ($usersIndex['weak'][$key] ?? []);
+        if (count($matchingUserIds) == 1) {
+            $userIds[] = $matchingUserIds[0];
+        } else {
+            $unresolved[] = $value;
+        }
+    }
+
+    return [array_values(array_unique($userIds)), $unresolved];
+}
+
+/**
+ * Read the date of an imported CSV cell, as a spreadsheet writes it
+ *
+ * Day first (25/10/2026, 25-10-26, 25.10.2026) or ISO (2026-10-25), then an optional time (14:30, 14h30, 14h).
+ * A date without time is set at 9:00, in the timezone of the user importing the file.
+ *
+ * @param  string $value Raw cell
+ * @return int           Timestamp, 0 when the cell holds no valid date
+ */
+function reedcrm_parse_import_date(string $value): int
+{
+    $value = trim($value);
+    $time  = '(?:[ T]+(\d{1,2})(?:[:hH](\d{2})?)?(?::(\d{2}))?)?';
+    if (preg_match('/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4}|\d{2})' . $time . '$/', $value, $matches)) {
+        list(, $day, $month, $year) = $matches;
+    } elseif (preg_match('/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})' . $time . '$/', $value, $matches)) {
+        list(, $year, $month, $day) = $matches;
+    } else {
+        return 0;
+    }
+
+    $year   = (int) $year < 100 ? 2000 + (int) $year : (int) $year;
+    $hour   = (isset($matches[4]) && $matches[4] !== '') ? (int) $matches[4] : 9;
+    $minute = (int) ($matches[5] ?? 0);
+    $second = (int) ($matches[6] ?? 0);
+    if (!checkdate((int) $month, (int) $day, $year) || $hour > 23 || $minute > 59 || $second > 59) {
+        return 0;
+    }
+
+    return (int) dol_mktime($hour, $minute, $second, (int) $month, (int) $day, $year, 'tzuserrel');
+}
+
+/**
+ * Turn the note of an imported CSV cell into an opportunity probability, ten percent per point
+ *
+ * @param  string   $value Raw cell, a note from 0 to 10 (2,5 and 2.5 are accepted)
+ * @return int|null        Probability from 0 to 100, null when the cell holds no valid note
+ */
+function reedcrm_parse_import_note(string $value): ?int
+{
+    $value = str_replace(',', '.', trim($value));
+    if (!preg_match('/^\d{1,2}(?:\.\d+)?$/', $value) || (float) $value > 10) {
+        return null;
+    }
+
+    return (int) round((float) $value * 10);
+}
+
+/**
+ * Tell whether an imported CSV cell says there is nothing, "Aucune" in an action column for instance
+ *
+ * @param  string $value Raw cell
+ * @return bool          True for an empty cell or a value meaning none or unknown
+ */
+function reedcrm_is_import_empty_value(string $value): bool
+{
+    return (bool) preg_match('/^(|-+|\?+|aucun|aucune|rien|non|none|n\/?a|inconnu|inconnue|unknown|nsp|je ne sais pas|ne sais pas|i don\'?t know)$/', reedcrm_normalize_import_key($value));
+}
+
+/**
+ * Opportunity status matching a probability: the active status of the highest probability not above it,
+ * the lowest one when all of them are above it
+ *
+ * Won and lost close an opportunity, a probability alone never leads to them.
+ *
+ * @param  int $percent Probability from 0 to 100
+ * @return int          Row ID of the status in c_lead_status, 0 when the dictionary has none
+ */
+function reedcrm_get_opp_status_for_percent(int $percent): int
+{
+    global $db;
+
+    // Read once per request, an import asks for it on every row
+    static $statuses = null;
+    if ($statuses === null) {
+        $statuses = [];
+        $sql      = 'SELECT rowid, percent FROM ' . MAIN_DB_PREFIX . "c_lead_status WHERE active = 1 AND code NOT IN ('WON', 'LOST') ORDER BY percent ASC, position ASC";
+        $resql    = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $statuses[] = ['id' => (int) $obj->rowid, 'percent' => (float) $obj->percent];
+            }
+            $db->free($resql);
+        }
+    }
+
+    $statusId = $statuses[0]['id'] ?? 0;
+    foreach ($statuses as $status) {
+        if ($status['percent'] > $percent) {
+            break;
+        }
+        $statusId = $status['id'];
+    }
+
+    return $statusId;
+}
+
+/**
  * Get (and lazily create) the actioncomm category used to tag automatic call reminders.
  *
  * The reminder events created from the ProCard/EventPro checkbox must NOT reuse the commercial
@@ -503,6 +768,104 @@ function reedcrm_get_call_reminder_category_id(DoliDB $db, User $user): int
     }
 
     return 0;
+}
+
+/**
+ * Create an automatic call reminder: a future to-do event and its browser notification.
+ *
+ * Same reminder as the ProCard/EventPro "AddReminder" checkbox: tagged with the dedicated call
+ * reminder category so the dashboard lists it in its upcoming reminders, and notified
+ * REEDCRM_QUICK_CREATION_REMINDER_OFFSET / _UNIT before its date.
+ *
+ * @param  DoliDB $db        Database handler
+ * @param  User   $user      User creating the reminder
+ * @param  string $label     Label of the reminder event
+ * @param  int    $date      Date of the reminder (timestamp)
+ * @param  int    $userId    User to remind
+ * @param  int    $projectId Linked project id (0 = none)
+ * @param  int    $socId     Linked thirdparty id (0 = none)
+ * @param  int    $contactId Linked contact id (0 = none)
+ * @param  string $typeCode  Type of the reminder event, one of reedcrm_get_relaunch_types()
+ * @param  int[]  $otherUserIds Other users to remind, assigned to the same event and notified too
+ * @param  array{due_date?: int, note?: string, notify?: bool} $options 'due_date': deadline of the event (its end date),
+ *                           notified before it rather than before $date; 'note': private note of the event;
+ *                           'notify': false to create no browser notification
+ * @return int               Id of the reminder event (> 0), or -1 on error
+ */
+function reedcrm_create_call_reminder(DoliDB $db, User $user, string $label, int $date, int $userId, int $projectId = 0, int $socId = 0, int $contactId = 0, string $typeCode = 'AC_OTH', array $otherUserIds = [], array $options = []): int
+{
+    require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncommreminder.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
+    $dueDate = (int) ($options['due_date'] ?? 0);
+
+    $db->begin();
+
+    $actionComm               = new ActionComm($db);
+    $actionComm->type_code    = $typeCode;
+    $actionComm->percentage   = 0; // A reminder is a future "to do"
+    $actionComm->datep        = $date;
+    if ($dueDate > 0) {
+        $actionComm->datef = $dueDate;
+    }
+    if (!empty($options['note'])) {
+        $actionComm->note_private = $options['note'];
+    }
+    $actionComm->label        = $label;
+    $actionComm->fk_project   = $projectId;
+    $actionComm->socid        = $socId;
+    $actionComm->userownerid  = $userId; // create() assigns the event to its owner
+    // A single event for every user to remind: whoever calls back marks it done for all of them
+    $remindedUserIds = array_values(array_unique(array_merge([$userId], array_map('intval', $otherUserIds))));
+    if (count($remindedUserIds) > 1) {
+        foreach ($remindedUserIds as $remindedUserId) {
+            $actionComm->userassigned[$remindedUserId] = ['id' => $remindedUserId, 'transparency' => 0];
+        }
+    }
+    if ($contactId > 0) {
+        $actionComm->socpeopleassigned = [$contactId => $contactId];
+    }
+
+    $actionCommID = $actionComm->create($user);
+    if ($actionCommID <= 0) {
+        dol_syslog(__FUNCTION__ . ' ' . $actionComm->error . ' ' . implode(', ', $actionComm->errors), LOG_ERR);
+        $db->rollback();
+        return -1;
+    }
+
+    $categoryID = reedcrm_get_call_reminder_category_id($db, $user);
+    if ($categoryID > 0) {
+        $category = new Categorie($db);
+        if ($category->fetch($categoryID) > 0) {
+            $category->add_type($actionComm, 'actioncomm');
+        }
+    }
+
+    $offsetValue = getDolGlobalInt('REEDCRM_QUICK_CREATION_REMINDER_OFFSET', 30);
+    $offsetUnit  = getDolGlobalString('REEDCRM_QUICK_CREATION_REMINDER_UNIT', 'i');
+
+    foreach (($options['notify'] ?? true) ? $remindedUserIds : [] as $remindedUserId) {
+        $actionCommReminder                = new ActionCommReminder($db);
+        $actionCommReminder->dateremind    = dol_time_plus_duree($dueDate > 0 ? $dueDate : $date, -1 * $offsetValue, $offsetUnit);
+        $actionCommReminder->typeremind    = 'browser';
+        $actionCommReminder->offsetvalue   = $offsetValue;
+        $actionCommReminder->offsetunit    = $offsetUnit;
+        $actionCommReminder->fk_actioncomm = $actionCommID;
+        $actionCommReminder->fk_user       = $remindedUserId;
+        $actionCommReminder->status        = ActionCommReminder::STATUS_TODO;
+
+        if ($actionCommReminder->create($user) <= 0) {
+            dol_syslog(__FUNCTION__ . ' ' . $actionCommReminder->error . ' ' . implode(', ', $actionCommReminder->errors), LOG_ERR);
+            $db->rollback();
+            return -1;
+        }
+    }
+
+    $db->commit();
+
+    return $actionCommID;
 }
 
 /**
@@ -586,6 +949,39 @@ function reedcrm_get_relaunch_types(): array
 }
 
 /**
+ * Relaunch types as select options, the type code as key and its translated label as value.
+ *
+ * @return array<string, string> Translated labels indexed by type code (AC_TEL, AC_EMAIL, ...)
+ */
+function reedcrm_get_relaunch_type_options(): array
+{
+    global $langs;
+
+    $langs->load('commercial');
+
+    $options = [];
+    foreach (reedcrm_get_relaunch_types() as $type) {
+        $options[$type['actioncode']] = $langs->trans('Action' . $type['actioncode']);
+    }
+
+    return $options;
+}
+
+/**
+ * Statuses offered when an event is created, the event percentage as key and its label key as value.
+ *
+ * @return array<int, string> Translation keys indexed by percentage
+ */
+function reedcrm_get_event_statuses(): array
+{
+    return [
+        0   => 'ActionsToDoShort',
+        50  => 'ActionRunningShort',
+        100 => 'ActionDoneShort',
+    ];
+}
+
+/**
  * Map an event type_code to its relaunch bucket.
  *
  * @param  string $typeCode ActionComm type code (AC_TEL, AC_EMAIL, ...)
@@ -662,4 +1058,77 @@ function reedcrm_get_template_relaunch_users(DoliDB $db): array
     $db->free($resql);
 
     return $relaunchUsers;
+}
+
+/**
+ * Build the full URL of a module asset, carrying a version derived from the file itself
+ *
+ * A stylesheet printed without a version is a second cache entry for the same file, and the
+ * browser can serve it stale. Suffixing with the modification time follows the convention the
+ * framework already uses for its own bundle.
+ *
+ * @param  string $relativePath Asset path relative to the custom directory, leading slash included
+ * @return string               Full URL, suffixed with the version of the file when it exists
+ */
+function reedcrm_asset_full_url(string $relativePath): string
+{
+    $url = dol_buildpath($relativePath, 1);
+
+    $absolutePath = dol_buildpath($relativePath, 0);
+    if (!file_exists($absolutePath)) {
+        return $url;
+    }
+
+    return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . filemtime($absolutePath);
+}
+
+/**
+ * Render the media block of the quick creation form
+ *
+ * The block is rendered again after each photo upload: going through here keeps its options, the
+ * photo wand included.
+ *
+ * @param  string $subDir Upload folder of the user, under the project directory
+ * @return string         HTML of the block
+ */
+function reedcrm_quickcreation_media_block(string $subDir): string
+{
+    dol_include_once('/saturne/lib/medias.lib.php');
+
+    // The readFileAI action of the quick creation only knows how to query ChatGPT
+    $showAi = getDolGlobalString('AI_API_SERVICE') == 'chatgpt';
+
+    return saturne_render_media_block('project', $subDir, 'quickcreation_', '', ['show_photo' => true, 'show_audio' => true, 'show_ai' => $showAi]);
+}
+
+/**
+ * Delete the time spent on the tasks of projects about to be deleted, as Dolibarr announces it will.
+ *
+ * Task::delete() refuses a task holding time spent, so the deletion of its project fails without a
+ * message. The time already invoiced is kept: those projects still cannot be deleted.
+ *
+ * @param  DoliDB            $db         Database handler
+ * @param  array<int|string> $projectIds Ids of the projects about to be deleted
+ * @return int                           Number of time spent lines deleted, -1 on error
+ */
+function reedcrm_delete_projects_time_spent(DoliDB $db, array $projectIds): int
+{
+    $projectIds = array_filter(array_map('intval', $projectIds));
+    if (empty($projectIds)) {
+        return 0;
+    }
+
+    $sql  = 'DELETE FROM ' . MAIN_DB_PREFIX . "element_time WHERE elementtype = 'task'";
+    $sql .= ' AND (invoice_id IS NULL OR invoice_id = 0)';
+    $sql .= ' AND fk_element IN (SELECT pt.rowid FROM ' . MAIN_DB_PREFIX . 'projet_task AS pt';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'projet AS p ON p.rowid = pt.fk_projet';
+    $sql .= ' WHERE p.rowid IN (' . $db->sanitize(implode(',', $projectIds)) . ') AND p.entity IN (' . getEntity('project') . '))';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ' ' . $db->lasterror(), LOG_ERR);
+        return -1;
+    }
+
+    return $db->affected_rows($resql);
 }

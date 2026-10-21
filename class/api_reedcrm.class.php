@@ -30,7 +30,7 @@ require_once DOL_DOCUMENT_ROOT . '/projet/class/task.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/extrafields.class.php';
 
-require_once DOL_DOCUMENT_ROOT . '/custom/saturne/lib/object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
 
 /**
  * API class for orders

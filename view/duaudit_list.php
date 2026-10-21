@@ -70,6 +70,11 @@ $propalStatic  = new Propal($db);
 $factureStatic = new Facture($db);
 $hookmanager->initHooks(['duauditlist']);
 
+// Opt-in feature: the board stays unreachable, even by direct URL, while it is turned off.
+if (!reedcrmFollowupDuIsEnabled()) {
+    accessforbidden($langs->trans('DuFollowupDisabled'));
+}
+
 // Security check (reuse the followup permissions).
 $permissiontoread   = $user->hasRight('reedcrm', 'followup', 'read');
 $permissiontoadd    = $user->hasRight('reedcrm', 'followup', 'write');
@@ -748,7 +753,7 @@ $printAuditRow = function (array $audit, bool $showDaysLate) use (&$thirdpartySt
     if (!empty($audit['intervention_id'])) {
         // The appointment sits in the ReedCRM intervention calendar: link straight to its month.
         $interventionMonth = $audit['intervention_date'] ?: $audit['date_rdv'];
-        print '<div><a href="' . dol_buildpath('/custom/reedcrm/view/intervention_calendar.php', 1) . '?month=' . (int) dol_print_date($interventionMonth, '%m') . '&year=' . (int) dol_print_date($interventionMonth, '%Y') . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-calendar-alt paddingright"></i>' . $langs->trans('FollowupAuditRdvInCalendar') . '</a></div>';
+        print '<div><a href="' . dol_buildpath('/reedcrm/view/intervention_calendar.php', 1) . '?month=' . (int) dol_print_date($interventionMonth, '%m') . '&year=' . (int) dol_print_date($interventionMonth, '%Y') . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-calendar-alt paddingright"></i>' . $langs->trans('FollowupAuditRdvInCalendar') . '</a></div>';
     }
     print '</td>';
     if ($showDaysLate) {
@@ -953,7 +958,7 @@ if ($permissiontoadd) {
             this.form.submit();
         });
 
-        var url = "' . dol_escape_js(dol_buildpath('/custom/reedcrm/ajax/get_du_audit_documents.php', 1)) . '";
+        var url = "' . dol_escape_js(dol_buildpath('/reedcrm/ajax/get_du_audit_documents.php', 1)) . '";
         var labels = {
             pick: ' . json_encode($langs->transnoentities('FollowupLinkPickClient')) . ',
             none: ' . json_encode($langs->transnoentities('FollowupLinkNoDocument')) . ',
@@ -1054,7 +1059,7 @@ if (empty($trackings)) {
         }
         if (!empty($track['intervention_id'])) {
             $interMonth = $track['intervention_date'] ?: $track['date_rdv'];
-            print '<div><a href="' . dol_buildpath('/custom/reedcrm/view/intervention_calendar.php', 1) . '?month=' . (int) dol_print_date($interMonth, '%m') . '&year=' . (int) dol_print_date($interMonth, '%Y') . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-calendar-alt paddingright"></i>' . $langs->trans('FollowupAuditRdvInCalendar') . '</a></div>';
+            print '<div><a href="' . dol_buildpath('/reedcrm/view/intervention_calendar.php', 1) . '?month=' . (int) dol_print_date($interMonth, '%m') . '&year=' . (int) dol_print_date($interMonth, '%Y') . '" target="_blank" rel="noopener" class="rcf-interlink"><i class="fas fa-calendar-alt paddingright"></i>' . $langs->trans('FollowupAuditRdvInCalendar') . '</a></div>';
         }
         print '</td>';
         print '<td class="tdoverflowmax300" title="' . dol_escape_htmltag($track['label']) . '">' . dol_escape_htmltag($track['label']) . '</td>';

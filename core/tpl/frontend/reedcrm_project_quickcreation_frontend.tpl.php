@@ -150,12 +150,18 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         color: #0f172a;
         font-size: 16px;
     }
-    .category-select-container > span.multiselectarraycategories {
+    /* Every multiselect of these rows (tags, sales representatives): left to its content width, the
+       sales representative one shrank to a 30px square, the only spot of its row reacting to a tap */
+    .category-select-container > span[class^="multiselectarray"] {
         flex: 1;
         min-width: 0;
         display: block;
     }
     .category-select-container .select2-container {
+        width: 100% !important;
+    }
+    /* Specific enough to outweigh the theme rule on widthcentpercentminusxx, which kept the tags 76px short */
+    .category-select-container > span[class^="multiselectarray"] > span.select2-container {
         width: 100% !important;
     }
     .category-select-container .select2-container--default .select2-selection--multiple,
@@ -335,6 +341,9 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 </div>
             </div>
         <?php endif; ?>
+
+        <!-- Remind me later -->
+        <?php include __DIR__ . '/reedcrm_project_quickcreation_reminder_frontend.tpl.php'; ?>
 
         <!-- Media & Submit Block -->
         <div class="action-buttons-row" style="margin-top: 15px; margin-bottom: 15px;">

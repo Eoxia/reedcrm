@@ -1,0 +1,85 @@
+// "Remind me later" block of the quick creation frontend (view/frontend/quickcreation.php).
+// Scoped to the page: the spacing around the block is the page's, not the block's.
+
+$quickcreation-reminder-accent: #9b59b6; // Same purple as the submit button
+$quickcreation-reminder-border: #cbd5e1;
+$quickcreation-reminder-ink:    #0f172a;
+$quickcreation-reminder-muted:  #64748b;
+
+.quickcreation-frontend .quickcreation-reminder {
+    margin-top: 15px;
+
+    .quickcreation-reminder__toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: $quickcreation-reminder-ink;
+        cursor: pointer;
+
+        input {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: $quickcreation-reminder-accent;
+            cursor: pointer;
+        }
+
+        .fa-bell {
+            color: $quickcreation-reminder-muted;
+        }
+
+        input:checked ~ .fa-bell {
+            color: $quickcreation-reminder-accent;
+        }
+    }
+
+    .quickcreation-reminder__fields {
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+
+        &.is-open {
+            display: flex;
+        }
+    }
+
+    .quickcreation-reminder__presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .quickcreation-reminder__preset {
+        padding: 6px 12px;
+        border: 1px solid $quickcreation-reminder-border;
+        border-radius: 16px;
+        background: #fff;
+        color: $quickcreation-reminder-ink;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+
+        &.is-active {
+            border-color: $quickcreation-reminder-accent;
+            background: $quickcreation-reminder-accent;
+            color: #fff;
+        }
+    }
+
+    // Same box as the text inputs of the form (theme height, #ccc border)
+    input[type="datetime-local"] {
+        width: 100%;
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background: #fff;
+        box-sizing: border-box;
+        font-size: 13px;
+        font-family: inherit;
+    }
+}

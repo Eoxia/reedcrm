@@ -53,7 +53,7 @@ saturne_load_langs(['categories']);
 
 // Get map filters parameters
 $fromId        = GETPOST('from_id');
-$objectType    = GETPOST('from_type', 'alpha');
+$objectType    = GETPOST('from_type', 'alpha') ?: 'project'; // the menu and the project tab always pass it, a cut link must not end in a fatal error
 $filterId      = GETPOST('filter_id');
 $filterCountry = GETPOST('filter_country');
 $filterRegion  = GETPOST('filter_region');
@@ -67,7 +67,13 @@ $source            = GETPOSTISSET('source') ? GETPOST('source') : '';
 
 // Initialize technical object
 $objectInfos  = saturne_get_objects_metadata($objectType);
-$className    = $objectInfos['class_name'];
+$className    = $objectInfos['class_name'] ?? '';
+if (!empty($className) && !class_exists($className) && !empty($objectInfos['class_path'])) {
+    dol_include_once('/' . ltrim($objectInfos['class_path'], '/'));
+}
+if (empty($className) || !class_exists($className)) {
+    accessforbidden($langs->trans('ErrorBadParameters'));
+}
 $objectLinked = new $className($db);
 $geolocation  = new Geolocation($db);
 $project      = new Project($db);
@@ -301,7 +307,7 @@ if (is_array($geolocations) && !empty($geolocations)) {
             $objectLinkedInfo .= '<div class="reedcrm-map-popup-meta">' . dol_escape_htmltag($geolocation->tmp_email) . '</div>';
         }
         if ($user->hasRight('agenda', 'myactions', 'create')) {
-            $cardProUrl        = dol_buildpath('/custom/reedcrm/view/procard.php', 1) . '?from_id=' . $objectLinked->id . '&from_type=project&modal=1';
+            $cardProUrl        = dol_buildpath('/reedcrm/view/procard.php', 1) . '?from_id=' . $objectLinked->id . '&from_type=project&modal=1';
             $objectLinkedInfo .= '<div class="reedcrm-map-popup-actions">';
             $objectLinkedInfo .= '<span class="fa fa-plus-circle reedcrm-card-modal-open reedcrm-map-popup-add" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $objectLinked->id . '" data-modal-url="' . dol_escape_htmltag($cardProUrl) . '">';
             $objectLinkedInfo .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
@@ -351,7 +357,7 @@ if ($filterId > 0) {
 }
 
 $backToMap = img_picto('project', 'fontawesome_project-diagram_fas_#ffffff') . ' ' . img_picto('create', 'fontawesome_plus_fas_#ffffff');
-$iconBTM   = '<a class="wpeo-button" href="' . dol_buildpath('custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 1) . '">' . $backToMap . '</a>';
+$iconBTM   = '<a class="wpeo-button" href="' . dol_buildpath('/reedcrm/view/frontend/quickcreation.php?source=pwa', 1) . '">' . $backToMap . '</a>';
 print_barre_liste($title, '', $_SERVER["PHP_SELF"], '', '', '', '', '', $num, 'fa-map-marked-alt', 0, ($source == 'pwa' ? $iconBTM : ''));
 
 if ($source != 'pwa') {
@@ -1094,8 +1100,8 @@ print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute
         }
 	</script>
 <?php if ($user->hasRight('agenda', 'myactions', 'create')): ?>
-	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/reedcrm.min.css', 1); ?>" rel="stylesheet">
-	<link href="<?php echo dol_buildpath('/custom/reedcrm/css/temp-framework.css', 1); ?>" rel="stylesheet">
+	<link href="<?php echo dol_buildpath('/reedcrm/css/reedcrm.min.css', 1); ?>" rel="stylesheet">
+	<link href="<?php echo dol_buildpath('/reedcrm/css/temp-framework.css', 1); ?>" rel="stylesheet">
 
 	<div class="wpeo-modal modal-eventpro" id="eventproCardModal">
 		<div class="modal-container wpeo-modal-event">

@@ -112,6 +112,7 @@ if ($action == 'loadColumn') {
     $todoColumns = reedcrmTodoGetKanbanColumns();
     $columnKey   = GETPOST('column', 'aZ09');
     $direction   = GETPOST('direction', 'aZ09') == 'desc' ? 'desc' : 'asc';
+    $sortKey     = GETPOST('sort', 'aZ09') == 'probability' ? 'probability' : 'date';
     $offset      = GETPOSTINT('offset');
     $pageSize    = reedcrmTodoGetPageSize();
 
@@ -126,9 +127,10 @@ if ($action == 'loadColumn') {
         reedcrmTodoAjaxAnswer($db, ['success' => 0, 'error' => 'Unknown column'], 400);
     }
 
-    $todoEvents = reedcrmTodoGetEvents($db, $todoFilters, $column, $todoColumns, $direction, $offset, $pageSize);
+    // Counted first: nothing left behind the offset, no need to read the column (see the board below)
     $counts     = reedcrmTodoCountByColumn($db, $todoFilters, $todoColumns);
     $total      = (int) ($counts[$columnKey] ?? 0);
+    $todoEvents = $total > $offset ? reedcrmTodoGetEvents($db, $todoFilters, $column, $todoColumns, $direction, $offset, $pageSize, $sortKey) : [];
 
     $permissionToWrite = $user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create');
 
@@ -296,7 +298,9 @@ $todoColumns = reedcrmTodoGetKanbanColumns();
 $todoCounts  = reedcrmTodoCountByColumn($db, $todoFilters, $todoColumns);
 $todoPage    = [];
 foreach ($todoColumns as $todoColumn) {
-    $todoPage[$todoColumn['key']] = reedcrmTodoGetEvents($db, $todoFilters, $todoColumn, $todoColumns);
+    // An empty column skips its query: hidden automatic events still have to be read through to
+    // find none (0.9 s for a user owning 98,000 of them)
+    $todoPage[$todoColumn['key']] = !empty($todoCounts[$todoColumn['key']]) ? reedcrmTodoGetEvents($db, $todoFilters, $todoColumn, $todoColumns) : [];
 }
 // The user being filtered on travels with the list, so the selector never shows a criteria
 // other than the one the board applied
