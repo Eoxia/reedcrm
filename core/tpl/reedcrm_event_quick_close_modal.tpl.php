@@ -80,6 +80,7 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
      data-trans-tooltip="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"
      data-trans-error="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventError')); ?>"
      data-trans-date-required="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDateRequired')); ?>"
+     data-trans-time-invalid="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTimeInvalid')); ?>"
      data-trans-title-close="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTitle')); ?>"
      data-trans-title-progress="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventProgressTitle')); ?>"
      data-trans-confirm-close="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?>"
@@ -161,6 +162,16 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
                     <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventOnDate')); ?></span>
                     <input type="date" id="reedcrm-quick-close-delay-date" class="reedcrm-quick-close-delay-date" min="<?php echo dol_print_date(dol_now(), '%Y-%m-%d'); ?>">
                 </label>
+
+                <?php // The day the choice above falls on, worked out as soon as it changes, and the hour
+                      // of the new event. Left empty, the hour is the one the endpoint gives it ?>
+                <div class="reedcrm-quick-close-delay-result">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="reedcrm-quick-close-delay-result-date" class="reedcrm-quick-close-delay-result-date"></span>
+                    <label for="reedcrm-quick-close-delay-time"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventAtTime')); ?></label>
+                    <input type="time" id="reedcrm-quick-close-delay-time" class="reedcrm-quick-close-delay-time">
+                </div>
+                <span class="reedcrm-quick-close-delay-help"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTimeHelp')); ?></span>
             </div>
         </div>
         <div class="modal-footer">

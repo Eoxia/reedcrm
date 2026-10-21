@@ -20,7 +20,7 @@
  * \ingroup reedcrm
  * \brief   Closes a to-do event (progress set to 100%, ended today), or only moves its progress to a lower percentage,
  *          renaming it if asked, with an optional comment, and optionally clones it as a new to-do event, renamed at will and
- *          postponed by X months, X days, or to a picked day.
+ *          postponed by X months, X days, or to a picked day, at the hour picked if any.
  */
 
 if (!defined('NOTOKENRENEWAL')) {
@@ -58,6 +58,7 @@ $delayUnit   = GETPOST('delay_unit', 'aZ09');
 $delayValue  = GETPOSTINT('delay_value');
 $delayMonths = GETPOSTINT('delay_months');
 $delayDate   = GETPOST('delay_date', 'aZ09');
+$delayTime   = GETPOST('delay_time', 'alphanohtml');
 $newLabel    = GETPOST('new_label', 'alphanohtml');
 $newType     = GETPOST('new_type', 'aZ09');
 // 100% closes the event, what a caller sending nothing still asks for. A lower percentage only
@@ -93,7 +94,6 @@ if ($actionComm->percentage >= 100 || $actionComm->percentage < 0) {
 
 // Keep an untouched copy to feed the clone, the closed event gets the comment appended
 $originalDatep = $actionComm->datep;
-$originalDatef = $actionComm->datef;
 $originalNote  = $actionComm->note_private;
 $originalLabel = $actionComm->label;
 
@@ -147,12 +147,14 @@ if ($reschedule > 0) {
     if ($delayMonths < 1) {
         $delayMonths = getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTHS', 1);
     }
+    // The hour is optional, anything but a valid HH:MM is no hour picked
+    $delayTime = preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $delayTime) ? $delayTime . ':00' : '';
 
     if ($delayUnit === 'date') {
         // The picked day keeps the hour of the closed event, the current one when it had no date
         // at all, the way a relaunch raised by the cron has none. The hour is read and written back
         // in the same timezone as the dates of the board, so the new event falls on the hour shown
-        $timeOfDay = dol_print_date(!empty($originalDatep) ? $originalDatep : dol_now(), '%H:%M:%S');
+        $timeOfDay = ($delayTime !== '') ? $delayTime : dol_print_date(!empty($originalDatep) ? $originalDatep : dol_now(), '%H:%M:%S');
         // An empty day would let strtotime() answer today, the choice has to carry one
         $newDatep  = !empty($delayDate) ? strtotime($delayDate . ' ' . $timeOfDay) : 0;
         if (empty($newDatep)) {
@@ -166,6 +168,11 @@ if ($reschedule > 0) {
     } else {
         $delayMonths = max(1, min(120, $delayMonths));
         $newDatep    = dol_time_plus_duree(dol_now(), $delayMonths, 'm');
+    }
+
+    // A delay counted from now falls at the current hour, an hour picked moves the event on that same day
+    if ($delayUnit !== 'date' && $delayTime !== '') {
+        $newDatep = strtotime(dol_print_date($newDatep, '%Y-%m-%d') . ' ' . $delayTime);
     }
 
     $clone = new ActionComm($db);
@@ -202,7 +209,9 @@ if ($reschedule > 0) {
     }
 
     $clone->datep        = $newDatep;
-    $clone->datef        = (!empty($originalDatef) && !empty($originalDatep)) ? $newDatep + ($originalDatef - $originalDatep) : null;
+    // A reminder is a single moment: carrying over the span of the closed event would push its end
+    // weeks after its start, an imported reminder running from its import day to its deadline
+    $clone->datef        = $newDatep;
     // create() falls back on the deprecated note property when note_private is empty, both must be reset
     $clone->note_private = $originalNote;
     $clone->note         = $originalNote;

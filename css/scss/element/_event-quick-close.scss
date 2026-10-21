@@ -237,6 +237,47 @@ tr.reedcrm-quick-close-flash > td {
     width: 150px;
   }
 
+  // Day the delay falls on, set apart from the choices it is worked out from, and the hour of the new event
+  .reedcrm-quick-close-delay-result {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid #dfe7ea;
+    font-weight: 600;
+
+    > i {
+      color: #014751;
+    }
+
+    label {
+      margin: 0;
+      font-weight: normal;
+    }
+  }
+
+  // ::first-letter only applies to a block, the weekday is written in lower case in French
+  .reedcrm-quick-close-delay-result-date {
+    display: inline-block;
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+
+  .reedcrm-quick-close-delay-time {
+    width: 110px;
+  }
+
+  .reedcrm-quick-close-delay-help {
+    display: block;
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 11px;
+  }
+
   .modal-footer {
     display: flex;
     justify-content: flex-end;
