@@ -175,6 +175,14 @@ if ($reschedule > 0) {
         exit;
     }
 
+    // The one who sets the reminder leads it: an assignee of a shared event becomes the owner of the
+    // clone, first of its users, and the former owner stays assigned right after. An event the user
+    // is not assigned to keeps its owner, so the reminder lands on the board of the one it concerns
+    if ((int) $clone->userownerid !== (int) $user->id && array_key_exists((int) $user->id, $clone->userassigned)) {
+        $clone->userownerid  = $user->id;
+        $clone->userassigned = [$user->id => $clone->userassigned[$user->id]] + $clone->userassigned;
+    }
+
     // The clone repeats the event as it was, the closure comment belongs to the closed one only
     $clone->percentage   = 0;
     // A name typed in the modal renames the clone. An empty one keeps the name the event carried
