@@ -92,7 +92,7 @@ $constArray['reedcrm'] = [
     ]
 ];
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_const_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_const_view.tpl.php');
 
 print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
 print '<input type="hidden" name="token" value="' . newToken() . '">';

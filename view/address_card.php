@@ -37,7 +37,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 // Load Saturne librairies
-require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
 
 // Load ReedCRM librairies
 require_once __DIR__ . '/../class/geolocation.class.php';

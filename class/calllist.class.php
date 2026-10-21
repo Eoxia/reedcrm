@@ -21,7 +21,7 @@
  * \brief       CRUD class for CallList
  */
 
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 // Preload the numbering module class: saturne_require_objects_mod() strips underscores from the
 // element type ('call_list' → 'calllist') and would not find the file in core/modules/reedcrm/call_list/
 require_once __DIR__ . '/../core/modules/reedcrm/call_list/mod_call_list_standard.php';

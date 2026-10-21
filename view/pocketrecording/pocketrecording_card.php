@@ -80,7 +80,7 @@ if ($id > 0 && $object->fetch($id) <= 0) {
 
 // The thirdparty is set from the banner, as on every Saturne card. The template writes the field
 // the banner form names and reloads the object, so the view below already shows the new value.
-require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
 // Attaching from the card: the objects offered are the ones of the thirdparty of the recording
 if ($action == 'link_object' && $permissiontoadd) {
