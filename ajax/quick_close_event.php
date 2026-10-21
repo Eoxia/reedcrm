@@ -93,7 +93,6 @@ if ($actionComm->percentage >= 100 || $actionComm->percentage < 0) {
 
 // Keep an untouched copy to feed the clone, the closed event gets the comment appended
 $originalDatep = $actionComm->datep;
-$originalDatef = $actionComm->datef;
 $originalNote  = $actionComm->note_private;
 $originalLabel = $actionComm->label;
 
@@ -194,7 +193,9 @@ if ($reschedule > 0) {
     }
 
     $clone->datep        = $newDatep;
-    $clone->datef        = (!empty($originalDatef) && !empty($originalDatep)) ? $newDatep + ($originalDatef - $originalDatep) : null;
+    // A reminder is a single moment: carrying over the span of the closed event would push its end
+    // weeks after its start, an imported reminder running from its import day to its deadline
+    $clone->datef        = $newDatep;
     // create() falls back on the deprecated note property when note_private is empty, both must be reset
     $clone->note_private = $originalNote;
     $clone->note         = $originalNote;
