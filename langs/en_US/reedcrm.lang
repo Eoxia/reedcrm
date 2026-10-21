@@ -1426,3 +1426,15 @@ SepaMandateIssueDesignatedInactive = This bank account is disabled, but a pendin
 SepaMandateIssueDesignatedMissing = The request of invoice %s designates a bank account that no longer exists: Dolibarr will debit the default bank account of the third party instead. Check it is the right account.
 SepaMandateIssueNoAccount = %s pending direct debit request(s), but no bank account is recorded for this third party: nothing can be debited. Add the bank account of the signed mandate.
 SepaMandateIssueNoDefault = %s pending direct debit request(s), but no bank account is set as default: Dolibarr will not put these invoices in the file. Set the bank account of the mandate as default.
+
+#
+# Pocket - "I just hung up" button
+#
+PocketHangup = I just hung up
+PocketHangupWith = I just hung up with %s
+PocketHangupHelp = Import the last Pocket recording and attach it to this record
+PocketHangupAttached = Last Pocket recording attached: %s
+PocketHangupAlreadyLinked = The last Pocket recording is already attached to this record: %s
+PocketHangupOldRecording = Beware, the last Pocket recording is dated %s: check that Pocket has uploaded the conversation that just ended
+PocketHangupNoRecording = No recording available in Pocket
+PocketHangupImportFailed = The import of the last Pocket recording failed
