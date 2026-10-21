@@ -542,6 +542,22 @@ class modReedCRM extends DolibarrModules
                 'status'        => 0,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && getDolGlobalString(\'REEDCRM_POCKET_API_KEY\') != \'\'',
                 'priority'      => 57
+            ],
+            10 => [
+                'label'         => $langs->transnoentities('PropalUnbilledCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmcron.class.php',
+                'objectname'    => 'ReedcrmCron',
+                'method'        => 'syncPropalUnbilledTag',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('PropalUnbilledCronComment'),
+                // Four times a day: 0h, 6h, 12h and 18h
+                'frequency'     => 6,
+                'unitfrequency' => 3600,
+                'datenextrun'   => dol_mktime(6, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && isModEnabled(\'categorie\')',
+                'priority'      => 58
             ]
         ];
         /* END MODULEBUILDER CRON */

@@ -37,6 +37,16 @@ class ReedcrmCron
     public string $output = '';
 
     /**
+     * @var string Error read by the cron manager when a job fails
+     */
+    public string $error = '';
+
+    /**
+     * @var string[] Errors read by the cron manager when a job fails
+     */
+    public array $errors = [];
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -81,6 +91,32 @@ class ReedcrmCron
         } else {
             $this->output = $langs->transnoentities('NoObject', $langs->transnoentities($className . 'Min'));
         }
+        return 0;
+    }
+
+    /**
+     * Tag the signed proposals not billed yet and untag the billed ones (Cronjob)
+     *
+     * Same synchronisation as the button of the proposals setup page, so the tag follows the invoices
+     * made since the last run without anybody clicking it.
+     *
+     * @return int 0 if OK, < 0 if KO
+     */
+    public function syncPropalUnbilledTag(): int
+    {
+        global $langs, $user;
+
+        require_once __DIR__ . '/../lib/reedcrm_propal_unbilled.lib.php';
+
+        $langs->load('reedcrm@reedcrm');
+
+        $result = reedcrmPropalUnbilledSync($this->db, reedcrmPropalUnbilledGetTagID($this->db, $user));
+        if (!is_array($result)) {
+            $this->error = $langs->transnoentities('PropalUnbilledSyncError');
+            return -1;
+        }
+
+        $this->output = $langs->transnoentities('PropalUnbilledSyncDone', (string) $result['tagged'], (string) $result['untagged']);
         return 0;
     }
 }
