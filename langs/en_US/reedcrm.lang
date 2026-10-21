@@ -96,7 +96,6 @@ RelaunchWho = Who
 RelaunchWhat = What
 
 # Dashboard graphs
-OpportunitySources = Distribution of opportunity sources
 
 # Map / Geolocation - Carte / Géolocalisation
 ShowRoute = Show Route
@@ -410,7 +409,6 @@ CommercialStatus = Commercial status
 CommercialStatusHelp = Commercial status of the commercial proposal
 RefusalReason = Refusal reason
 RefusalReasonHelp = Reason for refusing the commercial proposal
-PropalStatusCommRepartition = Distribution of open commercial proposal statuses
 PropalRefusalReasonRepartition = Distribution of commercial proposal refusal reasons
 
 # Billing contact notation
@@ -459,7 +457,6 @@ ReloadOppPercent = Compute undefined opportunity probabilities
 LabelLength = Label length
 LabelLengthDescription = Maximum size of the label field
 WarningTaskLabelCustom = Warning, you are getting close to the maximum allowed number of characters (%d)
-ProductLastSellList = Latest product sales (Order and Invoice)
 
 # Menu / lists
 Opportunities = Opportunities
@@ -467,7 +464,6 @@ OpenedPropals = Open proposals
 RecurringInvoices = Recurring invoices
 
 # Call notifications widget
-ProjectOpportunitiesList = The last 5 project opportunities
 LatestCreatedOpportunities = Latest created opportunities
 OppPercent = Opportunity percentage
 ButtonActions = Actions
@@ -1438,3 +1434,53 @@ PocketHangupAlreadyLinked = The last Pocket recording is already attached to thi
 PocketHangupOldRecording = Beware, the last Pocket recording is dated %s: check that Pocket has uploaded the conversation that just ended
 PocketHangupNoRecording = No recording available in Pocket
 PocketHangupImportFailed = The import of the last Pocket recording failed
+
+#
+# Home page of the module
+#
+HomeRange = From %s to %s
+HomeScopeMine = My figures
+HomeComparedWithMonth = vs previous month
+HomeComparedWithQuarter = vs previous quarter
+HomeComparedWithYear = vs previous fiscal year
+HomeRevenue = Revenue excl. tax
+HomeRevenueFiscalYear = Fiscal year %s: %s
+HomeRevenueMonthlyAverage = Average: %s per month
+HomeSignedProposals = Signed proposals excl. tax
+HomeSignedDetail = %s signed · %s pending (%s)
+HomePipeline = Open pipeline
+HomePipelineDetail = Weighted %s · %s opportunities
+HomeCollected = Payments incl. tax
+HomeCollectedDetail = Left to collect: %s
+HomeCollectedLate = of which %s overdue
+HomeRevenueChart = Revenue excl. tax over 12 months
+HomeRevenueChartCurrent = Last 12 months
+HomeRevenueChartPrevious = One year earlier
+HomeRevenueChartCompared = Compared with the 12 previous months: %s
+HomeRevenueChartDetail = See the detail per month
+HomeChange = Change
+HomePipelineTitle = Pipeline
+HomePipelineAmount = Gross
+HomePipelineWeighted = Weighted
+HomePipelineWeightedValue = weighted %s
+HomePipelineNoStage = No stage
+HomePipelineEmpty = No open opportunity
+HomePipelineWon = Won over the period: %s · %s
+HomeSignedTitle = Signed proposals
+HomeSignedEmpty = No proposal signed over the period
+HomePaymentsTitle = Payments
+HomePaymentsEmpty = No payment received over the period
+HomeLateInvoices = %s overdue invoice(s) · %s
+HomeSeeAll = See all
+HomeLastEvents = Last actions done
+HomeLastEventsEmpty = No action done lately
+HomeSeeAgenda = See the agenda
+HomeProductSales = Last sale per product
+HomeProductRecent = Last sales
+HomeProductDormant = No sale for %s months
+HomeProductDormantMore = … and %s more product(s)
+HomeProductEmpty = No product sold yet
+HomeProductDormantEmpty = No product in stock without sales
+HomeLastSale = Last sale
+HomeNeverSold = Never sold
+HomeDaysAgo = %s days ago
