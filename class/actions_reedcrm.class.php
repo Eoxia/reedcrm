@@ -3946,8 +3946,7 @@ EOT;
     }
 
     /**
-     * Overloading the saturneIndex function : adds the "upcoming call reminders" panel
-     * at the top right of the ReedCRM dashboard.
+     * Overloading the saturneIndex function : prints the home page of ReedCRM, which replaces the Saturne dashboard
      *
      * @param  array $parameters Hook metadata (context, etc...)
      * @return int               0 on success
@@ -3955,7 +3954,7 @@ EOT;
      */
     public function saturneIndex(array $parameters): int
     {
-        global $db, $langs, $user;
+        global $conf, $db, $langs, $user;
 
         if (strpos($parameters['context'], 'reedcrmindex') === false) {
             return 0;
@@ -3964,13 +3963,17 @@ EOT;
             return 0;
         }
 
-        require_once __DIR__ . '/reedcrmdashboard.class.php';
+        require_once __DIR__ . '/reedcrmhomedashboard.class.php';
 
-        $dashboard = new ReedcrmDashboard($db);
-        $reminders = $dashboard->getUpcomingCallReminders(getDolGlobalInt('REEDCRM_DASHBOARD_UPCOMING_REMINDERS_LIMIT', 5));
+        // The event types, the customer and the product columns are labelled with the Dolibarr translations
+        $langs->loadLangs(['commercial', 'companies', 'products']);
+
+        $homeDashboard = new ReedcrmHomeDashboard($db);
+        $homeDashboard->setFilters(GETPOST('period', 'aZ09'), GETPOST('scope', 'aZ09'));
+        $home = $homeDashboard->load_dashboard();
 
         ob_start();
-        require __DIR__ . '/../core/tpl/index/reedcrm_upcoming_reminders.tpl.php';
+        require __DIR__ . '/../core/tpl/index/reedcrm_home_dashboard.tpl.php';
         $this->resprints = ob_get_clean();
 
         return 0;
