@@ -119,7 +119,7 @@ if ($action == 'link_recording' && $permissiontoadd && $fromId > 0 && !empty($fr
 
 // Same gesture as the button of the card the tab belongs to, offered again here: the user who
 // clicked the tab first should not have to go back to the card to attach the call that just ended
-if ($action == 'reedcrm_pocket_hangup' && $permissiontoadd && $fromId > 0 && !empty($fromType)) {
+if ($action == 'add_pocket_hangup' && reedcrm_pocket_can_hangup() && $fromId > 0 && !empty($fromType)) {
     $hangupMetadata = reedcrm_pocket_get_object_metadata_from_link_name($fromType);
 
     if (!empty($hangupMetadata['object']) && $hangupMetadata['object']->fetch($fromId) > 0) {

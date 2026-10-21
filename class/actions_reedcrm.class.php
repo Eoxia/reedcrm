@@ -406,7 +406,7 @@ class ActionsReedcrm
     {
         // "I just hung up" button of the cards linked to Pocket: the last recording is imported and
         // attached here, then the card is reloaded so a refresh never replays the import.
-        if ($action == 'reedcrm_pocket_hangup' && is_object($object) && !empty($object->id)) {
+        if ($action == 'add_pocket_hangup' && is_object($object) && !empty($object->id)) {
             global $langs, $user;
 
             require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
@@ -1603,7 +1603,7 @@ class ActionsReedcrm
         if (strpos($context, 'card') !== false) {
             require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
 
-            $needsHangupScript = !empty(reedcrm_pocket_get_object_metadata_from_card_context($context)) && reedcrm_pocket_can_hangup();
+            $needsHangupScript = reedcrm_pocket_can_hangup() && !empty(reedcrm_pocket_get_object_metadata_from_card_context($context));
         }
 
         // The native cards carrying a lifecycle timeline or the Pocket hang up chip never load the
@@ -3797,7 +3797,7 @@ EOT;
         if (is_object($object) && !empty($object->id) && !empty($parameters['context']) && isset($parameters['morehtmlref'])) {
             require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
 
-            if (!empty(reedcrm_pocket_get_object_metadata_from_card_context($parameters['context']))) {
+            if (reedcrm_pocket_can_hangup() && !empty(reedcrm_pocket_get_object_metadata_from_card_context($parameters['context']))) {
                 $langs->load('reedcrm@reedcrm');
 
                 $parameters['morehtmlref'] = reedcrm_pocket_insert_hangup_button($parameters['morehtmlref'], $object);

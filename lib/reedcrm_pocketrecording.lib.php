@@ -447,13 +447,19 @@ function reedcrm_pocket_url_without_action(): string
 /**
  * Tell whether the hang up button may be offered on a card.
  *
- * @return bool True when Pocket is reachable and the user may write recordings.
+ * Pocket counts as configured once both the API key and the imported folder are set, as on the setup
+ * page. A key alone is not enough: without folder the synchronisation does nothing, so a recording
+ * attached seconds after the call would never receive its transcript, and the last recording would
+ * be picked from the whole account instead of the configured scope.
+ *
+ * @return bool True when Pocket is configured and the user may write recordings.
  */
 function reedcrm_pocket_can_hangup(): bool
 {
     global $user;
 
-    return !empty(getDolGlobalString('REEDCRM_POCKET_API_KEY')) && $user->hasRight('reedcrm', 'pocketrecording', 'write');
+    return getDolGlobalString('REEDCRM_POCKET_API_KEY') !== '' && getDolGlobalString('REEDCRM_POCKET_FOLDER_ID') !== ''
+        && $user->hasRight('reedcrm', 'pocketrecording', 'write');
 }
 
 /**
@@ -483,7 +489,7 @@ function reedcrm_pocket_hangup_button(CommonObject $object, string $baseUrl = ''
     $tooltip    = !empty($targetName) ? $langs->trans('PocketHangupWith', $targetName) . ' - ' . $langs->trans('PocketHangupHelp') : $langs->trans('PocketHangupHelp');
 
     $url  = !empty($baseUrl) ? $baseUrl : reedcrm_pocket_url_without_action();
-    $url .= (strpos($url, '?') === false ? '?' : '&') . 'action=reedcrm_pocket_hangup&token=' . newToken();
+    $url .= (strpos($url, '?') === false ? '?' : '&') . 'action=add_pocket_hangup&token=' . newToken();
 
     $button  = '<a class="reedcrm-pocket-hangup-button classfortooltip" href="' . dol_escape_htmltag($url) . '" title="' . dol_escape_htmltag($tooltip) . '">';
     $button .= '<i class="fas fa-phone-slash"></i>';
