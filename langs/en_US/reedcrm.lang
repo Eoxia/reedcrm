@@ -1150,12 +1150,14 @@ PropalUnbilledTagLabel = Tag of the not billed proposals
 PropalUnbilledTagDescription = A red banner is displayed on top of the card of every proposal carrying this tag, whether it was put by the button below or by hand.
 PropalUnbilledTagNotCreated = Not created yet: it will be on the first run
 PropalUnbilledSync = Automatically tag the not billed proposals
-PropalUnbilledSyncDescription = A proposal is not billed when it is signed and no invoice is linked to it, neither directly nor through the order or the contract created from it (abandoned invoices do not count). The tag is put on these proposals and removed from the billed proposals still carrying it.
+PropalUnbilledSyncDescription = A proposal is not billed when it is signed and no invoice is linked to it, neither directly nor through the order or the contract created from it (abandoned invoices do not count). The tag is put on these proposals and removed from the billed proposals still carrying it. A scheduled job also updates it 4 times a day.
 PropalUnbilledPendingChanges = To tag: %s not billed proposal(s) - To untag: %s billed proposal(s)
 PropalUnbilledSyncButton = Tag the not billed proposals
 PropalUnbilledSyncDone = Tag put on %s proposal(s), removed from %s proposal(s)
 PropalUnbilledSyncError = Unable to update the tag of the not billed proposals
 PropalUnbilledBanner = This proposal is not billed
+PropalUnbilledCronLabel = ReedCRM - Tag of the not billed proposals
+PropalUnbilledCronComment = Puts the "Not billed" tag on the signed proposals with no linked invoice and removes it from the billed ones, like the button of the proposals setup page. Run 4 times a day (0h, 6h, 12h and 18h).
 
 # Not billed contracts
 ContractUnbilledBanner = This contract is not billed

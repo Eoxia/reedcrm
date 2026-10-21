@@ -1270,12 +1270,14 @@ PropalUnbilledTagLabel = Tag des devis non facturés
 PropalUnbilledTagDescription = Un bandeau rouge s'affiche en haut de la fiche de tout devis qui porte ce tag, qu'il soit posé par le bouton ci-dessous ou à la main.
 PropalUnbilledTagNotCreated = Pas encore créé : il le sera au premier lancement
 PropalUnbilledSync = Taguer automatiquement les devis non facturés
-PropalUnbilledSyncDescription = Un devis est non facturé quand il est signé et qu'aucune facture ne lui est liée, ni directement ni par la commande ou le contrat créé depuis ce devis (les factures abandonnées ne comptent pas). Le tag est posé sur ces devis et retiré des devis facturés qui le portent encore.
+PropalUnbilledSyncDescription = Un devis est non facturé quand il est signé et qu'aucune facture ne lui est liée, ni directement ni par la commande ou le contrat créé depuis ce devis (les factures abandonnées ne comptent pas). Le tag est posé sur ces devis et retiré des devis facturés qui le portent encore. Une tâche planifiée fait aussi la mise à jour 4 fois par jour.
 PropalUnbilledPendingChanges = À taguer : %s devis non facturé(s) - À détaguer : %s devis facturé(s)
 PropalUnbilledSyncButton = Taguer les devis non facturés
 PropalUnbilledSyncDone = Tag posé sur %s devis, retiré de %s devis
 PropalUnbilledSyncError = Impossible de mettre à jour le tag des devis non facturés
 PropalUnbilledBanner = Ce devis n'est pas facturé
+PropalUnbilledCronLabel = ReedCRM - Tag des devis non facturés
+PropalUnbilledCronComment = Pose le tag « Non facturé » sur les devis signés sans facture liée et le retire des devis facturés, comme le bouton de la page de configuration des propositions commerciales. Lancée 4 fois par jour (0h, 6h, 12h et 18h).
 
 # Contrats non facturés
 ContractUnbilledBanner = Ce contrat n'est pas facturé
