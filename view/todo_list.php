@@ -312,7 +312,8 @@ saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], [], '', 'classforhorizonta
 
 $head       = [];
 $head[0][0] = $_SERVER['PHP_SELF'];
-$head[0][1] = '<i class="fas fa-clipboard-check pictofixedwidth"></i>' . $langs->trans('TodoBoard');
+// The picto of dol_get_fiche_head() already sits in the first tab: an icon in the label would show twice
+$head[0][1] = $langs->trans('TodoBoard');
 $head[0][2] = 'todo';
 
 print dol_get_fiche_head($head, 'todo', $title, -1, 'fontawesome_fa-clipboard-check_fas_#63ACC9');
