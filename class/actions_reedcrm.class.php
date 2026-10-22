@@ -2710,12 +2710,15 @@ class ActionsReedcrm
     /**
      * Overloading the printFieldListWhere hook : add WHERE conditions for propal list
      *
-     * @param  array        $parameters Hook metadatas (context, search, ...)
-     * @param  CommonObject $object     The object to process
-     * @param  string       $action     Current action
-     * @return int                      0 < on error, 0 on success, 1 to replace standard code
+     * The core does not always pass a CommonObject to the list hooks: the REST API of shipments sends
+     * a stdClass as soon as sqlfilters is given, a CommonObject type hint ended that call in a fatal error
+     *
+     * @param  array       $parameters Hook metadatas (context, search, ...)
+     * @param  object|null $object     The object to process, a stdClass from some REST APIs
+     * @param  string      $action     Current action
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListWhere(array $parameters, ?CommonObject $object, string $action): int
+    public function printFieldListWhere(array $parameters, ?object $object, string $action): int
     {
         if (strpos($parameters['context'], 'propallist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
             $this->resprints = ' AND t.fk_statut >= 0';
@@ -2727,12 +2730,12 @@ class ActionsReedcrm
     /**
      * Overloading the printFieldListSelect hook : select the current lifecycle step of the opportunity list
      *
-     * @param  array             $parameters Hook metadatas (context, ...)
-     * @param  CommonObject|null $object     The object to process
-     * @param  string            $action     Current action
-     * @return int                           0 < on error, 0 on success, 1 to replace standard code
+     * @param  array       $parameters Hook metadatas (context, ...)
+     * @param  object|null $object     The object to process, a stdClass from some REST APIs
+     * @param  string      $action     Current action
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListSelect(array $parameters, ?CommonObject $object, string $action): int
+    public function printFieldListSelect(array $parameters, ?object $object, string $action): int
     {
         // The value would otherwise be carried over from the previous hook method of this instance
         $this->resprints = '';
@@ -2750,12 +2753,12 @@ class ActionsReedcrm
     /**
      * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step
      *
-     * @param  array             $parameters Hook metadatas (context, key, val, ...)
-     * @param  CommonObject|null $object     The object to process
-     * @param  string            $action     Current action
-     * @return int                           0 < on error, 0 on success, 1 to replace standard code
+     * @param  array       $parameters Hook metadatas (context, key, val, ...)
+     * @param  object|null $object     The object to process, a stdClass from some REST APIs
+     * @param  string      $action     Current action
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListSearch(array $parameters, ?CommonObject $object, string $action): int
+    public function printFieldListSearch(array $parameters, ?object $object, string $action): int
     {
         $this->resprints = '';
 
@@ -2780,13 +2783,13 @@ class ActionsReedcrm
      * The column is declared by saturneListAddCustomFields on the generic Saturne list only, the
      * native project list has none to fill
      *
-     * @param  array             $parameters Hook metadatas (context, ...)
-     * @param  CommonObject|null $object     Object of the list
-     * @return bool                          True when the lifecycle column is to be filled
+     * @param  array       $parameters Hook metadatas (context, ...)
+     * @param  object|null $object     Object of the list, a stdClass with no element from some REST APIs
+     * @return bool                    True when the lifecycle column is to be filled
      */
-    protected function isLifecycleColumn(array $parameters, ?CommonObject $object): bool
+    protected function isLifecycleColumn(array $parameters, ?object $object): bool
     {
-        return is_object($object) && $object->element === 'project' && isset($object->fields['lifecycle']) && $this->isContext($parameters, ['saturnelist']);
+        return isset($object->element) && $object->element === 'project' && isset($object->fields['lifecycle']) && $this->isContext($parameters, ['saturnelist']);
     }
 
     public function saturnePrintFieldListLoopObject(array $parameters, CommonObject $object): int
