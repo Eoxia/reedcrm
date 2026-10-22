@@ -41,7 +41,7 @@ require_once __DIR__ . '/../lib/reedcrm_todo.lib.php';
 global $conf, $db, $hookmanager, $langs, $moduleName, $user;
 
 // Load translation files required by the page
-saturne_load_langs(['agenda', 'commercial', 'projects']);
+saturne_load_langs(['agenda', 'commercial', 'dict', 'projects']);
 
 // Get parameters
 $action = GETPOST('action', 'aZ09');
