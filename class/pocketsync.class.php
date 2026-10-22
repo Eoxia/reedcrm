@@ -21,6 +21,7 @@
  * \brief   Import of the Pocket recordings into the local mirror.
  */
 
+require_once __DIR__ . '/pocketaccount.class.php';
 require_once __DIR__ . '/pocketapi.class.php';
 require_once __DIR__ . '/pocketrecording.class.php';
 require_once __DIR__ . '/pocketactionitem.class.php';
@@ -28,7 +29,7 @@ require_once __DIR__ . '/pocketactionitem.class.php';
 /**
  * Class PocketSync.
  *
- * Pulls the recordings of the configured Pocket folder and mirrors them into
+ * Pulls the recordings of the folder of one Pocket account and mirrors them into
  * llx_reedcrm_pocket_recording. Idempotent: a recording already imported is updated in place,
  * matched on its Pocket id, and the fields the user owns (status, note, links, thirdparty) are
  * never overwritten.
@@ -39,6 +40,11 @@ class PocketSync
      * @var DoliDB Database handler.
      */
     public DoliDB $db;
+
+    /**
+     * @var PocketAccount Account the recordings are read from.
+     */
+    public PocketAccount $account;
 
     /**
      * @var PocketApi API client.
@@ -53,16 +59,50 @@ class PocketSync
     /**
      * Constructor.
      *
-     * @param DoliDB $db Database handler.
+     * @param DoliDB        $db      Database handler.
+     * @param PocketAccount $account Account the recordings are read from.
      */
-    public function __construct(DoliDB $db)
+    public function __construct(DoliDB $db, PocketAccount $account)
     {
-        $this->db  = $db;
-        $this->api = new PocketApi($db);
+        $this->db      = $db;
+        $this->account = $account;
+        $this->api     = $account->getApi();
     }
 
     /**
-     * Import the recordings of the configured folder.
+     * Import the recordings of every configured account, the shared one and the personal ones.
+     *
+     * An account in error does not stop the others: the dictaphone of one salesperson being out of
+     * reach is no reason to leave the calls of the whole team without transcript.
+     *
+     * @param  DoliDB $db   Database handler.
+     * @param  User   $user User the created records are attributed to.
+     * @return array{report:array{created:int,updated:int,skipped:int,errors:int},errors:string[],accounts:int} Summed report, error of each failing account, and number of accounts walked.
+     */
+    public static function syncAllAccounts(DoliDB $db, User $user): array
+    {
+        $outcome = ['report' => ['created' => 0, 'updated' => 0, 'skipped' => 0, 'errors' => 0], 'errors' => [], 'accounts' => 0];
+
+        foreach (PocketAccount::getAllConfigured($db) as $account) {
+            $pocketSync = new self($db, $account);
+            $report     = $pocketSync->syncRecordings($user);
+
+            foreach ($report as $counter => $value) {
+                $outcome['report'][$counter] += $value;
+            }
+
+            if (!empty($pocketSync->error)) {
+                $outcome['errors'][] = $account->getName() . ' : ' . $pocketSync->error;
+            }
+
+            $outcome['accounts']++;
+        }
+
+        return $outcome;
+    }
+
+    /**
+     * Import the recordings of the folder of the account.
      *
      * @param  User $user     User the created records are attributed to.
      * @param  int  $maxPages Safety bound on the number of API pages walked in one run.
@@ -81,13 +121,13 @@ class PocketSync
 
         // An empty folder means "not configured yet": importing the whole account instead would
         // flood the list, so the sync deliberately does nothing until a folder is chosen.
-        $folderId = getDolGlobalString('REEDCRM_POCKET_FOLDER_ID');
+        $folderId = $this->account->folderId;
         if (empty($folderId)) {
             $this->error = $langs->trans('PocketFolderMissing');
             return $report;
         }
 
-        $folderLabel = getDolGlobalString('REEDCRM_POCKET_FOLDER_LABEL');
+        $folderLabel = $this->account->folderLabel;
         $page        = 1;
         $hasMore     = false;
 
@@ -107,9 +147,9 @@ class PocketSync
                 // The folder filter is documented but currently not honoured by the API, which
                 // answers the whole account instead of failing on it. The page is therefore
                 // filtered again here, otherwise a silently unfiltered answer imports everything.
-                // A recording already mirrored keeps being refreshed whatever folder it sits in:
-                // the hang up button imports recordings before Pocket files them, and dropping them
-                // here would freeze them without transcript nor summary.
+                // A recording already mirrored keeps being refreshed whatever folder it sits in: one
+                // moved out of the folder after its import, or attached unfiled by the hang up button
+                // before it was restricted to the folder, would otherwise freeze without transcript.
                 $recordingFolderId = (string) ($recording['folder_id'] ?? '');
                 if ($recordingFolderId !== $folderId && empty($mirroredPocketIds[(string) ($recording['id'] ?? '')])) {
                     $report['skipped']++;
@@ -117,7 +157,7 @@ class PocketSync
                 }
 
                 // Each recording is stamped with the folder it really sits in, which is not always
-                // the configured one now that unfiled recordings can already be mirrored.
+                // the configured one for those refreshed above.
                 $result = $this->importRecording($recording, $user, $recordingFolderId, $recordingFolderId === $folderId ? $folderLabel : '');
                 if ($result < 0) {
                     $report['errors']++;
@@ -136,13 +176,13 @@ class PocketSync
     }
 
     /**
-     * Get the most recent recording available in Pocket.
+     * Get the most recent recording of the folder of the account.
      *
      * Answers the "I just hung up" button: the conversation that just ended is the last thing the
      * dictaphone recorded. The folder filter of the API is not honoured (see syncRecordings), so the
-     * pages are filtered here, and more loosely than the synchronisation does: a recording made
-     * seconds ago is usually not filed in a folder yet, so an unfiled one is accepted too. A
-     * recording sitting in another folder belongs to another scope and is never picked.
+     * pages are filtered here, as strictly as the synchronisation does. An unfiled recording is not
+     * picked either: the folders of an account split the companies of a group, and until it is
+     * filed nothing tells which one the call belongs to.
      *
      * @param  int $maxPages Safety bound on the number of API pages walked when nothing matches.
      * @return array<string,mixed>|null Recording as returned by the list endpoint, null when none.
@@ -158,7 +198,12 @@ class PocketSync
             return null;
         }
 
-        $folderId = getDolGlobalString('REEDCRM_POCKET_FOLDER_ID');
+        $folderId = $this->account->folderId;
+        if (empty($folderId)) {
+            $this->error = $langs->trans('PocketFolderMissing');
+            return null;
+        }
+
         $last     = null;
         $lastDate = 0;
         $page     = 1;
@@ -175,8 +220,7 @@ class PocketSync
                     continue;
                 }
 
-                $recordingFolder = (string) ($recording['folder_id'] ?? '');
-                if (!empty($folderId) && !empty($recordingFolder) && $recordingFolder !== $folderId) {
+                if ((string) ($recording['folder_id'] ?? '') !== $folderId) {
                     continue;
                 }
 
@@ -197,32 +241,37 @@ class PocketSync
     }
 
     /**
-     * Import the most recent Pocket recording into the local mirror.
+     * Import the most recent recording of the folder into the local mirror.
      *
-     * @param  User $user User the created record is attributed to.
+     * @param  User $user   User the created record is attributed to.
+     * @param  int  $maxAge Age in seconds past which the last recording is refused, 0 to accept any.
      * @return PocketRecording|null Recording as stored in Dolibarr, null on error, $this->error is then set.
      */
-    public function importLastRecording(User $user): ?PocketRecording
+    public function importLastRecording(User $user, int $maxAge = 0): ?PocketRecording
     {
         global $langs;
+
+        $folderName = dol_escape_htmltag($this->account->folderLabel ?: $this->account->folderId);
 
         $recording = $this->findLastRecording();
         if ($recording === null) {
             if (empty($this->error)) {
-                $this->error = $langs->trans('PocketHangupNoRecording');
+                $this->error = $langs->trans('PocketHangupNoRecordingInFolder', $folderName);
             }
 
             return null;
         }
 
-        // The recording keeps the folder it actually sits in: stamping a still unfiled recording
-        // with the configured folder would claim a filing Pocket has not done.
-        $folderId    = (string) ($recording['folder_id'] ?? '');
-        $folderLabel = ($folderId !== '' && $folderId === getDolGlobalString('REEDCRM_POCKET_FOLDER_ID'))
-            ? getDolGlobalString('REEDCRM_POCKET_FOLDER_LABEL')
-            : '';
+        // The call that just ended is not filed yet when the last recording of the folder is that
+        // old: attaching it would put an earlier conversation on the card, so nothing is attached
+        // and the user is told to file the call first.
+        $recordingDate = $this->getRecordingTimestamp($recording);
+        if ($maxAge > 0 && $recordingDate > 0 && (dol_now() - $recordingDate) > $maxAge) {
+            $this->error = $langs->trans('PocketHangupNotFiled', $folderName, dol_print_date($recordingDate, 'dayhour'));
+            return null;
+        }
 
-        if ($this->importRecording($recording, $user, $folderId, $folderLabel) < 0) {
+        if ($this->importRecording($recording, $user, $this->account->folderId, $this->account->folderLabel) < 0) {
             $this->error = $langs->trans('PocketHangupImportFailed');
             return null;
         }
@@ -313,8 +362,11 @@ class PocketSync
         $isNew           = $pocketRecording->fetchByPocketId((string) $recording['id']) <= 0;
         $previousSync    = $isNew ? 0 : (int) $pocketRecording->last_sync_date;
 
+        // The owner is only set on creation: an account configured twice, as the shared one and as
+        // someone's own, sees the same recordings, and the refresh must not hand them over
         if ($isNew) {
             $pocketRecording->pocket_id      = (string) $recording['id'];
+            $pocketRecording->fk_user_pocket = $this->account->fk_user > 0 ? $this->account->fk_user : null;
             $pocketRecording->status         = PocketRecording::STATUS_NEW;
             $pocketRecording->recording_date = !empty($recording['recording_at']) ? dol_stringtotime($recording['recording_at']) : dol_now();
         }

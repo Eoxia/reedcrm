@@ -447,19 +447,24 @@ function reedcrm_pocket_url_without_action(): string
 /**
  * Tell whether the hang up button may be offered on a card.
  *
- * Pocket counts as configured once both the API key and the imported folder are set, as on the setup
- * page. A key alone is not enough: without folder the synchronisation does nothing, so a recording
- * attached seconds after the call would never receive its transcript, and the last recording would
- * be picked from the whole account instead of the configured scope.
+ * The account checked is the one of the logged user: their own when they set a key on the Pocket
+ * tab of their user card, the shared one of the setup page otherwise. It counts as configured once
+ * both the API key and the imported folder are set. A key alone is not enough: the button only
+ * picks recordings filed in that folder.
  *
- * @return bool True when Pocket is configured and the user may write recordings.
+ * @return bool True when the Pocket account of the user is configured and they may write recordings.
  */
 function reedcrm_pocket_can_hangup(): bool
 {
-    global $user;
+    global $db, $user;
 
-    return getDolGlobalString('REEDCRM_POCKET_API_KEY') !== '' && getDolGlobalString('REEDCRM_POCKET_FOLDER_ID') !== ''
-        && $user->hasRight('reedcrm', 'pocketrecording', 'write');
+    if (!$user->hasRight('reedcrm', 'pocketrecording', 'write')) {
+        return false;
+    }
+
+    require_once __DIR__ . '/../class/pocketaccount.class.php';
+
+    return PocketAccount::getForUser($db, $user)->isConfigured();
 }
 
 /**
@@ -475,7 +480,7 @@ function reedcrm_pocket_can_hangup(): bool
  */
 function reedcrm_pocket_hangup_button(CommonObject $object, string $baseUrl = ''): string
 {
-    global $langs;
+    global $db, $langs, $user;
 
     if ($object->id <= 0 || !reedcrm_pocket_can_hangup()) {
         return '';
@@ -484,9 +489,11 @@ function reedcrm_pocket_hangup_button(CommonObject $object, string $baseUrl = ''
     $langs->load('reedcrm@reedcrm');
 
     // The name of the correspondent lives in the tooltip: printed, it would make the chip as wide
-    // as the title it sits next to.
-    $targetName = reedcrm_pocket_get_hangup_target_name($object);
-    $tooltip    = !empty($targetName) ? $langs->trans('PocketHangupWith', $targetName) . ' - ' . $langs->trans('PocketHangupHelp') : $langs->trans('PocketHangupHelp');
+    // as the title it sits next to. The folder is named too, the call has to be filed there first.
+    $pocketAccount = PocketAccount::getForUser($db, $user);
+    $hangupHelp    = $langs->trans('PocketHangupHelp', $pocketAccount->folderLabel ?: $pocketAccount->folderId);
+    $targetName    = reedcrm_pocket_get_hangup_target_name($object);
+    $tooltip       = !empty($targetName) ? $langs->trans('PocketHangupWith', $targetName) . ' - ' . $hangupHelp : $hangupHelp;
 
     $url  = !empty($baseUrl) ? $baseUrl : reedcrm_pocket_url_without_action();
     $url .= (strpos($url, '?') === false ? '?' : '&') . 'action=add_pocket_hangup&token=' . newToken();
@@ -527,10 +534,12 @@ function reedcrm_pocket_insert_hangup_button(string $moreHtmlRef, CommonObject $
 }
 
 /**
- * Attach the last Pocket recording to a business object.
+ * Attach the last Pocket recording of the folder to a business object.
  *
  * The recording is imported first: the conversation that just ended is not in Dolibarr yet, and
- * waiting for the next synchronisation would defeat the whole gesture.
+ * waiting for the next synchronisation would defeat the whole gesture. It is read from the account
+ * of the user, and refused when it is older than REEDCRM_POCKET_HANGUP_MAX_AGE minutes: the call
+ * that just ended is then not filed in the folder yet, and an earlier one would be attached.
  *
  * @param  CommonObject $object   Object the recording is attached to.
  * @param  string       $linkName Element link name of the object, ex. 'ticket'.
@@ -550,8 +559,8 @@ function reedcrm_pocket_attach_last_recording(CommonObject $object, string $link
 
     require_once __DIR__ . '/../class/pocketsync.class.php';
 
-    $pocketSync = new PocketSync($db);
-    $recording  = $pocketSync->importLastRecording($user);
+    $pocketSync = new PocketSync($db, PocketAccount::getForUser($db, $user));
+    $recording  = $pocketSync->importLastRecording($user, getDolGlobalInt('REEDCRM_POCKET_HANGUP_MAX_AGE', 240) * 60);
     if ($recording === null) {
         $outcome['error'] = $pocketSync->error;
         return $outcome;
@@ -618,13 +627,87 @@ function reedcrm_pocket_process_hangup(CommonObject $object, string $linkName, U
     }
 
     setEventMessage($langs->trans('PocketHangupAttached', $description));
+}
 
-    // A recording much older than the call that just ended usually means Pocket has not uploaded the
-    // new one yet. The link is kept, the user is told which conversation they just attached.
-    $maxAge = getDolGlobalInt('REEDCRM_POCKET_HANGUP_MAX_AGE', 240) * 60;
-    if ($maxAge > 0 && !empty($recording->recording_date) && (dol_now() - $recording->recording_date) > $maxAge) {
-        setEventMessages($langs->trans('PocketHangupOldRecording', dol_print_date($recording->recording_date, 'dayhour')), [], 'warnings');
+/**
+ * Run an action of the Pocket account setup and report its outcome as page messages.
+ *
+ * Shared by the setup page, for the shared account, and by the Pocket tab of the user card, for a
+ * personal one: the forms are the same, only the account they write to differs.
+ *
+ * @param  string        $action  Action posted by the form.
+ * @param  PocketAccount $account Account the action applies to.
+ * @param  User          $user    User performing the action.
+ * @return bool                   True when the action was an account one, the caller then redirects.
+ */
+function reedcrm_pocket_process_account_action(string $action, PocketAccount $account, User $user): bool
+{
+    global $db, $langs;
+
+    switch ($action) {
+        case 'set_pocket_api_key':
+            // The key is only rewritten when the field carries something: an untouched masked field
+            // must never wipe a working key.
+            $apiKey = trim(GETPOST('pocket_api_key', 'alphanohtml'));
+            if ($apiKey !== '') {
+                if ($account->setApiKey($apiKey) > 0) {
+                    setEventMessage($langs->trans('SavedConfig'));
+                } else {
+                    setEventMessages($langs->trans('Error'), [], 'errors');
+                }
+            }
+            return true;
+
+        case 'del_pocket_api_key':
+            $account->delete();
+            setEventMessage($langs->trans('SavedConfig'));
+            return true;
+
+        case 'set_pocket_folder':
+            $folderId = GETPOST('pocket_folder_id', 'alphanohtml');
+
+            // The label is denormalised so the recordings list and the sync stay readable even when
+            // the API is unreachable.
+            $folderLabel = '';
+            if ($folderId !== '') {
+                foreach ((array) $account->getApi()->getFolders() as $folder) {
+                    if ($folder['id'] === $folderId) {
+                        $folderLabel = $folder['label'];
+                        break;
+                    }
+                }
+            }
+
+            $account->setFolder($folderId, $folderLabel);
+            setEventMessage($langs->trans('SavedConfig'));
+            return true;
+
+        case 'test_pocket_connection':
+            $pocketApi = $account->getApi();
+            $folders   = $pocketApi->getFolders();
+
+            if ($folders === null) {
+                setEventMessages($langs->trans('PocketConnectionFailed', $pocketApi->error), [], 'errors');
+            } else {
+                setEventMessage($langs->trans('PocketConnectionSucceeded', count($folders)));
+            }
+            return true;
+
+        case 'sync_pocket_recordings':
+            require_once __DIR__ . '/../class/pocketsync.class.php';
+
+            $pocketSync = new PocketSync($db, $account);
+            $report     = $pocketSync->syncRecordings($user);
+
+            if (!empty($pocketSync->error)) {
+                setEventMessages($pocketSync->error, [], 'errors');
+            } else {
+                setEventMessage($langs->trans('PocketSyncReport', $report['created'], $report['updated'], $report['skipped'], $report['errors']));
+            }
+            return true;
     }
+
+    return false;
 }
 
 /**

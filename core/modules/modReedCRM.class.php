@@ -258,8 +258,9 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'chaine', 'pdf_calllist_standard', '', 0, 'current'],
 
             // CONST POCKET
-            // The API key and the imported folder are deliberately left empty: nothing is fetched
-            // from Pocket until an admin fills them in admin/pocket.php
+            // The API key and the imported folder of the shared account are deliberately left empty:
+            // nothing is fetched from it until an admin fills them in admin/pocket.php. Each user may
+            // also set an account of their own on the Pocket tab of their user card.
             $i++ => ['REEDCRM_POCKET_API_KEY', 'chaine', '', '', 0, 'current'],
             $i++ => ['REEDCRM_POCKET_FOLDER_ID', 'chaine', '', '', 0, 'current'],
             $i++ => ['REEDCRM_POCKET_FOLDER_LABEL', 'chaine', '', '', 0, 'current'],
@@ -306,6 +307,7 @@ class modReedCRM extends DolibarrModules
         $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
         $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/reedcrm/view/procard.php?from_id=__ID__&from_type=societe'];
         $this->tabs[] = ['data' => 'thirdparty:+keyyo:' . $pictoReedcrm . $langs->transnoentities('KeyyoCalls') . ':reedcrm@reedcrm:$user->hasRight(\'societe\', \'lire\'):/reedcrm/view/thirdparty_calls.php?id=__ID__'];
+        $this->tabs[] = ['data' => 'user:+pocket:' . $pictoReedcrm . $langs->transnoentities('Pocket') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'pocketrecording\', \'write\'):/reedcrm/view/pocketrecording/pocketrecording_user.php?id=__ID__'];
 
         // Pocket recording tabs, driven by the REEDCRM_POCKET_LINK_* constants set in admin/pocket.php.
         // This loop belongs to the constructor: saturne_refresh_module_registrations() instantiates the
@@ -540,7 +542,8 @@ class modReedCRM extends DolibarrModules
                 'unitfrequency' => 86400,
                 'datenextrun'   => dol_mktime(20, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
                 'status'        => 0,
-                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && getDolGlobalString(\'REEDCRM_POCKET_API_KEY\') != \'\'',
+                // No key in the test: the accounts may all be personal ones, the job reports what it walked
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\')',
                 'priority'      => 57
             ],
             10 => [

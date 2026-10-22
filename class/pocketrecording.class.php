@@ -88,6 +88,7 @@ class PocketRecording extends SaturneObject
         'fk_soc'              => ['type' => 'integer:Societe:societe/class/societe.class.php', 'label' => 'ThirdParty', 'picto' => 'company', 'enabled' => 1, 'position' => 140, 'notnull' => 0, 'visible' => 1, 'index' => 1],
         'pocket_id'           => ['type' => 'varchar(64)',  'label' => 'PocketRecordingId',      'enabled' => 1, 'position' => 150, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
         'pocket_folder_id'    => ['type' => 'varchar(64)',  'label' => 'PocketFolderId',         'enabled' => 1, 'position' => 160, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
+        'fk_user_pocket'      => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'PocketAccount', 'picto' => 'user', 'enabled' => 1, 'position' => 165, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'foreignkey' => 'user.rowid'],
         'pocket_state'        => ['type' => 'varchar(32)',  'label' => 'PocketState',            'enabled' => 1, 'position' => 170, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
         'last_sync_date'      => ['type' => 'datetime',     'label' => 'PocketLastSyncDate',     'enabled' => 1, 'position' => 180, 'notnull' => 0, 'visible' => -2, 'noteditable' => 1],
         'summary'             => ['type' => 'html',         'label' => 'PocketSummary',          'enabled' => 1, 'position' => 190, 'notnull' => 0, 'visible' => 0],
@@ -134,6 +135,11 @@ class PocketRecording extends SaturneObject
      * @var string|null Pocket folder label, denormalised so the list stays readable offline.
      */
     public $pocket_folder_label;
+
+    /**
+     * @var int|null User whose personal Pocket account the recording comes from, null for the shared account.
+     */
+    public $fk_user_pocket;
 
     /**
      * @var string|null Pocket processing state (completed, pending, ...).

@@ -26,6 +26,7 @@ CREATE TABLE llx_reedcrm_pocket_recording(
   pocket_id           varchar(64) NOT NULL,
   pocket_folder_id    varchar(64),
   pocket_folder_label varchar(255),
+  fk_user_pocket      integer,
   pocket_state        varchar(32),
   pocket_tags         varchar(255),
   language            varchar(8),

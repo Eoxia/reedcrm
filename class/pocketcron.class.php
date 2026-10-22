@@ -49,7 +49,7 @@ class PocketCron
     }
 
     /**
-     * Job: mirror the recordings of the configured Pocket folder into ReedCRM.
+     * Job: mirror the recordings of every configured Pocket account into ReedCRM.
      *
      * @return int 0 if OK, < 0 if KO.
      */
@@ -59,16 +59,21 @@ class PocketCron
 
         $langs->loadLangs(['reedcrm@reedcrm']);
 
-        $pocketSync = new PocketSync($this->db);
-        $report     = $pocketSync->syncRecordings($user);
+        $outcome = PocketSync::syncAllAccounts($this->db, $user);
+        $report  = $outcome['report'];
 
-        if (!empty($pocketSync->error)) {
-            $this->output = $pocketSync->error;
-            return -1;
+        // Nothing configured is not a failure: the job is declared on every install
+        if ($outcome['accounts'] == 0) {
+            $this->output = $langs->trans('PocketNoAccountConfigured');
+            return 0;
         }
 
-        $this->output = $langs->trans('PocketSyncReport', $report['created'], $report['updated'], $report['skipped'], $report['errors']);
+        // trans() takes four values at most, the number of accounts gets a sentence of its own
+        $this->output = $langs->trans('PocketSyncAccounts', $outcome['accounts']) . ' - ' . $langs->trans('PocketSyncReport', $report['created'], $report['updated'], $report['skipped'], $report['errors']);
+        if (!empty($outcome['errors'])) {
+            $this->output .= "\n" . implode("\n", $outcome['errors']);
+        }
 
-        return $report['errors'] > 0 ? -1 : 0;
+        return ($report['errors'] > 0 || !empty($outcome['errors'])) ? -1 : 0;
     }
 }
