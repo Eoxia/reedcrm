@@ -815,8 +815,32 @@
     cursor: default;
 }
 
-.todo-link-origin:hover ~ .todo-origin-tooltip {
+.todo-link-origin:hover ~ .todo-origin-tooltip,
+.todo-link-project:hover ~ .todo-origin-tooltip {
     display: block;
+}
+
+/* Infos of the project, in the colours of its badge */
+.todo-project-tooltip {
+    .todo-origin-tooltip-header i {
+        color: #5e4a96;
+    }
+
+    .todo-origin-tooltip-total .badge {
+        font-size: 10px;
+    }
+}
+
+.todo-project-tooltip-title {
+    display: block;
+    padding: 6px 0 2px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.todo-project-tooltip-description {
+    margin-top: 4px;
+    overflow-wrap: anywhere;
 }
 
 .todo-origin-tooltip-header {

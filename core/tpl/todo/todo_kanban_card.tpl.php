@@ -141,13 +141,43 @@ $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt'
                 $projectHasPercent    = isset($projectInfos['percent']);
                 $projectRelaunchCount = (int) ($projectInfos['relaunch_count'] ?? 0);
                 $projectCounted       = $projectHasAmount || $projectHasPercent || $projectRelaunchCount > 0;
+                // The tooltip replaces the native title of the badge, kept for whoever may not read projects
+                $projectHasTooltip    = !empty($projectInfos);
                 ?>
                 <span class="todo-origin-wrapper todo-project-wrapper">
                     <a class="todo-link-badge todo-link-project<?php echo $projectCounted ? ' todo-link-origin-counted' : ''; ?>" target="_blank"
                        href="<?php echo DOL_URL_ROOT . '/projet/card.php?id=' . $t['project_id']; ?>"
-                       title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>">
+                       <?php if (!$projectHasTooltip) : ?>title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>"<?php endif; ?>>
                         <i class="fas fa-project-diagram"></i> <?php echo dol_escape_htmltag($t['project_title'] ?: $t['project_ref']); ?>
                     </a>
+                    <?php // Infos of the project, shown on hovering its badge the same way the lines of a proposal are ?>
+                    <?php if ($projectHasTooltip) : ?>
+                        <span class="todo-origin-tooltip todo-project-tooltip">
+                            <span class="todo-origin-tooltip-header">
+                                <i class="fas fa-project-diagram"></i>
+                                <strong><?php echo dol_escape_htmltag($t['project_ref']); ?></strong>
+                                <span class="todo-origin-tooltip-total"><?php echo $projectInfos['status']; ?></span>
+                            </span>
+                            <?php if (!empty($t['project_title'])) : ?>
+                                <span class="todo-project-tooltip-title"><?php echo dol_escape_htmltag($t['project_title']); ?></span>
+                            <?php endif; ?>
+                            <?php foreach ($projectInfos['details'] as $projectDetail) : ?>
+                                <span class="todo-origin-tooltip-line">
+                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($projectDetail['label']); ?></span>
+                                    <span class="todo-origin-tooltip-amount"><?php echo dol_escape_htmltag($projectDetail['value']); ?></span>
+                                </span>
+                            <?php endforeach; ?>
+                            <?php if ($projectRelaunchCount > 0) : ?>
+                                <span class="todo-origin-tooltip-line">
+                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($langs->trans('TodoProjectRelaunches')); ?></span>
+                                    <span class="todo-origin-tooltip-amount"><i class="fas fa-headset"></i> <?php echo $projectRelaunchCount; ?></span>
+                                </span>
+                            <?php endif; ?>
+                            <?php if (!empty($projectInfos['description'])) : ?>
+                                <span class="todo-origin-tooltip-more todo-project-tooltip-description"><?php echo dol_escape_htmltag($projectInfos['description']); ?></span>
+                            <?php endif; ?>
+                        </span>
+                    <?php endif; ?>
                     <?php if ($projectHasAmount) : ?>
                         <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($projectInfos['amount_full']); ?>">
                             <?php echo dol_escape_htmltag($projectInfos['amount_short']); ?>
