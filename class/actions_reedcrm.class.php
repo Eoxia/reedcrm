@@ -2542,14 +2542,14 @@ class ActionsReedcrm
             'table_element'  => 'reedcrm_call_list',
             'hook_name_card' => 'call_listcard',
             'hook_name_list' => 'call_list_list',
-            'create_url'     => 'custom/reedcrm/view/call_list_card.php',
-            'list_url'       => 'custom/reedcrm/view/call_list_list.php',
+            'create_url'     => 'reedcrm/view/call_list_card.php',
+            'list_url'       => 'reedcrm/view/call_list_list.php',
             'defaultsort'    => 't.rowid',
             'defaultorder'   => 'DESC',
             // The call lists are ordered by hand (1 - Hot, 2 - Negotiation...): the sort chosen must stay
             'remember_sort'  => 1,
-            'class_path'     => 'custom/reedcrm/class/calllist.class.php',
-            'lib_path'       => 'custom/reedcrm/lib/reedcrm_call_list.lib.php',
+            'class_path'     => 'reedcrm/class/calllist.class.php',
+            'lib_path'       => 'reedcrm/lib/reedcrm_call_list.lib.php',
         ];
 
         $this->results['pocketrecording'] = [
@@ -2567,12 +2567,12 @@ class ActionsReedcrm
             'table_element'  => 'reedcrm_pocket_recording',
             'hook_name_card' => 'pocketrecordingcard',
             'hook_name_list' => 'pocketrecordinglist',
-            'create_url'     => 'custom/reedcrm/view/pocketrecording/pocketrecording_card.php',
-            'list_url'       => 'custom/reedcrm/view/pocketrecording/pocketrecording_list.php',
+            'create_url'     => 'reedcrm/view/pocketrecording/pocketrecording_card.php',
+            'list_url'       => 'reedcrm/view/pocketrecording/pocketrecording_list.php',
             'defaultsort'    => 't.recording_date',
             'defaultorder'   => 'DESC',
-            'class_path'     => 'custom/reedcrm/class/pocketrecording.class.php',
-            'lib_path'       => 'custom/reedcrm/lib/reedcrm_pocketrecording.lib.php',
+            'class_path'     => 'reedcrm/class/pocketrecording.class.php',
+            'lib_path'       => 'reedcrm/lib/reedcrm_pocketrecording.lib.php',
         ];
 
         return 0; // or return 1 to replace standard code
