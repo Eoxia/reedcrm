@@ -52,6 +52,11 @@ class ActionsReedcrm
     public $resprints;
 
     /**
+     * @var bool Module stylesheet already on the page. Static because the hook manager builds one instance per hook context
+     */
+    private static bool $mainCssLoaded = false;
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -1611,6 +1616,7 @@ class ActionsReedcrm
         if ($needsHangupScript || preg_match('/propalcard|ordercard|invoicecard|projectcard/', $context)) {
             $this->resprints  = '<!-- Includes CSS added by module reedcrm -->';
             $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
+            self::$mainCssLoaded = true;
         }
 
         // The chip has to be moved under the relaunch block once that block is teleported into
@@ -3813,6 +3819,13 @@ EOT;
             $lifecycleElement = $object->element;
             $lifecycleSteps   = reedcrm_get_lifecycle_steps($object);
             if (!empty($lifecycleSteps)) {
+                // The other tabs of these objects (overview, contacts, notes, documents...) and the module
+                // tabs show the same banner without loading the stylesheet in the page header
+                if (!self::$mainCssLoaded) {
+                    require_once __DIR__ . '/../../saturne/lib/asset.lib.php';
+                    $parameters['morehtmlstatus'] .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
+                    self::$mainCssLoaded = true;
+                }
                 ob_start();
                 require __DIR__ . '/../core/tpl/reedcrm_lifecycle_timeline.tpl.php';
                 $parameters['morehtmlstatus'] .= ob_get_clean();
