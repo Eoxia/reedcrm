@@ -41,7 +41,7 @@ require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 // Load ReedCRM libraries
 require_once __DIR__ . '/../../class/pocketrecording.class.php';
 require_once __DIR__ . '/../../class/pocketactionitem.class.php';
-require_once __DIR__ . '/../../class/pocketapi.class.php';
+require_once __DIR__ . '/../../class/pocketaccount.class.php';
 require_once __DIR__ . '/../../class/pocketsync.class.php';
 require_once __DIR__ . '/../../lib/reedcrm_pocketrecording.lib.php';
 
@@ -114,8 +114,9 @@ if ($action == 'unlink_object' && $permissiontoadd) {
     exit;
 }
 
+// Pocket only answers the detail and the audio of a recording to the account holding it
 if ($action == 'refresh_from_pocket' && $permissiontoadd) {
-    $pocketSync = new PocketSync($db);
+    $pocketSync = new PocketSync($db, PocketAccount::getForRecording($db, $object));
     $recording  = $pocketSync->api->getRecording($object->pocket_id);
 
     if ($recording === null) {
@@ -140,7 +141,7 @@ if ($action == 'refresh_from_pocket' && $permissiontoadd) {
 
 // The signed audio URL expires quickly, it is resolved on demand and never stored
 if ($action == 'play_audio' && $permissiontoread) {
-    $pocketApi = new PocketApi($db);
+    $pocketApi = PocketAccount::getForRecording($db, $object)->getApi();
     $audioUrl  = $pocketApi->getAudioUrl($object->pocket_id);
 
     if (empty($audioUrl)) {
@@ -182,6 +183,7 @@ if (!empty($object->duration)) {
 if (!empty($object->pocket_folder_label)) {
     $moreHtmlRef .= '<br>' . $langs->trans('PocketFolder') . ': ' . dol_escape_htmltag($object->pocket_folder_label);
 }
+$moreHtmlRef .= '<br>' . $langs->trans('PocketAccount') . ': ' . dol_escape_htmltag(PocketAccount::getForRecording($db, $object)->getName());
 $moreHtmlRef .= '</div>';
 
 $linkBack = '<a href="' . dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans('BackToList') . '</a>';
