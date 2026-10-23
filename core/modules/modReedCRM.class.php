@@ -1315,6 +1315,11 @@ class modReedCRM extends DolibarrModules
     {
         global $conf, $langs, $user;
 
+        // Dolibarr runs init() before activating $this->depends : activate them first, the Pocket tabs below need isModEnabled() on them
+        if (function_exists('saturne_activate_module_dependencies') && saturne_activate_module_dependencies($this) < 0) {
+            return -1;
+        }
+
         // Permissions
         $this->remove($options);
 
