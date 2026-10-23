@@ -649,15 +649,18 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   var $currentTooltip = null;
   var tooltipHovered = false;
   var loadingTooltip = false;
+  // Besides the relaunch buttons, any element only showing a number of relaunches (the headset of the
+  // todo cards) opens the same list, carrying its own project and third party
+  var triggers = '.reedcrm-relaunch-button, .reedcrm-relaunch-tooltip-trigger';
 
-  $(document).off('mouseenter', '.reedcrm-relaunch-button').on('mouseenter.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseenter', triggers).on('mouseenter.reedcrmRelaunchBtn', triggers, function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
     var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
     // The button always carries the project id. The "+" span it was read from before only exists
     // for users allowed to create events, so the tooltip stayed empty for read-only ones.
     var projectId = $button.data('project-id') || $wrapper.find('.reedcrm-modal-open').first().data('project-id');
-    var socid = $wrapper.data('socid') || '';
+    var socid = $button.data('socid') || $wrapper.data('socid') || '';
 
     if ((!projectId && !socid) || !type) {
       return;
@@ -810,7 +813,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
 
   });
 
-  $(document).off('mouseleave', '.reedcrm-relaunch-button').on('mouseleave.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseleave', triggers).on('mouseleave.reedcrmRelaunchBtn', triggers, function () {
     clearTimeout(tooltipTimeout);
     tooltipTimeout = setTimeout(function () {
       if ($currentTooltip && !tooltipHovered && !loadingTooltip) {
