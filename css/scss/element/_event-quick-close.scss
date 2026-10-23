@@ -124,7 +124,25 @@ tr.reedcrm-quick-close-flash > td {
   .reedcrm-quick-close-new-label {
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 12px;
+
+    // A ring rather than the border, which eldy forces to grey with !important while typing
+    &.reedcrm-quick-close-too-long {
+      box-shadow: 0 0 0 1px #dc2626;
+    }
+  }
+
+  // Characters of that name out of the most the new event keeps, red past it
+  .reedcrm-quick-close-counter {
+    display: block;
+    margin: 2px 0 12px;
+    color: #64748b;
+    font-size: 11px;
+    text-align: right;
+
+    &.reedcrm-quick-close-counter-too-long {
+      color: #dc2626;
+      font-weight: 600;
+    }
   }
 
   // Type of the reminder being raised. The four pills carry the colours the relaunch chips already
