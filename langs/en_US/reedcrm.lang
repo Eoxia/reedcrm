@@ -1455,6 +1455,34 @@ PocketHangupNotFiled = The last recording of the Pocket folder %s is dated %s: f
 PocketHangupImportFailed = The import of the last Pocket recording failed
 
 #
+# Pocket - reminder to file the calls
+#
+PocketTidyReminderTitle = Reminder to file the calls
+PocketTidyReminderTime = Time of the daily reminder
+PocketTidyReminderTimeHelp = Every day at this time, when recordings that reached Pocket during the last 24 hours sit in no folder, an event "File N Pocket calls" listing them is created with a notification: for the owner of each personal key, and for the users of the shared account. Nothing is created when everything is filed.
+PocketTidyReminderOff = -- Disabled --
+PocketTidyReminderNext = Next reminder
+PocketTidyReminderPending = (at the next run of the scheduled job)
+PocketTidyReminderSharedRecipients = Recipients of the shared account
+PocketTidyReminderSharedRecipientsHelp = Active users allowed to create Pocket recordings and without a personal key. Each personal key notifies its owner.
+PocketTidyReminderNoRecipient = No user works with the shared account
+PocketTidyReminderJob = Scheduled job
+PocketTidyReminderJobMissing = Scheduled job missing: disable then enable the ReedCRM module to declare it
+PocketTidyReminderCronDisabled = The Scheduled jobs module is disabled: the reminder will never be created
+PocketTidyReminderNoBrowserNotification = The browser notifications of the agenda are disabled: the event will be created without notification. Enable them in the <a href="%s">reminder setup of the agenda</a>.
+PocketTidyReminderCronLabel = Reminder to file the Pocket calls
+PocketTidyReminderCronComment = At the time set in the Pocket setup of ReedCRM, create for each account an event with a notification listing the recordings of the last 24 hours that sit in no folder
+PocketTidyReminderCronResult = Pocket filing reminders: %s created, %s account(s) checked
+PocketTidyReminderDisabled = No time set for the Pocket filing reminder: nothing to do
+PocketTidyReminderNextRun = Next Pocket filing reminder: %s
+PocketTidyReminderLabel = File %s Pocket call
+PocketTidyReminderLabelPlural = File %s Pocket calls
+PocketTidyReminderNote = Recordings that reached Pocket since %s and sit in no folder. File the calls in their folder from the Pocket application (folder imported into ReedCRM: %s): until they are, neither "I just hung up" nor the synchronisation picks them up.
+PocketTidyReminderUntitled = Untitled
+PocketTidyReminderDuration = duration %s
+PocketTidyReminderMore = … and %s more
+
+#
 # Home page of the module
 #
 HomeRange = From %s to %s

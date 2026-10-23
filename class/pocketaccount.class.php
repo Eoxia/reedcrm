@@ -213,6 +213,51 @@ class PocketAccount
     }
 
     /**
+     * Get the users working with the account, those its recordings come from.
+     *
+     * A personal account is the dictaphone of its owner. The shared one is used by every active user
+     * allowed to write recordings who did not set a key of their own, the way getForUser() hands it out.
+     *
+     * @return int[] User ids.
+     */
+    public function getUserIds(): array
+    {
+        if (!$this->isShared()) {
+            return [$this->fk_user];
+        }
+
+        $personalAccounts = self::getAllPersonal($this->db);
+
+        $userIds = [];
+
+        $sql  = 'SELECT u.rowid FROM ' . MAIN_DB_PREFIX . 'user as u';
+        $sql .= ' WHERE u.statut = 1 AND u.entity IN (' . getEntity('user') . ')';
+        $sql .= ' ORDER BY u.rowid';
+
+        $resql = $this->db->query($sql);
+        if (!$resql) {
+            return $userIds;
+        }
+
+        while ($obj = $this->db->fetch_object($resql)) {
+            $userId = (int) $obj->rowid;
+            if (isset($personalAccounts[$userId])) {
+                continue;
+            }
+
+            $candidate     = new User($this->db);
+            $candidate->id = $userId;
+            $candidate->loadRights('reedcrm');
+            if ($candidate->hasRight('reedcrm', 'pocketrecording', 'write')) {
+                $userIds[] = $userId;
+            }
+        }
+        $this->db->free($resql);
+
+        return $userIds;
+    }
+
+    /**
      * Tell whether the account is the shared one of the module setup.
      *
      * @return bool True for the shared account.
