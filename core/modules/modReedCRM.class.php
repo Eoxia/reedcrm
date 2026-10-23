@@ -561,6 +561,22 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && isModEnabled(\'categorie\')',
                 'priority'      => 58
+            ],
+            11 => [
+                'label'         => $langs->transnoentities('PocketTidyReminderCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/pocketcron.class.php',
+                'objectname'    => 'PocketCron',
+                'method'        => 'createTidyReminders',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('PocketTidyReminderCronComment'),
+                // Every quarter of an hour from midnight: the job waits for the time of the Pocket setup
+                'frequency'     => 15,
+                'unitfrequency' => 60,
+                'datenextrun'   => dol_mktime(0, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+                'priority'      => 59
             ]
         ];
         /* END MODULEBUILDER CRON */
