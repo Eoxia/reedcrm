@@ -1137,7 +1137,6 @@ TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created
 TodoLateEvent = Late
 TodoUpcomingEvent = Upcoming
 TodoRelaunchCount = %s relaunch(es) on this object
-TodoProjectRelaunchCount = %s relaunch(es) on this project
 TodoProjectBudget = Budget of the project: %s
 TodoProjectOpportunityAmount = Opportunity amount: %s
 TodoProjectProbability = Opportunity probability: %s

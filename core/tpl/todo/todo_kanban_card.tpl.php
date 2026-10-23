@@ -50,6 +50,10 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
 // A relaunch carries no start date on purpose: its slot shows the date of the object it was
 // raised on, greyed out, until a real date is picked
 $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt']);
+
+// Hovering a relaunch counter lists its relaunches, the tooltip of the relaunch buttons of the project
+// list (eventpro.js). That list is read on the same third party and project as the counter.
+$relaunchListUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
 ?>
 <div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?><?php echo !empty($t['upcoming']) ? ' todo-card-upcoming' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-event-type="<?php echo dol_escape_htmltag($t['type_code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
 
@@ -119,7 +123,10 @@ $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt'
                         </span>
                     <?php endif; ?>
                     <?php if ($originRelaunchCount > 0) : ?>
-                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoRelaunchCount', $originRelaunchCount)); ?>">
+                        <?php // An object without a project lists every relaunch of its third party, the way it is counted ?>
+                        <span class="todo-relaunch-count reedcrm-relaunch-tooltip-trigger" data-relaunch-type="all"
+                              data-project-id="<?php echo (int) $t['origin']['project']; ?>" data-socid="<?php echo (int) $t['origin']['soc_id']; ?>"
+                              data-dialog-url="<?php echo dol_escape_htmltag($relaunchListUrl); ?>">
                             <i class="fas fa-headset"></i> <?php echo $originRelaunchCount; ?>
                         </span>
                     <?php endif; ?>
@@ -189,7 +196,10 @@ $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt'
                         </span>
                     <?php endif; ?>
                     <?php if ($projectRelaunchCount > 0) : ?>
-                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectRelaunchCount', $projectRelaunchCount)); ?>">
+                        <?php // The list falls back on the third party of the project, the one its relaunches are counted on ?>
+                        <span class="todo-relaunch-count reedcrm-relaunch-tooltip-trigger" data-relaunch-type="all"
+                              data-project-id="<?php echo (int) $t['project_id']; ?>"
+                              data-dialog-url="<?php echo dol_escape_htmltag($relaunchListUrl); ?>">
                             <i class="fas fa-headset"></i> <?php echo $projectRelaunchCount; ?>
                         </span>
                     <?php endif; ?>
