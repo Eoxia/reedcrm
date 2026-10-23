@@ -242,6 +242,10 @@ window.reedcrm.eventQuickClose.event = function () {
     window.reedcrm.eventQuickClose.refreshDelayResult();
   });
 
+  $(document).on('input.reedcrmQuickClose', '#reedcrm-quick-close-new-label', function () {
+    window.reedcrm.eventQuickClose.refreshNewLabelCount();
+  });
+
   $(document).on('click.reedcrmQuickClose', '.reedcrm-quick-close-confirm', function () {
     window.reedcrm.eventQuickClose.confirm($(this));
   });
@@ -313,6 +317,7 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   }
   // The rescheduled event repeats the closed one, its name stays editable
   $('#reedcrm-quick-close-new-label').val(label);
+  window.reedcrm.eventQuickClose.refreshNewLabelCount();
 
   // The closed event is renamed from the same modal, so a name settled during the call is
   // written down where it belongs rather than in the comment
@@ -419,6 +424,47 @@ window.reedcrm.eventQuickClose.refreshDelayResult = function () {
 };
 
 /**
+ * Most characters the name of the new event may hold, set on the field by the template
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @return {Number} Maximum length
+ */
+window.reedcrm.eventQuickClose.getNewLabelMaxLength = function () {
+  return parseInt($('#reedcrm-quick-close-new-label').attr('data-max-length'), 10) || 128;
+};
+
+/**
+ * Show how many characters the name of the new event holds out of the most it may hold, in red past
+ * it: the field opens on the name of the closed event, which can be longer, and Dolibarr would cut
+ * the end of the new one without a word
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @return {Boolean} Whether the name is too long
+ */
+window.reedcrm.eventQuickClose.refreshNewLabelCount = function () {
+  var $label  = $('#reedcrm-quick-close-new-label');
+  var max     = window.reedcrm.eventQuickClose.getNewLabelMaxLength();
+  // Counted the way the server does: trimmed, and in characters, an emoji being a single one
+  var length  = Array.from(($label.val() || '').trim()).length;
+  var tooLong = length > max;
+
+  $label.toggleClass('reedcrm-quick-close-too-long', tooLong);
+  $('#reedcrm-quick-close-new-label-counter')
+    .toggleClass('reedcrm-quick-close-counter-too-long', tooLong)
+    .text(window.reedcrm.eventQuickClose.config('trans-new-label-count').replace('%s', length));
+
+  return tooLong;
+};
+
+/**
  * Close the modal
  *
  * @memberof ReedCRM_EventQuickClose
@@ -466,6 +512,13 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
   if ($('#reedcrm-quick-close-reschedule').is(':checked') && $time.length && $time[0].validity && $time[0].validity.badInput) {
     window.reedcrm.eventQuickClose.notify(window.reedcrm.eventQuickClose.config('trans-time-invalid'), 'error');
     $time.trigger('focus');
+    return;
+  }
+
+  // A name past the limit would reach the new event cut short, the user decides what to drop
+  if ($('#reedcrm-quick-close-reschedule').is(':checked') && window.reedcrm.eventQuickClose.refreshNewLabelCount()) {
+    window.reedcrm.eventQuickClose.notify(window.reedcrm.eventQuickClose.config('trans-new-label-too-long'), 'error');
+    $('#reedcrm-quick-close-new-label').trigger('focus');
     return;
   }
 
