@@ -1577,6 +1577,34 @@ PocketHangupNotFiled = Le dernier enregistrement du dossier Pocket %s date du %s
 PocketHangupImportFailed = L'import du dernier enregistrement Pocket a échoué
 
 #
+# Pocket - rappel de rangement des appels
+#
+PocketTidyReminderTitle = Rappel de rangement des appels
+PocketTidyReminderTime = Heure du rappel quotidien
+PocketTidyReminderTimeHelp = Chaque jour à cette heure, si des enregistrements arrivés dans Pocket au cours des dernières 24 heures ne sont rangés dans aucun dossier, un événement « Ranger N appels Pocket » qui les liste est créé avec une notification : pour le titulaire de chaque clé personnelle, et pour les utilisateurs du compte partagé. Rien n'est créé quand tout est rangé.
+PocketTidyReminderOff = -- Désactivé --
+PocketTidyReminderNext = Prochain rappel
+PocketTidyReminderPending = (au prochain passage de la tâche planifiée)
+PocketTidyReminderSharedRecipients = Destinataires du compte partagé
+PocketTidyReminderSharedRecipientsHelp = Utilisateurs actifs ayant le droit de créer des enregistrements Pocket et sans clé personnelle. Chaque clé personnelle prévient son titulaire.
+PocketTidyReminderNoRecipient = Aucun utilisateur n'utilise le compte partagé
+PocketTidyReminderJob = Tâche planifiée
+PocketTidyReminderJobMissing = Tâche planifiée absente : désactivez puis réactivez le module ReedCRM pour la déclarer
+PocketTidyReminderCronDisabled = Le module Travaux planifiés est désactivé : le rappel ne sera jamais créé
+PocketTidyReminderNoBrowserNotification = Les notifications navigateur de l'agenda sont désactivées : l'événement sera créé sans notification. Activez-les dans la <a href="%s">configuration des rappels de l'agenda</a>.
+PocketTidyReminderCronLabel = Rappel de rangement des appels Pocket
+PocketTidyReminderCronComment = À l'heure réglée dans la configuration Pocket de ReedCRM, crée pour chaque compte un événement avec notification listant les enregistrements des dernières 24 heures rangés dans aucun dossier
+PocketTidyReminderCronResult = Rappels de rangement Pocket : %s créé(s), %s compte(s) vérifié(s)
+PocketTidyReminderDisabled = Aucune heure de rappel de rangement Pocket configurée : rien à faire
+PocketTidyReminderNextRun = Prochain rappel de rangement Pocket : %s
+PocketTidyReminderLabel = Ranger %s appel Pocket
+PocketTidyReminderLabelPlural = Ranger %s appels Pocket
+PocketTidyReminderNote = Enregistrements arrivés dans Pocket depuis le %s et rangés dans aucun dossier. Rangez les appels dans leur dossier depuis l'application Pocket (dossier importé dans ReedCRM : %s) : tant qu'ils n'y sont pas, ni « Je viens de raccrocher » ni la synchronisation ne les récupèrent.
+PocketTidyReminderUntitled = Sans titre
+PocketTidyReminderDuration = durée %s
+PocketTidyReminderMore = … et %s autre(s)
+
+#
 # Accueil du module
 #
 HomeRange = Du %s au %s

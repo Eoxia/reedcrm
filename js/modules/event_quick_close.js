@@ -54,6 +54,18 @@ window.reedcrm.eventQuickClose = {};
 window.reedcrm.eventQuickClose.currentEventId = 0;
 
 /**
+ * Whether the last press inside the modal started on its backdrop
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @type {Boolean}
+ */
+window.reedcrm.eventQuickClose.pressedOnBackdrop = false;
+
+/**
  * Init
  *
  * @memberof ReedCRM_EventQuickClose
@@ -199,10 +211,17 @@ window.reedcrm.eventQuickClose.event = function () {
     window.reedcrm.eventQuickClose.close();
   });
 
+  // The backdrop closes the modal only when the press started on it too: a text selected in a field
+  // and released outside the frame also ends with a click on the backdrop
+  $(document).on('mousedown.reedcrmQuickClose', '#reedcrm-quick-close-modal', function (event) {
+    window.reedcrm.eventQuickClose.pressedOnBackdrop = $(event.target).is('#reedcrm-quick-close-modal');
+  });
+
   $(document).on('click.reedcrmQuickClose', '#reedcrm-quick-close-modal', function (event) {
-    if ($(event.target).is('#reedcrm-quick-close-modal')) {
+    if ($(event.target).is('#reedcrm-quick-close-modal') && window.reedcrm.eventQuickClose.pressedOnBackdrop) {
       window.reedcrm.eventQuickClose.close();
     }
+    window.reedcrm.eventQuickClose.pressedOnBackdrop = false;
   });
 
   // The slider and the exact figure move together, and the modal tells whether it closes the event

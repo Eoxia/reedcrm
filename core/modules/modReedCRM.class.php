@@ -561,6 +561,22 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && isModEnabled(\'categorie\')',
                 'priority'      => 58
+            ],
+            11 => [
+                'label'         => $langs->transnoentities('PocketTidyReminderCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/pocketcron.class.php',
+                'objectname'    => 'PocketCron',
+                'method'        => 'createTidyReminders',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('PocketTidyReminderCronComment'),
+                // Every quarter of an hour from midnight: the job waits for the time of the Pocket setup
+                'frequency'     => 15,
+                'unitfrequency' => 60,
+                'datenextrun'   => dol_mktime(0, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+                'priority'      => 59
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -1315,6 +1331,17 @@ class modReedCRM extends DolibarrModules
     {
         global $conf, $langs, $user;
 
+        // Saturne provides the functions used below : refuse the activation rather than a fatal error when it is missing
+        if (!function_exists('saturne_load_langs')) {
+            $this->error = $langs->trans('activateModuleDependNotSatisfied', $this->name, 'modSaturne', $this->name);
+            return -1;
+        }
+
+        // Dolibarr runs init() before activating $this->depends : activate them first, the Pocket tabs below need isModEnabled() on them
+        if (function_exists('saturne_activate_module_dependencies') && saturne_activate_module_dependencies($this) < 0) {
+            return -1;
+        }
+
         // Permissions
         $this->remove($options);
 
@@ -1344,7 +1371,7 @@ class modReedCRM extends DolibarrModules
             'reedcrm_firstname'    => ['Label' => 'FirstName',              'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 40, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'reedcrm_website'      => ['Label' => 'Website',                'type' => 'url',     'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 45, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'projectphone'         => ['Label' => 'ProjectPhone',           'type' => 'phone',                    'elementtype' => ['projet'], 'position' => $this->numero . 50, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'reedcrm_email'        => ['Label' => 'Email',                  'type' => 'mail',                     'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_email'        => ['Label' => 'Email',                  'type' => 'email',                    'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'opporigin'            => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:code:rowid' => null]],
             'projectaddress'       => ['Label' => 'FavoriteAddress',        'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 80, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['reedcrm_address:name:rowid::((element_type:=:\'project\') AND (status:=:1))' => null], 'perms' => '$user->hasRight(\'reedcrm\', \'address\', \'write\')', 'moreparams' => ['css' => 'minwidth100 maxwidth300 widthcentpercentminusx']],
             'opprefusal'           => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 85, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],

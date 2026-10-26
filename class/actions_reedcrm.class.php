@@ -3094,18 +3094,27 @@ class ActionsReedcrm
                 // Append the Contact Editor natively to the refidno block via the hook.
                 $contactHtml = '<div class="contact-inline-wrapper reedcrm-header-contact-master" data-project-id="' . (int)$object->id . '" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; vertical-align: middle; font-weight: 500; font-size: 0.9em; margin-bottom: 2px; color: #4a5568;">' .
                     '<img src="' . $logoPath . '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />' .
+                    // Each icon is kept with its value: past the width of the banner, a whole field goes to the next line
+                    '<span class="reedcrm-header-contact-item">' .
                     '<i class="fas fa-address-book" style="color: #64748b; margin-right: 6px;"></i>' .
                     '<span class="inline-edit-contact" data-field="lastname" data-val="'.dol_escape_htmltag($opt_lastname).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 4px;" title="Modifier le nom">' . $hLastName . '</span>' .
                     '<span class="inline-edit-contact" data-field="firstname" data-val="'.dol_escape_htmltag($opt_firstname).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier le prénom">' . $hFirstName . '</span>' .
+                    '</span>' .
                     '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>' .
+                    '<span class="reedcrm-header-contact-item">' .
                     $linkPhone .
                     '<span class="inline-edit-contact" data-field="phone" data-val="'.dol_escape_htmltag($opt_phone).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier le téléphone">' . $hPhone . '</span>' .
+                    '</span>' .
                     '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>' .
+                    '<span class="reedcrm-header-contact-item">' .
                     $linkEmail .
                     '<span class="inline-edit-contact" data-field="email" data-val="'.dol_escape_htmltag($opt_email).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s; margin-right: 8px;" title="Modifier l\'email">' . $hEmail . '</span>' .
+                    '</span>' .
                     '<span style="color: #cbd5e0; margin-right: 8px;">&bull;</span>' .
+                    '<span class="reedcrm-header-contact-item">' .
                     $linkWeb .
                     '<span class="inline-edit-contact" data-field="website" data-val="'.dol_escape_htmltag($opt_website).'" style="cursor: pointer; border-bottom: 1px dashed #cbd5e0; line-height: 1; padding-bottom: 1px; transition: color 0.3s;" title="Modifier le site web">' . $hWeb . '</span>' .
+                    '</span>' .
                 '</div>';
                 
                 $rawAmount = empty($object->opp_amount) ? '0' : (float)$object->opp_amount;
@@ -3441,7 +3450,7 @@ class ActionsReedcrm
                             
                             if (($statusRef.length > 0 || $fallback.length > 0) && !$("#reedcrm-closure-widget").length) {
                                 var widgetHtml = `
-                                    <div id="reedcrm-closure-widget" style="position:absolute; top:calc(100% + 8px); right:0; z-index:50; width:max-content; display:block; background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+                                    <div id="reedcrm-closure-widget" style="background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                                         <div style="display:flex; align-items:center; gap:8px;">
                                             <img src="' . dol_buildpath('/reedcrm/img/object_reedcrm_color.png', 1) . '" style="height:24px; width:auto;" alt="ReedCRM" />
                                             <select id="rcrm-close-reason" style="border:1px solid #ced4da; border-radius:4px; padding:3px; outline:none; font-size:12px; min-width:130px;" class="flat">
@@ -3461,15 +3470,8 @@ class ActionsReedcrm
                                     </div>
                                 `;
                                 
-                                if ($statusRef.length > 0) {
-                                    if ($statusRef.css("position") === "static") $statusRef.css("position", "relative");
-                                    $statusRef.css("overflow", "visible");
-                                    $statusRef.append(widgetHtml);
-                                } else {
-                                    if ($fallback.css("position") === "static") $fallback.css("position", "relative");
-                                    $fallback.css("overflow", "visible");
-                                    $fallback.append(widgetHtml);
-                                }
+                                // In the flow under the status and the timeline, the banner grows to hold it
+                                ($statusRef.length > 0 ? $statusRef : $fallback).append(widgetHtml);
 
                                 var selectedStatus = null;
 
@@ -3621,7 +3623,7 @@ class ActionsReedcrm
                                 var \$fallback = $(".arearef, .titre").first();
                                 if ((\$statusRef.length > 0 || \$fallback.length > 0) && !$("#reedcrm-closure-widget").length) {
                                     var widgetHtml = `
-                                        <div id="reedcrm-closure-widget" style="position:absolute; top:calc(100% + 8px); right:0; z-index:50; width:max-content; display:block; background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+                                        <div id="reedcrm-closure-widget" style="background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                                             <div style="display:flex; align-items:center; gap:8px;">
                                                 <img src="{$imgLogo}" style="height:24px; width:auto;" alt="ReedCRM" />
                                                 <i class="far fa-calendar-alt" style="color:#6c757d;"></i>
@@ -3641,21 +3643,14 @@ class ActionsReedcrm
                                             </div>
                                         </div>
                                     `;
-                                    
-                                    if (\$statusRef.length > 0) {
-                                        if (\$statusRef.css("position") === "static") \$statusRef.css("position", "relative");
-                                        \$statusRef.css("overflow", "visible");
-                                        \$statusRef.append(widgetHtml);
-                                    } else {
-                                        if (\$fallback.css("position") === "static") \$fallback.css("position", "relative");
-                                        \$fallback.css("overflow", "visible");
-                                        \$fallback.append(widgetHtml);
-                                    }
-                                    
+
+                                    // In the flow under the status and the timeline, the banner grows to hold it
+                                    (\$statusRef.length > 0 ? \$statusRef : \$fallback).append(widgetHtml);
+
                                     $("#rcrm-btn-reopen").on("click", function(e) {
                                         e.preventDefault();
                                         $(this).html("<i class='fas fa-spinner fa-spin'></i>");
-                                        
+
                                         $.ajax({
                                             url: "{$closeAjaxUrl}",
                                             method: "POST",
@@ -3686,7 +3681,7 @@ EOT;
                                 var \$fallback = $(".arearef, .titre").first();
                                 if ((\$statusRef.length > 0 || \$fallback.length > 0) && !$("#reedcrm-closure-widget").length) {
                                     var widgetHtml = `
-                                        <div id="reedcrm-closure-widget" style="position:absolute; top:calc(100% + 8px); right:0; z-index:50; width:max-content; display:block; background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+                                        <div id="reedcrm-closure-widget" style="background:#fff; border:1px solid #ced4da; border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
                                             <div style="display:flex; align-items:center; gap:8px;">
                                                 <img src="{$imgLogo}" style="height:24px; width:auto;" alt="ReedCRM" />
                                                 <i class="far fa-calendar-alt" style="color:#6c757d;"></i>
@@ -3701,15 +3696,8 @@ EOT;
                                             </div>
                                         </div>
                                     `;
-                                    if (\$statusRef.length > 0) {
-                                        if (\$statusRef.css("position") === "static") \$statusRef.css("position", "relative");
-                                        \$statusRef.css("overflow", "visible");
-                                        \$statusRef.append(widgetHtml);
-                                    } else {
-                                        if (\$fallback.css("position") === "static") \$fallback.css("position", "relative");
-                                        \$fallback.css("overflow", "visible");
-                                        \$fallback.append(widgetHtml);
-                                    }
+                                    // In the flow under the status and the timeline, the banner grows to hold it
+                                    (\$statusRef.length > 0 ? \$statusRef : \$fallback).append(widgetHtml);
                                     
                                     $("#rcrm-btn-reopen").on("click", function(e) {
                                         e.preventDefault();
@@ -3742,14 +3730,8 @@ EOT;
                                     t.innerHTML = clWidget;
                                     var node = t.firstElementChild;
                                     var closureWidget = document.getElementById("reedcrm-closure-widget");
-                                    if (closureWidget && closureWidget.parentElement) {
-                                        var parent = closureWidget.parentElement;
-                                        var closureH = closureWidget.offsetHeight;
-                                        node.style.position = "absolute";
-                                        node.style.top = "calc(100% + " + (8 + closureH + 6) + "px)";
-                                        node.style.right = "0";
-                                        node.style.zIndex = "49";
-                                        parent.appendChild(node);
+                                    if (closureWidget) {
+                                        closureWidget.insertAdjacentElement("afterend", node);
                                     } else {
                                         var statsBlock = document.querySelector(".reedcrm-header-stats");
                                         if (statsBlock) {

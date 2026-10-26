@@ -92,7 +92,9 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
      data-trans-confirm-close="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?>"
      data-trans-confirm-progress="<?php echo dol_escape_htmltag($langs->trans('Save')); ?>"></div>
 
-<div class="wpeo-modal modal-reedcrm-quick-close" id="reedcrm-quick-close-modal">
+<?php // Saturne closes any modal on a click on its backdrop, a selection released there included: the JS of the
+      // module closes this one itself, only when the press started on the backdrop ?>
+<div class="wpeo-modal modal-reedcrm-quick-close modal-close-only-with-button" id="reedcrm-quick-close-modal">
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTitle')); ?></h2>

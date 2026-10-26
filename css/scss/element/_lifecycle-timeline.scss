@@ -88,7 +88,8 @@
 // Riding in the right hand block of the banner, under the status badge
 .statusref .reedcrm-lifecycle {
     max-width: 640px;
-    margin: 6px 0 0;
+    // Pushed to the right edge when the closure widget makes the block wider than the timeline
+    margin: 6px 0 0 auto;
     // The block is right aligned for the badge, the timeline keeps its own steps left to right
     text-align: left;
 }

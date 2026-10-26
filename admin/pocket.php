@@ -38,6 +38,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
 require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
 require_once __DIR__ . '/../class/pocketaccount.class.php';
+require_once __DIR__ . '/../class/pocketcron.class.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -64,6 +65,33 @@ $form = new Form($db);
 $pocketAccount = PocketAccount::getShared($db);
 
 if ($permissiontoread && reedcrm_pocket_process_account_action($action, $pocketAccount, $user)) {
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+// Daily reminder to file the calls, empty time to disable it
+if ($action == 'set_pocket_tidy_reminder' && $permissiontoread) {
+    $tidyReminderTime = GETPOST('pocket_tidy_reminder_time', 'alphanohtml');
+
+    if ($tidyReminderTime === '') {
+        dolibarr_del_const($db, PocketCron::TIDY_REMINDER_TIME, $conf->entity);
+        setEventMessage($langs->trans('SavedConfig'));
+    } elseif (preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $tidyReminderTime)) {
+        dolibarr_set_const($db, PocketCron::TIDY_REMINDER_TIME, $tidyReminderTime, 'chaine', 0, '', $conf->entity);
+
+        // The time is the one the admin reads on their clock, the server may well run in UTC
+        $browserTimezone = (string) ($_SESSION['dol_tz_string'] ?? '');
+        if (in_array($browserTimezone, DateTimeZone::listIdentifiers(), true)) {
+            dolibarr_set_const($db, PocketCron::TIDY_REMINDER_TZ, $browserTimezone, 'chaine', 0, '', $conf->entity);
+        } else {
+            dolibarr_del_const($db, PocketCron::TIDY_REMINDER_TZ, $conf->entity);
+        }
+
+        setEventMessage($langs->trans('SavedConfig'));
+    } else {
+        setEventMessages($langs->trans('ErrorBadValueForParameter', dol_escape_htmltag($tidyReminderTime), $langs->transnoentities('PocketTidyReminderTime')), [], 'errors');
+    }
+
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
 }
@@ -152,6 +180,8 @@ foreach ($personalAccounts as $personalAccount) {
 }
 
 print '</table>';
+
+require_once __DIR__ . '/../core/tpl/reedcrm_pocket_tidy_reminder_setup.tpl.php';
 
 // Linkable elements, driven by the REEDCRM_POCKET_LINK_* constants
 $linkableObjects            = reedcrm_pocket_get_linkable_objects();

@@ -249,7 +249,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 }
 
                 $inputType = 'text';
-                if ($value == 'mail') {
+                if ($value == 'mail' || $value == 'email') {
                     $inputType = 'email';
                 }
                 if ($value == 'phone') {

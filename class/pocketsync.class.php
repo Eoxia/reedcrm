@@ -241,6 +241,67 @@ class PocketSync
     }
 
     /**
+     * Get the recordings that reached the account during a period and are still in no folder.
+     *
+     * Answers the daily reminder to file the calls: until a call is filed, neither the "I just hung up"
+     * button nor the synchronisation pick it up. The period is read on the date the recording reached
+     * Pocket, not on the date of the call: the dictaphone uploads in batches, sometimes days after the
+     * call, and a recording uploaded late would otherwise fall before every period and never be
+     * reminded. The API answers the most recently uploaded first, the pages stop once one only holds
+     * older recordings.
+     *
+     * @param  int $since    Start of the period, excluded.
+     * @param  int $until    End of the period, included.
+     * @param  int $maxPages Safety bound on the number of API pages walked.
+     * @return array<int,array<string,mixed>>|null Recordings as returned by the list endpoint, most recent call first, null on error.
+     */
+    public function findUnfiledRecordings(int $since, int $until, int $maxPages = 5): ?array
+    {
+        global $langs;
+
+        $this->error = '';
+
+        if (!$this->api->isConfigured()) {
+            $this->error = $langs->trans('PocketApiKeyMissing');
+            return null;
+        }
+
+        $unfiled = [];
+        $page    = 1;
+
+        do {
+            $response = $this->api->getRecordings('', 100, $page);
+            if ($response === null) {
+                $this->error = $this->api->error;
+                return null;
+            }
+
+            $newestOfPage = 0;
+            foreach ($response['data'] ?? [] as $recording) {
+                $uploadDate   = $this->getUploadTimestamp($recording);
+                $newestOfPage = max($newestOfPage, $uploadDate);
+
+                if (!$this->isRealRecording($recording) || !empty($recording['folder_id'])) {
+                    continue;
+                }
+
+                if ($uploadDate > $since && $uploadDate <= $until) {
+                    $unfiled[] = $recording;
+                }
+            }
+
+            $hasMore = !empty($response['pagination']['has_more']);
+            $page++;
+        } while ($hasMore && $newestOfPage > $since && $page <= $maxPages);
+
+        usort($unfiled, function (array $a, array $b): int {
+            return $this->getRecordingTimestamp($b) <=> $this->getRecordingTimestamp($a);
+        });
+
+        return $unfiled;
+    }
+
+    /**
      * Import the most recent recording of the folder into the local mirror.
      *
      * @param  User $user   User the created record is attributed to.
@@ -335,6 +396,23 @@ class PocketSync
     private function getRecordingTimestamp(array $recording): int
     {
         foreach (['recording_at', 'created_at', 'updated_at'] as $field) {
+            if (!empty($recording[$field])) {
+                return (int) dol_stringtotime((string) $recording[$field]);
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Read the date a recording reached Pocket from the list payload.
+     *
+     * @param  array<string,mixed> $recording Recording as returned by the list endpoint.
+     * @return int                            Timestamp, 0 when Pocket gave no usable date.
+     */
+    private function getUploadTimestamp(array $recording): int
+    {
+        foreach (['created_at', 'recording_at'] as $field) {
             if (!empty($recording[$field])) {
                 return (int) dol_stringtotime((string) $recording[$field]);
             }
