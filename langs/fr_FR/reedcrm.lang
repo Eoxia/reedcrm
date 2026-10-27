@@ -778,6 +778,10 @@ NoPhoneNumber = Pas de téléphone
 NoEventOnOpportunity = Aucun événement sur cette opportunité
 ToCallShort = à appeler
 SeeOpportunityTimeline = Voir l'historique
+CallListLineAddedOn = Dans la liste depuis le %s
+CallListLineUnlink = Délier de la liste d'appel
+ConfirmCallListLineUnlink = Délier cette personne de la liste d'appel ?
+ErrorCallListLineUnlink = Impossible de délier cette personne de la liste d'appel
 
 # Relaunch widget - Widget de relance (#873)
 RelaunchScopePastTooltip = Historique des relances

@@ -101,6 +101,7 @@
 }
 
 .pwa-call-card {
+    position: relative;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -117,11 +118,44 @@
     }
 }
 
+/* Unlink the line from the call list: discreet, in the top right corner, away from the call button */
+.pwa-call-btn-unlink {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: #fee2e2;
+        border-color: #e05353;
+        color: #e05353;
+    }
+
+    &.loading {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+}
+
 .pwa-call-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
+    /* Room for the unlink button in the corner */
+    padding-right: 44px;
 
     .todo-card-late-badge,
     .todo-card-upcoming-badge {
@@ -131,6 +165,16 @@
         padding: 4px 10px;
         font-size: 13px;
     }
+}
+
+/* Date the line was added to the call list */
+.pwa-call-added-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 14px;
+    color: #64748b;
 }
 
 /* Chips of the todo cards (object + amount + relaunches, third party), scaled up for the phone */
