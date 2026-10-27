@@ -119,7 +119,14 @@ if (empty($resHook)) {
 if ($isModal) {
     // Modal mode: output only the form template without header/banner/footer
     if (empty($action)) {
-        require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+        // The right-hand button of the relaunch widget asks for the short reminder form (#873),
+        // the left-hand one for the complete event form.
+        if (GETPOST('mode', 'aZ09') === 'reminder') {
+            require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+            require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_reminder.tpl.php';
+        } else {
+            require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+        }
     }
     $db->close();
     exit;
