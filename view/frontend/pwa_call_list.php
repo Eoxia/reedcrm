@@ -76,21 +76,7 @@ if (empty($object->id)) {
     exit;
 }
 
-$canRead = false;
-if ($user->hasRight('reedcrm', 'call_list', 'read_all') || $user->admin) {
-    $canRead = true;
-} elseif ($user->hasRight('reedcrm', 'call_list', 'read_subordinates')) {
-    $childIds = $user->getAllChildIds(1);
-    if (isset($childIds[$object->fk_user_assign])) {
-        $canRead = true;
-    }
-} elseif ($user->hasRight('reedcrm', 'call_list', 'read')) {
-    if ($object->fk_user_assign == $user->id) {
-        $canRead = true;
-    }
-}
-
-if (!$canRead) {
+if (!reedcrm_call_list_user_can_read($user, $object)) {
     accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
@@ -172,7 +158,7 @@ llxHeader('', $title, $helpUrl, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa p
 
 $pwaHeaderCenterHtml = '<div style="background:#e2e8f0;padding:4px 10px;border-radius:12px;font-size:13px;font-weight:bold;color:#475569;">'
     . '<i class="fas fa-phone"></i> ' . dol_escape_htmltag($object->label)
-    . ' — ' . $toCallCount . '/' . count($lines) . ' à appeler'
+    . ' — <span class="pwa-call-list-to-call-count">' . $toCallCount . '</span>/<span class="pwa-call-list-total-count">' . count($lines) . '</span> à appeler'
     . '</div>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
@@ -193,12 +179,18 @@ $statusColors = [
 
 $ajaxUrl          = dol_buildpath('/reedcrm/ajax/update_call_list_line_status.php', 1);
 $actioncommAjaxUrl = dol_buildpath('/reedcrm/ajax/create_call_actioncomm.php', 1);
+$unlinkAjaxUrl     = dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1);
 $createActioncomm  = getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
+// Same right as the line bin of the call list card
+$canUnlink         = $user->hasRight('reedcrm', 'call_list', 'delete');
 $token             = newToken();
 
 print '<div class="pwa-call-list-container"'
     . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
     . ' data-actioncomm-url="' . dol_escape_htmltag($actioncommAjaxUrl) . '"'
+    . ' data-unlink-url="' . dol_escape_htmltag($unlinkAjaxUrl) . '"'
+    . ' data-unlink-confirm="' . dol_escape_htmltag($langs->transnoentities('ConfirmCallListLineUnlink')) . '"'
+    . ' data-unlink-error="' . dol_escape_htmltag($langs->transnoentities('ErrorCallListLineUnlink')) . '"'
     . ' data-create-actioncomm="' . (int) $createActioncomm . '"'
     . ' data-default-list="' . ((int) $object->id === $defaultCallListId ? 1 : 0) . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
@@ -346,6 +338,10 @@ if (empty($lines)) {
 
         print '<div class="' . $cardClass . '" data-line-id="' . (int) $line->id . '" data-status="' . $currentStatus . '">';
 
+        if ($canUnlink) {
+            print '<button type="button" class="pwa-call-btn-unlink" data-action="unlink-line" title="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '"><i class="fas fa-unlink"></i></button>';
+        }
+
         // Ligne 1 : Nom + prochain événement en retard ou à venir, comme sur la todo
         print '<div class="pwa-call-card-header">';
         if ($lastname || $firstname) {
@@ -359,6 +355,10 @@ if (empty($lines)) {
             print '<span class="todo-card-upcoming-badge" title="' . dol_escape_htmltag($indicators['next_event_title']) . '"><i class="fas fa-clock"></i> ' . $langs->trans('TodoUpcomingEvent') . '</span>';
         }
         print '</div>';
+
+        if (!empty($line->date_creation)) {
+            print '<div class="pwa-call-added-date"><i class="far fa-calendar-plus"></i> ' . $langs->trans('CallListLineAddedOn', dol_print_date($line->date_creation, 'day', 'tzuser')) . '</div>';
+        }
 
         // Ligne 2 : Gros bouton d'appel vert + bouton copier le numéro
         if ($phone) {

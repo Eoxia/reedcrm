@@ -701,6 +701,10 @@ NoPhoneNumber = No phone number
 NoEventOnOpportunity = No event on this opportunity yet
 ToCallShort = to call
 SeeOpportunityTimeline = See the history
+CallListLineAddedOn = In the list since %s
+CallListLineUnlink = Unlink from the call list
+ConfirmCallListLineUnlink = Unlink this person from the call list?
+ErrorCallListLineUnlink = Could not unlink this person from the call list
 
 # Relaunch widget (#873)
 RelaunchScopePastTooltip = Relaunch history
