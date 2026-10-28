@@ -325,6 +325,7 @@ function get_pending_call_events($user_id) {
     $sql = "SELECT a.id as rowid, a.fk_contact, a.datep as call_date, a.label, a.extraparams, a.fk_soc, ";
     $sql .= "c.lastname, c.firstname, c.phone, c.phone_mobile, c.email ";
     $sql .= "FROM " . MAIN_DB_PREFIX . "actioncomm a ";
+    $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid ";
     $sql .= "WHERE a.fk_user_action = " . (int)$user_id . " ";
     $sql .= "AND a.code = 'AC_TEL' ";
     $sql .= "AND a.percent = 0 ";
