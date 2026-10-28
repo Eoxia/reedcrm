@@ -167,7 +167,7 @@ class ActionsReedcrm
         if (strpos($parameters['context'], 'thirdpartycomm') !== false) {
             if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-                require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+                dol_include_once('/saturne/lib/object.lib.php');
 
                 $projects    = saturne_fetch_all_object_type('Project', '', '', 0, 0, ['customsql' => 't.fk_soc = ' . $object->id]);
                 $projectData = [
@@ -224,7 +224,7 @@ class ActionsReedcrm
         if (strpos($parameters['context'], 'thirdpartycomm') !== false) {
             if (isModEnabled('project') && $user->hasRight('projet', 'lire') && isModEnabled('saturne')) {
                 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-                require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+                dol_include_once('/saturne/lib/object.lib.php');
 
                 $projects = saturne_fetch_all_object_type('Project', 'DESC', 'datec', 0, 0, ['customsql' => 't.fk_soc = ' . $object->id]);
                 if (is_array($projects) && !empty($projects)) {
@@ -566,7 +566,7 @@ class ActionsReedcrm
             }
         } else if (strpos($parameters['context'], 'projectlist') !== false) {
             if ($action == 'reload_opp_percent') {
-                require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+                dol_include_once('/saturne/lib/object.lib.php');
 
                 $projects = saturne_fetch_all_object_type('Project', '', '', 0, 0, ['customsql' => 't.fk_statut IN (' . Project::STATUS_DRAFT . ',' . Project::STATUS_VALIDATED . ') AND t.fk_opp_status IS NOT NULL AND t.opp_percent IS NULL']);
 
@@ -1542,7 +1542,7 @@ class ActionsReedcrm
      */
     public function addHtmlHeader(array $parameters): int
     {
-        require_once __DIR__ . '/../../saturne/lib/asset.lib.php';
+        dol_include_once('/saturne/lib/asset.lib.php');
 
         $context = $parameters['context'] ?? '';
 
@@ -3618,7 +3618,7 @@ EOT;
                 // The other tabs of these objects (overview, contacts, notes, documents...) and the module
                 // tabs show the same banner without loading the stylesheet in the page header
                 if (!self::$mainCssLoaded) {
-                    require_once __DIR__ . '/../../saturne/lib/asset.lib.php';
+                    dol_include_once('/saturne/lib/asset.lib.php');
                     $parameters['morehtmlstatus'] .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
                     self::$mainCssLoaded = true;
                 }
