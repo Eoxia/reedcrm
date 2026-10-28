@@ -29,7 +29,7 @@ require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../saturne/class/saturnedashboard.class.php';
+dol_include_once('/saturne/class/saturnedashboard.class.php');
 
 // Load ReedCRM libraries
 require_once __DIR__ . '/../lib/reedcrm_function.lib.php';

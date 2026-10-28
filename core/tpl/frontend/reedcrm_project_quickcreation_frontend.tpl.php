@@ -33,7 +33,7 @@ if (!$permissionToAddProject) {
     exit;
 }
 
-require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.tpl.php'; ?>
+require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'); ?>
 
 <?php require_once __DIR__ . '/reedcrm_pwa_header.tpl.php'; ?>
 

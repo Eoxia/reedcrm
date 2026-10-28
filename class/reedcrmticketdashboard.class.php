@@ -28,7 +28,7 @@ require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 // Load Saturne libraries
-require_once __DIR__ . '/../../saturne/class/saturnedashboard.class.php';
+dol_include_once('/saturne/class/saturnedashboard.class.php');
 
 // Load ReedCRM libraries
 require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
