@@ -31,9 +31,12 @@ if (empty($conf) || !is_object($conf)) {
     exit;
 }
 
+// reedcrm_asset_full_url() used by the stylesheet printed below: without a version, the browser keeps serving the previous release
+require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
+
 // The native Dolibarr cards never load reedcrm.min.css, and the banner is printed long before the footer that does
 ?>
-<link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/css/reedcrm.min.css', 1)); ?>">
+<link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
 
 <div class="reedcrm-unbilled-banner" role="alert">
     <i class="fas fa-file-invoice-dollar reedcrm-unbilled-banner-icon"></i>

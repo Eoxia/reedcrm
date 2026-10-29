@@ -36,6 +36,7 @@ require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 require_once __DIR__ . '/../class/calllist.class.php';
 require_once __DIR__ . '/../class/calllistline.class.php';
 require_once __DIR__ . '/../lib/reedcrm_call_list.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 dol_include_once('/saturne/lib/documents.lib.php');
 
 global $conf, $db, $hookmanager, $langs, $user;
@@ -704,7 +705,7 @@ if ($object->id > 0) {
             . ' data-label-no-phone="' . dol_escape_htmltag($langs->trans('ContactNoPhone')) . '"'
             . '></div>';
 
-        print '<script src="' . dol_buildpath('/reedcrm/js/modules/call_list.js', 1) . '"></script>';
+        print '<script src="' . reedcrm_asset_full_url('/reedcrm/js/modules/call_list.js') . '"></script>';
     }
 
     // =====================================================================
