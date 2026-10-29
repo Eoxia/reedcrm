@@ -141,7 +141,7 @@ window.saturne.contact_inline.mountCardUi = function() {
             companyBadge.before('<img src="' + logoPath + '" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM" />');
             
             // Inject the dedicated _blank hyperlink using the building icon
-            companyBadge.before('<a href="' + compHref + '" target="_blank" style="color: #64748b; margin-right: 6px; display: inline-flex; align-items: center;" title="Ouvrir la fiche tiers"><i class="fas fa-building"></i></a>');
+            companyBadge.before(window.saturne.contact_inline.companyCardLink(compHref));
         }
         
         // Ensure the text looks like editable fields
@@ -179,6 +179,35 @@ window.saturne.contact_inline.mountCardUi = function() {
         }
     }
 }
+
+// Building picto of the banner, opening the third party card in a new tab next to the name that edits it
+window.saturne.contact_inline.companyCardLink = function(href) {
+    return $('<a class="reedcrm-header-company-link" target="_blank" style="color: #64748b; margin-right: 6px; display: inline-flex; align-items: center;" title="Ouvrir la fiche tiers"><i class="fas fa-building"></i></a>').attr('href', href);
+};
+
+// Lay the third party just saved out as the banner does on load. The native link carries the building
+// picto inside: copied as is, the picto became part of the edit trigger and no longer led to the third
+// party until the page was reloaded
+window.saturne.contact_inline.showCompany = function(aTag, nativeA) {
+    let compHref = nativeA.attr('href');
+
+    nativeA.find('.fa-building, .fa-building-o, .fa-industry').remove();
+    aTag.attr({'href': compHref, 'title': 'Modifier l\'entreprise rattachée'})
+        .css('border-bottom', '')
+        .html(nativeA.html().replace(/&nbsp;/g, '').trim());
+    // The tooltip of the name reads its parameters on every hover: left as they were, it showed the previous third party
+    if (nativeA.attr('data-params')) {
+        aTag.attr('data-params', nativeA.attr('data-params'));
+    }
+
+    // A project without third party had no picto yet, only the "Affecter un tiers" placeholder
+    let cardLink = aTag.siblings('.reedcrm-header-company-link');
+    if (cardLink.length > 0) {
+        cardLink.attr('href', compHref);
+    } else {
+        aTag.before(window.saturne.contact_inline.companyCardLink(compHref));
+    }
+};
 
 window.saturne.contact_inline.startCompanyEdit = function(e) {
     if ($(e.target).hasClass('select2-selection__choice__remove') || $(e.target).closest('.select2-container').length > 0) return;
@@ -246,8 +275,7 @@ window.saturne.contact_inline.startCompanyEdit = function(e) {
                         let nativeA = tempDiv.find('a').first();
                         
                         if (nativeA.length > 0) {
-                            aTag.attr('href', nativeA.attr('href'));
-                            aTag.html(nativeA.html());
+                            window.saturne.contact_inline.showCompany(aTag, nativeA);
                         } else {
                             aTag.html(res.new_company_url);
                         }
