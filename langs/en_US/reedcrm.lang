@@ -1201,6 +1201,11 @@ PropalUnbilledCronComment = Puts the "Not billed" tag on the signed proposals wi
 PropalModelList = Proposal templates
 PropalModelListHelp = Here are all the commercial proposals carrying the tag <b>%s</b>. Click <i>Create</i> to make a new proposal based on the template.
 PropalModelCreate = Create
+PropalModel = Proposal template
+PropalModelSelect = Select a template
+PropalModelHelp = The lines of the template are copied into the new proposal, and so are its notes when you type none.
+PropalModelCreateFromProject = Create a proposal from a template
+PropalModelNotFound = The template picked is no longer a proposal template: the proposal was created without its lines.
 
 # Not billed contracts
 ContractUnbilledBanner = This contract is not billed
