@@ -1,42 +1,5 @@
 // Blocks the module adds to the banner of the project card
 
-// Ref block next to the status column. Dolibarr floats the status column right, under the navigation, and
-// lets the ref block flow beside it only while both fit on one line: with the lifecycle timeline and the
-// closure widget, the column left too little room and the ref block went under it, away from its status
-// and down the page. The grid keeps the ref at the top and gives it the width the column leaves. On a
-// narrow screen that width is too small for its fields, and the banner keeps the flow of Dolibarr
-@media (min-width: 900px) {
-    .mod-project.page-card .arearef > div {
-        display: grid;
-        grid-template-areas:
-            "photo ref nav"
-            "photo ref status";
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        grid-template-rows: auto 1fr;
-        column-gap: 16px;
-        align-items: start;
-
-        > .floatleft:not(.refid) {
-            grid-area: photo;
-        }
-
-        > .refid {
-            grid-area: ref;
-        }
-
-        > .pagination {
-            grid-area: nav;
-            justify-self: end;
-            // Dolibarr holds it to 30% of the banner, which is 30% of the column here: it went on two lines
-            max-width: none;
-        }
-
-        > .statusref {
-            grid-area: status;
-        }
-    }
-}
-
 // Contact of the opportunity. Dolibarr holds the ref block of the banner to 750px and lets a word break
 // anywhere in it: past that width, the flex squeezed every field and cut a name in the middle. Each field
 // keeps its value on one line, the fields that no longer fit go to the next line as a whole

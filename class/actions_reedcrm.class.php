@@ -1539,6 +1539,27 @@ class ActionsReedcrm
     }
 
     /**
+     * Overloading the llxHeader function : replacing the parent's function with the one below
+     *
+     * @param  array $parameters Hook metadata (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function llxHeader(array $parameters): int
+    {
+        global $object;
+
+        // Pages of an object carrying a lifecycle timeline in its banner, whatever the tab: the stylesheet
+        // lays the ref block of the banner beside the timeline, and the banner has no class to be told apart.
+        // The parameters hold references, so the class reaches the body tag Dolibarr prints next
+        require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
+        if (is_object($object) && !empty($object->id) && in_array($object->element ?? '', REEDCRM_LIFECYCLE_ELEMENTS)) {
+            $parameters['morecssonbody'] = trim($parameters['morecssonbody'] . ' reedcrm-lifecycle-banner');
+        }
+
+        return 0;
+    }
+
+    /**
      * Overloading the addHtmlHeader function : replacing the parent's function with the one below
      *
      * @param  array $parameters Hook metadata (context, etc...)
