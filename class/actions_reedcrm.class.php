@@ -2558,8 +2558,18 @@ class ActionsReedcrm
      */
     public function printFieldListWhere(array $parameters, ?object $object, string $action): int
     {
+        // The value would otherwise be carried over from the previous hook method of this instance
+        $this->resprints = '';
+
         if (strpos($parameters['context'], 'propallist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
             $this->resprints = ' AND t.fk_statut >= 0';
+        }
+
+        // Template list: the proposals carrying the template tag, whatever the filters of the list
+        if ($this->isContext($parameters, ['propalmodellist'])) {
+            require_once __DIR__ . '/../lib/reedcrm_propal_model.lib.php';
+
+            $this->resprints = ' AND ' . reedcrm_propal_model_sql_condition($this->db, 't');
         }
 
         return 0;
@@ -2589,7 +2599,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step
+     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step, and
+     * the template list on the label of the templates
      *
      * @param  array       $parameters Hook metadatas (context, key, val, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2599,6 +2610,14 @@ class ActionsReedcrm
     public function printFieldListSearch(array $parameters, ?object $object, string $action): int
     {
         $this->resprints = '';
+
+        // The label is an extrafield, read in a subquery: the generic list counts its records without the join of
+        // the extrafields, a condition on them would end that count in an SQL error
+        if (($parameters['key'] ?? '') === 'options_reedcrm_propal_label' && $this->isContext($parameters, ['propalmodellist'])) {
+            $this->resprints = ' AND EXISTS (SELECT 1 FROM ' . $this->db->prefix() . 'propal_extrafields AS pemodel WHERE pemodel.fk_object = t.rowid' . natural_search('pemodel.reedcrm_propal_label', (string) $parameters['val']) . ')';
+
+            return 1;
+        }
 
         if (($parameters['key'] ?? '') !== 'lifecycle' || !$this->isLifecycleColumn($parameters, $object)) {
             return 0;
@@ -2663,6 +2682,21 @@ class ActionsReedcrm
         if (strpos($parameters['context'], 'call_list_list') !== false && $parameters['key'] === 'ref') {
             $this->results = ['ref' => $object->getNomUrl(1)];
             return 1;
+        }
+
+        // Template list: the status as on the card, and the button cloning the template into a new proposal
+        if ($this->isContext($parameters, ['propalmodellist'])) {
+            global $langs;
+
+            if ($parameters['key'] === 'fk_statut') {
+                $this->results = ['fk_statut' => $object->getLibStatut(5)];
+                return 1;
+            }
+            if ($parameters['key'] === 'create_from_model') {
+                $url           = DOL_URL_ROOT . '/comm/propal/card.php?id=' . ((int) $object->id) . '&action=clone&token=' . newToken();
+                $this->results = ['create_from_model' => '<a class="butAction" href="' . $url . '">' . $langs->trans('PropalModelCreate') . '</a>'];
+                return 1;
+            }
         }
 
         return 0; // or return 1 to replace standard code
