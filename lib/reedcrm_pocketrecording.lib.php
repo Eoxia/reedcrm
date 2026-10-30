@@ -387,6 +387,75 @@ function reedcrm_pocket_get_object_socid(CommonObject $object): int
 }
 
 /**
+ * Carry the links of a recording over to an event created from one of its actions.
+ *
+ * The action was said during the call, so the event belongs to what the call was about. Each link
+ * lands in the field the agenda trigger of Dolibarr fills: the project in fk_project, the contacts
+ * in the resources of the event, any other object in fk_element, which puts the event on the
+ * Events tab of that object. A thirdparty already set on the event is kept, the linked objects only
+ * fill a missing one. The recording stays the element of the event when nothing else is linked.
+ *
+ * @param  PocketRecording $recording Recording the action comes from.
+ * @param  ActionComm      $event     Event about to be created.
+ * @return void
+ */
+function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionComm $event): void
+{
+    if ($recording->id <= 0) {
+        return;
+    }
+
+    $recording->fetchObjectLinked();
+
+    // The keys are the rowids of llx_element_element: sorted, the object attached first, usually
+    // the one the hang up button was pressed on, is the one the event is filed under
+    $linkedObjects = [];
+    foreach ($recording->linkedObjects as $linkedInstances) {
+        foreach ($linkedInstances as $linkId => $linkedInstance) {
+            $linkedObjects[$linkId] = $linkedInstance;
+        }
+    }
+    ksort($linkedObjects);
+
+    $businessObject = null;
+    foreach ($linkedObjects as $linkedObject) {
+        // The owner of the event is chosen on the action, a linked user says nothing about it
+        if ($linkedObject->element == 'user') {
+            continue;
+        }
+
+        if ($linkedObject->element == 'project') {
+            if (empty($event->fk_project)) {
+                $event->fk_project = (int) $linkedObject->id;
+            }
+        } elseif ($linkedObject->element == 'contact') {
+            $event->socpeopleassigned[(int) $linkedObject->id] = (int) $linkedObject->id;
+        } elseif ($linkedObject->element != 'societe' && $businessObject === null) {
+            $businessObject = $linkedObject;
+        }
+
+        // Some objects store -1 for "no thirdparty", only a real one fills the event
+        if (empty($event->socid) && reedcrm_pocket_get_object_socid($linkedObject) > 0) {
+            $event->socid = reedcrm_pocket_get_object_socid($linkedObject);
+        }
+    }
+
+    if ($businessObject !== null) {
+        // Same element type as the agenda trigger writes, the Events tab of the object reads it
+        $module = (!empty($businessObject->module) && $businessObject->module != 'product') ? $businessObject->module : '';
+
+        $event->fk_element  = (int) $businessObject->id;
+        $event->elementtype = $businessObject->element . ($module ? '@' . $module : '');
+
+        // A proposal or a ticket of a project files the event under that project too, unless the
+        // recording names a project of its own
+        if (empty($event->fk_project) && !empty($businessObject->fk_project)) {
+            $event->fk_project = (int) $businessObject->fk_project;
+        }
+    }
+}
+
+/**
  * Get the name of whoever was on the other end of the line.
  *
  * Feeds the label of the hang up button: the user recognises their call by the name of the person
