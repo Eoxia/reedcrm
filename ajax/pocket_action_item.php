@@ -43,6 +43,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once __DIR__ . '/../class/pocketactionitem.class.php';
 require_once __DIR__ . '/../class/pocketrecording.class.php';
+require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
 
 global $db, $langs, $user;
 
@@ -167,6 +168,9 @@ if ($subAction === 'create_event') {
     $event->socid       = $recording->fk_soc > 0 ? (int) $recording->fk_soc : 0;
     $event->fk_element  = (int) $recording->id;
     $event->elementtype = 'pocketrecording@reedcrm';
+
+    // The project and the objects the recording is attached to follow the event
+    reedcrm_pocket_apply_links_to_event($recording, $event);
 
     if ($ownerId != $user->id) {
         $event->userassigned = [$ownerId => ['id' => $ownerId, 'mandatory' => 0]];
