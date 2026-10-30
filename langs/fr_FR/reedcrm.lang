@@ -1317,6 +1317,16 @@ PropalUnbilledBanner = Ce devis n'est pas facturé
 PropalUnbilledCronLabel = ReedCRM - Tag des devis non facturés
 PropalUnbilledCronComment = Pose le tag « Non facturé » sur les devis signés sans facture liée et le retire des devis facturés, comme le bouton de la page de configuration des propositions commerciales. Lancée 4 fois par jour (0h, 6h, 12h et 18h).
 
+# Modèles de propositions
+PropalModelList = Modèles de propositions
+PropalModelListHelp = Retrouvez ici toutes les propositions commerciales marquées du tag <b>%s</b>. Cliquez sur <i>Créer</i> pour générer une nouvelle proposition basée sur le modèle.
+PropalModelCreate = Créer
+PropalModel = Modèle de proposition
+PropalModelSelect = Sélectionnez un modèle
+PropalModelHelp = Les lignes du modèle sont copiées dans la nouvelle proposition, ainsi que ses notes si vous n'en saisissez pas.
+PropalModelCreateFromProject = Créer une proposition à partir d'un modèle
+PropalModelNotFound = Le modèle choisi n'est plus une proposition modèle : la proposition a été créée sans ses lignes.
+
 # Contrats non facturés
 ContractUnbilledBanner = Ce contrat n'est pas facturé
 

@@ -1197,6 +1197,16 @@ PropalUnbilledBanner = This proposal is not billed
 PropalUnbilledCronLabel = ReedCRM - Tag of the not billed proposals
 PropalUnbilledCronComment = Puts the "Not billed" tag on the signed proposals with no linked invoice and removes it from the billed ones, like the button of the proposals setup page. Run 4 times a day (0h, 6h, 12h and 18h).
 
+# Proposal templates
+PropalModelList = Proposal templates
+PropalModelListHelp = Here are all the commercial proposals carrying the tag <b>%s</b>. Click <i>Create</i> to make a new proposal based on the template.
+PropalModelCreate = Create
+PropalModel = Proposal template
+PropalModelSelect = Select a template
+PropalModelHelp = The lines of the template are copied into the new proposal, and so are its notes when you type none.
+PropalModelCreateFromProject = Create a proposal from a template
+PropalModelNotFound = The template picked is no longer a proposal template: the proposal was created without its lines.
+
 # Not billed contracts
 ContractUnbilledBanner = This contract is not billed
 

@@ -312,7 +312,37 @@ class ActionsReedcrm
             $this->printLineProductDescriptions($object);
         }
 
+        // Project card: proposal made from a template. The core builds its "Create" dropdown with no hook, the
+        // entry is printed hidden and the script moves it on top of the dropdown, next to the proposal entry
+        if ($this->isContext($parameters, ['projectcard']) && !empty($object->id) && isModEnabled('propal') && $this->isPropalModelCreationOffered()) {
+            global $langs;
+
+            $langs->load('reedcrm@reedcrm');
+
+            $url  = DOL_URL_ROOT . '/comm/propal/card.php?action=create&projectid=' . ((int) $object->id) . '&socid=' . ((int) $object->socid) . '&reedcrm_choose_model=1';
+            $url .= '&backtopage=' . urlencode($_SERVER['PHP_SELF'] . '?id=' . ((int) $object->id));
+            print dolGetButtonAction('', $langs->trans('PropalModelCreateFromProject'), 'default', $url, '', 1, ['attr' => ['class' => 'reedcrm-propal-model-create hidden']]);
+        }
+
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Check whether the current user can create a proposal from a template, and there is one to create it from
+     *
+     * @return bool True when a proposal can be created from a template
+     */
+    private function isPropalModelCreationOffered(): bool
+    {
+        global $user;
+
+        if (!$user->hasRight('propal', 'creer')) {
+            return false;
+        }
+
+        require_once __DIR__ . '/../lib/reedcrm_propal_model.lib.php';
+
+        return !empty(reedcrm_propal_model_get_select_options($this->db));
     }
 
     /**
@@ -446,6 +476,24 @@ class ActionsReedcrm
                 // Only "filled" is worth storing : an empty value deletes the parameter, and the
                 // user falls back on the default of the module, every field shown
                 dol_set_user_param($this->db, $conf, $object, ['REEDCRM_CARD_FIELDS_DISPLAY' => ($mode === 'filled' ? 'filled' : '')]);
+            }
+        }
+
+        // Proposal created from a template picked on the creation form: the template becomes the origin of the
+        // proposal, whose lines the core copies after creating it from what was typed in the form. Only a template
+        // is copied, the id is posted by the form. The form offers no template to a proposal made from another object
+        global $origin, $originid;
+        if ($this->isContext($parameters, ['propalcard']) && $action == 'add' && GETPOSTINT('reedcrm_propal_model') > 0 && empty($origin)) {
+            global $langs;
+
+            require_once __DIR__ . '/../lib/reedcrm_propal_model.lib.php';
+
+            if (array_key_exists(GETPOSTINT('reedcrm_propal_model'), reedcrm_propal_model_get_select_options($this->db))) {
+                $origin   = 'propal';
+                $originid = GETPOSTINT('reedcrm_propal_model');
+            } else {
+                $langs->load('reedcrm@reedcrm');
+                setEventMessages($langs->trans('PropalModelNotFound'), [], 'warnings');
             }
         }
 
@@ -1606,6 +1654,12 @@ class ActionsReedcrm
             $this->resprints .= '<script nonce="' . getNonce() . '" src="' . reedcrm_asset_full_url('/reedcrm/js/reedcrm_project_create_thirdparty.js') . '"></script>';
         }
 
+        // Proposal templates: the entry of the "Create" dropdown of the project card, and the template selector of the
+        // proposal creation form
+        if ((strpos($context, 'projectcard') !== false && in_array(GETPOST('action', 'aZ09'), ['', 'view'])) || (strpos($context, 'propalcard') !== false && in_array(GETPOST('action', 'aZ09'), ['create', 'add']))) {
+            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . reedcrm_asset_full_url('/reedcrm/js/reedcrm_propal_model.js') . '"></script>';
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
@@ -2558,8 +2612,18 @@ class ActionsReedcrm
      */
     public function printFieldListWhere(array $parameters, ?object $object, string $action): int
     {
+        // The value would otherwise be carried over from the previous hook method of this instance
+        $this->resprints = '';
+
         if (strpos($parameters['context'], 'propallist') !== false && strpos($parameters['context'], 'saturnelist') !== false) {
             $this->resprints = ' AND t.fk_statut >= 0';
+        }
+
+        // Template list: the proposals carrying the template tag, whatever the filters of the list
+        if ($this->isContext($parameters, ['propalmodellist'])) {
+            require_once __DIR__ . '/../lib/reedcrm_propal_model.lib.php';
+
+            $this->resprints = ' AND ' . reedcrm_propal_model_sql_condition($this->db, 't');
         }
 
         return 0;
@@ -2589,7 +2653,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step
+     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step, and
+     * the template list on the label of the templates
      *
      * @param  array       $parameters Hook metadatas (context, key, val, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2599,6 +2664,14 @@ class ActionsReedcrm
     public function printFieldListSearch(array $parameters, ?object $object, string $action): int
     {
         $this->resprints = '';
+
+        // The label is an extrafield, read in a subquery: the generic list counts its records without the join of
+        // the extrafields, a condition on them would end that count in an SQL error
+        if (($parameters['key'] ?? '') === 'options_reedcrm_propal_label' && $this->isContext($parameters, ['propalmodellist'])) {
+            $this->resprints = ' AND EXISTS (SELECT 1 FROM ' . $this->db->prefix() . 'propal_extrafields AS pemodel WHERE pemodel.fk_object = t.rowid' . natural_search('pemodel.reedcrm_propal_label', (string) $parameters['val']) . ')';
+
+            return 1;
+        }
 
         if (($parameters['key'] ?? '') !== 'lifecycle' || !$this->isLifecycleColumn($parameters, $object)) {
             return 0;
@@ -2663,6 +2736,21 @@ class ActionsReedcrm
         if (strpos($parameters['context'], 'call_list_list') !== false && $parameters['key'] === 'ref') {
             $this->results = ['ref' => $object->getNomUrl(1)];
             return 1;
+        }
+
+        // Template list: the status as on the card, and the button cloning the template into a new proposal
+        if ($this->isContext($parameters, ['propalmodellist'])) {
+            global $langs;
+
+            if ($parameters['key'] === 'fk_statut') {
+                $this->results = ['fk_statut' => $object->getLibStatut(5)];
+                return 1;
+            }
+            if ($parameters['key'] === 'create_from_model') {
+                $url           = DOL_URL_ROOT . '/comm/propal/card.php?id=' . ((int) $object->id) . '&action=clone&token=' . newToken();
+                $this->results = ['create_from_model' => '<a class="butAction" href="' . $url . '">' . $langs->trans('PropalModelCreate') . '</a>'];
+                return 1;
+            }
         }
 
         return 0; // or return 1 to replace standard code
@@ -2826,6 +2914,82 @@ class ActionsReedcrm
         }
 
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the tabContentCreateProposal hook : template selector on top of the proposal creation form
+     *
+     * The proposal created takes the lines of the template picked, see doActions and createFrom. The core prints
+     * nothing the hook returns here, the selector is printed as it goes
+     *
+     * @param  array        $parameters Hook metadata (context, etc...)
+     * @param  CommonObject $object     The proposal being created
+     * @param  string       $action     Current action
+     * @return int                      0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function tabContentCreateProposal(array $parameters, $object, string $action): int
+    {
+        global $langs, $origin;
+
+        // A proposal made from another object takes the lines of that object
+        if (!$this->isContext($parameters, ['propalcard']) || (!empty($origin) && $origin != 'project') || !$this->isPropalModelCreationOffered()) {
+            return 0;
+        }
+
+        $langs->load('reedcrm@reedcrm');
+
+        $form = new Form($this->db);
+
+        // Opened at once when the user came to make a proposal from a template, see reedcrm_propal_model.js
+        $moreParam = GETPOSTINT('reedcrm_choose_model') ? 'data-open-on-load="1"' : '';
+
+        // A table of its own before the one of the form, laid out the same so that it reads as its first row
+        print '<table class="border centpercent">';
+        print '<tr class="field_reedcrm_propal_model">';
+        print '<td class="titlefieldcreate">' . $form->textwithpicto($langs->trans('PropalModel'), $langs->trans('PropalModelHelp')) . '</td>';
+        print '<td class="valuefieldcreate">';
+        print img_picto('', 'propal', 'class="pictofixedwidth"');
+        print $form->selectarray('reedcrm_propal_model', reedcrm_propal_model_get_select_options($this->db), GETPOSTINT('reedcrm_propal_model'), $langs->trans('PropalModelSelect'), 0, 0, $moreParam, 0, 0, 0, '', 'maxwidth500 widthcentpercentminusx', 1);
+        print '</td>';
+        print '</tr>';
+        print '</table>';
+
+        return 0;
+    }
+
+    /**
+     * Overloading the createFrom hook : proposal created from a template
+     *
+     * The core links the new proposal to its origin and copies its lines. A template is not the origin of the
+     * proposals made from it, its card would list all of them, so the link goes. Its notes come along when the
+     * form gave none, as the core does for the other origins of a proposal
+     *
+     * @param  array        $parameters Hook metadata (context, objFrom)
+     * @param  CommonObject $object     The proposal just created
+     * @param  string       $action     Current action
+     * @return int                      0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function createFrom(array $parameters, $object, string $action): int
+    {
+        $objFrom = $parameters['objFrom'] ?? null;
+        if (!$this->isContext($parameters, ['propalcard']) || !$objFrom instanceof Propal || (int) $objFrom->id !== GETPOSTINT('reedcrm_propal_model')) {
+            return 0;
+        }
+
+        $result = $object->deleteObjectLinked($objFrom->id, $objFrom->element, null, '', 0, null, 1);
+        foreach (['public', 'private'] as $noteType) {
+            $noteField = 'note_' . $noteType;
+            if ($result > 0 && dol_strlen(GETPOST($noteField, 'restricthtml')) == 0 && dol_strlen($objFrom->$noteField) > 0) {
+                $result = $object->update_note($objFrom->$noteField, '_' . $noteType);
+            }
+        }
+        if ($result < 0) {
+            $this->error  = $object->error;
+            $this->errors = $object->errors;
+            return -1;
+        }
+
+        return 0;
     }
 
 
