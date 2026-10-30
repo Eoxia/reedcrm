@@ -94,6 +94,51 @@
     text-align: left;
 }
 
+// Ref block next to the status column. Dolibarr floats the status column right, under the navigation, and
+// lets the ref block flow beside it only while both fit on one line: the timeline widens the column (the
+// closure widget too on the project card), and the ref block went under it, away from its status and down
+// the page. The grid keeps the ref at the top and gives it the width the column leaves. The banner has no
+// class of its own, so the hooks mark the body of the pages of an object carrying a timeline. On a narrow
+// screen that width is too small for its fields, and the banner keeps the flow of Dolibarr
+@media (min-width: 900px) {
+    .reedcrm-lifecycle-banner .arearef > div {
+        display: grid;
+        grid-template-areas:
+            "photo ref nav"
+            "photo ref status";
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-rows: auto 1fr;
+        column-gap: 16px;
+        align-items: start;
+
+        > .floatleft:not(.refid) {
+            grid-area: photo;
+        }
+
+        > .refid {
+            grid-area: ref;
+        }
+
+        // Both classes: the rule of Dolibarr holding it to 30% of the banner names four, and won. That is
+        // 30% of the column here, and it went on two lines
+        > .pagination.paginationref {
+            grid-area: nav;
+            justify-self: end;
+            max-width: none;
+        }
+
+        > .statusref {
+            grid-area: status;
+        }
+
+        // Blocks moved in after the ref block by script (relaunch widget, Pocket chip): Dolibarr clears them
+        // under the whole banner. Left to the grid, each took a cell of its own and widened the photo column
+        > :not(.floatleft):not(.pagination):not(.statusref) {
+            grid-column: 1 / -1;
+        }
+    }
+}
+
 // Milestone reached
 .reedcrm-lifecycle-step-done {
     &::before {
