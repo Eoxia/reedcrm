@@ -19,6 +19,9 @@ header('Content-Type: application/json; charset=utf-8');
 require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
+// Global variables definitions
+global $db, $langs, $user;
+
 $id = GETPOST('id', 'int');
 $type = GETPOST('type', 'alpha'); // 'projet' or 'propal'
 $statusStr = GETPOST('status', 'alpha'); // 'WON' or 'LOST'
@@ -133,7 +136,7 @@ if ($type === 'projet' || $type === 'project') {
         if ($statusStr !== 'WON') {
             // setClose() spawned an agenda event: fetch the latest one for this project via the ORM
             $actionStatic = new ActionComm($db);
-            $events       = $actionStatic->getActions(0, $id, 'project', '', 'a.id', 'DESC', 1);
+            $events       = $actionStatic->getActions(0, (int) $id, 'project', '', 'a.id', 'DESC', 1);
             if (is_array($events) && count($events) > 0) {
                 $event        = array_shift($events);
                 $event->label = $newLabel;
