@@ -112,12 +112,12 @@ function reedcrm_get_relaunch_sql_filter(DoliDB $db, int $projectId, int $socid 
  *
  * The previous implementation ran ActionComm::getActions() per row, which fetches every matching
  * event in full (1 + 2N queries) only to increment four integers. Here nothing leaves the database
- * but the four numbers, and the result is memoised for the page.
+ * but the four numbers and the two days printed under them, and the result is memoised for the page.
  *
  * @param  DoliDB $db        Database handler
  * @param  int    $projectId Project id
  * @param  int    $socid     Thirdparty id, used only when $projectId is 0
- * @return array{past: int, upcoming: int, overdue: int, late: int}
+ * @return array{past: int, upcoming: int, overdue: int, late: int, last: int, next: int} last and next are timestamps, 0 when there is none
  */
 function reedcrm_get_relaunch_counts(DoliDB $db, int $projectId, int $socid = 0): array
 {
@@ -128,7 +128,7 @@ function reedcrm_get_relaunch_counts(DoliDB $db, int $projectId, int $socid = 0)
         return $cache[$cacheKey];
     }
 
-    $empty = ['past' => 0, 'upcoming' => 0, 'overdue' => 0, 'late' => 0];
+    $empty = ['past' => 0, 'upcoming' => 0, 'overdue' => 0, 'late' => 0, 'last' => 0, 'next' => 0];
 
     $filter = reedcrm_get_relaunch_sql_filter($db, $projectId, $socid);
     if (empty($filter)) {
@@ -145,7 +145,10 @@ function reedcrm_get_relaunch_counts(DoliDB $db, int $projectId, int $socid = 0)
     $sql .= ' SUM(CASE WHEN a.datep < ' . $now . ' THEN 1 ELSE 0 END) as past,';
     $sql .= ' SUM(CASE WHEN a.datep >= ' . $now . ' AND ' . $todo . ' THEN 1 ELSE 0 END) as upcoming,';
     $sql .= ' SUM(CASE WHEN a.datep < ' . $now . ' AND ' . $todo . ' THEN 1 ELSE 0 END) as overdue,';
-    $sql .= ' SUM(CASE WHEN a.datep < ' . $late . ' AND ' . $todo . ' THEN 1 ELSE 0 END) as late';
+    $sql .= ' SUM(CASE WHEN a.datep < ' . $late . ' AND ' . $todo . ' THEN 1 ELSE 0 END) as late,';
+    // Same two buckets as the counters: the most recent of the past, the closest of what is to come
+    $sql .= ' MAX(CASE WHEN a.datep < ' . $now . ' THEN a.datep END) as last_date,';
+    $sql .= ' MIN(CASE WHEN a.datep >= ' . $now . ' AND ' . $todo . ' THEN a.datep END) as next_date';
     $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
     $sql .= ' WHERE 1 = 1' . $filter;
 
@@ -163,7 +166,47 @@ function reedcrm_get_relaunch_counts(DoliDB $db, int $projectId, int $socid = 0)
         'upcoming' => (int) ($obj->upcoming ?? 0),
         'overdue'  => (int) ($obj->overdue ?? 0),
         'late'     => (int) ($obj->late ?? 0),
+        'last'     => !empty($obj->last_date) ? (int) $db->jdate($obj->last_date) : 0,
+        'next'     => !empty($obj->next_date) ? (int) $db->jdate($obj->next_date) : 0,
     ];
+}
+
+/**
+ * Day of a relaunch as printed under its counter: "Today", "Yesterday", "3 d ago" on the past
+ * side, "Tomorrow" or the short weekday and date on the side still to come.
+ *
+ * Days are compared on the calendar of the user, not as 24 h slices: an event at 23:00 yesterday
+ * is "Yesterday" at 08:00 today, not "Today".
+ *
+ * @param  int    $timestamp Date of the event
+ * @return string            Label ready to print
+ */
+function reedcrm_get_relaunch_day_label(int $timestamp): string
+{
+    global $langs;
+
+    $utc   = new DateTimeZone('UTC');
+    $today = new DateTime(dol_print_date(dol_now(), '%Y-%m-%d', 'tzuserrel'), $utc);
+    $day   = new DateTime(dol_print_date($timestamp, '%Y-%m-%d', 'tzuserrel'), $utc);
+    $diff  = (int) $today->diff($day)->format('%r%a');
+
+    if ($diff === 0) {
+        return $langs->trans('Today');
+    }
+    if ($diff === -1) {
+        return $langs->trans('Yesterday');
+    }
+    if ($diff === 1) {
+        return $langs->trans('Tomorrow');
+    }
+    if ($diff < 0) {
+        return $langs->trans('RelaunchDaysAgo', -$diff);
+    }
+
+    // The short date of the language without its year, so the order of day and month follows it
+    $dayMonth = preg_replace('/[^%a-zA-Z]*%Y[^%a-zA-Z]*/', '', $langs->trans('FormatDateShort'));
+
+    return dol_print_date($timestamp, '%a ' . $dayMonth, 'tzuserrel');
 }
 
 /**
@@ -293,8 +336,9 @@ function reedcrm_get_relaunch_row_state(array $row, int $now): array
  * The two-button relaunch widget, shared by every surface.
  *
  * Left button holds the past and raises the overdue warning, right button holds what is still to be
- * done. The "+" of the left button opens the complete event form (event + optional reminder), the
- * one of the right button opens the direct reminder form.
+ * done. Each one prints its counter on top and, underneath, the day of the last relaunch or of the
+ * next one. The "+" of the left button opens the complete event form (event + optional reminder),
+ * the one of the right button opens the direct reminder form.
  *
  * @param  array $params projectId, socid, mode ('modal' on desktop, 'link' in the App), canCreate,
  *                       extraQuery appended to the creation urls, wrapperClass
@@ -330,15 +374,17 @@ function reedcrm_render_relaunch_widget(array $params): string
 
     $segments = [
         'past' => [
-            'picto' => 'calendar-check',
+            'picto' => 'headset',
             'count' => $counts['past'],
+            'day'   => $counts['last'] > 0 ? reedcrm_get_relaunch_day_label($counts['last']) : $langs->trans('RelaunchNever'),
             'title' => $langs->trans('RelaunchScopePastTooltip'),
             'add'   => $createBase,
             'addTitle' => $langs->trans('RelaunchAddFullEvent'),
         ],
         'upcoming' => [
-            'picto' => 'list-ul',
+            'picto' => $counts['upcoming'] > 0 ? 'bell' : 'bell-slash',
             'count' => $counts['upcoming'],
+            'day'   => $counts['next'] > 0 ? reedcrm_get_relaunch_day_label($counts['next']) : $langs->trans('RelaunchNothingPlanned'),
             'title' => $langs->trans('RelaunchScopeUpcomingTooltip'),
             'add'   => $createBase . '&mode=reminder',
             'addTitle' => $langs->trans('RelaunchAddDirectReminder'),
@@ -353,7 +399,7 @@ function reedcrm_render_relaunch_widget(array $params): string
         if ($scope === 'past' && $counts['overdue'] > 0) {
             $classes[] = $counts['late'] > 0 ? 'is-late' : 'is-overdue';
         }
-        if ($scope === 'upcoming' && $segment['count'] === 0) {
+        if ($segment['count'] === 0) {
             $classes[] = 'is-empty';
         }
 
@@ -368,25 +414,28 @@ function reedcrm_render_relaunch_widget(array $params): string
         $out .= ' data-limit="20"';
         $out .= ' title="' . dol_escape_htmltag($segment['title']) . '">';
 
-        $out .= '<div class="reedcrm-relaunch-btn-content reedcrm-plist-relaunch-btn-content">';
+        // Spans, not divs: the list cells flatten every div they contain (saturne _list-cell.scss)
+        $out .= '<div class="reedcrm-relaunch-btn-content">';
+        $out .= '<span class="reedcrm-relaunch-line">';
         $out .= '<i class="fas fa-' . $segment['picto'] . '"></i>';
-        $out .= '<span class="reedcrm-relaunch-count reedcrm-plist-relaunch-count">' . (int) $segment['count'] . '</span>';
-        $out .= '</div>';
-
+        $out .= '<span class="reedcrm-relaunch-count">' . (int) $segment['count'] . '</span>';
         if ($scope === 'past' && $counts['overdue'] > 0) {
             $out .= '<span class="reedcrm-relaunch-overdue" title="' . dol_escape_htmltag($langs->trans('RelaunchOverdueCount', $counts['overdue'])) . '">';
             $out .= '<i class="fas fa-exclamation"></i>' . (int) $counts['overdue'];
             $out .= '</span>';
         }
+        $out .= '</span>';
+        $out .= '<span class="reedcrm-relaunch-day">' . $segment['day'] . '</span>';
+        $out .= '</div>';
 
         if ($canCreate) {
             if ($mode === 'link') {
-                $out .= '<a class="reedcrm-relaunch-add reedcrm-plist-relaunch-add" href="' . dol_escape_htmltag($segment['add']) . '"';
+                $out .= '<a class="reedcrm-relaunch-add" href="' . dol_escape_htmltag($segment['add']) . '"';
                 $out .= ' title="' . dol_escape_htmltag($segment['addTitle']) . '" aria-label="' . dol_escape_htmltag($segment['addTitle']) . '">';
                 $out .= '<i class="fas fa-plus"></i>';
                 $out .= '</a>';
             } else {
-                $out .= '<div class="reedcrm-relaunch-add reedcrm-plist-relaunch-add modal-open reedcrm-modal-open"';
+                $out .= '<div class="reedcrm-relaunch-add modal-open reedcrm-modal-open"';
                 $out .= ' title="' . dol_escape_htmltag($segment['addTitle']) . '"';
                 $out .= ' data-project-id="' . $projectId . '"';
                 $out .= ' data-modal-url="' . dol_escape_htmltag($segment['add']) . '">';

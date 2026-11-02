@@ -250,51 +250,7 @@
     border-top: 1px solid #e2e8f0;
     box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
 
-    .reedcrm-relaunch-buttons {
-        justify-content: space-between;
-        gap: 12px;
-    }
-
-    /* Bigger hit area than the desktop list widget: this bar is the main action of the page */
-    .reedcrm-relaunch-button {
-        flex: 1;
-        min-width: 0;
-        height: 46px;
-        border-radius: 10px;
-        padding: 0;
-        color: #fff;
-        overflow: visible;
-    }
-
-    .reedcrm-relaunch-btn-content {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        height: 100%;
-        font-size: 18px;
-    }
-
-    .count-zero .reedcrm-relaunch-btn-content {
-        opacity: 0.75;
-    }
-
-    .reedcrm-relaunch-add {
-        position: absolute;
-        top: -10px;
-        right: -8px;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        background: #1e293b;
-        border: 2px solid #fff;
-        color: #fff !important;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none !important;
-    }
+    /* The two buttons inside the bar are laid out with the widget, in _relaunch-widget.scss */
 }
 
 /* --------------------------------------------------------- Relaunch form */
