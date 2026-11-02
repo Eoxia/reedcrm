@@ -43,6 +43,7 @@ if (isModEnabled('categorie')) {
 
 // load ReedCRM libraries
 require_once __DIR__ . '/../../class/geolocation.class.php';
+require_once __DIR__ . '/../../class/reedcrmvoicedescription.class.php';
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
 
 // Global variables definitions

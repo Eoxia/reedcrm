@@ -481,6 +481,24 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_PROJECT_DESCRIPTION_VISIBLE');
 print '</td></td><td></td></tr>';
 
+// Description written by the AI from the voice note
+if (getDolGlobalInt('REEDCRM_PROJECT_DESCRIPTION_VISIBLE') > 0) {
+    require_once __DIR__ . '/../class/reedcrmvoicedescription.class.php';
+
+    print '<tr class="oddeven"><td>';
+    print $langs->trans('VoiceDescription');
+    print '</td><td>';
+    print $langs->trans('VoiceDescriptionHelp');
+    if (!ReedcrmVoiceDescription::isAvailable()) {
+        print '<br><span class="warning">' . $langs->trans('VoiceDescriptionNeedsChatGPT') . '</span>';
+    }
+    print '</td>';
+
+    print '<td class="center">';
+    print ajax_constantonoff('REEDCRM_PROJECT_DESCRIPTION_FROM_VOICE');
+    print '</td><td></td></tr>';
+}
+
 // Extrafields
 print '<tr class="oddeven"><td>';
 print $langs->trans('Extrafields');

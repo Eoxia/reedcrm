@@ -140,7 +140,16 @@ if ($action == 'add_audio' && !empty($saturneModule) && !empty($_FILES['audio'][
     $fileName = dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
     $destFile = $uploadDir . '/' . $fileName;
 
+    // Recording of the quick creation that describeAudio writes up, only once it is really saved
+    $isQuickCreationAudio = $saturneModule === 'project' && $saturneSubDir === $quickCreationSubDir;
+    if ($isQuickCreationAudio) {
+        unset($_SESSION['reedcrm_quickcreation_audio']);
+    }
+
     if (move_uploaded_file($_FILES['audio']['tmp_name'], $destFile)) {
+        if ($isQuickCreationAudio) {
+            $_SESSION['reedcrm_quickcreation_audio'] = $fileName;
+        }
         setEventMessages($langs->trans('PhotoWellSent'), null, 'mesgs');
     } else {
         setEventMessages($langs->trans('PhotoNotSent'), null, 'errors');
@@ -1035,6 +1044,40 @@ if ($subaction == 'readFileAI' && isModEnabled('ai') && getDolGlobalString('AI_A
         }
 
     }
+    echo json_encode($result);
+    exit();
+}
+
+// Voice note of the quick creation written up into the description, see ReedcrmVoiceDescription
+if ($subaction == 'describeAudio' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../../../class/reedcrmvoicedescription.class.php';
+
+    // Only the recording the user has just saved in the quick creation folder, never a file named by the browser
+    $fileName = basename((string) ($_SESSION['reedcrm_quickcreation_audio'] ?? ''));
+    unset($_SESSION['reedcrm_quickcreation_audio']);
+    // The calls below take seconds: the other requests of the user must not wait for the session
+    session_write_close();
+
+    $filePath = $conf->project->dir_output . '/' . $quickCreationSubDir . '/' . $fileName;
+    $result   = ['success' => false];
+
+    if (!ReedcrmVoiceDescription::isEnabled()) {
+        $result['error'] = $langs->transnoentities('VoiceDescriptionNotConfigured');
+    } elseif ($fileName === '' || !dol_is_file($filePath)) {
+        $result['error'] = $langs->transnoentities('VoiceDescriptionNoRecording');
+    } else {
+        $voiceDescription = new ReedcrmVoiceDescription($db);
+        $description      = $voiceDescription->describe($filePath);
+
+        if ($description === null) {
+            $result['error'] = $voiceDescription->error;
+        } else {
+            $result['success']     = true;
+            $result['description'] = $description;
+        }
+    }
+
+    header('Content-Type: application/json');
     echo json_encode($result);
     exit();
 }

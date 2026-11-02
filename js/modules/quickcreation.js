@@ -93,6 +93,9 @@ window.reedcrm.quickcreation.event = function() {
   // Photo read by the AI (wand of the media block)
   $(document).on('saturne:media-analysed', window.reedcrm.quickcreation.fillFromPhotoAnalysis);
 
+  // Voice note written up into the description by the AI
+  $(document).on('saturne:audio-uploaded', window.reedcrm.quickcreation.describeAudio);
+
   // Drop-down of the tags and sales representatives fitted to its field on a phone
   $(document).on('select2:open', '.category-select-container select', window.reedcrm.quickcreation.fitSelectDropdown);
 };
@@ -144,6 +147,66 @@ window.reedcrm.quickcreation.fillFromPhotoAnalysis = function(event, response) {
     var currentDescription = description.val();
     description.val(currentDescription !== '' ? currentDescription + '\n' + response.text : response.text);
   }
+};
+
+/**
+ * Have the voice note just saved written up into the description: the server has it transcribed, then
+ * the AI writes the description, appended to what the user already typed
+ *
+ * @since   23.4.0
+ * @version 23.4.0
+ *
+ * @param  {Event}  event  saturne:audio-uploaded event
+ * @param  {Object} upload Module and folder of the block the recording comes from
+ * @return {void}
+ */
+window.reedcrm.quickcreation.describeAudio = function(event, upload) {
+  // Only rendered when the option is on
+  var $status = $('.quickcreation-voice-description');
+  if (!$status.length || !upload || upload.module !== 'project') {
+    return;
+  }
+
+  var $description   = $('textarea#description');
+  var $submit        = $('.quickcreation-form [type="submit"]');
+  var token          = window.saturne.toolbox.getToken();
+  var querySeparator = window.saturne.toolbox.getQuerySeparator(document.URL);
+
+  var onFailure = function(error) {
+    $.jnotify($status.data('error') + (error ? ' : ' + $('<span>').text(error).html() : ''), 'error', true);
+  };
+
+  // Saving now would lose the description on its way
+  $status.addClass('is-active');
+  $submit.prop('disabled', true);
+
+  $.ajax({
+    url      : document.URL + querySeparator + 'subaction=describeAudio&token=' + token,
+    type     : 'POST',
+    dataType : 'json',
+    timeout  : 180000,
+    success  : function(response) {
+      if (!response || !response.success) {
+        onFailure(response && response.error);
+        return;
+      }
+
+      if (!response.description) {
+        $.jnotify($status.data('empty'), 'warning', true);
+        return;
+      }
+
+      var currentDescription = $description.val();
+      $description.val(currentDescription !== '' ? currentDescription + '\n' + response.description : response.description);
+    },
+    error    : function(xhr, status, error) {
+      onFailure(error || status);
+    },
+    complete : function() {
+      $status.removeClass('is-active');
+      $submit.prop('disabled', false);
+    }
+  });
 };
 
 /**

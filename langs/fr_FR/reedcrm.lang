@@ -58,6 +58,20 @@ QuickCreationReminderCreated = Rappel programmé le %s
 ErrorQuickCreationReminderDateInPast = La date du rappel doit être dans le futur
 ErrorQuickCreationReminder = L'opportunité a bien été créée, mais pas son rappel
 
+# Voice description - Description rédigée par l'IA depuis le vocal
+VoiceDescription = Description rédigée depuis le vocal
+VoiceDescriptionHelp = Après chaque vocal de l'ajout rapide, l'IA le transcrit puis rédige la description. Le vocal est envoyé à OpenAI, avec la clé ChatGPT du module IA.
+VoiceDescriptionNeedsChatGPT = Indisponible : activez le module IA avec le service ChatGPT et renseignez sa clé
+VoiceDescriptionWriting = L'IA rédige la description à partir du vocal…
+VoiceDescriptionError = La description n'a pas pu être rédigée
+VoiceDescriptionEmpty = Ce vocal ne contient rien à reporter dans la description
+VoiceDescriptionNotConfigured = La rédaction de la description depuis le vocal n'est pas activée
+VoiceDescriptionNoRecording = Aucun vocal à transcrire
+VoiceDescriptionRecordingTooLong = Le vocal dépasse 25 Mo, la limite de la transcription
+VoiceDescriptionInvalidAnswer = Réponse inattendue du service d'IA
+VoiceDescriptionHttpError = Le service d'IA a répondu par une erreur HTTP %s
+VoiceDescriptionNotWritten = L'IA n'a pas rédigé la description (%s)
+
 
 
 #
