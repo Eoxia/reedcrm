@@ -49,6 +49,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/company.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/product.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
+require_once __DIR__.'/lib/reedcrm_function.lib.php';
 
 /**
  * @var Conf $conf
@@ -997,7 +998,8 @@ if ($socid > 0) {
 // Output page
 // --------------------------------------------------------------------
 
-llxHeader('', $title, $help_url, '', 0, 0, '', '', '', 'bodyforlist mod-expedition page-list');
+// Modern back office theme of Saturne, as on the pages built with saturne_header()
+llxHeader('', $title, $help_url, '', 0, 0, '', ['/saturne/css/saturne.min.css'], '', 'saturne-theme bodyforlist mod-expedition page-list');
 
 $arrayofselected = is_array($toselect) ? $toselect : array();
 
@@ -1978,7 +1980,7 @@ $reshook = $hookmanager->executeHooks('printFieldListFooter', $parameters, $obje
 print $hookmanager->resPrint;
 
 ?>
-<script nonce="<?php echo getNonce(); ?>" src="<?php echo dol_buildpath('/reedcrm/js/expedition_billed.js', 1); ?>"></script>
+<script nonce="<?php echo getNonce(); ?>" src="<?php echo reedcrm_asset_full_url('/reedcrm/js/expedition_billed.js'); ?>"></script>
 <?php
 
 print "</table>";

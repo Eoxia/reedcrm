@@ -22,7 +22,7 @@
  * \brief   Turns the status badge of every to-do event, listed by show_actions_done() or shown in the
  *          banner of its own card, into a quick close trigger : the event closed or only moved to a lower
  *          progress, renamed if needed, an optional comment, and an optional clone renamed at will and
- *          postponed by X months, X days, or to a picked day.
+ *          postponed by X months, X days, or to a picked day, at the hour picked if any.
  */
 
 if (!window.reedcrm) {
@@ -52,6 +52,18 @@ window.reedcrm.eventQuickClose = {};
  * @type {Number}
  */
 window.reedcrm.eventQuickClose.currentEventId = 0;
+
+/**
+ * Whether the last press inside the modal started on its backdrop
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @type {Boolean}
+ */
+window.reedcrm.eventQuickClose.pressedOnBackdrop = false;
 
 /**
  * Init
@@ -199,10 +211,17 @@ window.reedcrm.eventQuickClose.event = function () {
     window.reedcrm.eventQuickClose.close();
   });
 
+  // The backdrop closes the modal only when the press started on it too: a text selected in a field
+  // and released outside the frame also ends with a click on the backdrop
+  $(document).on('mousedown.reedcrmQuickClose', '#reedcrm-quick-close-modal', function (event) {
+    window.reedcrm.eventQuickClose.pressedOnBackdrop = $(event.target).is('#reedcrm-quick-close-modal');
+  });
+
   $(document).on('click.reedcrmQuickClose', '#reedcrm-quick-close-modal', function (event) {
-    if ($(event.target).is('#reedcrm-quick-close-modal')) {
+    if ($(event.target).is('#reedcrm-quick-close-modal') && window.reedcrm.eventQuickClose.pressedOnBackdrop) {
       window.reedcrm.eventQuickClose.close();
     }
+    window.reedcrm.eventQuickClose.pressedOnBackdrop = false;
   });
 
   // The slider and the exact figure move together, and the modal tells whether it closes the event
@@ -234,6 +253,16 @@ window.reedcrm.eventQuickClose.event = function () {
 
   $(document).on('focus.reedcrmQuickClose', '#reedcrm-quick-close-delay-date', function () {
     $('input[name="reedcrm-quick-close-delay-unit"][value="date"]').prop('checked', true);
+  });
+
+  // The day the new event falls on follows every change of the delay, a choice checked by the
+  // focus handlers above included: they run first, being bound first
+  $(document).on('input.reedcrmQuickClose change.reedcrmQuickClose focus.reedcrmQuickClose', 'input[name="reedcrm-quick-close-delay-unit"], #reedcrm-quick-close-delay-value, #reedcrm-quick-close-delay-months, #reedcrm-quick-close-delay-date', function () {
+    window.reedcrm.eventQuickClose.refreshDelayResult();
+  });
+
+  $(document).on('input.reedcrmQuickClose', '#reedcrm-quick-close-new-label', function () {
+    window.reedcrm.eventQuickClose.refreshNewLabelCount();
   });
 
   $(document).on('click.reedcrmQuickClose', '.reedcrm-quick-close-confirm', function () {
@@ -291,6 +320,8 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   $('#reedcrm-quick-close-delay-value').val(defaultDays);
   $('#reedcrm-quick-close-delay-months').val(defaultMonths);
   $('#reedcrm-quick-close-delay-date').val('');
+  $('#reedcrm-quick-close-delay-time').val('');
+  window.reedcrm.eventQuickClose.refreshDelayResult();
 
   // The reminder starts on the type of the event being closed, so picking one is a deliberate
   // change. A list row cannot tell that type: nothing is checked there, and the reminder keeps it
@@ -305,6 +336,7 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   }
   // The rescheduled event repeats the closed one, its name stays editable
   $('#reedcrm-quick-close-new-label').val(label);
+  window.reedcrm.eventQuickClose.refreshNewLabelCount();
 
   // The closed event is renamed from the same modal, so a name settled during the call is
   // written down where it belongs rather than in the comment
@@ -357,6 +389,101 @@ window.reedcrm.eventQuickClose.getPercentage = function (value) {
 };
 
 /**
+ * Work out the day the new event falls on, the way the endpoint does from the delay chosen
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @return {Date|null} The day, null while the choice does not tell one yet
+ */
+window.reedcrm.eventQuickClose.getDelayDate = function () {
+  var unit = $('input[name="reedcrm-quick-close-delay-unit"]:checked').val();
+  var date = new Date();
+
+  if (unit === 'date') {
+    // Read as a local day: new Date('YYYY-MM-DD') would be midnight UTC, the day before west of it
+    var picked = ($('#reedcrm-quick-close-delay-date').val() || '').split('-');
+    if (picked.length !== 3) {
+      return null;
+    }
+    return new Date(parseInt(picked[0], 10), parseInt(picked[1], 10) - 1, parseInt(picked[2], 10));
+  }
+
+  var count = parseInt($(unit === 'd' ? '#reedcrm-quick-close-delay-value' : '#reedcrm-quick-close-delay-months').val(), 10);
+  if (isNaN(count) || count < 1) {
+    return null;
+  }
+
+  // Same bounds as the endpoint
+  if (unit === 'd') {
+    date.setDate(date.getDate() + Math.min(3650, count));
+  } else {
+    date.setMonth(date.getMonth() + Math.min(120, count));
+  }
+
+  return date;
+};
+
+/**
+ * Show the day the new event falls on, written out in the language of the page
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventQuickClose.refreshDelayResult = function () {
+  var date = window.reedcrm.eventQuickClose.getDelayDate();
+
+  $('#reedcrm-quick-close-delay-result-date').text(date ? date.toLocaleDateString($('html').attr('lang') || undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '-');
+};
+
+/**
+ * Most characters the name of the new event may hold, set on the field by the template
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @return {Number} Maximum length
+ */
+window.reedcrm.eventQuickClose.getNewLabelMaxLength = function () {
+  return parseInt($('#reedcrm-quick-close-new-label').attr('data-max-length'), 10) || 128;
+};
+
+/**
+ * Show how many characters the name of the new event holds out of the most it may hold, in red past
+ * it: the field opens on the name of the closed event, which can be longer, and Dolibarr would cut
+ * the end of the new one without a word
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @return {Boolean} Whether the name is too long
+ */
+window.reedcrm.eventQuickClose.refreshNewLabelCount = function () {
+  var $label  = $('#reedcrm-quick-close-new-label');
+  var max     = window.reedcrm.eventQuickClose.getNewLabelMaxLength();
+  // Counted the way the server does: trimmed, and in characters, an emoji being a single one
+  var length  = Array.from(($label.val() || '').trim()).length;
+  var tooLong = length > max;
+
+  $label.toggleClass('reedcrm-quick-close-too-long', tooLong);
+  $('#reedcrm-quick-close-new-label-counter')
+    .toggleClass('reedcrm-quick-close-counter-too-long', tooLong)
+    .text(window.reedcrm.eventQuickClose.config('trans-new-label-count').replace('%s', length));
+
+  return tooLong;
+};
+
+/**
  * Close the modal
  *
  * @memberof ReedCRM_EventQuickClose
@@ -399,6 +526,21 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
     return;
   }
 
+  // A half typed hour reads as an empty one, the new event would silently take another hour
+  var $time = $('#reedcrm-quick-close-delay-time');
+  if ($('#reedcrm-quick-close-reschedule').is(':checked') && $time.length && $time[0].validity && $time[0].validity.badInput) {
+    window.reedcrm.eventQuickClose.notify(window.reedcrm.eventQuickClose.config('trans-time-invalid'), 'error');
+    $time.trigger('focus');
+    return;
+  }
+
+  // A name past the limit would reach the new event cut short, the user decides what to drop
+  if ($('#reedcrm-quick-close-reschedule').is(':checked') && window.reedcrm.eventQuickClose.refreshNewLabelCount()) {
+    window.reedcrm.eventQuickClose.notify(window.reedcrm.eventQuickClose.config('trans-new-label-too-long'), 'error');
+    $('#reedcrm-quick-close-new-label').trigger('focus');
+    return;
+  }
+
   $button.addClass('button-disable');
 
   $.ajax({
@@ -416,6 +558,7 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       delay_value: $('#reedcrm-quick-close-delay-value').val(),
       delay_months: $('#reedcrm-quick-close-delay-months').val(),
       delay_date: delayDate,
+      delay_time: $time.val() || '',
       new_label: $('#reedcrm-quick-close-new-label').val(),
       new_type: $('input[name="reedcrm-quick-close-new-type"]:checked').val() || $('#reedcrm-quick-close-new-type-select').val() || ''
     },

@@ -96,7 +96,6 @@ RelaunchWho = Who
 RelaunchWhat = What
 
 # Dashboard graphs
-OpportunitySources = Distribution of opportunity sources
 
 # Map / Geolocation - Carte / Géolocalisation
 ShowRoute = Show Route
@@ -424,7 +423,6 @@ CommercialStatus = Commercial status
 CommercialStatusHelp = Commercial status of the commercial proposal
 RefusalReason = Refusal reason
 RefusalReasonHelp = Reason for refusing the commercial proposal
-PropalStatusCommRepartition = Distribution of open commercial proposal statuses
 PropalRefusalReasonRepartition = Distribution of commercial proposal refusal reasons
 
 # Billing contact notation
@@ -473,7 +471,6 @@ ReloadOppPercent = Compute undefined opportunity probabilities
 LabelLength = Label length
 LabelLengthDescription = Maximum size of the label field
 WarningTaskLabelCustom = Warning, you are getting close to the maximum allowed number of characters (%d)
-ProductLastSellList = Latest product sales (Order and Invoice)
 
 # Menu / lists
 Opportunities = Opportunities
@@ -481,7 +478,6 @@ OpenedPropals = Open proposals
 RecurringInvoices = Recurring invoices
 
 # Call notifications widget
-ProjectOpportunitiesList = The last 5 project opportunities
 LatestCreatedOpportunities = Latest created opportunities
 OppPercent = Opportunity percentage
 ButtonActions = Actions
@@ -719,7 +715,29 @@ NoPhoneNumber = No phone number
 NoEventOnOpportunity = No event on this opportunity yet
 ToCallShort = to call
 SeeOpportunityTimeline = See the history
+CallListLineAddedOn = In the list since %s
+CallListLineUnlink = Unlink from the call list
+ConfirmCallListLineUnlink = Unlink this person from the call list?
+ErrorCallListLineUnlink = Could not unlink this person from the call list
 
+# Relaunch widget (#873)
+RelaunchScopePastTooltip = Relaunch history
+RelaunchScopeUpcomingTooltip = Upcoming relaunches
+RelaunchAddFullEvent = Add a complete event
+RelaunchAddDirectReminder = Add a direct reminder
+RelaunchOverdue = Overdue
+RelaunchOverdueCount = %s overdue relaunch(es)
+RelaunchLateBy = %s day(s) late
+RelaunchNoPast = No past relaunch
+RelaunchNoUpcoming = No upcoming relaunch
+RelaunchDaysAgo = %s d ago
+RelaunchNever = Never
+RelaunchNothingPlanned = Nothing planned
+RelaunchNoTitle = Untitled
+RelaunchWhen = When
+RelaunchInOneDay = Tomorrow
+RelaunchInThreeDays = In 3 days
+RelaunchInOneWeek = In 1 week
 #
 # Ticket dashboard
 #
@@ -878,7 +896,7 @@ PocketRecordingDate = Recording date
 PocketFolder = Pocket folder
 PocketFolderId = Pocket folder identifier
 PocketFolderTitle = Imported folder
-PocketFolderHelp = Only the recordings of this folder are imported into Dolibarr. As long as no folder is selected, no synchronisation happens.
+PocketFolderHelp = Only the recordings of this folder are imported into Dolibarr, and "I just hung up" picks the last one filed in it. As long as no folder is selected, no synchronisation happens.
 PocketFolderMissing = No Pocket folder selected
 PocketNoFolderSelected = -- No folder --
 PocketTags = Pocket tags
@@ -897,7 +915,16 @@ PocketSummaryEditedHint = Summary edited by hand: Pocket will not write it again
 PocketRecordingStatusNew = New
 PocketRecordingStatusProcessed = Processed
 PocketRecordingStatusArchived = Archived
-PocketConnection = Pocket connection
+PocketAccount = Pocket account
+PocketSharedAccount = Shared Pocket account
+PocketSharedAccountHelp = Used by the users who did not enter a key of their own on the Pocket tab of their user card.
+PocketPersonalAccount = Personal Pocket account
+PocketPersonalAccountHelp = Key and folder of this user only. They replace the shared account of the module setup for their "I just hung up" button, and the synchronisation imports this folder too.
+PocketPersonalAccounts = Personal Pocket accounts
+PocketNoPersonalAccount = No user entered a Pocket key of their own
+PocketUsesSharedAccount = No personal key: this user works with the shared Pocket account of the module setup (folder %s).
+PocketNoSharedAccount = Neither a personal key nor a shared Pocket account: the "I just hung up" button is not offered to this user.
+PocketNoAccountConfigured = No Pocket account configured (key and folder): nothing to synchronise
 PocketConnectionState = Connection state
 PocketApiKey = Pocket API key
 PocketApiKeyHelp = A pk_... key created from the Pocket application. It grants read access to the recordings, transcripts and audio files of the account.
@@ -912,8 +939,9 @@ PocketManualSync = Manual synchronisation
 PocketManualSyncHelp = Imports the recordings of the configured folder right away. The scheduled job runs the very same operation.
 PocketSyncNow = Synchronise now
 PocketSyncReport = Pocket synchronisation: %s created, %s updated, %s skipped, %s failed
+PocketSyncAccounts = Pocket accounts synchronised: %s
 PocketSyncCronLabel = Pocket recordings synchronisation
-PocketSyncCronComment = Imports the recordings of the configured Pocket folder, along with their summary, transcript and action items
+PocketSyncCronComment = Imports the recordings of the folder of every configured Pocket account, shared or personal, along with their summary, transcript and action items
 PocketRefreshFromApi = Refresh from Pocket
 PocketRefreshDone = Recording refreshed from Pocket
 PocketRefreshFailed = Refreshing from Pocket failed
@@ -1013,6 +1041,8 @@ QuickCloseEventDescriptionPlaceholder = Appended to the event description (optio
 QuickCloseEventReschedule = Schedule the same event again for later
 QuickCloseEventNewLabel = New event name
 QuickCloseEventNewLabelPlaceholder = Name of the closed event
+QuickCloseEventNewLabelCount = %s / %s characters
+QuickCloseEventNewLabelTooLong = The name of the new event is over %s characters: shorten it, or its end would be cut
 QuickCloseEventCurrentLabel = Event name
 QuickCloseEventCurrentLabelPlaceholder = Rename the event if needed
 QuickCloseEventNewType = Reminder type
@@ -1027,12 +1057,18 @@ RelaunchTypeCall = Call
 RelaunchTypeEmail = Email
 RelaunchTypeRdv = Meeting
 RelaunchTypeOther = Other
+RelaunchReminderCreated = Reminder created
+RelaunchReminderTitlePlaceholder = Reminder subject
+RelaunchReminderTitleRequired = The reminder subject is required
 QuickCloseEventInMonths = In
 QuickCloseEventInMonthsSuffix = months
 QuickCloseEventInDays = In
 QuickCloseEventInDaysSuffix = days
 QuickCloseEventOnDate = On
 QuickCloseEventDateRequired = Pick the date of the rescheduled event
+QuickCloseEventAtTime = at
+QuickCloseEventTimeHelp = Optional hour: without it, the new event takes the current hour, or the hour of the closed event for a picked day.
+QuickCloseEventTimeInvalid = The hour of the new event is incomplete
 QuickCloseEventConfirm = Close
 QuickCloseEventDone = Event closed
 QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
@@ -1142,10 +1178,16 @@ TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created
 TodoLateEvent = Late
 TodoUpcomingEvent = Upcoming
 TodoRelaunchCount = %s relaunch(es) on this object
-TodoProjectRelaunchCount = %s relaunch(es) on this project
 TodoProjectBudget = Budget of the project: %s
 TodoProjectOpportunityAmount = Opportunity amount: %s
 TodoProjectProbability = Opportunity probability: %s
+TodoProjectStep = Stage
+TodoProjectThirdParty = Third party
+TodoProjectContact = Contact
+TodoProjectPhone = Phone
+TodoProjectEmail = Email
+TodoProjectOrigin = Origin
+TodoProjectRelaunches = Relaunches
 TodoSortByProbability = Sort by opportunity probability
 TodoSortProbabilityAsc = Sort by increasing probability
 TodoSortProbabilityDesc = Sort by decreasing probability
@@ -1164,12 +1206,24 @@ PropalUnbilledTagLabel = Tag of the not billed proposals
 PropalUnbilledTagDescription = A red banner is displayed on top of the card of every proposal carrying this tag, whether it was put by the button below or by hand.
 PropalUnbilledTagNotCreated = Not created yet: it will be on the first run
 PropalUnbilledSync = Automatically tag the not billed proposals
-PropalUnbilledSyncDescription = A proposal is not billed when it is signed and no invoice is linked to it, neither directly nor through the order or the contract created from it (abandoned invoices do not count). The tag is put on these proposals and removed from the billed proposals still carrying it.
+PropalUnbilledSyncDescription = A proposal is not billed when it is signed and no invoice is linked to it, neither directly nor through the order or the contract created from it (abandoned invoices do not count). The tag is put on these proposals and removed from the billed proposals still carrying it. A scheduled job also updates it 4 times a day.
 PropalUnbilledPendingChanges = To tag: %s not billed proposal(s) - To untag: %s billed proposal(s)
 PropalUnbilledSyncButton = Tag the not billed proposals
 PropalUnbilledSyncDone = Tag put on %s proposal(s), removed from %s proposal(s)
 PropalUnbilledSyncError = Unable to update the tag of the not billed proposals
 PropalUnbilledBanner = This proposal is not billed
+PropalUnbilledCronLabel = ReedCRM - Tag of the not billed proposals
+PropalUnbilledCronComment = Puts the "Not billed" tag on the signed proposals with no linked invoice and removes it from the billed ones, like the button of the proposals setup page. Run 4 times a day (0h, 6h, 12h and 18h).
+
+# Proposal templates
+PropalModelList = Proposal templates
+PropalModelListHelp = Here are all the commercial proposals carrying the tag <b>%s</b>. Click <i>Create</i> to make a new proposal based on the template.
+PropalModelCreate = Create
+PropalModel = Proposal template
+PropalModelSelect = Select a template
+PropalModelHelp = The lines of the template are copied into the new proposal, and so are its notes when you type none.
+PropalModelCreateFromProject = Create a proposal from a template
+PropalModelNotFound = The template picked is no longer a proposal template: the proposal was created without its lines.
 
 # Not billed contracts
 ContractUnbilledBanner = This contract is not billed
@@ -1381,3 +1435,150 @@ DirectionNextInvoice = Next invoice
 DirectionLastInvoice = Last invoice
 DirectionInvoicesGenerated = Invoices generated
 DirectionUnpaidInvoices = Most late unpaid invoices
+
+#
+# SEPA mandate check
+#
+SepaMandateCheckTitle = SEPA mandate check
+SepaMandateRuleIntro = This page tells, bank account by bank account, what will keep a SEPA direct debit from leaving correctly. It changes nothing: each row links to the bank accounts tab of the third party to fix it.
+SepaMandateRuleFallback = With your Dolibarr version (%s), the signature date written in the file is the mandate signature date, or the creation date of the bank account when there is none.
+SepaMandateRuleNofallback = Warning: with your Dolibarr version (%s), when a direct debit request designates a given bank account, the file takes the mandate signature date with no fallback. When it is not filled in, the date goes out empty and the bank rejects the file, unless the Dolibarr fix #42020 is installed.
+SepaMandateRuleUncertain = With your Dolibarr version (%s), the Dolibarr fix #42020 may not be included: a bank account designated by a request and without a mandate signature date is therefore reported as blocking, to be safe.
+SepaMandateCheckedAccounts = Bank accounts checked
+SepaMandateAccountsBlocking = Bank accounts with a blocking issue
+SepaMandateAccountsWarning = Bank accounts to watch
+SepaMandateFailingRequests = Pending requests that will fail
+SepaMandateFailingRequestsHint = out of all the pending direct debit requests
+SepaMandateThirdpartiesInError = Third parties without a usable bank account
+SepaMandateSeverity = Severity
+SepaMandateSeverityBlocking = Blocking
+SepaMandateSeverityWarning = To watch
+SepaMandateSeverityOk = Correct
+SepaMandateFilterAll = All rows
+SepaMandateFilterIssues = Blocking or to watch
+SepaMandateFilterPending = Only bank accounts with a pending request
+SepaMandateBankAccount = Bank account
+SepaMandateRum = UMR
+SepaMandateDateRum = Mandate signature date
+SepaMandateDateWritten = Date written in the file
+SepaMandatePendingRequests = Pending requests
+SepaMandateIssues = What to fix
+SepaMandateNone = No bank account matches these filters.
+SepaMandateNoUsableAccount = No usable bank account
+SepaMandateNoLabel = Unnamed bank account
+SepaMandateNoIban = No IBAN
+SepaMandateNoIssue = Nothing to report
+SepaMandateDateEmpty = empty
+SepaMandateDateReasonMandate = mandate signature date
+SepaMandateDateReasonCreation = creation date of the bank account, for lack of a signature date
+SepaMandateDateReasonEmpty = no date to write
+SepaMandateDateReasonEmptyunlessfix = empty, unless the Dolibarr fix #42020 is installed
+SepaMandateFix = Fix
+SepaMandateFixOnThirdparty = Open the bank accounts tab of the third party
+SepaMandateReadOnlyNote = IBANs are never shown in full. The check follows the rules Dolibarr applies when it creates a direct debit order: a validated, unpaid invoice with a pending request.
+SepaMandateIssueDateMissingEmpty = Mandate signature date missing. This bank account is designated by a pending request: with Dolibarr %s, the file will leave with an empty signature date and the bank will reject it, unless the Dolibarr fix #42020 is installed. Fill in the mandate signature date on the bank account.
+SepaMandateIssueDateMissingUncertain = Mandate signature date missing. This bank account is designated by a pending request: if your Dolibarr version (%s) does not include the fix #42020, the file will leave with an empty signature date and the bank will reject it. Fill in the mandate signature date on the bank account.
+SepaMandateIssueDateMissingNoDate = Mandate signature date missing, and the bank account has no creation date: the file will leave with an empty signature date. Fill in the mandate signature date on the bank account.
+SepaMandateIssueDateMissingFallback = Mandate signature date missing: Dolibarr will write the creation date of the bank account instead (%s), which is not the day the customer signed. Fill in the actual signature date.
+SepaMandateIssueDateFuture = Mandate signature date in the future (%s): a direct debit cannot rely on a mandate not signed yet, the bank will reject the line. Correct the signature date.
+SepaMandateIssueRumMissing = Unique mandate reference (UMR) missing: Dolibarr will make one up, which will not match the mandate signed by the customer. Copy the UMR of the signed mandate.
+SepaMandateIssueRumDuplicate = Same mandate reference (UMR) as %s: each mandate needs its own reference, or the bank mixes them up. Correct the UMR of one of the bank accounts.
+SepaMandateIssueIbanMissing = IBAN missing: no direct debit can leave on this bank account. Copy the IBAN from the signed mandate.
+SepaMandateIssueIbanInvalid = Invalid IBAN (its check digits do not match): Dolibarr will leave the invoice out of the direct debit file. Copy the IBAN from the signed mandate.
+SepaMandateIssueBicMissing = BIC missing: Dolibarr will leave the invoice out of the direct debit file. Fill in the BIC of the customer's bank.
+SepaMandateIssueBicInvalid = Malformed BIC (%s): it has 8 or 11 characters, letters and digits, no space. Dolibarr will leave the invoice out of the direct debit file.
+SepaMandateIssueDuplicateDefault = This third party has several default bank accounts: Dolibarr will stop the creation of the direct debit order. Keep only one as default.
+SepaMandateIssueDesignatedInactive = This bank account is disabled, but a pending request designates it: Dolibarr will still debit this account. Enable it again if it is right, otherwise delete the request and make it again on the right bank account.
+SepaMandateIssueDesignatedMissing = The request of invoice %s designates a bank account that no longer exists: Dolibarr will debit the default bank account of the third party instead. Check it is the right account.
+SepaMandateIssueNoAccount = %s pending direct debit request(s), but no bank account is recorded for this third party: nothing can be debited. Add the bank account of the signed mandate.
+SepaMandateIssueNoDefault = %s pending direct debit request(s), but no bank account is set as default: Dolibarr will not put these invoices in the file. Set the bank account of the mandate as default.
+
+#
+# Pocket - "I just hung up" button
+#
+PocketHangup = I just hung up
+PocketHangupWith = I just hung up with %s
+PocketHangupHelp = Import the last recording of the Pocket folder %s and attach it to this record
+PocketHangupAttached = Last Pocket recording attached: %s
+PocketHangupAlreadyLinked = The last Pocket recording is already attached to this record: %s
+PocketHangupNoRecordingInFolder = No recording in the Pocket folder %s: file the call in this folder from the Pocket application, then try again
+PocketHangupNotFiled = The last recording of the Pocket folder %s is dated %s: file the call that just ended in this folder from the Pocket application, then try again
+PocketHangupImportFailed = The import of the last Pocket recording failed
+
+#
+# Pocket - reminder to file the calls
+#
+PocketTidyReminderTitle = Reminder to file the calls
+PocketTidyReminderTime = Time of the daily reminder
+PocketTidyReminderTimeHelp = Every day at this time, when recordings that reached Pocket during the last 24 hours sit in no folder, an event "File N Pocket calls" listing them is created with a notification: for the owner of each personal key, and for the users of the shared account. Nothing is created when everything is filed.
+PocketTidyReminderOff = -- Disabled --
+PocketTidyReminderNext = Next reminder
+PocketTidyReminderPending = (at the next run of the scheduled job)
+PocketTidyReminderSharedRecipients = Recipients of the shared account
+PocketTidyReminderSharedRecipientsHelp = Active users allowed to create Pocket recordings and without a personal key. Each personal key notifies its owner.
+PocketTidyReminderNoRecipient = No user works with the shared account
+PocketTidyReminderJob = Scheduled job
+PocketTidyReminderJobMissing = Scheduled job missing: disable then enable the ReedCRM module to declare it
+PocketTidyReminderCronDisabled = The Scheduled jobs module is disabled: the reminder will never be created
+PocketTidyReminderNoBrowserNotification = The browser notifications of the agenda are disabled: the event will be created without notification. Enable them in the <a href="%s">reminder setup of the agenda</a>.
+PocketTidyReminderCronLabel = Reminder to file the Pocket calls
+PocketTidyReminderCronComment = At the time set in the Pocket setup of ReedCRM, create for each account an event with a notification listing the recordings of the last 24 hours that sit in no folder
+PocketTidyReminderCronResult = Pocket filing reminders: %s created, %s account(s) checked
+PocketTidyReminderDisabled = No time set for the Pocket filing reminder: nothing to do
+PocketTidyReminderNextRun = Next Pocket filing reminder: %s
+PocketTidyReminderLabel = File %s Pocket call
+PocketTidyReminderLabelPlural = File %s Pocket calls
+PocketTidyReminderNote = Recordings that reached Pocket since %s and sit in no folder. File the calls in their folder from the Pocket application (folder imported into ReedCRM: %s): until they are, neither "I just hung up" nor the synchronisation picks them up.
+PocketTidyReminderUntitled = Untitled
+PocketTidyReminderDuration = duration %s
+PocketTidyReminderMore = … and %s more
+
+#
+# Home page of the module
+#
+HomeRange = From %s to %s
+HomeScopeMine = My figures
+HomeComparedWithMonth = vs previous month
+HomeComparedWithQuarter = vs previous quarter
+HomeComparedWithYear = vs previous fiscal year
+HomeRevenue = Revenue excl. tax
+HomeRevenueFiscalYear = Fiscal year %s: %s
+HomeRevenueMonthlyAverage = Average: %s per month
+HomeSignedProposals = Signed proposals excl. tax
+HomeSignedDetail = %s signed · %s pending (%s)
+HomePipeline = Open pipeline
+HomePipelineDetail = Weighted %s · %s opportunities
+HomeCollected = Payments incl. tax
+HomeCollectedDetail = Left to collect: %s
+HomeCollectedLate = of which %s overdue
+HomeRevenueChart = Revenue excl. tax over 12 months
+HomeRevenueChartCurrent = Last 12 months
+HomeRevenueChartPrevious = One year earlier
+HomeRevenueChartCompared = Compared with the 12 previous months: %s
+HomeRevenueChartDetail = See the detail per month
+HomeChange = Change
+HomePipelineTitle = Pipeline
+HomePipelineAmount = Gross
+HomePipelineWeighted = Weighted
+HomePipelineWeightedValue = weighted %s
+HomePipelineNoStage = No stage
+HomePipelineEmpty = No open opportunity
+HomePipelineWon = Won over the period: %s · %s
+HomeSignedTitle = Signed proposals
+HomeSignedEmpty = No proposal signed over the period
+HomePaymentsTitle = Payments
+HomePaymentsEmpty = No payment received over the period
+HomeLateInvoices = %s overdue invoice(s) · %s
+HomeSeeAll = See all
+HomeLastEvents = Last actions done
+HomeLastEventsEmpty = No action done lately
+HomeSeeAgenda = See the agenda
+HomeProductSales = Last sale per product
+HomeProductRecent = Last sales
+HomeProductDormant = No sale for %s months
+HomeProductDormantMore = … and %s more product(s)
+HomeProductEmpty = No product sold yet
+HomeProductDormantEmpty = No product in stock without sales
+HomeLastSale = Last sale
+HomeNeverSold = Never sold
+HomeDaysAgo = %s days ago

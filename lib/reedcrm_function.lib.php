@@ -49,7 +49,7 @@ function set_notation_object_contact(CommonObject $object): int
 function get_notation_object_contacts(CommonObject $object, string $haveRole = ''): array
 {
     require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-    require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+    dol_include_once('/saturne/lib/object.lib.php');
 
     $notationObjectContacts = [];
     $contacts               = saturne_fetch_all_object_type('Contact', '', '', 0, 0, ['customsql' => 't.fk_soc = ' . ($object->element == 'societe' ? $object->id : ($object->fk_soc > 0 ? $object->fk_soc : $object->socid))]);
@@ -159,7 +159,7 @@ function get_and_show_contact(string $caller, string $callee): array
     global $db, $user, $langs;
     require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
     require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
-    require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+    dol_include_once('/saturne/lib/object.lib.php');
 
     $contact = new Contact($db);
     $userCalled = new User($db);
@@ -325,6 +325,7 @@ function get_pending_call_events($user_id) {
     $sql = "SELECT a.id as rowid, a.fk_contact, a.datep as call_date, a.label, a.extraparams, a.fk_soc, ";
     $sql .= "c.lastname, c.firstname, c.phone, c.phone_mobile, c.email ";
     $sql .= "FROM " . MAIN_DB_PREFIX . "actioncomm a ";
+    $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid ";
     $sql .= "WHERE a.fk_user_action = " . (int)$user_id . " ";
     $sql .= "AND a.code = 'AC_TEL' ";
     $sql .= "AND a.percent = 0 ";

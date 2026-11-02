@@ -1,0 +1,490 @@
+@use 'tokens' as *;
+
+/* ReedCRM modern theme: dashboards and figures of the module pages: home (upcoming reminders),
+   steering dashboards, opportunities per month, billing follow-up, signed proposals not invoiced and
+   recurring invoices follow-up */
+
+#{$rc-scope} {
+  /* ---- Home: the upcoming reminders card is moved into the graph grid by
+     js/modules/dashboard_reminders.js. The grid cell is a card of the shared theme and the reminders
+     are a card of their own: the cell gives up its frame so that only one card shows ---- */
+
+  .graph-dashboard.wpeo-grid > .reedcrm-reminders-slot {
+    padding: 0 !important;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+
+    > .reedcrm-reminders {
+      height: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+  .reedcrm-reminders {
+    .reedcrm-reminders__count {
+      background: $rc-primary-soft;
+      color: $rc-primary-strong;
+    }
+
+    .reedcrm-reminders__item {
+      border-top-color: $rc-border-soft;
+    }
+
+    .reedcrm-reminders__tile {
+      background: $rc-primary-soft;
+    }
+
+    .reedcrm-reminders__day,
+    .reedcrm-reminders__label {
+      color: $rc-text;
+    }
+
+    .reedcrm-reminders__month {
+      color: $rc-primary-strong;
+    }
+
+    .reedcrm-reminders__label:hover,
+    .reedcrm-reminders__thirdparty:hover {
+      color: $rc-primary;
+    }
+
+    .reedcrm-reminders__meta,
+    .reedcrm-reminders__thirdparty,
+    .reedcrm-reminders__empty {
+      color: $rc-muted;
+    }
+  }
+
+  /* "New third party" action of the last opportunities list: a row action, not a page button */
+  #graph-ProjectOpportunitiesList td > .wpeo-button {
+    padding: 5px 11px;
+    border-radius: $rc-radius-sm;
+    color: #ffffff;
+    font-size: 12.5px;
+    line-height: 1.3;
+  }
+
+  /* ---- Steering dashboards: goal bars and change badges ---- */
+
+  .reedcrm-goal__bar {
+    background: $rc-border;
+
+    &::-webkit-progress-bar {
+      background: $rc-border;
+    }
+  }
+
+  .reedcrm-evolution {
+    border-radius: $rc-radius-pill;
+
+    &.reedcrm-evolution--up {
+      background: $rc-success-soft;
+      color: $rc-success-ink;
+    }
+
+    &.reedcrm-evolution--down {
+      background: $rc-danger-soft;
+      color: $rc-danger-ink;
+    }
+
+    &.reedcrm-evolution--flat {
+      background: $rc-bg;
+      color: $rc-text-soft;
+    }
+  }
+
+  /* ---- Opportunities per month (view/opportunity_stats.php) ---- */
+
+  .reedcrm-oppstats-filters {
+    gap: 14px 18px;
+    padding: 14px 18px;
+    @include rc-card;
+
+    label {
+      @include rc-label;
+      opacity: 1;
+    }
+  }
+
+  .reedcrm-oppstats-tiles {
+    gap: 14px;
+  }
+
+  .reedcrm-oppstats-tile {
+    padding: 14px 18px;
+    @include rc-card;
+
+    &:before {
+      background: $rc-primary;
+    }
+
+    .reedcrm-oppstats-tile-key {
+      @include rc-label;
+      opacity: 1;
+    }
+
+    .reedcrm-oppstats-tile-value {
+      color: $rc-text;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+
+      small {
+        color: $rc-muted;
+        opacity: 1;
+      }
+    }
+
+    .reedcrm-oppstats-tile-hint {
+      color: $rc-muted;
+      opacity: 1;
+    }
+  }
+
+  .reedcrm-oppstats-tablewrap {
+    @include rc-card;
+  }
+
+  .reedcrm-oppstats-table {
+    color: $rc-text;
+
+    thead th {
+      padding-top: 11px;
+      padding-bottom: 11px;
+      border-bottom-color: $rc-border;
+      background: $rc-surface-soft;
+      @include rc-label;
+      font-size: 11.5px;
+      opacity: 1;
+    }
+
+    tbody th,
+    tbody td {
+      border-top-color: $rc-border-soft;
+    }
+
+    .reedcrm-oppstats-th-year {
+      background: $rc-surface;
+    }
+
+    thead .reedcrm-oppstats-th-year {
+      background: $rc-surface-soft;
+    }
+
+    .reedcrm-oppstats-avg {
+      border-right-color: $rc-border;
+    }
+
+    .reedcrm-oppstats-badge {
+      border-radius: $rc-radius-pill;
+      background: $rc-bg;
+      color: $rc-text-soft;
+
+      &.up {
+        background: $rc-success-soft;
+        color: $rc-success-ink;
+      }
+
+      &.down {
+        background: $rc-danger-soft;
+        color: $rc-danger-ink;
+      }
+    }
+
+    /* Heat ramp in the Saturne blue */
+    .reedcrm-oppstats-heat-1 { background: rgba(13, 138, 255, 0.06); }
+    .reedcrm-oppstats-heat-2 { background: rgba(13, 138, 255, 0.12); }
+    .reedcrm-oppstats-heat-3 { background: rgba(13, 138, 255, 0.2); }
+    .reedcrm-oppstats-heat-4 { background: rgba(13, 138, 255, 0.3); }
+    .reedcrm-oppstats-heat-5 { background: rgba(13, 138, 255, 0.42); }
+  }
+
+  .reedcrm-oppstats-note {
+    color: $rc-muted;
+    opacity: 1;
+  }
+
+  /* ---- Figures of the billing pages: one tile recipe, the coloured rule on the left stays.
+     div.….info: the tile modifier collides with the info box of Dolibarr, whose frame, margin and
+     tinted background the shared theme restyles ---- */
+
+  .rbg-intro,
+  .rsu-intro {
+    color: $rc-text-soft;
+  }
+
+  .rbg-tiles,
+  .rsu-tiles,
+  .rcf-tiles {
+    gap: 14px;
+  }
+
+  div.rbg-tile,
+  div.rsu-tile,
+  .rcf-tile,
+  div.rbg-tile.info,
+  div.rsu-tile.info {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 14px 16px 14px 18px;
+    border: 1px solid $rc-border;
+    border-radius: $rc-radius-lg;
+    background: $rc-surface;
+    box-shadow: $rc-shadow-sm;
+    color: $rc-text;
+
+    &:before {
+      width: 4px;
+    }
+
+    .k {
+      @include rc-label;
+      line-height: 1.35;
+    }
+
+    .v {
+      margin-top: 4px;
+      color: $rc-text;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .a {
+      color: $rc-muted;
+      font-size: 13px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  /* Same palette as the badges of the shared theme */
+  div.rbg-tile:before,
+  div.rsu-tile:before {
+    background: $rc-danger;
+  }
+
+  div.rbg-tile.warn:before,
+  div.rsu-tile.warn:before,
+  .rcf-tile.warn:before {
+    background: $rc-warning;
+  }
+
+  div.rbg-tile.info:before,
+  div.rsu-tile.info:before,
+  .rcf-tile:before {
+    background: $rc-primary;
+  }
+
+  div.rsu-tile.good:before,
+  .rcf-tile.good:before {
+    background: $rc-success;
+  }
+
+  div.rbg-tile.viol:before {
+    background: #7c3aed;
+  }
+
+  .rcf-tile.crit:before {
+    background: $rc-danger;
+  }
+
+  .rcf-tile {
+    &.warn .v {
+      color: $rc-warning;
+    }
+
+    &.crit .v {
+      color: $rc-danger;
+    }
+
+    &.good .v {
+      color: $rc-success;
+    }
+  }
+
+  a.rcf-tilelink:hover {
+    border-color: $rc-primary;
+    box-shadow: $rc-shadow;
+  }
+
+  .rcf-tileon {
+    border-color: $rc-primary;
+    box-shadow: 0 0 0 2px $rc-primary;
+  }
+
+  /* ---- Criteria of the signed proposals not invoiced ---- */
+
+  .rsu-filters {
+    gap: 12px 14px;
+    padding: 14px 18px;
+    @include rc-card;
+
+    label {
+      @include rc-label;
+      margin-bottom: 4px;
+    }
+
+    select,
+    input:not([type="checkbox"]):not([type="radio"]) {
+      box-sizing: border-box;
+      height: 34px;
+      padding: 4px 10px;
+      border: 1px solid $rc-border-strong;
+      border-radius: $rc-radius-sm;
+      background: $rc-surface;
+      color: $rc-text;
+
+      &:focus {
+        outline: none;
+        border-color: $rc-primary;
+        box-shadow: $rc-ring;
+      }
+    }
+
+    .select2-container--default .select2-selection--single {
+      height: 34px;
+    }
+
+    button.button,
+    a.button {
+      display: inline-flex;
+      align-items: center;
+      height: 34px;
+      margin: 0;
+      padding: 0 14px !important;
+      border-radius: $rc-radius;
+      font-size: 13px;
+      text-transform: none;
+      @include rc-button-primary;
+    }
+
+    a.button.button-cancel {
+      @include rc-button;
+      @include rc-button-cancel-force;
+    }
+  }
+
+  .rsu-badge {
+    border-radius: $rc-radius-pill;
+
+    &.todo {
+      background: $rc-danger-soft;
+      color: $rc-danger-ink;
+    }
+
+    &.chain {
+      background: $rc-success-soft;
+      color: $rc-success-ink;
+    }
+
+    &.amount {
+      background: $rc-warning-soft;
+      color: $rc-warning-ink;
+    }
+
+    &.products {
+      background: $rc-primary-soft;
+      color: $rc-primary-strong;
+    }
+  }
+
+  .rsu-age.mid {
+    color: $rc-warning;
+  }
+
+  .rsu-age.old {
+    color: $rc-danger;
+  }
+
+  /* The row actions: invoice (blue) and classify as invoiced (secondary) */
+  .rsu-actions a.button.button-cancel {
+    @include rc-button;
+    @include rc-button-cancel-force;
+  }
+
+  /* ---- Recurring invoices follow-up: month navigation, chart and movements ---- */
+
+  .rcf-nav {
+    a {
+      display: inline-flex;
+      align-items: center;
+      height: 34px;
+      padding: 0 12px;
+      @include rc-button;
+    }
+
+    select {
+      height: 34px;
+      border-color: $rc-border-strong;
+      border-radius: $rc-radius-sm;
+      background: $rc-surface;
+      color: $rc-text;
+
+      &:hover {
+        border-color: $rc-primary;
+      }
+    }
+
+    .rcf-month {
+      color: $rc-text;
+    }
+  }
+
+  .rcf-chartbox {
+    padding: 14px 18px;
+    @include rc-card;
+  }
+
+  .rcf-charttitle {
+    color: $rc-text;
+    font-weight: 700;
+  }
+
+  .rcf-mvtbox {
+    @include rc-card;
+
+    td {
+      border-top-color: $rc-border-soft;
+      color: $rc-text;
+    }
+  }
+
+  .rcf-mvthead {
+    padding: 11px 14px;
+    border-bottom-color: $rc-border;
+    background: $rc-surface-soft;
+    font-weight: 700;
+  }
+
+  .rcf-mvtbox.in .rcf-mvthead {
+    color: $rc-success-ink;
+  }
+
+  .rcf-mvtbox.out .rcf-mvthead {
+    color: $rc-danger-ink;
+  }
+
+  .rcf-run {
+    border-radius: $rc-radius-pill;
+
+    &.done {
+      border-color: rgba(22, 163, 74, 0.3);
+      background: $rc-success-soft;
+      color: $rc-success-ink;
+    }
+
+    &.todo {
+      border-color: rgba(233, 173, 79, 0.45);
+      background: $rc-warning-soft;
+      color: $rc-warning-ink;
+    }
+
+    &.late {
+      border-color: rgba(224, 83, 83, 0.3);
+      background: $rc-danger-soft;
+      color: $rc-danger-ink;
+    }
+  }
+}

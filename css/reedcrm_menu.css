@@ -185,3 +185,73 @@
 #id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) .menu_titre .reedcrm-menu-separator {
     margin-right: 0;
 }
+
+/* ------------------------------------------------------------------ */
+/* Modern back office theme                                            */
+/* ------------------------------------------------------------------ */
+
+/* saturne_header() puts the saturne-theme class on the logged-in pages of the Saturne modules, whose
+ * shared theme makes the menu blocks transparent: the white labels of the bands above would vanish on
+ * the white sidebar. There the headers become uppercase micro labels and the App rule a hairline.
+ * Kept in this file rather than in reedcrm.min.css: Saturne pages of other objects (generic lists)
+ * show the ReedCRM menu without loading the module stylesheet. The colours are the custom
+ * properties the shared theme declares on that scope; #id-left outweighs its sidebar rules.
+ */
+body#mainbody.saturne-theme #id-left div.vmenu .blockvmenu:has(.reedcrm-menu-section) {
+    margin: 12px 0 0;
+    padding: 8px 8px 2px;
+    border-radius: 0;
+    background: transparent;
+}
+
+body#mainbody.saturne-theme #id-left .menu_titre .vmenu:has(> .reedcrm-menu-section) {
+    display: block;
+    padding: 0 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--saturne-faint);
+}
+
+body#mainbody.saturne-theme #id-left .menu_titre .reedcrm-menu-section > i {
+    color: var(--saturne-faint);
+}
+
+/* The block right after a header hangs from it */
+body#mainbody.saturne-theme #id-left div.vmenu .blockvmenu:has(.reedcrm-menu-section) + .blockvmenu {
+    padding-top: 2px;
+    border-top: none;
+}
+
+body#mainbody.saturne-theme #id-left div.vmenu .blockvmenu:has(.reedcrm-menu-separator) {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+body#mainbody.saturne-theme #id-left .menu_titre .reedcrm-menu-separator {
+    height: 1px;
+    margin: 0 10px;
+    background: var(--saturne-border);
+}
+
+/* Sub entries carry no picto: indent them under the label of their parent, past its picto */
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) div.vmenu div.menu_contenu {
+    padding-left: 24px;
+}
+
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) div.menu_contenu .vsmenu {
+    opacity: 1;
+}
+
+/* The links of the theme already fill their row and react on hover: no second highlight */
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) .menu_titre:has(> a.vmenu):hover,
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) .menu_contenu:has(> a.vsmenu):hover {
+    background: transparent;
+}
+
+/* Minimized menu: the headers keep their picto only, on the axis of the others */
+body#mainbody.saturne-theme #id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) div.vmenu .blockvmenu:has(.reedcrm-menu-section) {
+    margin: 8px 0 0;
+    padding-top: 4px;
+}

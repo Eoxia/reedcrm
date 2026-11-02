@@ -18,5 +18,6 @@ ALTER TABLE llx_reedcrm_pocket_recording ADD INDEX idx_reedcrm_pocket_recording_
 ALTER TABLE llx_reedcrm_pocket_recording ADD INDEX idx_reedcrm_pocket_recording_folder (pocket_folder_id);
 ALTER TABLE llx_reedcrm_pocket_recording ADD INDEX idx_reedcrm_pocket_recording_date (recording_date);
 ALTER TABLE llx_reedcrm_pocket_recording ADD INDEX idx_reedcrm_pocket_recording_fk_soc (fk_soc);
+ALTER TABLE llx_reedcrm_pocket_recording ADD INDEX idx_reedcrm_pocket_recording_fk_user_pocket (fk_user_pocket);
 ALTER TABLE llx_reedcrm_pocket_recording ADD UNIQUE INDEX uk_reedcrm_pocket_recording_pocket_id (pocket_id, entity);
 ALTER TABLE llx_reedcrm_pocket_recording ADD CONSTRAINT llx_reedcrm_pocket_recording_fk_user_creat FOREIGN KEY (fk_user_creat) REFERENCES llx_user(rowid);

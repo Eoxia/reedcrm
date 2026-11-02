@@ -22,7 +22,7 @@
  *              of a service line (a qty of 2.5 asks for 3 dates).
  */
 
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for InterventionDate

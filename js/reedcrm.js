@@ -1000,7 +1000,7 @@ window.saturne.pwa_selectors.event = function() {
                     dataType: 'json',
                     delay:    200,
                     cache:    true,
-                    data:     function(p) { return { action: 'search_tiers_ajax', q: p.term || '' }; },
+                    data:     function(p) { return { action: 'search_tiers_ajax', q: p.term || '', token: window.saturne.toolbox.getToken() }; },
                     processResults: function(d) { return { results: d.results || [] }; }
                 }
             });
@@ -1113,7 +1113,7 @@ window.saturne.pwa_selectors.event = function() {
         $panel.html('<div class="pwa-contact-loading-inline"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>');
 
         // Fetch contacts and build native <ul> — no Select2, no "Searching...", list appears immediately
-        $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
+        $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '', token: window.saturne.toolbox.getToken() }, function(data) {
             var results = (data && data.results) ? data.results : [];
             var $ul = $('<ul class="pwa-contact-list">');
             if (results.length === 0) {
@@ -1377,7 +1377,7 @@ window.saturne.quickcreation_form.initContactSelect = function() {
     $(document).on('change','#socid, #search_socid', toggleCW);
     $(document).on('change','#contactid', function() {
         var cid=$(this).val(); if (!cid||cid<=0) return;
-        var fd=new FormData(); fd.append('action','get_contact_details'); fd.append('contactid',cid);
+        var fd=new FormData(); fd.append('action','get_contact_details'); fd.append('contactid',cid); fd.append('token',window.saturne.toolbox.getToken());
         fetch(window.location.href,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(c) {
             if (!c||!c.id) return;
             var pi=document.getElementById('projectphone'); if (pi&&c.phone) { pi.value=c.phone; pi.dispatchEvent(new Event('input',{bubbles:true})); }

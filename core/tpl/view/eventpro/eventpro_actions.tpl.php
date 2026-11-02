@@ -204,9 +204,11 @@ if (empty($eventProRedirectAfterTicket)) {
                 $reminderType = 'AC_OTH';
             }
 
-            // A new event, owned by the user to remind: reusing the event created above kept its type
+            // A new event, owned by the user to remind: reusing the event created above kept its type.
+            // $result is deliberately not overwritten: a failed reminder used to be reported to the user
+            // as a failed event, and blocked the opportunity update below.
             $reminderUserId = GETPOSTINT('reminder_user_id') ?: $user->id;
-            $result         = reedcrm_create_call_reminder($db, $user, $reminderLabel, $dateReminder > 0 ? $dateReminder : dol_now(), $reminderUserId, (int) $actionComm->fk_project, (int) $actionComm->socid, GETPOSTINT('contactid'), $reminderType);
+            reedcrm_create_call_reminder($db, $user, $reminderLabel, $dateReminder > 0 ? $dateReminder : dol_now(), $reminderUserId, (int) $actionComm->fk_project, (int) $actionComm->socid, GETPOSTINT('contactid'), $reminderType);
         }
 
         $newOpportunityPercent = GETPOST('new_opportunity_percent');
@@ -238,6 +240,49 @@ if (empty($eventProRedirectAfterTicket)) {
             }
             setEventMessages($actionComm->error, $actionComm->errors, 'errors');
         }
+    }
+
+    // Action to add a direct reminder, without logging a completed event first (#873). This is what
+    // the right-hand button of the relaunch widget posts.
+    if ($action == 'add_reminder') {
+        $reminderDate  = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
+        $reminderLabel = trim(GETPOST('reminder_title', 'alphanohtml'));
+        $reminderNote  = GETPOST('description', 'restricthtml');
+
+        $reminderId = -1;
+        if ($reminderLabel !== '') {
+            $reminderId = reedcrm_create_call_reminder(
+                $db,
+                $user,
+                $reminderLabel,
+                $reminderDate > 0 ? $reminderDate : dol_now(),
+                GETPOSTINT('reminder_user_id') ?: $user->id,
+                GETPOSTINT('project_id') ?: ($fromType == 'project' ? (int) $id : 0),
+                GETPOSTINT('socid'),
+                GETPOSTINT('contactid'),
+                GETPOST('actioncode', 'aZ09') ?: 'AC_OTH',
+                [],
+                $reminderNote !== '' ? ['note' => $reminderNote] : []
+            );
+        }
+
+        if ($reminderId > 0) {
+            if ($isModal) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => $langs->trans('RelaunchReminderCreated')]);
+                exit;
+            }
+            setEventMessages($langs->trans('RelaunchReminderCreated'), null);
+            header('Location: ' . $eventProRedirectAfterEvent);
+            exit;
+        }
+
+        if ($isModal) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => $langs->trans('RelaunchReminderTitleRequired')]);
+            exit;
+        }
+        setEventMessages($langs->trans('RelaunchReminderTitleRequired'), null, 'errors');
     }
 
     // Action to create ticket

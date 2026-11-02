@@ -784,12 +784,16 @@ function reedcrmTodoCountRelaunches(DoliDB $db, array $origins): array
  * project): the events tagged as commercial relaunches linked to the project, restricted to its
  * third party when it has one.
  *
+ * The tooltip of the project badge tells the rest of what a salesman looks for on the project card:
+ * its status, the stage of the opportunity, the third party, the contact the opportunity came with,
+ * its dates, its origin and the beginning of its description.
+ *
  * Only told to whoever may read projects. The whole board takes two queries, one for the projects
  * and one for their relaunches.
  *
  * @param  DoliDB $db     Database handler
  * @param  array  $events Rows of the board, indexed by event ID
- * @return array          [project id => ['amount_short' => , 'amount_full' => , 'percent' => , 'relaunch_count' => ]]
+ * @return array          [project id => ['amount_short' => , 'amount_full' => , 'percent' => , 'relaunch_count' => , 'status' => , 'details' => , 'description' => ]]
  */
 function reedcrmTodoGetProjectInfos(DoliDB $db, array $events): array
 {
@@ -805,13 +809,24 @@ function reedcrmTodoGetProjectInfos(DoliDB $db, array $events): array
         return [];
     }
 
-    $sql   = 'SELECT rowid, fk_soc, budget_amount, opp_amount, opp_percent FROM ' . MAIN_DB_PREFIX . 'projet';
-    $sql  .= ' WHERE rowid IN (' . implode(',', $projectIds) . ')';
+    $sql   = 'SELECT p.rowid, p.fk_soc, p.fk_statut, p.dateo, p.datee, p.description, p.budget_amount, p.opp_amount, p.opp_percent,';
+    $sql  .= ' s.nom as soc_name, ls.code as opp_status_code, ls.label as opp_status_label,';
+    $sql  .= ' pe.reedcrm_firstname, pe.reedcrm_lastname, pe.projectphone, pe.reedcrm_email, ir.code as origin_code, ir.label as origin_label';
+    $sql  .= ' FROM ' . MAIN_DB_PREFIX . 'projet as p';
+    $sql  .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = p.fk_soc';
+    $sql  .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_lead_status as ls ON ls.rowid = p.fk_opp_status';
+    $sql  .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'projet_extrafields as pe ON pe.fk_object = p.rowid';
+    $sql  .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_input_reason as ir ON ir.rowid = pe.opporigin';
+    $sql  .= ' WHERE p.rowid IN (' . implode(',', $projectIds) . ')';
     $resql = $db->query($sql);
     if (!$resql) {
         dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
         return [];
     }
+
+    // Same labels and colours as the status of the project card
+    $statusLabels  = [0 => 'Draft', 1 => 'Opened', 2 => 'Closed'];
+    $statusClasses = [0 => 'status0', 1 => 'status4', 2 => 'status6'];
 
     $infos      = [];
     $projectSoc = [];
@@ -819,13 +834,54 @@ function reedcrmTodoGetProjectInfos(DoliDB $db, array $events): array
         $projectId = (int) $obj->rowid;
         $budget    = (float) $obj->budget_amount;
         $amount    = $budget > 0 ? $budget : (float) $obj->opp_amount;
+        $percent   = ($obj->opp_percent !== null && $obj->opp_percent !== '') ? (int) round((float) $obj->opp_percent) : null;
+        $status    = (int) $obj->fk_statut;
+
+        // Lines of the tooltip, left out when the project has nothing to tell
+        $details = [];
+        if (!empty($obj->opp_status_code)) {
+            $stepKey   = 'OppStatus' . $obj->opp_status_code;
+            $details[] = ['label' => $langs->transnoentities('TodoProjectStep'), 'value' => $langs->transnoentities($stepKey) !== $stepKey ? $langs->transnoentities($stepKey) : $obj->opp_status_label];
+        }
+        if ($amount > 0) {
+            $details[] = ['label' => $langs->transnoentities($budget > 0 ? 'Budget' : 'OpportunityAmount'), 'value' => price($amount, 0, $langs, 1, -1, -1, $conf->currency)];
+        }
+        if ($percent !== null) {
+            $details[] = ['label' => $langs->transnoentities('OpportunityProbability'), 'value' => $percent . '%'];
+        }
+        if (!empty($obj->soc_name)) {
+            $details[] = ['label' => $langs->transnoentities('TodoProjectThirdParty'), 'value' => $obj->soc_name];
+        }
+        $contactName = trim($obj->reedcrm_firstname . ' ' . $obj->reedcrm_lastname);
+        if ($contactName !== '') {
+            $details[] = ['label' => $langs->transnoentities('TodoProjectContact'), 'value' => $contactName];
+        }
+        if (!empty($obj->projectphone)) {
+            $details[] = ['label' => $langs->transnoentities('TodoProjectPhone'), 'value' => $obj->projectphone];
+        }
+        if (!empty($obj->reedcrm_email)) {
+            $details[] = ['label' => $langs->transnoentities('TodoProjectEmail'), 'value' => $obj->reedcrm_email];
+        }
+        if ($obj->dateo) {
+            $details[] = ['label' => $langs->transnoentities('DateStart'), 'value' => dol_print_date($db->jdate($obj->dateo), 'day')];
+        }
+        if ($obj->datee) {
+            $details[] = ['label' => $langs->transnoentities('DateEnd'), 'value' => dol_print_date($db->jdate($obj->datee), 'day')];
+        }
+        if (!empty($obj->origin_code)) {
+            $originKey = 'DemandReasonType' . $obj->origin_code;
+            $details[] = ['label' => $langs->transnoentities('TodoProjectOrigin'), 'value' => $langs->transnoentities($originKey) !== $originKey ? $langs->transnoentities($originKey) : $obj->origin_label];
+        }
 
         $projectSoc[$projectId] = (int) $obj->fk_soc;
         $infos[$projectId]      = [
             'amount_short'   => $amount > 0 ? reedcrmTodoFormatAmountMagnitude($amount) : '',
             'amount_full'    => $amount > 0 ? $langs->trans($budget > 0 ? 'TodoProjectBudget' : 'TodoProjectOpportunityAmount', price($amount, 0, $langs, 1, -1, -1, $conf->currency)) : '',
-            'percent'        => ($obj->opp_percent !== null && $obj->opp_percent !== '') ? (int) round((float) $obj->opp_percent) : null,
+            'percent'        => $percent,
             'relaunch_count' => 0,
+            'status'         => isset($statusLabels[$status]) ? dolGetStatus($langs->transnoentitiesnoconv($statusLabels[$status]), '', '', $statusClasses[$status], 5, '', ['tooltip' => 'no']) : '',
+            'details'        => $details,
+            'description'    => dol_trunc(dol_string_nohtmltag((string) $obj->description), 200),
         ];
     }
     $db->free($resql);

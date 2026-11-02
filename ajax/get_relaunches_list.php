@@ -65,6 +65,25 @@ if (!$user->hasRight('agenda', 'myactions', 'read') && !$user->hasRight('agenda'
 $projectId  = GETPOSTINT('project_id');
 $actionType = GETPOST('action_type', 'aZ09'); // AC_TEL, AC_EMAIL, AC_RDV, or other
 $socid      = GETPOSTINT('socid');
+$scope      = GETPOST('scope', 'aZ09'); // #873: 'past' or 'upcoming'
+
+// The two-button widget asks for a temporal bucket instead of a type. The legacy per-type path
+// below is left untouched for the callers that still send action_type alone.
+if (!empty($scope) && (!empty($projectId) || !empty($socid))) {
+    require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+
+    $rows = reedcrm_get_relaunch_rows($db, $projectId, $socid, $scope, GETPOSTINT('limit'));
+
+    ob_start();
+    require __DIR__ . '/../core/tpl/view/eventpro/relaunch_list_panel.tpl.php';
+    $html = ob_get_clean();
+
+    top_httphead('application/json');
+    echo json_encode(['success' => true, 'html' => $html]);
+
+    $db->close();
+    exit;
+}
 
 if (empty($actionType) || (empty($projectId) && empty($socid))) {
     top_httphead('application/json');

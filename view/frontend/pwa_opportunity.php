@@ -61,19 +61,19 @@ saturne_check_access($permissionToRead);
 
 // Only opportunities (projects) are exposed in the App for now; the desktop card handles the other types
 if ($fromType !== 'project' || !isModEnabled('project')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
 $project = new Project($db);
 if ($id <= 0 || $project->fetch($id) <= 0) {
-    accessforbidden($langs->trans('RecordNotFound'), 0);
+    accessforbidden($langs->trans('ErrorRecordNotFound'));
     exit;
 }
 $project->fetch_optionals();
 
 if (!$user->hasRight('projet', 'lire')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
