@@ -28,7 +28,8 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/geturl.lib.php';
  *
  * Thin read-only client over the Pocket public API. Only the endpoints the module needs are
  * exposed: folders (to feed the admin selector), recordings and their detail, and the signed
- * audio URL. Every call is authenticated with the API key stored in the module configuration.
+ * audio URL. Every call is authenticated with the API key of the account it is built for, see
+ * PocketAccount::getApi().
  */
 class PocketApi
 {
@@ -61,12 +62,14 @@ class PocketApi
      * Constructor.
      *
      * @param DoliDB $db     Database handler.
-     * @param string $apiKey Override of the configured key, used by the admin connection test.
+     * @param string $apiKey Key of the account, personal or shared. No implicit fallback on the
+     *                       shared key: the caller picks the account, a recording is only readable
+     *                       with the key of the account holding it.
      */
-    public function __construct(DoliDB $db, string $apiKey = '')
+    public function __construct(DoliDB $db, string $apiKey)
     {
         $this->db     = $db;
-        $this->apiKey = $apiKey !== '' ? $apiKey : getDolGlobalString('REEDCRM_POCKET_API_KEY');
+        $this->apiKey = $apiKey;
     }
 
     /**

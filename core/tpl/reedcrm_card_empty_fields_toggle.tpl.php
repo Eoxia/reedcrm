@@ -31,12 +31,15 @@ if (empty($conf) || !is_object($conf)) {
 
 global $langs, $user;
 
+// reedcrm_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
+require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
+
 // Per-user display preference: every field is shown as long as the user has not asked otherwise
 $cardFieldsDisplay = (isset($user->conf->REEDCRM_CARD_FIELDS_DISPLAY) && $user->conf->REEDCRM_CARD_FIELDS_DISPLAY === 'filled') ? 'filled' : 'all';
 
 // The native Dolibarr cards never load reedcrm.min.css nor the module bundle, both are needed here
 ?>
-<link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/css/reedcrm.min.css', 1)); ?>">
+<link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
 
 <div id="reedcrm-card-fields-config"
      data-url="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/save_kpi_layout.php', 1)); ?>"
@@ -54,4 +57,4 @@ $cardFieldsDisplay = (isset($user->conf->REEDCRM_CARD_FIELDS_DISPLAY) && $user->
     </button>
 </div>
 
-<script type="text/javascript" src="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/js/modules/card_empty_fields.js', 1)); ?>"></script>
+<script type="text/javascript" src="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/js/modules/card_empty_fields.js')); ?>"></script>

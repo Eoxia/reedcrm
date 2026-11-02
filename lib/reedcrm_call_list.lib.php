@@ -119,6 +119,25 @@ function reedcrm_get_or_create_user_default_call_list(DoliDB $db, User $targetUs
 }
 
 /**
+ * Check whether a user may see a call list: all of them, their subordinates' ones or their own, by right.
+ *
+ * @param  User     $user     User to check
+ * @param  CallList $callList Call list
+ * @return bool               true if the user may see the call list
+ */
+function reedcrm_call_list_user_can_read(User $user, CallList $callList): bool
+{
+    if ($user->hasRight('reedcrm', 'call_list', 'read_all') || $user->admin) {
+        return true;
+    }
+    if ($user->hasRight('reedcrm', 'call_list', 'read_subordinates')) {
+        return isset($user->getAllChildIds(1)[$callList->fk_user_assign]);
+    }
+
+    return $user->hasRight('reedcrm', 'call_list', 'read') && $callList->fk_user_assign == $user->id;
+}
+
+/**
  * Add an element (project / propal / facture) to a call list.
  *
  * Shared business core used by both the select widget endpoint and the

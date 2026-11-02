@@ -301,6 +301,485 @@ function reedcrm_pocket_get_linkable_recordings(string $linkName, int $objectId,
 }
 
 /**
+ * Get the metadata of the linkable object a card hook context belongs to.
+ *
+ * Only the enabled links are looked at: the button of a disabled object type must not appear on its
+ * card, exactly like its tab does not.
+ *
+ * @param  string             $context Hook context of the page, ex. 'thirdpartycard,globalcard'.
+ * @return array<string,mixed>         Matching metadata, empty array when the page carries no link.
+ */
+function reedcrm_pocket_get_object_metadata_from_card_context(string $context): array
+{
+    if (empty($context)) {
+        return [];
+    }
+
+    $linkableObjects = reedcrm_pocket_get_linkable_objects();
+
+    foreach (reedcrm_pocket_get_enabled_linked_object_types() as $objectType) {
+        $hookNameCard = $linkableObjects[$objectType]['hook_name_card'] ?? '';
+
+        if (!empty($hookNameCard) && strpos($context, $hookNameCard) !== false) {
+            return $linkableObjects[$objectType];
+        }
+    }
+
+    return [];
+}
+
+/**
+ * Tell whether a recording is already attached to a business object.
+ *
+ * Both directions of llx_element_element are tested: the pair is stored in the order Dolibarr chose
+ * when the link was created. Asking first also keeps the unique index of the table from turning a
+ * second click on the button into an error.
+ *
+ * @param  int    $recordingId Recording ID.
+ * @param  string $linkName    Element link name of the target, ex. 'ticket'.
+ * @param  int    $objectId    Target object ID.
+ * @return bool                True when the link already exists.
+ */
+function reedcrm_pocket_is_recording_linked(int $recordingId, string $linkName, int $objectId): bool
+{
+    global $db;
+
+    if ($recordingId <= 0 || empty($linkName) || $objectId <= 0) {
+        return false;
+    }
+
+    $sql  = 'SELECT ee.rowid FROM ' . MAIN_DB_PREFIX . 'element_element as ee';
+    $sql .= " WHERE (ee.sourcetype = '" . $db->escape(REEDCRM_POCKET_LINK_ELEMENT_TYPE) . "' AND ee.fk_source = " . $recordingId;
+    $sql .= " AND ee.targettype = '" . $db->escape($linkName) . "' AND ee.fk_target = " . $objectId . ')';
+    $sql .= " OR (ee.targettype = '" . $db->escape(REEDCRM_POCKET_LINK_ELEMENT_TYPE) . "' AND ee.fk_target = " . $recordingId;
+    $sql .= " AND ee.sourcetype = '" . $db->escape($linkName) . "' AND ee.fk_source = " . $objectId . ')';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return false;
+    }
+
+    $exists = $db->num_rows($resql) > 0;
+    $db->free($resql);
+
+    return $exists;
+}
+
+/**
+ * Get the thirdparty a business object belongs to.
+ *
+ * @param  CommonObject $object Object the recording is attached to.
+ * @return int                  Thirdparty ID, 0 when the object carries none.
+ */
+function reedcrm_pocket_get_object_socid(CommonObject $object): int
+{
+    if ($object->element == 'societe') {
+        return (int) $object->id;
+    }
+
+    foreach (['socid', 'fk_soc', 'fk_thirdparty'] as $property) {
+        if (!empty($object->$property)) {
+            return (int) $object->$property;
+        }
+    }
+
+    return 0;
+}
+
+/**
+ * Carry the links of a recording over to an event created from one of its actions.
+ *
+ * The action was said during the call, so the event belongs to what the call was about. Each link
+ * lands in the field the agenda trigger of Dolibarr fills: the project in fk_project, the contacts
+ * in the resources of the event, any other object in fk_element, which puts the event on the
+ * Events tab of that object. A thirdparty already set on the event is kept, the linked objects only
+ * fill a missing one. The recording stays the element of the event when nothing else is linked.
+ *
+ * @param  PocketRecording $recording Recording the action comes from.
+ * @param  ActionComm      $event     Event about to be created.
+ * @return void
+ */
+function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionComm $event): void
+{
+    if ($recording->id <= 0) {
+        return;
+    }
+
+    $recording->fetchObjectLinked();
+
+    // The keys are the rowids of llx_element_element: sorted, the object attached first, usually
+    // the one the hang up button was pressed on, is the one the event is filed under
+    $linkedObjects = [];
+    foreach ($recording->linkedObjects as $linkedInstances) {
+        foreach ($linkedInstances as $linkId => $linkedInstance) {
+            $linkedObjects[$linkId] = $linkedInstance;
+        }
+    }
+    ksort($linkedObjects);
+
+    $businessObject = null;
+    foreach ($linkedObjects as $linkedObject) {
+        // The owner of the event is chosen on the action, a linked user says nothing about it
+        if ($linkedObject->element == 'user') {
+            continue;
+        }
+
+        if ($linkedObject->element == 'project') {
+            if (empty($event->fk_project)) {
+                $event->fk_project = (int) $linkedObject->id;
+            }
+        } elseif ($linkedObject->element == 'contact') {
+            $event->socpeopleassigned[(int) $linkedObject->id] = (int) $linkedObject->id;
+        } elseif ($linkedObject->element != 'societe' && $businessObject === null) {
+            $businessObject = $linkedObject;
+        }
+
+        // Some objects store -1 for "no thirdparty", only a real one fills the event
+        if (empty($event->socid) && reedcrm_pocket_get_object_socid($linkedObject) > 0) {
+            $event->socid = reedcrm_pocket_get_object_socid($linkedObject);
+        }
+    }
+
+    if ($businessObject !== null) {
+        // Same element type as the agenda trigger writes, the Events tab of the object reads it
+        $module = (!empty($businessObject->module) && $businessObject->module != 'product') ? $businessObject->module : '';
+
+        $event->fk_element  = (int) $businessObject->id;
+        $event->elementtype = $businessObject->element . ($module ? '@' . $module : '');
+
+        // A proposal or a ticket of a project files the event under that project too, unless the
+        // recording names a project of its own
+        if (empty($event->fk_project) && !empty($businessObject->fk_project)) {
+            $event->fk_project = (int) $businessObject->fk_project;
+        }
+    }
+}
+
+/**
+ * Get the name of whoever was on the other end of the line.
+ *
+ * Feeds the label of the hang up button: the user recognises their call by the name of the person
+ * or the company, not by the reference of the object they happen to be reading.
+ *
+ * @param  CommonObject $object Object the button is printed on.
+ * @return string               Name to show, empty when the object gives nothing readable.
+ */
+function reedcrm_pocket_get_hangup_target_name(CommonObject $object): string
+{
+    global $db, $langs;
+
+    if ($object->element == 'contact' && method_exists($object, 'getFullName')) {
+        $contactName = $object->getFullName($langs);
+        if (!empty($contactName)) {
+            return $contactName;
+        }
+    }
+
+    $socid = reedcrm_pocket_get_object_socid($object);
+    if ($socid > 0) {
+        // The thirdparty of the object is read on its own rather than through fetch_thirdparty(),
+        // which would alter the object the card is about to print.
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+        $thirdparty = new Societe($db);
+        if ($thirdparty->fetch($socid) > 0) {
+            return $thirdparty->name;
+        }
+    }
+
+    foreach (['ref', 'label', 'title'] as $property) {
+        if (!empty($object->$property)) {
+            return (string) $object->$property;
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Rebuild the URL of the current page without its action parameters.
+ *
+ * The button and the redirection that follows it both need the page back as it was, and the objects
+ * a recording attaches to do not all read their identifier from the same parameter (socid, id,
+ * track_id). The query string of the request is therefore kept as is instead of being rebuilt.
+ *
+ * @return string URL of the current page, action and token dropped.
+ */
+function reedcrm_pocket_url_without_action(): string
+{
+    $query = $_GET;
+    unset($query['action'], $query['token'], $query['confirm'], $query['massaction']);
+
+    return $_SERVER['PHP_SELF'] . (!empty($query) ? '?' . http_build_query($query) : '');
+}
+
+/**
+ * Tell whether the hang up button may be offered on a card.
+ *
+ * The account checked is the one of the logged user: their own when they set a key on the Pocket
+ * tab of their user card, the shared one of the setup page otherwise. It counts as configured once
+ * both the API key and the imported folder are set. A key alone is not enough: the button only
+ * picks recordings filed in that folder.
+ *
+ * @return bool True when the Pocket account of the user is configured and they may write recordings.
+ */
+function reedcrm_pocket_can_hangup(): bool
+{
+    global $db, $user;
+
+    if (!$user->hasRight('reedcrm', 'pocketrecording', 'write')) {
+        return false;
+    }
+
+    require_once __DIR__ . '/../class/pocketaccount.class.php';
+
+    return PocketAccount::getForUser($db, $user)->isConfigured();
+}
+
+/**
+ * Build the "I just hung up" button of a business object.
+ *
+ * Deliberately not an action button of the card: the sentence is long enough to push the whole
+ * action row out of the screen. It is a small inline chip printed beside the title of the banner,
+ * and it stays inline, since the banner puts anything starting with a div on its own line.
+ *
+ * @param  CommonObject $object  Object the recording will be attached to.
+ * @param  string       $baseUrl Page the action is sent to, current page when empty.
+ * @return string                Button HTML, empty string when the button must not be offered.
+ */
+function reedcrm_pocket_hangup_button(CommonObject $object, string $baseUrl = ''): string
+{
+    global $db, $langs, $user;
+
+    if ($object->id <= 0 || !reedcrm_pocket_can_hangup()) {
+        return '';
+    }
+
+    $langs->load('reedcrm@reedcrm');
+
+    // The name of the correspondent lives in the tooltip: printed, it would make the chip as wide
+    // as the title it sits next to. The folder is named too, the call has to be filed there first.
+    $pocketAccount = PocketAccount::getForUser($db, $user);
+    $hangupHelp    = $langs->trans('PocketHangupHelp', $pocketAccount->folderLabel ?: $pocketAccount->folderId);
+    $targetName    = reedcrm_pocket_get_hangup_target_name($object);
+    $tooltip       = !empty($targetName) ? $langs->trans('PocketHangupWith', $targetName) . ' - ' . $hangupHelp : $hangupHelp;
+
+    $url  = !empty($baseUrl) ? $baseUrl : reedcrm_pocket_url_without_action();
+    $url .= (strpos($url, '?') === false ? '?' : '&') . 'action=add_pocket_hangup&token=' . newToken();
+
+    $button  = '<a class="reedcrm-pocket-hangup-button classfortooltip" href="' . dol_escape_htmltag($url) . '" title="' . dol_escape_htmltag($tooltip) . '">';
+    $button .= '<i class="fas fa-phone-slash"></i>';
+    $button .= '<span>' . dol_escape_htmltag($langs->trans('PocketHangup')) . '</span>';
+    $button .= '</a>';
+
+    return $button;
+}
+
+/**
+ * Insert the hang up chip into the ref block of a banner, on the line of the title.
+ *
+ * The whole ref block is printed inside the title, but the cards fill it with block level divs -
+ * the address of a thirdparty, the references of a ticket. Appended, the chip would drop under
+ * them; it is therefore inserted right before the first of those blocks, after the inline pictos
+ * the card may have put next to its title.
+ *
+ * @param  string       $moreHtmlRef Ref block of the banner, as the card built it.
+ * @param  CommonObject $object      Object the recording will be attached to.
+ * @return string                    Ref block with the chip on the title line.
+ */
+function reedcrm_pocket_insert_hangup_button(string $moreHtmlRef, CommonObject $object): string
+{
+    $button = reedcrm_pocket_hangup_button($object);
+    if (empty($button)) {
+        return $moreHtmlRef;
+    }
+
+    $firstBlock = strpos($moreHtmlRef, '<div');
+    if ($firstBlock === false) {
+        return $moreHtmlRef . $button;
+    }
+
+    return substr($moreHtmlRef, 0, $firstBlock) . $button . substr($moreHtmlRef, $firstBlock);
+}
+
+/**
+ * Attach the last Pocket recording of the folder to a business object.
+ *
+ * The recording is imported first: the conversation that just ended is not in Dolibarr yet, and
+ * waiting for the next synchronisation would defeat the whole gesture. It is read from the account
+ * of the user, and refused when it is older than REEDCRM_POCKET_HANGUP_MAX_AGE minutes: the call
+ * that just ended is then not filed in the folder yet, and an earlier one would be attached.
+ *
+ * @param  CommonObject $object   Object the recording is attached to.
+ * @param  string       $linkName Element link name of the object, ex. 'ticket'.
+ * @param  User         $user     User performing the action.
+ * @return array{recording:?PocketRecording,error:string,already_linked:bool} Outcome of the attachment.
+ */
+function reedcrm_pocket_attach_last_recording(CommonObject $object, string $linkName, User $user): array
+{
+    global $db, $langs;
+
+    $outcome = ['recording' => null, 'error' => '', 'already_linked' => false];
+
+    if ($object->id <= 0 || empty($linkName)) {
+        $outcome['error'] = $langs->trans('ErrorBadParameters');
+        return $outcome;
+    }
+
+    require_once __DIR__ . '/../class/pocketsync.class.php';
+
+    $pocketSync = new PocketSync($db, PocketAccount::getForUser($db, $user));
+    $recording  = $pocketSync->importLastRecording($user, getDolGlobalInt('REEDCRM_POCKET_HANGUP_MAX_AGE', 240) * 60);
+    if ($recording === null) {
+        $outcome['error'] = $pocketSync->error;
+        return $outcome;
+    }
+
+    $outcome['recording'] = $recording;
+
+    // The object answers what the recording cannot: who was on the line. Only a recording without
+    // thirdparty is filled, the one already set was chosen by someone and stays.
+    if (empty($recording->fk_soc)) {
+        $socid = reedcrm_pocket_get_object_socid($object);
+        if ($socid > 0) {
+            $recording->fk_soc = $socid;
+            $recording->update($user);
+        }
+    }
+
+    if (reedcrm_pocket_is_recording_linked((int) $recording->id, $linkName, (int) $object->id)) {
+        $outcome['already_linked'] = true;
+        return $outcome;
+    }
+
+    if (reedcrm_pocket_link_recording($recording, $linkName, (int) $object->id) <= 0) {
+        $outcome['error'] = $langs->trans('PocketRecordingLinkFailed');
+    }
+
+    return $outcome;
+}
+
+/**
+ * Run the hang up action and report its outcome as page messages.
+ *
+ * @param  CommonObject $object   Object the recording is attached to.
+ * @param  string       $linkName Element link name of the object, ex. 'ticket'.
+ * @param  User         $user     User performing the action.
+ * @return void
+ */
+function reedcrm_pocket_process_hangup(CommonObject $object, string $linkName, User $user): void
+{
+    global $langs;
+
+    $langs->load('reedcrm@reedcrm');
+
+    $outcome = reedcrm_pocket_attach_last_recording($object, $linkName, $user);
+
+    if (!empty($outcome['error'])) {
+        setEventMessages($outcome['error'], [], 'errors');
+        return;
+    }
+
+    // A recording attached seconds after the call is often still untitled and without duration:
+    // Pocket fills them once it has processed the audio, so the message only shows what it holds.
+    $recording = $outcome['recording'];
+    $duration  = reedcrm_pocket_format_duration((int) $recording->duration);
+
+    $description  = $recording->getNomUrl(1);
+    $description .= !empty($recording->label) ? ' ' . dol_escape_htmltag((string) $recording->label) : '';
+    $description .= ' - ' . dol_print_date($recording->recording_date, 'dayhour');
+    $description .= !empty($duration) ? ' (' . $duration . ')' : '';
+
+    if (!empty($outcome['already_linked'])) {
+        setEventMessages($langs->trans('PocketHangupAlreadyLinked', $description), [], 'warnings');
+        return;
+    }
+
+    setEventMessage($langs->trans('PocketHangupAttached', $description));
+}
+
+/**
+ * Run an action of the Pocket account setup and report its outcome as page messages.
+ *
+ * Shared by the setup page, for the shared account, and by the Pocket tab of the user card, for a
+ * personal one: the forms are the same, only the account they write to differs.
+ *
+ * @param  string        $action  Action posted by the form.
+ * @param  PocketAccount $account Account the action applies to.
+ * @param  User          $user    User performing the action.
+ * @return bool                   True when the action was an account one, the caller then redirects.
+ */
+function reedcrm_pocket_process_account_action(string $action, PocketAccount $account, User $user): bool
+{
+    global $db, $langs;
+
+    switch ($action) {
+        case 'set_pocket_api_key':
+            // The key is only rewritten when the field carries something: an untouched masked field
+            // must never wipe a working key.
+            $apiKey = trim(GETPOST('pocket_api_key', 'alphanohtml'));
+            if ($apiKey !== '') {
+                if ($account->setApiKey($apiKey) > 0) {
+                    setEventMessage($langs->trans('SavedConfig'));
+                } else {
+                    setEventMessages($langs->trans('Error'), [], 'errors');
+                }
+            }
+            return true;
+
+        case 'del_pocket_api_key':
+            $account->delete();
+            setEventMessage($langs->trans('SavedConfig'));
+            return true;
+
+        case 'set_pocket_folder':
+            $folderId = GETPOST('pocket_folder_id', 'alphanohtml');
+
+            // The label is denormalised so the recordings list and the sync stay readable even when
+            // the API is unreachable.
+            $folderLabel = '';
+            if ($folderId !== '') {
+                foreach ((array) $account->getApi()->getFolders() as $folder) {
+                    if ($folder['id'] === $folderId) {
+                        $folderLabel = $folder['label'];
+                        break;
+                    }
+                }
+            }
+
+            $account->setFolder($folderId, $folderLabel);
+            setEventMessage($langs->trans('SavedConfig'));
+            return true;
+
+        case 'test_pocket_connection':
+            $pocketApi = $account->getApi();
+            $folders   = $pocketApi->getFolders();
+
+            if ($folders === null) {
+                setEventMessages($langs->trans('PocketConnectionFailed', $pocketApi->error), [], 'errors');
+            } else {
+                setEventMessage($langs->trans('PocketConnectionSucceeded', count($folders)));
+            }
+            return true;
+
+        case 'sync_pocket_recordings':
+            require_once __DIR__ . '/../class/pocketsync.class.php';
+
+            $pocketSync = new PocketSync($db, $account);
+            $report     = $pocketSync->syncRecordings($user);
+
+            if (!empty($pocketSync->error)) {
+                setEventMessages($pocketSync->error, [], 'errors');
+            } else {
+                setEventMessage($langs->trans('PocketSyncReport', $report['created'], $report['updated'], $report['skipped'], $report['errors']));
+            }
+            return true;
+    }
+
+    return false;
+}
+
+/**
  * Get the columns a table actually holds.
  *
  * The objects a recording may be linked to are spread over a dozen tables, each naming its business

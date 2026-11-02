@@ -163,7 +163,7 @@ function reedcrm_get_order_lifecycle_steps(CommonObject $object): array
     }
 
     $status     = (int) $row['fk_statut'];
-    $sent       = reedcrm_lifecycle_sent_summary('commande', (int) $object->id);
+    $sent       = reedcrm_lifecycle_sent_summary('order', (int) $object->id);
     $isClosed   = ($status == Commande::STATUS_CLOSED);
     $isCanceled = ($status == Commande::STATUS_CANCELED);
 
@@ -215,7 +215,7 @@ function reedcrm_get_invoice_lifecycle_steps(CommonObject $object): array
     $status      = (int) $row['fk_statut'];
     $isPaid      = !empty($row['paye']);
     $isAbandoned = ($status == Facture::STATUS_ABANDONED);
-    $sent        = reedcrm_lifecycle_sent_summary('facture', (int) $object->id);
+    $sent        = reedcrm_lifecycle_sent_summary('invoice', (int) $object->id);
     $payments    = reedcrm_lifecycle_payment_summary((int) $object->id);
 
     $steps   = [];
@@ -706,7 +706,10 @@ function reedcrm_lifecycle_date(array $row, string $field): ?int
 /**
  * Summary of the mails carrying the object, taken from the events the agenda records on its own
  *
- * @param  string $elementType Element type stored by the agenda (propal, commande, facture)
+ * ActionComm::create() stores the orders and the invoices as order and invoice, not under the element
+ * of their object: the type to pass is the one the agenda keeps, never $object->element
+ *
+ * @param  string $elementType Element type stored by the agenda (propal, order, invoice)
  * @param  int    $objectId    Id of the object
  * @return array               count, first and last sending
  */
