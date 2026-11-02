@@ -70,7 +70,8 @@ $permissiontodelete  = $user->hasRight('reedcrm', 'pocketrecording', 'delete');
 
 saturne_check_access($permissiontoread);
 
-if ($id > 0 && $object->fetch($id) <= 0) {
+// A recording only comes from the Pocket import: without one there is nothing to show (no creation form)
+if ($id <= 0 || $object->fetch($id) <= 0) {
     accessforbidden($langs->trans('ErrorRecordNotFound'));
 }
 
