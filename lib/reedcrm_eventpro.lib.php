@@ -21,7 +21,16 @@
  * \brief   Library files with common functions for ReedCRM eventPro
  */
 
-function showEventProTabs($id, $fromType, $currentTab): string
+/**
+ * Render the eventPro tab bar (customer note / email / ticket).
+ *
+ * @param  int    $id          Id of the object the events belong to
+ * @param  string $fromType    Element type of that object (project, societe, ...)
+ * @param  string $currentTab  Active tab key
+ * @param  string $extraParams Extra query string (starting with &) kept across tab switches
+ * @return string              HTML output
+ */
+function showEventProTabs($id, $fromType, $currentTab, string $extraParams = ''): string
 {
     global $langs;
 
@@ -45,7 +54,7 @@ function showEventProTabs($id, $fromType, $currentTab): string
         $isActive = ($currentTab == $tabKey);
         $out .= '<div class="inline-block tabsElem' . ($isActive ? ' tabsElemActive' : '') . '">';
             $out .= '<div class="tab tab' . ($isActive ? 'active' : 'unactive') . '">';
-                $out .= '<a class="tab inline-block valignmiddle" href="' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=' . $tabKey . '" title="' . $langs->trans($tabInfos['label']) . '">';
+                $out .= '<a class="tab inline-block valignmiddle" href="' . $_SERVER['PHP_SELF'] . '?from_id=' . $id . '&from_type=' . $fromType . '&tab=' . $tabKey . $extraParams . '" title="' . $langs->trans($tabInfos['label']) . '">';
                     $out .= img_picto($langs->trans($tabInfos['label']), $tabInfos['picto'], 'class="pictofixedwidth"');
                     $out .= $langs->trans($tabInfos['label']);
                 $out .= '</a>';
@@ -87,7 +96,7 @@ function showLatestProposals($object, $maxSizeShortListLimit = 3): string
                 $out .= '<div class="div-table-responsive-no-min">';
                 $out .= '<table class="noborder centpercent lastrecordtable">';
                 $out .= '<tr class="liste_titre">';
-                $out .= '<td colspan="5"><table width="100%" class="nobordernopadding"><tr><td>' . $langs->trans('LastPropals', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)) . '</td><td class="right"><a class="notasortlink" href="' . DOL_URL_ROOT.'/comm/propal/list.php?socid=' . $societe->id.'"><span class="hideonsmartphone">' . $langs->trans('AllPropals') . '</span><span class="badge marginleftonlyshort">' . $num . '</span></a></td>';
+                $out .= '<td colspan="5"><table width="100%" class="nobordernopadding"><tr><td>' . $langs->trans('LastPropals', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)) . '</td><td class="right"><a class="notasortlink" href="' . DOL_URL_ROOT.'/comm/propal/list.php?socid=' . $object->thirdparty->id . '"><span class="hideonsmartphone">' . $langs->trans('AllPropals') . '</span><span class="badge marginleftonlyshort">' . $num . '</span></a></td>';
                 $out .= '<td width="20px" class="right"><a href="' . DOL_URL_ROOT . '/comm/propal/stats/index.php?socid=' . $object->thirdparty->id . '">' . img_picto($langs->trans("Statistics"), 'stats') . '</a></td>';
                 $out .= '</tr></table></td>';
                 $out .= '</tr>';

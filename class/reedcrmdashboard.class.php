@@ -44,308 +44,87 @@ class ReedcrmDashboard
 	/**
 	 * Load dashboard info.
 	 *
+	 * @param  array|null $moreParams Parameters for load dashboard info
 	 * @return array
 	 * @throws Exception
 	 */
-	public function load_dashboard(): array
+	public function load_dashboard(?array $moreParams = []): array
 	{
-        global $user, $langs;
+        // The ticket dashboard is a page of its own: it replaces the content instead of adding to it
+        if (!empty($moreParams['LoadTicketDashboard'])) {
+            require_once __DIR__ . '/reedcrmticketdashboard.class.php';
 
-        $confName        = 'REEDCRM_DASHBOARD_CONFIG';
-        $dashboardConfig = isset($user->conf->$confName) ? json_decode($user->conf->$confName) : null;
-        $array = ['propal' => ['graphs' => [], 'disabledGraphs' => []]];
+            $ticketDashboard = new ReedcrmTicketDashboard($this->db);
 
-        if (empty($dashboardConfig->graphs->OpportunitySources->hide)) {
-            $array['propal']['graphs'][] = self::getOpportunitySources('OpportunitySources');
-        } else {
-            $array['propal']['disabledGraphs']['OpportunitySources'] = $langs->transnoentities('OpportunitySources');
+            return ['ticket' => $ticketDashboard->load_dashboard()];
         }
 
-        if (empty($dashboardConfig->graphs->PropalStatusCommRepartition->hide)) {
-            $array['propal']['graphs'][] = self::getDataFromExtrafieldsAndDictionary('PropalStatusCommRepartition', 'c_commercial_status');
-        } else {
-            $array['propal']['disabledGraphs']['PropalStatusCommRepartition'] = $langs->transnoentities('PropalStatusCommRepartition');
-        }
-        if (empty($dashboardConfig->graphs->PropalRefusalReasonRepartition->hide)) {
-            $array['propal']['graphs'][] = self::getDataFromExtrafieldsAndDictionary('PropalRefusalReasonRepartition', 'c_refusal_reason', 'commrefusal');
-        } else {
-            $array['propal']['disabledGraphs']['PropalRefusalReasonRepartition'] = $langs->transnoentities('PropalRefusalReasonRepartition');
+        // The sales and direction dashboards are pages of their own as well
+        if (!empty($moreParams['LoadSalesDashboard'])) {
+            require_once __DIR__ . '/reedcrmsalesdashboard.class.php';
+
+            $salesDashboard = new ReedcrmSalesDashboard($this->db);
+
+            return ['sales' => $salesDashboard->load_dashboard()];
         }
 
-        $array['project'] = ['lists' => [], 'disabledGraphs' => []];
-        if (empty($dashboardConfig->graphs->ProjectOpportunitiesList->hide)) {
-            $array['project']['lists'][] = self::getProjectOpportunitiesList();
-        } else {
-            $array['project']['disabledGraphs']['ProjectOpportunitiesList'] = $langs->transnoentities('ProjectOpportunitiesList');
+        if (!empty($moreParams['LoadDirectionDashboard'])) {
+            require_once __DIR__ . '/reedcrmdirectiondashboard.class.php';
+
+            $directionDashboard = new ReedcrmDirectionDashboard($this->db);
+
+            return ['direction' => $directionDashboard->load_dashboard()];
         }
 
-        if (empty($dashboardConfig->graphs->ProductLastSellList->hide)) {
-            $array['product']['lists'][] = self::getProductLastSellList();
-        } else {
-            $array['product']['disabledGraphs']['ProductLastSellList'] = $langs->transnoentities('ProjectOpportunitiesList');
-        }
-
-		return $array;
+        // The home page is printed by ActionsReedcrm::saturneIndex, the Saturne dashboard has nothing to add to it
+        return [];
 	}
 
-	/**
-	 * Get repartition of a dataset according to extrafields and dictionary
-	 *
-	 * @param  string    $title      Title of the graph
-	 * @param  string    $dictionary Dictionary with every data
-	 * @param  string    $fieldName  Extrafields where we can set the status
-	 * @param  string    $class      Class linked to the extrafields
-	 * @return array                 Graph datas (label/color/type/title/data etc..).
-	 * @throws Exception
-	 */
-	public function getDataFromExtrafieldsAndDictionary(string $title, string $dictionary, string $fieldName = 'commstatus', string $class = 'propal'): array
-	{
-		global $langs;
-
-		require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-
-		$propals = saturne_fetch_all_object_type($class, '', '', 0, 0, [], 'AND', true);
-
-		// Graph Title parameters.
-		$array['title'] = $langs->transnoentities($title);
-        $array['name']  = $title;
-		$array['picto'] = $class;
-
-		// Graph parameters.
-		$array['width']   = '100%';
-		$array['height']  = 400;
-		$array['type']    = 'pie';
-		$array['dataset'] = 1;
-
-		$dictionaries = saturne_fetch_dictionary($dictionary);
-
-		$i                  = 0;
-		$arrayNbDataByLabel = [0 => 0];
-
-		$array['labels'][$i] = ['label' => 'N/A', 'color' => '#999999'];
-
-		if (is_array($dictionaries) && !empty($dictionaries)) {
-			foreach ($dictionaries as $dictionaryValue) {
-				++$i;
-				$arrayNbDataByLabel[$i] = 0;
-				$array['labels'][$i]    = [
-					'label' => $langs->transnoentities($dictionaryValue->label),
-					'color' => $this->getColorRange($i)
-				];
-			}
-
-			if (is_array($propals) && !empty($propals)) {
-				foreach ($propals as $propal) {
-					if (!empty($propal->array_options['options_' . $fieldName])) {
-						$commStatus = $propal->array_options['options_' . $fieldName];
-						if (!isset($arrayNbDataByLabel[$commStatus])) {
-							$arrayNbDataByLabel[$commStatus] = 0;
-						}
-						$arrayNbDataByLabel[$commStatus]++;
-					} else {
-						$arrayNbDataByLabel[0]++;
-					}
-				}
-				ksort($arrayNbDataByLabel);
-			}
-		}
-
-		$array['data'] = $arrayNbDataByLabel;
-
-		return $array;
-	}
-
-    public function getOpportunitySources($title)
+    /**
+     * Get the upcoming automatic call reminders of the current user.
+     *
+     * Reminders are the future to-do events created from the ProCard/EventPro
+     * "Créer une notification de rappel automatique" checkbox. They are identified by their
+     * dedicated category (REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG) and their linked actioncomm_reminder row.
+     *
+     * @param  int   $limit Maximum number of reminders to return
+     * @return array        List of reminder objects (id, label, datep, fk_soc, thirdparty_name)
+     */
+    public function getUpcomingCallReminders(int $limit = 5): array
     {
-        global $db, $langs;
+        global $user;
 
-        // Graph Title parameters.
-		$array['title'] = $langs->transnoentities($title);
-        $array['name']  = $title;
-		$array['picto'] = 'project';
+        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncommreminder.class.php';
 
-		// Graph parameters.
-		$array['width']   = '100%';
-		$array['height']  = 400;
-		$array['type']    = 'pie';
-		$array['dataset'] = 1;
+        $reminders = [];
 
-        $array['labels'] = [];
-
-        $sql = "SELECT c.rowid, c.label, c.active";
-        $sql .= " FROM ".MAIN_DB_PREFIX."c_input_reason as c";
-        $sql .= " WHERE c.active = 1";
-        $result = $db->query($sql);
-
-        $num = $db->num_rows($result);
-        $i = 0;
-		while ($i < $num) {
-			$objp = $db->fetch_object($result);
-            $array['labels'][$objp->rowid] = ['label' => $objp->label, 'color' => $this::getColorRange($i)];
-            $i++;
+        $reminderTag = getDolGlobalInt('REEDCRM_ACTIONCOMM_CALL_REMINDER_TAG');
+        if ($reminderTag <= 0) {
+            return $reminders;
         }
 
-        $array['data'] = [];
+        // A reminder with a deadline (an imported one) is due on it rather than on its start date
+        $sql  = 'SELECT a.id, a.label, COALESCE(a.datep2, a.datep) AS datep, a.fk_soc, s.nom AS thirdparty_name';
+        $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm AS a';
+        $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'actioncomm_reminder AS r ON r.fk_actioncomm = a.id';
+        $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'categorie_actioncomm AS c ON c.fk_actioncomm = a.id';
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe AS s ON s.rowid = a.fk_soc';
+        $sql .= ' WHERE c.fk_categorie = ' . ((int) $reminderTag);
+        $sql .= ' AND r.fk_user = ' . ((int) $user->id);
+        $sql .= ' AND r.status = ' . ActionCommReminder::STATUS_TODO;
+        $sql .= " AND COALESCE(a.datep2, a.datep) >= '" . $this->db->idate(dol_now()) . "'";
+        $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
+        $sql .= ' ORDER BY COALESCE(a.datep2, a.datep) ASC';
+        $sql .= $this->db->plimit($limit);
 
-        $sql2 = "SELECT e.opporigin";
-        $sql2 .= " FROM ".MAIN_DB_PREFIX."projet_extrafields as e";
-        $sql2 .= " WHERE e.opporigin IS NOT NULL AND e.opporigin != 0";
-        $result = $db->query($sql2);
-
-        $num = $db->num_rows($result);
-        $i = 0;
-		while ($i < $num) {
-			$objp = $db->fetch_object($result);
-            if (empty($array['data'][$objp->opporigin])) {
-                $array['data'][$objp->opporigin] = 0;
+        $resql = $this->db->query($sql);
+        if ($resql) {
+            while ($obj = $this->db->fetch_object($resql)) {
+                $reminders[] = $obj;
             }
-            $array['data'][$objp->opporigin]++;
-            $i++;
+            $this->db->free($resql);
         }
 
-        return $array;
-    }
-
-	/**
-	 * get color range for key
-	 *
-	 * @param  int    $key Key to find in color array
-	 * @return string
-	 */
-	public function getColorRange(int $key): string
-	{
-		$colorArray = ['#f44336', '#e81e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722', '#795548', '#9e9e9e', '#607d8b'];
-		return $colorArray[$key % count($colorArray)];
-	}
-
-    /**
-     * Get controls list by next control
-     *
-     * @return array    $array Graph datas (label/color/type/title/data etc..)
-     * @throws Exception
-     */
-    public function getProjectOpportunitiesList(): array
-    {
-        global $langs;
-
-        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-
-        // Graph Title parameters
-        $array['title'] = $langs->transnoentities('ProjectOpportunitiesList');
-        $array['name']  = 'ProjectOpportunitiesList';
-        $array['picto'] = '';
-
-        // Graph parameters
-        $array['type']   = 'list';
-        $array['labels'] = ['Ref', 'Label', 'OpportunityAmount', 'OppPercent', 'Relance', 'LastName', 'FirstName', 'Phone', 'Email', 'ButtonActions'];
-
-        $arrayProjectOpportunitiesList = [];
-        $projects                      = saturne_fetch_all_object_type('Project', 'DESC', 't.datec', 5, 0, [], 'AND', true);
-        if (!is_array($projects) || empty($projects)) {
-            $array['data'] = $arrayProjectOpportunitiesList;
-            return $array;
-        }
-
-        foreach ($projects as $project) {
-            $newThirdPartyUrl = DOL_URL_ROOT . '/societe/card.php?action=create&projectid=' . $project->id;
-
-            $arrayProjectOpportunitiesList[$project->id]['Ref']['value']               = $project->getNomUrl(1);
-            $arrayProjectOpportunitiesList[$project->id]['Ref']['morecss']             = 'left';
-            $arrayProjectOpportunitiesList[$project->id]['Label']['value']             = $project->title;
-            $arrayProjectOpportunitiesList[$project->id]['OpportunityAmount']['value'] = $project->opp_amount ? price($project->opp_amount, 0, '', 11, -1, -1, 'auto') : '-';
-            $arrayProjectOpportunitiesList[$project->id]['OppPercent']['value']        = $project->opp_percent ? $project->opp_percent . ' %' : '-';
-            $arrayProjectOpportunitiesList[$project->id]['Relance']['value']           = '';
-            $arrayProjectOpportunitiesList[$project->id]['LastName']['value']          = $project->array_options['options_reedcrm_lastname'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['FirstName']['value']         = $project->array_options['options_reedcrm_firstname'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['Phone']['value']             = $project->array_options['options_projectphone'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['Email']['value']             = $project->array_options['options_reedcrm_email'] ?? '-';
-            $arrayProjectOpportunitiesList[$project->id]['ButtonActions']['value']     = '<a class="wpeo-button" href="'. $newThirdPartyUrl .'"><i class="fas fa-plus"></i> '. $langs->trans('NewThirdparty') .'</a>';
-        }
-
-        $array['data'] = $arrayProjectOpportunitiesList;
-
-        return $array;
-    }
-
-    /**
-     * Get controls list by next control
-     *
-     * @return array    $array Graph datas (label/color/type/title/data etc..)
-     * @throws Exception
-     */
-    public function getProductLastSellList(): array
-    {
-        global $conf, $langs;
-
-        require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
-
-        // Graph Title parameters
-        $array['title'] = $langs->transnoentities('ProductLastSellList');
-        $array['name']  = 'ProductLastSellList';
-        $array['picto'] = '';
-
-        // Graph parameters
-        $array['type']   = 'list';
-        $array['labels'] = ['Ref', 'Label', 'LastSell', 'StockReel'];
-
-        $arrayProductLastSellList = [];
-
-        $select  = ', SUM(ps.reel) AS stock_reel,';
-        $select .= ' MAX(GREATEST(IFNULL(cmd.last_cmd, "1970-01-01"), IFNULL(fac.last_fac, "1970-01-01"))) AS last_sell';
-
-        $moreSelect = ['last_sell', 'stock_reel'];
-
-        $join  = ' LEFT JOIN ' . $this->db->prefix() . 'product_stock AS ps
-                    ON ps.fk_product = t.rowid
-                    AND ps.fk_entrepot IN (
-                        SELECT e.rowid
-                        FROM ' . $this->db->prefix() . 'entrepot AS e
-                        WHERE e.entity = ' . $conf->entity . '
-                    )';
-
-        $join .= ' LEFT JOIN (
-                        SELECT cd.fk_product, MAX(c.date_commande) AS last_cmd
-                        FROM ' . $this->db->prefix() . 'commandedet cd
-                        INNER JOIN ' . $this->db->prefix() . 'commande c
-                            ON c.rowid = cd.fk_commande
-                            AND c.fk_statut > 0
-                        GROUP BY cd.fk_product
-                    ) AS cmd ON cmd.fk_product = t.rowid';
-
-        $join .= ' LEFT JOIN (
-                        SELECT fd.fk_product, MAX(f.datef) AS last_fac
-                        FROM ' . $this->db->prefix() . 'facturedet fd
-                        INNER JOIN ' . $this->db->prefix() . 'facture f
-                            ON f.rowid = fd.fk_facture
-                            AND f.fk_statut > 0
-                        GROUP BY fd.fk_product
-                    ) AS fac ON fac.fk_product = t.rowid';
-
-        $filter = ['customsql' => 't.tosell = 1'];
-
-        $months = getDolGlobalInt('REEDCRM_DASHBOARD_PRODUCT_INACTIVE_MONTHS', 6);
-
-        $groupBy  = ' GROUP BY t.rowid';
-        $groupBy .= ' HAVING stock_reel > 0';
-        $groupBy .= ' AND (last_sell < DATE_SUB(CURDATE(), INTERVAL ' . (int) $months . ' MONTH)
-                        OR last_sell IS NULL)';
-
-        $products = saturne_fetch_all_object_type('Product', 'ASC', 'last_sell', 0, 0, $filter, 'AND', false, true, false, $join, [], $select, $moreSelect, $groupBy);
-        if (!is_array($products) || empty($products)) {
-            $array['data'] = $arrayProductLastSellList;
-            return $array;
-        }
-
-        foreach ($products as $product) {
-            $arrayProductLastSellList[$product->id]['Ref']['value']       = $product->getNomUrl(1);
-            $arrayProductLastSellList[$product->id]['Ref']['morecss']     = 'left';
-            $arrayProductLastSellList[$product->id]['Label']['value']     = $product->label;
-            $arrayProductLastSellList[$product->id]['LastSell']['value']  = $product->last_sell != '1970-01-01' ? dol_print_date($product->last_sell, 'day') : '-';
-            $arrayProductLastSellList[$product->id]['StockReel']['value'] = $product->stock_reel;
-        }
-
-        $array['data'] = $arrayProductLastSellList;
-
-        return $array;
+        return $reminders;
     }
 }

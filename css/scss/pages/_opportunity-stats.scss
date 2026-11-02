@@ -1,0 +1,219 @@
+/* Opportunity stats : filters, figures of the running year and the year x month matrix. */
+
+/* One accent for the whole page, and a heat ramp built from it so the matrix reads the same in both themes:
+   an alpha layer over the row background rather than opaque colors. */
+$oppstats-accent: #2f6f9f;
+
+.reedcrm-oppstats-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  .reedcrm-oppstats-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  label {
+    font-size: .78em;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity: .65;
+  }
+
+  .reedcrm-oppstats-filter-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.reedcrm-oppstats-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.reedcrm-oppstats-tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: $oppstats-accent;
+  }
+
+  .reedcrm-oppstats-tile-key {
+    font-size: .78em;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity: .65;
+  }
+
+  .reedcrm-oppstats-tile-value {
+    font-size: 1.7em;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+
+    small {
+      font-size: .5em;
+      font-weight: 600;
+      opacity: .6;
+    }
+  }
+
+  .reedcrm-oppstats-tile-hint {
+    font-size: .8em;
+    opacity: .6;
+  }
+}
+
+.reedcrm-oppstats-tablewrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+}
+
+.reedcrm-oppstats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 9px 10px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  thead th {
+    font-size: .78em;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity: .7;
+    border-bottom: 1px solid var(--colortopbordertitle1, #ddd);
+  }
+
+  /* The year names the row, so it is a header cell and stays put when the months scroll sideways */
+  .reedcrm-oppstats-th-year {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    width: 1%;
+    text-align: left;
+    font-weight: 600;
+    background: var(--colorbacklinepair2, #fff);
+  }
+
+  tbody th,
+  tbody td {
+    border-top: 1px solid var(--colortopbordertitle1, #eee);
+  }
+
+  /* Total and average are the reading of the row, the months are its detail: a rule tells them apart.
+     Width 1% shrinks these three columns to their content, so the twelve months share everything left. */
+  .reedcrm-oppstats-th-sum,
+  .reedcrm-oppstats-sum {
+    width: 1%;
+    padding-right: 16px;
+    font-weight: 600;
+  }
+
+  /* The badge follows the average, and a badge is as wide as what it says. Anchoring the cell on its left and
+     giving the figure a slot of its own is what keeps the averages on a line: were the cell right-aligned, each
+     row would be pushed by the width of its own badge. */
+  .reedcrm-oppstats-avg {
+    text-align: left;
+    border-right: 2px solid var(--colortopbordertitle1, #ccc);
+  }
+
+  .reedcrm-oppstats-avg-value {
+    display: inline-block;
+    min-width: 3.4em;
+    text-align: right;
+  }
+
+  /* The comparison comments the average it sits next to, so it stays a small badge rather than a figure of its own */
+  .reedcrm-oppstats-badge {
+    display: inline-block;
+    min-width: 4.6em;
+    margin-left: 6px;
+    padding: 0 5px;
+    border-radius: 8px;
+    font-size: .62em;
+    font-weight: 600;
+    line-height: 1.7;
+    text-align: center;
+    vertical-align: 2px;
+    background: rgba(120, 130, 150, .14);
+
+    &.up {
+      color: #1f7a51;
+      background: rgba(46, 158, 108, .18);
+    }
+
+    &.down {
+      color: #a8303f;
+      background: rgba(207, 66, 87, .18);
+    }
+  }
+
+  .reedcrm-oppstats-month {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  thead .reedcrm-oppstats-month {
+    text-align: center;
+  }
+
+  tr.reedcrm-oppstats-running {
+    th,
+    .reedcrm-oppstats-sum {
+      font-weight: 700;
+    }
+  }
+
+  /* Relative shading: five steps against the busiest month of the table */
+  .reedcrm-oppstats-heat-0 { opacity: .35; }
+  .reedcrm-oppstats-heat-1 { background: rgba(47, 111, 159, .07); }
+  .reedcrm-oppstats-heat-2 { background: rgba(47, 111, 159, .15); }
+  .reedcrm-oppstats-heat-3 { background: rgba(47, 111, 159, .26); }
+  .reedcrm-oppstats-heat-4 { background: rgba(47, 111, 159, .38); }
+  .reedcrm-oppstats-heat-5 { background: rgba(47, 111, 159, .52); font-weight: 600; }
+
+  /* A month the running year has not reached yet carries no figure, not even a zero */
+  .reedcrm-oppstats-ahead {
+    background: repeating-linear-gradient(135deg, transparent, transparent 5px, rgba(120, 130, 150, .09) 5px, rgba(120, 130, 150, .09) 10px);
+  }
+}
+
+.reedcrm-oppstats-note {
+  margin-top: 10px;
+  font-size: .85em;
+  opacity: .6;
+}

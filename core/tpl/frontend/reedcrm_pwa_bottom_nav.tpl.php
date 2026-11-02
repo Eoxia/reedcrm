@@ -7,13 +7,19 @@
 
 require_once __DIR__ . '/../../../lib/reedcrm_pwa_nav.lib.php';
 
-global $user;
+global $langs, $user;
 
 $navItems     = reedcrm_pwa_nav_get_items();
 $navFavorites = reedcrm_pwa_nav_get_favorites($user);
+$navBadges    = reedcrm_pwa_nav_get_badges($user);
 
 // Find active tab based on the current page
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+// Dolibarr entry point to leave the App. Dolibarr only applies MAIN_LANDING_PAGE at login,
+// so reproduce it here to land on the page the user is used to instead of a raw index.php
+$landingPage = getDolUserString('MAIN_LANDING_PAGE', getDolGlobalString('MAIN_LANDING_PAGE'));
+$dolibarrUrl = !empty($landingPage) ? dol_buildpath($landingPage, 1) : DOL_URL_ROOT . '/index.php';
 ?>
 <nav class="pwa-bottom-nav">
     <div class="nav-group nav-favorites">
@@ -22,6 +28,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <a href="<?= $navItem['url'] ?>" class="pwa-nav-item <?= ($currentPage == $navItem['page']) ? 'active' : '' ?>" data-nav-slug="<?= $navSlug ?>">
             <i class="fas <?= $navItem['icon'] ?>"></i>
             <span><?= $navItem['label'] ?></span>
+            <?= reedcrm_pwa_nav_badge_html($navBadges[$navSlug] ?? 0) ?>
         </a>
         <?php } ?>
     </div>
@@ -33,7 +40,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 </nav>
 
 <div class="pwa-nav-drawer-overlay" data-action="close-pwa-nav-drawer"></div>
-<div class="pwa-nav-drawer" data-ajax-url="<?= dol_buildpath('/custom/reedcrm/ajax/save_pwa_nav_favorites.php', 1) ?>" data-max-favorites="<?= REEDCRM_PWA_NAV_MAX_FAVORITES ?>">
+<div class="pwa-nav-drawer" data-ajax-url="<?= dol_buildpath('/reedcrm/ajax/save_pwa_nav_favorites.php', 1) ?>" data-max-favorites="<?= REEDCRM_PWA_NAV_MAX_FAVORITES ?>">
     <div class="pwa-nav-drawer-header">
         <span class="pwa-nav-drawer-title">Menu</span>
         <span class="pwa-nav-drawer-hint"><i class="fas fa-star"></i> Favoris affichés en bas (max <?= REEDCRM_PWA_NAV_MAX_FAVORITES ?>)</span>
@@ -45,11 +52,19 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a href="<?= $navItem['url'] ?>" class="pwa-nav-drawer-link">
                 <i class="fas <?= $navItem['icon'] ?>"></i>
                 <span><?= $navItem['label'] ?></span>
+                <?= reedcrm_pwa_nav_badge_html($navBadges[$navSlug] ?? 0) ?>
             </a>
             <button type="button" class="pwa-nav-fav-toggle<?= $isNavFavorite ? ' is-favorite' : '' ?>" data-action="toggle-pwa-nav-favorite" aria-pressed="<?= $isNavFavorite ? 'true' : 'false' ?>" aria-label="<?= $isNavFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' ?>">
                 <i class="fas fa-star"></i>
             </button>
         </div>
         <?php } ?>
+    </div>
+
+    <div class="pwa-nav-drawer-footer">
+        <a href="<?= dol_escape_htmltag($dolibarrUrl) ?>" class="pwa-nav-drawer-exit">
+            <i class="fas fa-sign-out-alt"></i>
+            <span><?= $langs->trans('BackToDolibarr') ?></span>
+        </a>
     </div>
 </div>

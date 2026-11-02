@@ -1,0 +1,30 @@
+// Blocks the module adds to the banner of the project card
+
+// Contact of the opportunity. Dolibarr holds the ref block of the banner to 750px and lets a word break
+// anywhere in it: past that width, the flex squeezed every field and cut a name in the middle. Each field
+// keeps its value on one line, the fields that no longer fit go to the next line as a whole
+.reedcrm-header-contact-master {
+    flex-wrap: wrap;
+    row-gap: 4px;
+
+    .reedcrm-header-contact-item {
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+}
+
+// Quick closure widget, under the status badge and the lifecycle timeline. It stays in the flow of the
+// right hand block: laid over the page, it covered the fields of the card, the lower the taller the timeline
+#reedcrm-closure-widget {
+    box-sizing: border-box;
+    width: max-content;
+    max-width: 100%;
+    margin: 8px 0 0 auto;
+    text-align: left;
+}
+
+// Call list widget mounted under the closure widget
+#reedcrm-closure-widget + .reedcrm-add-to-call-list-wrapper {
+    margin-top: 6px;
+}

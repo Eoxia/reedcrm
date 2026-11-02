@@ -7,23 +7,13 @@
 
 define('NOSESSION', '1'); // script CLI friendly
 
-// Dolibarr bootstrap
-$res = false;
-foreach ([
-    __DIR__ . '/../../../../main.inc.php',
-    __DIR__ . '/../../../main.inc.php',
-    dirname(__DIR__, 4) . '/main.inc.php',
-] as $path) {
-    if (file_exists($path)) {
-        $res = require_once($path);
-        break;
-    }
-}
-if (!$res) {
-    // Try relative to htdocs
-    $htdocs = realpath(__DIR__ . '/../../../../');
-    echo 'Looking for main.inc.php from: ' . __DIR__ . PHP_EOL;
-    die('Cannot load Dolibarr environment. Script must be run from htdocs directory.');
+// Load Dolibarr environment
+if (file_exists(__DIR__ . '/../../main.inc.php')) {
+    require_once __DIR__ . '/../../main.inc.php';
+} elseif (file_exists(__DIR__ . '/../../../main.inc.php')) {
+    require_once __DIR__ . '/../../../main.inc.php';
+} else {
+    die('Include of main fails');
 }
 
 require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';

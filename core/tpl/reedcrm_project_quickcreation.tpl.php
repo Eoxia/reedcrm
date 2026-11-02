@@ -63,6 +63,17 @@ if ($permissiontoaddproject) {
 		}
 	}
 
+	// Commercial
+	if (getDolGlobalInt('REEDCRM_PROJECT_COMMERCIAL_VISIBLE') > 0 && !getDolGlobalInt('REEDCRM_PROJECT_COMMERCIAL_INHERIT')) {
+		require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
+		if (!isset($userList) || empty($userList)) {
+			$userList = $form->select_dolusers('', '', 0, null, 0, '', '', 0, 0, 0, '((u.statut:=:1) AND (u.employee:=:1))', 0, '', '', 0, 1);
+		}
+		print '<tr><td><label for="commercial_project">' . $langs->trans('AllocateCommercial') . '</label></td>';
+		print '<td>' . img_picto('', 'user', 'class="pictofixedwidth"') . $form->multiselectarray('commercial_project', $userList, GETPOST('commercial_project', 'array'), '', 0, 'quatrevingtpercent widthcentpercentminusx') . '</td>';
+		print '</tr>';
+	}
+
 	// Date start
 	if ($conf->global->REEDCRM_PROJECT_DATE_START_VISIBLE > 0) {
 		print '<tr><td><label for="projectstart">' . $langs->trans('DateStart') . '</label></td>';
@@ -83,6 +94,13 @@ if ($permissiontoaddproject) {
     if ($conf->global->REEDCRM_PROJECT_EXTRAFIELDS_VISIBLE > 0) {
         $object = $project;
         $extrafields->fetch_name_optionals_label($object->table_element);
+
+        // The GravityForm link is filled in by the incoming form itself, never typed here.
+        // Dropping the key from 'label' takes it out of the showOptionals() loop for this form only,
+        // leaving the extrafield untouched everywhere else (project card button, API).
+        // Same exclusion as the frontend form, see core/tpl/frontend/reedcrm_project_quickcreation_frontend.tpl.php.
+        unset($extrafields->attributes[$object->table_element]['label']['reedcrm_gravityform']);
+
         include DOL_DOCUMENT_ROOT . '/core/tpl/extrafields_add.tpl.php';
         $object = '';
     }

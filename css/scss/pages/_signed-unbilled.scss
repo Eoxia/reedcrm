@@ -1,0 +1,145 @@
+/* Signed proposals not invoiced (view/signedunbilled_list.php): figures, criteria and check badges */
+
+.rsu-intro {
+  margin: 0 0 14px;
+  color: #777;
+}
+
+.rsu-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.rsu-tile {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #cf4257;
+  }
+
+  &.warn:before {
+    background: #c8871a;
+  }
+
+  &.info:before {
+    background: #2f6f9f;
+  }
+
+  &.good:before {
+    background: #2e9e6c;
+  }
+
+  .k {
+    font-size: .82em;
+    color: #777;
+    font-weight: 600;
+  }
+
+  .v {
+    font-size: 1.7em;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .a {
+    font-size: .9em;
+    color: #555;
+    font-weight: 600;
+  }
+}
+
+.rsu-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  label {
+    display: block;
+    font-size: .8em;
+    color: #777;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  select,
+  input {
+    padding: 5px 8px;
+    border: 1px solid var(--colortopbordertitle1, #ccc);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+  }
+}
+
+.rsu-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 11px;
+  font-size: .8em;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &.todo {
+    background: #fbe9ec;
+    color: #a3293c;
+  }
+
+  &.chain {
+    background: #e6f4ec;
+    color: #1f7a52;
+  }
+
+  &.amount {
+    background: #fdf1de;
+    color: #96631b;
+  }
+
+  &.products {
+    background: #eaf1f8;
+    color: #2f6f9f;
+  }
+}
+
+.rsu-inv {
+  display: block;
+  font-size: .85em;
+  margin-top: 3px;
+}
+
+.rsu-age {
+  font-weight: 700;
+
+  &.mid {
+    color: #c8871a;
+  }
+
+  &.old {
+    color: #cf4257;
+  }
+}
+
+.rsu-actions {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}

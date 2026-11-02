@@ -53,8 +53,7 @@ window.reedcrm.projectPresets.event = function () {
  * @returns {String} The AJAX endpoint URL
  */
 window.reedcrm.projectPresets.url = function () {
-  var root = (window.saturne && window.saturne.config && window.saturne.config.urlRoot) ? window.saturne.config.urlRoot : '';
-  return root + '/custom/reedcrm/ajax/save_project_view.php';
+  return window.reedcrm.moduleUrl('/ajax/save_project_view.php');
 };
 
 /**

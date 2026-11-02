@@ -1,5 +1,7 @@
 <?php
 
+require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
 ?>
 
 <div class="wpeo-grid grid-1">
@@ -13,21 +15,33 @@
             <textarea name="description" id="description" rows="6" placeholder="<?php echo $langs->trans('Description'); ?>"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
         </label>
     </div>
+    <div class="event-status-row">
+        <label for="event_percentage">
+            <span class="event-status-row__label"><?php echo $langs->trans('Status'); ?></span>
+            <?php echo $form->selectarray('event_percentage', reedcrm_get_event_statuses(), GETPOSTISSET('event_percentage') ? GETPOSTINT('event_percentage') : 100, 0, 0, 0, '', 1, 0, 0, '', 'maxwidth200'); ?>
+        </label>
+    </div>
 
-    <label>
+    <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;">
+        <input type="checkbox" id="toggle_reminder" name="add_reminder" value="1" style="margin: 0;">
         <i class="far fa-bell"></i>
         <?= $langs->trans('AddReminder'); ?>
     </label>
 
-    <div id="reminder_fields" class="reminder-fields">
+    <div id="reminder_fields" class="reminder-fields" style="display: none;">
         <div>
             <label for="reminder_title">
                 <input type="text" id="reminder_title" name="reminder_title" maxlength="255" placeholder="<?php echo $langs->trans('Title'); ?>" value="<?php echo dol_escape_htmltag((GETPOSTISSET('reminder_title') ? GETPOST('reminder_title') : '')); ?>">
             </label>
         </div>
 
+        <div class="reminder-type-row">
+            <?php echo $form->selectarray('reminder_actioncode', reedcrm_get_relaunch_type_options(), GETPOSTISSET('reminder_actioncode') ? GETPOST('reminder_actioncode', 'aZ09') : 'AC_OTH', 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200'); ?>
+        </div>
+
         <div class="reminder-date-row">
-            <?php echo $form->selectDate(dol_now('tzuser'), 'reminder_', 1, 1); ?>
+            <?php // Tomorrow by default: a reminder set to now is already past, so it would never be listed as upcoming ?>
+            <?php echo $form->selectDate(dol_time_plus_duree(dol_now(), 1, 'd'), 'reminder_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?>
         </div>
 
         <div class="reminder-user-row">

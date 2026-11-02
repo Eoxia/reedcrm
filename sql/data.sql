@@ -57,3 +57,7 @@ INSERT INTO llx_overwrite_trans (entity, lang, transkey, transvalue) VALUES (0, 
 
 -- 1.5.0
 INSERT INTO llx_c_type_contact (element, source, code, libelle, active, module, position) VALUES('project', 'external', 'PROJECTADDRESS', 'ProjectAddress', 1, 'reedcrm', 1);
+
+-- Intervention dates on the service lines
+DELETE FROM llx_c_actioncomm WHERE code = 'AC_REEDCRM_INTERVENTION';
+INSERT INTO llx_c_actioncomm (id, code, libelle, type, module, active, position, color) VALUES (110, 'AC_REEDCRM_INTERVENTION', 'Intervention', 'module', 'reedcrm@reedcrm', 1, 110, '63acc9');

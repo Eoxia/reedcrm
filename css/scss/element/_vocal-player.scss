@@ -39,40 +39,51 @@
         }
     }
 
+    // Play button of the Saturne media block (PWA opportunity card), sized and cornered like the
+    // photo thumbnail and the Coordonnées block of the opportunity list
     &.reedcrm-vocal-player-purple {
-        transition: opacity 0.2s ease;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #f7f7f7;
-        border: 1px solid #e0e0e0;
-        border-radius: 2px;
-        cursor: pointer;
+        width: 66px;
+        height: 66px;
         margin: 0 auto;
+        background-color: #7b68ee;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        transition: background-color 0.2s ease;
 
         &:hover {
-            opacity: 0.8;
+            background-color: #6a58e0;
         }
 
         i {
-            color: #9d7b9d;
-            font-size: 1.3em;
-            margin-left: 3px;
+            color: #fff;
+            font-size: 22px;
         }
 
-        &.disabled {
-            opacity: 0.5;
-            cursor: default;
-
-            i {
-                color: #ccc;
-            }
+        // The triangle of the play icon looks off-center when strictly centered
+        i.fa-play {
+            margin-left: 4px;
         }
 
         .reedcrm-vocal-time {
-            color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 10px;
+        }
+
+        // The time goes under the icon rather than beside it: a widening button would resize the column,
+        // and the whole table would jump at each click. The width only grows past 10 minutes of audio
+        &.playing {
+            flex-direction: column;
+            gap: 4px;
+            width: auto;
+            min-width: 66px;
+            padding: 0 4px;
+            box-sizing: border-box;
+        }
+
+        &.disabled {
+            background-color: #cbd5e1;
+            box-shadow: none;
+            cursor: default;
         }
     }
 }

@@ -1,0 +1,589 @@
+/* Two-button relaunch widget (#873).
+ *
+ * Replaces the row of four per-type pills: the left segment holds the past and raises the overdue
+ * warning, the right one holds what is still to be done. Each segment is a pale pill on two
+ * storeys - its counter on top, the day of the last or next relaunch underneath - with its "+"
+ * built in on the right edge. The "+" and the overdue "!" used to float over the corners, where
+ * they bit into the row above in the lists.
+ *
+ * Loaded after _event-pro.scss on purpose: its base pill paints the children by :nth-child() and
+ * sets every span of a button to 14px bold, and its .reedcrm-modal-open turns the "+" into an
+ * absolute dark disc. Every rule below goes through the duo class pair to win over those. */
+
+.reedcrm-relaunch-wrapper {
+    display: inline-flex;
+    align-items: center;
+}
+
+.reedcrm-relaunch-buttons.reedcrm-relaunch-duo {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 6px;
+
+    .reedcrm-relaunch-button.reedcrm-relaunch-seg {
+        position: relative;
+        display: inline-flex;
+        align-items: stretch;
+        min-width: 0;
+        min-height: 30px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        border-radius: 6px;
+        background: #eef2f6;
+        box-shadow: none;
+        color: #334155;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .reedcrm-relaunch-seg .reedcrm-relaunch-btn-content {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 3px;
+        min-width: 0;
+        padding: 4px 9px;
+        font-size: 13px;
+        line-height: 1;
+
+        &:hover {
+            background: rgba(15, 23, 42, .05);
+        }
+    }
+
+    // Fixed minimum widths: in a list every row draws its own widget, so a longer day on the left
+    // ("Il y a 110 j" over "Jamais") pushed the right button out of line with the rows around it.
+    // Sized on the longest usual labels, "Il y a 110 j" with its "!" and "Rien de prévu".
+    .reedcrm-relaunch-seg-past .reedcrm-relaunch-btn-content {
+        min-width: 72px;
+    }
+
+    .reedcrm-relaunch-seg-upcoming .reedcrm-relaunch-btn-content {
+        min-width: 84px;
+    }
+
+    .reedcrm-relaunch-seg .reedcrm-relaunch-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+
+        > i {
+            display: inline-block;
+            font-size: 12px;
+            opacity: .8;
+        }
+    }
+
+    .reedcrm-relaunch-seg .reedcrm-relaunch-count {
+        display: inline;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .reedcrm-relaunch-seg .reedcrm-relaunch-day {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 400;
+        line-height: 1.1;
+        white-space: nowrap;
+        opacity: .9;
+    }
+
+    // The overdue "!" sits on the counter line, inside the pill
+    .reedcrm-relaunch-seg .reedcrm-relaunch-overdue {
+        position: static;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        height: 16px;
+        padding: 0 5px;
+        border-radius: 8px;
+        background: #b45309;
+        box-shadow: none;
+        color: #fff;
+        font-size: 10.5px;
+        font-weight: 700;
+        line-height: 1;
+
+        i {
+            display: inline-block;
+            font-size: 8px;
+            opacity: 1;
+        }
+    }
+
+    .reedcrm-relaunch-seg .reedcrm-relaunch-add {
+        position: static;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: auto;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-left: 1px solid rgba(15, 23, 42, .07);
+        border-radius: 0;
+        background: rgba(15, 23, 42, .05);
+        box-shadow: none;
+        color: inherit;
+        font-size: 10px;
+        text-decoration: none;
+        opacity: .85;
+        transform: none;
+
+        &:hover {
+            background: rgba(15, 23, 42, .12);
+            box-shadow: none;
+            opacity: 1;
+            transform: none;
+        }
+
+        i {
+            display: inline-block;
+            font-size: 10px;
+        }
+    }
+
+    // Right: what is still to do, in the blue the product already uses for the next step
+    .reedcrm-relaunch-seg.reedcrm-relaunch-seg-upcoming {
+        background: #e6efff;
+        color: #1d4ed8;
+    }
+
+    // An empty side goes grey, so the eye stops on the coloured ones while scanning a list. The "+"
+    // of an empty "to do" side stays blue: it is the button to press.
+    .reedcrm-relaunch-seg.is-empty {
+        background: #f6f7f9;
+        color: #94a3b8;
+    }
+
+    .reedcrm-relaunch-seg-upcoming.is-empty .reedcrm-relaunch-add {
+        color: #2563eb;
+        opacity: 1;
+    }
+
+    // Two alert levels: amber the day something slips, red once it passes the agenda threshold
+    .reedcrm-relaunch-seg.reedcrm-relaunch-seg-past.is-overdue {
+        background: #fdf0d5;
+        color: #92400e;
+    }
+
+    .reedcrm-relaunch-seg.reedcrm-relaunch-seg-past.is-late {
+        background: #fde4e4;
+        color: #b91c1c;
+
+        .reedcrm-relaunch-overdue {
+            background: #dc2626;
+        }
+    }
+}
+
+/* List surfaces. Saturne flattens every div of a truncating list cell with
+ * `table.liste td[class*="tdoverflowmax"] div { display: inline; padding: 0; margin: 0 }`, which
+ * outranks the wrapper and the duo class pair alone: restate their layout from inside that same
+ * selector. The segments and what they hold already carry enough classes to win. */
+table.liste td[class*="tdoverflowmax"] {
+    .reedcrm-relaunch-wrapper {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .reedcrm-relaunch-duo {
+        display: inline-flex;
+        align-items: stretch;
+        gap: 6px;
+    }
+}
+
+/* App bar of the opportunity page: the two buttons share the whole width of the sticky bar, with
+ * a bigger hit area - it is the main action of the page. */
+.pwa-opp-relaunch-bar {
+    .reedcrm-relaunch-wrapper {
+        display: flex;
+        width: 100%;
+    }
+
+    .reedcrm-relaunch-buttons.reedcrm-relaunch-duo {
+        display: flex;
+        width: 100%;
+        gap: 12px;
+
+        .reedcrm-relaunch-button.reedcrm-relaunch-seg {
+            flex: 1;
+            min-height: 50px;
+            border-radius: 10px;
+        }
+
+        .reedcrm-relaunch-seg .reedcrm-relaunch-btn-content {
+            flex: 1;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .reedcrm-relaunch-seg .reedcrm-relaunch-line {
+            gap: 7px;
+            font-size: 16px;
+
+            > i {
+                font-size: 15px;
+            }
+        }
+
+        .reedcrm-relaunch-seg .reedcrm-relaunch-count {
+            font-size: 16px;
+        }
+
+        .reedcrm-relaunch-seg .reedcrm-relaunch-day {
+            font-size: 12px;
+        }
+
+        .reedcrm-relaunch-seg .reedcrm-relaunch-overdue {
+            height: 19px;
+            padding: 0 6px;
+            border-radius: 10px;
+            font-size: 12px;
+
+            i {
+                font-size: 9px;
+            }
+        }
+
+        .reedcrm-relaunch-seg .reedcrm-relaunch-add {
+            width: 42px;
+            font-size: 13px;
+
+            i {
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+/* Header block of the project / thirdparty / proposal card. The markup used to carry these as
+ * inline styles built in PHP. */
+.reedcrm-header-relaunch-master {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-bottom: 2px;
+    padding: 4px 8px 4px 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fbff;
+    color: #4a5568;
+    font-size: .9em;
+    font-weight: 500;
+}
+
+.reedcrm-header-relaunch-logo {
+    height: 18px;
+    width: 18px;
+    margin-right: 8px;
+    padding-right: 8px;
+    border-right: 1px solid #cbd5e0;
+    object-fit: contain;
+}
+
+/* Panel opened next to the buttons: one line per relaunch, "date - type - who - what - status". */
+.reedcrm-relaunch-panel {
+    .reedcrm-relaunch-panel-table {
+        width: 100%;
+    }
+
+    .reedcrm-relaunch-panel-date {
+        width: 130px;
+    }
+
+    .reedcrm-relaunch-panel-type {
+        width: 40px;
+    }
+
+    .reedcrm-relaunch-panel-who {
+        width: 140px;
+    }
+
+    .reedcrm-relaunch-panel-status {
+        width: 110px;
+    }
+
+    .reedcrm-relaunch-line-overdue {
+        background: #fef2f2;
+
+        .reedcrm-relaunch-panel-date {
+            font-weight: 700;
+            color: #b91c1c;
+        }
+    }
+
+    .reedcrm-relaunch-late-days {
+        display: block;
+        color: #b91c1c;
+        font-size: 11px;
+    }
+
+    .reedcrm-relaunch-panel-empty {
+        padding: 18px 12px;
+        color: #94a3b8;
+        text-align: center;
+    }
+}
+
+/* The type dimension the four pills used to carry moves onto the panel line and the reminder form. */
+.reedcrm-relaunch-type-picto {
+    font-size: 13px;
+
+    &.reedcrm-relaunch-type-call {
+        color: #4a90e2;
+    }
+
+    &.reedcrm-relaunch-type-email {
+        color: #3ea85e;
+    }
+
+    &.reedcrm-relaunch-type-rdv {
+        color: #e6732e;
+    }
+
+    &.reedcrm-relaunch-type-other {
+        color: #7d5fa3;
+    }
+}
+
+/* Direct reminder form: three questions and a button, nothing else. */
+.reedcrm-reminder-form {
+    padding: 4px 2px;
+
+    #reedcrm-modal-title-data {
+        display: none;
+    }
+
+    .reedcrm-reminder-field {
+        margin-bottom: 16px;
+
+        > label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 0 0 6px;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+        }
+    }
+
+    .reedcrm-reminder-label-picto {
+        width: 14px;
+        color: #94a3b8;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    input[type="text"]#reminder_title {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 14px;
+
+        &:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+            outline: none;
+        }
+    }
+
+    /* Type: one chip per relaunch type, the radio itself is only there for the POST. */
+    .reedcrm-reminder-type-choices {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .reedcrm-reminder-type-choice {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0;
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        background: #fff;
+        color: #475569;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1;
+        transition: border-color .15s ease, background .15s ease, color .15s ease;
+
+        input[type="radio"] {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        > i {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        > span {
+            line-height: 1;
+        }
+
+        &:hover {
+            border-color: #94a3b8;
+            background: #f8fafc;
+        }
+
+        &:has(input:checked) {
+            border-width: 2px;
+            padding: 7px 11px;
+        }
+
+        &.reedcrm-reminder-type-call {
+            > i { color: #4a90e2; }
+            &:has(input:checked) { border-color: #4a90e2; background: #eff6ff; color: #1d4ed8; }
+        }
+
+        &.reedcrm-reminder-type-email {
+            > i { color: #3ea85e; }
+            &:has(input:checked) { border-color: #3ea85e; background: #f0fdf4; color: #15803d; }
+        }
+
+        &.reedcrm-reminder-type-rdv {
+            > i { color: #e6732e; }
+            &:has(input:checked) { border-color: #e6732e; background: #fff7ed; color: #c2410c; }
+        }
+
+        &.reedcrm-reminder-type-other {
+            > i { color: #7d5fa3; }
+            &:has(input:checked) { border-color: #7d5fa3; background: #faf5ff; color: #6b21a8; }
+        }
+    }
+
+    /* Date shortcuts: plain chips, deliberately not Dolibarr's .button */
+    .reedcrm-reminder-shortcuts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .reedcrm-reminder-shortcut {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0;
+        padding: 7px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        background: #fff;
+        color: #475569;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1;
+        text-transform: none;
+        transition: border-color .15s ease, background .15s ease, color .15s ease;
+
+        i {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        &:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #1d4ed8;
+
+            i {
+                color: #2563eb;
+            }
+        }
+
+        &.is-active {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #1d4ed8;
+
+            i {
+                color: #2563eb;
+            }
+        }
+    }
+
+    /* jQuery UI drops its calendar button inside .divfordateinput, right after the input, which
+     * pushes it under the field in this narrow column. Keep the whole row on one line. */
+    .reminder-date-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+
+        .divfordateinput {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        input.maxwidth75,
+        input[name="reminder_"] {
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        .ui-datepicker-trigger {
+            margin: 0;
+            border: 0;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 15px;
+            line-height: 1;
+            vertical-align: middle;
+        }
+
+        span.nowraponall {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+    }
+
+    .reminder-user-row {
+        .select2-container,
+        select {
+            max-width: 100%;
+        }
+    }
+
+    .reedcrm-reminder-submit {
+        margin-top: 20px;
+        text-align: center;
+
+        .butAction {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+    }
+}

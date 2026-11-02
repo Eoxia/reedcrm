@@ -1,0 +1,62 @@
+/* Billing follow-up (view/billinggaps_list.php): intro and figures of what is still to invoice */
+
+.rbg-intro {
+  margin: 0 0 14px;
+  color: #777;
+}
+
+.rbg-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.rbg-tile {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #cf4257;
+  }
+
+  &.warn:before {
+    background: #c8871a;
+  }
+
+  &.info:before {
+    background: #2f6f9f;
+  }
+
+  &.viol:before {
+    background: #6f42c1;
+  }
+
+  .k {
+    font-size: .82em;
+    color: #777;
+    font-weight: 600;
+  }
+
+  .v {
+    font-size: 1.7em;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .a {
+    font-size: .9em;
+    color: #555;
+    font-weight: 600;
+  }
+}
