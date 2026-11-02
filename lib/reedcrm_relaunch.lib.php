@@ -411,8 +411,7 @@ function reedcrm_render_relaunch_widget(array $params): string
         $out .= ' data-socid="' . $socid . '"';
         $out .= ' data-dialog-url="' . dol_escape_htmltag($dialogUrl) . '"';
         $out .= ' data-dialog-title="' . dol_escape_htmltag($segment['title']) . '"';
-        $out .= ' data-limit="20"';
-        $out .= ' title="' . dol_escape_htmltag($segment['title']) . '">';
+        $out .= ' data-limit="20">';
 
         // Spans, not divs: the list cells flatten every div they contain (saturne _list-cell.scss)
         $out .= '<div class="reedcrm-relaunch-btn-content">';

@@ -62,7 +62,7 @@ $now           = dol_now();
                     <td class="reedcrm-relaunch-panel-who"><?php echo dol_escape_htmltag($who); ?></td>
                     <td class="reedcrm-relaunch-panel-what">
                         <a href="<?php echo dol_escape_htmltag(DOL_URL_ROOT . '/comm/action/card.php?id=' . $row['id']); ?>">
-                            <?php echo dol_escape_htmltag($what !== '' ? $what : $langs->trans('NoTitle')); ?>
+                            <?php echo dol_escape_htmltag($what !== '' ? $what : $langs->trans('RelaunchNoTitle')); ?>
                         </a>
                         <?php if ($state['late_days'] > 0) : ?>
                             <span class="reedcrm-relaunch-late-days"><?php echo $langs->trans('RelaunchLateBy', $state['late_days']); ?></span>

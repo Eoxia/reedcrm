@@ -719,6 +719,7 @@ RelaunchNoUpcoming = No upcoming relaunch
 RelaunchDaysAgo = %s d ago
 RelaunchNever = Never
 RelaunchNothingPlanned = Nothing planned
+RelaunchNoTitle = Untitled
 RelaunchWhen = When
 RelaunchInOneDay = Tomorrow
 RelaunchInThreeDays = In 3 days

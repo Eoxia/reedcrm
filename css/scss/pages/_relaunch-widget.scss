@@ -53,6 +53,17 @@
         }
     }
 
+    // Fixed minimum widths: in a list every row draws its own widget, so a longer day on the left
+    // ("Il y a 110 j" over "Jamais") pushed the right button out of line with the rows around it.
+    // Sized on the longest usual labels, "Il y a 110 j" with its "!" and "Rien de prévu".
+    .reedcrm-relaunch-seg-past .reedcrm-relaunch-btn-content {
+        min-width: 72px;
+    }
+
+    .reedcrm-relaunch-seg-upcoming .reedcrm-relaunch-btn-content {
+        min-width: 84px;
+    }
+
     .reedcrm-relaunch-seg .reedcrm-relaunch-line {
         display: inline-flex;
         align-items: center;
