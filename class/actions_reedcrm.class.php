@@ -2419,6 +2419,11 @@ class ActionsReedcrm
      */
     public function saturneExtendGetObjectsMetadata(array $parameters): int
     {
+        // Paths relative to DOL_DOCUMENT_ROOT as installed (custom/reedcrm on a standard install): Saturne < 23.3.0 and older
+        // readers prepend DOL_DOCUMENT_ROOT, newer ones use dol_buildpath(). Bare name only outside the main document root
+        $moduleDir  = dol_buildpath('/reedcrm', 0);
+        $modulePath = strpos($moduleDir, DOL_DOCUMENT_ROOT . '/') === 0 ? substr($moduleDir, strlen(DOL_DOCUMENT_ROOT) + 1) : 'reedcrm';
+
         $this->results['call_list'] = [
             'mainmenu'       => 'reedcrm',
             'leftmenu'       => 'call_list',
@@ -2434,14 +2439,14 @@ class ActionsReedcrm
             'table_element'  => 'reedcrm_call_list',
             'hook_name_card' => 'call_listcard',
             'hook_name_list' => 'call_list_list',
-            'create_url'     => 'reedcrm/view/call_list_card.php',
-            'list_url'       => 'reedcrm/view/call_list_list.php',
+            'create_url'     => $modulePath . '/view/call_list_card.php',
+            'list_url'       => $modulePath . '/view/call_list_list.php',
             'defaultsort'    => 't.rowid',
             'defaultorder'   => 'DESC',
             // The call lists are ordered by hand (1 - Hot, 2 - Negotiation...): the sort chosen must stay
             'remember_sort'  => 1,
-            'class_path'     => 'reedcrm/class/calllist.class.php',
-            'lib_path'       => 'reedcrm/lib/reedcrm_call_list.lib.php',
+            'class_path'     => $modulePath . '/class/calllist.class.php',
+            'lib_path'       => $modulePath . '/lib/reedcrm_call_list.lib.php',
         ];
 
         $this->results['pocketrecording'] = [
@@ -2459,12 +2464,12 @@ class ActionsReedcrm
             'table_element'  => 'reedcrm_pocket_recording',
             'hook_name_card' => 'pocketrecordingcard',
             'hook_name_list' => 'pocketrecordinglist',
-            'create_url'     => 'reedcrm/view/pocketrecording/pocketrecording_card.php',
-            'list_url'       => 'reedcrm/view/pocketrecording/pocketrecording_list.php',
+            'create_url'     => $modulePath . '/view/pocketrecording/pocketrecording_card.php',
+            'list_url'       => $modulePath . '/view/pocketrecording/pocketrecording_list.php',
             'defaultsort'    => 't.recording_date',
             'defaultorder'   => 'DESC',
-            'class_path'     => 'reedcrm/class/pocketrecording.class.php',
-            'lib_path'       => 'reedcrm/lib/reedcrm_pocketrecording.lib.php',
+            'class_path'     => $modulePath . '/class/pocketrecording.class.php',
+            'lib_path'       => $modulePath . '/lib/reedcrm_pocketrecording.lib.php',
         ];
 
         return 0; // or return 1 to replace standard code
