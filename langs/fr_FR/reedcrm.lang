@@ -796,6 +796,7 @@ RelaunchNoUpcoming = Aucune relance à venir
 RelaunchDaysAgo = Il y a %s j
 RelaunchNever = Jamais
 RelaunchNothingPlanned = Rien de prévu
+RelaunchNoTitle = Sans titre
 RelaunchWhen = Quand
 RelaunchInOneDay = Demain
 RelaunchInThreeDays = Dans 3 jours
