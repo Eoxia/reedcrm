@@ -197,43 +197,7 @@ $nextMonth  = dol_print_date(dol_time_plus_duree($periodStart, 1, 'm'), '%Y-%m')
 $monthLabel = dol_print_date($periodStart, '%B %Y');
 $navBase    = $_SERVER['PHP_SELF'] . '?search_month=';
 
-print '<style>
-.rcf-dash{margin:0 0 14px}
-.rcf-nav{display:flex;align-items:center;gap:12px;margin-bottom:12px;font-size:1.1em}
-.rcf-nav .rcf-month{font-weight:bold;text-transform:capitalize;min-width:150px;text-align:center}
-.rcf-nav a{text-decoration:none;padding:4px 10px;border:1px solid var(--colortopbordertitle1,#ccc);border-radius:7px}
-.rcf-nav a:hover{border-color:#2f6f9f;color:#2f6f9f}
-.rcf-nav select{padding:5px 9px;border:1px solid var(--colortopbordertitle1,#ccc);border-radius:7px;background:var(--colorbacklinepair2,#fff);font-size:.95em;font-weight:600;color:inherit;cursor:pointer}
-.rcf-nav select:hover{border-color:#2f6f9f}
-.rcf-datesel{display:inline-flex;gap:6px;align-items:center}
-.rcf-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
-.rcf-tile{border:1px solid var(--colortopbordertitle1,#ddd);border-radius:8px;padding:10px 12px;background:var(--colorbacklinepair2,#fff);position:relative;overflow:hidden}
-.rcf-tile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#2f6f9f}
-.rcf-tile.warn:before{background:#c8871a}.rcf-tile.crit:before{background:#cf4257}.rcf-tile.good:before{background:#2e9e6c}
-.rcf-tile .k{font-size:.82em;color:#777;font-weight:600}
-.rcf-tile .v{font-size:1.7em;font-weight:800;line-height:1.1}
-.rcf-tile.warn .v{color:#c8871a}.rcf-tile.crit .v{color:#cf4257}.rcf-tile.good .v{color:#2e9e6c}
-.rcf-chartbox{border:1px solid var(--colortopbordertitle1,#ddd);border-radius:8px;padding:12px 14px;background:var(--colorbacklinepair2,#fff);overflow:hidden;margin:8px 0 14px}
-.rcf-charttitle{font-weight:600;font-size:.9em;color:#555;margin-bottom:8px}
-.rcf-canvaswrap{position:relative;height:230px;width:100%}
-.rcf-canvaswrap canvas{max-height:230px}
-.rcf-run{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:12px;font-weight:700;font-size:.86em;white-space:nowrap;border:1px solid}
-.rcf-run.done{background:#e6f5ee;color:#1b7048;border-color:#a9dcc5}
-.rcf-run.todo{background:#fdf3e0;color:#8f5c0d;border-color:#f0d3a0}
-.rcf-run.late{background:#fdeaed;color:#a02536;border-color:#f2b8c1}
-.rcf-tilelink{display:block;text-decoration:none;color:inherit}
-.rcf-tilelink:hover{border-color:#2f6f9f}
-.rcf-tileon{box-shadow:0 0 0 2px #2f6f9f inset}
-.rcf-mvt{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin:8px 0 14px}
-.rcf-mvtbox{border:1px solid var(--colortopbordertitle1,#ddd);border-radius:8px;overflow:hidden;background:var(--colorbacklinepair2,#fff)}
-.rcf-mvthead{padding:9px 12px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--colortopbordertitle1,#eee)}
-.rcf-mvtbox.in .rcf-mvthead{color:#2e9e6c}.rcf-mvtbox.out .rcf-mvthead{color:#cf4257}
-.rcf-mvthead .amt{font-size:1.05em}
-.rcf-mvtbox table{width:100%;border-collapse:collapse}
-.rcf-mvtbox td{padding:5px 12px;border-top:1px solid var(--colortopbordertitle1,#f0f0f0);font-size:.92em}
-.rcf-mvtbox td.a{text-align:right;white-space:nowrap;font-weight:600}
-.rcf-mvtempty{padding:12px;text-align:center}
-</style>';
+// Styles of the navigation, figures, chart and movements: css/scss/pages/_recurring-followup.scss
 
 // Month navigation.
 $monthNamesFull = [1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril', 5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août', 9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'];
