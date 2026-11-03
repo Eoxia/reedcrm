@@ -702,13 +702,11 @@ class ActionsReedcrm
                 require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
 
                 $out  = '<tr id="reedcrm-relaunch-row-hidden" style="display:none;"><td colspan="2">';
-                $out .= '<div class="contact-inline-wrapper reedcrm-header-relaunch-master">';
-                $out .= '<img src="' . $pictoPath . '" class="reedcrm-header-relaunch-logo" alt="ReedCRM" />';
                 $out .= reedcrm_render_relaunch_widget([
-                    'projectId' => $projectId,
-                    'socid'     => $socid,
+                    'projectId'    => $projectId,
+                    'socid'        => $socid,
+                    'wrapperClass' => 'contact-inline-wrapper reedcrm-header-relaunch-master',
                 ]);
-                $out .= '</div>';
 
                 // Teleport the block to the header area
                 $out .= '<script>

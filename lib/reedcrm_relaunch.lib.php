@@ -397,7 +397,9 @@ function reedcrm_render_relaunch_widget(array $params): string
         ],
     ];
 
+    // Framed with the ReedCRM logo on every surface, so that the buttons read as ReedCRM's among those of the page
     $out  = '<div class="reedcrm-relaunch-wrapper' . ($wrapperClass !== '' ? ' ' . $wrapperClass : '') . '">';
+    $out .= '<img src="' . dol_buildpath('/reedcrm/img/reedcrm_color.png', 1) . '" class="reedcrm-relaunch-logo" alt="ReedCRM">';
     $out .= '<div class="reedcrm-relaunch-buttons reedcrm-relaunch-duo" data-project-id="' . $projectId . '" data-socid="' . $socid . '">';
 
     foreach ($segments as $scope => $segment) {

@@ -10,9 +10,26 @@
  * sets every span of a button to 14px bold, and its .reedcrm-modal-open turns the "+" into an
  * absolute dark disc. Every rule below goes through the duo class pair to win over those. */
 
+/* Frame and ReedCRM logo, on every surface: cards, CardPro, lists and App. No wrap: _event-pro.scss lets the
+ * wrapper wrap, which would drop the buttons under the logo in a narrow cell. */
 .reedcrm-relaunch-wrapper {
     display: inline-flex;
+    flex-wrap: nowrap;
     align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fbff;
+}
+
+.reedcrm-relaunch-logo {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    padding-right: 8px;
+    border-right: 1px solid #cbd5e0;
+    object-fit: contain;
 }
 
 .reedcrm-relaunch-buttons.reedcrm-relaunch-duo {
@@ -194,6 +211,12 @@ table.liste td[class*="tdoverflowmax"] {
     .reedcrm-relaunch-wrapper {
         display: inline-flex;
         align-items: center;
+        padding: 4px 8px 4px 6px;
+    }
+
+    /* Saturne hides the images of these cells too */
+    .reedcrm-relaunch-logo {
+        display: block;
     }
 
     .reedcrm-relaunch-duo {
@@ -209,11 +232,22 @@ table.liste td[class*="tdoverflowmax"] {
     .reedcrm-relaunch-wrapper {
         display: flex;
         width: 100%;
+        gap: 10px;
+        padding: 6px 8px;
+        border-radius: 12px;
+        box-sizing: border-box;
+    }
+
+    .reedcrm-relaunch-logo {
+        width: 24px;
+        height: 24px;
+        padding-right: 10px;
     }
 
     .reedcrm-relaunch-buttons.reedcrm-relaunch-duo {
         display: flex;
-        width: 100%;
+        flex: 1 1 auto;
+        min-width: 0;
         gap: 12px;
 
         .reedcrm-relaunch-button.reedcrm-relaunch-seg {
@@ -268,28 +302,13 @@ table.liste td[class*="tdoverflowmax"] {
 }
 
 /* Header block of the project / thirdparty / proposal card. The markup used to carry these as
- * inline styles built in PHP. */
+ * inline styles built in PHP. Its frame and logo are the ones of every surface, above. */
 .reedcrm-header-relaunch-master {
-    display: inline-flex;
-    align-items: center;
     vertical-align: middle;
     margin-bottom: 2px;
-    padding: 4px 8px 4px 6px;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    background: #f8fbff;
     color: #4a5568;
     font-size: .9em;
     font-weight: 500;
-}
-
-.reedcrm-header-relaunch-logo {
-    height: 18px;
-    width: 18px;
-    margin-right: 8px;
-    padding-right: 8px;
-    border-right: 1px solid #cbd5e0;
-    object-fit: contain;
 }
 
 /* Panel opened next to the buttons: one line per relaunch, "date - type - who - what - status". */
