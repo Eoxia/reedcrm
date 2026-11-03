@@ -411,6 +411,12 @@ window.reedcrm.eventpro.event = function () {
   // this the modal handlers end up bound twice and a single click opens two AJAX requests.
   $(document).off('.reedcrmEventProModal');
 
+  // The reminder box of the CardPro page itself: bindModalContentEvents() only binds the copy loaded in the modal,
+  // so on the page the ticked box showed nothing
+  $(document).on('change.reedcrmEventProModal', '.reedcrm-cardpro #toggle_reminder', function () {
+    $(this).closest('form').find('#reminder_fields').slideToggle(200);
+  });
+
   $(document).on('click.reedcrmEventProModal', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function (e) {
     e.preventDefault();
     var $modal = $(modalSelector);
