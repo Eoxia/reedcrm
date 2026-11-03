@@ -139,7 +139,9 @@ $moreCSS = [
     '/reedcrm/css/temp.css'
 ];
 
-saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm-' . $object->element . 'template-pwa page-list bodyforlist');
+// reedcrm-cardpro-page: the banner above the page is compacted on this page only (theme/_eventpro.scss),
+// and laid out on one line for a thirdparty, whose banner has no lifecycle timeline
+saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm-' . $object->element . 'template-pwa page-list bodyforlist reedcrm-cardpro-page reedcrm-cardpro-' . $object->element);
 
 if (empty($action)) {
     saturne_get_fiche_head($object, 'event', $title);
@@ -154,7 +156,8 @@ if (empty($action)) {
         include __DIR__ . '/../core/tpl/frontend/reedcrm_opportunity_chain_bar.tpl.php';
     }
 
-    print '<div class="fichecenter">';
+    // reedcrm-cardpro scopes the layout of the page: the same form also opens in the side modal of the lists
+    print '<div class="fichecenter reedcrm-cardpro">';
 
     print '<div class="fichehalfleft">';
     require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
