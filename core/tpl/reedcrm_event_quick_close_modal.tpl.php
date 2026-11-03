@@ -175,12 +175,14 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
                 </label>
 
                 <?php // The day the choice above falls on, worked out as soon as it changes, and the hour
-                      // of the new event. Left empty, the hour is the one the endpoint gives it ?>
+                      // of the new event. Left empty, the hour is the one the endpoint gives it.
+                      // A plain text field: a time field refuses an hour typed without its minutes,
+                      // here "16" or "16h30" is enough, the JS writes it back as 16:00 or 16:30 ?>
                 <div class="reedcrm-quick-close-delay-result">
                     <i class="fas fa-calendar-alt"></i>
                     <span id="reedcrm-quick-close-delay-result-date" class="reedcrm-quick-close-delay-result-date"></span>
                     <label for="reedcrm-quick-close-delay-time"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventAtTime')); ?></label>
-                    <input type="time" id="reedcrm-quick-close-delay-time" class="reedcrm-quick-close-delay-time">
+                    <input type="text" id="reedcrm-quick-close-delay-time" class="reedcrm-quick-close-delay-time" maxlength="8" autocomplete="off" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTimePlaceholder')); ?>">
                 </div>
                 <span class="reedcrm-quick-close-delay-help"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTimeHelp')); ?></span>
             </div>

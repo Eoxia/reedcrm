@@ -265,6 +265,20 @@ window.reedcrm.eventQuickClose.event = function () {
     window.reedcrm.eventQuickClose.refreshNewLabelCount();
   });
 
+  // The hour typed short is written back in full once the field is left, so the user sees the hour
+  // the new event will take. An unreadable one is left as typed and flagged, the closure refuses it
+  $(document).on('change.reedcrmQuickClose', '#reedcrm-quick-close-delay-time', function () {
+    var time = window.reedcrm.eventQuickClose.parseTime($(this).val());
+    if (time) {
+      $(this).val(time);
+    }
+    $(this).toggleClass('reedcrm-quick-close-invalid', time === null);
+  });
+
+  $(document).on('input.reedcrmQuickClose', '#reedcrm-quick-close-delay-time', function () {
+    $(this).removeClass('reedcrm-quick-close-invalid');
+  });
+
   $(document).on('click.reedcrmQuickClose', '.reedcrm-quick-close-confirm', function () {
     window.reedcrm.eventQuickClose.confirm($(this));
   });
@@ -320,7 +334,7 @@ window.reedcrm.eventQuickClose.open = function ($trigger) {
   $('#reedcrm-quick-close-delay-value').val(defaultDays);
   $('#reedcrm-quick-close-delay-months').val(defaultMonths);
   $('#reedcrm-quick-close-delay-date').val('');
-  $('#reedcrm-quick-close-delay-time').val('');
+  $('#reedcrm-quick-close-delay-time').val('').removeClass('reedcrm-quick-close-invalid');
   window.reedcrm.eventQuickClose.refreshDelayResult();
 
   // The reminder starts on the type of the event being closed, so picking one is a deliberate
@@ -443,6 +457,38 @@ window.reedcrm.eventQuickClose.refreshDelayResult = function () {
 };
 
 /**
+ * Read the hour of the new event the way it is typed: "16", "16h", "16h30", "16:30" or "1630". The
+ * minutes go with the hour or not at all, "16h3" could be 16:03 as well as 16:30 half typed.
+ *
+ * @memberof ReedCRM_EventQuickClose
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param  {String}      value Hour typed
+ * @return {String|null}       Hour as HH:MM, empty when none is typed, null when it cannot be read
+ */
+window.reedcrm.eventQuickClose.parseTime = function (value) {
+  var typed = (value || '').toLowerCase().replace(/\s+/g, '');
+  if (typed === '') {
+    return '';
+  }
+
+  var parts = typed.match(/^(\d{1,2})(?:[h:.](\d{2})?)?$/) || typed.match(/^(\d{1,2})(\d{2})$/);
+  if (!parts) {
+    return null;
+  }
+
+  var hours   = parseInt(parts[1], 10);
+  var minutes = parts[2] ? parseInt(parts[2], 10) : 0;
+  if (hours > 23 || minutes > 59) {
+    return null;
+  }
+
+  return (hours < 10 ? '0' : '') + hours + ':' + (minutes < 10 ? '0' : '') + minutes;
+};
+
+/**
  * Most characters the name of the new event may hold, set on the field by the template
  *
  * @memberof ReedCRM_EventQuickClose
@@ -526,9 +572,11 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
     return;
   }
 
-  // A half typed hour reads as an empty one, the new event would silently take another hour
+  // An unreadable hour would reach the endpoint as no hour, the new event would silently take another one
   var $time = $('#reedcrm-quick-close-delay-time');
-  if ($('#reedcrm-quick-close-reschedule').is(':checked') && $time.length && $time[0].validity && $time[0].validity.badInput) {
+  var delayTime = window.reedcrm.eventQuickClose.parseTime($time.val());
+  if ($('#reedcrm-quick-close-reschedule').is(':checked') && delayTime === null) {
+    $time.addClass('reedcrm-quick-close-invalid');
     window.reedcrm.eventQuickClose.notify(window.reedcrm.eventQuickClose.config('trans-time-invalid'), 'error');
     $time.trigger('focus');
     return;
@@ -558,7 +606,7 @@ window.reedcrm.eventQuickClose.confirm = function ($button) {
       delay_value: $('#reedcrm-quick-close-delay-value').val(),
       delay_months: $('#reedcrm-quick-close-delay-months').val(),
       delay_date: delayDate,
-      delay_time: $time.val() || '',
+      delay_time: delayTime || '',
       new_label: $('#reedcrm-quick-close-new-label').val(),
       new_type: $('input[name="reedcrm-quick-close-new-type"]:checked').val() || $('#reedcrm-quick-close-new-type-select').val() || ''
     },
