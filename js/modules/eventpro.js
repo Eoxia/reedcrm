@@ -267,7 +267,8 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
     });
   });
 
-  $content.find('form').off('submit.reedcrm').on('submit.reedcrm', function (e) {
+  // The send form of the email tab is left to post itself: the card answers it with a page, not JSON
+  $content.find('form').not('#mailform').off('submit.reedcrm').on('submit.reedcrm', function (e) {
     e.preventDefault();
     var $form = $(this);
     var formAction = $form.attr('action');
