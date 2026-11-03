@@ -191,8 +191,16 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
     if ($sel.hasClass('select2-hidden-accessible')) {
       return;
     }
-    if (/hour|min|sec|month|day|year/i.test(selName)) {
+    // On the end of the name only: "reminder" holds "min", and the user of the direct reminder was left out. On the
+    // CardPro, its own select2 call goes to the select of the same id in the form of the page
+    if (/(hour|min|sec|month|day|year)$/i.test(selName)) {
       return;
+    }
+    // The CardPro page holds the same form: select2 keys its instance on the id, so with two selects of one id,
+    // initializing one destroys the other. The copy of the modal takes an id of its own, its name is kept
+    if (this.id && document.querySelectorAll('[id="' + this.id + '"]').length > 1) {
+      $content.find('label[for="' + this.id + '"]').attr('for', this.id + '_modal');
+      this.id += '_modal';
     }
     if (typeof $.fn.select2 !== 'undefined') {
       $sel.select2({
@@ -418,9 +426,9 @@ window.reedcrm.eventpro.event = function () {
     $(this).closest('form').find('#reminder_fields').slideToggle(200);
   });
 
-  // "+" of the note and ticket blocks of the CardPro: when the form already shows the right tab, go to its first
-  // field rather than reload the page
-  $(document).on('click.reedcrmEventProModal', '.reedcrm-cardpro .cardpro-block-add[data-focus]', function (e) {
+  // "+" of the note and ticket blocks of the CardPro, and left "+" of the relaunch widget of its banner: when the form
+  // already shows the right tab, go to its first field rather than reload the page
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-cardpro .cardpro-block-add[data-focus], .reedcrm-cardpro-page .reedcrm-relaunch-add[data-focus]', function (e) {
     var $field = $($(this).data('focus')).filter(':visible').first();
     if ($field.length) {
       e.preventDefault();

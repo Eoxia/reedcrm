@@ -145,7 +145,20 @@ saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm
 
 if (empty($action)) {
     saturne_get_fiche_head($object, 'event', $title);
-    saturne_banner_tab($object);
+
+    // ReedCRM: relaunch widget in the banner, as on the cards of the thirdparty and of the project. Its left "+" goes
+    // to the event form of the page, the right one opens the direct reminder form in the modal printed below
+    $relaunchWidget = '';
+    if (isModEnabled('agenda')) {
+        require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+        $relaunchWidget = reedcrm_render_relaunch_widget([
+            'projectId'      => $object->element === 'project' ? (int) $object->id : 0,
+            'socid'          => $object->element === 'societe' ? (int) $object->id : (int) $object->socid,
+            'wrapperClass'   => 'reedcrm-cardpro-relaunch',
+            'fullEventFocus' => '#addeventform #title',
+        ]);
+    }
+    saturne_banner_tab($object, 'ref', '', 1, 'ref', 'ref', $relaunchWidget);
 
     // ReedCRM: opportunity chain bar (projects only)
     if ($object->element === 'project') {
@@ -170,6 +183,10 @@ if (empty($action)) {
     }
 
     print '</div>';
+
+    if (!empty($relaunchWidget)) {
+        require __DIR__ . '/../core/tpl/view/eventpro/eventpro_modal.tpl.php';
+    }
 }
 
 // End of page

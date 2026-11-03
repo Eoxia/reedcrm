@@ -748,21 +748,8 @@ class ActionsReedcrm
                 print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
                 print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
 
-                $modalId = 'eventproCardModal';
-                $langs->load('reedcrm@reedcrm');
+                require __DIR__ . '/../core/tpl/view/eventpro/eventpro_modal.tpl.php';
                 ?>
-                <div class="wpeo-modal modal-eventpro" id="<?php echo $modalId; ?>">
-                    <div class="modal-container wpeo-modal-event">
-                        <div class="modal-header">
-                            <h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?></h2>
-                            <div class="modal-close"><i class="fas fa-times"></i></div>
-                        </div>
-                        <div class="modal-content">
-                            <div id="eventproCardModal-loader" class="wpeo-loader"></div>
-                            <div id="eventproCardModal-content"></div>
-                        </div>
-                    </div>
-                </div>
                 <script>
                     // Always load eventpro.js module (overrides minified version with latest changes)
                     var script = document.createElement('script');
@@ -840,23 +827,8 @@ class ActionsReedcrm
                 print '<script src="' . $jsPath . '"></script>';
 
                 // Single modal for all projects
-                $modalId = 'eventproCardModal';
-                $langs->load('reedcrm@reedcrm');
+                require __DIR__ . '/../core/tpl/view/eventpro/eventpro_modal.tpl.php';
                 ?>
-                <div class="wpeo-modal modal-eventpro" id="<?php echo $modalId; ?>">
-                    <div class="modal-container wpeo-modal-event">
-                        <!-- Modal-Header -->
-                        <div class="modal-header">
-                            <h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickEventCreation')); ?></h2>
-                            <div class="modal-close"><i class="fas fa-times"></i></div>
-                        </div>
-                        <!-- Modal-Content -->
-                        <div class="modal-content">
-                            <div id="eventproCardModal-loader" class="wpeo-loader"></div>
-                            <div id="eventproCardModal-content"></div>
-                        </div>
-                    </div>
-                </div>
                 <script>
                     jQuery(document).ready(function () {
                         // Load eventpro.js after DOM ready to ensure it overrides reedcrm.min.js definitions
