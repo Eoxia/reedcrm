@@ -1,0 +1,143 @@
+@use 'tokens' as *;
+
+/* ReedCRM modern theme: the eventPro form of the CardPro tab (view/procard.php, also opened in the
+   side modal of the opportunity list and of the map) and the map page (view/map.php) */
+
+#{$rc-scope} {
+  /* ---- eventPro form ----
+     The form wraps its fields in a .template-pwa block, which css/temp.css draws as labelled boxes
+     (picto, then field). Same boxes here, with the radius, greys and focus ring of the theme */
+
+  #addeventform .template-pwa label,
+  #eventproCardModal .template-pwa label {
+    border-color: $rc-border-strong;
+    border-radius: $rc-radius-sm;
+    background: $rc-surface;
+    transition: border-color $rc-transition, box-shadow $rc-transition;
+
+    > .fas,
+    > .far,
+    > .fa,
+    > span.fas {
+      color: $rc-faint;
+    }
+
+    &:focus-within {
+      border-color: $rc-primary;
+      box-shadow: $rc-ring;
+    }
+
+    /* The box is the field: the frame the shared theme gives every select2 would draw a second box
+       inside it (css/temp.css flattens it, the theme sets it back with !important) */
+    .select2-container--default .select2-selection--single,
+    .select2-container--default .select2-selection--multiple {
+      border: none !important;
+      box-shadow: none;
+    }
+  }
+
+  .reedcrm-add-contact-btn,
+  .reedcrm-add-project-btn {
+    border-radius: $rc-radius-sm;
+    background: $rc-primary;
+    box-shadow: 0 1px 2px rgba(13, 138, 255, 0.35);
+
+    &:hover {
+      background: $rc-primary-strong;
+      box-shadow: 0 4px 12px rgba(13, 138, 255, 0.3);
+      transform: none;
+    }
+  }
+
+  .reedcrm-add-contact-form,
+  .reedcrm-add-project-form {
+    border-radius: $rc-radius;
+  }
+
+  /* ---- Relaunch counters of the eventPro panels and of the project card ---- */
+
+  .reedcrm-relaunch-button {
+    border-radius: $rc-radius-sm;
+  }
+
+  .reedcrm-coordonnees-box {
+    border-color: $rc-border;
+    border-radius: $rc-radius;
+  }
+
+  .reedcrm-coordonnees-btn {
+    border-radius: $rc-radius-sm;
+  }
+
+  .reedcrm-relaunch-tooltip {
+    border: 1px solid $rc-border;
+    border-radius: $rc-radius;
+    box-shadow: $rc-shadow-hover;
+  }
+
+  /* ---- Map ---- */
+
+  .reedcrm-map-filters {
+    gap: 10px 18px;
+    padding: 14px 18px;
+    @include rc-card;
+
+    .divsearchfield {
+      color: $rc-text-soft;
+    }
+
+    input.flat,
+    select.flat {
+      min-height: 32px;
+      border-color: $rc-border-strong;
+      border-radius: $rc-radius-sm;
+
+      &:focus {
+        border-color: $rc-primary;
+        box-shadow: $rc-ring;
+      }
+    }
+
+    .map-preset-btn.button {
+      height: 32px;
+      padding: 0 12px;
+      border-color: $rc-border-strong !important;
+      border-radius: $rc-radius !important;
+      color: $rc-text-soft !important;
+      font-size: 13px;
+      font-weight: 600;
+
+      &:hover,
+      &:focus {
+        border-color: $rc-primary !important;
+        background: $rc-surface !important;
+        color: $rc-primary-strong !important;
+      }
+
+      &.is-active {
+        border-color: $rc-primary !important;
+        background: $rc-primary !important;
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  #display_map {
+    overflow: hidden;
+    border: 1px solid $rc-border;
+    border-radius: $rc-radius-lg;
+    box-shadow: $rc-shadow-sm;
+  }
+
+  .ol-popup {
+    border-color: $rc-border;
+    border-radius: $rc-radius;
+    box-shadow: $rc-shadow-hover;
+  }
+
+  .route-toggle-button,
+  .geolocate-button {
+    border: 1px solid $rc-border;
+    box-shadow: $rc-shadow;
+  }
+}

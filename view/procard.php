@@ -108,7 +108,7 @@ if ($resHook < 0) {
 }
 
 if (empty($resHook)) {
-    // create_contact / add_event / create_ticket, shared with the mobile App form (view/frontend/pwa_relaunch.php)
+    // create_contact / create_project / add_event / create_ticket, shared with the mobile App form (view/frontend/pwa_relaunch.php)
     require __DIR__ . '/../core/tpl/view/eventpro/eventpro_actions.tpl.php';
 }
 
@@ -119,7 +119,14 @@ if (empty($resHook)) {
 if ($isModal) {
     // Modal mode: output only the form template without header/banner/footer
     if (empty($action)) {
-        require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+        // The right-hand button of the relaunch widget asks for the short reminder form (#873),
+        // the left-hand one for the complete event form.
+        if (GETPOST('mode', 'aZ09') === 'reminder') {
+            require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+            require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_reminder.tpl.php';
+        } else {
+            require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+        }
     }
     $db->close();
     exit;
@@ -128,8 +135,8 @@ if ($isModal) {
 $title   = $langs->transnoentities('ReedCRM');
 $helpUrl = 'FR:Module_ReedCRM';
 $moreCSS = [
-    '/custom/reedcrm/css/reedcrm.min.css',
-    '/custom/reedcrm/css/temp.css'
+    '/reedcrm/css/reedcrm.min.css',
+    '/reedcrm/css/temp.css'
 ];
 
 saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm-' . $object->element . 'template-pwa page-list bodyforlist');

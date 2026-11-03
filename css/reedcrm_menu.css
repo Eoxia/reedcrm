@@ -1,0 +1,257 @@
+/* Copyright (C) 2026 EVARISK <technique@evarisk.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* Section headers of the ReedCRM left menu.
+ * Loaded on every page through module_parts['css'] because the ReedCRM left menu
+ * is also displayed on pages that do not belong to the module (recurring invoice
+ * templates, saturne generic lists...) and that never load reedcrm.min.css.
+ * Everything is scoped to a left menu that actually carries a section marker, so
+ * the other main menus of Dolibarr keep their native rendering.
+ * The markers live in the "prefix" column of llx_menu because "titre" is split on
+ * "/" by Menubase::menuLoad() to translate composed titles.
+ */
+
+/* ReedCRM brand palette. */
+:root {
+    --reedcrm-brand-deep: #014751;
+}
+
+/* ------------------------------------------------------------------ */
+/* Section headers                                                     */
+/* ------------------------------------------------------------------ */
+
+#id-left .blockvmenu:has(.reedcrm-menu-section) {
+    margin: 9px 8px 0 4px;
+    padding-top: 5px;
+    padding-bottom: 4px;
+    background: var(--reedcrm-brand-deep);
+    border: none;
+    border-radius: 5px;
+}
+
+#id-left .blockvmenu:has(.reedcrm-menu-section) .menu_titre {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#id-left .menu_titre .vmenu:has(> .reedcrm-menu-section) {
+    font-size: 0.85em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    opacity: 1;
+}
+
+/* The picto sits on the dark band, so it must not inherit any theme picto colour. */
+#id-left .menu_titre .reedcrm-menu-section > i {
+    color: #FFFFFF;
+}
+
+/* The block right after a header must not look detached from it. */
+#id-left .blockvmenu:has(.reedcrm-menu-section) + .blockvmenu {
+    padding-top: 6px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Sub entries                                                         */
+/* ------------------------------------------------------------------ */
+
+/* The eldy menu indents sub entries with non breaking spaces from level 2 only,
+ * so a level 1 entry ends up further left than the label of its own parent.
+ * Align it under the parent label, past the parent picto. The theme sizes the row in
+ * content box, so without border-box that indent widens it by 26px past the level 1
+ * rows: harmless while the row had no background, visible once it is hovered.
+ */
+#id-left:has(.reedcrm-menu-section) .menu_contenu {
+    box-sizing: border-box;
+    padding-left: 26px;
+}
+
+#id-left:has(.reedcrm-menu-section) .menu_contenu .vsmenu {
+    opacity: 0.85;
+}
+
+/* ------------------------------------------------------------------ */
+/* Rule that sets the App entry apart                                  */
+/* ------------------------------------------------------------------ */
+
+#id-left .blockvmenu:has(.reedcrm-menu-separator) {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+#id-left .blockvmenu:has(.reedcrm-menu-separator) .menu_titre {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#id-left .menu_titre .vmenu:has(> .reedcrm-menu-separator) {
+    display: block;
+}
+
+#id-left .menu_titre .reedcrm-menu-separator {
+    display: block;
+    height: 3px;
+    margin: 3px 10px 3px 0;
+    background: var(--reedcrm-brand-deep);
+}
+
+/* Drop the hairline of the entry above so the thick rule reads as a single break. */
+#id-left .blockvmenu:has(+ .blockvmenu .reedcrm-menu-separator) {
+    border-bottom: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Full row click target                                               */
+/* ------------------------------------------------------------------ */
+
+/* Eldy prints each entry as an inline <a> inside a row that spans the whole
+ * width of the left menu, so only the label itself reacts to a click. Stretch
+ * the link over its row with a transparent overlay rather than turning it into
+ * a block: the indentation that eldy prints as "&nbsp;" text nodes before the
+ * link stays on the same line, and no width or margin of the theme is touched.
+ * Rows without a link (section headers, separator, disabled entries) hold a
+ * <span> instead of an <a> and are left alone by the :has() guard.
+ */
+#id-left:has(.reedcrm-menu-section) .menu_titre:has(> a.vmenu),
+#id-left:has(.reedcrm-menu-section) .menu_contenu:has(> a.vsmenu) {
+    position: relative;
+}
+
+#id-left:has(.reedcrm-menu-section) .menu_titre > a.vmenu::after,
+#id-left:has(.reedcrm-menu-section) .menu_contenu > a.vsmenu::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+}
+
+/* Nothing would tell that the whole row is now clickable without a hover state. */
+#id-left:has(.reedcrm-menu-section) .menu_titre:has(> a.vmenu):hover,
+#id-left:has(.reedcrm-menu-section) .menu_contenu:has(> a.vsmenu):hover {
+    background: rgba(1, 71, 81, 0.07);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ */
+/* Minimized menu                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Saturne shrinks the left menu to a column of pictos (js/modules/menu.js): it hides
+ * the labels and clips every row at 40px, but sets no class on the menu. The chevron
+ * of the toggle entry, which turns right, is the only marker of that state.
+ * Without these rules the section bands keep the margins of a full width band and cut
+ * their picto in half, the sub entries (eldy prints no picto below level 0) stay as
+ * blank rows, and eldy shifts every picto 8px right of the rows it sits in.
+ */
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right):has(.reedcrm-menu-section) .menu_titre > .vmenu {
+    margin-left: 0;
+}
+
+/* Centre every picto on the rows, so the bands, the hairlines and the pictos share one axis. */
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right):has(.reedcrm-menu-section) .menu_titre .pictofixedwidth {
+    width: 28px;
+    text-align: center;
+}
+
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) .blockvmenu:has(.reedcrm-menu-section) {
+    margin-right: 0;
+    margin-left: 2px;
+}
+
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right):has(.reedcrm-menu-section) .menu_contenu {
+    display: none;
+}
+
+#id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) .menu_titre .reedcrm-menu-separator {
+    margin-right: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Modern back office theme                                            */
+/* ------------------------------------------------------------------ */
+
+/* saturne_header() puts the saturne-theme class on the logged-in pages of the Saturne modules, whose
+ * shared theme makes the menu blocks transparent: the white labels of the bands above would vanish on
+ * the white sidebar. There the headers become uppercase micro labels and the App rule a hairline.
+ * Kept in this file rather than in reedcrm.min.css: Saturne pages of other objects (generic lists)
+ * show the ReedCRM menu without loading the module stylesheet. The colours are the custom
+ * properties the shared theme declares on that scope; #id-left outweighs its sidebar rules.
+ */
+body#mainbody.saturne-theme #id-left div.vmenu .blockvmenu:has(.reedcrm-menu-section) {
+    margin: 12px 0 0;
+    padding: 8px 8px 2px;
+    border-radius: 0;
+    background: transparent;
+}
+
+body#mainbody.saturne-theme #id-left .menu_titre .vmenu:has(> .reedcrm-menu-section) {
+    display: block;
+    padding: 0 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--saturne-faint);
+}
+
+body#mainbody.saturne-theme #id-left .menu_titre .reedcrm-menu-section > i {
+    color: var(--saturne-faint);
+}
+
+/* The block right after a header hangs from it */
+body#mainbody.saturne-theme #id-left div.vmenu .blockvmenu:has(.reedcrm-menu-section) + .blockvmenu {
+    padding-top: 2px;
+    border-top: none;
+}
+
+body#mainbody.saturne-theme #id-left div.vmenu .blockvmenu:has(.reedcrm-menu-separator) {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+body#mainbody.saturne-theme #id-left .menu_titre .reedcrm-menu-separator {
+    height: 1px;
+    margin: 0 10px;
+    background: var(--saturne-border);
+}
+
+/* Sub entries carry no picto: indent them under the label of their parent, past its picto */
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) div.vmenu div.menu_contenu {
+    padding-left: 24px;
+}
+
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) div.menu_contenu .vsmenu {
+    opacity: 1;
+}
+
+/* The links of the theme already fill their row and react on hover: no second highlight */
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) .menu_titre:has(> a.vmenu):hover,
+body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) .menu_contenu:has(> a.vsmenu):hover {
+    background: transparent;
+}
+
+/* Minimized menu: the headers keep their picto only, on the axis of the others */
+body#mainbody.saturne-theme #id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) div.vmenu .blockvmenu:has(.reedcrm-menu-section) {
+    margin: 8px 0 0;
+    padding-top: 4px;
+}

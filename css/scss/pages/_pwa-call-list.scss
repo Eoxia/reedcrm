@@ -101,17 +101,134 @@
 }
 
 .pwa-call-card {
+    position: relative;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     padding: 16px;
     margin-bottom: 16px;
+
+    /* Next event late or to come: same flags as the todo cards */
+    &--late {
+        border-left: 4px solid #e05353;
+    }
+
+    &--upcoming {
+        border-left: 4px solid #63acc9;
+    }
+}
+
+/* Unlink the line from the call list: discreet, in the top right corner, away from the call button */
+.pwa-call-btn-unlink {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: #fee2e2;
+        border-color: #e05353;
+        color: #e05353;
+    }
+
+    &.loading {
+        opacity: 0.5;
+        pointer-events: none;
+    }
 }
 
 .pwa-call-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+    /* Room for the unlink button in the corner */
+    padding-right: 44px;
+
+    .todo-card-late-badge,
+    .todo-card-upcoming-badge {
+        flex-shrink: 0;
+        align-self: flex-start;
+        margin-top: 8px;
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+}
+
+/* Date the line was added to the call list */
+.pwa-call-added-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+/* Chips of the todo cards (object + amount + relaunches, third party), scaled up for the phone */
+.pwa-call-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .todo-link-badge,
+    .todo-origin-amount,
+    .todo-relaunch-count {
+        padding: 5px 12px;
+        font-size: 15px;
+    }
+
+    .pwa-call-percent {
+        margin-left: auto;
+    }
+}
+
+/* Next event still to do, in clear (no hover on a phone to read the badge tooltip):
+   red with the warning triangle once its date has passed */
+.pwa-call-next-event {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #475569;
+
+    &--late .pwa-call-next-event-date {
+        color: #e05353;
+    }
+}
+
+.pwa-call-next-event-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pwa-call-next-event-label {
+    /* Free text: readable, but never more than two lines on the card */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-width: 0;
+    word-break: break-word;
 }
 
 .pwa-call-name {

@@ -1,0 +1,222 @@
+@use 'tokens' as *;
+
+/* ReedCRM modern theme: intervention calendar (view/intervention_calendar.php) and the buttons it
+   shares with the opportunity stats page (.reedcrm-btn) */
+
+#{$rc-scope} {
+  a.reedcrm-btn,
+  button.reedcrm-btn {
+    height: 34px;
+    @include rc-button;
+    font-size: 13px;
+
+    i {
+      opacity: 1;
+    }
+
+    &.reedcrm-btn-icon {
+      width: 34px;
+    }
+
+    &.reedcrm-btn-on {
+      border-color: $rc-primary;
+      background: $rc-primary-soft;
+      color: $rc-primary-strong;
+    }
+
+    &.reedcrm-btn-primary {
+      @include rc-button-primary;
+    }
+  }
+
+  .reedcrm-intervention-views {
+    padding: 3px;
+    border: 1px solid $rc-border;
+    border-radius: $rc-radius;
+    background: $rc-surface;
+    box-shadow: $rc-shadow-sm;
+
+    /* A segmented control: the buttons lose their own frame inside it */
+    .reedcrm-btn,
+    .reedcrm-btn:first-child,
+    .reedcrm-btn:last-child {
+      height: 28px;
+      margin: 0;
+      border-color: transparent;
+      border-radius: $rc-radius-sm;
+      background: transparent;
+    }
+
+    .reedcrm-btn.reedcrm-btn-on {
+      border-color: transparent;
+      background: $rc-primary-soft;
+      color: $rc-primary-strong;
+    }
+  }
+
+  .reedcrm-intervention-period .reedcrm-intervention-period-label {
+    color: $rc-text;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .reedcrm-intervention-filters {
+    gap: 12px 14px;
+  }
+
+  .reedcrm-intervention-filter label {
+    @include rc-label;
+  }
+
+  /* ---- Figures of the month ---- */
+
+  .reedcrm-intervention-stats {
+    gap: 12px;
+  }
+
+  .reedcrm-intervention-stat {
+    padding: 12px 16px;
+    @include rc-card;
+
+    .reedcrm-intervention-stat-value {
+      color: $rc-text;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .reedcrm-intervention-stat-label {
+      @include rc-label;
+      font-weight: 600;
+    }
+  }
+
+  .reedcrm-intervention-legend {
+    color: $rc-text-soft;
+  }
+
+  .reedcrm-intervention-legend-color {
+    border-radius: 4px;
+  }
+
+  /* ---- Month grid ---- */
+
+  .reedcrm-calendar {
+    margin-top: 14px;
+    @include rc-card;
+  }
+
+  .reedcrm-calendar-head-day {
+    padding: 10px 10px;
+    border-bottom-color: $rc-border;
+    background: $rc-surface-soft;
+    @include rc-label;
+  }
+
+  .reedcrm-calendar-day {
+    border-right-color: $rc-border-soft;
+    border-bottom-color: $rc-border-soft;
+
+    &.reedcrm-calendar-day-out {
+      background: $rc-surface-soft;
+      color: $rc-faint;
+    }
+
+    &.reedcrm-calendar-day-weekend {
+      background: $rc-surface-soft;
+    }
+
+    &.reedcrm-calendar-day-today {
+      background: rgba(13, 138, 255, 0.04);
+      box-shadow: inset 0 0 0 2px $rc-primary;
+    }
+  }
+
+  .reedcrm-calendar-day-head {
+    .reedcrm-calendar-day-number {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .reedcrm-calendar-day-count {
+      padding: 1px 6px;
+      border-radius: $rc-radius-pill;
+      background: $rc-primary-soft;
+      color: $rc-primary-strong;
+      font-weight: 700;
+    }
+  }
+
+  .reedcrm-calendar-day:not(.reedcrm-calendar-day-out) .reedcrm-calendar-day-number {
+    color: $rc-text-soft;
+  }
+
+  .reedcrm-calendar-day.reedcrm-calendar-day-today .reedcrm-calendar-day-number {
+    color: $rc-primary-strong;
+  }
+
+  /* The left rule of a chip keeps its colour (inline style, the status of the intervention) */
+  .reedcrm-intervention-chip {
+    padding: 5px 7px;
+    border-color: $rc-border;
+    border-radius: $rc-radius-sm;
+    box-shadow: $rc-shadow-sm;
+
+    &:hover {
+      border-color: $rc-border-strong;
+      background: $rc-surface-soft;
+      box-shadow: $rc-shadow;
+    }
+
+    &.reedcrm-intervention-chip-done {
+      background: $rc-surface-soft;
+    }
+
+    .reedcrm-chip-time {
+      border-radius: 4px;
+      background: $rc-primary-soft;
+      color: $rc-primary-strong;
+    }
+
+    .reedcrm-chip-amount {
+      color: $rc-success-ink;
+    }
+
+    .reedcrm-chip-soc {
+      color: $rc-text;
+    }
+
+    .reedcrm-chip-label {
+      color: $rc-muted;
+    }
+
+    .reedcrm-chip-user {
+      border-top-color: $rc-border-soft;
+      color: $rc-text-soft;
+
+      &.reedcrm-chip-user-none {
+        color: $rc-faint;
+      }
+    }
+
+    .reedcrm-chip-link {
+      color: $rc-faint;
+
+      &:hover {
+        color: $rc-primary;
+      }
+    }
+  }
+
+  .reedcrm-chip-avatar {
+    background: $rc-faint;
+
+    &.reedcrm-chip-avatar-none {
+      background: $rc-border-strong;
+    }
+  }
+
+  .reedcrm-intervention-remaining {
+    border-radius: $rc-radius-pill;
+    background: $rc-danger-soft;
+    color: $rc-danger-ink;
+  }
+}

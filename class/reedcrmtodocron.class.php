@@ -24,6 +24,7 @@
 // dol_time_plus_duree() is not loaded by default, the cron runner would fatal on it
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 require_once __DIR__ . '/../lib/reedcrm_todo.lib.php';
 
 /**
@@ -62,7 +63,7 @@ class ReedcrmTodoCron
      */
     public function createProposalRelaunchEvents(): int
     {
-        global $conf, $langs;
+        global $langs;
 
         $langs->loadLangs(['reedcrm@reedcrm', 'agenda', 'propal']);
 
@@ -92,16 +93,7 @@ class ReedcrmTodoCron
                 continue;
             }
 
-            $referenceDate = $this->db->jdate($row->date_reference);
-            $label         = $langs->transnoentities('TodoPropalRelaunchLabel', $row->ref);
-            if (!empty($row->soc_name)) {
-                $label .= ' - ' . $row->soc_name;
-            }
-            $note = $langs->transnoentities(
-                'TodoPropalRelaunchNote',
-                $referenceDate ? dol_print_date($referenceDate, 'day') : '?',
-                price($row->total_ttc, 0, $langs, 1, -1, -1, $conf->currency)
-            );
+            [$label, $note] = $this->buildRelaunchTexts('propal', $row);
 
             if ($this->createRelaunchEvent(REEDCRM_TODO_CODE_PROPAL_RELAUNCH, 'propal', $row, $label, $note)) {
                 $created++;
@@ -122,7 +114,7 @@ class ReedcrmTodoCron
      */
     public function createInvoiceRelaunchEvents(): int
     {
-        global $conf, $langs;
+        global $langs;
 
         $langs->loadLangs(['reedcrm@reedcrm', 'agenda', 'bills']);
 
@@ -130,7 +122,7 @@ class ReedcrmTodoCron
         $threshold = dol_time_plus_duree(dol_now(), -$days, 'd');
 
         // fk_statut = 1 is the validated invoice, paye = 0 the unpaid one, type 2 a credit note
-        $sql  = 'SELECT f.rowid, f.ref, f.fk_soc, f.fk_projet, f.total_ttc, f.fk_user_author, f.fk_user_valid,';
+        $sql  = 'SELECT f.rowid, f.ref, f.fk_soc, f.fk_projet, f.total_ttc, f.fk_user_author, f.fk_user_valid, f.fk_fac_rec_source,';
         $sql .= ' COALESCE(f.date_lim_reglement, f.datef) as date_reference, s.nom as soc_name';
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'facture as f';
         $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = f.fk_soc';
@@ -146,22 +138,18 @@ class ReedcrmTodoCron
             return -1;
         }
 
+        $relaunchUsers = reedcrm_get_template_relaunch_users($this->db);
+
         $created = 0;
         while ($row = $this->db->fetch_object($resql)) {
             if ($this->relaunchExists('invoice', (int) $row->rowid, REEDCRM_TODO_CODE_INVOICE_RELAUNCH, $days)) {
                 continue;
             }
 
-            $referenceDate = $this->db->jdate($row->date_reference);
-            $label         = $langs->transnoentities('TodoInvoiceRelaunchLabel', $row->ref);
-            if (!empty($row->soc_name)) {
-                $label .= ' - ' . $row->soc_name;
-            }
-            $note = $langs->transnoentities(
-                'TodoInvoiceRelaunchNote',
-                $referenceDate ? dol_print_date($referenceDate, 'day') : '?',
-                price($row->total_ttc, 0, $langs, 1, -1, -1, $conf->currency)
-            );
+            // An invoice generated from a template hands its relaunch to the user the template names
+            $row->fk_user_relaunch = $relaunchUsers[(int) $row->fk_fac_rec_source] ?? 0;
+
+            [$label, $note] = $this->buildRelaunchTexts('invoice', $row);
 
             if ($this->createRelaunchEvent(REEDCRM_TODO_CODE_INVOICE_RELAUNCH, 'invoice', $row, $label, $note)) {
                 $created++;
@@ -172,6 +160,89 @@ class ReedcrmTodoCron
         $this->output = $langs->transnoentities('TodoInvoiceRelaunchCronResult', $created);
 
         return 0;
+    }
+
+    /**
+     * Rebuild the label and the note of the relaunch events stored with an untranslated key.
+     *
+     * A cron job running in a language whose file lacked the relaunch keys (the "auto" language
+     * of the instance resolves to en_US outside of a browser) saved the key itself, and lost the
+     * reference, the date and the amount it was given along the way. The linked proposal or
+     * invoice still holds them: both texts are written again from it, in the current language.
+     *
+     * @return int Number of events repaired, < 0 if KO
+     */
+    public function repairUntranslatedRelaunchEvents(): int
+    {
+        global $langs;
+
+        $langs->loadLangs(['reedcrm@reedcrm', 'agenda', 'propal', 'bills']);
+
+        $sources = [
+            'propal'  => ['code' => REEDCRM_TODO_CODE_PROPAL_RELAUNCH, 'table' => 'propal', 'date' => 'COALESCE(o.date_valid, o.datep)', 'key' => 'TodoPropalRelaunch'],
+            'invoice' => ['code' => REEDCRM_TODO_CODE_INVOICE_RELAUNCH, 'table' => 'facture', 'date' => 'COALESCE(o.date_lim_reglement, o.datef)', 'key' => 'TodoInvoiceRelaunch'],
+        ];
+
+        $repaired = 0;
+        foreach ($sources as $elementType => $source) {
+            $sql  = 'SELECT a.id as event_id, o.ref, o.total_ttc, ' . $source['date'] . ' as date_reference, s.nom as soc_name';
+            $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+            $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . $source['table'] . ' as o ON o.rowid = a.fk_element';
+            $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = o.fk_soc';
+            $sql .= " WHERE a.code = '" . $this->db->escape($source['code']) . "'";
+            $sql .= " AND a.elementtype = '" . $this->db->escape($elementType) . "'";
+            $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
+            $sql .= " AND (a.label LIKE '" . $this->db->escape($source['key']) . "Label%' OR a.note LIKE '" . $this->db->escape($source['key']) . "Note%')";
+
+            $resql = $this->db->query($sql);
+            if (!$resql) {
+                dol_syslog(__METHOD__ . ': ' . $this->db->lasterror(), LOG_ERR);
+                return -1;
+            }
+
+            while ($row = $this->db->fetch_object($resql)) {
+                [$label, $note] = $this->buildRelaunchTexts($elementType, $row);
+
+                $sqlUpdate  = 'UPDATE ' . MAIN_DB_PREFIX . 'actioncomm';
+                $sqlUpdate .= " SET label = '" . $this->db->escape($label) . "', note = '" . $this->db->escape($note) . "'";
+                $sqlUpdate .= ' WHERE id = ' . ((int) $row->event_id);
+                if ($this->db->query($sqlUpdate)) {
+                    $repaired++;
+                } else {
+                    dol_syslog(__METHOD__ . ': ' . $this->db->lasterror(), LOG_ERR);
+                }
+            }
+            $this->db->free($resql);
+        }
+
+        return $repaired;
+    }
+
+    /**
+     * Build the label and the private note of a relaunch event.
+     *
+     * @param  string $elementType Element type the event is linked to: propal or invoice
+     * @param  object $row         Row of the proposal or the invoice (ref, total_ttc, date_reference, soc_name)
+     * @return string[]            [label, note]
+     */
+    protected function buildRelaunchTexts(string $elementType, $row): array
+    {
+        global $conf, $langs;
+
+        $key           = $elementType == 'propal' ? 'TodoPropalRelaunch' : 'TodoInvoiceRelaunch';
+        $referenceDate = $this->db->jdate($row->date_reference);
+
+        $label = $langs->transnoentities($key . 'Label', $row->ref);
+        if (!empty($row->soc_name)) {
+            $label .= ' - ' . $row->soc_name;
+        }
+        $note = $langs->transnoentities(
+            $key . 'Note',
+            $referenceDate ? dol_print_date($referenceDate, 'day') : '?',
+            price($row->total_ttc, 0, $langs, 1, -1, -1, $conf->currency)
+        );
+
+        return [$label, $note];
     }
 
     /**
@@ -231,8 +302,12 @@ class ReedcrmTodoCron
 
         require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
-        // The one who validated the object owns the relaunch, the author otherwise
-        $ownerId = (int) $row->fk_user_valid;
+        // The user named on the recurring invoice template owns the relaunch, then the one who
+        // validated the object, the author otherwise
+        $ownerId = (int) ($row->fk_user_relaunch ?? 0);
+        if (empty($ownerId)) {
+            $ownerId = (int) $row->fk_user_valid;
+        }
         if (empty($ownerId)) {
             $ownerId = (int) $row->fk_user_author;
         }

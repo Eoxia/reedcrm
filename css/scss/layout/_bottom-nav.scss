@@ -77,6 +77,40 @@
     }
 }
 
+/* Red counter on a nav item icon (e.g. lines still to call) */
+.pwa-nav-badge {
+    position: absolute;
+    top: -6px;
+    left: calc(50% + 3px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 2px solid #ffffff;
+    border-radius: 9px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    text-align: center;
+    box-sizing: border-box;
+    pointer-events: none;
+
+    /* Ring blends into the dark block of the active item */
+    .active > & {
+        border-color: #1e293b;
+    }
+
+    .pwa-nav-drawer-link > & {
+        top: 6px;
+        left: calc(50% + 4px);
+    }
+
+    .active .pwa-nav-drawer-link > & {
+        border-color: #1e293b;
+    }
+}
+
 /* Burger drawer */
 .pwa-nav-drawer-overlay {
     position: fixed;

@@ -24,6 +24,7 @@
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 require_once __DIR__ . '/recurringinvoicefollowup.class.php';
 require_once __DIR__ . '/../lib/reedcrm_followup.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 /**
  * Class holding the recurring invoice follow-up scheduled jobs.
@@ -228,20 +229,24 @@ class RecurringInvoiceFollowupCron
         }
 
         // Payment reminders whose reminder date has been reached and invoice not paid.
-        $sqlRelance  = 'SELECT t.rowid, t.ref, t.fk_soc, t.date_relance FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
+        $sqlRelance  = 'SELECT t.rowid, t.ref, t.fk_soc, t.fk_facture_rec, t.date_relance FROM ' . MAIN_DB_PREFIX . 'reedcrm_facturerec_followup as t';
         $sqlRelance .= ' WHERE t.status = 1 AND t.facture_payee = 0 AND t.date_relance IS NOT NULL';
         $sqlRelance .= ' AND t.entity IN (' . getEntity('reedcrm_facturerec_followup') . ')';
         $sqlRelance .= " AND t.date_relance <= '" . $this->db->idate($now) . "'";
 
         $resqlRelance = $this->db->query($sqlRelance);
         if ($resqlRelance) {
+            $relaunchUsers = reedcrm_get_template_relaunch_users($this->db);
+
             while ($row = $this->db->fetch_object($resqlRelance)) {
                 $relanceDate = $this->db->jdate($row->date_relance);
                 if ($this->reminderExists((int) $row->rowid, $relanceDate)) {
                     continue;
                 }
                 $label = $langs->transnoentities('FollowupRelanceReminderLabel', $row->ref);
-                if ($this->createEvent((int) $row->rowid, (int) $row->fk_soc, $label, $relanceDate)) {
+                // The template hands its payment reminders to the user it names
+                $ownerId = $relaunchUsers[(int) $row->fk_facture_rec] ?? 0;
+                if ($this->createEvent((int) $row->rowid, (int) $row->fk_soc, $label, $relanceDate, $ownerId)) {
                     $created++;
                 }
             }
@@ -266,6 +271,12 @@ class RecurringInvoiceFollowupCron
 
         $langs->loadLangs(['reedcrm@reedcrm']);
         require_once __DIR__ . '/duaudit.class.php';
+
+        // Opt-in feature: no audit is created while the DU follow-up is turned off.
+        if (!reedcrmFollowupDuIsEnabled()) {
+            $this->output = $langs->trans('DuFollowupDisabled');
+            return 0;
+        }
 
         $created = 0;
         $updated = 0;
@@ -318,6 +329,9 @@ class RecurringInvoiceFollowupCron
                     $audit->note              = $obj->label;
                     $audit->montant           = (float) $obj->line_ttc;
                     $audit->status            = DuAudit::STATUS_TODO;
+                    // New cycle: the appointment of the previous one no longer applies.
+                    $audit->date_rdv          = null;
+                    $audit->fk_intervention_date = null;
                     if ($audit->update($user) > 0) {
                         $updated++;
                     }
@@ -372,13 +386,18 @@ class RecurringInvoiceFollowupCron
      * @param  int    $socid      Thirdparty ID.
      * @param  string $label      Event label.
      * @param  int    $datep      Event date timestamp.
+     * @param  int    $ownerId    User the event belongs to, 0 for the one running the job.
      * @return bool               True on success.
      */
-    protected function createEvent(int $followupId, int $socid, string $label, int $datep): bool
+    protected function createEvent(int $followupId, int $socid, string $label, int $datep, int $ownerId = 0): bool
     {
         global $user;
 
         require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+        if (empty($ownerId)) {
+            $ownerId = $user->id > 0 ? $user->id : 1;
+        }
 
         $event              = new ActionComm($this->db);
         $event->type_code   = 'AC_OTH';
@@ -386,7 +405,7 @@ class RecurringInvoiceFollowupCron
         $event->datep       = $datep;
         $event->datef       = $datep;
         $event->percentage  = -1;
-        $event->userownerid = $user->id > 0 ? $user->id : 1;
+        $event->userownerid = $ownerId;
         $event->socid       = $socid > 0 ? $socid : 0;
         $event->fk_element  = $followupId;
         $event->elementtype = 'recurringinvoicefollowup@reedcrm';

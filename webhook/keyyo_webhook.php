@@ -61,21 +61,35 @@ log_to_file('REQUEST: '.json_encode($payload, JSON_UNESCAPED_UNICODE));
 // Récupération des numéros d'appel
 $caller = $_GET['caller'] ?? '';
 $callee = $_GET['callee'] ?? '';
+$type   = $_GET['type'] ?? '';
 
 // Traitement JSON si présent
 $data = json_decode($raw, true);
 if (json_last_error() === JSON_ERROR_NONE) {
     $caller = $data['caller'] ?? $caller;
     $callee = $data['callee'] ?? $callee;
+    $type   = $data['type'] ?? $type;
     log_to_file('JSON OK: caller='.$caller.' callee='.$callee);
 } else {
     if (!empty($_POST)) {
         $caller = $_POST['caller'] ?? $caller;
         $callee = $_POST['callee'] ?? $callee;
+        $type   = $_POST['type'] ?? $type;
         log_to_file('FORM DATA: '.json_encode($_POST, JSON_UNESCAPED_UNICODE));
     } else {
         log_to_file('No JSON / No POST fields');
     }
+}
+
+// Keyyo notifie chaque appel à chaque changement d'état (SETUP, CONNECT puis RELEASE) :
+// seul le début de l'appel est un appel entrant
+$type = strtoupper(trim((string) $type));
+if ($type !== '' && $type !== 'SETUP') {
+    log_to_file('Ignored ' . $type . ' notification');
+    http_response_code(200);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'OK';
+    exit;
 }
 
 // Identifier l'utilisateur et le contact

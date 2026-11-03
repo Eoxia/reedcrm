@@ -115,6 +115,12 @@ if (empty($reshook)) {
         header('Location: ' . dol_buildpath('/reedcrm/reedcrmindex.php', 1));
         exit;
     }
+    // Prefill the third party form with the company selected in the SIREN search (module Sirene)
+    if ($action == 'sirene_set_company_infos' && isModEnabled('societe') && isModEnabled('sirene') && dol_include_once('/sirene/class/actions_sirene.class.php')) {
+        $actionsSirene = new ActionsSirene($db);
+        $actionsSirene->doActions(['context' => 'thirdpartycard'], $thirdparty, $action, $hookmanager);
+    }
+
 	require_once __DIR__ . '/../core/tpl/reedcrm_quickcreation_actions.tpl.php';
 }
 

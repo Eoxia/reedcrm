@@ -1,5 +1,7 @@
 <?php
 
+require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
+
 ?>
 
 <div class="wpeo-grid grid-1">
@@ -11,6 +13,12 @@
     <div>
         <label for="description">
             <textarea name="description" id="description" rows="6" placeholder="<?php echo $langs->trans('Description'); ?>"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
+        </label>
+    </div>
+    <div class="event-status-row">
+        <label for="event_percentage">
+            <span class="event-status-row__label"><?php echo $langs->trans('Status'); ?></span>
+            <?php echo $form->selectarray('event_percentage', reedcrm_get_event_statuses(), GETPOSTISSET('event_percentage') ? GETPOSTINT('event_percentage') : 100, 0, 0, 0, '', 1, 0, 0, '', 'maxwidth200'); ?>
         </label>
     </div>
 
@@ -27,8 +35,13 @@
             </label>
         </div>
 
+        <div class="reminder-type-row">
+            <?php echo $form->selectarray('reminder_actioncode', reedcrm_get_relaunch_type_options(), GETPOSTISSET('reminder_actioncode') ? GETPOST('reminder_actioncode', 'aZ09') : 'AC_OTH', 0, 0, 0, '', 0, 0, 0, '', 'maxwidth200'); ?>
+        </div>
+
         <div class="reminder-date-row">
-            <?php echo $form->selectDate(dol_now(), 'reminder_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?>
+            <?php // Tomorrow by default: a reminder set to now is already past, so it would never be listed as upcoming ?>
+            <?php echo $form->selectDate(dol_time_plus_duree(dol_now(), 1, 'd'), 'reminder_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?>
         </div>
 
         <div class="reminder-user-row">

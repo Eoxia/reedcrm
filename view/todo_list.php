@@ -41,7 +41,7 @@ require_once __DIR__ . '/../lib/reedcrm_todo.lib.php';
 global $conf, $db, $hookmanager, $langs, $moduleName, $user;
 
 // Load translation files required by the page
-saturne_load_langs(['agenda', 'commercial', 'projects']);
+saturne_load_langs(['agenda', 'commercial', 'dict', 'projects']);
 
 // Get parameters
 $action = GETPOST('action', 'aZ09');
@@ -112,6 +112,7 @@ if ($action == 'loadColumn') {
     $todoColumns = reedcrmTodoGetKanbanColumns();
     $columnKey   = GETPOST('column', 'aZ09');
     $direction   = GETPOST('direction', 'aZ09') == 'desc' ? 'desc' : 'asc';
+    $sortKey     = GETPOST('sort', 'aZ09') == 'probability' ? 'probability' : 'date';
     $offset      = GETPOSTINT('offset');
     $pageSize    = reedcrmTodoGetPageSize();
 
@@ -126,9 +127,10 @@ if ($action == 'loadColumn') {
         reedcrmTodoAjaxAnswer($db, ['success' => 0, 'error' => 'Unknown column'], 400);
     }
 
-    $todoEvents = reedcrmTodoGetEvents($db, $todoFilters, $column, $todoColumns, $direction, $offset, $pageSize);
+    // Counted first: nothing left behind the offset, no need to read the column (see the board below)
     $counts     = reedcrmTodoCountByColumn($db, $todoFilters, $todoColumns);
     $total      = (int) ($counts[$columnKey] ?? 0);
+    $todoEvents = $total > $offset ? reedcrmTodoGetEvents($db, $todoFilters, $column, $todoColumns, $direction, $offset, $pageSize, $sortKey) : [];
 
     $permissionToWrite = $user->hasRight('agenda', 'myactions', 'create') || $user->hasRight('agenda', 'allactions', 'create');
 
@@ -295,7 +297,7 @@ $todoColumns = reedcrmTodoGetKanbanColumns();
 // as a small one, "load more" fetching the rest column by column. The six pages are enriched
 // together, so what the cards display is resolved once for the whole board
 $todoCounts  = reedcrmTodoCountByColumn($db, $todoFilters, $todoColumns);
-$todoPage    = reedcrmTodoGetColumnPages($db, $todoFilters, $todoColumns);
+$todoPage    = reedcrmTodoGetColumnPages($db, $todoFilters, $todoColumns, $todoCounts);
 // The user being filtered on travels with the list, so the selector never shows a criteria
 // other than the one the board applied
 $todoUsers   = reedcrmTodoGetSelectableUsers($db, (int) $todoFilters['user']);
@@ -306,7 +308,8 @@ saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], [], '', 'classforhorizonta
 
 $head       = [];
 $head[0][0] = $_SERVER['PHP_SELF'];
-$head[0][1] = '<i class="fas fa-clipboard-check pictofixedwidth"></i>' . $langs->trans('TodoBoard');
+// The picto of dol_get_fiche_head() already sits in the first tab: an icon in the label would show twice
+$head[0][1] = $langs->trans('TodoBoard');
 $head[0][2] = 'todo';
 
 print dol_get_fiche_head($head, 'todo', $title, -1, 'fontawesome_fa-clipboard-check_fas_#63ACC9');

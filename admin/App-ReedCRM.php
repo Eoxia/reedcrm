@@ -58,7 +58,7 @@ saturne_check_access($permissionToRead);
  * Actions
  */
 
-$startUrl = dol_buildpath('custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 3);
+$startUrl = dol_buildpath('/reedcrm/view/frontend/quickcreation.php?source=pwa', 3);
 
 if ($action == 'generate_QRCode') {
     $urlToEncode = GETPOST('urlToEncode');
