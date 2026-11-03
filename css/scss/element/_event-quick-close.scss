@@ -287,6 +287,10 @@ tr.reedcrm-quick-close-flash > td {
 
   .reedcrm-quick-close-delay-time {
     width: 110px;
+
+    &.reedcrm-quick-close-invalid {
+      box-shadow: 0 0 0 1px #dc2626;
+    }
   }
 
   .reedcrm-quick-close-delay-help {
