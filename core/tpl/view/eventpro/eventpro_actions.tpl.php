@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/view/eventpro/eventpro_actions.tpl.php
  * \ingroup reedcrm
- * \brief   eventPro action handlers (create_contact, create_project, add_event, create_ticket), shared by the
+ * \brief   eventPro action handlers (create_contact, create_project, add_event, create_ticket, send), shared by the
  *          desktop card (view/procard.php) and the mobile App form (view/frontend/pwa_relaunch.php).
  *          Expects $action, $id, $fromType, $object, $actionComm, $category, $isModal, $currentTab,
  *          $langs, $user and $db to be in scope, exactly as the desktop card sets them up.
@@ -394,5 +394,32 @@ if (empty($eventProRedirectAfterTicket)) {
         } else {
             // Stay on ticket tab to show errors
             $currentTab = 'ticket';
+        }
+    }
+
+    // Action of the email tab: the core send form posts "send" to apply a template, to attach or remove a file
+    // and to send. Nothing handled it, so the card rendered an empty page
+    if ($action == 'send' && !empty($permissiontoadd)) {
+        if (GETPOST('cancel', 'alpha')) {
+            $action     = '';
+            $currentTab = 'note';
+        } else {
+            // Applying a template only shows the form again, filled with it
+            if (GETPOST('modelselected', 'alpha')) {
+                $action = 'presend';
+            }
+
+            $eventProSendTriggers = ['societe' => 'COMPANY_SENTBYMAIL', 'project' => 'PROJECT_SENTBYMAIL'];
+            $triggersendname      = $eventProSendTriggers[$object->element] ?? '';
+            if ($object->element == 'project') {
+                $autocopy = 'MAIN_MAIL_AUTOCOPY_PROJECT_TO';
+            }
+            // Once sent, the include redirects to PHP_SELF?<paramname>=<id>: the card also needs its type
+            $paramname = 'from_type=' . $fromType . '&from_id';
+            include DOL_DOCUMENT_ROOT . '/core/actions_sendmails.inc.php';
+
+            // Not sent (template, file, error): the email tab shows the form again
+            $action     = '';
+            $currentTab = 'email';
         }
     }
