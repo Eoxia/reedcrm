@@ -349,7 +349,7 @@ function showOpenNotes(CommonObject $object, int $maxSizeShortListLimit = 3): st
                 $actionComm->authorid    = (int) $objp->fk_user_author;
                 $actionComm->userownerid = (int) $objp->fk_user_action;
                 // Every line is an event the user is assigned to when they cannot see them all: getNomUrl() checks it to give the link
-                $actionComm->userassigned = $canReadAllEvents ? [] : [$user->id => ['id' => $user->id]];
+                $actionComm->userassigned = $canReadAllEvents ? [] : [(int) $user->id => ['id' => (int) $user->id, 'transparency' => 0]];
 
                 $typeLabel = $langs->trans('Action' . $objp->type_code);
                 if ($typeLabel == 'Action' . $objp->type_code) {
