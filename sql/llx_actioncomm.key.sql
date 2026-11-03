@@ -23,11 +23,12 @@
 -- thirty of them.
 --
 -- Laid out in this order the index answers the whole read: the entity and the percentage pin
--- the column, the date hands the rows over already sorted, and the type of the event lets the
--- "hide the automatic events" criterion be applied without opening a single row. It is also
--- what the counters of the columns are read through, which touch no row at all.
+-- the column, the date then the ID hand the rows over already sorted - the ID settling two
+-- events sharing a date, as the board always did - and the type of the event lets the "hide
+-- the automatic events" criterion be applied without opening a single row. It is also what the
+-- counters of the columns are read through, which touch no row at all.
 --
 -- Idempotent: re-running the module activation raises DB_ERROR_KEY_NAME_ALREADY_EXISTS, an
 -- error run_sql() accepts.
 
-ALTER TABLE llx_actioncomm ADD INDEX idx_reedcrm_todo (entity, percent, datep, fk_action);
+ALTER TABLE llx_actioncomm ADD INDEX idx_reedcrm_todo (entity, percent, datep, id, fk_action);

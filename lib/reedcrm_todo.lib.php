@@ -293,8 +293,9 @@ function reedcrmTodoReadColumnRows(DoliDB $db, array $filters, array $column, ar
         $sql .= ' ORDER BY CASE WHEN p.opp_percent IS NULL THEN 1 ELSE 0 END, p.opp_percent ' . $order . ', ' . reedcrmTodoGetSortExpression() . ' ASC, a.id ASC';
     } elseif ($isDated) {
         // The dated pass is ordered on the columns of the index, in their order, so the rows come
-        // out sorted and the tie between two events sharing a date stays settled
-        $sql .= ' ORDER BY a.datep ' . $order . ', a.fk_action ' . $order . ', a.id ' . $order;
+        // out sorted. The index carries the ID right after the date, which settles the tie between
+        // two events sharing a date the way the single query over the whole cascade did
+        $sql .= ' ORDER BY a.datep ' . $order . ', a.id ' . $order;
     } else {
         $sql .= ' ORDER BY ' . reedcrmTodoGetSortExpression() . ' ' . $order . ', a.id ' . $order;
     }
@@ -349,9 +350,13 @@ function reedcrmTodoMergeOnSortDate(array $dated, array $undated, string $order,
             continue;
         }
         // A row without any date at all sorts the way the database sorts a NULL: first when
-        // reading from the oldest, last the other way round
+        // reading from the oldest, last the other way round. Two rows sharing a date are told
+        // apart on their ID, the second key of both passes
         $comparison = strcmp((string) $left[$i]->sort_date, (string) $right[$j]->sort_date);
-        $takeLeft   = $order === 'DESC' ? $comparison >= 0 : $comparison <= 0;
+        if ($comparison === 0) {
+            $comparison = (int) $left[$i]->id <=> (int) $right[$j]->id;
+        }
+        $takeLeft   = $order === 'DESC' ? $comparison > 0 : $comparison < 0;
         $merged[]   = $takeLeft ? $left[$i++] : $right[$j++];
     }
 
