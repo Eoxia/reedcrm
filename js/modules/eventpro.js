@@ -417,6 +417,17 @@ window.reedcrm.eventpro.event = function () {
     $(this).closest('form').find('#reminder_fields').slideToggle(200);
   });
 
+  // "+" of the note and ticket blocks of the CardPro: when the form already shows the right tab, go to its first
+  // field rather than reload the page
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-cardpro .cardpro-block-add[data-focus]', function (e) {
+    var $field = $($(this).data('focus')).filter(':visible').first();
+    if ($field.length) {
+      e.preventDefault();
+      $field[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $field.trigger('focus');
+    }
+  });
+
   $(document).on('click.reedcrmEventProModal', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function (e) {
     e.preventDefault();
     var $modal = $(modalSelector);

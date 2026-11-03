@@ -282,14 +282,28 @@
       }
     }
 
-    .tdboxstats {
-      padding: 12px !important;
+    /* Amount tiles: four cards of their own, as the blocks under them. They sat in the rounded frame of the table
+       around them, with the 6px left border and the shadow of eldy: squares in a round box */
+    .fichehalfright > .box.divboxtable {
+      > table.boxtable {
+        padding: 0;
+        border: none !important;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .tdboxstats {
+        padding: 0 !important;
+        border-radius: 0;
+        background: transparent;
+      }
     }
 
     .cardpro-stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
 
       > a.boxstatsindicator {
         display: block;
@@ -301,6 +315,38 @@
         width: auto;
         max-width: none;
         margin: 0;
+        padding: 12px 14px;
+        border: 1px solid $rc-border !important;
+        border-radius: $rc-radius-lg;
+        background: $rc-surface;
+        box-shadow: $rc-shadow-sm;
+        text-align: left;
+        transition: border-color $rc-transition, box-shadow $rc-transition;
+      }
+
+      > a.boxstatsindicator:hover .boxstats {
+        border-color: $rc-primary !important;
+        box-shadow: $rc-shadow-hover;
+      }
+
+      /* Between the label and the amount: both are blocks now, the line break only left a blank line */
+      .boxstats > br {
+        display: none;
+      }
+
+      .boxstatstext {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: $rc-muted;
+      }
+
+      span.boxstatsindicator {
+        display: block;
+        margin-top: 4px;
+        font-size: 20px;
+        font-weight: 600;
       }
     }
 
@@ -313,6 +359,45 @@
         padding: 0 !important;
         border: none !important;
         background: transparent;
+      }
+
+      /* Statistics and "+" at the end of the title row */
+      td.cardpro-block-tool {
+        width: 1%;
+        white-space: nowrap;
+
+        > a {
+          margin-left: 10px;
+        }
+      }
+
+      a.cardpro-block-add {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border-radius: $rc-radius-sm;
+        background: $rc-primary-soft;
+        color: $rc-primary-strong !important;
+        font-size: 12px;
+        transition: background-color $rc-transition, color $rc-transition;
+
+        &:hover {
+          background: $rc-primary;
+          color: #ffffff !important;
+          text-decoration: none;
+        }
+
+        /* eldy recolours the Font Awesome pictos */
+        .fas {
+          color: inherit !important;
+        }
+      }
+
+      td.cardpro-block-empty {
+        color: $rc-muted;
+        font-style: italic;
       }
 
       /* Same widths in every block, so that the dates and the statuses line up; the main column takes what is left.
