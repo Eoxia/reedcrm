@@ -145,6 +145,27 @@ if ($action == 'unlink_recording' && $permissiontoadd && $fromId > 0 && !empty($
     exit;
 }
 
+// The cron synchronisation run on the spot. The list shows the recordings of every account, so every
+// account is fetched, and the user stays on the list to see what came in.
+if ($action == 'sync_pocket_recordings' && $permissiontoadd) {
+    require_once __DIR__ . '/../../class/pocketsync.class.php';
+
+    $outcome = PocketSync::syncAllAccounts($db, $user);
+    $report  = $outcome['report'];
+
+    if ($outcome['accounts'] == 0) {
+        setEventMessages($langs->trans('PocketNoAccountConfigured'), [], 'warnings');
+    } else {
+        setEventMessage($langs->trans('PocketSyncReport', $report['created'], $report['updated'], $report['skipped'], $report['errors']));
+        if (!empty($outcome['errors'])) {
+            setEventMessages('', $outcome['errors'], 'errors');
+        }
+    }
+
+    header('Location: ' . $_SERVER['PHP_SELF'] . ($fromId > 0 ? '?fromtype=' . urlencode($fromType) . '&fromid=' . $fromId : ''));
+    exit;
+}
+
 if ($action == 'confirm_delete' && $confirm == 'yes' && $permissiontodelete) {
     $recordingToDelete = new PocketRecording($db);
     if ($recordingToDelete->fetch(GETPOSTINT('id')) > 0) {
@@ -285,8 +306,8 @@ print '<input type="hidden" name="fromtype" value="' . dol_escape_htmltag($fromT
 print '<input type="hidden" name="fromid" value="' . $fromId . '">';
 
 $newCardButton = '';
-if ($user->hasRight('reedcrm', 'adminpage', 'read')) {
-    $newCardButton = dolGetButtonTitle($langs->trans('PocketSyncNow'), '', 'fa fa-sync', dol_buildpath('/reedcrm/admin/pocket.php', 1) . '?action=sync_pocket_recordings&token=' . newToken());
+if ($permissiontoadd) {
+    $newCardButton = dolGetButtonTitle($langs->trans('PocketSyncNow'), '', 'fa fa-sync', $_SERVER['PHP_SELF'] . '?action=sync_pocket_recordings&token=' . newToken() . $moreUrlParameters);
 }
 
 print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $moreUrlParameters, $sortfield, $sortorder, '', $num, $nbtotalofrecords, 'fa-microphone', 0, $newCardButton, '', $limit, 0, 0, 1);
