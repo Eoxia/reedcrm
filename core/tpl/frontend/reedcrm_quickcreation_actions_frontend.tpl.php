@@ -787,11 +787,11 @@ if ($action == 'add') {
             dol_copy($file['fullname'], $fullPath);
             
             // Thumbnail generation for images
-            if ($file['type'] === 'image' && function_exists('vignette')) {
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM ?? 500, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM ?? 500, '_medium');
-                vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE ?? 800, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE ?? 800, '_large');
+            if ($file['type'] === 'image' && function_exists('saturne_vignette')) {
+                saturne_vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MINI ?? 120, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MINI ?? 120, '_mini');
+                saturne_vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_SMALL ?? 240, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_SMALL ?? 240);
+                saturne_vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_MEDIUM ?? 500, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_MEDIUM ?? 500, '_medium');
+                saturne_vignette($fullPath, $conf->global->REEDCRM_MEDIA_MAX_WIDTH_LARGE ?? 800, $conf->global->REEDCRM_MEDIA_MAX_HEIGHT_LARGE ?? 800, '_large');
             }
         }
         saturne_invalidate_upload_token($uploadContext, 'project', 'tmp');
