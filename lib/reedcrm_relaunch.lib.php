@@ -341,18 +341,22 @@ function reedcrm_get_relaunch_row_state(array $row, int $now): array
  * the one of the right button opens the direct reminder form.
  *
  * @param  array $params projectId, socid, mode ('modal' on desktop, 'link' in the App), canCreate,
- *                       extraQuery appended to the creation urls, wrapperClass
+ *                       extraQuery appended to the creation urls, wrapperClass, fullEventFocus (selector
+ *                       of the complete event form when the page already shows it, as the CardPro does:
+ *                       the "+" of the left button goes to it instead of opening a second copy, with the
+ *                       same ids, in the modal)
  * @return string        HTML output
  */
 function reedcrm_render_relaunch_widget(array $params): string
 {
     global $db, $langs, $user;
 
-    $projectId    = (int) ($params['projectId'] ?? 0);
-    $socid        = (int) ($params['socid'] ?? 0);
-    $mode         = (string) ($params['mode'] ?? 'modal');
-    $extraQuery   = (string) ($params['extraQuery'] ?? '');
-    $wrapperClass = (string) ($params['wrapperClass'] ?? '');
+    $projectId      = (int) ($params['projectId'] ?? 0);
+    $socid          = (int) ($params['socid'] ?? 0);
+    $mode           = (string) ($params['mode'] ?? 'modal');
+    $extraQuery     = (string) ($params['extraQuery'] ?? '');
+    $wrapperClass   = (string) ($params['wrapperClass'] ?? '');
+    $fullEventFocus = (string) ($params['fullEventFocus'] ?? '');
     $canCreate    = array_key_exists('canCreate', $params)
         ? (bool) $params['canCreate']
         : (bool) $user->hasRight('agenda', 'myactions', 'create');
@@ -378,8 +382,10 @@ function reedcrm_render_relaunch_widget(array $params): string
             'count' => $counts['past'],
             'day'   => $counts['last'] > 0 ? reedcrm_get_relaunch_day_label($counts['last']) : $langs->trans('RelaunchNever'),
             'title' => $langs->trans('RelaunchScopePastTooltip'),
-            'add'   => $createBase,
+            // Without javascript, the link opens the note tab of the form of the page
+            'add'   => $fullEventFocus !== '' ? $createBase . '&tab=note#addeventform' : $createBase,
             'addTitle' => $langs->trans('RelaunchAddFullEvent'),
+            'focus' => $fullEventFocus,
         ],
         'upcoming' => [
             'picto' => $counts['upcoming'] > 0 ? 'bell' : 'bell-slash',
@@ -428,8 +434,11 @@ function reedcrm_render_relaunch_widget(array $params): string
         $out .= '</div>';
 
         if ($canCreate) {
-            if ($mode === 'link') {
+            if ($mode === 'link' || !empty($segment['focus'])) {
                 $out .= '<a class="reedcrm-relaunch-add" href="' . dol_escape_htmltag($segment['add']) . '"';
+                if (!empty($segment['focus'])) {
+                    $out .= ' data-focus="' . dol_escape_htmltag($segment['focus']) . '"';
+                }
                 $out .= ' title="' . dol_escape_htmltag($segment['addTitle']) . '" aria-label="' . dol_escape_htmltag($segment['addTitle']) . '">';
                 $out .= '<i class="fas fa-plus"></i>';
                 $out .= '</a>';

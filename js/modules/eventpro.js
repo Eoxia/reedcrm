@@ -418,9 +418,9 @@ window.reedcrm.eventpro.event = function () {
     $(this).closest('form').find('#reminder_fields').slideToggle(200);
   });
 
-  // "+" of the note and ticket blocks of the CardPro: when the form already shows the right tab, go to its first
-  // field rather than reload the page
-  $(document).on('click.reedcrmEventProModal', '.reedcrm-cardpro .cardpro-block-add[data-focus]', function (e) {
+  // "+" of the note and ticket blocks of the CardPro, and left "+" of the relaunch widget of its banner: when the form
+  // already shows the right tab, go to its first field rather than reload the page
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-cardpro .cardpro-block-add[data-focus], .reedcrm-cardpro-page .reedcrm-relaunch-add[data-focus]', function (e) {
     var $field = $($(this).data('focus')).filter(':visible').first();
     if ($field.length) {
       e.preventDefault();
