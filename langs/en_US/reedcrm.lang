@@ -1544,6 +1544,14 @@ PocketTidyReminderDuration = duration %s
 PocketTidyReminderMore = … and %s more
 
 #
+# Pocket - event of the recording
+#
+PocketRecordingEventLabel = Pocket call %s
+PocketRecordingEventHelp = Created by the synchronisation for each recording Pocket processed, in progress until the call is handled. Pocket does not tell a call from a meeting: the Phone call type is set by default, switch it to Meeting if it was one.
+PocketRecordingActionEventHelp = Created from an action item of this Pocket recording
+PocketRecordingEventSummary = Beginning of the summary of the Pocket recording %s
+
+#
 # Home page of the module
 #
 HomeRange = From %s to %s

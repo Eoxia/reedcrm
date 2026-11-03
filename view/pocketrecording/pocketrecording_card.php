@@ -227,6 +227,14 @@ if ($show == 'transcript') {
 
     print '<tr><td class="titlefield">' . $langs->trans('PocketTags') . '</td><td>' . dol_escape_htmltag($object->pocket_tags) . '</td></tr>';
 
+    // The event of the call, created by the synchronisation once Pocket processed the recording
+    if ($object->fk_actioncomm > 0) {
+        $recordingEvent = new ActionComm($db);
+        if ($recordingEvent->fetch($object->fk_actioncomm) > 0) {
+            print '<tr><td>' . $langs->trans('Event') . '</td><td>' . $recordingEvent->getNomUrl(1) . ' ' . $recordingEvent->getLibStatut(5) . '</td></tr>';
+        }
+    }
+
     // The URL Pocket signs expires within the hour, so the player carries the endpoint that
     // resolves it rather than the URL itself: the native <audio> is injected on the first play
     print '<tr><td>' . $langs->trans('PocketAudio') . '</td><td>';

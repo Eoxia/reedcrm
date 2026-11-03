@@ -25,6 +25,7 @@ require_once __DIR__ . '/pocketaccount.class.php';
 require_once __DIR__ . '/pocketapi.class.php';
 require_once __DIR__ . '/pocketrecording.class.php';
 require_once __DIR__ . '/pocketactionitem.class.php';
+require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
 
 /**
  * Class PocketSync.
@@ -480,6 +481,7 @@ class PocketSync
             }
 
             $this->syncActionItems($pocketRecording, $user);
+            $this->createRecordingEvent($pocketRecording, $user);
 
             return 1;
         }
@@ -490,8 +492,29 @@ class PocketSync
         }
 
         $this->syncActionItems($pocketRecording, $user);
+        $this->createRecordingEvent($pocketRecording, $user);
 
         return 0;
+    }
+
+    /**
+     * Create the event of a recording once Pocket processed it.
+     *
+     * Not before: until then the recording has no title, no length and no summary, and its event would
+     * be a blank call nobody recognises in the agenda. A recording mirrored before the events existed
+     * gets its own on its next refresh.
+     *
+     * @param  PocketRecording $pocketRecording Recording just imported or refreshed.
+     * @param  User            $user            User the event is created by.
+     * @return void
+     */
+    private function createRecordingEvent(PocketRecording $pocketRecording, User $user): void
+    {
+        if ($pocketRecording->pocket_state !== 'completed' || !empty($pocketRecording->fk_actioncomm)) {
+            return;
+        }
+
+        reedcrm_pocket_create_recording_event($pocketRecording, $user);
     }
 
     /**

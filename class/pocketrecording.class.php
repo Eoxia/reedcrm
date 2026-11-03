@@ -86,7 +86,8 @@ class PocketRecording extends SaturneObject
         'pocket_tags'         => ['type' => 'varchar(255)', 'label' => 'PocketTags',             'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => 1, 'noteditable' => 1, 'searchall' => 1],
         'language'            => ['type' => 'varchar(8)',   'label' => 'Language',               'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => -1, 'noteditable' => 1, 'css' => 'maxwidth50'],
         'fk_soc'              => ['type' => 'integer:Societe:societe/class/societe.class.php', 'label' => 'ThirdParty', 'picto' => 'company', 'enabled' => 1, 'position' => 140, 'notnull' => 0, 'visible' => 1, 'index' => 1],
-        'pocket_id'           => ['type' => 'varchar(64)',  'label' => 'PocketRecordingId',      'enabled' => 1, 'position' => 150, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
+        'fk_actioncomm'       => ['type' => 'integer:ActionComm:comm/action/class/actioncomm.class.php', 'label' => 'Event', 'picto' => 'action', 'enabled' => 1, 'position' => 145, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
+        'pocket_id'          => ['type' => 'varchar(64)',  'label' => 'PocketRecordingId',      'enabled' => 1, 'position' => 150, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
         'pocket_folder_id'    => ['type' => 'varchar(64)',  'label' => 'PocketFolderId',         'enabled' => 1, 'position' => 160, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
         'fk_user_pocket'      => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'PocketAccount', 'picto' => 'user', 'enabled' => 1, 'position' => 165, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'foreignkey' => 'user.rowid'],
         'pocket_state'        => ['type' => 'varchar(32)',  'label' => 'PocketState',            'enabled' => 1, 'position' => 170, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
@@ -195,6 +196,11 @@ class PocketRecording extends SaturneObject
      * @var int|null Thirdparty ID.
      */
     public $fk_soc;
+
+    /**
+     * @var int|null Event created for the recording, kept once deleted so that it is not created again.
+     */
+    public $fk_actioncomm;
 
     /**
      * @var int User author.

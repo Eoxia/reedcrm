@@ -278,9 +278,14 @@ $relaunchListUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
               <?php if ($quickCloseEvent) : ?>data-event-id="<?php echo $t['id']; ?>" title="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"<?php endif; ?>><?php echo dol_escape_htmltag($percentText); ?><?php if ($quickCloseEvent) : ?><i class="fas fa-check-circle reedcrm-quick-close-icon"></i><?php endif; ?></span>
     </div>
 
-    <!-- Location and private note -->
-    <?php if (!empty($t['location']) || !empty($t['note'])) : ?>
+    <!-- Beginning of the summary of the Pocket recording, location and private note -->
+    <?php if (!empty($t['pocket_summary']) || !empty($t['location']) || !empty($t['note'])) : ?>
         <div class="todo-card-footer">
+            <?php if (!empty($t['pocket_summary'])) : ?>
+                <span class="todo-card-note todo-card-pocket-summary" title="<?php echo dol_escape_htmltag($langs->trans('PocketRecordingEventSummary', $t['pocket_summary']['ref'])); ?>">
+                    <i class="fas fa-microphone"></i> <?php echo dol_escape_htmltag($t['pocket_summary']['excerpt']); ?>
+                </span>
+            <?php endif; ?>
             <?php if (!empty($t['location'])) : ?>
                 <span class="todo-card-location" title="<?php echo dol_escape_htmltag($langs->trans('Location')); ?>">
                     <i class="fas fa-map-marker-alt"></i> <?php echo dol_escape_htmltag($t['location']); ?>

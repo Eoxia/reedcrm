@@ -818,6 +818,9 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events): array
     // Budget, probability and relaunches of the projects the events are linked to
     $projectInfos = reedcrmTodoGetProjectInfos($db, $events);
 
+    // Beginning of the summary of the Pocket recordings the events are the calls of
+    $pocketSummaries = reedcrmTodoGetPocketSummaries($db, $eventIds);
+
     $now       = dol_now();
     // An event planned for a later day is still to come. Today is the pivot the two badges
     // leave alone: an event of the day is neither late until its hour has passed, nor to come.
@@ -884,6 +887,7 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events): array
             'project_ref'    => $obj->project_ref,
             'project_title'  => $obj->project_title,
             'project_infos'  => $projectInfos[(int) $obj->fk_project] ?? [],
+            'pocket_summary' => $pocketSummaries[$eventId] ?? [],
             'owner'          => $owner,
             'assigned'       => array_values($assigned),
             'url'            => DOL_URL_ROOT . '/comm/action/card.php?id=' . $eventId,
@@ -1289,6 +1293,47 @@ function reedcrmTodoGetProjectInfos(DoliDB $db, array $events): array
     $db->free($resql);
 
     return $infos;
+}
+
+/**
+ * Return the beginning of the summary of the Pocket recordings a set of events are the calls of
+ *
+ * Read on the recording, not copied on the event: the summary is written by Pocket once the audio is
+ * processed and may be rewritten on the recording card afterwards, the card always shows the current one.
+ *
+ * @param  DoliDB $db       Database handler
+ * @param  array  $eventIds Event row IDs
+ * @return array            [event id => ['ref' => , 'excerpt' => ]]
+ */
+function reedcrmTodoGetPocketSummaries(DoliDB $db, array $eventIds): array
+{
+    if (empty($eventIds)) {
+        return [];
+    }
+
+    require_once __DIR__ . '/reedcrm_pocketrecording.lib.php';
+
+    $sql  = 'SELECT r.fk_actioncomm, r.ref, r.summary';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_pocket_recording as r';
+    $sql .= ' WHERE r.fk_actioncomm IN (' . implode(',', array_map('intval', $eventIds)) . ')';
+    $sql .= " AND r.summary IS NOT NULL AND r.summary <> ''";
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $summaries = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $excerpt = reedcrm_pocket_summary_excerpt((string) $obj->summary);
+        if ($excerpt !== '') {
+            $summaries[(int) $obj->fk_actioncomm] = ['ref' => $obj->ref, 'excerpt' => $excerpt];
+        }
+    }
+    $db->free($resql);
+
+    return $summaries;
 }
 
 /**

@@ -223,9 +223,18 @@ function reedcrm_pocket_link_recording(PocketRecording $recording, string $linkN
         return -1;
     }
 
+    global $user;
+
     $recording->clearObjectLinkedCache();
 
-    return $recording->add_object_linked($linkName, $objectId);
+    $result = $recording->add_object_linked($linkName, $objectId);
+
+    // The event of the call learns who the call was with, the thirdparty and the project of the object
+    if ($result > 0) {
+        reedcrm_pocket_refresh_recording_event($recording, $user);
+    }
+
+    return $result;
 }
 
 /**
@@ -395,11 +404,15 @@ function reedcrm_pocket_get_object_socid(CommonObject $object): int
  * Events tab of that object. A thirdparty already set on the event is kept, the linked objects only
  * fill a missing one. The recording stays the element of the event when nothing else is linked.
  *
- * @param  PocketRecording $recording Recording the action comes from.
- * @param  ActionComm      $event     Event about to be created.
+ * The event of the call itself stays filed under the recording whatever is linked: it is the
+ * recording, the object only brings its thirdparty and its project.
+ *
+ * @param  PocketRecording $recording       Recording the action comes from.
+ * @param  ActionComm      $event           Event about to be created.
+ * @param  bool            $fileUnderObject False to keep the recording as the element of the event.
  * @return void
  */
-function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionComm $event): void
+function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionComm $event, bool $fileUnderObject = true): void
 {
     if ($recording->id <= 0) {
         return;
@@ -441,11 +454,13 @@ function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionC
     }
 
     if ($businessObject !== null) {
-        // Same element type as the agenda trigger writes, the Events tab of the object reads it
-        $module = (!empty($businessObject->module) && $businessObject->module != 'product') ? $businessObject->module : '';
+        if ($fileUnderObject) {
+            // Same element type as the agenda trigger writes, the Events tab of the object reads it
+            $module = (!empty($businessObject->module) && $businessObject->module != 'product') ? $businessObject->module : '';
 
-        $event->fk_element  = (int) $businessObject->id;
-        $event->elementtype = $businessObject->element . ($module ? '@' . $module : '');
+            $event->fk_element  = (int) $businessObject->id;
+            $event->elementtype = $businessObject->element . ($module ? '@' . $module : '');
+        }
 
         // A proposal or a ticket of a project files the event under that project too, unless the
         // recording names a project of its own
@@ -453,6 +468,150 @@ function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionC
             $event->fk_project = (int) $businessObject->fk_project;
         }
     }
+}
+
+/**
+ * Create the event of a recording: the call it holds, in progress until someone handles it.
+ *
+ * Filed under the recording, at the time and for the length of the conversation, with the thirdparty,
+ * the project and the contacts the recording is linked to. Pocket does not tell a call from a meeting:
+ * the event is a phone call, its owner switches it to a meeting when it was one. The event is
+ * remembered on the recording, which is never given a second one, even once the first was deleted.
+ *
+ * @param  PocketRecording $recording Recording the event is created for.
+ * @param  User            $user      User creating the event.
+ * @return int                        Event ID, 0 when the recording already has one, < 0 on error.
+ */
+function reedcrm_pocket_create_recording_event(PocketRecording $recording, User $user): int
+{
+    global $db, $langs;
+
+    if ($recording->id <= 0 || !empty($recording->fk_actioncomm)) {
+        return 0;
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+    $langs->load('reedcrm@reedcrm');
+
+    $recordingDate = is_numeric($recording->recording_date) ? (int) $recording->recording_date : (int) dol_stringtotime((string) $recording->recording_date);
+
+    $event              = new ActionComm($db);
+    $event->type_code   = 'AC_TEL';
+    $event->label       = !empty($recording->label) ? (string) $recording->label : $langs->transnoentities('PocketRecordingEventLabel', $recording->ref);
+    $event->datep       = $recordingDate > 0 ? $recordingDate : dol_now();
+    $event->datef       = $event->datep + max(0, (int) $recording->duration);
+    // In progress: the call took place, what it brought is still to be handled
+    $event->percentage  = 50;
+    // The call is the one of the owner of the dictaphone, the shared account has none
+    $event->userownerid = $recording->fk_user_pocket > 0 ? (int) $recording->fk_user_pocket : (int) $user->id;
+    $event->socid       = $recording->fk_soc > 0 ? (int) $recording->fk_soc : 0;
+    $event->fk_element  = (int) $recording->id;
+    $event->elementtype = 'pocketrecording@reedcrm';
+
+    reedcrm_pocket_apply_links_to_event($recording, $event, false);
+
+    if ($event->create($user) <= 0) {
+        dol_syslog(__FUNCTION__ . ' ' . $recording->ref . ': ' . $event->error . ' ' . implode(', ', $event->errors), LOG_ERR);
+        return -1;
+    }
+
+    // Written alone: an update of the whole recording would also rewrite what the synchronisation
+    // is about to refresh
+    $recording->fk_actioncomm = $event->id;
+    if ($recording->setValueFrom('fk_actioncomm', $event->id, '', null, 'int', '', $user) <= 0) {
+        return -1;
+    }
+
+    return (int) $event->id;
+}
+
+/**
+ * Bring the event of a recording in line with what the recording was linked to since.
+ *
+ * Only fills what the event lacks, the thirdparty, the project and the contacts: what its owner set
+ * on the event stays. Nothing is done once the event was deleted.
+ *
+ * @param  PocketRecording $recording Recording whose event is refreshed.
+ * @param  User            $user      User performing the change.
+ * @return void
+ */
+function reedcrm_pocket_refresh_recording_event(PocketRecording $recording, User $user): void
+{
+    global $db;
+
+    if (empty($recording->fk_actioncomm)) {
+        return;
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+    $event = new ActionComm($db);
+    if ($event->fetch((int) $recording->fk_actioncomm) <= 0) {
+        return;
+    }
+
+    $contactIds = array_keys($event->socpeopleassigned);
+    $before     = [(int) $event->socid, (int) $event->fk_project, $contactIds];
+
+    if (empty($event->socid) && $recording->fk_soc > 0) {
+        $event->socid = (int) $recording->fk_soc;
+    }
+
+    $recording->clearObjectLinkedCache();
+    reedcrm_pocket_apply_links_to_event($recording, $event, false);
+
+    $contactIds = array_keys($event->socpeopleassigned);
+    if ($before !== [(int) $event->socid, (int) $event->fk_project, $contactIds]) {
+        $event->update($user);
+    }
+}
+
+/**
+ * Get the recording an event comes from.
+ *
+ * The event of the call is remembered on the recording, the event of an action on the action. An
+ * event filed under a recording is one of the two, whatever the rows say.
+ *
+ * @param  ActionComm $event Event to look up.
+ * @return PocketRecording|null Recording, null when the event does not come from Pocket.
+ */
+function reedcrm_pocket_get_event_recording(ActionComm $event): ?PocketRecording
+{
+    global $db;
+
+    if ($event->id <= 0) {
+        return null;
+    }
+
+    require_once __DIR__ . '/../class/pocketrecording.class.php';
+
+    $recordingId = 0;
+    if ($event->elementtype == 'pocketrecording@reedcrm' && $event->fk_element > 0) {
+        $recordingId = (int) $event->fk_element;
+    } else {
+        $sql  = 'SELECT r.rowid FROM ' . MAIN_DB_PREFIX . 'reedcrm_pocket_recording as r';
+        $sql .= ' WHERE r.fk_actioncomm = ' . ((int) $event->id);
+        $sql .= ' UNION SELECT ai.fk_pocket_recording FROM ' . MAIN_DB_PREFIX . 'reedcrm_pocket_action_item as ai';
+        $sql .= ' WHERE ai.fk_actioncomm = ' . ((int) $event->id);
+
+        $resql = $db->query($sql);
+        if ($resql) {
+            $obj = $db->fetch_object($resql);
+            if ($obj) {
+                $recordingId = (int) $obj->rowid;
+            }
+            $db->free($resql);
+        }
+    }
+
+    if ($recordingId <= 0) {
+        return null;
+    }
+
+    $recording = new PocketRecording($db);
+
+    return $recording->fetch($recordingId) > 0 ? $recording : null;
 }
 
 /**
@@ -1132,6 +1291,40 @@ function reedcrm_pocket_sanitize_summary(string $summary): string
     }
 
     return trim($cleaned);
+}
+
+/**
+ * Get the beginning of the summary of a recording as plain text.
+ *
+ * Feeds the cards that only have a few lines to tell what the call was about. The Pocket blocks are
+ * graphs, none of them reads as a sentence, and the markdown markers only shape the text: both go,
+ * the words stay.
+ *
+ * @param  string $summary Markdown summary as returned by Pocket.
+ * @param  int    $length  Maximum length of the excerpt, ellipsis included.
+ * @return string          Plain text excerpt, empty when the summary is.
+ */
+function reedcrm_pocket_summary_excerpt(string $summary, int $length = 200): string
+{
+    if (trim($summary) === '') {
+        return '';
+    }
+
+    $text = reedcrm_pocket_latex_to_text((string) preg_replace(REEDCRM_POCKET_BLOCK_PATTERN, "\n", $summary));
+
+    $lines = [];
+    foreach (preg_split('/\R/', $text) as $line) {
+        // Rules first: '---' would otherwise read as a bullet
+        $line = (string) preg_replace(['/^\s*([-*_]\s*){3,}$/', '/^\s*#{1,6}\s*/', '/^\s*(?:[-*+]|\d+[.)])\s+/'], '', $line);
+        if (trim($line) !== '') {
+            $lines[] = trim($line);
+        }
+    }
+
+    // Links keep their text, emphasis and code lose their markers
+    $text = (string) preg_replace(['/\[([^\]]*)\]\([^)]*\)/', '/\*+|`+|__/'], ['$1', ''], implode(' ', $lines));
+
+    return dol_trunc(trim(dol_string_nohtmltag($text, 1)), $length);
 }
 
 /**

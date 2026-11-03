@@ -1664,6 +1664,14 @@ PocketTidyReminderDuration = durée %s
 PocketTidyReminderMore = … et %s autre(s)
 
 #
+# Pocket - événement de l'enregistrement
+#
+PocketRecordingEventLabel = Appel Pocket %s
+PocketRecordingEventHelp = Créé par la synchronisation pour chaque enregistrement traité par Pocket, en cours tant que l'appel n'est pas traité. Pocket ne distingue pas un appel d'une réunion : le type Appel téléphonique est posé par défaut, passez-le en Rendez-vous si c'était une réunion.
+PocketRecordingActionEventHelp = Créé depuis une action à faire de cet enregistrement Pocket
+PocketRecordingEventSummary = Début du compte rendu de l'enregistrement Pocket %s
+
+#
 # Accueil du module
 #
 HomeRange = Du %s au %s
