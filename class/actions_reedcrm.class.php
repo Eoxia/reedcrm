@@ -2918,6 +2918,29 @@ class ActionsReedcrm
             }
         }
 
+        // An event that comes from Pocket says so on its card, with the recording it comes from
+        if ($this->isContext($parameters, ['actioncard']) && $object instanceof ActionComm && $object->id > 0 && !in_array($action, ['create', 'edit'])) {
+            global $user;
+
+            require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
+
+            $recording = reedcrm_pocket_get_event_recording($object);
+            if ($recording !== null) {
+                $langs->load('reedcrm@reedcrm');
+
+                $form     = new Form($this->db);
+                $duration = reedcrm_pocket_format_duration((int) $recording->duration);
+                // The event of the call itself, or the one made from an action said during the call
+                $help     = ((int) $recording->fk_actioncomm === (int) $object->id) ? 'PocketRecordingEventHelp' : 'PocketRecordingActionEventHelp';
+
+                print '<tr class="field_reedcrm_pocket_recording"><td>' . $form->textwithpicto($langs->trans('PocketRecording'), $langs->trans($help)) . '</td><td>';
+                print $user->hasRight('reedcrm', 'pocketrecording', 'read') ? $recording->getNomUrl(1) : dol_escape_htmltag($recording->ref);
+                print !empty($recording->label) ? ' ' . dol_escape_htmltag((string) $recording->label) : '';
+                print ' - ' . dol_print_date($recording->recording_date, 'dayhour') . (!empty($duration) ? ' (' . $duration . ')' : '');
+                print '</td></tr>';
+            }
+        }
+
         return 0; // or return 1 to replace standard code
     }
 
