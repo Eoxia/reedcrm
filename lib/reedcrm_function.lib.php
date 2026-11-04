@@ -212,6 +212,58 @@ function get_and_show_contact(string $caller, string $callee): array
 }
 
 /**
+ * Build the Translate object a text saved in database has to be written with.
+ *
+ * A cron job and a webhook both run without any Accept-Language header: with
+ * MAIN_LANG_DEFAULT left on 'auto', Dolibarr falls back to en_US and the label written on
+ * the record ends up in English on a French instance. The user the record belongs to carries
+ * the language it has to be written in, the language of the entity takes over when the user
+ * has none of their own.
+ *
+ * @param  int      $userId    Row ID of the user the text is written for, 0 when there is none
+ * @param  string[] $langFiles Lang files to load on the returned object
+ * @return Translate           Translate object set on the resolved language
+ */
+function reedcrm_get_output_langs(int $userId = 0, array $langFiles = ['reedcrm@reedcrm']): Translate
+{
+    global $conf, $db, $langs;
+
+    $langCode = '';
+
+    if ($userId > 0) {
+        $resql = $db->query('SELECT lang FROM ' . MAIN_DB_PREFIX . 'user WHERE rowid = ' . $userId);
+        if ($resql) {
+            $obj = $db->fetch_object($resql);
+            if ($obj && !empty($obj->lang)) {
+                $langCode = $obj->lang;
+            }
+            $db->free($resql);
+        }
+    }
+
+    if (empty($langCode) || $langCode == 'auto') {
+        $langCode = getDolGlobalString('MAIN_LANG_DEFAULT');
+    }
+
+    // Nothing sets the language: keep the one of the running request rather than force a locale
+    if (empty($langCode) || $langCode == 'auto') {
+        $langCode = $langs->getDefaultLang();
+    }
+
+    // A cron job asks once per row: the lang files are read once per language
+    static $cache = [];
+    $cacheKey     = $langCode . '|' . implode(',', $langFiles);
+    if (!isset($cache[$cacheKey])) {
+        $outputLangs = new Translate('', $conf);
+        $outputLangs->setDefaultLang($langCode);
+        $outputLangs->loadLangs($langFiles);
+        $cache[$cacheKey] = $outputLangs;
+    }
+
+    return $cache[$cacheKey];
+}
+
+/**
  * Find the call event a Keyyo notification belongs to.
  *
  * Keyyo notifies one call several times: once per call state (SETUP, CONNECT, RELEASE) when the
@@ -260,20 +312,23 @@ function store_call_event($user_id, $contact_id, $caller, $callee) {
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
     require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
 
+    // The label lands in database and the webhook has no browser to read the language from
+    $outputLangs = reedcrm_get_output_langs((int) $user_id, ['reedcrm@reedcrm', 'companies']);
+
     $contact = new Contact($db);
     $contact_socid = 0;
 
     if ($contact_id > 0) {
         $contact->fetch($contact_id);
-        $contact_name = $contact->getFullName($langs);
+        $contact_name = $contact->getFullName($outputLangs);
         $contact_socid = $contact->fk_soc;
     } else {
-        $contact_name = $langs->trans("UnknownContact");
+        $contact_name = $outputLangs->trans("UnknownContact");
     }
 
     $actioncomm = new ActionComm($db);
     $actioncomm->type_code = 'AC_TEL';
-    $actioncomm->label = $langs->trans("IncomingCall") . ' - ' . $contact_name;
+    $actioncomm->label = $outputLangs->trans("IncomingCall") . ' - ' . $contact_name;
     $actioncomm->datep = dol_now();
     $actioncomm->datef = dol_now();
     $actioncomm->percentage = 0;

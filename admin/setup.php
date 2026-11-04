@@ -735,9 +735,9 @@ print '</td></td></tr>';
 
 
 $offsetUnits = [
-    'd' => $langs->trans('Jour'),    // Jour
-    'i' => $langs->trans('Minute'), // Minute
-    's' => $langs->trans('Seconde') // Seconde
+    'd' => $langs->trans('Day'),
+    'i' => $langs->trans('Minute'),
+    's' => $langs->trans('Second')
 ];
 // Remind offset unit
 print '<tr class="oddeven"><td>';

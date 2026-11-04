@@ -57,6 +57,13 @@ ImportProjectsFromCSV = Import projects from CSV
 ImportProjectsDescription = Select a CSV file to automatically create projects.
 CSVExpectedColumns = File must contain columns: Prenom, Nom, Email, Tel, Note.
 UploadImport = Import
+ViewImportHistory = Import history
+ImportHistory = Import history
+ChooseExistingTag = Choose an existing tag
+OrCreateNewTag = Or create a new tag
+SelectOrCreate = -- Select a tag --
+TagAlreadyExistsTitle = Tag already exists
+TagAlreadyExistsQuestion = The tag "%s" already exists. Do you want to use it for this import?
 ConfirmImportProjectsTitle = Import projects
 ConfirmImportProjectsQuestion = Enter the category name to assign to the imported projects.
 CategoryName = Category name
@@ -329,6 +336,9 @@ OpportunityStatusDescription = Opportunity status selection <br> Default value: 
 OpportunityAmountDescription = Opportunity amount selection <br> Default value: <b> 3000 € </b>
 ProspectCustomerDescription = Third-party nature selection <br> Default value: <b> Prospect </b>
 
+# Propal Extrafield
+ReedCRMPropalLabel = Label
+
 # Product kit
 ProductKitConf = Fill the quote line description with the kit composition
 ProductKitConfDesc = Independently of the product module setting on description filling. <br> When adding a product/service that has a kit on a quote line, the line description will be replaced with the label and description of the component products.
@@ -548,9 +558,32 @@ PropalStatusBilled = Billed
 ShippingDateEqualsCreationDate = Set shipping date equal to creation date
 ShippingDateEqualsCreationDateHelp = When a shipment is created, if no shipping date is entered, it automatically takes the creation date.
 
+TicketTimeTaskPrefix=Task label prefix
+TicketTimeTaskPrefixDescription=Prefix used to automatically find the task the time spent on a ticket is logged into (based on its label).
+
+TicketTimeTaskSuffix=Task label suffix
+TicketTimeTaskSuffixDescription=Choose what has to be added after the prefix in the task label.
+TicketTimeTaskSuffixTicketRef=Ticket reference (e.g. TS2606-0005)
+TicketTimeTaskSuffixProjectRef=Project reference
+TicketTimeTaskSuffixProjectLabel=Project label
+TicketTimeTaskSuffixNone=Nothing (prefix only)
+
+TicketTimeTitleMaxLength=Max length of the event title
+TicketTimeTitleMaxLengthDescription=Maximum number of characters kept for the event title in the agenda (truncated automatically, recommended max: 255).
+
+TicketTimeDefaultMinutes=Default time (minutes)
+TicketTimeDefaultMinutesDescription=The default time prefilled in the quick entry block of the ticket.
+
 ReadMyCallLists=Read my call lists
 ReadSubordinatesCallLists=Read subordinates call lists
 ReadAllCallLists=Read all call lists
+
+# Proposals - List columns
+PropalList=Proposal list
+RelauchCommercial=Sales follow-up
+ContactDetails=Contact details
+
+ProjectList=Project list
 
 # Dashboard - Upcoming reminders
 UpcomingCallReminders = Upcoming reminders
@@ -628,6 +661,8 @@ FollowupAuditMarkDone = Mark the audit done on this date (rolls the cycle to nex
 FollowupAuditRealDate = Real audit completion date
 FollowupAuditDoneRolled = Audit done on %s — next audit on %s
 FollowupProposalSent = Proposal sent
+FollowupProposalOrInvoice = Proposal / Invoice
+FollowupAuditToBill = To invoice
 FollowupAuditPrSigned = Quote signed
 FollowupSignedUnbilled = Signed Digirisk / DU quotes not invoiced
 FollowupSignedUnbilledEmpty = No signed Digirisk / DU quote left to invoice
@@ -636,6 +671,33 @@ FollowupAuditInvoiced = Invoiced
 FollowupAuditPaid = Paid
 FollowupDuLostCount = Lost DU (>3y)
 FollowupLinkedQuote = Linked quote
+FollowupLinkedInvoice = Linked invoice
+FollowupLinkProposal = Quotes of the client
+FollowupLinkInvoice = Invoices of the client
+FollowupLinkNoDocument = No document for this client
+FollowupLinkDocument = Link a quote or an invoice
+FollowupTrackingFromDocument = taken from the document
+FollowupLinkPickClient = Pick a client first
+FollowupAuditAddedOtherMonth = This audit is planned in %s: that month is now displayed.
+FollowupAuditAddNoThirdParty = Pick a client to add an audit.
+FollowupAuditDoneOn = Done on %s
+FollowupAuditCorrectDoneDate = Correct the completion date (the next audit is moved to this date + 1 year)
+FollowupNextAuditPlanned = Planned (yearly)
+FollowupAuditPlannedTag = theoretical date
+FollowupAuditRdv = Client appointment
+FollowupAuditRdvPlan = Plan the appointment with the client: the date goes into the intervention calendar
+FollowupAuditRdvMove = Move the appointment: the intervention date follows in the calendar
+FollowupAuditRdvLater = Appointment to plan later
+FollowupAuditRdvOn = Appointment on %s
+FollowupAuditRdvCount = Planned appointments
+FollowupAuditRdvPlanned = Appointment of %s saved and put into the intervention calendar.
+FollowupAuditRdvCleared = Appointment cancelled: the line goes back to its planned date.
+FollowupAuditRdvNoIntervention = Appointment saved, but nothing was put into the calendar (feature disabled or missing permission).
+FollowupAuditRdvInterventionFailed = Appointment saved, but the intervention could not be created.
+FollowupAuditRdvInCalendar = See in the intervention calendar
+FollowupAuditRdvNoProposal = Appointment saved, but this client has no DU quote: the intervention date is set on the service line of the quote. Create the quote, then plan the appointment again.
+FollowupLinkedIntervention = Linked intervention date
+FollowupInterventionLabel = Document Unique audit
 FollowupProposalAmount = Proposal amount
 FollowupProposalSentCount = Proposals sent
 FollowupMarkProposalSent = Check: commercial proposal (quote) sent today
@@ -708,8 +770,12 @@ BillingGapDueSince = Past due since
 FollowupChartDuAmount = DU amount (proposed / invoiced / lost)
 FollowupChartProposed = Proposed
 FollowupCreateProposal = Create the quote for this client
+FollowupCreateInvoice = Create the invoice for this client (from the quote if there is one)
 FollowupChartInvoiced = Invoiced
 PleaseLinkProjectFirst=Please first link a project to the ticket
+ReedCRMLogTimeWithMessage=Log the time spent along with this message
+ReedCRMTimeEntriesLatest=Latest time entries (%s/%s):
+ReedCRMNoTimeEntries=No time logged on this task.
 
 # PWA nav
 BackToDolibarr = Back to Dolibarr
@@ -835,6 +901,49 @@ LastMessage = Last message
 TicketStaleList = The %s open tickets with no message for more than %s days
 NbOfTicketsWithTimeDescription = Number of tickets holding at least one time entry, over the number of analysed tickets: the tickets still open plus the ones created or closed over the period.
 TimeSpentOnAssignedTickets = Time on their tickets
+
+#
+# Todo - agenda event board
+#
+TodoBoard = Todo
+TodoAllUsers = Every user
+TodoAllTypes = Every type
+TodoSearchPlaceholder = Label, place or third party
+TodoFilterHideAuto = Hide the automatic events
+TodoFilterHideAutoHelp = The events traced by Dolibarr itself are not actions to carry out
+TodoFilterCount = %s event(s)
+TodoNoEvent = No event
+TodoNoLabel = No label
+TodoLateEvent = Late
+TodoUnassigned = Unassigned
+TodoAddAssigned = Assign a user
+TodoRemoveAssigned = Remove the assignment
+TodoLoadMore = Show %s more
+TodoSortByDate = Sort by start date
+TodoColumnWidth = Column width
+TodoColumnGap = Spacing
+TodoVisibleColumns = Displayed columns
+TodoColumnOptions = Column options
+TodoSortDateAsc = Sort by ascending date
+TodoSortDateDesc = Sort by descending date
+TodoGroup = Group
+TodoFreeze = Freeze
+TodoHideColumn = Hide
+TodoComingSoon = Coming soon
+
+# Todo - automatic relaunches (crons)
+TodoColumnPropalRelaunch = Proposals to relaunch
+TodoColumnInvoiceRelaunch = Invoices to relaunch
+TodoPropalRelaunchLabel = Relaunch proposal %s
+TodoPropalRelaunchNote = Proposal validated on %s, amount %s, still unanswered.
+TodoInvoiceRelaunchLabel = Relaunch unpaid invoice %s
+TodoInvoiceRelaunchNote = Invoice due on %s, amount %s, still unpaid.
+TodoPropalRelaunchCronLabel = ReedCRM - Relaunches of unanswered proposals
+TodoPropalRelaunchCronComment = Creates an event to do for every proposal validated more than 30 days ago (constant REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) that is neither signed nor refused. The event feeds the "Proposals to relaunch" column of the Todo board.
+TodoPropalRelaunchCronResult = %s proposal relaunch(es) created
+TodoInvoiceRelaunchCronLabel = ReedCRM - Relaunches of unpaid invoices
+TodoInvoiceRelaunchCronComment = Creates an event to do for every validated invoice still unpaid more than 30 days after its due date (constant REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). The event feeds the "Invoices to relaunch" column of the Todo board.
+TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created
 
 # Signed quotes never invoiced
 SignedUnbilledMenu = Signed quotes not invoiced
@@ -991,11 +1100,7 @@ PocketActionItemTodo = To do
 PocketActionItemDone = Done
 PocketActionItemDismissed = Deleted
 PocketActionItemEdited = Rewritten action
-PocketChangeStatus = Change the status
 PocketSummaryEdited = Rewritten summary
-PocketSummaryEditedHint = This summary was rewritten in Dolibarr: Pocket synchronisations no longer overwrite it.
-PocketEditSummary = Click to edit the summary
-PocketSummaryEditHelp = The summary is written in markdown, Pocket blocks included. It is saved when the field loses the focus, and is no longer overwritten by the synchronisations: empty it to get the Pocket one back.
 
 #
 # Pocket - attach from the business objects
@@ -1015,13 +1120,6 @@ PocketNoObjectFound = No object found
 PocketObjectLinked = Object attached
 PocketObjectUnlinked = Object detached
 PocketUnlinkObject = Detach this object
-PocketLinkObject = Attach an object
-PocketUnlinkObject = Detach this object
-PocketAllObjectTypes = Every type
-PocketSearchObject = Search by reference or label
-PocketNoObjectFound = No object found
-PocketObjectLinked = Object attached
-PocketObjectUnlinked = Object detached
 
 #
 # Menu - Left menu sections
@@ -1143,6 +1241,22 @@ InterventionDateProductTagLabel = Tags of the services to plan
 InterventionDateProductTagDescription = Only the service lines whose product carries one of these tags get intervention dates. Free lines, the ones without a product, are out of scope. As long as no tag is chosen, no line can be planned.
 InterventionDateNoProductTagWarning = No service tag is selected: no service line can be planned. Pick the tags in the ReedCRM setup, Proposals tab.
 
+# Follow-up of the other client commitments (assistance, training, sprint)
+FollowupTrackingsOfMonth = Other follow-ups of the month
+FollowupTrackingPlanned = Planned
+FollowupTrackingLabel = Subject
+FollowupTrackingAdd = Add the follow-up
+FollowupTrackingAdded = Follow-up added
+FollowupTrackingDone = Follow-up closed on %s
+FollowupTrackingMarkDone = Close this follow-up (on the appointment date if it is filled in, today otherwise)
+FollowupNoTrackingThisMonth = No follow-up this month. Add it with the line below.
+FollowupTrackingRdvNoProposal = Appointment saved, but no quote is linked: the intervention calendar works on a quote line. Link a quote to this line to show it there.
+FollowupTrackingTypeAssistance = Assistance
+FollowupTrackingTypeFormation = Training
+FollowupTrackingTypeSprint = Sprint
+FollowupTrackingTypeOther = Other
+FollowupLineCount = Lines
+
 # Card empty fields toggle
 CardHideEmptyFields = Hide the empty fields
 CardShowAllFields = Show every field
@@ -1171,21 +1285,8 @@ OpportunityStatsSameWindow = %s over the same window
 OpportunityStatsNoComparison = No comparison
 
 # Todo - automatic relaunches (crons)
-TodoColumnPropalRelaunch = Proposals to relaunch
-TodoColumnInvoiceRelaunch = Invoices to relaunch
 TodoMoveRefusedRelaunch = A relaunch stays in its column until it is handled: drop it in "%s" or "%s".
 TodoMoveRefusedBacklog = This column only takes the relaunches created automatically.
-TodoPropalRelaunchLabel = Relaunch proposal %s
-TodoPropalRelaunchNote = Proposal validated on %s, amount %s, still unanswered.
-TodoInvoiceRelaunchLabel = Relaunch unpaid invoice %s
-TodoInvoiceRelaunchNote = Invoice due on %s, amount %s, still unpaid.
-TodoPropalRelaunchCronLabel = ReedCRM - Relaunches of unanswered proposals
-TodoPropalRelaunchCronComment = Creates an event to do for every proposal validated more than 30 days ago (constant REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) that is neither signed nor refused. The event feeds the "Proposals to relaunch" column of the Todo board.
-TodoPropalRelaunchCronResult = %s proposal relaunch(es) created
-TodoInvoiceRelaunchCronLabel = ReedCRM - Relaunches of unpaid invoices
-TodoInvoiceRelaunchCronComment = Creates an event to do for every validated invoice still unpaid more than 30 days after its due date (constant REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). The event feeds the "Invoices to relaunch" column of the Todo board.
-TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created
-TodoLateEvent = Late
 TodoUpcomingEvent = Upcoming
 TodoRelaunchCount = %s relaunch(es) on this object
 TodoProjectBudget = Budget of the project: %s
@@ -1600,3 +1701,40 @@ HomeProductDormantEmpty = No product in stock without sales
 HomeLastSale = Last sale
 HomeNeverSold = Never sold
 HomeDaysAgo = %s days ago
+
+#
+# Miscellaneous - generic labels
+#
+Calls = Calls
+NoEvents = No event
+Tag = Tag
+Visible = Visible
+Inactive = Inactive
+RecordNotFound = Record not found
+CommercialProposals = Commercial proposals
+DateDeadline = Deadline
+EstimatedWeight = Estimated weight
+CardPro = Pro card
+EventPro = Pro event
+QuickEvent = Quick event creation
+TicketCreated = Ticket created
+AIAnalyseImage = Analysis of image %s
+ErrorMapFeatureEncoding = The map data could not be encoded
+EmptyValue = Empty value
+Latitude = Latitude
+Longitude = Longitude
+PermissionDenied = Permission denied
+Propal = Proposal
+ErrorBadValue = Bad value
+ReedCRM = ReedCRM
+
+
+#
+# Call list - card actions
+#
+ValidateCallList = Validate the call list
+ConfirmValidateCallList = Are you sure you want to validate this call list?
+ArchiveCallList = Archive the call list
+ConfirmArchiveCallList = Are you sure you want to archive this call list?
+DeleteCallList = Delete the call list
+ConfirmDeleteCallList = Are you sure you want to delete this call list?

@@ -93,9 +93,10 @@ class ReedcrmTodoCron
                 continue;
             }
 
-            [$label, $note] = $this->buildRelaunchTexts('propal', $row);
+            $ownerId        = $this->relaunchOwnerId($row);
+            [$label, $note] = $this->buildRelaunchTexts('propal', $row, $ownerId);
 
-            if ($this->createRelaunchEvent(REEDCRM_TODO_CODE_PROPAL_RELAUNCH, 'propal', $row, $label, $note)) {
+            if ($this->createRelaunchEvent(REEDCRM_TODO_CODE_PROPAL_RELAUNCH, 'propal', $row, $label, $note, $ownerId)) {
                 $created++;
             }
         }
@@ -149,9 +150,10 @@ class ReedcrmTodoCron
             // An invoice generated from a template hands its relaunch to the user the template names
             $row->fk_user_relaunch = $relaunchUsers[(int) $row->fk_fac_rec_source] ?? 0;
 
-            [$label, $note] = $this->buildRelaunchTexts('invoice', $row);
+            $ownerId        = $this->relaunchOwnerId($row);
+            [$label, $note] = $this->buildRelaunchTexts('invoice', $row, $ownerId);
 
-            if ($this->createRelaunchEvent(REEDCRM_TODO_CODE_INVOICE_RELAUNCH, 'invoice', $row, $label, $note)) {
+            if ($this->createRelaunchEvent(REEDCRM_TODO_CODE_INVOICE_RELAUNCH, 'invoice', $row, $label, $note, $ownerId)) {
                 $created++;
             }
         }
@@ -168,7 +170,8 @@ class ReedcrmTodoCron
      * A cron job running in a language whose file lacked the relaunch keys (the "auto" language
      * of the instance resolves to en_US outside of a browser) saved the key itself, and lost the
      * reference, the date and the amount it was given along the way. The linked proposal or
-     * invoice still holds them: both texts are written again from it, in the current language.
+     * invoice still holds them: both texts are written again from it, in the language of the
+     * user the event is assigned to.
      *
      * @return int Number of events repaired, < 0 if KO
      */
@@ -185,7 +188,7 @@ class ReedcrmTodoCron
 
         $repaired = 0;
         foreach ($sources as $elementType => $source) {
-            $sql  = 'SELECT a.id as event_id, o.ref, o.total_ttc, ' . $source['date'] . ' as date_reference, s.nom as soc_name';
+            $sql  = 'SELECT a.id as event_id, a.fk_user_action, o.ref, o.total_ttc, ' . $source['date'] . ' as date_reference, s.nom as soc_name';
             $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
             $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . $source['table'] . ' as o ON o.rowid = a.fk_element';
             $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = o.fk_soc';
@@ -201,7 +204,7 @@ class ReedcrmTodoCron
             }
 
             while ($row = $this->db->fetch_object($resql)) {
-                [$label, $note] = $this->buildRelaunchTexts($elementType, $row);
+                [$label, $note] = $this->buildRelaunchTexts($elementType, $row, (int) $row->fk_user_action);
 
                 $sqlUpdate  = 'UPDATE ' . MAIN_DB_PREFIX . 'actioncomm';
                 $sqlUpdate .= " SET label = '" . $this->db->escape($label) . "', note = '" . $this->db->escape($note) . "'";
@@ -221,25 +224,30 @@ class ReedcrmTodoCron
     /**
      * Build the label and the private note of a relaunch event.
      *
+     * Both texts land in database: they are written in the language of the user owning the
+     * relaunch, not in the one of the cron runner, which falls back to en_US.
+     *
      * @param  string $elementType Element type the event is linked to: propal or invoice
      * @param  object $row         Row of the proposal or the invoice (ref, total_ttc, date_reference, soc_name)
+     * @param  int    $ownerId     Row ID of the user owning the relaunch, 0 when there is none
      * @return string[]            [label, note]
      */
-    protected function buildRelaunchTexts(string $elementType, $row): array
+    protected function buildRelaunchTexts(string $elementType, $row, int $ownerId): array
     {
-        global $conf, $langs;
+        global $conf;
 
+        $outputLangs   = reedcrm_get_output_langs($ownerId, ['reedcrm@reedcrm', 'agenda', $elementType == 'propal' ? 'propal' : 'bills']);
         $key           = $elementType == 'propal' ? 'TodoPropalRelaunch' : 'TodoInvoiceRelaunch';
         $referenceDate = $this->db->jdate($row->date_reference);
 
-        $label = $langs->transnoentities($key . 'Label', $row->ref);
+        $label = $outputLangs->transnoentities($key . 'Label', $row->ref);
         if (!empty($row->soc_name)) {
             $label .= ' - ' . $row->soc_name;
         }
-        $note = $langs->transnoentities(
+        $note = $outputLangs->transnoentities(
             $key . 'Note',
             $referenceDate ? dol_print_date($referenceDate, 'day') : '?',
-            price($row->total_ttc, 0, $langs, 1, -1, -1, $conf->currency)
+            price($row->total_ttc, 0, $outputLangs, 1, -1, -1, $conf->currency)
         );
 
         return [$label, $note];
@@ -283,27 +291,19 @@ class ReedcrmTodoCron
     }
 
     /**
-     * Create a relaunch event to do, without any date.
+     * Tell which user owns the relaunch of an object.
      *
-     * ActionComm::create() always writes a start date, an event with none has to be saved
-     * once before its date can be cleared. The board reads those dateless events as a plain
-     * backlog: nothing to put in a calendar, only something waiting to be done.
+     * The user named on the recurring invoice template comes first, then the one who validated
+     * the object, its author otherwise. The owner also carries the language the label of the
+     * relaunch has to be written in.
      *
-     * @param  string $code        Code carried by the event
-     * @param  string $elementType Element type the event is linked to
-     * @param  object $row         Row of the proposal or the invoice
-     * @param  string $label       Label of the event
-     * @param  string $note        Private note of the event
-     * @return bool                True when the event was created
+     * @param  object $row Row of the proposal or the invoice
+     * @return int         Row ID of the owner
      */
-    protected function createRelaunchEvent(string $code, string $elementType, $row, string $label, string $note): bool
+    protected function relaunchOwnerId($row): int
     {
         global $user;
 
-        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
-
-        // The user named on the recurring invoice template owns the relaunch, then the one who
-        // validated the object, the author otherwise
         $ownerId = (int) ($row->fk_user_relaunch ?? 0);
         if (empty($ownerId)) {
             $ownerId = (int) $row->fk_user_valid;
@@ -315,7 +315,31 @@ class ReedcrmTodoCron
             $ownerId = ($user->id > 0 ? $user->id : 1);
         }
 
-        $event               = new ActionComm($this->db);
+        return $ownerId;
+    }
+
+    /**
+     * Create a relaunch event to do, without any date.
+     *
+     * ActionComm::create() always writes a start date, an event with none has to be saved
+     * once before its date can be cleared. The board reads those dateless events as a plain
+     * backlog: nothing to put in a calendar, only something waiting to be done.
+     *
+     * @param  string $code        Code carried by the event
+     * @param  string $elementType Element type the event is linked to
+     * @param  object $row         Row of the proposal or the invoice
+     * @param  string $label       Label of the event
+     * @param  string $note        Private note of the event
+     * @param  int    $ownerId     Row ID of the user owning the relaunch
+     * @return bool                True when the event was created
+     */
+    protected function createRelaunchEvent(string $code, string $elementType, $row, string $label, string $note, int $ownerId): bool
+    {
+        global $user;
+
+        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+        $event              = new ActionComm($this->db);
         $event->type_code    = 'AC_OTH';
         $event->code         = $code;
         $event->label        = $label;
