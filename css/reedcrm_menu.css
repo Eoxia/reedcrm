@@ -191,31 +191,35 @@
 /* ------------------------------------------------------------------ */
 
 /* saturne_header() puts the saturne-theme class on the logged-in pages of the Saturne modules, whose
- * shared theme makes the menu blocks transparent: the white labels of the bands above would vanish on
- * the white sidebar. There the headers become uppercase micro labels and the App rule a hairline.
+ * shared theme makes the menu blocks transparent and greys their labels and pictos. The section headers
+ * keep their brand band there too, on the axis of the sidebar rows; the App rule becomes a hairline.
  * Kept in this file rather than in reedcrm.min.css: Saturne pages of other objects (generic lists)
  * show the ReedCRM menu without loading the module stylesheet. The colours are the custom
  * properties the shared theme declares on that scope; #id-left outweighs its sidebar rules.
  */
 body#mainbody.saturne-theme #id-left div.vmenu .blockvmenu:has(.reedcrm-menu-section) {
-    margin: 12px 0 0;
-    padding: 8px 8px 2px;
-    border-radius: 0;
+    margin: 12px 8px 0;
+    padding: 2px 0;
+    border: none;
+    border-radius: 5px;
+    background: var(--reedcrm-brand-deep);
+}
+
+/* The band is not a link: no hover background of the theme on it */
+body#mainbody.saturne-theme #id-left .menu_titre .vmenu:has(> .reedcrm-menu-section),
+body#mainbody.saturne-theme #id-left .menu_titre .vmenu:has(> .reedcrm-menu-section):hover {
+    display: block;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #FFFFFF;
     background: transparent;
 }
 
-body#mainbody.saturne-theme #id-left .menu_titre .vmenu:has(> .reedcrm-menu-section) {
-    display: block;
-    padding: 0 10px;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--saturne-faint);
-}
-
 body#mainbody.saturne-theme #id-left .menu_titre .reedcrm-menu-section > i {
-    color: var(--saturne-faint);
+    color: #FFFFFF;
 }
 
 /* The block right after a header hangs from it */
@@ -250,8 +254,14 @@ body#mainbody.saturne-theme #id-left:has(.reedcrm-menu-section) .menu_contenu:ha
     background: transparent;
 }
 
-/* Minimized menu: the headers keep their picto only, on the axis of the others */
+/* Minimized menu: the headers keep their picto only, the band shrinks to the column of the other pictos.
+ * The blocks end 10px before the edge of the menu, which would cut the band under its picto: hence the width */
 body#mainbody.saturne-theme #id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) div.vmenu .blockvmenu:has(.reedcrm-menu-section) {
-    margin: 8px 0 0;
-    padding-top: 4px;
+    box-sizing: border-box;
+    width: 28px;
+    margin: 8px 0 0 12px;
+}
+
+body#mainbody.saturne-theme #id-left:has(.saturne-toggle-menu.fa-chevron-circle-right) .menu_titre .vmenu:has(> .reedcrm-menu-section) {
+    padding: 4px 0;
 }
