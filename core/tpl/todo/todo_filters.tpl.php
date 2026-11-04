@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/todo/todo_filters.tpl.php
  * \ingroup reedcrm
- * \brief   Criteria bar of the todo board (user, period, type of event, text)
+ * \brief   Criteria bar of the todo board (user, period, type of event, probability, text)
  *
  * Variables expected from calling PHP:
  * - $todoFilters array     Criteria from reedcrmTodoGetFilters()
@@ -32,6 +32,18 @@
 $menuMain = GETPOST('mainmenu', 'aZ09');
 $menuLeft = GETPOST('leftmenu', 'aZ09');
 $menuId   = GETPOSTINT('idmenu');
+
+// Wiping the criteria has to say so: a plain link would find the last ones back
+$todoResetUrl = $_SERVER['PHP_SELF'] . '?removefilter=1';
+if (!empty($menuMain)) {
+    $todoResetUrl .= '&mainmenu=' . urlencode($menuMain);
+}
+if (!empty($menuLeft)) {
+    $todoResetUrl .= '&leftmenu=' . urlencode($menuLeft);
+}
+if ($menuId > 0) {
+    $todoResetUrl .= '&idmenu=' . $menuId;
+}
 ?>
 
 <form class="todo-filter-bar" method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
@@ -83,6 +95,15 @@ $menuId   = GETPOSTINT('idmenu');
         </select>
     </div>
 
+    <?php // Probability of the opportunity of the project, read like the numeric search fields of the Dolibarr lists ?>
+    <div class="tdf-field">
+        <label for="search_probability"><i class="fas fa-percent"></i> <?php echo $langs->trans('TodoFilterProbability'); ?></label>
+        <input type="text" class="flat tdf-text tdf-probability" id="search_probability" name="search_probability"
+               value="<?php echo dol_escape_htmltag($todoFilters['probability']); ?>"
+               placeholder="<?php echo dol_escape_htmltag($langs->transnoentities('TodoFilterProbabilityPlaceholder')); ?>"
+               title="<?php echo dol_escape_htmltag($langs->transnoentities('TodoFilterProbabilityHelp')); ?>">
+    </div>
+
     <div class="tdf-field">
         <label for="search_text"><i class="fas fa-search"></i> <?php echo $langs->trans('Search'); ?></label>
         <input type="text" class="flat tdf-text" id="search_text" name="search_text"
@@ -101,7 +122,7 @@ $menuId   = GETPOSTINT('idmenu');
         <button type="submit" class="tdf-btn tdf-btn-search">
             <i class="fas fa-search"></i> <?php echo $langs->trans('Search'); ?>
         </button>
-        <a class="tdf-btn tdf-btn-reset" href="<?php echo $_SERVER['PHP_SELF']; ?>">
+        <a class="tdf-btn tdf-btn-reset" href="<?php echo dol_escape_htmltag($todoResetUrl); ?>">
             <i class="fas fa-eraser"></i> <?php echo $langs->trans('RemoveFilter'); ?>
         </a>
         <span class="tdf-count">

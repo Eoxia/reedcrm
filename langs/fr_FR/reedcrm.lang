@@ -21,7 +21,6 @@
 ModuleReedCRMName = ReedCRM
 ModuleReedCRMDesc = Simplification de la CRM
 ReedCRMDescription = Simplification de la CRM
-ReedCRMDescriptionLong = Simplification de la CRM
 
 #
 # Quick Creation - Ajout rapide
@@ -48,6 +47,30 @@ ProjectContactSameAsThirdPartyContact = Contact du projet identique au contact d
 
 # Frontend - Frontend
 QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
+QuickCreationRemindMeLater = Me rappeler plus tard
+QuickCreationReminderDate = Date du rappel
+QuickCreationReminderIn3Days = Dans 3 jours
+QuickCreationReminderIn1Week = Dans 1 semaine
+QuickCreationReminderIn1Month = Dans 1 mois
+QuickCreationReminderTitlePlaceholder = Objet du rappel (facultatif)
+QuickCreationReminderDefaultLabel = Rappel : %s
+QuickCreationReminderCreated = Rappel programmé le %s
+ErrorQuickCreationReminderDateInPast = La date du rappel doit être dans le futur
+ErrorQuickCreationReminder = L'opportunité a bien été créée, mais pas son rappel
+
+# Voice description - Description rédigée par l'IA depuis le vocal
+VoiceDescription = Description rédigée depuis le vocal
+VoiceDescriptionHelp = Après chaque vocal de l'ajout rapide, l'IA le transcrit puis rédige la description. Le vocal est envoyé à OpenAI, avec la clé ChatGPT du module IA.
+VoiceDescriptionNeedsChatGPT = Indisponible : activez le module IA avec le service ChatGPT et renseignez sa clé
+VoiceDescriptionWriting = L'IA rédige la description à partir du vocal…
+VoiceDescriptionError = La description n'a pas pu être rédigée
+VoiceDescriptionEmpty = Ce vocal ne contient rien à reporter dans la description
+VoiceDescriptionNotConfigured = La rédaction de la description depuis le vocal n'est pas activée
+VoiceDescriptionNoRecording = Aucun vocal à transcrire
+VoiceDescriptionRecordingTooLong = Le vocal dépasse 25 Mo, la limite de la transcription
+VoiceDescriptionInvalidAnswer = Réponse inattendue du service d'IA
+VoiceDescriptionHttpError = Le service d'IA a répondu par une erreur HTTP %s
+VoiceDescriptionNotWritten = L'IA n'a pas rédigé la description (%s)
 
 
 
@@ -96,7 +119,7 @@ ProductInactiveMonthsDescription = Nombre de mois d'inactivité (pas de vente ni
 ReminderValue = Délai du rappel
 ReminderValueDescription = Nombre d’unités de temps avant l’événement pour déclencher le rappel
 ReminderUnit = Unité du rappel
-ReminderUnitDescription = nité de temps utilisée pour le rappel
+ReminderUnitDescription = Unité de temps utilisée pour le rappel
 
 # ApiQuickCreation
 ApiQuickCreations = ajouts rapides via l'api
@@ -201,8 +224,6 @@ CommercialStatus = Statut commercial
 CommercialStatusHelp = Statut commercial de la proposition commerciale
 RefusalReason = Raison refus
 RefusalReasonHelp = Raison du refus de la proposition commerciale
-OpportunitySources = Répartition des sources d'opportunités
-PropalStatusCommRepartition = Répartition du statut des propositions commerciale ouvertes
 PropalRefusalReasonRepartition = Répartition des raisons de refus des propositions commerciale
 NotationObjectContact = Contact facturation
 NotationObjectContactHelp = Taux de remplissage des informations du contact client facturation <ul><li>Nom / Libellé - 5 <li>Prénom - 5 </li><li>Tél pro - 5 </li><li>Tél portable - 5 </li><li>EMail - 40 </li><li>Contact / adresse par défaut - 40 </li></ul>
@@ -210,6 +231,8 @@ SetNotationObjectContact = Mise à jour de la notation contact client facturatio
 UpdateNotationObjectContactsJob = Maj des notations contact client facturation sur les %s
 UpdateNotationObjectContactsJobComment = Mise à jour de l'attribut suplémentaire des notations contact client facturation sur les factures récurrentes pour indiquer le taux de remplissage des informations du contact client facturation
 NotationObjectContactsUpdated = Mise à jour des notations contact client facturation sur %d %s
+ReedCRMRelaunchUser = Assigner utilisateur pour relance
+ReedCRMRelaunchUserHelp = Utilisateur à qui reviennent les relances des factures générées depuis cette facture modèle. Sans utilisateur choisi, la relance revient à celui qui a validé la facture, puis à son auteur.
 NoObject = Aucune %s
 FactureMin = facture
 FactureMins = factures
@@ -241,11 +264,10 @@ ReloadOppPercent = Calculer les probabilités d'opportunité non définies
 LabelLength = Taille libellé
 LabelLengthDescription = Taille maximum du champ libellé
 WarningTaskLabelCustom = Attention, vous vous rapprochez du nombre de caractères maximum autorisé (%d)
-ProductLastSellList = Dernières ventes du produit (Commande et Facture)
 Opportunities = Opportunités
 OpenedPropals = PR ouvertes
 RecurringInvoices = Factures récurrentes
-GravityFormLink                        = Lien GravityForm
+GravityFormLink                        = Lien du formulaire web
 
 # Libellés des extrafields projet du module (llx_extrafields.label sert de clé de traduction,
 # et showOptionals() ne charge que le langfile de l'extrafield, ici reedcrm@reedcrm).
@@ -254,7 +276,7 @@ GravityFormLink                        = Lien GravityForm
 LastName                               = Nom
 FirstName                              = Prénom
 Website                                = Site web
-ReedCRMGravityForm                     = Lien GravityForm
+ReedCRMGravityForm                     = Formulaire web
 
 # Traductions pour ReedCRM - Notifications d'appel
 IncomingCall = Appel entrant
@@ -281,7 +303,6 @@ WebhookConfiguration = Configuration du Webhook
 WebhookURL = URL du Webhook
 Method = Méthode
 ReedCRMKeyyoSecurityToken = Token de sécurité pour le webhook Keyyo (laisser vide pour désactiver la vérification du token)
-ProjectOpportunitiesList = Les 5 dernières opportunités de projet
 LatestCreatedOpportunities = Dernières opportunités créées
 OppPercent = Pourcentage d'opportunité
 ButtonActions = Actions
@@ -315,6 +336,15 @@ EmailSubject = Sujet de l'email
 EmailContent = Contenu de l'email
 EmailTo = Destinataire
 CustomerNote = Note client
+EventProOpenTickets = Tickets en cours
+EventProAllOpenTickets = Tous les tickets en cours
+EventProOpenNotes = Notes en cours
+EventProAllOpenNotes = Toutes les notes en cours
+EventProNewNote = Nouvelle note
+EventProNoProposal = Aucune proposition commerciale
+EventProNoOpenTickets = Aucun ticket en cours
+EventProNoOpenNotes = Aucune note en cours
+EventProNoProject = Aucun projet
 SendEmail = Envoyer un email
 EventCreated = Événement créé avec succès
 EmailFormReady = Formulaire d'email prêt
@@ -346,6 +376,26 @@ ImportParametersMissing = Paramètres d'import manquants.
 CategoryCreationError = Erreur lors de la création de la catégorie.
 ProjectsImported = %s projets importés sur %s lignes.
 ProjectsImportErrors = %s lignes n'ont pas pu être importées.
+CSVAssigneesColumn = Facultatif : une colonne des personnes à assigner, choisie au moment de l'import.
+AssigneesColumn = Colonne des personnes assignées
+AssigneesColumnHelp = Chaque personne de cette colonne est ajoutée à l'opportunité comme « Commercial affecté au projet ». Elle est reconnue par son identifiant (id), son login, son email, son nom complet, son prénom seul ou son prénom suivi de l'initiale du nom. Plusieurs personnes se séparent par une virgule, « / », « & » ou « et ».
+ImportAssigneesNotFound = Personnes non reconnues (inconnues ou homonymes), opportunités importées sans elles : %s
+ImportAssignmentErrors = %s affectations n'ont pas pu être enregistrées.
+CSVReminderColumns = Facultatif : une colonne de texte et une colonne d'échéance pour ajouter un rappel à la todo, choisies au moment de l'import.
+ReminderLabelColumn = Colonne du texte du rappel
+ReminderLabelColumnHelp = Le texte de cette colonne devient le libellé d'un événement de rappel « À faire » lié à l'opportunité. Il apparaît dans la todo des personnes assignées à l'opportunité, ou dans la vôtre si personne ne l'est. Sans texte, le rappel s'appelle « Rappel : Prénom Nom ». « Aucune », « - » ou « Je ne sais pas » valent une case vide.
+ReminderDateColumn = Colonne de l'échéance du rappel
+ReminderDateColumnHelp = Date d'échéance (date de fin) du rappel, au format JJ/MM/AAAA ou AAAA-MM-JJ, suivie ou non d'une heure (14:30 ou 14h30) ; sans heure, 9 h. Le rappel commence à l'import. Une échéance absente ou illisible donne un rappel sans échéance, la valeur du fichier (« 3-6 mois »…) est reprise dans sa note. Une échéance passée donne un rappel en retard, sans notification.
+ImportRemindersCreated = %s rappels ajoutés à la todo.
+ImportRemindersWithoutText = %s rappels créés sans texte, avec le libellé « Rappel : Prénom Nom ».
+ImportRemindersWithoutDueDate = %s rappels créés sans échéance : date absente ou illisible (formats acceptés : JJ/MM/AAAA ou AAAA-MM-JJ, heure facultative). La valeur du fichier est reprise dans la note du rappel.
+ImportRemindersOverdue = %s rappels créés avec une échéance déjà passée : ils sont en retard dans la todo, sans notification.
+ImportReminderDueDateAsWritten = Échéance indiquée dans le fichier d'import : %s
+ImportReminderErrors = %s rappels n'ont pas pu être enregistrés.
+CSVNoteColumn = Facultatif : une colonne de note de 0 à 10 qui donne la probabilité de l'opportunité (1 = 10 %), choisie au moment de l'import.
+NoteColumn = Colonne de la note (probabilité)
+NoteColumnHelp = Note de 0 à 10 transformée en probabilité de l'opportunité : 1 = 10 %, 2 = 20 %… 10 = 100 % (2,5 = 25 %). L'opportunité prend aussi l'étape du dictionnaire qui correspond (prospection, qualification…). Une case vide laisse la ligne sans probabilité. Si c'est la colonne « Note » attendue par l'import, une note n'y sert plus de description ; un texte, si.
+ImportNotesInvalid = %s notes non reprises : valeur illisible ou hors de 0 à 10.
 OpportunitiesImport = Import d'opportunités
 ImportedOpportunityList = Liste des opportunités importés
 
@@ -399,6 +449,7 @@ ReedCRMStatusAsBadge = État : pastille
 CallList = Liste d'appel
 CallLists = Listes d'appel
 NewCallList = Nouvelle liste d'appel
+CallListPDF = Liste d'appel (PDF)
 # Derived keys auto-built by the generic saturne_list.php from the element name (call_list)
 Call_listList = Listes d'appel
 NewCall_list = Nouvelle liste d'appel
@@ -620,10 +671,12 @@ FollowupAuditToPrepare = À préparer
 FollowupAuditAdded = Audit ajouté
 FollowupAuditAdd = Ajouter l'audit
 FollowupAuditMove = Déplacer la date de l'audit
-FollowupAuditMarkDone = Marquer l'audit réalisé à cette date (le cycle passe à l'année suivante)
+FollowupAuditMarkDone = Marquer l'audit réalisé : à la date du RDV client si elle est saisie, sinon aujourd'hui (le cycle passe à l'année suivante)
 FollowupAuditRealDate = Date réelle de réalisation de l'audit
 FollowupAuditDoneRolled = Audit réalisé le %s — prochain audit le %s
 FollowupProposalSent = PR envoyée
+FollowupProposalOrInvoice = PR / Facture
+FollowupAuditToBill = À facturer
 FollowupAuditPrSigned = PR signée
 FollowupSignedUnbilled = PR Digirisk / DU signées non facturées
 FollowupSignedUnbilledEmpty = Aucun devis Digirisk / DU signé non facturé
@@ -632,13 +685,40 @@ FollowupAuditInvoiced = Facturé
 FollowupAuditPaid = Payé
 FollowupDuLostCount = DU perdus (>3 ans)
 FollowupLinkedQuote = Devis lié
+FollowupLinkedInvoice = Facture liée
+FollowupLinkProposal = Devis du client
+FollowupLinkInvoice = Factures du client
+FollowupLinkNoDocument = Aucun document pour ce client
+FollowupLinkDocument = Lier un devis ou une facture
+FollowupTrackingFromDocument = repris du document
+FollowupLinkPickClient = Choisir d'abord un client
+FollowupAuditAddedOtherMonth = Cet audit est planifié sur %s : affichage de ce mois.
+FollowupAuditAddNoThirdParty = Choisis un client pour ajouter un audit.
+FollowupAuditDoneOn = Fait le %s
+FollowupAuditCorrectDoneDate = Corriger la date de réalisation (le prochain audit est recalé sur cette date + 1 an)
+FollowupNextAuditPlanned = Prévu (annuel)
+FollowupAuditPlannedTag = date théorique
+FollowupAuditRdv = RDV client
+FollowupAuditRdvPlan = Planifier le RDV avec le client : pose la date dans le calendrier des interventions
+FollowupAuditRdvMove = Déplacer le RDV : la date d'intervention suit dans le calendrier
+FollowupAuditRdvLater = RDV à planifier ensuite
+FollowupAuditRdvOn = RDV le %s
+FollowupAuditRdvCount = RDV planifiés
+FollowupAuditRdvPlanned = RDV du %s enregistré et posé dans le calendrier des interventions.
+FollowupAuditRdvCleared = RDV annulé : la ligne revient à sa date prévisionnelle.
+FollowupAuditRdvNoIntervention = RDV enregistré, mais rien n'a été posé dans le calendrier (fonctionnalité désactivée ou droit manquant).
+FollowupAuditRdvInterventionFailed = RDV enregistré, mais la création de l'intervention a échoué.
+FollowupAuditRdvInCalendar = Voir dans le calendrier des interventions
+FollowupAuditRdvNoProposal = RDV enregistré, mais aucun devis DU pour ce client : la date d'intervention se pose sur la ligne de service du devis. Crée le devis puis replanifie le RDV.
+FollowupLinkedIntervention = Date d'intervention liée
+FollowupInterventionLabel = Audit du Document Unique
 FollowupProposalAmount = Montant PR
 FollowupProposalSentCount = PR envoyées
 FollowupMarkProposalSent = Cocher : proposition (devis) envoyée aujourd'hui
 FollowupProposalSentOn = Proposition envoyée le %s (cliquer pour annuler)
 FollowupAssignedTo = Assigné à
 FollowupAssign = Assigner l'audit à cette personne
-FollowupAmountPerPerson = Montant DU par personne
+FollowupAmountPerPerson = Montant par personne (audits + autres suivis)
 FollowupDigiriskNoSub = Clients Digirisk sans abonnement récurrent
 FollowupDigiriskNoSubEmpty = Tous les clients Digirisk ont un abonnement récurrent
 FollowupDigiriskInstance = Instance Digirisk (projet actif)
@@ -686,6 +766,10 @@ FollowupChartToDo = DU à faire
 FollowupChartLost = DU perdus
 FollowupAmount = Montant
 DuFollowupMenu = Suivi client DU
+DuFollowupEnabled = Portefeuille service (suivi client DU)
+DuFollowupEnabledDescription = Affiche la section de menu « Portefeuille service » et son tableau de suivi des audits DU. Fonctionnalité interne Evarisk, adossée aux références produits DU_A*, D1 à D5 et aux projets digirisk.com : à laisser désactivée sur une installation client. Réactiver le module pour que le menu prenne ce réglage en compte.
+DuFollowupDisabled = Le suivi client DU est désactivé sur cette instance.
+OptionalFeatures = Fonctionnalités optionnelles
 BillingGapsMenu = Suivi facturation
 BillingGapsIntro = Tout ce qui a été signé, commandé ou dû mais qui n'a pas encore été facturé.
 BillingGapSignedProposals = Devis signés non facturés
@@ -700,10 +784,7 @@ BillingGapDueSince = Échéance dépassée le
 FollowupChartDuAmount = Montant DU (proposé / facturé / perdu)
 FollowupChartProposed = PR proposé
 FollowupCreateProposal = Créer le devis pour ce client
-FollowupAuditRenew = Renouveler : passer la ligne au cycle suivant (une fois la nouvelle facture DU créée)
-FollowupAuditRenewedOn = Ligne renouvelée : prochain audit en %s
-FollowupAuditRenewNoInvoice = Aucune nouvelle facture DU pour ce client. Crée d'abord la facture du renouvellement : la ligne passera alors au cycle suivant (ou automatiquement via le cron).
-FollowupAuditRenewConfirm = Renouveler cet audit ? La ligne passera au cycle suivant (prochain audit dans un an) si une nouvelle facture DU existe.
+FollowupCreateInvoice = Créer la facture pour ce client (depuis le devis s'il y en a un)
 FollowupChartInvoiced = Facturé
 
 # PWA nav
@@ -719,7 +800,29 @@ NoPhoneNumber = Pas de téléphone
 NoEventOnOpportunity = Aucun événement sur cette opportunité
 ToCallShort = à appeler
 SeeOpportunityTimeline = Voir l'historique
+CallListLineAddedOn = Dans la liste depuis le %s
+CallListLineUnlink = Délier de la liste d'appel
+ConfirmCallListLineUnlink = Délier cette personne de la liste d'appel ?
+ErrorCallListLineUnlink = Impossible de délier cette personne de la liste d'appel
 
+# Relaunch widget - Widget de relance (#873)
+RelaunchScopePastTooltip = Historique des relances
+RelaunchScopeUpcomingTooltip = Relances à venir
+RelaunchAddFullEvent = Ajouter un événement complet
+RelaunchAddDirectReminder = Ajouter un rappel direct
+RelaunchOverdue = En retard
+RelaunchOverdueCount = %s relance(s) en retard
+RelaunchLateBy = En retard de %s jour(s)
+RelaunchNoPast = Aucune relance passée
+RelaunchNoUpcoming = Aucune relance à venir
+RelaunchDaysAgo = Il y a %s j
+RelaunchNever = Jamais
+RelaunchNothingPlanned = Rien de prévu
+RelaunchNoTitle = Sans titre
+RelaunchWhen = Quand
+RelaunchInOneDay = Demain
+RelaunchInThreeDays = Dans 3 jours
+RelaunchInOneWeek = Dans 1 semaine
 #
 # Tableau de bord tickets
 #
@@ -818,10 +921,16 @@ TodoAllTypes = Tous les types
 TodoSearchPlaceholder = Libellé, lieu ou tiers
 TodoFilterHideAuto = Masquer les événements automatiques
 TodoFilterHideAutoHelp = Les événements tracés par Dolibarr lui-même ne sont pas des actions à mener
+TodoFilterProbability = Probabilité
+TodoFilterProbabilityPlaceholder = ex. >= 50
+TodoFilterProbabilityHelp = Probabilité de l'opportunité du projet, avec un opérateur comme dans les listes Dolibarr : >= 50, < 20, 30, ou plusieurs conditions séparées par un espace (>= 20 <= 60). Les événements sans probabilité sont alors masqués.
 TodoFilterCount = %s événement(s)
 TodoNoEvent = Aucun événement
+TodoMoveRefusedRelaunch = Une relance reste dans sa colonne tant qu'elle n'est pas traitée : déposez-la dans « %s » ou « %s ».
+TodoMoveRefusedBacklog = Cette colonne ne reçoit que les relances créées automatiquement.
 TodoNoLabel = Sans libellé
 TodoLateEvent = En retard
+TodoUpcomingEvent = À venir
 TodoUnassigned = Non affecté
 TodoAddAssigned = Affecter un utilisateur
 TodoRemoveAssigned = Retirer l'affectation
@@ -833,6 +942,9 @@ TodoVisibleColumns = Colonnes affichées
 TodoColumnOptions = Options de la colonne
 TodoSortDateAsc = Trier par date croissante
 TodoSortDateDesc = Trier par date décroissante
+TodoSortByProbability = Trier par probabilité de l'opportunité
+TodoSortProbabilityAsc = Trier par probabilité croissante
+TodoSortProbabilityDesc = Trier par probabilité décroissante
 TodoGroup = Grouper
 TodoFreeze = Figer
 TodoHideColumn = Masquer
@@ -851,6 +963,21 @@ TodoPropalRelaunchCronResult = %s relance(s) de devis créée(s)
 TodoInvoiceRelaunchCronLabel = ReedCRM - Relances des factures impayées
 TodoInvoiceRelaunchCronComment = Crée un événement à faire pour chaque facture validée impayée depuis plus de 30 jours après son échéance (constante REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). L'événement alimente la colonne « Factures à relancer » du tableau Todo.
 TodoInvoiceRelaunchCronResult = %s relance(s) de facture créée(s)
+TodoRelaunchCount = %s relance(s) sur cet objet
+TodoProjectBudget = Budget du projet : %s
+TodoProjectOpportunityAmount = Montant de l'opportunité : %s
+TodoProjectProbability = Probabilité de l'opportunité : %s
+TodoProjectStep = Étape
+TodoProjectThirdParty = Tiers
+TodoProjectContact = Contact
+TodoProjectPhone = Téléphone
+TodoProjectEmail = Email
+TodoProjectOrigin = Origine
+TodoProjectRelaunches = Relances
+TodoOriginAmountHT = Montant HT : %s
+TodoOriginDatePropal = Devis validé le %s
+TodoOriginDateInvoice = Facture échue le %s
+TodoOriginMoreLines = + %s autre(s) ligne(s)
 # Signed quotes never invoiced
 SignedUnbilledMenu = PR signées non facturées
 SignedUnbilledIntro = Propositions commerciales signées sans facture rattachée. Chaque ligne est recoupée avec les factures du client pour repérer celles qui ont en fait été facturées séparément (facture créée à part, via la commande ou le contrat).
@@ -920,7 +1047,7 @@ PocketRecordingDate = Date d'enregistrement
 PocketFolder = Dossier Pocket
 PocketFolderId = Identifiant du dossier Pocket
 PocketFolderTitle = Dossier importé
-PocketFolderHelp = Seuls les enregistrements de ce dossier sont importés dans Dolibarr. Tant qu'aucun dossier n'est choisi, aucune synchronisation n'a lieu.
+PocketFolderHelp = Seuls les enregistrements de ce dossier sont importés dans Dolibarr, et « Je viens de raccrocher » prend le dernier qui y est rangé. Tant qu'aucun dossier n'est choisi, aucune synchronisation n'a lieu.
 PocketFolderMissing = Aucun dossier Pocket sélectionné
 PocketNoFolderSelected = -- Aucun dossier --
 PocketTags = Tags Pocket
@@ -932,10 +1059,23 @@ PocketLastSyncDate = Dernière synchronisation
 PocketNoSummary = Aucun résumé disponible pour cet enregistrement
 PocketNoTranscript = Aucune transcription disponible pour cet enregistrement
 PocketNoActionItem = Aucune action détectée par Pocket
+PocketChangeStatus = Changer le statut
+PocketEditSummary = Cliquer pour modifier le résumé
+PocketSummaryEditHelp = Texte au format markdown. Quitter le champ enregistre, Échap annule.
+PocketSummaryEditedHint = Résumé modifié manuellement : Pocket ne le réécrira plus. Videz-le pour retrouver le résumé généré.
 PocketRecordingStatusNew = Nouveau
 PocketRecordingStatusProcessed = Traité
 PocketRecordingStatusArchived = Archivé
-PocketConnection = Connexion à Pocket
+PocketAccount = Compte Pocket
+PocketSharedAccount = Compte Pocket partagé
+PocketSharedAccountHelp = Utilisé par les utilisateurs qui n'ont pas saisi leur propre clé dans l'onglet Pocket de leur fiche utilisateur.
+PocketPersonalAccount = Compte Pocket personnel
+PocketPersonalAccountHelp = Clé et dossier propres à cet utilisateur. Ils remplacent le compte partagé de la configuration du module pour son bouton « Je viens de raccrocher », et la synchronisation importe aussi ce dossier.
+PocketPersonalAccounts = Comptes Pocket personnels
+PocketNoPersonalAccount = Aucun utilisateur n'a saisi sa propre clé Pocket
+PocketUsesSharedAccount = Aucune clé personnelle : cet utilisateur utilise le compte Pocket partagé de la configuration du module (dossier %s).
+PocketNoSharedAccount = Ni clé personnelle ni compte Pocket partagé : le bouton « Je viens de raccrocher » n'est pas proposé à cet utilisateur.
+PocketNoAccountConfigured = Aucun compte Pocket configuré (clé et dossier) : rien à synchroniser
 PocketConnectionState = État de la connexion
 PocketApiKey = Clé API Pocket
 PocketApiKeyHelp = Clé de type pk_... créée depuis l'application Pocket. Elle donne accès en lecture aux enregistrements, transcriptions et audios du compte.
@@ -950,8 +1090,9 @@ PocketManualSync = Synchronisation manuelle
 PocketManualSyncHelp = Importe immédiatement les enregistrements du dossier configuré. La même opération est jouée automatiquement par la tâche planifiée.
 PocketSyncNow = Synchroniser maintenant
 PocketSyncReport = Synchronisation Pocket : %s créés, %s mis à jour, %s ignorés, %s en erreur
+PocketSyncAccounts = Comptes Pocket synchronisés : %s
 PocketSyncCronLabel = Synchronisation des enregistrements Pocket
-PocketSyncCronComment = Importe les enregistrements du dossier Pocket configuré, avec leur résumé, leur transcription et leurs actions
+PocketSyncCronComment = Importe les enregistrements du dossier de chaque compte Pocket configuré, partagé ou personnel, avec leur résumé, leur transcription et leurs actions
 PocketRefreshFromApi = Rafraîchir depuis Pocket
 PocketRefreshDone = Enregistrement rafraîchi depuis Pocket
 PocketRefreshFailed = Le rafraîchissement depuis Pocket a échoué
@@ -984,22 +1125,589 @@ PocketPlayAudio = Écouter l'enregistrement
 PocketAssignedUser = Affecté à
 PocketAssignee = Interlocuteur Pocket
 PocketCreateEvent = Créer un événement
+PocketActionDueDate = Date d'échéance
+PocketDeleteActionItem = Supprimer cette action
+PocketConfirmDeleteActionItem = Supprimer cette action à faire ? Elle ne reviendra pas à la prochaine synchronisation Pocket.
 PocketActionItemId = Identifiant de l'action Pocket
 PocketActionItemTodo = À faire
 PocketActionItemDone = Faite
+PocketActionItemDismissed = Supprimée
+PocketActionItemEdited = Action réécrite
+PocketSummaryEdited = Résumé réécrit
 
 #
 # Pocket - rattachement depuis les objets
 #
 PocketLinkedObjects = Objets liés
 PocketNoLinkedObject = Aucun objet lié à cet enregistrement
-PocketLinkFromObjectHint = Pour rattacher cet enregistrement, ouvrez la fiche du ticket, du projet, de la facture ou de la proposition concerné et utilisez son onglet « Enregistrements Pocket ».
 PocketLinkRecording = Rattacher un enregistrement
 PocketUnlinkRecording = Détacher cet enregistrement
 PocketNoRecordingToLink = Tous les enregistrements disponibles sont déjà rattachés
 PocketRecordingLinked = Enregistrement rattaché
 PocketRecordingUnlinked = Enregistrement détaché
 PocketRecordingLinkFailed = L'opération de rattachement a échoué
+PocketLinkObject = Rattacher un objet
+PocketAllObjectTypes = Tous les types
+PocketSearchObject = Rechercher par référence ou libellé
+PocketNoObjectFound = Aucun objet trouvé
+PocketObjectLinked = Objet rattaché
+PocketObjectUnlinked = Objet détaché
+PocketUnlinkObject = Détacher cet objet
+
+#
+# Menu - Sections du menu de gauche
+#
+MenuSectionQuickAccess = Accès rapides
+MenuSectionCommerce = Commerce
+MenuSectionServicePortfolio = Portefeuille service
+MenuSectionAdvTechnical = ADV / Technique
+MenuSectionBilling = Facturation
+MenuSectionTools = Outils transversaux
+MenuSectionAdministration = Administration
+ShipmentFollowupMenu = Suivi des expéditions
+TicketFollowupMenu = Suivi des tickets
+DataManagementMenu = Gestion des données
+
+# Clôture rapide d'un événement
+QuickCloseEventTitle = Clôturer l'événement
+QuickCloseEventTooltip = Clôturer cet événement ou changer son avancement
+QuickCloseEventProgressTitle = Mettre à jour l'événement
+QuickCloseEventPercentage = Avancement
+QuickCloseEventPercentageHelp = À 100 %, l'événement est clôturé. En dessous, seul son avancement change.
+QuickCloseEventProgressSaved = Avancement de l'événement passé à %s
+QuickCloseEventProgressSavedAndRescheduled = Avancement de l'événement passé à %s, nouvel événement programmé le %s
+QuickCloseEventDescription = Description
+QuickCloseEventDescriptionPlaceholder = Ajouté à la description de l'événement (facultatif)
+QuickCloseEventReschedule = Reprogrammer un événement identique pour plus tard
+QuickCloseEventNewLabel = Nom du nouvel événement
+QuickCloseEventNewLabelPlaceholder = Nom de l'événement clôturé
+QuickCloseEventNewLabelCount = %s / %s caractères
+QuickCloseEventNewLabelTooLong = Le nom du nouvel événement dépasse %s caractères : raccourcissez-le, sinon la fin serait coupée
+QuickCloseEventCurrentLabel = Nom de l'événement
+QuickCloseEventCurrentLabelPlaceholder = Renommez l'événement si besoin
+QuickCloseEventNewType = Type de rappel
+QuickCloseEventKeepType = Garder le type de l'événement clôturé
+QuickCloseEventTypeDisplay = Choix du type de rappel
+QuickCloseEventTypeDisplayDescription = Forme du sélecteur de type dans la modale de clôture rapide
+QuickCloseEventTypeDisplayButtons = Boutons
+QuickCloseEventTypeDisplaySelect = Liste déroulante
+
+# Types de relance, partagés par les pastilles de relance et les formulaires de rappel
+RelaunchTypeCall = Appel
+RelaunchTypeEmail = Email
+RelaunchTypeRdv = RDV
+RelaunchTypeOther = Autre
+RelaunchReminderCreated = Rappel créé
+RelaunchReminderTitlePlaceholder = Objet du rappel
+RelaunchReminderTitleRequired = L'objet du rappel est obligatoire
+QuickCloseEventInMonths = Dans
+QuickCloseEventInMonthsSuffix = mois
+QuickCloseEventInDays = Dans
+QuickCloseEventInDaysSuffix = jours
+QuickCloseEventOnDate = Le
+QuickCloseEventDateRequired = Choisissez la date du nouvel événement
+QuickCloseEventAtTime = à
+QuickCloseEventTimeHelp = Heure facultative, « 16 » suffit pour 16:00 : sans elle, le nouvel événement prend l'heure actuelle, ou celle de l'événement clôturé pour un jour choisi.
+QuickCloseEventTimePlaceholder = hh:mm
+QuickCloseEventTimeInvalid = L'heure du nouvel événement n'est pas valide (ex. : 16, 16h30)
+QuickCloseEventConfirm = Clôturer
+QuickCloseEventDone = Événement clôturé
+QuickCloseEventDoneAndRescheduled = Événement clôturé, nouvel événement programmé le %s
+QuickCloseEventNotTodo = Cet événement n'est pas à faire, il ne peut pas être clôturé
+QuickCloseEventError = L'enregistrement de l'événement a échoué
+QuickCloseEvents = clôtures rapides d'événement
+QuickCloseEventInMonthsLabel = Dans un nombre de mois
+QuickCloseEventInDaysLabel = Dans un nombre de jours
+QuickCloseEventDefaultDelay = Délai de reprogrammation par défaut
+QuickCloseEventDefaultDelayDescription = Choix présélectionné dans la modale de clôture rapide quand la reprogrammation est demandée
+QuickCloseEventDefaultDays = Nombre de jours par défaut
+QuickCloseEventDefaultDaysDescription = Nombre de jours prérempli pour le délai « Dans un nombre de jours »
+QuickCloseEventDefaultMonths = Nombre de mois par défaut
+QuickCloseEventDefaultMonthsDescription = Nombre de mois prérempli pour le délai « Dans un nombre de mois »
+
+#
+# Dates d'intervention
+#
+InterventionCalendar = Calendrier des interventions
+InterventionDates = Dates d'intervention
+InterventionDate = Date d'intervention
+InterventionUser = Intervenant
+InterventionUsers = Intervenants
+InterventionNoUser = Non affecté
+InterventionToPlan = À planifier
+InterventionPlanned = Planifiée
+InterventionDone = Réalisée
+InterventionStatus = Statut de l'intervention
+InterventionPropalStatus = Statut du devis
+InterventionDurationMinutes = Durée (min)
+InterventionDateHelp = Une date par unité de quantité : une quantité de 2,5 demande 3 interventions. Laisser une date vide retire l'intervention et son événement.
+InterventionDateNoQuantity = Cette ligne de service n'a pas de quantité, aucune intervention à planifier.
+InterventionDatePlanTooltip = Planifier les dates d'intervention de cette ligne de service
+InterventionDateSaved = Dates d'intervention enregistrées
+InterventionDateSaveError = Erreur lors de l'enregistrement des dates d'intervention
+InterventionDateFeatureDisabled = Les dates d'intervention ne sont pas activées dans la configuration de ReedCRM
+InterventionSeeEvent = Voir l'événement dans l'agenda
+InterventionEventLabel = Intervention %s - %s (%s)
+InterventionsThisMonth = Interventions du mois
+InterventionAmountThisMonth = CA du mois
+InterventionViewMonth = Mois
+InterventionViewList = Liste
+InterventionOnlyMine = Mes interventions
+InterventionNoneThisMonth = Aucune intervention planifiée sur ce mois
+InterventionToPlanList = Interventions à planifier (%s lignes de service)
+InterventionPlanAction = Planifier
+InterventionPlannedCount = Planifiées
+InterventionRemainingCount = Restantes
+ActionAC_REEDCRM_INTERVENTION = Intervention
+InterventionDateSetupTitle = Dates d'intervention sur les lignes de service
+InterventionDateEnabled = Activer les dates d'intervention
+InterventionDateEnabledDescription = Ajoute un bouton de planification sur chaque ligne de service des devis et affiche le calendrier des interventions
+InterventionDateCreateEvent = Créer un événement d'agenda par date
+InterventionDateCreateEventDescription = Chaque date d'intervention crée un événement de type Intervention affecté à l'intervenant, mis à jour et supprimé avec la date
+InterventionDateDefaultDurationLabel = Durée par défaut d'une intervention (minutes)
+InterventionDateMaxPerLineLabel = Nombre maximum de dates par ligne de service
+InterventionDateMaxPerLineDescription = Garde-fou pour les lignes de service à très grande quantité
+InterventionLocation = Lieu
+InterventionDateFromLabel = Devis pris en compte à partir du
+InterventionDateFromDescription = Les devis antérieurs à cette date sortent du périmètre : ni pastille sur leurs lignes de service, ni interventions à planifier. Vider le champ pour prendre tout l'historique.
+InterventionDateProductTagLabel = Tags des services à planifier
+InterventionDateProductTagDescription = Seules les lignes de service dont le produit porte l'un de ces tags reçoivent des dates d'intervention. Les lignes libres, sans produit, sont hors périmètre. Tant qu'aucun tag n'est choisi, aucune ligne n'est planifiable.
+InterventionDateNoProductTagWarning = Aucun tag de service n'est sélectionné : aucune ligne de service n'est planifiable. Choisissez les tags dans Configuration ReedCRM, onglet Propositions.
+
+# Suivi des autres engagements clients (assistance, formation, sprint)
+FollowupTrackingsOfMonth = Autres suivis du mois
+FollowupTrackingPlanned = Prévu
+FollowupTrackingLabel = Objet
+FollowupTrackingAdd = Ajouter le suivi
+FollowupTrackingAdded = Suivi ajouté
+FollowupTrackingDone = Suivi clôturé au %s
+FollowupTrackingMarkDone = Clôturer ce suivi (à la date du RDV si elle est saisie, sinon aujourd'hui)
+FollowupNoTrackingThisMonth = Aucun suivi ce mois-ci. Ajoute-le avec la ligne ci-dessous.
+FollowupTrackingRdvNoProposal = RDV enregistré, mais aucun devis lié : le calendrier des interventions se pose sur une ligne de devis. Lie un devis à cette ligne pour l'y faire apparaître.
+FollowupTrackingTypeAssistance = Assistance
+FollowupTrackingTypeFormation = Formation
+FollowupTrackingTypeSprint = Sprint
+FollowupTrackingTypeOther = Autre
+FollowupLineCount = Lignes
+
+# Card empty fields toggle
+CardHideEmptyFields = Masquer les champs vides
+CardShowAllFields = Tout afficher
+CardEmptyFieldsHiddenCount = %s masqués
+CardEmptyFieldsTooltip = Masque ou affiche les champs de cette fiche qui n'ont pas de valeur. Le choix est conservé pour toutes vos fiches.
+CardEmptyFieldsUserParam = Champs vides des fiches
+
+# Opportunity stats - Opportunités par mois
+OpportunityStatsMenu = Opportunités par mois
+OpportunityStatsTitle = Opportunités par mois
+OpportunityStatsTag = Tag
+OpportunityStatsEveryTag = Tous les tags
+OpportunityStatsDepth = Profondeur
+OpportunityStatsLastYears = %s dernières années
+OpportunityStatsDateType = Date de référence
+OpportunityStatsDateCreation = Date de création
+OpportunityStatsDateStart = Date de début
+OpportunityStatsAverage = Moyenne
+OpportunityStatsAverageHint = La moyenne divise le total par les mois écoulés : les mois que l'année en cours n'a pas encore vécus ne la tirent pas vers le bas.
+OpportunityStatsDateStartWarning = Le comptage se fait sur la date de début : les opportunités qui n'en ont pas sont absentes du tableau.
+OpportunityStatsTotalYear = Total %s
+OpportunityStatsPerMonth = Par mois
+OpportunityStatsBestMonth = Meilleur mois
+OpportunityStatsVersusYear = Contre %s
+OpportunityStatsSameWindow = %s sur la même période
+OpportunityStatsNoComparison = Pas de comparaison
+
+# Devis non facturés
+PropalUnbilledTag = Non facturé
+PropalUnbilledSetupTitle = Devis non facturés
+PropalUnbilledTagLabel = Tag des devis non facturés
+PropalUnbilledTagDescription = Un bandeau rouge s'affiche en haut de la fiche de tout devis qui porte ce tag, qu'il soit posé par le bouton ci-dessous ou à la main.
+PropalUnbilledTagNotCreated = Pas encore créé : il le sera au premier lancement
+PropalUnbilledSync = Taguer automatiquement les devis non facturés
+PropalUnbilledSyncDescription = Un devis est non facturé quand il est signé et qu'aucune facture ne lui est liée, ni directement ni par la commande ou le contrat créé depuis ce devis (les factures abandonnées ne comptent pas). Le tag est posé sur ces devis et retiré des devis facturés qui le portent encore. Une tâche planifiée fait aussi la mise à jour 4 fois par jour.
+PropalUnbilledPendingChanges = À taguer : %s devis non facturé(s) - À détaguer : %s devis facturé(s)
+PropalUnbilledSyncButton = Taguer les devis non facturés
+PropalUnbilledSyncDone = Tag posé sur %s devis, retiré de %s devis
+PropalUnbilledSyncError = Impossible de mettre à jour le tag des devis non facturés
+PropalUnbilledBanner = Ce devis n'est pas facturé
+PropalUnbilledCronLabel = ReedCRM - Tag des devis non facturés
+PropalUnbilledCronComment = Pose le tag « Non facturé » sur les devis signés sans facture liée et le retire des devis facturés, comme le bouton de la page de configuration des propositions commerciales. Lancée 4 fois par jour (0h, 6h, 12h et 18h).
+
+# Modèles de propositions
+PropalModelList = Modèles de propositions
+PropalModelListHelp = Retrouvez ici toutes les propositions commerciales marquées du tag <b>%s</b>. Cliquez sur <i>Créer</i> pour générer une nouvelle proposition basée sur le modèle.
+PropalModelCreate = Créer
+PropalModel = Modèle de proposition
+PropalModelSelect = Sélectionnez un modèle
+PropalModelHelp = Les lignes du modèle sont copiées dans la nouvelle proposition, ainsi que ses notes si vous n'en saisissez pas.
+PropalModelCreateFromProject = Créer une proposition à partir d'un modèle
+PropalModelNotFound = Le modèle choisi n'est plus une proposition modèle : la proposition a été créée sans ses lignes.
+
+# Contrats non facturés
+ContractUnbilledBanner = Ce contrat n'est pas facturé
+
+# Lifecycle timeline
+LifecycleStepCreation = Création
+LifecycleStepValidation = Validation
+LifecycleStepSending = Envoi
+LifecycleStepReception = Réception
+LifecycleStepRelaunch = Relances
+LifecycleStepValidityEnd = Fin validité
+LifecycleStepSignature = Signature
+LifecycleStepRefusal = Refus
+LifecycleStepBilling = Facturation
+LifecycleStepDelivery = Livraison
+LifecycleStepShipping = Expédition
+LifecycleStepClosing = Clôture
+LifecycleStepCancellation = Annulation
+LifecycleStepDueDate = Échéance
+LifecycleStepPayment = Règlement
+LifecycleStepAbandon = Abandon
+LifecycleStepProjectStart = Démarrage
+LifecycleStepProjectEnd = Fin prévue
+LifecycleStepFirstProposal = Devis
+LifecycleStepFirstOrder = Commande
+LifecycleStepFirstInvoice = Facture
+LifecycleTooltipPending = Étape non atteinte
+LifecycleTooltipOverdue = Date dépassée
+LifecycleTooltipBy = Par %s
+LifecycleTooltipSentCount = %s envois par mail
+LifecycleTooltipLastSending = Dernier envoi le %s
+LifecycleTooltipLinkedCount = %s documents liés
+LifecycleTooltipPaymentCount = %s règlements
+LifecycleTooltipPaidAmount = %s réglés sur %s
+LifecycleTooltipCommercialStatus = Statut commercial : %s
+LifecycleTooltipNoStatusDate = Le statut commercial ne conserve pas de date
+LifecycleTooltipRelaunchCount = %s relances ReedCRM
+LifecycleTooltipFirstRelaunch = Première relance le %s
+LifecycleStep = Étape
+LifecycleStepHelp = Dernière étape franchie par l'opportunité sur son fil d'Ariane : la colonne est triée et filtrée sur elle. Le détail d'une étape s'affiche au survol de son point.
+
+#
+# Tableaux de bord de pilotage : commercial et Direction (#694)
+#
+MenuSectionSteering = Pilotage
+SalesDashboard = Tableau de bord commercial
+DirectionDashboard = Tableau de bord Direction
+ReadSalesDashboard = Consulter le tableau de bord commercial (ses propres chiffres)
+ReadSalesDashboardOfTeam = Consulter les chiffres commerciaux de toute l'équipe
+ReadDirectionDashboard = Consulter le tableau de bord Direction
+
+# Objectifs commerciaux
+SalesGoals = Objectifs commerciaux
+SalesTeam = Équipe commerciale
+SalesTeamGroup = Groupe de l'équipe commerciale
+SalesTeamGroupDescription = Les membres de ce groupe forment l'équipe décrite par les tableaux de bord et peuvent recevoir des objectifs individuels. Sans groupe, l'équipe regroupe toute personne ayant une activité commerciale (appels, opportunités, devis).
+SalesGoalCallsPerDay = Appels par jour ouvré
+SalesGoalCallsPerDayDescription = Nombre d'appels sortants attendu chaque jour ouvré, week-ends et jours fériés exclus. Laisser vide pour ne fixer aucun objectif.
+SalesGoalSignedPerMonth = Devis signés par mois
+SalesGoalSignedPerMonthDescription = Nombre de devis passés au statut signé attendu chaque mois.
+SalesGoalSignedAmountPerMonth = Montant signé par mois (HT)
+SalesGoalSignedAmountPerMonthDescription = Montant hors taxe des devis signés attendu chaque mois.
+SalesGoalOpportunitiesPerMonth = Opportunités créées par mois
+SalesGoalOpportunitiesPerMonthDescription = Nombre de nouvelles opportunités attendu chaque mois.
+SalesPersonalGoals = Objectifs individuels
+SalesPersonalGoalsDescription = Un champ vide garde l'objectif de l'équipe, affiché en grisé.
+SalesPersonalGoalsNeedGroup = Choisissez d'abord le groupe de l'équipe commerciale pour fixer des objectifs individuels.
+SalesGoal = Objectif
+SalesGoalProgressReached = Objectif atteint (%s)
+SalesGoalProgressOntrack = Dans le rythme attendu (%s de l'objectif)
+SalesGoalProgressLate = En retard sur le rythme attendu (%s de l'objectif)
+SalesComparedWith = Évolution par rapport à la période du %s au %s
+
+# Filtres
+SalesPeriodFilter = Période
+SalesPeriodWeek = Semaine en cours
+SalesPeriodMonth = Mois en cours
+SalesPeriodPreviousMonth = Mois précédent
+SalesPeriodPreviousQuarter = Trimestre précédent
+SalesPeriodPreviousYear = Exercice précédent
+SalesPeriodQuarter = Trimestre en cours
+SalesPeriodYear = Exercice en cours
+SalesPeriodLastTwelveMonths = 12 derniers mois
+SalesUserFilter = Commercial
+SalesWholeTeam = Toute l'équipe
+DirectionWholeCompany = Toute l'entreprise
+
+# Tableau de bord commercial
+SalesToday = Aujourd'hui
+SalesCallsMadeToday = Appels passés aujourd'hui
+SalesCallsMadeDescription = Événements « Appel téléphonique » datés dans le passé et terminés, sans objet ou saisis après coup. Un appel planifié n'est compté qu'une fois fait ; les appels entrants Keyyo sont comptés à part.
+SalesCallsMadeThisWeek = Appels passés cette semaine
+SalesIncomingCallsToday = Appels entrants aujourd'hui
+SalesIncomingCallsDescription = Appels reçus enregistrés par la téléphonie Keyyo : ils ne comptent pas dans l'objectif d'appels.
+SalesActionsDueToday = Actions prévues aujourd'hui
+SalesActionsLate = Actions en retard
+SalesRelaunchesWaiting = Relances à traiter
+SalesRelaunchesWaitingDescription = Événements à faire sans date, comme les relances automatiques de devis et de factures.
+SalesCallListLinesToCall = Contacts à appeler (listes d'appel)
+SalesGoalsOfPeriod = Objectifs : %s
+SalesCallsMade = Appels passés
+SalesCallsPerWorkingDay = Appels par jour ouvré
+SalesCallsPerWorkingDayDescription = Moyenne sur les jours ouvrés déjà écoulés de la période, comparée à l'objectif journalier.
+SalesProposalsSignedDescription = Devis passés au statut signé sur la période, à leur date de signature.
+SalesSignedAmount = Montant signé HT
+SalesOpportunitiesCreated = Opportunités créées
+SalesEffortLeft = Effort restant
+SalesEffortLeftDescription = Ce qu'il reste à faire pour atteindre les objectifs de la période, réparti sur les %s jours ouvrés restants, aujourd'hui compris.
+SalesEffortCallsPerDay = %s appels par jour
+SalesEffortProposals = %s devis à signer
+SalesWorkingDaysLeft = %s jours ouvrés restants
+SalesPipeline = Pipeline
+SalesOpenOpportunities = Opportunités ouvertes
+SalesWeightedPipeline = Pipeline pondéré
+SalesWeightedPipelineDescription = Somme des montants des opportunités ouvertes multipliés par leur probabilité.
+SalesProposalsAwaitingSignature = Devis en attente de signature
+SalesOpportunitiesWithoutAction = Opportunités sans prochaine action
+SalesOpportunitiesWithoutActionDescription = Opportunités ouvertes sans aucun événement à faire : personne n'a prévu de les relancer.
+SalesStaleOpportunities = Sans activité depuis %s jours
+SalesConversion = Transformation
+SalesCallsPerOpportunity = Appels par opportunité créée
+SalesCallsPerOpportunityDescription = Nombre d'appels passés sur la période pour chaque opportunité créée sur la même période.
+SalesOpportunityToProposalRate = Opportunités transformées en devis
+SalesOpportunityToProposalRateDescription = Part des opportunités créées sur la période ayant déjà au moins un devis rattaché.
+SalesSignatureRate = Taux de signature des devis
+SalesSignatureRateDescription = Devis signés sur la période, rapportés aux devis signés ou refusés sur la même période.
+SalesWinRate = Taux de gain des opportunités
+SalesWinRateDescription = Opportunités gagnées sur la période, rapportées aux opportunités gagnées ou perdues sur la même période.
+SalesMeanSignatureDelay = Délai moyen de signature
+SalesAverageSignedDeal = Panier moyen signé
+SalesNbDays = %s j
+SalesCallsPerDay = Appels par jour ouvré
+SalesCallsPerWeek = Appels par semaine
+SalesWeekOf = Sem. du %s
+SalesSignaturesPerMonth = Devis signés par mois
+SalesFunnel = Entonnoir commercial de la période
+SalesProposalsIssued = Devis émis
+SalesProposalsSigned = Devis signés
+SalesOpenOpportunitiesStatus = Opportunités ouvertes par étape
+NbOfOpportunities = Nombre d'opportunités
+NoStatus = Sans statut
+SalesTeamBoard = Tableau de l'équipe commerciale
+SalesCallsOfPeriod = Appels de la période
+SalesTodoList = Actions du jour et en retard
+SalesLateBy = Retard
+SalesOpportunitiesToFollowUp = Opportunités à relancer
+SalesPendingProposals = Devis en attente de signature
+SalesWaitingFor = En attente depuis
+
+# Tableau de bord Direction
+DirectionRevenue = Chiffre d'affaires : %s
+DirectionBilledRevenue = CA facturé HT
+DirectionBilledRevenueDescription = Montant hors taxe des factures validées de la période, avoirs déduits, acomptes exclus. Évolution comparée à la même durée de la période précédente.
+DirectionRecurringPart = Part récurrente
+DirectionRecurringPartDescription = Part du CA facturé issue d'un modèle de facture récurrente.
+DirectionSignedRevenue = CA signé HT
+DirectionSignedUnbilled = Signé non facturé
+DirectionSignedUnbilledDescription = Devis signés sans facture liée, avec la même règle que le tag « non facturé » des devis.
+DirectionRecurring = Facturation récurrente
+DirectionMonthlyRecurringRevenue = Revenu récurrent mensuel (MRR)
+DirectionMonthlyRecurringRevenueDescription = Montant HT des modèles de facture récurrente actifs, ramené à un mois selon leur fréquence.
+DirectionAnnualRecurringRevenue = Revenu récurrent annuel (ARR)
+DirectionActiveSubscriptions = Abonnements actifs
+DirectionNbCustomers = %s clients
+DirectionRecurringToBill = À facturer sous %s jours
+DirectionRecurringLate = Modèles en retard de génération
+DirectionRecurringLateDescription = Modèles actifs dont la date de prochaine facture est dépassée : une facture aurait dû être générée.
+DirectionNewSubscriptions = Nouveaux abonnements sur la période
+DirectionPipeline = Pipeline
+DirectionReceivables = Encaissements et impayés
+DirectionOutstanding = Encours clients TTC
+DirectionOutstandingDescription = Reste à payer des factures validées non soldées, paiements et avoirs imputés déduits.
+DirectionOverdue = Dont échu
+DirectionInvoicesVeryLate = Factures en retard de plus de %s jours
+DirectionCollected = Encaissé sur la période
+DirectionMeanPaymentDelay = Délai moyen de paiement
+DirectionMeanPaymentDelayDescription = Pour les factures soldées sur la période, temps écoulé entre la date de facture et le dernier paiement.
+DirectionSalesTeam = Équipe commerciale
+DirectionSalesRepresentatives = Commerciaux
+DirectionSalesRepresentativesDescription = Membres du groupe de l'équipe commerciale, ou à défaut toute personne ayant une activité commerciale.
+DirectionCallsPerDayPerRepresentative = Appels par jour et par commercial
+DirectionNewCustomers = Nouveaux clients
+DirectionNewCustomersDescription = Tiers ayant signé leur tout premier devis sur la période.
+DirectionRevenuePerMonth = CA facturé HT par mois, par exercice
+DirectionRecurringRevenueShare = CA récurrent et ponctuel par mois
+DirectionRecurringRevenue = Récurrent
+DirectionOneOffRevenue = Ponctuel
+DirectionSignedPerMonth = Montant signé HT par mois, par exercice
+DirectionOpportunitiesPerMonth = Opportunités créées par mois, par exercice
+DirectionPipelineFunnel = Entonnoir : pipeline brut, pondéré et signé
+DirectionGrossPipeline = Pipeline brut
+DirectionPipelineByStage = Pipeline ouvert par étape (montant HT)
+DirectionOpportunitySources = Origine des opportunités sur la période
+DirectionOpportunitiesWon = Opportunités gagnées
+DirectionUnknownOrigin = Origine non renseignée
+DirectionLostReasons = Motifs de perte et de refus sur la période
+DirectionNoReason = Motif non renseigné
+DirectionUnpaidAge = Ancienneté des impayés (TTC)
+DirectionNotDueYet = Non échu
+DirectionOutstandingEvolution = Évolution de l'encours clients
+DirectionSignedPerUser = Signatures par commercial sur la période
+DirectionTeamPerformance = Performance de l'équipe commerciale sur la période
+DirectionTopOpportunities = Plus grosses opportunités ouvertes
+DirectionNextAction = Prochaine action
+DirectionRecurringFollowUp = Suivi de la facturation récurrente
+DirectionRecurringTemplate = Modèle
+DirectionMonthlyAmount = Mensualisé HT
+DirectionNextInvoice = Prochaine facture
+DirectionLastInvoice = Dernière facture
+DirectionInvoicesGenerated = Factures générées
+DirectionUnpaidInvoices = Factures impayées les plus en retard
+
+#
+# Contrôle des mandats SEPA
+#
+SepaMandateCheckTitle = Contrôle des mandats SEPA
+SepaMandateRuleIntro = Cette page dit, RIB par RIB, ce qui empêchera un prélèvement SEPA de partir correctement. Elle ne modifie rien : chaque ligne renvoie vers l'onglet RIB du tiers pour corriger.
+SepaMandateRuleFallback = Avec votre version de Dolibarr (%s), la date de signature écrite dans le fichier est la date de signature du mandat, ou à défaut la date de création du RIB.
+SepaMandateRuleNofallback = Attention : avec votre version de Dolibarr (%s), quand une demande de prélèvement désigne un RIB précis, le fichier reprend la date de signature du mandat sans aucun repli. Si elle n'est pas renseignée, la date part vide et la banque rejette le fichier, sauf si le correctif Dolibarr #42020 est installé.
+SepaMandateRuleUncertain = Avec votre version de Dolibarr (%s), il n'est pas certain que le correctif Dolibarr #42020 soit inclus : un RIB désigné par une demande et sans date de signature du mandat est donc signalé comme bloquant par prudence.
+SepaMandateCheckedAccounts = RIB contrôlés
+SepaMandateAccountsBlocking = RIB avec un point bloquant
+SepaMandateAccountsWarning = RIB à surveiller
+SepaMandateFailingRequests = Demandes en attente qui partiront en erreur
+SepaMandateFailingRequestsHint = sur l'ensemble des demandes de prélèvement en attente
+SepaMandateThirdpartiesInError = Tiers sans RIB utilisable
+SepaMandateSeverity = Gravité
+SepaMandateSeverityBlocking = Bloquant
+SepaMandateSeverityWarning = À surveiller
+SepaMandateSeverityOk = Correct
+SepaMandateFilterAll = Toutes les lignes
+SepaMandateFilterIssues = Bloquant ou à surveiller
+SepaMandateFilterPending = Uniquement les RIB avec une demande en attente
+SepaMandateBankAccount = RIB
+SepaMandateRum = RUM
+SepaMandateDateRum = Date de signature du mandat
+SepaMandateDateWritten = Date écrite dans le fichier
+SepaMandatePendingRequests = Demandes en attente
+SepaMandateIssues = Ce qu'il faut corriger
+SepaMandateNone = Aucun RIB ne correspond à ces filtres.
+SepaMandateNoUsableAccount = Aucun RIB utilisable
+SepaMandateNoLabel = RIB sans libellé
+SepaMandateNoIban = IBAN absent
+SepaMandateNoIssue = Rien à signaler
+SepaMandateDateEmpty = vide
+SepaMandateDateReasonMandate = date de signature du mandat
+SepaMandateDateReasonCreation = date de création du RIB, faute de date de signature
+SepaMandateDateReasonEmpty = aucune date à écrire
+SepaMandateDateReasonEmptyunlessfix = vide, sauf si le correctif Dolibarr #42020 est installé
+SepaMandateFix = Corriger
+SepaMandateFixOnThirdparty = Ouvrir l'onglet RIB du tiers
+SepaMandateReadOnlyNote = Les IBAN ne sont jamais affichés en entier. Le contrôle reprend les règles de Dolibarr au moment de la création d'un ordre de prélèvement : une facture validée, impayée, avec une demande en attente.
+SepaMandateIssueDateMissingEmpty = Date de signature du mandat absente. Ce RIB est désigné par une demande en attente : avec Dolibarr %s, le fichier partira avec une date de signature vide et la banque le rejettera, sauf si le correctif Dolibarr #42020 est installé. Renseignez la date de signature du mandat sur le RIB.
+SepaMandateIssueDateMissingUncertain = Date de signature du mandat absente. Ce RIB est désigné par une demande en attente : si votre version de Dolibarr (%s) n'inclut pas le correctif #42020, le fichier partira avec une date de signature vide et la banque le rejettera. Renseignez la date de signature du mandat sur le RIB.
+SepaMandateIssueDateMissingNoDate = Date de signature du mandat absente, et le RIB n'a pas de date de création : le fichier partira avec une date de signature vide. Renseignez la date de signature du mandat sur le RIB.
+SepaMandateIssueDateMissingFallback = Date de signature du mandat absente : Dolibarr écrira à la place la date de création du RIB (%s), qui n'est pas la date à laquelle le client a signé. Renseignez la vraie date de signature.
+SepaMandateIssueDateFuture = Date de signature du mandat dans le futur (%s) : un prélèvement ne peut pas s'appuyer sur un mandat qui n'est pas encore signé, la banque rejettera la ligne. Corrigez la date de signature.
+SepaMandateIssueRumMissing = Référence unique de mandat (RUM) absente : Dolibarr en fabriquera une automatiquement, qui ne correspondra pas au mandat signé par le client. Reportez la RUM du mandat signé.
+SepaMandateIssueRumDuplicate = Même référence de mandat (RUM) que %s : chaque mandat doit avoir sa propre référence, sinon la banque confond les deux. Corrigez la RUM de l'un des RIB.
+SepaMandateIssueIbanMissing = IBAN absent : aucun prélèvement ne peut partir sur ce RIB. Recopiez l'IBAN depuis le mandat signé.
+SepaMandateIssueIbanInvalid = IBAN invalide (sa clé de contrôle ne correspond pas) : Dolibarr écartera la facture du fichier de prélèvement. Recopiez l'IBAN depuis le mandat signé.
+SepaMandateIssueBicMissing = BIC absent : Dolibarr écartera la facture du fichier de prélèvement. Renseignez le BIC de la banque du client.
+SepaMandateIssueBicInvalid = BIC mal formé (%s) : il compte 8 ou 11 caractères, lettres et chiffres, sans espace. Dolibarr écartera la facture du fichier de prélèvement.
+SepaMandateIssueDuplicateDefault = Ce tiers a plusieurs RIB par défaut : Dolibarr arrêtera la création de l'ordre de prélèvement. N'en gardez qu'un seul par défaut.
+SepaMandateIssueDesignatedInactive = Ce RIB est désactivé, mais une demande en attente le désigne : Dolibarr prélèvera quand même sur ce compte. Réactivez-le s'il est bon, sinon supprimez la demande et refaites-la sur le bon RIB.
+SepaMandateIssueDesignatedMissing = La demande de la facture %s désigne un RIB qui n'existe plus : Dolibarr prélèvera à la place sur le RIB par défaut du tiers. Vérifiez que c'est bien le bon compte.
+SepaMandateIssueNoAccount = %s demande(s) de prélèvement en attente, mais aucun RIB n'est enregistré pour ce tiers : impossible de prélever. Ajoutez le RIB du mandat signé.
+SepaMandateIssueNoDefault = %s demande(s) de prélèvement en attente, mais aucun RIB n'est marqué par défaut : Dolibarr ne mettra pas ces factures dans le fichier. Marquez le RIB du mandat comme RIB par défaut.
+
+#
+# Pocket - bouton « Je viens de raccrocher »
+#
+PocketHangup = Je viens de raccrocher
+PocketHangupWith = Je viens de raccrocher avec %s
+PocketHangupHelp = Importe le dernier enregistrement du dossier Pocket %s et le rattache à cet élément
+PocketHangupAttached = Dernier enregistrement Pocket rattaché : %s
+PocketHangupAlreadyLinked = Le dernier enregistrement Pocket est déjà rattaché à cet élément : %s
+PocketHangupNoRecordingInFolder = Aucun enregistrement dans le dossier Pocket %s : rangez l'appel dans ce dossier depuis l'application Pocket, puis réessayez
+PocketHangupNotFiled = Le dernier enregistrement du dossier Pocket %s date du %s : rangez l'appel qui vient de se terminer dans ce dossier depuis l'application Pocket, puis réessayez
+PocketHangupImportFailed = L'import du dernier enregistrement Pocket a échoué
+
+#
+# Pocket - rappel de rangement des appels
+#
+PocketTidyReminderTitle = Rappel de rangement des appels
+PocketTidyReminderTime = Heure du rappel quotidien
+PocketTidyReminderTimeHelp = Chaque jour à cette heure, si des enregistrements arrivés dans Pocket au cours des dernières 24 heures ne sont rangés dans aucun dossier, un événement « Ranger N appels Pocket » qui les liste est créé avec une notification : pour le titulaire de chaque clé personnelle, et pour les utilisateurs du compte partagé. Rien n'est créé quand tout est rangé.
+PocketTidyReminderOff = -- Désactivé --
+PocketTidyReminderNext = Prochain rappel
+PocketTidyReminderPending = (au prochain passage de la tâche planifiée)
+PocketTidyReminderSharedRecipients = Destinataires du compte partagé
+PocketTidyReminderSharedRecipientsHelp = Utilisateurs actifs ayant le droit de créer des enregistrements Pocket et sans clé personnelle. Chaque clé personnelle prévient son titulaire.
+PocketTidyReminderNoRecipient = Aucun utilisateur n'utilise le compte partagé
+PocketTidyReminderJob = Tâche planifiée
+PocketTidyReminderJobMissing = Tâche planifiée absente : désactivez puis réactivez le module ReedCRM pour la déclarer
+PocketTidyReminderCronDisabled = Le module Travaux planifiés est désactivé : le rappel ne sera jamais créé
+PocketTidyReminderNoBrowserNotification = Les notifications navigateur de l'agenda sont désactivées : l'événement sera créé sans notification. Activez-les dans la <a href="%s">configuration des rappels de l'agenda</a>.
+PocketTidyReminderCronLabel = Rappel de rangement des appels Pocket
+PocketTidyReminderCronComment = À l'heure réglée dans la configuration Pocket de ReedCRM, crée pour chaque compte un événement avec notification listant les enregistrements des dernières 24 heures rangés dans aucun dossier
+PocketTidyReminderCronResult = Rappels de rangement Pocket : %s créé(s), %s compte(s) vérifié(s)
+PocketTidyReminderDisabled = Aucune heure de rappel de rangement Pocket configurée : rien à faire
+PocketTidyReminderNextRun = Prochain rappel de rangement Pocket : %s
+PocketTidyReminderLabel = Ranger %s appel Pocket
+PocketTidyReminderLabelPlural = Ranger %s appels Pocket
+PocketTidyReminderNote = Enregistrements arrivés dans Pocket depuis le %s et rangés dans aucun dossier. Rangez les appels dans leur dossier depuis l'application Pocket (dossier importé dans ReedCRM : %s) : tant qu'ils n'y sont pas, ni « Je viens de raccrocher » ni la synchronisation ne les récupèrent.
+PocketTidyReminderUntitled = Sans titre
+PocketTidyReminderDuration = durée %s
+PocketTidyReminderMore = … et %s autre(s)
+
+#
+# Pocket - événement de l'enregistrement
+#
+PocketRecordingEventLabel = Appel Pocket %s
+PocketRecordingEventHelp = Créé par la synchronisation pour chaque enregistrement traité par Pocket, en cours tant que l'appel n'est pas traité. Pocket ne distingue pas un appel d'une réunion : le type Appel téléphonique est posé par défaut, passez-le en Rendez-vous si c'était une réunion.
+PocketRecordingActionEventHelp = Créé depuis une action à faire de cet enregistrement Pocket
+PocketRecordingEventSummary = Début du compte rendu de l'enregistrement Pocket %s
+
+#
+# Accueil du module
+#
+HomeRange = Du %s au %s
+HomeScopeMine = Mes chiffres
+HomeComparedWithMonth = vs mois précédent
+HomeComparedWithQuarter = vs trimestre précédent
+HomeComparedWithYear = vs exercice précédent
+HomeRevenue = Chiffre d'affaires HT
+HomeRevenueFiscalYear = Exercice %s : %s
+HomeRevenueMonthlyAverage = Moyenne : %s par mois
+HomeSignedProposals = Devis signés HT
+HomeSignedDetail = %s signé(s) · %s en attente (%s)
+HomePipeline = Pipe ouvert
+HomePipelineDetail = Pondéré %s · %s opportunité(s)
+HomeCollected = Encaissements TTC
+HomeCollectedDetail = Reste à encaisser : %s
+HomeCollectedLate = dont %s en retard
+HomeRevenueChart = Chiffre d'affaires HT sur 12 mois
+HomeRevenueChartCurrent = 12 derniers mois
+HomeRevenueChartPrevious = Un an plus tôt
+HomeRevenueChartCompared = Par rapport aux 12 mois précédents : %s
+HomeRevenueChartDetail = Voir le détail par mois
+HomeChange = Évolution
+HomePipelineTitle = Le pipe
+HomePipelineAmount = Brut
+HomePipelineWeighted = Pondéré
+HomePipelineWeightedValue = pondéré %s
+HomePipelineNoStage = Sans étape
+HomePipelineEmpty = Aucune opportunité ouverte
+HomePipelineWon = Gagnées sur la période : %s · %s
+HomeSignedTitle = Devis signés
+HomeSignedEmpty = Aucun devis signé sur la période
+HomePaymentsTitle = Encaissements
+HomePaymentsEmpty = Aucun encaissement sur la période
+HomeLateInvoices = %s facture(s) en retard · %s
+HomeSeeAll = Tout voir
+HomeLastEvents = Dernières actions faites
+HomeLastEventsEmpty = Aucune action faite récemment
+HomeSeeAgenda = Voir l'agenda
+HomeProductSales = Dernière vente par produit
+HomeProductRecent = Dernières ventes
+HomeProductDormant = Sans vente depuis %s mois
+HomeProductDormantMore = … et %s autre(s) produit(s)
+HomeProductEmpty = Aucune vente de produit
+HomeProductDormantEmpty = Aucun produit en stock sans vente
+HomeLastSale = Dernière vente
+HomeNeverSold = Jamais vendu
+HomeDaysAgo = il y a %s j
 
 #
 # Divers - libellés génériques
@@ -1023,6 +1731,9 @@ EmptyValue = Valeur vide
 Latitude = Latitude
 Longitude = Longitude
 PermissionDenied = Permission refusée
+Propal = Devis
+ErrorBadValue = Valeur incorrecte
+ReedCRM = ReedCRM
 
 
 #
@@ -1034,4 +1745,3 @@ ArchiveCallList = Archiver la liste d'appel
 ConfirmArchiveCallList = Êtes-vous sûr de vouloir archiver cette liste d'appel ?
 DeleteCallList = Supprimer la liste d'appel
 ConfirmDeleteCallList = Êtes-vous sûr de vouloir supprimer cette liste d'appel ?
-CallListPDF = Modèle PDF standard de liste d'appel

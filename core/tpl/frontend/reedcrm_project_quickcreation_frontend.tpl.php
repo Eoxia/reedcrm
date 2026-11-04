@@ -33,7 +33,10 @@ if (!$permissionToAddProject) {
     exit;
 }
 
-require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.tpl.php'; ?>
+// reedcrm_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
+require_once __DIR__ . '/../../../lib/reedcrm_function.lib.php';
+
+require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'); ?>
 
 <?php require_once __DIR__ . '/reedcrm_pwa_header.tpl.php'; ?>
 
@@ -150,12 +153,18 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         color: #0f172a;
         font-size: 16px;
     }
-    .category-select-container > span.multiselectarraycategories {
+    /* Every multiselect of these rows (tags, sales representatives): left to its content width, the
+       sales representative one shrank to a 30px square, the only spot of its row reacting to a tap */
+    .category-select-container > span[class^="multiselectarray"] {
         flex: 1;
         min-width: 0;
         display: block;
     }
     .category-select-container .select2-container {
+        width: 100% !important;
+    }
+    /* Specific enough to outweigh the theme rule on widthcentpercentminusxx, which kept the tags 76px short */
+    .category-select-container > span[class^="multiselectarray"] > span.select2-container {
         width: 100% !important;
     }
     .category-select-container .select2-container--default .select2-selection--multiple,
@@ -208,6 +217,12 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
             <div class="form-group">
                 <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
+                <?php if (ReedcrmVoiceDescription::isEnabled()) : ?>
+                    <!-- Shown while the AI writes the description from the last voice note -->
+                    <div class="quickcreation-voice-description" data-error="<?php echo dol_escape_htmltag($langs->trans('VoiceDescriptionError')); ?>" data-empty="<?php echo dol_escape_htmltag($langs->trans('VoiceDescriptionEmpty')); ?>">
+                        <i class="fas fa-circle-notch fa-spin"></i> <?php echo $langs->trans('VoiceDescriptionWriting'); ?>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
@@ -243,7 +258,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 }
 
                 $inputType = 'text';
-                if ($value == 'mail') {
+                if ($value == 'mail' || $value == 'email') {
                     $inputType = 'email';
                 }
                 if ($value == 'phone') {
@@ -336,6 +351,9 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
             </div>
         <?php endif; ?>
 
+        <!-- Remind me later -->
+        <?php include __DIR__ . '/reedcrm_project_quickcreation_reminder_frontend.tpl.php'; ?>
+
         <!-- Media & Submit Block -->
         <div class="action-buttons-row" style="margin-top: 15px; margin-bottom: 15px;">
             <?php include __DIR__ . '/reedcrm_project_quickcreation_media_frontend.tpl.php'; ?>
@@ -352,7 +370,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 </div>
 
 <!-- intl-tel-input (Local libphonenumber integration) -->
-<link rel="stylesheet" href="<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/css/intlTelInput.css', 1); ?>">
+<link rel="stylesheet" href="<?php echo reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css'); ?>">
 <style>
     /* Fix the width issue caused by the library inserting a wrapper */
     .iti { width: 100%; display: block; }
@@ -380,7 +398,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 <?php
 // Data attributes for JS — lang is passed via HTML, no inline script needed
 $defaultLang = substr($langs->defaultlang, 0, 2);
-$utilsPath   = dol_buildpath('/reedcrm/js/intl-tel-input/js/utils.js', 1);
+$utilsPath   = reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/js/utils.js');
 ?>
 <div id="reedcrm-quickcreation-data"
      data-lang="<?php echo dol_escape_htmltag($defaultLang); ?>"

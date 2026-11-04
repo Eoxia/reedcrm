@@ -76,7 +76,41 @@ window.reedcrm.eventpro.init = function () {
   window.reedcrm.eventpro.event();
   window.reedcrm.eventpro.modalCloseWatcher();
   window.reedcrm.eventpro.initAddContact();
+  window.reedcrm.eventpro.initAddProject();
   window.reedcrm.eventpro.initRelaunchTooltips();
+  window.reedcrm.eventpro.fixDatePickerTriggers();
+};
+
+/**
+ * Put the datepicker button back on the date line
+ *
+ * jQuery UI injects its calendar trigger inside .divfordateinput, right after the input, which in a
+ * narrow column drops it under the field. Move it between the date and the hours, so the row reads
+ * [date] [calendar] [hh:mm].
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param  {Object} [$scope] Optional container to limit the fix to
+ * @returns {void}
+ */
+window.reedcrm.eventpro.fixDatePickerTriggers = function ($scope) {
+  var $root = $scope && $scope.length ? $scope : $(document);
+
+  ['#reminder_', '#event_'].forEach(function (selector) {
+    var $input = $root.find ? $root.find(selector) : $(selector);
+    if (!$input.length) {
+      return;
+    }
+
+    var $trigger = $input.siblings('.ui-datepicker-trigger');
+    var $hours = $input.closest('.divfordateinput').nextAll('span.nowraponall').first();
+    if ($trigger.length && $hours.length) {
+      $hours.before($trigger.detach());
+    }
+  });
 };
 
 /**
@@ -157,8 +191,16 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
     if ($sel.hasClass('select2-hidden-accessible')) {
       return;
     }
-    if (/hour|min|sec|month|day|year/i.test(selName)) {
+    // On the end of the name only: "reminder" holds "min", and the user of the direct reminder was left out. On the
+    // CardPro, its own select2 call goes to the select of the same id in the form of the page
+    if (/(hour|min|sec|month|day|year)$/i.test(selName)) {
       return;
+    }
+    // The CardPro page holds the same form: select2 keys its instance on the id, so with two selects of one id,
+    // initializing one destroys the other. The copy of the modal takes an id of its own, its name is kept
+    if (this.id && document.querySelectorAll('[id="' + this.id + '"]').length > 1) {
+      $content.find('label[for="' + this.id + '"]').attr('for', this.id + '_modal');
+      this.id += '_modal';
     }
     if (typeof $.fn.select2 !== 'undefined') {
       $sel.select2({
@@ -199,7 +241,7 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
       };
       postData[dataKey] = newVal;
       $.ajax({
-        url: $('meta[name=reedcrm-quickcreation-url]').attr('content') || '/custom/reedcrm/ajax/quickcreation.php',
+        url: $('meta[name=reedcrm-quickcreation-url]').attr('content') || window.reedcrm.moduleUrl('/ajax/quickcreation.php'),
         type: 'POST',
         data: postData,
         dataType: 'json',
@@ -233,7 +275,8 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
     });
   });
 
-  $content.find('form').off('submit.reedcrm').on('submit.reedcrm', function (e) {
+  // The send form of the email tab is left to post itself: the card answers it with a page, not JSON
+  $content.find('form').not('#mailform').off('submit.reedcrm').on('submit.reedcrm', function (e) {
     e.preventDefault();
     var $form = $(this);
     var formAction = $form.attr('action');
@@ -283,6 +326,11 @@ window.reedcrm.eventpro.bindModalContentEvents = function () {
   $content.find('#toggle_reminder').on('change', function () {
     $content.find('#reminder_fields').slideToggle(200);
   });
+
+  // The datepicker is built after the fragment is inserted, so replace its trigger now
+  setTimeout(function () {
+    window.reedcrm.eventpro.fixDatePickerTriggers($content);
+  }, 100);
 };
 
 /**
@@ -368,7 +416,28 @@ window.reedcrm.eventpro.modalCloseWatcher = function () {
 window.reedcrm.eventpro.event = function () {
   var modalSelector = '#' + window.reedcrm.eventpro.modalId;
 
-  $(document).on('click', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function (e) {
+  // eventpro.js is loaded once inside reedcrm.min.js and once raw by every host page, so without
+  // this the modal handlers end up bound twice and a single click opens two AJAX requests.
+  $(document).off('.reedcrmEventProModal');
+
+  // The reminder box of the CardPro page itself: bindModalContentEvents() only binds the copy loaded in the modal,
+  // so on the page the ticked box showed nothing
+  $(document).on('change.reedcrmEventProModal', '.reedcrm-cardpro #toggle_reminder', function () {
+    $(this).closest('form').find('#reminder_fields').slideToggle(200);
+  });
+
+  // "+" of the note and ticket blocks of the CardPro, and left "+" of the relaunch widget of its banner: when the form
+  // already shows the right tab, go to its first field rather than reload the page
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-cardpro .cardpro-block-add[data-focus], .reedcrm-cardpro-page .reedcrm-relaunch-add[data-focus]', function (e) {
+    var $field = $($(this).data('focus')).filter(':visible').first();
+    if ($field.length) {
+      e.preventDefault();
+      $field[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $field.trigger('focus');
+    }
+  });
+
+  $(document).on('click.reedcrmEventProModal', modalSelector + ' .modal-close, ' + modalSelector + ' .modal-close i', function (e) {
     e.preventDefault();
     var $modal = $(modalSelector);
     $modal.removeClass('modal-active');
@@ -376,18 +445,40 @@ window.reedcrm.eventpro.event = function () {
   });
 
   var mousedownOnBackdrop = false;
-  $(document).on('mousedown', modalSelector, function (e) {
+  $(document).on('mousedown.reedcrmEventProModal', modalSelector, function (e) {
     mousedownOnBackdrop = $(e.target).is(modalSelector);
   });
 
-  $(document).on('click', modalSelector, function (e) {
+  $(document).on('click.reedcrmEventProModal', modalSelector, function (e) {
     if ($(e.target).is(modalSelector) && mousedownOnBackdrop) {
       $(this).removeClass('modal-active');
       $(this).find('#' + window.reedcrm.eventpro.modalId + '-content').empty();
     }
   });
 
-  $(document).on('click', '.reedcrm-modal-open, .reedcrm-card-modal-open', function (e) {
+  // #873: date shortcuts of the direct reminder form. selectDate() drives the POST through its
+  // hidden day/month/year inputs, so they are set alongside the visible one.
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-reminder-shortcut', function (e) {
+    e.preventDefault();
+
+    var days = parseInt($(this).data('days'), 10) || 1;
+    var target = new Date();
+    target.setDate(target.getDate() + days);
+
+    var day = ('0' + target.getDate()).slice(-2);
+    var month = ('0' + (target.getMonth() + 1)).slice(-2);
+    var year = target.getFullYear();
+
+    $('#reminder_').val(day + '/' + month + '/' + year);
+    $('#reminder_day').val(day);
+    $('#reminder_month').val(month);
+    $('#reminder_year').val(year);
+
+    $(this).closest('.reedcrm-reminder-shortcuts').find('.reedcrm-reminder-shortcut').removeClass('is-active');
+    $(this).addClass('is-active');
+  });
+
+  $(document).on('click.reedcrmEventProModal', '.reedcrm-modal-open, .reedcrm-card-modal-open', function (e) {
     var $button = $(this);
     var modalUrl = $button.attr('data-modal-url');
     var projectId = $button.attr('data-project-id');
@@ -531,6 +622,111 @@ window.reedcrm.eventpro.submitAddContact = function ($button) {
 };
 
 /**
+ * Initialize add project functionality ("+" button next to a project select)
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.2.0
+ * @version 1.2.0
+ */
+window.reedcrm.eventpro.initAddProject = function () {
+  $(document).on('click', '.reedcrm-add-project-btn', function (e) {
+    e.preventDefault();
+    var $form = $(this).closest('.reedcrm-project-field-wrapper').find('.reedcrm-add-project-form');
+    $form.slideDown(function () {
+      $form.find('.reedcrm-add-project-title').trigger('focus');
+    });
+  });
+
+  $(document).on('click', '.reedcrm-add-project-cancel', function (e) {
+    e.preventDefault();
+    var $form = $(this).closest('.reedcrm-add-project-form');
+    $form.slideUp();
+    $form.find('input').val('');
+  });
+
+  $(document).on('click', '.reedcrm-add-project-submit', function (e) {
+    e.preventDefault();
+    window.reedcrm.eventpro.submitAddProject($(this));
+  });
+
+  // Enter in the inline form must create the project, not submit the eventPro form around it
+  $(document).on('keydown', '.reedcrm-add-project-form input', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      window.reedcrm.eventpro.submitAddProject($(this).closest('.reedcrm-add-project-form').find('.reedcrm-add-project-submit'));
+    }
+  });
+};
+
+/**
+ * Submit add project form
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.2.0
+ * @version 1.2.0
+ *
+ * @param {jQuery} $button The submit button element
+ */
+window.reedcrm.eventpro.submitAddProject = function ($button) {
+  var $form = $button.closest('.reedcrm-add-project-form');
+  var $mainForm = $form.closest('form');
+  var $projectSelect = $form.closest('.reedcrm-project-field-wrapper').find('select[name="project_id"]');
+  var notify = window.reedcrm.eventQuickClose.notify;
+
+  var title = $form.find('.reedcrm-add-project-title').val().trim();
+  if (!title) {
+    notify($form.data('error-required'), 'error');
+    return;
+  }
+
+  var baseUrl = $mainForm.attr('action');
+  baseUrl = baseUrl ? baseUrl.split('?')[0] : window.location.href.split('?')[0];
+
+  $button.prop('disabled', true);
+
+  $.ajax({
+    url: baseUrl,
+    type: 'POST',
+    data: {
+      action: 'create_project',
+      token: $mainForm.find('input[name="token"]').val(),
+      from_id: $mainForm.find('input[name="from_id"]').val(),
+      from_type: $mainForm.find('input[name="from_type"]').val(),
+      socid: $mainForm.find('select[name="' + $form.data('socid-field') + '"]').val() || '',
+      new_project_title: title,
+      new_project_amount: ($form.find('.reedcrm-add-project-amount').val() || '').trim()
+    },
+    dataType: 'json',
+    success: function (response) {
+      if (response && response.success) {
+        // Offer the new project in every project select of the form, select it in the one of the button
+        $mainForm.find('select[name="project_id"]').each(function () {
+          var isTarget = $projectSelect.is(this);
+          $(this).append(new Option(response.project_label, response.project_id, isTarget, isTarget));
+          if (isTarget) {
+            $(this).trigger('change');
+          }
+        });
+
+        $form.slideUp();
+        $form.find('input').val('');
+        notify(response.message, 'success');
+      } else {
+        notify(response && response.error ? response.error : 'Error', 'error');
+      }
+    },
+    error: function (xhr) {
+      notify(xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error', 'error');
+    },
+    complete: function () {
+      $button.prop('disabled', false);
+    }
+  });
+};
+
+/**
  * Initialize tooltips for relaunch buttons
  *
  * @memberof ReedCRM_EventPro
@@ -543,15 +739,20 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
   var $currentTooltip = null;
   var tooltipHovered = false;
   var loadingTooltip = false;
+  // Besides the relaunch buttons, any element only showing a number of relaunches (the headset of the
+  // todo cards) opens the same list, carrying its own project and third party
+  var triggers = '.reedcrm-relaunch-button, .reedcrm-relaunch-tooltip-trigger';
 
-  $(document).off('mouseenter', '.reedcrm-relaunch-button').on('mouseenter.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseenter', triggers).on('mouseenter.reedcrmRelaunchBtn', triggers, function () {
     var $button = $(this);
     var type = $button.data('relaunch-type');
+    // #873: the two-button widget asks for a temporal bucket ('past' / 'upcoming') instead of a type
+    var scope = $button.data('relaunch-scope') || '';
     var $wrapper = $button.closest('.reedcrm-relaunch-buttons');
     // The button always carries the project id. The "+" span it was read from before only exists
     // for users allowed to create events, so the tooltip stayed empty for read-only ones.
     var projectId = $button.data('project-id') || $wrapper.find('.reedcrm-modal-open').first().data('project-id');
-    var socid = $wrapper.data('socid') || '';
+    var socid = $button.data('socid') || $wrapper.data('socid') || '';
 
     if ((!projectId && !socid) || !type) {
       return;
@@ -586,7 +787,9 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
       'all': 'Relances commerciales'
     };
 
-    tooltipContent += '<strong>' + (typeLabels[type] || type) + '</strong>';
+    // data-dialog-title is emitted server-side and translated; typeLabels is the legacy fallback
+    var dialogTitle = $button.data('dialog-title');
+    tooltipContent += '<strong>' + (dialogTitle || typeLabels[type] || type) + '</strong>';
     tooltipContent += '</div>';
     tooltipContent += '<div class="reedcrm-relaunch-tooltip-content">';
     tooltipContent += '<div class="reedcrm-relaunch-tooltip-loading">' + (typeof window.saturne !== 'undefined' && window.saturne.loader ? '' : 'Chargement...') + '</div>';
@@ -670,6 +873,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
           project_id: projectId || '',
           socid: socid,
           action_type: actionType,
+          scope: scope,
           limit: $button.data('limit') || 0,
           token: $('meta[name=anti-csrf-currenttoken]').attr('content') || ''
         },
@@ -704,7 +908,7 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
 
   });
 
-  $(document).off('mouseleave', '.reedcrm-relaunch-button').on('mouseleave.reedcrmRelaunchBtn', '.reedcrm-relaunch-button', function () {
+  $(document).off('mouseleave', triggers).on('mouseleave.reedcrmRelaunchBtn', triggers, function () {
     clearTimeout(tooltipTimeout);
     tooltipTimeout = setTimeout(function () {
       if ($currentTooltip && !tooltipHovered && !loadingTooltip) {

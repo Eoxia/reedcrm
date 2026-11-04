@@ -1,0 +1,130 @@
+/* Steering dashboards (sales and management): goal progress and change badges inside the Saturne widget rows. */
+
+$steering-reached: #2e9e6b;
+$steering-ontrack: #0d8aff;
+$steering-late:    #e9a00d;
+$steering-down:    #d64545;
+$steering-track:   rgba(0, 0, 0, .08);
+
+// The goal sits in the data pill of the widget row, right after the figure: the target, then a thin bar
+.reedcrm-goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+  font-weight: 400;
+
+  .reedcrm-goal__target {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// A native progress element carries its own proportion: the bar needs no inline width
+.reedcrm-goal__bar {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 64px;
+  height: 6px;
+  border: none;
+  border-radius: 3px;
+  overflow: hidden;
+  background: $steering-track;
+  color: $steering-ontrack;
+
+  &::-webkit-progress-bar {
+    background: $steering-track;
+    border-radius: 3px;
+  }
+
+  &::-webkit-progress-value {
+    background: currentColor;
+    border-radius: 3px;
+  }
+
+  &::-moz-progress-bar {
+    background: currentColor;
+    border-radius: 3px;
+  }
+
+  &.reedcrm-goal__bar--reached {
+    color: $steering-reached;
+  }
+
+  &.reedcrm-goal__bar--late {
+    color: $steering-late;
+  }
+}
+
+// The change against the comparison period, green up, red down
+.reedcrm-evolution {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: .85em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  &.reedcrm-evolution--up {
+    color: $steering-reached;
+    background: rgba($steering-reached, .12);
+  }
+
+  &.reedcrm-evolution--down {
+    color: $steering-down;
+    background: rgba($steering-down, .12);
+  }
+
+  &.reedcrm-evolution--flat {
+    color: inherit;
+    background: $steering-track;
+  }
+}
+
+// #id-right is a table cell sized on its content: the widest list would stretch the whole page, menu included.
+// As a flex item allowed to shrink, it keeps the window width and the lists scroll in their own box.
+body.reedcrm-steering-dashboard > #id-container {
+  display: flex;
+}
+
+body.reedcrm-steering-dashboard > #id-container > #id-right {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+// The period and the person are the filters these dashboards are read through: wide enough to read their value
+body.reedcrm-steering-dashboard #graph-filters {
+  align-items: flex-end;
+  gap: 12px;
+
+  > .flex-col {
+    gap: 4px;
+  }
+
+  select {
+    min-width: 240px;
+  }
+}
+
+// A widget figure can be a sentence, the effort left: it wraps instead of pushing the widget out of a phone screen
+body.reedcrm-steering-dashboard .wpeo-infobox {
+  min-width: 0;
+}
+
+body.reedcrm-steering-dashboard .wpeo-infobox .body__row {
+  .row__data-container {
+    min-width: 0;
+    text-align: right;
+  }
+
+  .row__data {
+    white-space: normal;
+  }
+}
+
+// The dashboard lists show the goal of each member under the figure, the cells stay narrow
+.dashboard .div-table-responsive-no-min .reedcrm-goal {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+}

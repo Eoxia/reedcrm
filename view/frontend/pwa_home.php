@@ -19,8 +19,8 @@ saturne_load_langs();
 
 $title    = $langs->trans('Home');
 $help_url = 'FR:Module_ReedCRM';
-$moreJS   = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS  = ['/custom/reedcrm/css/reedcrm.min.css'];
+$moreJS   = ['/saturne/js/saturne.min.js', '/reedcrm/js/reedcrm.min.js'];
+$moreCSS  = ['/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;

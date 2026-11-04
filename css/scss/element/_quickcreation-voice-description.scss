@@ -1,0 +1,21 @@
+// "The AI is writing" line under the description of the quick creation frontend (view/frontend/quickcreation.php),
+// shown while a voice note is written up. Scoped to the page: the spacing around the line is the page's.
+
+$quickcreation-voice-description-accent: #9b59b6; // Same purple as the submit button
+
+.quickcreation-frontend .quickcreation-voice-description {
+    display: none;
+    margin-top: 6px;
+    font-size: 13px;
+    color: $quickcreation-voice-description-accent;
+
+    &.is-active {
+        display: block;
+    }
+}
+
+// The save button waits for the description, it has to look like it
+.quickcreation-frontend .quickcreation-form [type="submit"]:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}

@@ -22,7 +22,7 @@
  */
 
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for PocketRecording.
@@ -86,11 +86,14 @@ class PocketRecording extends SaturneObject
         'pocket_tags'         => ['type' => 'varchar(255)', 'label' => 'PocketTags',             'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => 1, 'noteditable' => 1, 'searchall' => 1],
         'language'            => ['type' => 'varchar(8)',   'label' => 'Language',               'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => -1, 'noteditable' => 1, 'css' => 'maxwidth50'],
         'fk_soc'              => ['type' => 'integer:Societe:societe/class/societe.class.php', 'label' => 'ThirdParty', 'picto' => 'company', 'enabled' => 1, 'position' => 140, 'notnull' => 0, 'visible' => 1, 'index' => 1],
-        'pocket_id'           => ['type' => 'varchar(64)',  'label' => 'PocketRecordingId',      'enabled' => 1, 'position' => 150, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
+        'fk_actioncomm'       => ['type' => 'integer:ActionComm:comm/action/class/actioncomm.class.php', 'label' => 'Event', 'picto' => 'action', 'enabled' => 1, 'position' => 145, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
+        'pocket_id'          => ['type' => 'varchar(64)',  'label' => 'PocketRecordingId',      'enabled' => 1, 'position' => 150, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
         'pocket_folder_id'    => ['type' => 'varchar(64)',  'label' => 'PocketFolderId',         'enabled' => 1, 'position' => 160, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
+        'fk_user_pocket'      => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'PocketAccount', 'picto' => 'user', 'enabled' => 1, 'position' => 165, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'foreignkey' => 'user.rowid'],
         'pocket_state'        => ['type' => 'varchar(32)',  'label' => 'PocketState',            'enabled' => 1, 'position' => 170, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
         'last_sync_date'      => ['type' => 'datetime',     'label' => 'PocketLastSyncDate',     'enabled' => 1, 'position' => 180, 'notnull' => 0, 'visible' => -2, 'noteditable' => 1],
-        'summary'             => ['type' => 'html',         'label' => 'PocketSummary',          'enabled' => 1, 'position' => 190, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
+        'summary'             => ['type' => 'html',         'label' => 'PocketSummary',          'enabled' => 1, 'position' => 190, 'notnull' => 0, 'visible' => 0],
+        'summary_edited'      => ['type' => 'smallint',     'label' => 'PocketSummaryEdited',    'enabled' => 1, 'position' => 195, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'default' => 0],
         'transcript'          => ['type' => 'text',         'label' => 'PocketTranscript',       'enabled' => 1, 'position' => 200, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1, 'searchall' => 1],
         'action_items'        => ['type' => 'text',         'label' => 'PocketActionItems',      'enabled' => 1, 'position' => 210, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
         'note_public'         => ['type' => 'html',         'label' => 'NotePublic',             'enabled' => 1, 'position' => 220, 'notnull' => 0, 'visible' => 0],
@@ -135,6 +138,11 @@ class PocketRecording extends SaturneObject
     public $pocket_folder_label;
 
     /**
+     * @var int|null User whose personal Pocket account the recording comes from, null for the shared account.
+     */
+    public $fk_user_pocket;
+
+    /**
      * @var string|null Pocket processing state (completed, pending, ...).
      */
     public $pocket_state;
@@ -170,6 +178,11 @@ class PocketRecording extends SaturneObject
     public $summary;
 
     /**
+     * @var int 1 once the summary was rewritten in Dolibarr, which freezes it against Pocket.
+     */
+    public $summary_edited = 0;
+
+    /**
      * @var string|null Full transcript.
      */
     public $transcript;
@@ -183,6 +196,11 @@ class PocketRecording extends SaturneObject
      * @var int|null Thirdparty ID.
      */
     public $fk_soc;
+
+    /**
+     * @var int|null Event created for the recording, kept once deleted so that it is not created again.
+     */
+    public $fk_actioncomm;
 
     /**
      * @var int User author.

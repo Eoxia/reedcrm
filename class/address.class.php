@@ -18,19 +18,21 @@
 /**
  * \file        class/address.class.php
  * \ingroup     reedcrm
- * \brief       This file is a CRUD class file for Address (Create/Read/Update/Delete)
+ * \brief       This file is a CRUD class file for ReedcrmAddress (Create/Read/Update/Delete)
  */
 
 // Load Dolibarr libraries
 require_once DOL_DOCUMENT_ROOT . '/core/lib/company.lib.php';
 
 // Load Saturne libraries.
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
- * Class for Address
+ * Class for ReedcrmAddress
+ *
+ * Prefixed: a bare "Address" collides with other modules (InfraS infraspackplus declares one too)
  */
-class Address extends SaturneObject
+class ReedcrmAddress extends SaturneObject
 {
     /**
      * @var string Module name.

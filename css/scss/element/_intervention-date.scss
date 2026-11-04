@@ -1,0 +1,182 @@
+/* Intervention dates : the trigger sitting on a service line and the modal holding its dates. */
+
+// The line description ends right above it, the trigger owns its own row
+.reedcrm-intervention-line {
+  padding-top: 6px;
+}
+
+.reedcrm-intervention-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid #d5dde5;
+  border-radius: 12px;
+  background: #f7fafc;
+  color: #4a5568;
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    background: #edf3f8;
+    border-color: #63acc9;
+  }
+
+  .reedcrm-intervention-count {
+    font-weight: 600;
+  }
+
+  &.reedcrm-intervention-trigger-complete {
+    background: #eaf7ef;
+    border-color: #7fb77e;
+    color: #38663a;
+  }
+
+  &.reedcrm-intervention-trigger-flash {
+    animation: reedcrm-intervention-flash 1.5s ease;
+  }
+
+  &.reedcrm-intervention-trigger-inline {
+    border: none;
+    background: none;
+    padding: 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+@keyframes reedcrm-intervention-flash {
+  0%   { box-shadow: 0 0 0 2px #7fb77e; }
+  100% { box-shadow: none; }
+}
+
+.modal-reedcrm-intervention-date {
+  .modal-container {
+    max-width: 900px;
+    width: 92%;
+  }
+
+  .reedcrm-intervention-date-line {
+    margin: 0 0 12px;
+    font-weight: 600;
+    color: #2d3748;
+  }
+}
+
+.reedcrm-intervention-date-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.reedcrm-intervention-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fdfdfe;
+
+  &.reedcrm-intervention-row-planned {
+    background: #f6fbf7;
+  }
+}
+
+.reedcrm-intervention-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8em;
+}
+
+.reedcrm-intervention-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .reedcrm-intervention-label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #718096;
+  }
+
+  input,
+  select {
+    padding: 3px 6px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+  }
+}
+
+.reedcrm-intervention-field-user {
+  .select2-container {
+    min-width: 190px;
+  }
+
+  .select2-container--default .select2-selection--single {
+    height: 26px;
+    border-color: #cbd5e0;
+
+    .select2-selection__rendered {
+      line-height: 24px;
+    }
+
+    .select2-selection__arrow {
+      height: 24px;
+    }
+  }
+}
+
+.reedcrm-intervention-field-note {
+  flex: 1 1 180px;
+
+  input {
+    width: 100%;
+  }
+}
+
+.reedcrm-intervention-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85em;
+  color: #4a5568;
+}
+
+.reedcrm-intervention-event {
+  color: #63acc9;
+}
+
+.reedcrm-intervention-help,
+.reedcrm-intervention-empty {
+  margin: 10px 0 0;
+  font-size: 0.85em;
+  color: #718096;
+}
+
+.reedcrm-intervention-loading {
+  padding: 24px;
+  text-align: center;
+  color: #63acc9;
+}
+
+.reedcrm-intervention-field-location {
+  flex: 1 1 220px;
+
+  input {
+    width: 100%;
+  }
+}

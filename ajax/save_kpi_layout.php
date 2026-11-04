@@ -19,7 +19,8 @@
 /**
  * \file    ajax/save_kpi_layout.php
  * \ingroup reedcrm
- * \brief   AJAX endpoint to save/reset the per-user opportunity KPI banner layout (order + hidden cards)
+ * \brief   AJAX endpoint to save/reset the per-user display preferences: opportunity KPI banner
+ *          layout (order + hidden cards), status display, list density and card empty fields
  */
 
 // Load ReedCRM environment
@@ -83,6 +84,15 @@ if ($action === 'set_list_density') {
     $mode = GETPOST('mode', 'aZ09');
     $mode = in_array($mode, ['compact', 'comfortable'], true) ? $mode : 'compact';
     $res  = dol_set_user_param($db, $conf, $user, ['REEDCRM_LIST_DENSITY' => $mode]);
+    echo json_encode($res > 0 ? ['success' => true] : ['success' => false, 'error' => 'SaveFailed']);
+    exit;
+}
+
+if ($action === 'set_card_fields_display') {
+    // Only "filled" is worth storing : an empty value deletes the parameter, and the user falls
+    // back on the default of the module, every field shown
+    $mode = GETPOST('mode', 'aZ09') === 'filled' ? 'filled' : '';
+    $res  = dol_set_user_param($db, $conf, $user, ['REEDCRM_CARD_FIELDS_DISPLAY' => $mode]);
     echo json_encode($res > 0 ? ['success' => true] : ['success' => false, 'error' => 'SaveFailed']);
     exit;
 }

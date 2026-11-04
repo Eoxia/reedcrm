@@ -2,3 +2,6 @@
 @use "layout/layout";
 @use "element/element";
 @use "pages/pages";
+
+// Modern back office theme, imported last so that it wins over the legacy rules above
+@use "theme/theme";

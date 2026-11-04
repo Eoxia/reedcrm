@@ -108,7 +108,7 @@ if ($resHook < 0) {
 }
 
 if (empty($resHook)) {
-    // create_contact / add_event / create_ticket, shared with the mobile App form (view/frontend/pwa_relaunch.php)
+    // create_contact / create_project / add_event / create_ticket, shared with the mobile App form (view/frontend/pwa_relaunch.php)
     require __DIR__ . '/../core/tpl/view/eventpro/eventpro_actions.tpl.php';
 }
 
@@ -119,7 +119,14 @@ if (empty($resHook)) {
 if ($isModal) {
     // Modal mode: output only the form template without header/banner/footer
     if (empty($action)) {
-        require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+        // The right-hand button of the relaunch widget asks for the short reminder form (#873),
+        // the left-hand one for the complete event form.
+        if (GETPOST('mode', 'aZ09') === 'reminder') {
+            require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+            require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_reminder.tpl.php';
+        } else {
+            require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
+        }
     }
     $db->close();
     exit;
@@ -128,15 +135,30 @@ if ($isModal) {
 $title   = $langs->transnoentities('ReedCRM');
 $helpUrl = 'FR:Module_ReedCRM';
 $moreCSS = [
-    '/custom/reedcrm/css/reedcrm.min.css',
-    '/custom/reedcrm/css/temp.css'
+    '/reedcrm/css/reedcrm.min.css',
+    '/reedcrm/css/temp.css'
 ];
 
-saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm-' . $object->element . 'template-pwa page-list bodyforlist');
+// reedcrm-cardpro-page: the banner above the page is compacted on this page only (theme/_eventpro.scss),
+// and laid out on one line for a thirdparty, whose banner has no lifecycle timeline
+saturne_header(0, '', $title, $helpUrl, '', 0, 0, [], $moreCSS, '', 'mod-reedcrm-' . $object->element . 'template-pwa page-list bodyforlist reedcrm-cardpro-page reedcrm-cardpro-' . $object->element);
 
 if (empty($action)) {
     saturne_get_fiche_head($object, 'event', $title);
-    saturne_banner_tab($object);
+
+    // ReedCRM: relaunch widget in the banner, as on the cards of the thirdparty and of the project. Its left "+" goes
+    // to the event form of the page, the right one opens the direct reminder form in the modal printed below
+    $relaunchWidget = '';
+    if (isModEnabled('agenda')) {
+        require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+        $relaunchWidget = reedcrm_render_relaunch_widget([
+            'projectId'      => $object->element === 'project' ? (int) $object->id : 0,
+            'socid'          => $object->element === 'societe' ? (int) $object->id : (int) $object->socid,
+            'wrapperClass'   => 'reedcrm-cardpro-relaunch',
+            'fullEventFocus' => '#addeventform #title',
+        ]);
+    }
+    saturne_banner_tab($object, 'ref', '', 1, 'ref', 'ref', $relaunchWidget);
 
     // ReedCRM: opportunity chain bar (projects only)
     if ($object->element === 'project') {
@@ -147,7 +169,8 @@ if (empty($action)) {
         include __DIR__ . '/../core/tpl/frontend/reedcrm_opportunity_chain_bar.tpl.php';
     }
 
-    print '<div class="fichecenter">';
+    // reedcrm-cardpro scopes the layout of the page: the same form also opens in the side modal of the lists
+    print '<div class="fichecenter reedcrm-cardpro">';
 
     print '<div class="fichehalfleft">';
     require_once __DIR__ . '/../core/tpl/view/eventpro/view_eventpro_actioncomm.tpl.php';
@@ -160,6 +183,10 @@ if (empty($action)) {
     }
 
     print '</div>';
+
+    if (!empty($relaunchWidget)) {
+        require __DIR__ . '/../core/tpl/view/eventpro/eventpro_modal.tpl.php';
+    }
 }
 
 // End of page

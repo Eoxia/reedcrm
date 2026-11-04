@@ -43,6 +43,8 @@ if (isModEnabled('categorie')) {
 
 // load ReedCRM libraries
 require_once __DIR__ . '/../../class/geolocation.class.php';
+require_once __DIR__ . '/../../class/reedcrmvoicedescription.class.php';
+require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -103,24 +105,24 @@ if (empty($resHook) && !empty($permissionToAddProject)) {
 $title    = $langs->trans('QuickCreation');
 $help_url = 'FR:Module_ReedCRM';
 $moreJS   = [
-    '/custom/saturne/js/saturne.min.js',
-    '/custom/saturne/js/includes/signature-pad.min.js',
-    '/custom/saturne/js/includes/hammer.min.js',
-    '/custom/reedcrm/js/intl-tel-input/js/intlTelInput.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js',
-    '/custom/reedcrm/js/modules/quickcreation.js'
+    '/saturne/js/saturne.min.js',
+    '/saturne/js/includes/signature-pad.min.js',
+    '/saturne/js/includes/hammer.min.js',
+    '/reedcrm/js/intl-tel-input/js/intlTelInput.min.js',
+    '/reedcrm/js/reedcrm.min.js',
+    '/reedcrm/js/modules/quickcreation.js'
 ];
-$moreCSS  = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreCSS  = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
 
-$conf->global->MAIN_FAVICON_URL = DOL_URL_ROOT . '/custom/reedcrm/img/reedcrm_color_512.png';
+$conf->global->MAIN_FAVICON_URL = dol_buildpath('/reedcrm/img/reedcrm_color_512.png', 1);
 
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa quickcreation-frontend');
 
 if (empty($permissionToAddProject)) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 

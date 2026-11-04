@@ -66,6 +66,69 @@ function showEventProTabs($id, $fromType, $currentTab, string $extraParams = '')
     return $out;
 }
 
+/**
+ * Render the title row of a block of the right column of the CardPro: its title, the link to the full list with
+ * the count, the statistics and the add button when given
+ *
+ * @param  int    $colspan   Number of columns of the block
+ * @param  string $title     Title, translated
+ * @param  string $listUrl   URL of the full list
+ * @param  string $listLabel Label of the link to the full list, translated
+ * @param  int    $num       Number of records, shown in the badge
+ * @param  string $statsUrl  URL of the statistics, empty for none
+ * @param  string $addUrl    URL that creates a record, empty for no add button
+ * @param  string $addLabel  Tooltip of the add button, translated
+ * @param  string $addFocus  Selector of the field of the CardPro form to go to, when the page already shows it, instead of
+ *                           following $addUrl (js/modules/eventpro.js)
+ * @return string            HTML output
+ */
+function reedcrm_cardpro_block_title(int $colspan, string $title, string $listUrl, string $listLabel, int $num, string $statsUrl = '', string $addUrl = '', string $addLabel = '', string $addFocus = ''): string
+{
+    global $langs;
+
+    $out  = '<tr class="liste_titre">';
+    $out .= '<td colspan="' . $colspan . '"><table width="100%" class="nobordernopadding"><tr>';
+    $out .= '<td>' . $title . '</td>';
+    $out .= '<td class="right"><a class="notasortlink" href="' . $listUrl . '"><span class="hideonsmartphone">' . $listLabel . '</span><span class="badge marginleftonlyshort">' . $num . '</span></a></td>';
+    if (!empty($statsUrl)) {
+        $out .= '<td class="right cardpro-block-tool"><a href="' . $statsUrl . '">' . img_picto($langs->trans('Statistics'), 'stats') . '</a></td>';
+    }
+    if (!empty($addUrl)) {
+        $out .= '<td class="right cardpro-block-tool"><a class="cardpro-block-add" href="' . $addUrl . '" title="' . dol_escape_htmltag($addLabel) . '"' . (!empty($addFocus) ? ' data-focus="' . dol_escape_htmltag($addFocus) . '"' : '') . '>';
+        $out .= '<span class="fas fa-plus"></span>';
+        $out .= '</a></td>';
+    }
+    $out .= '</tr></table></td>';
+    $out .= '</tr>';
+
+    return $out;
+}
+
+/**
+ * Render the line of an empty block of the right column of the CardPro. The blocks show even when empty, so that
+ * their add button stays at hand
+ *
+ * @param  int    $colspan Number of columns of the block
+ * @param  string $label   Message, translated
+ * @return string          HTML output
+ */
+function reedcrm_cardpro_block_empty(int $colspan, string $label): string
+{
+    return '<tr class="oddeven"><td colspan="' . $colspan . '" class="cardpro-block-empty">' . $label . '</td></tr>';
+}
+
+/**
+ * URL of the CardPro of an object, on one of the tabs of its form
+ *
+ * @param  CommonObject $object Thirdparty or project of the CardPro
+ * @param  string       $tab    Tab of the form (note, email, ticket)
+ * @return string               URL, anchored on the form
+ */
+function reedcrm_cardpro_url(CommonObject $object, string $tab): string
+{
+    return dol_buildpath('/reedcrm/view/procard.php', 1) . '?from_id=' . ((int) $object->id) . '&from_type=' . urlencode($object->element) . '&tab=' . urlencode($tab) . '#addeventform';
+}
+
 function showLatestProposals($object, $maxSizeShortListLimit = 3): string
 {
     global $conf, $db, $langs, $user;
@@ -92,22 +155,29 @@ function showLatestProposals($object, $maxSizeShortListLimit = 3): string
             $propal = new Propal($db);
 
             $num = $db->num_rows($resql);
-            if ($num > 0) {
-                $out .= '<div class="div-table-responsive-no-min">';
-                $out .= '<table class="noborder centpercent lastrecordtable">';
-                $out .= '<tr class="liste_titre">';
-                $out .= '<td colspan="5"><table width="100%" class="nobordernopadding"><tr><td>' . $langs->trans('LastPropals', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)) . '</td><td class="right"><a class="notasortlink" href="' . DOL_URL_ROOT.'/comm/propal/list.php?socid=' . $societe->id.'"><span class="hideonsmartphone">' . $langs->trans('AllPropals') . '</span><span class="badge marginleftonlyshort">' . $num . '</span></a></td>';
-                $out .= '<td width="20px" class="right"><a href="' . DOL_URL_ROOT . '/comm/propal/stats/index.php?socid=' . $object->thirdparty->id . '">' . img_picto($langs->trans("Statistics"), 'stats') . '</a></td>';
-                $out .= '</tr></table></td>';
-                $out .= '</tr>';
+
+            // Back to the CardPro when the creation is canceled, with the project of a project CardPro already chosen
+            $addUrl = '';
+            if ($user->hasRight('propal', 'creer')) {
+                $addUrl  = DOL_URL_ROOT . '/comm/propal/card.php?action=create&socid=' . ((int) $object->thirdparty->id);
+                $addUrl .= ($object->element == 'project' ? '&projectid=' . ((int) $object->id) : '');
+                $addUrl .= '&backtopage=' . urlencode(reedcrm_cardpro_url($object, 'note'));
+            }
+
+            $out .= '<div class="div-table-responsive-no-min">';
+            $out .= '<table class="noborder centpercent lastrecordtable">';
+            $out .= reedcrm_cardpro_block_title(5, $langs->trans('LastPropals', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)), DOL_URL_ROOT . '/comm/propal/list.php?socid=' . ((int) $object->thirdparty->id), $langs->trans('AllPropals'), $num, DOL_URL_ROOT . '/comm/propal/stats/index.php?socid=' . ((int) $object->thirdparty->id), $addUrl, $langs->trans('NewPropal'));
+            if ($num == 0) {
+                $out .= reedcrm_cardpro_block_empty(5, $langs->trans('EventProNoProposal'));
             }
 
             $i = 0;
             while ($i < $num && $i < $maxSizeShortListLimit) {
                 $objp = $db->fetch_object($resql);
 
+                // The cardpro-col-* classes size the columns, so that the dates and statuses of every block line up
                 $out .= '<tr class="oddeven">';
-                $out .= '<td class="nowraponall">';
+                $out .= '<td class="nowraponall cardpro-col-ref">';
                 $propal->id           = $objp->propalid;
                 $propal->ref          = $objp->ref;
                 $propal->ref_customer = $objp->ref_client;
@@ -116,7 +186,7 @@ function showLatestProposals($object, $maxSizeShortListLimit = 3): string
                 $propal->total_tva    = $objp->total_tva;
                 $propal->total_ttc    = $objp->total_ttc;
                 $out .= $propal->getNomUrl(1);
-                $out .= '</td><td class="tdoverflowmax125">';
+                $out .= '</td><td class="cardpro-col-main">';
                 if ($propal->fk_project > 0) {
                     $project = new Project($db);
                     $project->fetch($propal->fk_project);
@@ -125,17 +195,16 @@ function showLatestProposals($object, $maxSizeShortListLimit = 3): string
                 if (($db->jdate($objp->date_limit) < (dol_now() - $conf->propal->cloture->warning_delay)) && $objp->fk_statut == $propal::STATUS_VALIDATED) {
                     $out .= ' ' . img_warning();
                 }
-                $out .= '</td><td class="right" width="80px">' . dol_print_date($db->jdate($objp->dp), 'day') . '</td>';
-                $out .= '<td class="right nowraponall">' . price($objp->total_ht) . '</td>';
-                $out .= '<td class="right" style="min-width: 60px" class="nowrap">' . $propal->LibStatut($objp->fk_statut, 5) . '</td></tr>';
+                // Amount before the date: the date column then sits where it is in the other blocks
+                $out .= '</td><td class="right nowraponall cardpro-col-amount">' . price($objp->total_ht) . '</td>';
+                $out .= '<td class="right nowraponall cardpro-col-date">' . dol_print_date($db->jdate($objp->dp), 'day') . '</td>';
+                $out .= '<td class="right nowraponall cardpro-col-status">' . $propal->LibStatut($objp->fk_statut, 5) . '</td></tr>';
                 $i++;
             }
             $db->free($resql);
 
-            if ($num > 0) {
-                $out .= "</table>";
-                $out .= '</div>';
-            }
+            $out .= '</table>';
+            $out .= '</div>';
         } else {
             dol_print_error($db);
         }
@@ -166,14 +235,17 @@ function showLatestProjects($object, $maxSizeShortListLimit = 3): string
             $project = new Project($db);
 
             $num = $db->num_rows($resql);
-            if ($num > 0) {
-                $out .= '<div class="div-table-responsive-no-min">';
-                $out .= '<table class="noborder centpercent lastrecordtable">';
-                $out .= '<tr class="liste_titre">';
-                $out .= '<td colspan="4"><table width="100%" class="nobordernopadding"><tr><td>' . $langs->trans('LastProjects', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)) . '</td><td class="right"><a class="notasortlink" href="' . DOL_URL_ROOT . '/projet/list.php?socid=' . $object->thirdparty->id . '"><span class="hideonsmartphone">' . $langs->trans('AllProjects') . '</span><span class="badge marginleftonlyshort">' . $num . '</span></a></td>';
-                $out .= '<td width="20px" class="right"><a href="' . DOL_URL_ROOT . '/projet/stats/index.php?socid=' . $object->thirdparty->id . '">' . img_picto($langs->trans('Statistics'), 'stats') . '</a></td>';
-                $out .= '</tr></table></td>';
-                $out .= '</tr>';
+
+            $addUrl = '';
+            if ($user->hasRight('projet', 'creer')) {
+                $addUrl = DOL_URL_ROOT . '/projet/card.php?action=create&socid=' . ((int) $object->thirdparty->id) . '&backtopage=' . urlencode(reedcrm_cardpro_url($object, 'note'));
+            }
+
+            $out .= '<div class="div-table-responsive-no-min">';
+            $out .= '<table class="noborder centpercent lastrecordtable">';
+            $out .= reedcrm_cardpro_block_title(4, $langs->trans('LastProjects', ($num <= $maxSizeShortListLimit ? '' : $maxSizeShortListLimit)), DOL_URL_ROOT . '/projet/list.php?socid=' . ((int) $object->thirdparty->id), $langs->trans('AllProjects'), $num, DOL_URL_ROOT . '/projet/stats/index.php?socid=' . ((int) $object->thirdparty->id), $addUrl, $langs->trans('NewProject'));
+            if ($num == 0) {
+                $out .= reedcrm_cardpro_block_empty(4, $langs->trans('EventProNoProject'));
             }
 
             $i = 0;
@@ -181,24 +253,202 @@ function showLatestProjects($object, $maxSizeShortListLimit = 3): string
                 $objp = $db->fetch_object($resql);
 
                 $out .= '<tr class="oddeven">';
-                $out .= '<td class="nowraponall">';
+                $out .= '<td class="nowraponall cardpro-col-ref">';
                 $project->id            = $objp->projectid;
                 $project->ref           = $objp->ref;
                 $project->title         = $objp->title;
                 $project->budget_amount = $objp->budget_amount;
                 $out .= $project->getNomUrl(1);
-                $out .= '</td><td class="tdoverflowmax125">';
-                $out .= dol_trunc($objp->title, 30);
-                $out .= '</td><td class="right" width="80px">' . dol_print_date($db->jdate($objp->datec), 'day') . '</td>';
-                $out .= '<td class="right" style="min-width: 60px" class="nowrap">' . $project->LibStatut($objp->fk_statut, 5) . '</td></tr>';
+                // Cut by the width of the column, the whole title stays in the tooltip
+                $out .= '</td><td class="cardpro-col-main" title="' . dol_escape_htmltag($objp->title) . '">';
+                $out .= dol_escape_htmltag($objp->title);
+                $out .= '</td><td class="right nowraponall cardpro-col-date">' . dol_print_date($db->jdate($objp->datec), 'day') . '</td>';
+                $out .= '<td class="right nowraponall cardpro-col-status">' . $project->LibStatut($objp->fk_statut, 5) . '</td></tr>';
                 $i++;
             }
             $db->free($resql);
 
-            if ($num > 0) {
-                $out .= '</table>';
-                $out .= '</div>';
+            $out .= '</table>';
+            $out .= '</div>';
+        } else {
+            dol_print_error($db);
+        }
+    }
+
+    return $out;
+}
+
+/**
+ * Render the open tickets of the thirdparty, neither closed nor canceled, latest first (#997).
+ *
+ * @param  CommonObject $object                Object of the card, with its thirdparty loaded
+ * @param  int          $maxSizeShortListLimit Number of tickets listed
+ * @return string                              HTML output, empty without the ticket module or the right to read tickets
+ */
+function showOpenTickets(CommonObject $object, int $maxSizeShortListLimit = 3): string
+{
+    global $db, $langs, $user;
+
+    $out = '';
+
+    if (isModEnabled('ticket') && $user->hasRight('ticket', 'read')) {
+        require_once DOL_DOCUMENT_ROOT . '/ticket/class/ticket.class.php';
+
+        $langs->load('ticket');
+
+        $sql  = 'SELECT t.rowid, t.ref, t.track_id, t.subject, t.fk_statut, t.progress, t.datec';
+        $sql .= ' FROM ' . MAIN_DB_PREFIX . 'ticket as t';
+        $sql .= ' WHERE t.fk_soc = ' . ((int) $object->thirdparty->id);
+        $sql .= ' AND t.entity IN (' . getEntity('ticket') . ')';
+        $sql .= ' AND t.fk_statut NOT IN (' . Ticket::STATUS_CLOSED . ', ' . Ticket::STATUS_CANCELED . ')';
+        // Same restriction as the ticket list, which the link of the title opens
+        if (!$user->admin && getDolGlobalString('TICKET_LIMIT_VIEW_ASSIGNED_ONLY')) {
+            $sql .= ' AND t.fk_user_assign = ' . ((int) $user->id);
+        }
+        $sql .= ' ORDER BY t.datec DESC';
+
+        $resql = $db->query($sql);
+        if ($resql) {
+            $ticket = new Ticket($db);
+
+            $num = $db->num_rows($resql);
+
+            // The ticket tab of the CardPro form, as quick as the note one
+            $addUrl = '';
+            if ($user->hasRight('ticket', 'write') && $user->hasRight('reedcrm', 'eventpro', 'write')) {
+                $addUrl = reedcrm_cardpro_url($object, 'ticket');
             }
+
+            $out .= '<div class="div-table-responsive-no-min">';
+            $out .= '<table class="noborder centpercent lastrecordtable">';
+            $out .= reedcrm_cardpro_block_title(4, $langs->trans('EventProOpenTickets'), DOL_URL_ROOT . '/ticket/list.php?socid=' . ((int) $object->thirdparty->id) . '&search_fk_statut=openall', $langs->trans('EventProAllOpenTickets'), $num, '', $addUrl, $langs->trans('NewTicket'), 'input[name="ticket_subject"]');
+            if ($num == 0) {
+                $out .= reedcrm_cardpro_block_empty(4, $langs->trans('EventProNoOpenTickets'));
+            }
+
+            $i = 0;
+            while ($i < $num && $i < $maxSizeShortListLimit) {
+                $objp = $db->fetch_object($resql);
+
+                $ticket->id       = (int) $objp->rowid;
+                $ticket->ref      = $objp->ref;
+                $ticket->track_id = $objp->track_id;
+                $ticket->subject  = $objp->subject;
+                $ticket->status   = (int) $objp->fk_statut;
+                $ticket->progress = (int) $objp->progress;
+
+                $out .= '<tr class="oddeven">';
+                $out .= '<td class="nowraponall cardpro-col-ref">' . $ticket->getNomUrl(1) . '</td>';
+                $out .= '<td class="cardpro-col-main" title="' . dol_escape_htmltag($objp->subject) . '">' . dol_escape_htmltag($objp->subject) . '</td>';
+                $out .= '<td class="right nowraponall cardpro-col-date">' . dol_print_date($db->jdate($objp->datec), 'day') . '</td>';
+                $out .= '<td class="right nowraponall cardpro-col-status">' . $ticket->LibStatut((int) $objp->fk_statut, 5, 0, (int) $objp->progress) . '</td>';
+                $out .= '</tr>';
+                $i++;
+            }
+            $db->free($resql);
+
+            $out .= '</table>';
+            $out .= '</div>';
+        } else {
+            dol_print_error($db);
+        }
+    }
+
+    return $out;
+}
+
+/**
+ * Render the open notes of the thirdparty: its events still "to do" or "in progress", latest first (#997).
+ * These are the two statuses the "Customer note" tab offers besides "done".
+ *
+ * @param  CommonObject $object                Object of the card, with its thirdparty loaded
+ * @param  int          $maxSizeShortListLimit Number of events listed
+ * @return string                              HTML output, empty without the agenda module or the right to read events
+ */
+function showOpenNotes(CommonObject $object, int $maxSizeShortListLimit = 3): string
+{
+    global $db, $langs, $user;
+
+    $out = '';
+
+    if (isModEnabled('agenda') && $user->hasRight('agenda', 'myactions', 'read')) {
+        require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+        $langs->load('agenda');
+
+        $canReadAllEvents = $user->hasRight('agenda', 'allactions', 'read');
+
+        $sql  = 'SELECT a.id, a.label, a.datep, a.percent, a.fk_user_author, a.fk_user_action, c.code as type_code, c.libelle as type_label, c.picto as type_picto';
+        $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a';
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'c_actioncomm as c ON c.id = a.fk_action';
+        $sql .= ' WHERE a.fk_soc = ' . ((int) $object->thirdparty->id);
+        $sql .= ' AND a.entity IN (' . getEntity('agenda') . ')';
+        // The "todo" filter of the agenda list, which the link of the title opens: -1 is "not applicable", the automatic events
+        $sql .= ' AND a.percent >= 0 AND a.percent < 100';
+        // Without the right to see every event, the agenda list only shows the ones the user is assigned to
+        if (!$canReadAllEvents) {
+            $sql .= ' AND EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . "actioncomm_resources as ar WHERE ar.fk_actioncomm = a.id AND ar.element_type = 'user' AND ar.fk_element = " . ((int) $user->id) . ')';
+        }
+        $sql .= ' ORDER BY a.datep DESC, a.id DESC';
+
+        $resql = $db->query($sql);
+        if ($resql) {
+            $actionComm = new ActionComm($db);
+
+            $num = $db->num_rows($resql);
+
+            // The note tab of the CardPro form: on the page, the "+" goes to its title field
+            $addUrl = '';
+            if ($user->hasRight('agenda', 'myactions', 'create') && $user->hasRight('reedcrm', 'eventpro', 'write')) {
+                $addUrl = reedcrm_cardpro_url($object, 'note');
+            }
+
+            $out .= '<div class="div-table-responsive-no-min">';
+            $out .= '<table class="noborder centpercent lastrecordtable">';
+            // Without disabledefaultvalues the list keeps the default event type of the agenda setup (AGENDA_DEFAULT_FILTER_TYPE),
+            // and without search_filtert=-1 only the events of the user, so its count would not be the one of the badge
+            $out .= reedcrm_cardpro_block_title(4, $langs->trans('EventProOpenNotes'), DOL_URL_ROOT . '/comm/action/list.php?mode=show_list&disabledefaultvalues=1&search_filtert=-1&socid=' . ((int) $object->thirdparty->id) . '&search_status=todo', $langs->trans('EventProAllOpenNotes'), $num, '', $addUrl, $langs->trans('EventProNewNote'), '#addeventform #title');
+            if ($num == 0) {
+                $out .= reedcrm_cardpro_block_empty(4, $langs->trans('EventProNoOpenNotes'));
+            }
+
+            $i = 0;
+            while ($i < $num && $i < $maxSizeShortListLimit) {
+                $objp = $db->fetch_object($resql);
+
+                $actionComm->id          = (int) $objp->id;
+                $actionComm->ref         = (string) $objp->id;
+                $actionComm->label       = $objp->label;
+                $actionComm->type_code   = $objp->type_code;
+                $actionComm->type_label  = $objp->type_label;
+                $actionComm->type_picto  = $objp->type_picto;
+                $actionComm->authorid    = (int) $objp->fk_user_author;
+                $actionComm->userownerid = (int) $objp->fk_user_action;
+                // Every line is an event the user is assigned to when they cannot see them all: getNomUrl() checks it to give the link
+                $actionComm->userassigned = $canReadAllEvents ? [] : [(int) $user->id => ['id' => (int) $user->id, 'transparency' => 0]];
+
+                $typeLabel = $langs->trans('Action' . $objp->type_code);
+                if ($typeLabel == 'Action' . $objp->type_code) {
+                    $typeLabel = $objp->type_label;
+                }
+
+                // The short status of ActionComm is the bare percentage ("0%"): the word reads better, the percentage stays in the tooltip
+                $isToDo      = ((int) $objp->percent === 0);
+                $statusLabel = $langs->trans($isToDo ? 'StatusActionToDo' : 'StatusActionInProcess');
+                $statusBadge = dolGetStatus($statusLabel, $statusLabel, '', $isToDo ? 'status1' : 'status3', 5, '', ['badgeParams' => ['attr' => ['title' => $statusLabel . ' (' . ((int) $objp->percent) . '%)']]]);
+
+                $out .= '<tr class="oddeven">';
+                $out .= '<td class="cardpro-col-main">' . $actionComm->getNomUrl(1) . '</td>';
+                $out .= '<td class="cardpro-col-type" title="' . dol_escape_htmltag($typeLabel) . '">' . dol_escape_htmltag($typeLabel) . '</td>';
+                $out .= '<td class="right nowraponall cardpro-col-date">' . dol_print_date($db->jdate($objp->datep), 'day', 'tzuserrel') . '</td>';
+                $out .= '<td class="right nowraponall cardpro-col-status">' . $statusBadge . '</td>';
+                $out .= '</tr>';
+                $i++;
+            }
+            $db->free($resql);
+
+            $out .= '</table>';
+            $out .= '</div>';
         } else {
             dol_print_error($db);
         }
@@ -302,11 +552,14 @@ function showEventProInfos(CommonObject $object): string
     $out  = '<div class="box divboxtable box-halfright">';
     $out .= '<table summary="' . dol_escape_htmltag($langs->trans('DolibarrStateBoard')) . '" class="border boxtable boxtablenobottom boxtablenotop boxtablenomarginbottom centpercent">';
     $out .= '<tr class="impair nohover"><td colspan="2" class="tdboxstats nohover">';
+    // Laid out as a grid by the theme, the tiles share the width instead of floating in the middle
+    $out .= '<div class="cardpro-stats">';
 
     $out .= showOutstandingProposals($object);
     $out .= showOutstandingOrders($object);
     $out .= showOutstandingBills($object);
 
+    $out .= '</div>';
     $out .= '</td></tr>';
     $out .= '</table>';
     $out .= '</div>';
@@ -314,6 +567,9 @@ function showEventProInfos(CommonObject $object): string
     $maxSizeShortListLimit = getDolGlobalString('MAIN_SIZE_SHORTLIST_LIMIT');
 
     $out .= showLatestProposals($object, $maxSizeShortListLimit);
+    // Under the proposals, what is still open with the thirdparty (#997)
+    $out .= showOpenTickets($object, (int) $maxSizeShortListLimit);
+    $out .= showOpenNotes($object, (int) $maxSizeShortListLimit);
     $out .= showLatestProjects($object, $maxSizeShortListLimit);
 
     return $out;

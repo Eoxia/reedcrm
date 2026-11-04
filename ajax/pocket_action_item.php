@@ -31,16 +31,19 @@ if (!defined('NOREQUIREHTML')) {
     define('NOREQUIREHTML', '1');
 }
 
-// Load main Dolibarr environment
-if (file_exists(__DIR__ . '/../../saturne/saturne.main.inc.php')) {
-    require_once __DIR__ . '/../../saturne/saturne.main.inc.php';
+// Load ReedCRM environment
+if (file_exists('../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../reedcrm.main.inc.php';
+} elseif (file_exists('../../reedcrm.main.inc.php')) {
+    require_once __DIR__ . '/../../reedcrm.main.inc.php';
 } else {
-    die('Include of saturne main fails');
+    die('Include of reedcrm main fails');
 }
 
 require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 require_once __DIR__ . '/../class/pocketactionitem.class.php';
 require_once __DIR__ . '/../class/pocketrecording.class.php';
+require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
 
 global $db, $langs, $user;
 
@@ -75,11 +78,45 @@ if ($subAction === 'assign') {
     exit;
 }
 
+if ($subAction === 'set_text') {
+    // Pocket writes the wording, the user owns it afterwards: an empty label is a legitimate
+    // value, the fallback only applies to the event that carries the action in the agenda
+    // restricthtml encodes the ampersands and the quotes of a plain text, and the card escapes the
+    // wording again when it prints it: without the decoding, an edit saved twice would store the
+    // HTML source of the previous one
+    $label       = htmlspecialchars_decode(GETPOST('label', 'restricthtml'), ENT_QUOTES);
+    $description = htmlspecialchars_decode(GETPOST('description', 'restricthtml'), ENT_QUOTES);
+
+    $actionItem->label       = dol_trunc($label, 255, 'right', 'UTF-8', 1);
+    $actionItem->description = $description;
+    // What the user wrote wins over what Pocket sends on the next synchronisation
+    $actionItem->user_edited = 1;
+
+    if ($actionItem->update($user) <= 0) {
+        echo json_encode(['success' => false, 'error' => $actionItem->error]);
+        exit;
+    }
+
+    // The event created from the action carries the same wording, keep the two aligned
+    if ($actionItem->fk_actioncomm > 0) {
+        $event = new ActionComm($db);
+        if ($event->fetch($actionItem->fk_actioncomm) > 0) {
+            $event->label        = $actionItem->label ?: $langs->transnoentities('PocketActionItems');
+            $event->note_private = $actionItem->description;
+            $event->update($user);
+        }
+    }
+
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 if ($subAction === 'set_due_date') {
     $dueDate = GETPOST('due_date', 'alphanohtml');
 
     // An emptied field clears the deadline, it is not an error
-    $actionItem->due_date = $dueDate !== '' ? dol_stringtotime($dueDate) : null;
+    $actionItem->due_date    = $dueDate !== '' ? dol_stringtotime($dueDate) : null;
+    $actionItem->user_edited = 1;
 
     if ($actionItem->update($user) <= 0) {
         echo json_encode(['success' => false, 'error' => $actionItem->error]);
@@ -122,12 +159,18 @@ if ($subAction === 'create_event') {
     $event->note_private = $actionItem->description;
     $event->datep       = !empty($actionItem->due_date) ? (int) $actionItem->due_date : dol_now();
     $event->datef       = $event->datep;
-    // -1 keeps the event in the "to do" board, like the other ReedCRM follow-up events
-    $event->percentage  = -1;
+    // 0 is what Dolibarr reads as "to do", and what reedcrmTodoGetKanbanColumns() puts in the
+    // column of that name. -1 is the percentage of an event that does not apply: it used to be set
+    // here for the to-do board, which is the one column it never reaches, and it left the action
+    // showing "not applicable" and beyond the reach of the quick close
+    $event->percentage  = 0;
     $event->userownerid = $ownerId;
     $event->socid       = $recording->fk_soc > 0 ? (int) $recording->fk_soc : 0;
     $event->fk_element  = (int) $recording->id;
     $event->elementtype = 'pocketrecording@reedcrm';
+
+    // The project and the objects the recording is attached to follow the event
+    reedcrm_pocket_apply_links_to_event($recording, $event);
 
     if ($ownerId != $user->id) {
         $event->userassigned = [$ownerId => ['id' => $ownerId, 'mandatory' => 0]];
@@ -146,6 +189,22 @@ if ($subAction === 'create_event') {
         'event_id' => (int) $event->id,
         'url'      => dol_buildpath('/comm/action/card.php', 1) . '?id=' . ((int) $event->id)
     ]);
+    exit;
+}
+
+if ($subAction === 'dismiss') {
+    // The row is kept and marked instead of being deleted: Pocket still holds the action, and
+    // importActionItems() recreates every action it does not find in base. A deleted row would
+    // therefore come back at the next refresh of the recording or at the next run of the cron.
+    $actionItem->status      = PocketActionItem::STATUS_DISMISSED;
+    $actionItem->user_edited = 1;
+
+    if ($actionItem->update($user) <= 0) {
+        echo json_encode(['success' => false, 'error' => $actionItem->error]);
+        exit;
+    }
+
+    echo json_encode(['success' => true]);
     exit;
 }
 

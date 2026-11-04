@@ -26,6 +26,7 @@ CREATE TABLE llx_reedcrm_pocket_recording(
   pocket_id           varchar(64) NOT NULL,
   pocket_folder_id    varchar(64),
   pocket_folder_label varchar(255),
+  fk_user_pocket      integer,
   pocket_state        varchar(32),
   pocket_tags         varchar(255),
   language            varchar(8),
@@ -33,11 +34,13 @@ CREATE TABLE llx_reedcrm_pocket_recording(
   recording_date      datetime,
   last_sync_date      datetime,
   summary             mediumtext,
+  summary_edited      smallint DEFAULT 0 NOT NULL,
   transcript          longtext,
   action_items        mediumtext,
   note_public         text,
   note_private        text,
   fk_soc              integer,
+  fk_actioncomm       integer,
   fk_user_creat       integer NOT NULL,
   fk_user_modif       integer
 ) ENGINE=innodb;

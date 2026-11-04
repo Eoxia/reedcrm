@@ -14,7 +14,7 @@
         <?php if ($object->element === 'project' && !empty($object->usage_opportunity)) {
             $oppAmount  = (float) $object->opp_amount;
             $oppPercent = (float) $object->opp_percent;
-            $imgPath    = dol_buildpath('/custom/reedcrm/img/reedcrm.png', 1);
+            $imgPath    = dol_buildpath('/reedcrm/img/reedcrm.png', 1);
         ?>
         <div class="reedcrm-header-stats" style="display: inline-flex; align-items: center; background: #f8fbff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px 4px 6px; margin-bottom: 4px; vertical-align: middle; font-weight: 600; font-size: 0.95em;">
             <img src="<?= dol_escape_htmltag($imgPath) ?>" style="height: 18px; width: 18px; object-fit: contain; margin-right: 8px; border-right: 1px solid #cbd5e0; padding-right: 8px;" alt="ReedCRM">
@@ -91,11 +91,16 @@
                     <div class="select2-container" style="display: flex; align-items: center;"><?php echo $form->selectDate(dol_now(), 'event_', 1, 1, 0, "addeventform", 1, 0, 0, '', '', '', '', 1, '', '', 'tzuserrel'); ?></div>
                 </label>
             </div>
-            <div>
+            <div class="reedcrm-project-field-wrapper">
                 <label for="project_id">
                     <?php echo img_picto('', 'project'); ?>
                     <div class="select2-container"><?php echo $formProject->select_projects(!empty($object->thirdparty) ? $object->thirdparty->id : 0, $object->id, 'project_id', 64); ?></div>
                 </label>
+                <?php
+                $eventProProjectFormKey    = 'event';
+                $eventProProjectSocidField = 'socid';
+                require __DIR__ . '/eventpro_add_project.tpl.php';
+                ?>
             </div>
         </div>
 

@@ -1,0 +1,44 @@
+<?php
+/* Copyright (C) 2026 EVARISK <technique@evarisk.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
+ * \file    core/tpl/reedcrm_unbilled_banner.tpl.php
+ * \ingroup reedcrm
+ * \brief   Red banner on top of a "not billed" proposal or contract card.
+ *          Loaded by the formConfirm hook, printed between the tabs and the banner of the card.
+ *
+ * Variables expected:
+ *   $unbilledBannerMessage  string  Message of the banner, already translated
+ */
+
+// Protection to avoid direct call of template
+if (empty($conf) || !is_object($conf)) {
+    print 'Error, template page can be called as an URL';
+    exit;
+}
+
+// reedcrm_asset_full_url() used by the stylesheet printed below: without a version, the browser keeps serving the previous release
+require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
+
+// The native Dolibarr cards never load reedcrm.min.css, and the banner is printed long before the footer that does
+?>
+<link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
+
+<div class="reedcrm-unbilled-banner" role="alert">
+    <i class="fas fa-file-invoice-dollar reedcrm-unbilled-banner-icon"></i>
+    <span><?php echo dol_escape_htmltag($unbilledBannerMessage); ?></span>
+</div>

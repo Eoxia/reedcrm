@@ -26,6 +26,7 @@ CREATE TABLE llx_reedcrm_pocket_action_item(
   description          text,
   due_date             datetime,
   priority             varchar(16),
+  user_edited          smallint DEFAULT 0 NOT NULL,
   pocket_assignee      varchar(128),
   pocket_status        varchar(32),
   fk_user_assign       integer,

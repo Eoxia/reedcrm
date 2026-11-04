@@ -21,7 +21,7 @@
  * \brief   CRUD class for an action item extracted by Pocket from a recording.
  */
 
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 
 /**
  * Class for PocketActionItem.
@@ -64,6 +64,12 @@ class PocketActionItem extends SaturneObject
 
     public const STATUS_TODO = 0;
     public const STATUS_DONE = 1;
+    /**
+     * An action dropped from the card. The row is kept rather than deleted: Pocket still holds the
+     * action and importActionItems() recreates every action it does not find, so a deleted row
+     * would come back at the next refresh or at the next run of the cron.
+     */
+    public const STATUS_DISMISSED = 2;
 
     /**
      * @var array<string,array<string,mixed>> Fields.
@@ -74,13 +80,14 @@ class PocketActionItem extends SaturneObject
         'date_creation'       => ['type' => 'datetime',     'label' => 'DateCreation',       'enabled' => 1, 'position' => 20,  'notnull' => 1, 'visible' => 0],
         'tms'                 => ['type' => 'timestamp',    'label' => 'DateModification',   'enabled' => 1, 'position' => 30,  'notnull' => 1, 'visible' => 0],
         'import_key'          => ['type' => 'varchar(14)',  'label' => 'ImportId',           'enabled' => 1, 'position' => 40,  'notnull' => 0, 'visible' => 0],
-        'status'              => ['type' => 'smallint',     'label' => 'Status',             'enabled' => 1, 'position' => 50,  'notnull' => 1, 'visible' => 1, 'index' => 1, 'default' => 0, 'arrayofkeyval' => [0 => 'PocketActionItemTodo', 1 => 'PocketActionItemDone']],
+        'status'              => ['type' => 'smallint',     'label' => 'Status',             'enabled' => 1, 'position' => 50,  'notnull' => 1, 'visible' => 1, 'index' => 1, 'default' => 0, 'arrayofkeyval' => [0 => 'PocketActionItemTodo', 1 => 'PocketActionItemDone', 2 => 'PocketActionItemDismissed']],
         'fk_pocket_recording' => ['type' => 'integer',      'label' => 'PocketRecording',    'enabled' => 1, 'position' => 60,  'notnull' => 1, 'visible' => 0, 'index' => 1],
         'pocket_action_id'    => ['type' => 'varchar(128)', 'label' => 'PocketActionItemId', 'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 0, 'noteditable' => 1],
         'label'               => ['type' => 'varchar(255)', 'label' => 'Label',              'enabled' => 1, 'position' => 80,  'notnull' => 0, 'visible' => 1],
         'description'         => ['type' => 'text',         'label' => 'Description',        'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 0],
-        'due_date'            => ['type' => 'datetime',     'label' => 'DateDeadline',       'enabled' => 1, 'position' => 100, 'notnull' => 0, 'visible' => 1],
+        'due_date'            => ['type' => 'datetime',     'label' => 'Deadline',           'enabled' => 1, 'position' => 100, 'notnull' => 0, 'visible' => 1],
         'priority'            => ['type' => 'varchar(16)',  'label' => 'Priority',           'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 1],
+        'user_edited'         => ['type' => 'smallint',     'label' => 'PocketActionItemEdited', 'enabled' => 1, 'position' => 115, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'default' => 0],
         'pocket_assignee'     => ['type' => 'varchar(128)', 'label' => 'PocketAssignee',     'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => 1, 'noteditable' => 1],
         'pocket_status'       => ['type' => 'varchar(32)',  'label' => 'PocketState',        'enabled' => 1, 'position' => 130, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
         'fk_user_assign'      => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'AssignedUser', 'picto' => 'user', 'enabled' => 1, 'position' => 140, 'notnull' => 0, 'visible' => 1, 'index' => 1],
@@ -128,6 +135,11 @@ class PocketActionItem extends SaturneObject
      * @var string|null Priority (low, medium, high).
      */
     public $priority;
+
+    /**
+     * @var int 1 once the wording was rewritten in Dolibarr, which freezes it against Pocket.
+     */
+    public $user_edited = 0;
 
     /**
      * @var string|null Assignee as named by Pocket, free text.
@@ -184,13 +196,16 @@ class PocketActionItem extends SaturneObject
     }
 
     /**
-     * Get every action item of a recording, oldest first.
+     * Get the action items of a recording the user has not dropped, oldest first.
      *
      * @param  int                    $recordingId Parent recording ID.
      * @return array<int,self>|int                 Action items, < 0 on error.
      */
     public function fetchAllByRecording(int $recordingId)
     {
-        return $this->fetchAll('ASC', 't.rowid', 0, 0, ['customsql' => 't.fk_pocket_recording = ' . ((int) $recordingId)]);
+        $where  = 't.fk_pocket_recording = ' . ((int) $recordingId);
+        $where .= ' AND t.status != ' . self::STATUS_DISMISSED;
+
+        return $this->fetchAll('ASC', 't.rowid', 0, 0, ['customsql' => $where]);
     }
 }

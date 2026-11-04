@@ -160,7 +160,7 @@ if ($action == 'add_contact_notification') {
  * View
  */
 
-$title   = $langs->trans('Tools');
+$title   = $langs->trans('DataManagementMenu');
 $helpUrl = 'FR:Module_ReedCRM';
 
 saturne_header(0,'', $title, $helpUrl);

@@ -21,7 +21,7 @@
  * \brief       CRUD class for CallList
  */
 
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 // Preload the numbering module class: saturne_require_objects_mod() strips underscores from the
 // element type ('call_list' → 'calllist') and would not find the file in core/modules/reedcrm/call_list/
 require_once __DIR__ . '/../core/modules/reedcrm/call_list/mod_call_list_standard.php';
@@ -158,6 +158,11 @@ class CallList extends SaturneObject
     public function __construct(DoliDB $db)
     {
         parent::__construct($db, $this->module, $this->element);
+
+        // Deleting a call list only sets its status to STATUS_DELETED, the record stays in the table. The list
+        // hides those, so the previous/next arrows of the banner must skip them too, or they walk the user
+        // through call lists that are not in the list anymore. 'te' is the alias load_previous_next_ref() uses
+        $this->next_prev_filter = '(te.status:>=:' . self::STATUS_DRAFT . ')';
     }
 
     /**
@@ -221,7 +226,7 @@ class CallList extends SaturneObject
         $label .= '<br><b>' . $langs->trans('Ref') . ':</b> ' . $this->ref;
         $label .= '<br><b>' . $langs->trans('Label') . ':</b> ' . dol_htmlentities($this->label);
 
-        $url = dol_buildpath('/custom/reedcrm/view/call_list_card.php', 1) . '?id=' . $this->id;
+        $url = dol_buildpath('/reedcrm/view/call_list_card.php', 1) . '?id=' . $this->id;
 
         $linkclose = '';
         if (empty($noToolTip)) {

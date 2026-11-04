@@ -34,7 +34,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 // Keep this entry point so existing bookmarks and back-to-list links keep working,
 // forwarding any extra query parameters (filters, sort, ...) to the generic list.
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
-$target      = dol_buildpath('/custom/saturne/view/saturne_list.php', 1) . '?object_type=call_list';
+$target      = dol_buildpath('/saturne/view/saturne_list.php', 1) . '?object_type=call_list';
 if (!empty($queryString)) {
     $target .= '&' . $queryString;
 }

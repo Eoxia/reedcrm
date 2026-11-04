@@ -120,7 +120,8 @@ $title = $langs->trans("ThirdParty") . ' - ' . $langs->trans("KeyyoCalls");
 if (getDolGlobalString('MAIN_HTML_TITLE') && preg_match('/thirdpartynameonly/', getDolGlobalString('MAIN_HTML_TITLE')) && $object->name) {
     $title = $object->name . " - " . $title;
 }
-llxHeader('', $title);
+// Modern back office theme of Saturne, as on the pages built with saturne_header()
+llxHeader('', $title, '', '', 0, 0, '', ['/saturne/css/saturne.min.css'], '', 'saturne-theme');
 
 $head = societe_prepare_head($object);
 
@@ -159,7 +160,7 @@ if ((!empty($objthirdparty->id) || !empty($objcon->id)) && $permok) {
 
 $morehtmlright = '';
 
-$messagingUrl = DOL_URL_ROOT . '/custom/reedcrm/view/thirdparty_calls.php?socid=' . $object->id;
+$messagingUrl = dol_buildpath('/reedcrm/view/thirdparty_calls.php', 1) . '?socid=' . $object->id;
 $morehtmlright .= dolGetButtonTitle($langs->trans('ShowAsConversation'), '', 'fa fa-comments imgforviewmode', $messagingUrl, '', 1);
 $messagingUrl = DOL_URL_ROOT . '/societe/agenda.php?socid=' . $object->id . '&actioncode=AC_TEL';
 $morehtmlright .= dolGetButtonTitle($langs->trans('MessageListViewType'), '', 'fa fa-bars imgforviewmode', $messagingUrl, '', 2);
