@@ -45,14 +45,6 @@ saturne_load_langs();
 $id     = GETPOSTINT('id');
 $action = GETPOST('action', 'nohtml');
 
-// LOG ALL REQUESTS TO DEBUG
-$debugFile = $conf->ecm->dir_output . '/debug_upload_top.log';
-file_put_contents($debugFile, "===== REQ to pwa_call_list =====\n", FILE_APPEND);
-file_put_contents($debugFile, "GET: " . print_r($_GET, true) . "\n", FILE_APPEND);
-file_put_contents($debugFile, "POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
-file_put_contents($debugFile, "ACTION: " . $action . "\n", FILE_APPEND);
-
-
 if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcrm', 'call_list', 'read_subordinates') && !$user->hasRight('reedcrm', 'call_list', 'read_all')) {
     accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
