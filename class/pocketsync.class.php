@@ -440,6 +440,7 @@ class PocketSync
         $pocketRecording = new PocketRecording($this->db);
         $isNew           = $pocketRecording->fetchByPocketId((string) $recording['id']) <= 0;
         $previousSync    = $isNew ? 0 : (int) $pocketRecording->last_sync_date;
+        $previousLabel   = $isNew ? '' : (string) $pocketRecording->label;
 
         // The owner is only set on creation: an account configured twice, as the shared one and as
         // someone's own, sees the same recordings, and the refresh must not hand them over
@@ -492,6 +493,8 @@ class PocketSync
         }
 
         $this->syncActionItems($pocketRecording, $user);
+        // A call renamed in Pocket after its import is renamed in the agenda too
+        reedcrm_pocket_rename_recording_event($pocketRecording, $previousLabel, $user);
         $this->createRecordingEvent($pocketRecording, $user);
 
         return 0;
