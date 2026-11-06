@@ -149,7 +149,19 @@ if ($action == 'loadColumn') {
     ]);
 }
 
-$ajaxActions = ['updateEventPercent', 'updateEventLabel', 'updateEventDate', 'updateEventOwner', 'addEventAssigned', 'removeEventAssigned'];
+// Third parties, contacts or projects the links panel of a card offers as the user types
+if ($action == 'searchLinkTargets') {
+    header('Content-Type: application/json');
+
+    if (!$permissionToWrite) {
+        reedcrmTodoAjaxAnswer($db, ['success' => 0, 'error' => 'Not allowed'], 403);
+    }
+
+    $targets = reedcrmTodoSearchLinkTargets($db, GETPOST('type', 'aZ09'), trim(GETPOST('search', 'alphanohtml')), GETPOSTINT('socid'));
+    reedcrmTodoAjaxAnswer($db, ['success' => 1, 'results' => $targets]);
+}
+
+$ajaxActions = ['updateEventPercent', 'updateEventLabel', 'updateEventDate', 'updateEventOwner', 'addEventAssigned', 'removeEventAssigned', 'updateEventLinks'];
 
 if (in_array($action, $ajaxActions, true)) {
     header('Content-Type: application/json');
@@ -274,6 +286,62 @@ if (in_array($action, $ajaxActions, true)) {
 
         $assignedInfos = reedcrmTodoGetUserInfos($db, [$assignedUserId]);
         reedcrmTodoAjaxAnswer($db, ['success' => 1, 'user' => $assignedInfos[$assignedUserId] ?? []]);
+    }
+
+    // Third party, contact or project of the event, picked from the links panel of the card
+    if ($action == 'updateEventLinks') {
+        $linkTypes = ['socid' => 'thirdparty', 'contactid' => 'contact', 'projectid' => 'project'];
+        $field     = GETPOST('field', 'aZ09');
+        $value     = GETPOSTINT('value');
+        if (!isset($linkTypes[$field]) || $value < 0) {
+            reedcrmTodoAjaxAnswer($db, ['success' => 0, 'error' => 'Unknown field'], 400);
+        }
+
+        // Checked against the same search as the panel: what the user may read, and for a contact
+        // or a project, what belongs to the third party of the event
+        $target = [];
+        if ($value > 0) {
+            $targets = reedcrmTodoSearchLinkTargets($db, $linkTypes[$field], '', $field == 'socid' ? 0 : (int) $event->socid, $value);
+            if (empty($targets)) {
+                reedcrmTodoAjaxAnswer($db, ['success' => 0, 'error' => 'Not allowed'], 403);
+            }
+            $target = $targets[0];
+        }
+
+        if ($field == 'socid') {
+            $event->socid = $value;
+        } elseif ($field == 'contactid') {
+            // The contact also sits among the contacts of the event, the way the event card adds it
+            unset($event->socpeopleassigned[(int) $event->contact_id]);
+            $event->contact_id = $value;
+            if ($value > 0) {
+                $event->socpeopleassigned[$value] = ['id' => $value];
+            }
+        } else {
+            $event->fk_project = $value;
+        }
+
+        // An event without a third party takes the one of the contact or the project picked,
+        // then lets go of whatever no longer belongs to its third party
+        if (empty($event->socid) && !empty($target['soc_id'])) {
+            $event->socid = $target['soc_id'];
+        }
+        reedcrmTodoAlignEventLinks($db, $event);
+
+        if ($event->update($user) <= 0) {
+            dol_syslog('ReedCRM todo board: updateEventLinks failed on event ' . $eventId . ' - ' . $event->error, LOG_ERR);
+            reedcrmTodoAjaxAnswer($db, ['success' => 0, 'error' => $event->error], 500);
+        }
+
+        // The links of the card are rendered again, budget and relaunches of the project included
+        $t = reedcrmTodoGetEventCard($db, $eventId);
+        if (empty($t)) {
+            reedcrmTodoAjaxAnswer($db, ['success' => 1, 'html' => '']);
+        }
+
+        ob_start();
+        require __DIR__ . '/../core/tpl/todo/todo_kanban_card_links.tpl.php';
+        reedcrmTodoAjaxAnswer($db, ['success' => 1, 'html' => ob_get_clean()]);
     }
 }
 

@@ -27,6 +27,7 @@
  * - $todoUsers         array     Selectable users (owner and assigned users selectors)
  * - $permissionToWrite bool      Whether the user may change an event
  * - $langs             Translate Translation object
+ * - $user              User      Connected user
  */
 ?>
 
@@ -100,6 +101,32 @@
         <?php foreach ($todoUsers as $selectableUser) : ?>
             <div class="todo-user-option" data-value="<?php echo $selectableUser['id']; ?>" data-initial="<?php echo dol_escape_htmltag($selectableUser['initials']); ?>" data-search="<?php echo dol_escape_htmltag(strtolower($selectableUser['fullname'])); ?>">
                 <?php echo dol_escape_htmltag($selectableUser['fullname']); ?>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <?php
+    // Third party, contact and project of a card, picked on the fly. Rendered once as well: the JS
+    // module moves the panel under the links of the card whose button was clicked. Each kind is
+    // only offered to whoever may read it, see reedcrmTodoSearchLinkTargets()
+    $todoLinkFields = [];
+    if ($user->hasRight('societe', 'lire')) {
+        $todoLinkFields['socid'] = ['type' => 'thirdparty', 'icon' => 'fa-building', 'label' => $langs->trans('ThirdParty')];
+    }
+    if ($user->hasRight('societe', 'contact', 'lire')) {
+        $todoLinkFields['contactid'] = ['type' => 'contact', 'icon' => 'fa-address-book', 'label' => $langs->trans('Contact')];
+    }
+    if ($user->hasRight('projet', 'lire')) {
+        $todoLinkFields['projectid'] = ['type' => 'project', 'icon' => 'fa-project-diagram', 'label' => $langs->trans('Project')];
+    }
+    ?>
+    <div class="todo-links-panel" id="todoLinksPanel">
+        <?php foreach ($todoLinkFields as $linkField => $linkDefinition) : ?>
+            <div class="todo-links-field">
+                <i class="fas <?php echo $linkDefinition['icon']; ?>" title="<?php echo dol_escape_htmltag($linkDefinition['label']); ?>"></i>
+                <?php // The id is what the select2:open handler of Dolibarr focuses the search field on ?>
+                <select id="todoLinks_<?php echo $linkField; ?>" class="todo-links-select" data-field="<?php echo $linkField; ?>" data-type="<?php echo $linkDefinition['type']; ?>"
+                        data-placeholder="<?php echo dol_escape_htmltag($linkDefinition['label']); ?>"></select>
             </div>
         <?php endforeach; ?>
     </div>

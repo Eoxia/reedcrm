@@ -330,7 +330,8 @@
     background: $rc-faint;
   }
 
-  .todo-add-assigned-btn {
+  .todo-add-assigned-btn,
+  .todo-links-btn {
     border-color: $rc-border-strong;
     color: $rc-faint;
 
@@ -340,8 +341,13 @@
     }
   }
 
+  .todo-links-field > i {
+    color: $rc-faint;
+  }
+
   .todo-owner-dropdown,
-  .todo-assigned-dropdown {
+  .todo-assigned-dropdown,
+  .todo-links-panel {
     border-color: $rc-border;
     border-radius: $rc-radius;
     box-shadow: $rc-shadow-hover;
