@@ -1292,21 +1292,6 @@ class modReedCRM extends DolibarrModules
         ];
 
         $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=project',
-            'type'     => 'left',
-            'titre'    => $langs->transnoentities('MinimizeMenu'),
-            'prefix'   => '<i class="fas fa-chevron-circle-left pictofixedwidth saturne-toggle-menu"></i>',
-            'leftmenu' => 'minimizemenu',
-            'url'      => '',
-            'langs'    => 'projet@projet',
-            'position' => 1000 + $r,
-            'enabled'  => '$conf->projet->enabled',
-            'perms'    => '$user->rights->projet->lire',
-            'target'   => '',
-            'user'     => 0,
-        ];
-
-        $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=commercial,fk_leftmenu=propals',
             'type'     => 'left',
             'titre'    => 'Modèle de proposition',
