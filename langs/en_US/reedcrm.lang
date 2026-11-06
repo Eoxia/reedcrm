@@ -918,6 +918,7 @@ TodoLateEvent = Late
 TodoUnassigned = Unassigned
 TodoAddAssigned = Assign a user
 TodoRemoveAssigned = Remove the assignment
+TodoEditLinks = Third party, contact and project of the event
 TodoLoadMore = Show %s more
 TodoSortByDate = Sort by start date
 TodoColumnWidth = Column width

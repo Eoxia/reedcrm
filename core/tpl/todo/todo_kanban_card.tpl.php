@@ -50,10 +50,6 @@ $dateInputType = !empty($t['fullday']) ? 'date' : 'datetime-local';
 // A relaunch carries no start date on purpose: its slot shows the date of the object it was
 // raised on, greyed out, until a real date is picked
 $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt']);
-
-// Hovering a relaunch counter lists its relaunches, the tooltip of the relaunch buttons of the project
-// list (eventpro.js). That list is read on the same third party and project as the counter.
-$relaunchListUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
 ?>
 <div class="todo-card<?php echo !empty($t['late']) ? ' todo-card-late' : ''; ?><?php echo !empty($t['upcoming']) ? ' todo-card-upcoming' : ''; ?>" data-event-id="<?php echo $t['id']; ?>" data-percent="<?php echo $t['percent']; ?>" data-fullday="<?php echo (int) $t['fullday']; ?>" data-event-code="<?php echo dol_escape_htmltag($t['code']); ?>" data-event-type="<?php echo dol_escape_htmltag($t['type_code']); ?>" data-date-sort="<?php echo (int) $t['date_sort_ts']; ?>" data-quick-close="<?php echo $permissionToWrite ? 1 : 0; ?>">
 
@@ -81,132 +77,8 @@ $relaunchListUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
     <!-- Label -->
     <div class="todo-card-label<?php echo $permissionToWrite ? ' todo-editable-label' : ''; ?>"><?php echo dol_escape_htmltag($t['label']); ?></div>
 
-    <!-- Third party, project and, for a relaunch, the proposal or the invoice it was raised on -->
-    <?php if (!empty($t['soc_id']) || !empty($t['project_id']) || !empty($t['origin'])) : ?>
-        <div class="todo-card-links">
-            <?php if (!empty($t['origin'])) : ?>
-                <?php
-                // The amount and the counter are glued to the reference they describe: the badge
-                // gives up its right corners so they read as a single chip, and the wrapper keeps
-                // them on one line
-                $originRelaunchCount = (int) ($t['origin']['relaunch_count'] ?? 0);
-                $originHasAmount     = !empty($t['origin']['amount_ht']);
-                $originPicto         = $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar';
-                ?>
-                <span class="todo-origin-wrapper">
-                    <a class="todo-link-badge todo-link-origin<?php echo ($originRelaunchCount > 0 || $originHasAmount) ? ' todo-link-origin-counted' : ''; ?>" target="_blank" href="<?php echo $t['origin']['url']; ?>">
-                        <i class="fas <?php echo $originPicto; ?>"></i>
-                        <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
-                    </a>
-                    <?php // Lines of the object, shown on hovering its reference the way the risk of a task is on the action plan of Digirisk ?>
-                    <?php if (!empty($t['origin']['lines'])) : ?>
-                        <span class="todo-origin-tooltip">
-                            <span class="todo-origin-tooltip-header">
-                                <i class="fas <?php echo $originPicto; ?>"></i>
-                                <strong><?php echo dol_escape_htmltag($t['origin']['ref']); ?></strong>
-                                <span class="todo-origin-tooltip-total"><?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?></span>
-                            </span>
-                            <?php foreach ($t['origin']['lines'] as $originLine) : ?>
-                                <span class="todo-origin-tooltip-line">
-                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($originLine['label']); ?></span>
-                                    <span class="todo-origin-tooltip-amount"><?php echo dol_escape_htmltag($originLine['amount']); ?></span>
-                                </span>
-                            <?php endforeach; ?>
-                            <?php if (!empty($t['origin']['lines_more'])) : ?>
-                                <span class="todo-origin-tooltip-more"><?php echo dol_escape_htmltag($langs->trans('TodoOriginMoreLines', $t['origin']['lines_more'])); ?></span>
-                            <?php endif; ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($originHasAmount) : ?>
-                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?>">
-                            <?php echo dol_escape_htmltag($t['origin']['amount_ht_short']); ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($originRelaunchCount > 0) : ?>
-                        <?php // An object without a project lists every relaunch of its third party, the way it is counted ?>
-                        <span class="todo-relaunch-count reedcrm-relaunch-tooltip-trigger" data-relaunch-type="all"
-                              data-project-id="<?php echo (int) $t['origin']['project']; ?>" data-socid="<?php echo (int) $t['origin']['soc_id']; ?>"
-                              data-dialog-url="<?php echo dol_escape_htmltag($relaunchListUrl); ?>">
-                            <i class="fas fa-headset"></i> <?php echo $originRelaunchCount; ?>
-                        </span>
-                    <?php endif; ?>
-                </span>
-            <?php endif; ?>
-            <?php if (!empty($t['soc_id'])) : ?>
-                <a class="todo-link-badge todo-link-soc" target="_blank"
-                   href="<?php echo DOL_URL_ROOT . '/societe/card.php?socid=' . $t['soc_id']; ?>"
-                   title="<?php echo dol_escape_htmltag($t['soc_name']); ?>">
-                    <i class="fas fa-building"></i> <?php echo dol_escape_htmltag($t['soc_name']); ?>
-                </a>
-            <?php endif; ?>
-            <?php if (!empty($t['project_id'])) : ?>
-                <?php
-                // Budget, probability and relaunches of the project are glued to its badge, the way the
-                // amount and the counter of a proposal are to its reference
-                $projectInfos         = $t['project_infos'] ?? [];
-                $projectHasAmount     = !empty($projectInfos['amount_short']);
-                $projectHasPercent    = isset($projectInfos['percent']);
-                $projectRelaunchCount = (int) ($projectInfos['relaunch_count'] ?? 0);
-                $projectCounted       = $projectHasAmount || $projectHasPercent || $projectRelaunchCount > 0;
-                // The tooltip replaces the native title of the badge, kept for whoever may not read projects
-                $projectHasTooltip    = !empty($projectInfos);
-                ?>
-                <span class="todo-origin-wrapper todo-project-wrapper">
-                    <a class="todo-link-badge todo-link-project<?php echo $projectCounted ? ' todo-link-origin-counted' : ''; ?>" target="_blank"
-                       href="<?php echo DOL_URL_ROOT . '/projet/card.php?id=' . $t['project_id']; ?>"
-                       <?php if (!$projectHasTooltip) : ?>title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>"<?php endif; ?>>
-                        <i class="fas fa-project-diagram"></i> <?php echo dol_escape_htmltag($t['project_title'] ?: $t['project_ref']); ?>
-                    </a>
-                    <?php // Infos of the project, shown on hovering its badge the same way the lines of a proposal are ?>
-                    <?php if ($projectHasTooltip) : ?>
-                        <span class="todo-origin-tooltip todo-project-tooltip">
-                            <span class="todo-origin-tooltip-header">
-                                <i class="fas fa-project-diagram"></i>
-                                <strong><?php echo dol_escape_htmltag($t['project_ref']); ?></strong>
-                                <span class="todo-origin-tooltip-total"><?php echo $projectInfos['status']; ?></span>
-                            </span>
-                            <?php if (!empty($t['project_title'])) : ?>
-                                <span class="todo-project-tooltip-title"><?php echo dol_escape_htmltag($t['project_title']); ?></span>
-                            <?php endif; ?>
-                            <?php foreach ($projectInfos['details'] as $projectDetail) : ?>
-                                <span class="todo-origin-tooltip-line">
-                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($projectDetail['label']); ?></span>
-                                    <span class="todo-origin-tooltip-amount"><?php echo dol_escape_htmltag($projectDetail['value']); ?></span>
-                                </span>
-                            <?php endforeach; ?>
-                            <?php if ($projectRelaunchCount > 0) : ?>
-                                <span class="todo-origin-tooltip-line">
-                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($langs->trans('TodoProjectRelaunches')); ?></span>
-                                    <span class="todo-origin-tooltip-amount"><i class="fas fa-headset"></i> <?php echo $projectRelaunchCount; ?></span>
-                                </span>
-                            <?php endif; ?>
-                            <?php if (!empty($projectInfos['description'])) : ?>
-                                <span class="todo-origin-tooltip-more todo-project-tooltip-description"><?php echo dol_escape_htmltag($projectInfos['description']); ?></span>
-                            <?php endif; ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($projectHasAmount) : ?>
-                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($projectInfos['amount_full']); ?>">
-                            <?php echo dol_escape_htmltag($projectInfos['amount_short']); ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($projectHasPercent) : ?>
-                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectProbability', $projectInfos['percent'] . '%')); ?>">
-                            <?php echo (int) $projectInfos['percent']; ?>%
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($projectRelaunchCount > 0) : ?>
-                        <?php // The list falls back on the third party of the project, the one its relaunches are counted on ?>
-                        <span class="todo-relaunch-count reedcrm-relaunch-tooltip-trigger" data-relaunch-type="all"
-                              data-project-id="<?php echo (int) $t['project_id']; ?>"
-                              data-dialog-url="<?php echo dol_escape_htmltag($relaunchListUrl); ?>">
-                            <i class="fas fa-headset"></i> <?php echo $projectRelaunchCount; ?>
-                        </span>
-                    <?php endif; ?>
-                </span>
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
+    <!-- Third party, contact, project and, for a relaunch, the proposal or the invoice it was raised on -->
+    <?php require __DIR__ . '/todo_kanban_card_links.tpl.php'; ?>
 
     <!-- People: [owner] | [assigned users] [+] -->
     <div class="todo-card-people">

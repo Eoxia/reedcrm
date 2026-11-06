@@ -934,6 +934,7 @@ TodoUpcomingEvent = À venir
 TodoUnassigned = Non affecté
 TodoAddAssigned = Affecter un utilisateur
 TodoRemoveAssigned = Retirer l'affectation
+TodoEditLinks = Tiers, contact et projet de l'événement
 TodoLoadMore = Afficher %s de plus
 TodoSortByDate = Trier par date de début
 TodoColumnWidth = Largeur des colonnes

@@ -274,10 +274,7 @@ function reedcrmTodoReadColumnRows(DoliDB $db, array $filters, array $column, ar
     // invoice; the dated one already holds the date it is ordered on
     $isDated = $scope === 'dated';
 
-    $sql  = 'SELECT a.id, a.ref, a.label, a.datep, a.datep2, a.datec, a.percent, a.priority, a.location, a.fulldayevent, a.note, a.code,';
-    $sql .= ' a.fk_soc, a.fk_project, a.fk_contact, a.fk_user_action, a.fk_element, a.elementtype,';
-    $sql .= ' ca.id as type_id, ca.code as type_code, ca.libelle as type_label, ca.color as type_color, ca.picto as type_picto,';
-    $sql .= ' s.nom as soc_name, p.ref as project_ref, p.title as project_title,';
+    $sql  = 'SELECT ' . reedcrmTodoGetSelectFields() . ',';
     $sql .= ' ' . ($isDated ? 'a.datep' : reedcrmTodoGetSortExpression()) . ' as sort_date';
     // The index only pays off on a read ordered on the date, a sort on the probability keeps the plan the database picks
     $sql .= reedcrmTodoBuildEventsFrom($db, $filters, ['origin' => !$isDated, 'hint' => empty($column['code']) && $sortKey !== 'probability']);
@@ -314,6 +311,52 @@ function reedcrmTodoReadColumnRows(DoliDB $db, array $filters, array $column, ar
     $db->free($resql);
 
     return $events;
+}
+
+/**
+ * Columns a card is built from, see reedcrmTodoEnrichEvents()
+ *
+ * @return string SQL select list, on the joins of reedcrmTodoBuildEventsFrom()
+ */
+function reedcrmTodoGetSelectFields(): string
+{
+    $fields  = 'a.id, a.ref, a.label, a.datep, a.datep2, a.datec, a.percent, a.priority, a.location, a.fulldayevent, a.note, a.code,';
+    $fields .= ' a.fk_soc, a.fk_project, a.fk_contact, a.fk_user_action, a.fk_element, a.elementtype,';
+    $fields .= ' ca.id as type_id, ca.code as type_code, ca.libelle as type_label, ca.color as type_color, ca.picto as type_picto,';
+    $fields .= ' s.nom as soc_name, p.ref as project_ref, p.title as project_title';
+
+    return $fields;
+}
+
+/**
+ * Return the card of a single event, the way the board renders it
+ *
+ * Read again after a change made on the card, so that what it displays comes from the database.
+ *
+ * @param  DoliDB $db      Database handler
+ * @param  int    $eventId Event row ID
+ * @return array           Enriched event, empty when it is not on the board of the user
+ */
+function reedcrmTodoGetEventCard(DoliDB $db, int $eventId): array
+{
+    $sql  = 'SELECT ' . reedcrmTodoGetSelectFields();
+    $sql .= reedcrmTodoBuildEventsFrom($db, [], ['origin' => false]);
+    $sql .= ' AND a.id = ' . $eventId;
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+    $obj = $db->fetch_object($resql);
+    $db->free($resql);
+    if (!$obj) {
+        return [];
+    }
+
+    $cards = reedcrmTodoEnrichEvents($db, [(int) $obj->id => $obj]);
+
+    return $cards[0] ?? [];
 }
 
 /**
@@ -818,6 +861,9 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events): array
     // Budget, probability and relaunches of the projects the events are linked to
     $projectInfos = reedcrmTodoGetProjectInfos($db, $events);
 
+    // Names of the contacts the events are linked to
+    $contactNames = reedcrmTodoGetContactNames($db, $events);
+
     // Beginning of the summary of the Pocket recordings the events are the calls of
     $pocketSummaries = reedcrmTodoGetPocketSummaries($db, $eventIds);
 
@@ -883,6 +929,8 @@ function reedcrmTodoEnrichEvents(DoliDB $db, array $events): array
             'type_picto'     => reedcrmTodoGetTypeIcon((string) $obj->type_code),
             'soc_id'         => (int) $obj->fk_soc,
             'soc_name'       => $obj->soc_name,
+            'contact_id'     => (int) $obj->fk_contact,
+            'contact_name'   => $contactNames[(int) $obj->fk_contact] ?? '',
             'project_id'     => (int) $obj->fk_project,
             'project_ref'    => $obj->project_ref,
             'project_title'  => $obj->project_title,
@@ -1296,6 +1344,44 @@ function reedcrmTodoGetProjectInfos(DoliDB $db, array $events): array
 }
 
 /**
+ * Return the names of the contacts a set of events are linked to
+ *
+ * @param  DoliDB $db     Database handler
+ * @param  array  $events Rows of the board, indexed by event ID
+ * @return array          [contact id => full name]
+ */
+function reedcrmTodoGetContactNames(DoliDB $db, array $events): array
+{
+    global $user;
+
+    $contactIds = [];
+    foreach ($events as $obj) {
+        if ($obj->fk_contact > 0) {
+            $contactIds[(int) $obj->fk_contact] = (int) $obj->fk_contact;
+        }
+    }
+    if (empty($contactIds) || !$user->hasRight('societe', 'contact', 'lire')) {
+        return [];
+    }
+
+    $sql   = 'SELECT sp.rowid, sp.firstname, sp.lastname FROM ' . MAIN_DB_PREFIX . 'socpeople as sp';
+    $sql  .= ' WHERE sp.rowid IN (' . implode(',', $contactIds) . ')';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $names = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $names[(int) $obj->rowid] = dolGetFirstLastname($obj->firstname, $obj->lastname);
+    }
+    $db->free($resql);
+
+    return $names;
+}
+
+/**
  * Return the beginning of the summary of the Pocket recordings a set of events are the calls of
  *
  * Read on the recording, not copied on the event: the summary is written by Pocket once the audio is
@@ -1577,4 +1663,152 @@ function reedcrmTodoCanEditEvent(ActionComm $event, User $user): bool
     $event->fetchResources();
 
     return array_key_exists((int) $user->id, $event->userassigned);
+}
+
+/**
+ * Search the third parties, contacts or projects an event of the board may be linked to
+ *
+ * Contacts and projects are filtered on the third party of the event, the way the selectors of
+ * the event card are: a contact belongs to it, a project belongs to it or to nobody. Each kind
+ * only lists what the user may read. Asked for a single ID, it tells whether that one qualifies.
+ *
+ * @param  DoliDB $db       Database handler
+ * @param  string $type     'thirdparty', 'contact' or 'project'
+ * @param  string $search   Text typed in the selector
+ * @param  int    $socId    Third party of the event, 0 for none
+ * @param  int    $targetId Only this row, to check a value before saving it
+ * @return array            [['id' => , 'text' => , 'soc_id' => ]]
+ */
+function reedcrmTodoSearchLinkTargets(DoliDB $db, string $type, string $search = '', int $socId = 0, int $targetId = 0): array
+{
+    global $user;
+
+    // A sales representative only sees the third parties they follow
+    $salesRepFilter = '';
+    if (!$user->hasRight('societe', 'client', 'voir')) {
+        $salesRepFilter = 'SELECT sc.fk_soc FROM ' . MAIN_DB_PREFIX . 'societe_commerciaux as sc WHERE sc.fk_user = ' . ((int) $user->id);
+    }
+
+    if ($type == 'thirdparty') {
+        if (!$user->hasRight('societe', 'lire')) {
+            return [];
+        }
+        $sql  = 'SELECT s.rowid, s.nom as name, s.name_alias, s.rowid as soc_id FROM ' . MAIN_DB_PREFIX . 'societe as s';
+        $sql .= ' WHERE s.entity IN (' . getEntity('societe') . ') AND s.status = 1';
+        if ($salesRepFilter) {
+            $sql .= ' AND s.rowid IN (' . $salesRepFilter . ')';
+        }
+        if ($user->socid > 0) {
+            $sql .= ' AND s.rowid = ' . ((int) $user->socid);
+        }
+        $idField      = 's.rowid';
+        $searchFields = ['s.nom', 's.name_alias'];
+        $orderBy      = 's.nom';
+    } elseif ($type == 'contact') {
+        if (!$user->hasRight('societe', 'contact', 'lire')) {
+            return [];
+        }
+        $sql  = 'SELECT sp.rowid, sp.firstname, sp.lastname, sp.fk_soc as soc_id, s.nom as soc_name FROM ' . MAIN_DB_PREFIX . 'socpeople as sp';
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = sp.fk_soc';
+        $sql .= ' WHERE sp.entity IN (' . getEntity('contact') . ') AND sp.statut = 1';
+        $sql .= ' AND (sp.priv = 0 OR sp.fk_user_creat = ' . ((int) $user->id) . ')';
+        if ($socId > 0) {
+            $sql .= ' AND sp.fk_soc = ' . $socId;
+        }
+        if ($salesRepFilter) {
+            $sql .= ' AND (sp.fk_soc IS NULL OR sp.fk_soc IN (' . $salesRepFilter . '))';
+        }
+        if ($user->socid > 0) {
+            $sql .= ' AND sp.fk_soc = ' . ((int) $user->socid);
+        }
+        $idField      = 'sp.rowid';
+        $searchFields = ['sp.lastname', 'sp.firstname', 'sp.email'];
+        $orderBy      = 'sp.lastname, sp.firstname';
+    } elseif ($type == 'project') {
+        if (!$user->hasRight('projet', 'lire')) {
+            return [];
+        }
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+
+        $sql  = 'SELECT p.rowid, p.ref, p.title, p.fk_soc as soc_id FROM ' . MAIN_DB_PREFIX . 'projet as p';
+        $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe as s ON s.rowid = p.fk_soc';
+        // A closed project takes no more events
+        $sql .= ' WHERE p.entity IN (' . getEntity('project') . ') AND p.fk_statut <> ' . Project::STATUS_CLOSED;
+        if (!$user->hasRight('projet', 'all', 'lire')) {
+            $projectStatic = new Project($db);
+            $projectIds    = $projectStatic->getProjectsAuthorizedForUser($user, 0, 1);
+            $sql          .= ' AND p.rowid IN (' . ($projectIds ?: '0') . ')';
+        }
+        if ($socId > 0 && getDolGlobalString('PROJECT_ALLOW_TO_LINK_FROM_OTHER_COMPANY') != 'all') {
+            $sql .= ' AND (p.fk_soc = ' . $socId . ' OR p.fk_soc IS NULL)';
+        }
+        $idField      = 'p.rowid';
+        $searchFields = ['p.ref', 'p.title', 's.nom'];
+        $orderBy      = 'p.ref DESC';
+    } else {
+        return [];
+    }
+
+    if ($targetId > 0) {
+        $sql .= ' AND ' . $idField . ' = ' . $targetId;
+    }
+    if ($search !== '') {
+        $sql .= natural_search($searchFields, $search);
+    }
+    $sql .= ' ORDER BY ' . $orderBy;
+    $sql .= $db->plimit(20);
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+        return [];
+    }
+
+    $targets = [];
+    while ($obj = $db->fetch_object($resql)) {
+        if ($type == 'thirdparty') {
+            $text = $obj->name . (!empty($obj->name_alias) ? ' (' . $obj->name_alias . ')' : '');
+        } elseif ($type == 'contact') {
+            // Without a third party on the event, the company tells two namesakes apart
+            $text = dolGetFirstLastname($obj->firstname, $obj->lastname) . ($socId <= 0 && !empty($obj->soc_name) ? ' - ' . $obj->soc_name : '');
+        } else {
+            $text = $obj->ref . ' - ' . $obj->title;
+        }
+        $targets[] = ['id' => (int) $obj->rowid, 'text' => $text, 'soc_id' => (int) $obj->soc_id];
+    }
+    $db->free($resql);
+
+    return $targets;
+}
+
+/**
+ * Drop the contact and the project of an event that no longer belong to its third party
+ *
+ * Same rule as the search of reedcrmTodoSearchLinkTargets(): a contact belongs to the third party
+ * of the event, a project belongs to it or to nobody.
+ *
+ * @param  DoliDB     $db    Database handler
+ * @param  ActionComm $event Event about to be saved, resources loaded
+ * @return void
+ */
+function reedcrmTodoAlignEventLinks(DoliDB $db, ActionComm $event)
+{
+    $socId = (int) $event->socid;
+
+    if ($event->contact_id > 0) {
+        $resql   = $db->query('SELECT fk_soc FROM ' . MAIN_DB_PREFIX . 'socpeople WHERE rowid = ' . ((int) $event->contact_id));
+        $contact = $resql ? $db->fetch_object($resql) : null;
+        if ($contact && (int) $contact->fk_soc !== $socId) {
+            unset($event->socpeopleassigned[(int) $event->contact_id]);
+            $event->contact_id = 0;
+        }
+    }
+
+    if ($event->fk_project > 0 && $socId > 0 && getDolGlobalString('PROJECT_ALLOW_TO_LINK_FROM_OTHER_COMPANY') != 'all') {
+        $resql   = $db->query('SELECT fk_soc FROM ' . MAIN_DB_PREFIX . 'projet WHERE rowid = ' . ((int) $event->fk_project));
+        $project = $resql ? $db->fetch_object($resql) : null;
+        if ($project && $project->fk_soc > 0 && (int) $project->fk_soc !== $socId) {
+            $event->fk_project = 0;
+        }
+    }
 }

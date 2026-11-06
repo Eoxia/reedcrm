@@ -20,7 +20,8 @@
  * \file    js/modules/todo_kanban.js
  * \ingroup reedcrm
  * \brief   Kanban board of the todo tab: drag & drop between event statuses and
- *          inline edition of the agenda events (label, dates, owner, assigned users).
+ *          inline edition of the agenda events (label, dates, owner, assigned users,
+ *          third party, contact and project).
  */
 
 if (!window.reedcrm) {
@@ -149,6 +150,8 @@ window.reedcrm.todoKanban.event = function () {
 
   $(document).on('input', '.todo-owner-search, .todo-assigned-search', window.reedcrm.todoKanban.filterOptions);
 
+  $(document).on('click', '.todo-links-btn', window.reedcrm.todoKanban.toggleLinksPanel);
+
   $(document).on('click', '.todo-column-sort', window.reedcrm.todoKanban.toggleColumnSort);
 
   $(document).on('click', '.todo-load-more', function (event) {
@@ -161,12 +164,12 @@ window.reedcrm.todoKanban.event = function () {
   $(document).on('click', function () {
     window.reedcrm.todoKanban.closeDropdowns();
   });
-  $(document).on('click', '.todo-owner-dropdown, .todo-assigned-dropdown', function (event) {
+  $(document).on('click', '.todo-owner-dropdown, .todo-assigned-dropdown, .todo-links-panel', function (event) {
     event.stopPropagation();
   });
 
   // Interacting with a control of the card must never start a drag
-  $(document).on('mousedown', '.todo-editable-label, .todo-editable-date, .todo-card-progress, .todo-initial-owner, .todo-owner-dropdown, .todo-assigned-dropdown, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge', function (event) {
+  $(document).on('mousedown', '.todo-editable-label, .todo-editable-date, .todo-card-progress, .todo-initial-owner, .todo-owner-dropdown, .todo-assigned-dropdown, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge, .todo-links-btn, .todo-links-panel', function (event) {
     event.stopPropagation();
   });
 };
@@ -202,6 +205,8 @@ window.reedcrm.todoKanban.closeDropdowns = function () {
     $(this).removeClass('visible');
     $(this).closest('.todo-card').removeClass('todo-card-dropdown-open');
   });
+
+  window.reedcrm.todoKanban.closeLinksPanel();
 };
 
 /**
@@ -210,9 +215,10 @@ window.reedcrm.todoKanban.closeDropdowns = function () {
  * @param  {Object}   params    Query parameters, action included
  * @param  {jQuery}   $card     Card to flag while the call runs
  * @param  {Function} onSuccess Called with the JSON payload when the update went through
+ * @param  {Function} [onError] Called when it did not
  * @returns {void}
  */
-window.reedcrm.todoKanban.request = function (params, $card, onSuccess) {
+window.reedcrm.todoKanban.request = function (params, $card, onSuccess, onError) {
   var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
 
   params.token = window.saturne.toolbox.getToken();
@@ -231,11 +237,17 @@ window.reedcrm.todoKanban.request = function (params, $card, onSuccess) {
         }
       } else {
         window.reedcrm.todoKanban.flag($card, 'todo-card-error', 3000);
+        if (onError) {
+          onError();
+        }
       }
     },
     error: function () {
       $card.removeClass('todo-card-saving');
       window.reedcrm.todoKanban.flag($card, 'todo-card-error', 3000);
+      if (onError) {
+        onError();
+      }
     }
   });
 };
@@ -807,6 +819,189 @@ window.reedcrm.todoKanban.removeAssigned = function (event) {
 };
 
 /**
+ * Open or close the links panel of a card: its third party, contact and project, picked on the fly.
+ *
+ * The panel is rendered once for the whole board and moved under the links of the card it serves,
+ * so a board of hundreds of cards carries a single set of selectors.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleLinksPanel = function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  var $panel     = $('#todoLinksPanel');
+  var $card      = $(this).closest('.todo-card');
+  var openedHere = $panel.hasClass('visible') && $panel.closest('.todo-card').is($card);
+
+  window.reedcrm.todoKanban.closeDropdowns();
+  if (openedHere || !$panel.length) {
+    return;
+  }
+
+  window.reedcrm.todoKanban.initLinksPanel($panel);
+  $card.find('.todo-card-links').after($panel);
+  window.reedcrm.todoKanban.fillLinksPanel($card);
+  $panel.addClass('visible');
+  $card.addClass('todo-card-dropdown-open');
+};
+
+/**
+ * Close the links panel and put it back beside the board: left inside a card, it would go along
+ * with it when its column is read again.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.closeLinksPanel = function () {
+  var $panel = $('#todoLinksPanel');
+
+  if (!$panel.hasClass('visible')) {
+    return;
+  }
+
+  $panel.find('.todo-links-select').each(function () {
+    if ($(this).data('select2')) {
+      $(this).select2('close');
+    }
+  });
+  $panel.removeClass('visible');
+  $panel.closest('.todo-card').removeClass('todo-card-dropdown-open');
+  $('.todo-board').before($panel);
+};
+
+/**
+ * Turn the selectors of the links panel into searches, on their first opening.
+ *
+ * Each one is saved as soon as a value is picked or cleared.
+ *
+ * @param  {jQuery} $panel Links panel
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initLinksPanel = function ($panel) {
+  if ($panel.data('initialized') || typeof $.fn.select2 === 'undefined') {
+    return;
+  }
+  $panel.data('initialized', 1);
+
+  $panel.find('.todo-links-select').each(function () {
+    var $select = $(this);
+    var field   = $select.data('field');
+
+    $select.select2({
+      width: '100%',
+      placeholder: $select.data('placeholder'),
+      allowClear: true,
+      // Inside the panel, a click in the list is not a click outside of it
+      dropdownParent: $panel,
+      language: typeof select2arrayoflanguage === 'undefined' ? 'en' : select2arrayoflanguage,
+      ajax: {
+        url: document.URL,
+        dataType: 'json',
+        delay: 250,
+        data: function (params) {
+          return {
+            action: 'searchLinkTargets',
+            type: $select.data('type'),
+            search: params.term || '',
+            // Contacts and projects are searched among those of the third party of the card
+            socid: window.reedcrm.todoKanban.getCardLinks($panel.closest('.todo-card')).socid.id || 0,
+            token: window.saturne.toolbox.getToken()
+          };
+        },
+        processResults: function (response) {
+          return {results: (response && response.results) || []};
+        }
+      }
+    });
+
+    $select.on('select2:select', function (selectEvent) {
+      window.reedcrm.todoKanban.saveLink($panel, field, selectEvent.params.data.id);
+    });
+    $select.on('select2:clear', function () {
+      window.reedcrm.todoKanban.saveLink($panel, field, 0);
+    });
+  });
+};
+
+/**
+ * Read the third party, contact and project a card carries.
+ *
+ * @param  {jQuery} $card Card
+ * @returns {Object}      {socid: {id, text}, contactid: {id, text}, projectid: {id, text}}
+ */
+window.reedcrm.todoKanban.getCardLinks = function ($card) {
+  var links = {};
+
+  try {
+    links = JSON.parse($card.find('.todo-card-links').attr('data-links') || '{}');
+  } catch (error) {
+    links = {};
+  }
+
+  ['socid', 'contactid', 'projectid'].forEach(function (field) {
+    links[field] = links[field] || {id: 0, text: ''};
+  });
+
+  return links;
+};
+
+/**
+ * Show in the selectors of the links panel what the card carries.
+ *
+ * @param  {jQuery} $card Card the panel serves
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.fillLinksPanel = function ($card) {
+  var links = window.reedcrm.todoKanban.getCardLinks($card);
+
+  $('#todoLinksPanel').find('.todo-links-select').each(function () {
+    var $select = $(this);
+    var link    = links[$select.data('field')];
+
+    $select.empty().append(new Option('', '', false, false));
+    if (link.id > 0) {
+      $select.append(new Option(link.text, link.id, true, true));
+    }
+    $select.trigger('change.select2');
+  });
+};
+
+/**
+ * Save the third party, the contact or the project picked in the links panel.
+ *
+ * The links of the card come back rendered: picking a contact or a project may bring its third
+ * party along, and changing the third party drops a contact or a project belonging to another.
+ *
+ * @param  {jQuery} $panel Links panel
+ * @param  {string} field  'socid', 'contactid' or 'projectid'
+ * @param  {number} value  ID picked, 0 to clear
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.saveLink = function ($panel, field, value) {
+  var $card = $panel.closest('.todo-card');
+
+  if (!$card.length) {
+    return;
+  }
+
+  window.reedcrm.todoKanban.request(
+    {action: 'updateEventLinks', event_id: $card.data('event-id'), field: field, value: value},
+    $card,
+    function (response) {
+      if (response.html) {
+        $card.find('.todo-card-links').replaceWith(response.html);
+      }
+      window.reedcrm.todoKanban.fillLinksPanel($card);
+    },
+    function () {
+      // Back to what the card still carries
+      window.reedcrm.todoKanban.fillLinksPanel($card);
+    }
+  );
+};
+
+/**
  * Whether a card dropped in a column would stay there.
  *
  * A relaunch backlog holds cards on their code, no percentage puts a card in it, and a
@@ -876,7 +1071,7 @@ window.reedcrm.todoKanban.initSortable = function () {
     placeholder: 'todo-card-placeholder',
     tolerance: 'pointer',
     cursor: 'grabbing',
-    cancel: '.todo-editable-label, .todo-inline-edit, .todo-editable-date, .todo-date-input, .todo-card-progress, .todo-progress-bar, .todo-initial-owner, .todo-owner-dropdown, .todo-owner-search, .todo-assigned-dropdown, .todo-assigned-search, .todo-user-option, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge',
+    cancel: '.todo-editable-label, .todo-inline-edit, .todo-editable-date, .todo-date-input, .todo-card-progress, .todo-progress-bar, .todo-initial-owner, .todo-owner-dropdown, .todo-owner-search, .todo-assigned-dropdown, .todo-assigned-search, .todo-user-option, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge, .todo-links-btn, .todo-links-panel',
     // While a card is dragged, the columns that would keep it stand out and the others fade
     start: function (event, ui) {
       var $card = ui.item;
@@ -971,6 +1166,10 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
       }
 
       if (replace) {
+        // The links panel may have been opened on one of these cards meanwhile
+        if ($body.find('#todoLinksPanel').length) {
+          window.reedcrm.todoKanban.closeLinksPanel();
+        }
         $body.children('.todo-card').remove();
       }
       $body.children('.todo-empty').remove();
