@@ -471,6 +471,31 @@ function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionC
 }
 
 /**
+ * Get the title the event of a recording is given for a title of the recording.
+ *
+ * The title Pocket gave the recording, its reference when Pocket gave none. Cut the way the agenda
+ * cuts it on creation, so the title can be compared with the one an event holds.
+ *
+ * @param  PocketRecording $recording Recording the event belongs to.
+ * @param  string          $label     Title of the recording.
+ * @return string                     Title of the event.
+ */
+function reedcrm_pocket_get_recording_event_label(PocketRecording $recording, string $label): string
+{
+    global $langs;
+
+    $langs->load('reedcrm@reedcrm');
+
+    $label = trim($label);
+    if ($label === '') {
+        $label = $langs->transnoentities('PocketRecordingEventLabel', $recording->ref);
+    }
+
+    // ActionComm::create() keeps the first 128 characters, ActionComm::update() everything
+    return dol_trunc($label, 128);
+}
+
+/**
  * Create the event of a recording: the call it holds, in progress until someone handles it.
  *
  * Filed under the recording, at the time and for the length of the conversation, with the thirdparty,
@@ -484,7 +509,7 @@ function reedcrm_pocket_apply_links_to_event(PocketRecording $recording, ActionC
  */
 function reedcrm_pocket_create_recording_event(PocketRecording $recording, User $user): int
 {
-    global $db, $langs;
+    global $db;
 
     if ($recording->id <= 0 || !empty($recording->fk_actioncomm)) {
         return 0;
@@ -492,13 +517,11 @@ function reedcrm_pocket_create_recording_event(PocketRecording $recording, User 
 
     require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
 
-    $langs->load('reedcrm@reedcrm');
-
     $recordingDate = is_numeric($recording->recording_date) ? (int) $recording->recording_date : (int) dol_stringtotime((string) $recording->recording_date);
 
     $event              = new ActionComm($db);
     $event->type_code   = 'AC_TEL';
-    $event->label       = !empty($recording->label) ? (string) $recording->label : $langs->transnoentities('PocketRecordingEventLabel', $recording->ref);
+    $event->label       = reedcrm_pocket_get_recording_event_label($recording, (string) $recording->label);
     $event->datep       = $recordingDate > 0 ? $recordingDate : dol_now();
     $event->datef       = $event->datep + max(0, (int) $recording->duration);
     // In progress: the call took place, what it brought is still to be handled
@@ -565,6 +588,42 @@ function reedcrm_pocket_refresh_recording_event(PocketRecording $recording, User
     if ($before !== [(int) $event->socid, (int) $event->fk_project, $contactIds]) {
         $event->update($user);
     }
+}
+
+/**
+ * Give the event of a recording the title the recording was given since in Pocket.
+ *
+ * Only an event still holding the previous title of the recording follows: one its owner renamed in
+ * the agenda keeps its own title. Nothing is done once the event was deleted.
+ *
+ * @param  PocketRecording $recording     Recording just refreshed, with its new title.
+ * @param  string          $previousLabel Title of the recording before the refresh.
+ * @param  User            $user          User performing the change.
+ * @return void
+ */
+function reedcrm_pocket_rename_recording_event(PocketRecording $recording, string $previousLabel, User $user): void
+{
+    global $db;
+
+    if (empty($recording->fk_actioncomm)) {
+        return;
+    }
+
+    $previousEventLabel = reedcrm_pocket_get_recording_event_label($recording, $previousLabel);
+    $newEventLabel      = reedcrm_pocket_get_recording_event_label($recording, (string) $recording->label);
+    if ($newEventLabel === $previousEventLabel) {
+        return;
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+    $event = new ActionComm($db);
+    if ($event->fetch((int) $recording->fk_actioncomm) <= 0 || $event->label !== $previousEventLabel) {
+        return;
+    }
+
+    $event->label = $newEventLabel;
+    $event->update($user);
 }
 
 /**
