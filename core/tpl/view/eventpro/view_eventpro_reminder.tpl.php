@@ -34,7 +34,6 @@ global $langs, $user;
 
 $reminderProjectId = ($object->element === 'project') ? (int) $object->id : (int) GETPOSTINT('project_id');
 $reminderSocId     = ($object->element === 'societe') ? (int) $object->id : (int) ($object->socid ?? 0);
-$reminderTypes     = reedcrm_get_relaunch_types();
 $selectedType      = GETPOST('actioncode', 'aZ09') ?: 'AC_TEL';
 $reminderDate      = GETPOSTISSET('reminder_year') ? dol_mktime(0, 0, 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year')) : dol_time_plus_duree(dol_now(), 1, 'd');
 ?>
@@ -74,16 +73,11 @@ $reminderDate      = GETPOSTISSET('reminder_year') ? dol_mktime(0, 0, 0, GETPOST
                 <i class="fas fa-tags reedcrm-reminder-label-picto"></i>
                 <?php echo $langs->trans('Type'); ?>
             </label>
-            <div class="reedcrm-reminder-type-choices">
-                <?php foreach ($reminderTypes as $typeKey => $type) : ?>
-                    <label class="reedcrm-reminder-type-choice reedcrm-reminder-type-<?php echo dol_escape_htmltag($typeKey); ?>">
-                        <input type="radio" name="actioncode" value="<?php echo dol_escape_htmltag($type['actioncode']); ?>"
-                            <?php echo $selectedType === $type['actioncode'] ? 'checked="checked"' : ''; ?>>
-                        <i class="fas fa-<?php echo dol_escape_htmltag($type['picto']); ?>"></i>
-                        <span><?php echo dol_escape_htmltag($langs->trans('RelaunchType' . ucfirst($typeKey))); ?></span>
-                    </label>
-                <?php endforeach; ?>
-            </div>
+            <?php
+            $typeChoicesSelected = $selectedType;
+            $typeChoicesClass    = '';
+            require __DIR__ . '/eventpro_type_choices.tpl.php';
+            ?>
         </div>
 
         <div class="reedcrm-reminder-field">

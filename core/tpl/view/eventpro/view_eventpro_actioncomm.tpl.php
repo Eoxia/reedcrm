@@ -77,12 +77,16 @@
                     </div>
                 </div>
             </div>
-            <div>
-                <label for="actioncode">
-                    <?php //echo img_picto('', 'setting'); ?>
-                    <?php echo $formActions->select_type_actions(GETPOSTISSET('actioncode') ? GETPOST('actioncode', 'aZ09') : getDolGlobalString('REEDCRM_EVENT_TYPE_CODE_VALUE'), 'actioncode', 'systemauto', 0, -1, 0, 1, ''); ?>
-                </label>
-            </div>
+            <?php
+            // The chips of the direct reminder rather than the select of every type of the agenda. A default type
+            // set in the setup outside of those four falls back on "Other"
+            $typeChoicesSelected = GETPOSTISSET('actioncode') ? GETPOST('actioncode', 'aZ09') : getDolGlobalString('REEDCRM_EVENT_TYPE_CODE_VALUE', 'AC_TEL');
+            if (!in_array($typeChoicesSelected, array_column(reedcrm_get_relaunch_types(), 'actioncode'), true)) {
+                $typeChoicesSelected = 'AC_OTH';
+            }
+            $typeChoicesClass = 'reedcrm-event-type-choices';
+            require __DIR__ . '/eventpro_type_choices.tpl.php';
+            ?>
         </div>
         <div class="wpeo-grid grid-2">
             <div>
