@@ -76,15 +76,9 @@ if (!reedcrm_call_list_user_can_read($user, $object)) {
 
 // Handle audio upload — JS posts to current URL with action=add_audio
 if ($action === 'add_audio') {
-    $debugFile = $conf->ecm->dir_output . '/debug_upload.log';
-    file_put_contents($debugFile, "add_audio triggered\n", FILE_APPEND);
-    file_put_contents($debugFile, "POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
-    file_put_contents($debugFile, "FILES: " . print_r($_FILES, true) . "\n", FILE_APPEND);
-    
     if (!empty($_FILES['audio']['tmp_name'])) {
         $audioModule   = GETPOST('module_name', 'alpha');
         $audioSubDir   = GETPOST('sub_dir', 'nohtml'); // Allow hyphens/slashes
-        file_put_contents($debugFile, "module=$audioModule subdir=$audioSubDir\n", FILE_APPEND);
         $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
 
         $uploadDir = !empty($conf->$audioModLower->dir_output)
@@ -94,14 +88,10 @@ if ($action === 'add_audio') {
             $uploadDir .= '/' . $audioSubDir;
         }
         if (!dol_is_dir($uploadDir)) {
-            $mkres = dol_mkdir($uploadDir);
-            file_put_contents($debugFile, "mkdir $uploadDir res=$mkres\n", FILE_APPEND);
+            dol_mkdir($uploadDir);
         }
         $destFile = $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
-        $res = move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
-        file_put_contents($debugFile, "move_uploaded_file to $destFile res=$res\n", FILE_APPEND);
-    } else {
-        file_put_contents($debugFile, "FAILED: tmp_name is empty\n", FILE_APPEND);
+        move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
     }
 }
 
