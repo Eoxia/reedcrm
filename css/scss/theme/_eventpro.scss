@@ -18,10 +18,11 @@
 #{$rc-scope} {
   /* ---- eventPro form ----
      The form wraps its fields in a .template-pwa block, which css/temp.css draws as labelled boxes
-     (picto, then field). Same boxes here, with the radius, greys and focus ring of the theme */
+     (picto, then field). Same boxes here, with the radius, greys and focus ring of the theme. The type
+     chips draw their own box, with the colour of each type (pages/_relaunch-widget.scss) */
 
-  #addeventform .template-pwa label,
-  #eventproCardModal .template-pwa label {
+  #addeventform .template-pwa label:not(.reedcrm-reminder-type-choice),
+  #eventproCardModal .template-pwa label:not(.reedcrm-reminder-type-choice) {
     border-color: $rc-border-strong;
     border-radius: $rc-radius-sm;
     background: $rc-surface;
