@@ -147,6 +147,38 @@ class ActionsReedcrm
                 }
             }
         }
+
+        // Tickets menu : "List" and "My tickets" open the money list, the native list stays one click away (#1242)
+        if (($parameters['mainmenu'] ?? '') === 'ticket' && is_array($object) && getDolGlobalInt('REEDCRM_TICKET_MONEY_MENU', 1)
+            && isModEnabled('ticket') && $user->hasRight('reedcrm', 'read') && $user->hasRight('ticket', 'read')) {
+            $langs->load('reedcrm@reedcrm');
+
+            $items = [];
+            foreach ($object as $item) {
+                $leftmenu = $item['leftmenu'] ?? '';
+                if ($leftmenu === 'ticketlist') {
+                    $native = $item;
+
+                    $item['url']   = '/reedcrm/view/ticket_money.php?mainmenu=ticket&leftmenu=ticketlist';
+                    $item['titre'] = $langs->trans('TicketMoneyMenuList');
+                    $items[]       = $item;
+
+                    $native['leftmenu'] = 'ticketlistfull';
+                    $native['titre']    = $langs->trans('TicketMoneyFullList');
+                    $native['position'] = ($native['position'] ?? 0) + 1;
+                    $items[]            = $native;
+                    continue;
+                }
+                if ($leftmenu === 'ticketmy') {
+                    $item['url'] = '/reedcrm/view/ticket_money.php?mode=mine&mainmenu=ticket&leftmenu=ticketmy';
+                }
+                $items[] = $item;
+            }
+
+            $this->results = $items;
+            return 1;
+        }
+
         return 0;
     }
 
@@ -510,6 +542,51 @@ class ActionsReedcrm
         if (!empty($deletedProjectIds) && $user->hasRight('projet', 'supprimer')) {
             require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
             reedcrm_delete_projects_time_spent($this->db, $deletedProjectIds);
+        }
+
+        // Money banner of the ticket card (#1242) : quick time, billing mode of the ticket
+        if ($this->isContext($parameters, ['ticketcard']) && $object instanceof Ticket && !empty($object->id)
+            && in_array($action, ['reedcrm_money_time', 'reedcrm_money_billing', 'reedcrm_money_confirm_free'], true)) {
+            global $langs, $user;
+
+            $langs->load('reedcrm@reedcrm');
+            if (GETPOST('token', 'alpha') !== currentToken()) {
+                accessforbidden('Bad value for CSRF token');
+            }
+
+            $redirect = DOL_URL_ROOT . '/ticket/card.php?id=' . ((int) $object->id) . '#reedcrm-ticket-money';
+            if (!$user->hasRight('ticket', 'write')) {
+                setEventMessages($langs->trans('NotEnoughPermissions'), [], 'errors');
+            } elseif ($action === 'reedcrm_money_time') {
+                require_once __DIR__ . '/../lib/reedcrm_ticket_time.lib.php';
+
+                $minutes = GETPOSTINT('minutes');
+                $error   = reedcrm_ticket_log_time($this->db, $user, $object, $minutes, '');
+                if ($error === '') {
+                    setEventMessages($langs->trans('TicketMoneyTimeLogged', $minutes), []);
+                } else {
+                    setEventMessages($error, [], 'errors');
+                }
+            } elseif ($action !== 'reedcrm_money_confirm_free' || GETPOST('confirm', 'alpha') === 'yes') {
+                require_once __DIR__ . '/reedcrmticketmoney.class.php';
+
+                $mode = $action === 'reedcrm_money_confirm_free' ? ReedcrmTicketMoney::BILLING_FREE : GETPOST('mode', 'aZ09');
+                $note = trim(GETPOST('reedcrm_billing_note', 'alphanohtml'));
+                // A free ticket is money given away : the reason is what makes it a decision and not an oversight
+                if ($mode === ReedcrmTicketMoney::BILLING_FREE && $note === '') {
+                    setEventMessages($langs->trans('TicketMoneyFreeNeedsReason'), [], 'errors');
+                } else {
+                    $money = new ReedcrmTicketMoney($this->db);
+                    if ($money->setBillingMode($user, $object, $mode, $note) > 0) {
+                        setEventMessages($langs->trans('TicketMoneyBillingSaved'), []);
+                    } else {
+                        setEventMessages($money->error, $money->errors, 'errors');
+                    }
+                }
+            }
+
+            header('Location: ' . $redirect);
+            exit;
         }
 
         // Auto-log time when a ticket message is sent and the checkbox is checked
@@ -1974,6 +2051,41 @@ class ActionsReedcrm
                 ob_start();
                 require __DIR__ . '/../core/tpl/reedcrm_unbilled_banner.tpl.php';
                 $this->resprints = ob_get_clean();
+            }
+        }
+
+        // Money banner on top of the ticket card (#1242) : who pays, what is covered, what is left to bill
+        if ($this->isContext($parameters, ['ticketcard']) && $object instanceof Ticket && !empty($object->id) && getDolGlobalInt('REEDCRM_TICKET_MONEY_BANNER', 1)) {
+            global $conf, $langs, $user;
+
+            if ($user->hasRight('reedcrm', 'read')) {
+                require_once __DIR__ . '/reedcrmticketmoney.class.php';
+
+                $langs->load('reedcrm@reedcrm');
+                $money = new ReedcrmTicketMoney($this->db);
+                if ($money->load(['ticket_ids' => [(int) $object->id]]) > 0 && ($moneyTicket = $money->getTicket((int) $object->id)) !== null) {
+                    $moneySociety    = $moneyTicket->fk_soc > 0 ? $money->getSociety($moneyTicket->fk_soc) : null;
+                    $moneyCardUrl    = DOL_URL_ROOT . '/ticket/card.php?id=' . ((int) $object->id);
+                    $moneyListUrl    = dol_buildpath('/reedcrm/view/ticket_money.php', 1);
+                    $moneyCanLogTime = $user->hasRight('ticket', 'write');
+                    $moneyCanBill    = $user->hasRight('facture', 'creer');
+                    $moneyCanQuote   = $user->hasRight('propal', 'creer');
+
+                    $html = '';
+                    // Reason asked before a ticket is given away
+                    if (GETPOST('action', 'aZ09') === 'reedcrm_money_free' && $moneyCanLogTime) {
+                        require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+                        $form     = new Form($this->db);
+                        $question = [['type' => 'text', 'name' => 'reedcrm_billing_note', 'label' => $langs->trans('TicketMoneyFreeReason'), 'value' => '', 'morecss' => 'minwidth300']];
+                        $html    .= $form->formconfirm($moneyCardUrl, $langs->trans('TicketMoneyActionFree'), $langs->trans('TicketMoneyFreeConfirm', $object->ref), 'reedcrm_money_confirm_free', $question, 'yes', 1);
+                    }
+
+                    ob_start();
+                    require __DIR__ . '/../core/tpl/reedcrm_ticket_money_banner.tpl.php';
+                    $html .= ob_get_clean();
+
+                    $this->resprints = $html;
+                }
             }
         }
 

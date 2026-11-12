@@ -1379,6 +1379,10 @@ class modReedCRM extends DolibarrModules
 
             'reedcrm_propal_label' => ['Label' => 'ReedCRMPropalLabel',     'type' => 'varchar', 'length' => 255, 'elementtype' => ['propal'], 'position' => $this->numero . 95, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1],
 
+            // Billing of the time of a ticket (#1242) : empty = the subscription credit first, then billed
+            'reedcrm_billing'      => ['Label' => 'TicketMoneyBillingMode', 'type' => 'select',                  'elementtype' => ['ticket'], 'position' => $this->numero . 10, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')', 'alwayseditable' => 1, 'params' => ['billable' => 'TicketMoneyBillingBillable', 'free' => 'TicketMoneyBillingFree'], 'help' => 'TicketMoneyBillingModeHelp'],
+            'reedcrm_billing_note' => ['Label' => 'TicketMoneyFreeReason',  'type' => 'varchar', 'length' => 255, 'elementtype' => ['ticket'], 'position' => $this->numero . 20, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')', 'alwayseditable' => 1],
+
             'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facturerec_contact' => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture_rec'], 'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],

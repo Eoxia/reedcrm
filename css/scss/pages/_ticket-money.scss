@@ -1,0 +1,312 @@
+/* Tickets seen from the money (#1242) : list view/ticket_money.php and banner of the ticket card */
+
+$rtm-good: #2e9e6c;
+$rtm-bad: #cf4257;
+$rtm-warn: #c8871a;
+$rtm-info: #2f6f9f;
+$rtm-mute: #8a8f98;
+
+.rtm-intro {
+  margin: 0 0 14px;
+  color: #777;
+}
+
+.rtm-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.rtm-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px 14px 12px 17px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+  }
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: $rtm-mute;
+  }
+
+  &.good:before {
+    background: $rtm-good;
+  }
+
+  &.bad:before {
+    background: $rtm-bad;
+  }
+
+  &.warn:before {
+    background: $rtm-warn;
+  }
+
+  &.info:before {
+    background: $rtm-info;
+  }
+
+  &.active {
+    border-color: #555;
+    box-shadow: inset 0 0 0 1px #555;
+  }
+
+  .k {
+    font-size: .82em;
+    color: #777;
+    font-weight: 600;
+  }
+
+  .v {
+    font-size: 1.7em;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .a {
+    font-size: .88em;
+    color: #555;
+  }
+}
+
+.rtm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 12px;
+}
+
+.rtm-switch {
+  display: inline-flex;
+  border: 1px solid var(--colortopbordertitle1, #ccc);
+  border-radius: 6px;
+  overflow: hidden;
+
+  a {
+    padding: 5px 12px;
+    color: inherit;
+    text-decoration: none;
+
+    &.on {
+      background: #555;
+      color: #fff;
+    }
+  }
+}
+
+.rtm-table {
+  td {
+    vertical-align: top;
+    white-space: normal;
+  }
+
+  // Each piece of a cell on its own line, whatever the theme does with the divs of a list
+  .rtm-subject,
+  .rtm-line,
+  div.rtm-meta {
+    display: block;
+  }
+
+  .rtm-col-ticket {
+    min-width: 240px;
+    max-width: 380px;
+  }
+
+  .rtm-col {
+    min-width: 150px;
+    max-width: 240px;
+  }
+}
+
+.rtm-ref {
+  font-weight: 700;
+}
+
+.rtm-subject {
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rtm-meta {
+  font-size: .85em;
+  color: #888;
+}
+
+.rtm-warn {
+  color: $rtm-warn;
+  font-weight: 600;
+}
+
+.rtm-amount {
+  font-size: 1.15em;
+  font-weight: 800;
+  color: $rtm-good;
+}
+
+.rtm-badge {
+  display: inline-block;
+  margin: 2px 0;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: .85em;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #fff;
+  background: $rtm-mute;
+
+  &.good {
+    background: $rtm-good;
+  }
+
+  &.bad {
+    background: $rtm-bad;
+  }
+
+  &.warn {
+    background: $rtm-warn;
+  }
+
+  &.info {
+    background: $rtm-info;
+  }
+}
+
+.rtm-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rtm-credit-bar {
+  display: inline-block;
+  width: 70px;
+  height: 8px;
+  border-radius: 4px;
+  background: #e3e6ea;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: $rtm-info;
+  }
+}
+
+.rtm-action {
+  display: inline-block;
+  margin: 2px 0 2px 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #fff !important;
+  background: $rtm-mute;
+  text-decoration: none !important;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+
+  &.good {
+    background: $rtm-good;
+  }
+
+  &.bad {
+    background: $rtm-bad;
+  }
+
+  &.warn {
+    background: $rtm-warn;
+  }
+
+  &.info {
+    background: $rtm-info;
+  }
+
+  &.mute {
+    color: #333 !important;
+    background: #e6e8eb;
+  }
+}
+
+.rtm-massaction {
+  margin: 10px 0;
+}
+
+.rtm-legend {
+  margin-top: 12px;
+  font-size: .88em;
+  color: #888;
+}
+
+// Banner of the ticket card, printed between the tabs and the banner of the card
+.rtm-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  align-items: flex-start;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-left: 5px solid $rtm-good;
+  border-radius: 6px;
+  background: var(--colorbacklinepair2, #fff);
+
+  &.overdue {
+    border-left-color: $rtm-bad;
+  }
+
+  .rtm-banner-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    min-width: 180px;
+
+    .rtm-action {
+      margin-left: 0;
+    }
+  }
+
+  .rtm-banner-label {
+    font-size: .78em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #888;
+  }
+
+  .rtm-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .rtm-time-buttons {
+    margin-right: 8px;
+  }
+
+  .rtm-link {
+    margin-left: 8px;
+    font-size: .88em;
+  }
+}
