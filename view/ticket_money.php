@@ -79,6 +79,7 @@ $hookmanager->initHooks(['reedcrmticketmoneylist']);
 $permissiontoread  = $user->hasRight('reedcrm', 'read') && $user->hasRight('ticket', 'read');
 $permissiontobill  = $user->hasRight('facture', 'creer');
 $permissiontoquote = $user->hasRight('propal', 'creer');
+$permissiontoreserve = $user->hasRight('ticket', 'write');
 saturne_check_access($permissiontoread);
 
 $listParams = ($searchAction ? '&search_action=' . urlencode($searchAction) : '') . ($searchUser > 0 ? '&search_user=' . $searchUser : '') . ($searchText !== '' ? '&search_text=' . urlencode($searchText) : '');
@@ -143,6 +144,22 @@ if (empty($resHook)) {
         header('Location: ' . $selfUrl);
         exit;
     }
+
+    // Customer late in paying : the ticket is handled anyway, under reserve, or goes back to the chasing
+    if (in_array($action, ['reserve', 'unreserve'], true) && $id > 0 && $permissiontoreserve) {
+        if (GETPOST('token', 'alpha') !== currentToken()) {
+            accessforbidden('Bad value for CSRF token');
+        }
+        $ticket = new Ticket($db);
+        if ($ticket->fetch($id) > 0 && $money->setReserve($user, $ticket, $action === 'reserve') > 0) {
+            $message = $action === 'reserve' ? $langs->trans('TicketMoneyReserveSaved', $ticket->ref, dol_print_date(dol_now() + ReedcrmTicketMoney::getReserveDays() * 86400, 'day')) : $langs->trans('TicketMoneyReserveRemoved', $ticket->ref);
+            setEventMessages($message, []);
+        } else {
+            setEventMessages($money->error ?: $ticket->error, [], 'errors');
+        }
+        header('Location: ' . $selfUrl . '#rtm-group-' . ($action === 'reserve' ? 'reserve' : ReedcrmTicketMoney::ACTION_RELAUNCH));
+        exit;
+    }
 }
 
 /*
@@ -177,6 +194,7 @@ if ($searchAction !== '') {
 // Sections of the list, in the order of the money : one per next action, the rows keep their order inside
 $actionStyles = [
     ReedcrmTicketMoney::ACTION_RELAUNCH          => ['css' => 'bad', 'icon' => 'fa-bell'],
+    ReedcrmTicketMoney::SECTION_RESERVE          => ['css' => 'warn', 'icon' => 'fa-hand-holding-usd'],
     ReedcrmTicketMoney::ACTION_BILL              => ['css' => 'good', 'icon' => 'fa-file-invoice-dollar'],
     ReedcrmTicketMoney::ACTION_QUOTE             => ['css' => 'info', 'icon' => 'fa-file-signature'],
     ReedcrmTicketMoney::ACTION_ATTACH_THIRDPARTY => ['css' => 'warn', 'icon' => 'fa-building'],
@@ -188,7 +206,8 @@ $actionStyles = [
 $groups     = array_fill_keys(array_keys($actionStyles), []);
 $groupStats = [];
 foreach ($rows as $row) {
-    $groups[$row->action][] = $row;
+    // A ticket under reserve keeps its own next action, but waits in its section while the customer owes money
+    $groups[$money->isInReserve($row) ? ReedcrmTicketMoney::SECTION_RESERVE : $row->action][] = $row;
 }
 $groups = array_filter($groups);
 foreach ($groups as $action => $groupRows) {
@@ -197,7 +216,7 @@ foreach ($groups as $action => $groupRows) {
         $groupStats[$action]['to_bill'] += $row->amount_to_bill;
         $society = $row->fk_soc > 0 ? $money->getSociety($row->fk_soc) : null;
         // The overdue amount is the customer's : counted once, however many tickets it has in the section
-        if ($action === ReedcrmTicketMoney::ACTION_RELAUNCH && $society !== null && !isset($groupStats[$action]['socs'][$row->fk_soc])) {
+        if (in_array($action, [ReedcrmTicketMoney::ACTION_RELAUNCH, ReedcrmTicketMoney::SECTION_RESERVE], true) && $society !== null && !isset($groupStats[$action]['socs'][$row->fk_soc])) {
             $groupStats[$action]['socs'][$row->fk_soc] = 1;
             $groupStats[$action]['overdue']            += $society->overdue;
         }
@@ -390,6 +409,9 @@ foreach ($groups as $action => $groupRows) {
             print '<span class="opacitymedium">—</span>';
         } elseif ($society->frozen) {
             print '<span class="rtm-badge bad">' . $langs->trans('TicketMoneyCreditFrozen') . '</span>';
+            if ($money->isInReserve($row)) {
+                print '<div class="rtm-line"><span class="rtm-badge warn">' . $langs->trans('TicketMoneyReserveUntil', dol_print_date($row->reserve_until, 'day')) . '</span></div>';
+            }
         } elseif ($society->period !== null) {
             $left = max(0, $society->period->credit - $society->period->used);
             $pct  = $society->period->credit > 0 ? min(100, (int) round($society->period->used / $society->period->credit * 100)) : 100;
@@ -465,6 +487,12 @@ foreach ($groups as $action => $groupRows) {
                 break;
         }
         print '<a class="rtm-action ' . $button['css'] . '" href="' . dol_escape_htmltag($button['url']) . '"><i class="fas ' . $button['icon'] . ' paddingright"></i>' . $button['label'] . '</a>';
+        // Customer late in paying : chase, or handle the ticket anyway under reserve (and take it back)
+        if ($permissiontoreserve && $row->action === ReedcrmTicketMoney::ACTION_RELAUNCH) {
+            print '<div class="rtm-line"><a class="rtm-action warn rtm-action-small" href="' . dol_escape_htmltag($selfUrl . '&action=reserve&id=' . $row->id . '&token=' . newToken()) . '" title="' . dol_escape_htmltag($langs->trans('TicketMoneyActionReserveHelp', ReedcrmTicketMoney::getReserveDays())) . '"><i class="fas fa-hand-holding-usd paddingright"></i>' . $langs->trans('TicketMoneyActionReserve') . '</a></div>';
+        } elseif ($permissiontoreserve && $money->isInReserve($row)) {
+            print '<div class="rtm-line"><a class="rtm-action mute rtm-action-small" href="' . dol_escape_htmltag($selfUrl . '&action=unreserve&id=' . $row->id . '&token=' . newToken()) . '" title="' . dol_escape_htmltag($langs->trans('TicketMoneyActionUnreserveHelp')) . '"><i class="fas fa-undo paddingright"></i>' . $langs->trans('TicketMoneyActionUnreserve') . '</a></div>';
+        }
         print '</td>';
 
         print '</tr>';

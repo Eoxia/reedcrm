@@ -135,6 +135,11 @@ $rtm-mute: #8a8f98;
 }
 
 // Section header of the list : one per next action
+// Reached by its anchor : kept below the fixed top menu of Dolibarr
+.rtm-table tr.rtm-group {
+  scroll-margin-top: 80px;
+}
+
 .rtm-table tr.rtm-group td {
   padding: 14px 10px 8px;
   border-bottom: 2px solid $rtm-mute;
@@ -237,13 +242,18 @@ $rtm-mute: #8a8f98;
   }
 
   .rtm-col-ticket {
-    min-width: 240px;
+    min-width: 210px;
     max-width: 380px;
   }
 
   .rtm-col {
-    min-width: 150px;
+    min-width: 130px;
     max-width: 240px;
+
+    // A long badge (reserve and its date) wraps rather than widening the table past the screen
+    .rtm-badge {
+      white-space: normal;
+    }
   }
 }
 
@@ -255,6 +265,8 @@ $rtm-mute: #8a8f98;
   margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
+  // A subject made of a long URL would otherwise set the width of the whole column
+  overflow-wrap: anywhere;
 }
 
 .rtm-meta {
@@ -357,6 +369,13 @@ $rtm-mute: #8a8f98;
     color: #333 !important;
     background: #e6e8eb;
   }
+}
+
+// Second button of a line (under reserve, lift the reserve) : visible, but below the next action
+.rtm-action-small {
+  margin-top: 4px;
+  padding: 3px 10px;
+  font-size: .85em;
 }
 
 .rtm-massaction {

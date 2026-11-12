@@ -546,7 +546,7 @@ class ActionsReedcrm
 
         // Money banner of the ticket card (#1242) : quick time, billing mode of the ticket
         if ($this->isContext($parameters, ['ticketcard']) && $object instanceof Ticket && !empty($object->id)
-            && in_array($action, ['reedcrm_money_time', 'reedcrm_money_billing', 'reedcrm_money_confirm_free'], true)) {
+            && in_array($action, ['reedcrm_money_time', 'reedcrm_money_billing', 'reedcrm_money_confirm_free', 'reedcrm_money_reserve', 'reedcrm_money_unreserve'], true)) {
             global $langs, $user;
 
             $langs->load('reedcrm@reedcrm');
@@ -557,6 +557,17 @@ class ActionsReedcrm
             $redirect = DOL_URL_ROOT . '/ticket/card.php?id=' . ((int) $object->id) . '#reedcrm-ticket-money';
             if (!$user->hasRight('ticket', 'write')) {
                 setEventMessages($langs->trans('NotEnoughPermissions'), [], 'errors');
+            } elseif (in_array($action, ['reedcrm_money_reserve', 'reedcrm_money_unreserve'], true)) {
+                require_once __DIR__ . '/reedcrmticketmoney.class.php';
+
+                // Customer late in paying (#1248) : handle the ticket anyway for a while, or send it back to the chasing
+                $money = new ReedcrmTicketMoney($this->db);
+                $on    = $action === 'reedcrm_money_reserve';
+                if ($money->setReserve($user, $object, $on) > 0) {
+                    setEventMessages($on ? $langs->trans('TicketMoneyReserveSaved', $object->ref, dol_print_date(dol_now() + ReedcrmTicketMoney::getReserveDays() * 86400, 'day')) : $langs->trans('TicketMoneyReserveRemoved', $object->ref), []);
+                } else {
+                    setEventMessages($money->error, $money->errors, 'errors');
+                }
             } elseif ($action === 'reedcrm_money_time') {
                 require_once __DIR__ . '/../lib/reedcrm_ticket_time.lib.php';
 
@@ -2070,6 +2081,7 @@ class ActionsReedcrm
                     $moneyCanLogTime = $user->hasRight('ticket', 'write');
                     $moneyCanBill    = $user->hasRight('facture', 'creer');
                     $moneyCanQuote   = $user->hasRight('propal', 'creer');
+                    $moneyInReserve  = $money->isInReserve($moneyTicket);
 
                     $html = '';
                     // Reason asked before a ticket is given away

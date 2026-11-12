@@ -104,6 +104,7 @@ if ($action == 'set_money_config') {
     dolibarr_set_const($db, 'REEDCRM_TICKET_MONEY_ROUNDING_MINUTES', max(1, GETPOSTINT('ticket_money_rounding_minutes')), 'integer', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_TICKET_MONEY_DORMANT_DAYS', max(0, GETPOSTINT('ticket_money_dormant_days')), 'integer', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_TICKET_MONEY_OVERDUE_GRACE_DAYS', max(0, GETPOSTINT('ticket_money_overdue_grace_days')), 'integer', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'REEDCRM_TICKET_MONEY_RESERVE_DAYS', max(1, GETPOSTINT('ticket_money_reserve_days')), 'integer', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_TICKET_MONEY_MENU', GETPOSTINT('ticket_money_menu') ? 1 : 0, 'integer', 0, '', $conf->entity);
     dolibarr_set_const($db, 'REEDCRM_TICKET_MONEY_BANNER', GETPOSTINT('ticket_money_banner') ? 1 : 0, 'integer', 0, '', $conf->entity);
 
@@ -209,6 +210,7 @@ $moneySettings = [
     ['TicketMoneyRoundingMinutes', '<input type="number" class="width75" min="1" name="ticket_money_rounding_minutes" value="' . getDolGlobalInt('REEDCRM_TICKET_MONEY_ROUNDING_MINUTES', 15) . '">'],
     ['TicketMoneyDormantDays', '<input type="number" class="width75" min="0" name="ticket_money_dormant_days" value="' . getDolGlobalInt('REEDCRM_TICKET_MONEY_DORMANT_DAYS', 90) . '">'],
     ['TicketMoneyOverdueGraceDays', '<input type="number" class="width75" min="0" name="ticket_money_overdue_grace_days" value="' . getDolGlobalInt('REEDCRM_TICKET_MONEY_OVERDUE_GRACE_DAYS') . '">'],
+    ['TicketMoneyReserveDays', '<input type="number" class="width75" min="1" name="ticket_money_reserve_days" value="' . getDolGlobalInt('REEDCRM_TICKET_MONEY_RESERVE_DAYS', 30) . '">'],
     ['TicketMoneyMenu', $form->selectyesno('ticket_money_menu', getDolGlobalInt('REEDCRM_TICKET_MONEY_MENU', 1), 1)],
     ['TicketMoneyBanner', $form->selectyesno('ticket_money_banner', getDolGlobalInt('REEDCRM_TICKET_MONEY_BANNER', 1), 1)],
 ];
