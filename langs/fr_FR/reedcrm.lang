@@ -1895,3 +1895,6 @@ TicketTechBillUntil = Facturer au %s
 TicketTechBillAll = Tout facturer
 TicketTechBillAllConfirm = Créer %s factures brouillon, une par client, avec le temps saisi jusqu'au %s ?
 TicketTechLegend = Le technicien est celui qui a saisi le temps. « À facturer » : temps non facturé saisi jusqu'au %s, hors crédit d'heures et hors tickets offerts, au tarif du produit de facturation, arrondi par ticket. Le bouton facture tout le temps des tickets du client jusqu'à cette date, quel que soit le technicien ; le temps saisi après reste à facturer. Les factures sont créées en brouillon.
+TicketTechTileToBillMine = dont %s de mon temps
+TicketTechShare = Part du technicien (HT)
+TicketTechShareHelp = Temps à facturer saisi par ce technicien, au tarif du client, avant l'arrondi par ticket. La somme des parts peut être un peu inférieure au total facturé.

@@ -261,9 +261,16 @@ print '</form>';
 $urgent = count(array_filter($todo, function ($row) {
     return ReedcrmTicketMoney::getPriorityRank($row->severity_code) <= 1;
 }));
+// What the buttons will bill : whole tickets, rounded per ticket ; the technician's own share is only a detail of it
+$billTotal   = array_sum(array_column($clients, 'amount'));
+$billSeconds = array_sum(array_column($clients, 'seconds'));
+$billSub     = $langs->trans('TicketTechTileToBillSub', ReedcrmTicketMoney::formatDuration($billSeconds), count($clients));
+if ($searchTech > 0) {
+    $billSub .= '<br>' . $langs->trans('TicketTechTileToBillMine', price($totals['amount'], 0, $langs, 1, 0, 0, $currency));
+}
 print '<div class="rtm-tiles">';
 print '<a class="rtm-tile bad" href="#rtm-tech-todo"><span class="k">' . $langs->trans('TicketTechTileTodo') . '</span><span class="v">' . count($todo) . '</span><span class="a">' . $langs->trans('TicketTechTileTodoSub', $urgent) . '</span></a>';
-print '<a class="rtm-tile good" href="#rtm-tech-bill"><span class="k">' . $langs->trans('TicketTechTileToBill', $endLabel) . '</span><span class="v">' . price($totals['amount'], 0, $langs, 1, 0, 0, $currency) . '</span><span class="a">' . $langs->trans('TicketTechTileToBillSub', ReedcrmTicketMoney::formatDuration($totals['to_bill']), count($clients)) . '</span></a>';
+print '<a class="rtm-tile good" href="#rtm-tech-bill"><span class="k">' . $langs->trans('TicketTechTileToBill', $endLabel) . '</span><span class="v">' . price($billTotal, 0, $langs, 1, 0, 0, $currency) . '</span><span class="a">' . $billSub . '</span></a>';
 print '<a class="rtm-tile info" href="#rtm-tech-bill"><span class="k">' . $langs->trans('TicketTechTileLogged', $monthLabel) . '</span><span class="v">' . ReedcrmTicketMoney::formatDuration($totals['logged']) . '</span><span class="a">' . $langs->trans('TicketTechTileLoggedSub', ReedcrmTicketMoney::formatDuration($totals['included']), ReedcrmTicketMoney::formatDuration($totals['free'])) . '</span></a>';
 print '</div>';
 
@@ -321,14 +328,14 @@ foreach ($todo as $row) {
 print '</table></div>';
 
 // 2. To bill at the end of the month
-print '<h3 class="rtm-tech-title" id="rtm-tech-bill"><i class="fas fa-file-invoice-dollar paddingright"></i>' . $langs->trans('TicketTechToBill', $endLabel) . ' <span class="rtm-group-money good">' . price($totals['amount'], 0, $langs, 1, 0, 0, $currency) . '</span></h3>';
+print '<h3 class="rtm-tech-title" id="rtm-tech-bill"><i class="fas fa-file-invoice-dollar paddingright"></i>' . $langs->trans('TicketTechToBill', $endLabel) . ' <span class="rtm-group-money good">' . price($billTotal, 0, $langs, 1, 0, 0, $currency) . '</span></h3>';
 
 // Per technician, when the whole team is shown
 if ($searchTech <= 0 && count($techStats) > 0) {
     print '<div class="div-table-responsive"><table class="tagtable liste centpercent rtm-table rtm-tech-table">';
     print '<tr class="liste_titre"><th>' . $langs->trans('TicketTechTechnician') . '</th><th class="right">' . $langs->trans('TicketTechTileLogged', $monthLabel) . '</th>';
     print '<th class="right">' . $langs->trans('TicketTechIncluded') . '</th><th class="right">' . $langs->trans('TicketTechFree') . '</th>';
-    print '<th class="right">' . $langs->trans('TicketTechTimeToBill') . '</th><th class="right">' . $langs->trans('TicketTechAmountToBill') . '</th></tr>';
+    print '<th class="right">' . $langs->trans('TicketTechTimeToBill') . '</th><th class="right classfortooltip" title="' . dol_escape_htmltag($langs->trans('TicketTechShareHelp')) . '">' . $langs->trans('TicketTechShare') . '</th></tr>';
     uasort($techStats, function ($first, $second) {
         return $second['amount'] <=> $first['amount'];
     });
