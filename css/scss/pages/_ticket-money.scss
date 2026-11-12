@@ -371,6 +371,31 @@ $rtm-mute: #8a8f98;
   }
 }
 
+// Project of a ticket, under its subject
+.rtm-project {
+  color: inherit;
+}
+
+// Priority (severity) of a ticket : the urgent ones in color, the low one discreet
+.rtm-priority.light {
+  color: #555;
+  background: #e6e8eb;
+}
+
+// Tech view (view/ticket_tech.php)
+.rtm-tech-title {
+  margin: 22px 0 10px;
+  scroll-margin-top: 80px;
+}
+
+.rtm-tech-ticket + .rtm-tech-ticket {
+  margin-top: 6px;
+}
+
+.rtm-tech-table {
+  margin-bottom: 14px;
+}
+
 // Second button of a line (under reserve, lift the reserve) : visible, but below the next action
 .rtm-action-small {
   margin-top: 4px;

@@ -38,6 +38,7 @@ require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 
 // Load ReedCRM libraries
 require_once __DIR__ . '/../class/reedcrmticketmoney.class.php';
+require_once __DIR__ . '/../lib/reedcrm_ticket_money.lib.php';
 
 // Global variables definitions
 global $conf, $db, $hookmanager, $langs, $user;
@@ -248,6 +249,7 @@ $now      = dol_now();
 $currency = $conf->currency;
 
 $morehtmlright  = '<a class="butAction" href="' . DOL_URL_ROOT . '/ticket/card.php?action=create&mode=init&mainmenu=ticket">' . $langs->trans('NewTicket') . '</a>';
+$morehtmlright .= '<a class="butAction" href="' . dol_buildpath('/reedcrm/view/ticket_tech.php', 1) . '?mainmenu=ticket&leftmenu=tickettech">' . $langs->trans('TicketTechMenu') . '</a>';
 $morehtmlright .= '<a class="butActionRefused classfortooltip rtm-native-list" href="' . DOL_URL_ROOT . '/ticket/list.php?search_fk_statut=openall&mainmenu=ticket">' . $langs->trans('TicketMoneyFullList') . '</a>';
 print load_fiche_titre($title, $morehtmlright, 'ticket');
 
@@ -363,6 +365,10 @@ foreach ($groups as $action => $groupRows) {
         // Ticket
         print '<td class="rtm-col-ticket">';
         print '<a class="rtm-ref" href="' . $cardUrl . '">' . img_picto('', 'ticket', 'class="pictofixedwidth"') . dol_escape_htmltag($row->ref) . '</a>';
+        $priority = reedcrm_ticket_money_priority_badge($row, true);
+        if ($priority !== '') {
+            print ' ' . $priority;
+        }
         if ($row->type_code === ReedcrmTicketMoney::COMMERCIAL_TYPE) {
             print ' <span class="rtm-badge info">' . $langs->trans('TicketMoneyCommercial') . '</span>';
         }
@@ -370,6 +376,10 @@ foreach ($groups as $action => $groupRows) {
             print ' <span class="rtm-badge mute">' . $langs->trans('TicketMoneyClosed') . '</span>';
         }
         print '<div class="rtm-subject" title="' . dol_escape_htmltag($row->subject) . '">' . dol_escape_htmltag(dol_trunc($row->subject, 70)) . '</div>';
+        $project = reedcrm_ticket_money_project_link($row);
+        if ($project !== '') {
+            print '<div class="rtm-line rtm-meta">' . $project . '</div>';
+        }
         print '<div class="rtm-meta">' . $langs->trans('TicketMoneyAge', $ageDays);
         if ($lastMove < $now - 30 * 86400) {
             print ' · ' . $langs->trans('TicketMoneyIdle', (int) floor(($now - $lastMove) / 86400));
@@ -458,35 +468,7 @@ foreach ($groups as $action => $groupRows) {
 
         // Next action : one button
         print '<td class="right nowraponall">';
-        $button = ['label' => $langs->trans('TicketMoneyActionOpen'), 'url' => $cardUrl, 'css' => 'mute', 'icon' => 'fa-arrow-right'];
-        switch ($row->action) {
-            case ReedcrmTicketMoney::ACTION_ATTACH_THIRDPARTY:
-                $button = ['label' => $langs->trans('TicketMoneyActionAttachThirdparty'), 'url' => DOL_URL_ROOT . '/ticket/card.php?track_id=' . urlencode($row->track_id) . '&action=editcustomer&token=' . newToken(), 'css' => 'warn', 'icon' => 'fa-building'];
-                break;
-            case ReedcrmTicketMoney::ACTION_RELAUNCH:
-                $button = ['label' => $langs->trans('TicketMoneyActionRelaunch', price($society->overdue, 0, $langs, 1, 0, 0, $currency)), 'url' => DOL_URL_ROOT . '/compta/facture/list.php?socid=' . $row->fk_soc . '&search_status=1&search_option=late', 'css' => 'bad', 'icon' => 'fa-bell'];
-                break;
-            case ReedcrmTicketMoney::ACTION_BILL:
-                if ($permissiontobill) {
-                    $button = ['label' => $langs->trans('TicketMoneyActionBill', price($row->amount_to_bill, 0, $langs, 1, 0, 0, $currency)), 'url' => $selfUrl . '&action=bill&id=' . $row->id . '&token=' . newToken(), 'css' => 'good', 'icon' => 'fa-file-invoice-dollar'];
-                }
-                break;
-            case ReedcrmTicketMoney::ACTION_QUOTE:
-                if ($permissiontoquote) {
-                    $button = ['label' => $langs->trans('TicketMoneyActionQuote'), 'url' => $selfUrl . '&action=quote&id=' . $row->id . '&token=' . newToken(), 'css' => 'info', 'icon' => 'fa-file-signature'];
-                }
-                break;
-            case ReedcrmTicketMoney::ACTION_ATTACH_PROJECT:
-                $button = ['label' => $langs->trans('TicketMoneyActionAttachProject'), 'url' => DOL_URL_ROOT . '/ticket/card.php?id=' . $row->id . '&action=classify&token=' . newToken(), 'css' => 'warn', 'icon' => 'fa-project-diagram'];
-                break;
-            case ReedcrmTicketMoney::ACTION_LOG_TIME:
-                $button = ['label' => $langs->trans('TicketMoneyActionLogTime'), 'url' => $cardUrl . '#reedcrm-ticket-money', 'css' => 'info', 'icon' => 'fa-stopwatch'];
-                break;
-            case ReedcrmTicketMoney::ACTION_CLOSE:
-                $button = ['label' => $langs->trans('TicketMoneyActionClose'), 'url' => DOL_URL_ROOT . '/ticket/card.php?track_id=' . urlencode($row->track_id) . '&action=close&token=' . newToken(), 'css' => 'mute', 'icon' => 'fa-archive'];
-                break;
-        }
-        print '<a class="rtm-action ' . $button['css'] . '" href="' . dol_escape_htmltag($button['url']) . '"><i class="fas ' . $button['icon'] . ' paddingright"></i>' . $button['label'] . '</a>';
+        print reedcrm_ticket_money_action_button($money, $row, $selfUrl, ['bill' => $permissiontobill, 'quote' => $permissiontoquote]);
         // Customer late in paying : chase, or handle the ticket anyway under reserve (and take it back)
         if ($permissiontoreserve && $row->action === ReedcrmTicketMoney::ACTION_RELAUNCH) {
             print '<div class="rtm-line"><a class="rtm-action warn rtm-action-small" href="' . dol_escape_htmltag($selfUrl . '&action=reserve&id=' . $row->id . '&token=' . newToken()) . '" title="' . dol_escape_htmltag($langs->trans('TicketMoneyActionReserveHelp', ReedcrmTicketMoney::getReserveDays())) . '"><i class="fas fa-hand-holding-usd paddingright"></i>' . $langs->trans('TicketMoneyActionReserve') . '</a></div>';
