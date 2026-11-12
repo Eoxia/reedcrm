@@ -396,6 +396,11 @@ $rtm-mute: #8a8f98;
   margin-bottom: 14px;
 }
 
+// Close / abandon, side by side under the next action
+.rtm-close-actions {
+  white-space: nowrap;
+}
+
 // Second button of a line (under reserve, lift the reserve) : visible, but below the next action
 .rtm-action-small {
   margin-top: 4px;
