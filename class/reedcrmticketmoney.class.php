@@ -55,6 +55,11 @@ class ReedcrmTicketMoney
     public const ACTION_NONE              = 'none';
 
     /**
+     * Section of the tickets handled anyway while their customer owes money : not an action, they keep theirs
+     */
+    public const SECTION_RESERVE = 'reserve';
+
+    /**
      * Billing modes of a ticket, stored in the extrafield reedcrm_billing (empty = auto)
      */
     public const BILLING_AUTO     = 'auto';
@@ -573,6 +578,50 @@ class ReedcrmTicketMoney
     }
 
     /**
+     * Put a ticket under reserve, or take it out : the customer owes money, the ticket is handled anyway for a while
+     *
+     * @param  User   $user   User
+     * @param  Ticket $ticket Ticket
+     * @param  bool   $on     True to put it under reserve from now, false to take it out
+     * @return int            Negative if KO, positive if OK
+     */
+    public function setReserve(User $user, Ticket $ticket, bool $on): int
+    {
+        $ticket->fetch_optionals();
+        $ticket->array_options['options_reedcrm_reserve'] = $on ? dol_now() : '';
+
+        $result = $ticket->insertExtraFields('', $user);
+        if ($result < 0) {
+            $this->error = $ticket->error;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Is the ticket handled under reserve right now : reserve still valid and customer still owing money
+     *
+     * @param  stdClass $ticket Ticket with its figures
+     * @return bool
+     */
+    public function isInReserve(stdClass $ticket): bool
+    {
+        $society = $ticket->fk_soc > 0 ? ($this->societies[$ticket->fk_soc] ?? null) : null;
+
+        return $ticket->reserved && $society !== null && $society->overdue > 0;
+    }
+
+    /**
+     * How long a ticket stays under reserve before it goes back to the overdue invoices to chase
+     *
+     * @return int Days
+     */
+    public static function getReserveDays(): int
+    {
+        return max(1, getDolGlobalInt('REEDCRM_TICKET_MONEY_RESERVE_DAYS', 30));
+    }
+
+    /**
      * Read the tickets : the targets, plus every ticket of their customers
      *
      * @param  int[] $socIds Customers of the targets
@@ -615,6 +664,9 @@ class ReedcrmTicketMoney
                 'is_open'          => !in_array((int) $obj->fk_statut, self::DONE_STATUS, true),
                 'billing'          => self::BILLING_AUTO,
                 'billing_note'     => '',
+                'reserve_date'     => 0,
+                'reserve_until'    => 0,
+                'reserved'         => false,
                 'time_total'       => 0,
                 'time_included'    => 0,
                 'time_to_bill'     => 0,
@@ -637,9 +689,17 @@ class ReedcrmTicketMoney
         if ($resql) {
             while ($obj = $this->db->fetch_object($resql)) {
                 $ticket = $this->tickets[(int) $obj->fk_object] ?? null;
-                if ($ticket !== null && in_array($obj->reedcrm_billing ?? '', [self::BILLING_BILLABLE, self::BILLING_FREE], true)) {
+                if ($ticket === null) {
+                    continue;
+                }
+                if (in_array($obj->reedcrm_billing ?? '', [self::BILLING_BILLABLE, self::BILLING_FREE], true)) {
                     $ticket->billing      = $obj->reedcrm_billing;
                     $ticket->billing_note = (string) ($obj->reedcrm_billing_note ?? '');
+                }
+                if (!empty($obj->reedcrm_reserve)) {
+                    $ticket->reserve_date  = (int) $this->db->jdate($obj->reedcrm_reserve);
+                    $ticket->reserve_until = $ticket->reserve_date + self::getReserveDays() * 86400;
+                    $ticket->reserved      = dol_now() < $ticket->reserve_until;
                 }
             }
             $this->db->free($resql);
@@ -994,7 +1054,7 @@ class ReedcrmTicketMoney
         $rank = 0;
         if ($ticket->fk_soc <= 0) {
             $ticket->action = self::ACTION_ATTACH_THIRDPARTY;
-        } elseif ($society !== null && $society->overdue > 0) {
+        } elseif ($society !== null && $society->overdue > 0 && !$ticket->reserved) {
             $rank           = 1;
             $ticket->action = self::ACTION_RELAUNCH;
             $ticket->stake  = $society->overdue;

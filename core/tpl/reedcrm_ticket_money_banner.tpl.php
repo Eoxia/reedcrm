@@ -30,6 +30,7 @@
  *   $moneyCanLogTime  bool           The user may log time and change the billing mode
  *   $moneyCanBill     bool           The user may create invoices
  *   $moneyCanQuote    bool           The user may create proposals
+ *   $moneyInReserve   bool           The customer owes money and the ticket is handled anyway, under reserve
  */
 
 // Protection to avoid direct call of template
@@ -56,6 +57,14 @@ $token    = newToken();
             <span class="rtm-badge bad"><?php echo $langs->trans('TicketMoneyOverdue', price($moneySociety->overdue, 0, $langs, 1, 0, 0, $currency)); ?></span>
             <span class="rtm-meta"><?php echo $langs->trans('TicketMoneyOverdueTooltip', $moneySociety->overdue_count, dol_print_date($moneySociety->overdue_oldest, 'day')); ?></span>
             <a class="rtm-action bad" href="<?php echo dol_escape_htmltag(DOL_URL_ROOT . '/compta/facture/list.php?socid=' . $moneyTicket->fk_soc . '&search_status=1&search_option=late'); ?>"><i class="fas fa-bell paddingright"></i><?php echo $langs->trans('TicketMoneyActionRelaunchShort'); ?></a>
+            <?php if ($moneyInReserve) : ?>
+                <span class="rtm-badge warn"><?php echo $langs->trans('TicketMoneyReserveUntil', dol_print_date($moneyTicket->reserve_until, 'day')); ?></span>
+                <?php if ($moneyCanLogTime) : ?>
+                    <a class="rtm-action mute rtm-action-small" href="<?php echo dol_escape_htmltag($moneyCardUrl . '&action=reedcrm_money_unreserve&token=' . $token); ?>" title="<?php echo dol_escape_htmltag($langs->trans('TicketMoneyActionUnreserveHelp')); ?>"><i class="fas fa-undo paddingright"></i><?php echo $langs->trans('TicketMoneyActionUnreserve'); ?></a>
+                <?php endif; ?>
+            <?php elseif ($moneyCanLogTime) : ?>
+                <a class="rtm-action warn rtm-action-small" href="<?php echo dol_escape_htmltag($moneyCardUrl . '&action=reedcrm_money_reserve&token=' . $token); ?>" title="<?php echo dol_escape_htmltag($langs->trans('TicketMoneyActionReserveHelp', ReedcrmTicketMoney::getReserveDays())); ?>"><i class="fas fa-hand-holding-usd paddingright"></i><?php echo $langs->trans('TicketMoneyActionReserve'); ?></a>
+            <?php endif; ?>
         <?php else : ?>
             <span class="rtm-badge good"><?php echo $langs->trans('TicketMoneyUpToDate'); ?></span>
         <?php endif; ?>
