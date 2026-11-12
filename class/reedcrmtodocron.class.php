@@ -31,7 +31,8 @@ require_once __DIR__ . '/../lib/reedcrm_todo.lib.php';
  * Class raising the relaunch events of the todo board.
  *
  * A proposal still waiting for its answer, and an invoice still waiting for its payment,
- * both become an event to do once the delay of the configuration has passed.
+ * both become an event to do once the delay of the configuration has passed. The event is
+ * marked done as soon as its object stops waiting, see reedcrmTodoCloseSettledRelaunches().
  */
 class ReedcrmTodoCron
 {
@@ -63,9 +64,17 @@ class ReedcrmTodoCron
      */
     public function createProposalRelaunchEvents(): int
     {
-        global $langs;
+        global $langs, $user;
 
         $langs->loadLangs(['reedcrm@reedcrm', 'agenda', 'propal']);
+
+        // The trigger closes the relaunch of a proposal as it gets its answer: this catches the
+        // ones it could not see, raised before it existed or on a proposal deleted or reopened since
+        $closed = reedcrmTodoCloseSettledRelaunches($this->db, $user, 'propal');
+        if ($closed < 0) {
+            $this->output = $this->db->lasterror();
+            return -1;
+        }
 
         $days      = getDolGlobalInt('REEDCRM_TODO_PROPAL_RELAUNCH_DAYS', 30);
         $threshold = dol_time_plus_duree(dol_now(), -$days, 'd');
@@ -102,7 +111,7 @@ class ReedcrmTodoCron
         }
         $this->db->free($resql);
 
-        $this->output = $langs->transnoentities('TodoPropalRelaunchCronResult', $created);
+        $this->output = $langs->transnoentities('TodoPropalRelaunchCronResult', $created, $closed);
 
         return 0;
     }
@@ -115,9 +124,17 @@ class ReedcrmTodoCron
      */
     public function createInvoiceRelaunchEvents(): int
     {
-        global $langs;
+        global $langs, $user;
 
         $langs->loadLangs(['reedcrm@reedcrm', 'agenda', 'bills']);
+
+        // The trigger closes the relaunch of an invoice as it gets paid: this catches the ones it
+        // could not see, raised before it existed or on an invoice deleted or settled without it
+        $closed = reedcrmTodoCloseSettledRelaunches($this->db, $user, 'invoice');
+        if ($closed < 0) {
+            $this->output = $this->db->lasterror();
+            return -1;
+        }
 
         $days      = getDolGlobalInt('REEDCRM_TODO_INVOICE_RELAUNCH_DAYS', 30);
         $threshold = dol_time_plus_duree(dol_now(), -$days, 'd');
@@ -159,7 +176,7 @@ class ReedcrmTodoCron
         }
         $this->db->free($resql);
 
-        $this->output = $langs->transnoentities('TodoInvoiceRelaunchCronResult', $created);
+        $this->output = $langs->transnoentities('TodoInvoiceRelaunchCronResult', $created, $closed);
 
         return 0;
     }

@@ -84,6 +84,60 @@ function reedcrmTodoGetColumnForEvent(array $columns, array $event): array
 }
 
 /**
+ * Close the relaunches whose proposal or invoice no longer waits for anything
+ *
+ * A relaunch is raised on a proposal still unanswered or an invoice still unpaid. Once the
+ * proposal is signed, refused, billed or cancelled, or once the invoice is paid, abandoned or
+ * back to draft, there is nobody left to chase: its relaunches are marked done, wherever they
+ * stand on the board, instead of waiting for somebody to move them by hand. A relaunch whose
+ * object was deleted is closed the same way.
+ *
+ * The test is the one the cron jobs raise a relaunch on, read on the object as it stands in
+ * database: called from the trigger of a payment, it already sees the invoice paid.
+ *
+ * @param  DoliDB $db          Database handler
+ * @param  User   $user        User the relaunches are closed by
+ * @param  string $elementType 'propal' or 'invoice', both when empty
+ * @param  int    $elementId   Row ID of the proposal or the invoice, all of them when 0
+ * @return int                 Number of relaunches closed, < 0 if KO
+ */
+function reedcrmTodoCloseSettledRelaunches(DoliDB $db, User $user, string $elementType = '', int $elementId = 0): int
+{
+    // Objects still waiting, the same conditions as ReedcrmTodoCron
+    $sources = [
+        'propal'  => ['code' => REEDCRM_TODO_CODE_PROPAL_RELAUNCH, 'waiting' => 'SELECT rowid FROM ' . MAIN_DB_PREFIX . 'propal WHERE fk_statut = 1'],
+        'invoice' => ['code' => REEDCRM_TODO_CODE_INVOICE_RELAUNCH, 'waiting' => 'SELECT rowid FROM ' . MAIN_DB_PREFIX . 'facture WHERE fk_statut = 1 AND paye = 0'],
+    ];
+
+    $closed = 0;
+    foreach ($sources as $type => $source) {
+        if ($elementType !== '' && $elementType !== $type) {
+            continue;
+        }
+
+        $sql  = 'UPDATE ' . MAIN_DB_PREFIX . 'actioncomm';
+        $sql .= ' SET percent = 100, fk_user_mod = ' . ($user->id > 0 ? (int) $user->id : 'NULL');
+        $sql .= " WHERE code = '" . $db->escape($source['code']) . "'";
+        $sql .= " AND elementtype = '" . $db->escape($type) . "'";
+        $sql .= ' AND entity IN (' . getEntity('agenda') . ')';
+        $sql .= ' AND percent >= 0 AND percent < 100';
+        if ($elementId > 0) {
+            $sql .= ' AND fk_element = ' . $elementId;
+        }
+        $sql .= ' AND fk_element NOT IN (' . $source['waiting'] . ')';
+
+        $resql = $db->query($sql);
+        if (!$resql) {
+            dol_syslog(__FUNCTION__ . ': ' . $db->lasterror(), LOG_ERR);
+            return -1;
+        }
+        $closed += (int) $db->affected_rows($resql);
+    }
+
+    return $closed;
+}
+
+/**
  * Return the session entry the criteria of the board are kept in
  *
  * Kept per entity: a user switching company must not find the criteria of the other one, the
