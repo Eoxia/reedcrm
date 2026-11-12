@@ -113,7 +113,17 @@ $rtm-mute: #8a8f98;
 .rtm-table {
   td {
     vertical-align: top;
+  }
+
+  // Only the text columns wrap : an amount or a button cut in two lines is read wrong
+  .rtm-col-ticket,
+  .rtm-col {
     white-space: normal;
+  }
+
+  .rtm-amount,
+  .rtm-action {
+    white-space: nowrap;
   }
 
   // Each piece of a cell on its own line, whatever the theme does with the divs of a list
