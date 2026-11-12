@@ -84,6 +84,98 @@ $rtm-mute: #8a8f98;
   }
 }
 
+// Number of tickets per next action, on top of the list
+.rtm-groups-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.rtm-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-left: 4px solid $rtm-mute;
+  border-radius: 6px;
+  background: var(--colorbacklinepair2, #fff);
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+  }
+
+  &.good {
+    border-left-color: $rtm-good;
+  }
+
+  &.bad {
+    border-left-color: $rtm-bad;
+  }
+
+  &.warn {
+    border-left-color: $rtm-warn;
+  }
+
+  &.info {
+    border-left-color: $rtm-info;
+  }
+
+  .rtm-chip-count {
+    margin-left: 8px;
+    padding: 0 8px;
+    border-radius: 10px;
+    background: #e6e8eb;
+    font-weight: 800;
+  }
+}
+
+// Section header of the list : one per next action
+.rtm-table tr.rtm-group td {
+  padding: 14px 10px 8px;
+  border-bottom: 2px solid $rtm-mute;
+  background: var(--colorbacktitle1, #f4f5f7);
+  font-weight: 700;
+  white-space: normal;
+}
+
+@each $name, $color in (good: $rtm-good, bad: $rtm-bad, warn: $rtm-warn, info: $rtm-info) {
+  .rtm-table tr.rtm-group.#{$name} td {
+    border-bottom-color: $color;
+
+    i {
+      color: $color;
+    }
+  }
+}
+
+.rtm-group-label {
+  font-size: 1.1em;
+}
+
+.rtm-group-count {
+  margin-left: 12px;
+  color: #777;
+  font-weight: 600;
+}
+
+.rtm-group-money {
+  margin-left: 12px;
+  font-weight: 800;
+
+  &.good {
+    color: $rtm-good;
+  }
+
+  &.bad {
+    color: $rtm-bad;
+  }
+}
+
 .rtm-filters {
   display: flex;
   flex-wrap: wrap;
@@ -117,8 +209,19 @@ $rtm-mute: #8a8f98;
 
   // Only the text columns wrap : an amount or a button cut in two lines is read wrong
   .rtm-col-ticket,
-  .rtm-col {
+  .rtm-col,
+  .rtm-col-time {
     white-space: normal;
+  }
+
+  // The total stays on one line, its detail (included, billed, free) wraps under it
+  .rtm-col-time {
+    min-width: 80px;
+    max-width: 150px;
+
+    strong {
+      white-space: nowrap;
+    }
   }
 
   .rtm-amount,

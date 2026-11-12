@@ -174,6 +174,36 @@ if ($searchAction !== '') {
     }));
 }
 
+// Sections of the list, in the order of the money : one per next action, the rows keep their order inside
+$actionStyles = [
+    ReedcrmTicketMoney::ACTION_RELAUNCH          => ['css' => 'bad', 'icon' => 'fa-bell'],
+    ReedcrmTicketMoney::ACTION_BILL              => ['css' => 'good', 'icon' => 'fa-file-invoice-dollar'],
+    ReedcrmTicketMoney::ACTION_QUOTE             => ['css' => 'info', 'icon' => 'fa-file-signature'],
+    ReedcrmTicketMoney::ACTION_ATTACH_THIRDPARTY => ['css' => 'warn', 'icon' => 'fa-building'],
+    ReedcrmTicketMoney::ACTION_ATTACH_PROJECT    => ['css' => 'warn', 'icon' => 'fa-project-diagram'],
+    ReedcrmTicketMoney::ACTION_LOG_TIME          => ['css' => 'info', 'icon' => 'fa-stopwatch'],
+    ReedcrmTicketMoney::ACTION_CLOSE             => ['css' => 'mute', 'icon' => 'fa-archive'],
+    ReedcrmTicketMoney::ACTION_NONE              => ['css' => 'mute', 'icon' => 'fa-check'],
+];
+$groups     = array_fill_keys(array_keys($actionStyles), []);
+$groupStats = [];
+foreach ($rows as $row) {
+    $groups[$row->action][] = $row;
+}
+$groups = array_filter($groups);
+foreach ($groups as $action => $groupRows) {
+    $groupStats[$action] = ['nb' => count($groupRows), 'overdue' => 0.0, 'socs' => [], 'to_bill' => 0.0];
+    foreach ($groupRows as $row) {
+        $groupStats[$action]['to_bill'] += $row->amount_to_bill;
+        $society = $row->fk_soc > 0 ? $money->getSociety($row->fk_soc) : null;
+        // The overdue amount is the customer's : counted once, however many tickets it has in the section
+        if ($action === ReedcrmTicketMoney::ACTION_RELAUNCH && $society !== null && !isset($groupStats[$action]['socs'][$row->fk_soc])) {
+            $groupStats[$action]['socs'][$row->fk_soc] = 1;
+            $groupStats[$action]['overdue']            += $society->overdue;
+        }
+    }
+}
+
 $userNames = [];
 $userName  = function (int $userId) use ($db, $langs, &$userNames): string {
     if ($userId <= 0) {
@@ -233,6 +263,18 @@ foreach ($tiles as $key => $tile) {
 }
 print '</div>';
 
+// Number of tickets per next action, each one jumps to its section
+if (!empty($groups)) {
+    print '<div class="rtm-groups-nav">';
+    foreach ($groupStats as $action => $stats) {
+        print '<a class="rtm-chip ' . $actionStyles[$action]['css'] . '" href="#rtm-group-' . $action . '">';
+        print '<i class="fas ' . $actionStyles[$action]['icon'] . ' paddingright"></i>' . $langs->trans('TicketMoneyGroup_' . $action);
+        print ' <span class="rtm-chip-count">' . $stats['nb'] . '</span>';
+        print '</a>';
+    }
+    print '</div>';
+}
+
 // Filters
 print '<form method="GET" action="' . $_SERVER['PHP_SELF'] . '" class="rtm-filters">';
 print '<input type="hidden" name="search_action" value="' . dol_escape_htmltag($searchAction) . '">';
@@ -269,149 +311,164 @@ if (empty($rows)) {
 $societyStatic = new Societe($db);
 $totalToBill   = 0.0;
 $billableShown = 0;
-foreach ($rows as $row) {
-    $society  = $row->fk_soc > 0 ? $money->getSociety($row->fk_soc) : null;
-    $cardUrl  = DOL_URL_ROOT . '/ticket/card.php?id=' . $row->id;
-    $ageDays  = (int) floor(($now - $row->datec) / 86400);
-    $lastMove = max($row->datec, $row->last_activity);
-
-    print '<tr class="oddeven rtm-row rtm-action-' . $row->action . '">';
-
-    // Selection : only a ticket with time to bill goes in the mass billing
-    print '<td class="center">';
-    if ($row->amount_to_bill > 0 && $permissiontobill) {
-        print '<input type="checkbox" class="flat checkforselect" name="toselect[]" value="' . $row->id . '">';
-        $billableShown++;
+foreach ($groups as $action => $groupRows) {
+    // Section header : what to do, how many tickets, how much money
+    $groupStyle = $actionStyles[$action];
+    print '<tr class="rtm-group ' . $groupStyle['css'] . '" id="rtm-group-' . $action . '"><td colspan="7">';
+    print '<i class="fas ' . $groupStyle['icon'] . ' paddingright"></i><span class="rtm-group-label">' . $langs->trans('TicketMoneyGroup_' . $action) . '</span>';
+    print '<span class="rtm-group-count">' . $langs->trans('TicketMoneyGroupCount', $groupStats[$action]['nb']) . '</span>';
+    if ($groupStats[$action]['overdue'] > 0) {
+        print '<span class="rtm-group-money bad">' . $langs->trans('TicketMoneyGroupOverdue', price($groupStats[$action]['overdue'], 0, $langs, 1, 0, 0, $currency), count($groupStats[$action]['socs'])) . '</span>';
     }
-    print '</td>';
+    if ($groupStats[$action]['to_bill'] > 0) {
+        print '<span class="rtm-group-money good">' . $langs->trans('TicketMoneyGroupToBill', price($groupStats[$action]['to_bill'], 0, $langs, 1, 0, 0, $currency)) . '</span>';
+    }
+    print '</td></tr>';
 
-    // Ticket
-    print '<td class="rtm-col-ticket">';
-    print '<a class="rtm-ref" href="' . $cardUrl . '">' . img_picto('', 'ticket', 'class="pictofixedwidth"') . dol_escape_htmltag($row->ref) . '</a>';
-    if ($row->type_code === ReedcrmTicketMoney::COMMERCIAL_TYPE) {
-        print ' <span class="rtm-badge info">' . $langs->trans('TicketMoneyCommercial') . '</span>';
-    }
-    if (!$row->is_open) {
-        print ' <span class="rtm-badge mute">' . $langs->trans('TicketMoneyClosed') . '</span>';
-    }
-    print '<div class="rtm-subject" title="' . dol_escape_htmltag($row->subject) . '">' . dol_escape_htmltag(dol_trunc($row->subject, 70)) . '</div>';
-    print '<div class="rtm-meta">' . $langs->trans('TicketMoneyAge', $ageDays);
-    if ($lastMove < $now - 30 * 86400) {
-        print ' · ' . $langs->trans('TicketMoneyIdle', (int) floor(($now - $lastMove) / 86400));
-    }
-    $assignee = $userName($row->fk_user_assign);
-    print ' · ' . ($assignee !== '' ? dol_escape_htmltag($assignee) : '<span class="rtm-warn">' . $langs->trans('TicketMoneyNobody') . '</span>');
-    print '</div>';
-    print '</td>';
+    foreach ($groupRows as $row) {
+        $society  = $row->fk_soc > 0 ? $money->getSociety($row->fk_soc) : null;
+        $cardUrl  = DOL_URL_ROOT . '/ticket/card.php?id=' . $row->id;
+        $ageDays  = (int) floor(($now - $row->datec) / 86400);
+        $lastMove = max($row->datec, $row->last_activity);
 
-    // Customer and its payment state
-    print '<td class="rtm-col">';
-    if ($society === null) {
-        print '<span class="rtm-badge warn">' . $langs->trans('TicketMoneyNoThirdparty') . '</span>';
-    } else {
-        $societyStatic->id     = $row->fk_soc;
-        $societyStatic->name   = $row->soc_name;
-        $societyStatic->status = $row->soc_status;
-        print $societyStatic->getNomUrl(1, '', 28);
-        print '<div class="rtm-line">';
-        if ($society->overdue > 0) {
-            print '<span class="rtm-badge bad classfortooltip" title="' . dol_escape_htmltag($langs->trans('TicketMoneyOverdueTooltip', $society->overdue_count, dol_print_date($society->overdue_oldest, 'day'))) . '">';
-            print $langs->trans('TicketMoneyOverdue', price($society->overdue, 0, $langs, 1, 0, 0, $currency)) . '</span>';
-        } else {
-            print '<span class="rtm-badge good">' . $langs->trans('TicketMoneyUpToDate') . '</span>';
+        print '<tr class="oddeven rtm-row rtm-action-' . $row->action . '">';
+
+        // Selection : only a ticket with time to bill goes in the mass billing
+        print '<td class="center">';
+        if ($row->amount_to_bill > 0 && $permissiontobill) {
+            print '<input type="checkbox" class="flat checkforselect" name="toselect[]" value="' . $row->id . '">';
+            $billableShown++;
         }
+        print '</td>';
+
+        // Ticket
+        print '<td class="rtm-col-ticket">';
+        print '<a class="rtm-ref" href="' . $cardUrl . '">' . img_picto('', 'ticket', 'class="pictofixedwidth"') . dol_escape_htmltag($row->ref) . '</a>';
+        if ($row->type_code === ReedcrmTicketMoney::COMMERCIAL_TYPE) {
+            print ' <span class="rtm-badge info">' . $langs->trans('TicketMoneyCommercial') . '</span>';
+        }
+        if (!$row->is_open) {
+            print ' <span class="rtm-badge mute">' . $langs->trans('TicketMoneyClosed') . '</span>';
+        }
+        print '<div class="rtm-subject" title="' . dol_escape_htmltag($row->subject) . '">' . dol_escape_htmltag(dol_trunc($row->subject, 70)) . '</div>';
+        print '<div class="rtm-meta">' . $langs->trans('TicketMoneyAge', $ageDays);
+        if ($lastMove < $now - 30 * 86400) {
+            print ' · ' . $langs->trans('TicketMoneyIdle', (int) floor(($now - $lastMove) / 86400));
+        }
+        $assignee = $userName($row->fk_user_assign);
+        print ' · ' . ($assignee !== '' ? dol_escape_htmltag($assignee) : '<span class="rtm-warn">' . $langs->trans('TicketMoneyNobody') . '</span>');
         print '</div>';
-    }
-    print '</td>';
+        print '</td>';
 
-    // Coverage : credit of the subscription, frozen, or none
-    print '<td class="rtm-col">';
-    if ($row->billing === ReedcrmTicketMoney::BILLING_FREE) {
-        print '<span class="rtm-badge mute classfortooltip" title="' . dol_escape_htmltag($row->billing_note) . '">' . $langs->trans('TicketMoneyBillingFree') . '</span>';
-    } elseif ($row->billing === ReedcrmTicketMoney::BILLING_BILLABLE) {
-        print '<span class="rtm-badge info">' . $langs->trans('TicketMoneyBillingBillable') . '</span>';
-    } elseif ($society === null) {
-        print '<span class="opacitymedium">—</span>';
-    } elseif ($society->frozen) {
-        print '<span class="rtm-badge bad">' . $langs->trans('TicketMoneyCreditFrozen') . '</span>';
-    } elseif ($society->period !== null) {
-        $left = max(0, $society->period->credit - $society->period->used);
-        $pct  = $society->period->credit > 0 ? min(100, (int) round($society->period->used / $society->period->credit * 100)) : 100;
-        print '<div class="rtm-credit"><span class="rtm-credit-bar"><span style="width:' . $pct . '%"></span></span>';
-        print '<span>' . $langs->trans('TicketMoneyCreditLeft', ReedcrmTicketMoney::formatDuration($left), ReedcrmTicketMoney::formatDuration($society->period->credit)) . '</span></div>';
-        print '<div class="rtm-meta">' . dol_escape_htmltag($society->period->product_ref) . ' · ' . $langs->trans('TicketMoneyUntil', dol_print_date($society->period->end, 'day')) . '</div>';
-    } else {
-        print '<span class="rtm-badge warn">' . $langs->trans('TicketMoneyNoSubscription') . '</span>';
-    }
-    print '</td>';
-
-    // Time
-    print '<td class="right nowraponall">';
-    if ($row->time_total > 0) {
-        print '<strong>' . ReedcrmTicketMoney::formatDuration($row->time_total) . '</strong>';
-        $details = [];
-        if ($row->time_included > 0) {
-            $details[] = $langs->trans('TicketMoneyIncluded', ReedcrmTicketMoney::formatDuration($row->time_included));
-        }
-        if ($row->time_invoiced > 0) {
-            $details[] = $langs->trans('TicketMoneyInvoiced', ReedcrmTicketMoney::formatDuration($row->time_invoiced));
-        }
-        if ($row->time_free > 0) {
-            $details[] = $langs->trans('TicketMoneyFree', ReedcrmTicketMoney::formatDuration($row->time_free));
-        }
-        if (!empty($details)) {
-            print '<div class="rtm-meta">' . implode(' · ', $details) . '</div>';
-        }
-    } else {
-        print '<span class="opacitymedium">—</span>';
-    }
-    print '</td>';
-
-    // Amount to bill
-    print '<td class="right nowraponall">';
-    if ($row->amount_to_bill > 0) {
-        $totalToBill += $row->amount_to_bill;
-        print '<span class="rtm-amount">' . price($row->amount_to_bill, 0, $langs, 1, -1, -1, $currency) . '</span>';
-        print '<div class="rtm-meta">' . ReedcrmTicketMoney::formatDuration(ReedcrmTicketMoney::roundBillable($row->time_to_bill)) . '</div>';
-    } else {
-        print '<span class="opacitymedium">—</span>';
-    }
-    print '</td>';
-
-    // Next action : one button
-    print '<td class="right nowraponall">';
-    $button = ['label' => $langs->trans('TicketMoneyActionOpen'), 'url' => $cardUrl, 'css' => 'mute', 'icon' => 'fa-arrow-right'];
-    switch ($row->action) {
-        case ReedcrmTicketMoney::ACTION_ATTACH_THIRDPARTY:
-            $button = ['label' => $langs->trans('TicketMoneyActionAttachThirdparty'), 'url' => DOL_URL_ROOT . '/ticket/card.php?track_id=' . urlencode($row->track_id) . '&action=editcustomer&token=' . newToken(), 'css' => 'warn', 'icon' => 'fa-building'];
-            break;
-        case ReedcrmTicketMoney::ACTION_RELAUNCH:
-            $button = ['label' => $langs->trans('TicketMoneyActionRelaunch', price($society->overdue, 0, $langs, 1, 0, 0, $currency)), 'url' => DOL_URL_ROOT . '/compta/facture/list.php?socid=' . $row->fk_soc . '&search_status=1&search_option=late', 'css' => 'bad', 'icon' => 'fa-bell'];
-            break;
-        case ReedcrmTicketMoney::ACTION_BILL:
-            if ($permissiontobill) {
-                $button = ['label' => $langs->trans('TicketMoneyActionBill', price($row->amount_to_bill, 0, $langs, 1, 0, 0, $currency)), 'url' => $selfUrl . '&action=bill&id=' . $row->id . '&token=' . newToken(), 'css' => 'good', 'icon' => 'fa-file-invoice-dollar'];
+        // Customer and its payment state
+        print '<td class="rtm-col">';
+        if ($society === null) {
+            print '<span class="rtm-badge warn">' . $langs->trans('TicketMoneyNoThirdparty') . '</span>';
+        } else {
+            $societyStatic->id     = $row->fk_soc;
+            $societyStatic->name   = $row->soc_name;
+            $societyStatic->status = $row->soc_status;
+            print $societyStatic->getNomUrl(1, '', 28);
+            print '<div class="rtm-line">';
+            if ($society->overdue > 0) {
+                print '<span class="rtm-badge bad classfortooltip" title="' . dol_escape_htmltag($langs->trans('TicketMoneyOverdueTooltip', $society->overdue_count, dol_print_date($society->overdue_oldest, 'day'))) . '">';
+                print $langs->trans('TicketMoneyOverdue', price($society->overdue, 0, $langs, 1, 0, 0, $currency)) . '</span>';
+            } else {
+                print '<span class="rtm-badge good">' . $langs->trans('TicketMoneyUpToDate') . '</span>';
             }
-            break;
-        case ReedcrmTicketMoney::ACTION_QUOTE:
-            if ($permissiontoquote) {
-                $button = ['label' => $langs->trans('TicketMoneyActionQuote'), 'url' => $selfUrl . '&action=quote&id=' . $row->id . '&token=' . newToken(), 'css' => 'info', 'icon' => 'fa-file-signature'];
-            }
-            break;
-        case ReedcrmTicketMoney::ACTION_ATTACH_PROJECT:
-            $button = ['label' => $langs->trans('TicketMoneyActionAttachProject'), 'url' => DOL_URL_ROOT . '/ticket/card.php?id=' . $row->id . '&action=classify&token=' . newToken(), 'css' => 'warn', 'icon' => 'fa-project-diagram'];
-            break;
-        case ReedcrmTicketMoney::ACTION_LOG_TIME:
-            $button = ['label' => $langs->trans('TicketMoneyActionLogTime'), 'url' => $cardUrl . '#reedcrm-ticket-money', 'css' => 'info', 'icon' => 'fa-stopwatch'];
-            break;
-        case ReedcrmTicketMoney::ACTION_CLOSE:
-            $button = ['label' => $langs->trans('TicketMoneyActionClose'), 'url' => DOL_URL_ROOT . '/ticket/card.php?track_id=' . urlencode($row->track_id) . '&action=close&token=' . newToken(), 'css' => 'mute', 'icon' => 'fa-archive'];
-            break;
-    }
-    print '<a class="rtm-action ' . $button['css'] . '" href="' . dol_escape_htmltag($button['url']) . '"><i class="fas ' . $button['icon'] . ' paddingright"></i>' . $button['label'] . '</a>';
-    print '</td>';
+            print '</div>';
+        }
+        print '</td>';
 
-    print '</tr>';
+        // Coverage : credit of the subscription, frozen, or none
+        print '<td class="rtm-col">';
+        if ($row->billing === ReedcrmTicketMoney::BILLING_FREE) {
+            print '<span class="rtm-badge mute classfortooltip" title="' . dol_escape_htmltag($row->billing_note) . '">' . $langs->trans('TicketMoneyBillingFree') . '</span>';
+        } elseif ($row->billing === ReedcrmTicketMoney::BILLING_BILLABLE) {
+            print '<span class="rtm-badge info">' . $langs->trans('TicketMoneyBillingBillable') . '</span>';
+        } elseif ($society === null) {
+            print '<span class="opacitymedium">—</span>';
+        } elseif ($society->frozen) {
+            print '<span class="rtm-badge bad">' . $langs->trans('TicketMoneyCreditFrozen') . '</span>';
+        } elseif ($society->period !== null) {
+            $left = max(0, $society->period->credit - $society->period->used);
+            $pct  = $society->period->credit > 0 ? min(100, (int) round($society->period->used / $society->period->credit * 100)) : 100;
+            print '<div class="rtm-credit"><span class="rtm-credit-bar"><span style="width:' . $pct . '%"></span></span>';
+            print '<span>' . $langs->trans('TicketMoneyCreditLeft', ReedcrmTicketMoney::formatDuration($left), ReedcrmTicketMoney::formatDuration($society->period->credit)) . '</span></div>';
+            print '<div class="rtm-meta">' . dol_escape_htmltag($society->period->product_ref) . ' · ' . $langs->trans('TicketMoneyUntil', dol_print_date($society->period->end, 'day')) . '</div>';
+        } else {
+            print '<span class="rtm-badge warn">' . $langs->trans('TicketMoneyNoSubscription') . '</span>';
+        }
+        print '</td>';
+
+        // Time
+        print '<td class="right rtm-col-time">';
+        if ($row->time_total > 0) {
+            print '<strong>' . ReedcrmTicketMoney::formatDuration($row->time_total) . '</strong>';
+            $details = [];
+            if ($row->time_included > 0) {
+                $details[] = $langs->trans('TicketMoneyIncluded', ReedcrmTicketMoney::formatDuration($row->time_included));
+            }
+            if ($row->time_invoiced > 0) {
+                $details[] = $langs->trans('TicketMoneyInvoiced', ReedcrmTicketMoney::formatDuration($row->time_invoiced));
+            }
+            if ($row->time_free > 0) {
+                $details[] = $langs->trans('TicketMoneyFree', ReedcrmTicketMoney::formatDuration($row->time_free));
+            }
+            if (!empty($details)) {
+                print '<div class="rtm-meta">' . implode(' · ', $details) . '</div>';
+            }
+        } else {
+            print '<span class="opacitymedium">—</span>';
+        }
+        print '</td>';
+
+        // Amount to bill
+        print '<td class="right nowraponall">';
+        if ($row->amount_to_bill > 0) {
+            $totalToBill += $row->amount_to_bill;
+            print '<span class="rtm-amount">' . price($row->amount_to_bill, 0, $langs, 1, -1, -1, $currency) . '</span>';
+            print '<div class="rtm-meta">' . ReedcrmTicketMoney::formatDuration(ReedcrmTicketMoney::roundBillable($row->time_to_bill)) . '</div>';
+        } else {
+            print '<span class="opacitymedium">—</span>';
+        }
+        print '</td>';
+
+        // Next action : one button
+        print '<td class="right nowraponall">';
+        $button = ['label' => $langs->trans('TicketMoneyActionOpen'), 'url' => $cardUrl, 'css' => 'mute', 'icon' => 'fa-arrow-right'];
+        switch ($row->action) {
+            case ReedcrmTicketMoney::ACTION_ATTACH_THIRDPARTY:
+                $button = ['label' => $langs->trans('TicketMoneyActionAttachThirdparty'), 'url' => DOL_URL_ROOT . '/ticket/card.php?track_id=' . urlencode($row->track_id) . '&action=editcustomer&token=' . newToken(), 'css' => 'warn', 'icon' => 'fa-building'];
+                break;
+            case ReedcrmTicketMoney::ACTION_RELAUNCH:
+                $button = ['label' => $langs->trans('TicketMoneyActionRelaunch', price($society->overdue, 0, $langs, 1, 0, 0, $currency)), 'url' => DOL_URL_ROOT . '/compta/facture/list.php?socid=' . $row->fk_soc . '&search_status=1&search_option=late', 'css' => 'bad', 'icon' => 'fa-bell'];
+                break;
+            case ReedcrmTicketMoney::ACTION_BILL:
+                if ($permissiontobill) {
+                    $button = ['label' => $langs->trans('TicketMoneyActionBill', price($row->amount_to_bill, 0, $langs, 1, 0, 0, $currency)), 'url' => $selfUrl . '&action=bill&id=' . $row->id . '&token=' . newToken(), 'css' => 'good', 'icon' => 'fa-file-invoice-dollar'];
+                }
+                break;
+            case ReedcrmTicketMoney::ACTION_QUOTE:
+                if ($permissiontoquote) {
+                    $button = ['label' => $langs->trans('TicketMoneyActionQuote'), 'url' => $selfUrl . '&action=quote&id=' . $row->id . '&token=' . newToken(), 'css' => 'info', 'icon' => 'fa-file-signature'];
+                }
+                break;
+            case ReedcrmTicketMoney::ACTION_ATTACH_PROJECT:
+                $button = ['label' => $langs->trans('TicketMoneyActionAttachProject'), 'url' => DOL_URL_ROOT . '/ticket/card.php?id=' . $row->id . '&action=classify&token=' . newToken(), 'css' => 'warn', 'icon' => 'fa-project-diagram'];
+                break;
+            case ReedcrmTicketMoney::ACTION_LOG_TIME:
+                $button = ['label' => $langs->trans('TicketMoneyActionLogTime'), 'url' => $cardUrl . '#reedcrm-ticket-money', 'css' => 'info', 'icon' => 'fa-stopwatch'];
+                break;
+            case ReedcrmTicketMoney::ACTION_CLOSE:
+                $button = ['label' => $langs->trans('TicketMoneyActionClose'), 'url' => DOL_URL_ROOT . '/ticket/card.php?track_id=' . urlencode($row->track_id) . '&action=close&token=' . newToken(), 'css' => 'mute', 'icon' => 'fa-archive'];
+                break;
+        }
+        print '<a class="rtm-action ' . $button['css'] . '" href="' . dol_escape_htmltag($button['url']) . '"><i class="fas ' . $button['icon'] . ' paddingright"></i>' . $button['label'] . '</a>';
+        print '</td>';
+
+        print '</tr>';
+    }
 }
 
 if (!empty($rows)) {
