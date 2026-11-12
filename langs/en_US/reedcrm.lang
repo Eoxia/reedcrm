@@ -1888,3 +1888,6 @@ TicketTechBillUntil = Bill on %s
 TicketTechBillAll = Bill everything
 TicketTechBillAllConfirm = Create %s draft invoices, one per customer, with the time logged up to %s?
 TicketTechLegend = The technician is the one who logged the time. "To bill": time not billed yet, logged up to %s, outside the support credit and the free tickets, at the rate of the billing product, rounded per ticket. The button bills all the time of the customer's tickets up to that date, whoever logged it; the time logged after stays to bill. Invoices are created as drafts.
+TicketTechTileToBillMine = of which %s of my time
+TicketTechShare = Technician's share (excl. tax)
+TicketTechShareHelp = Time to bill logged by this technician, at the customer's rate, before the rounding per ticket. The sum of the shares can be a little below the billed total.
