@@ -171,6 +171,16 @@ class ActionsReedcrm
                 }
                 if ($leftmenu === 'ticketmy') {
                     $item['url'] = '/reedcrm/view/ticket_money.php?mode=mine&mainmenu=ticket&leftmenu=ticketmy';
+                    $items[]     = $item;
+
+                    // Tech view (#1250) : what to do first, what to bill at the end of the month
+                    $tech             = $item;
+                    $tech['url']      = '/reedcrm/view/ticket_tech.php?mainmenu=ticket&leftmenu=tickettech';
+                    $tech['titre']    = $langs->trans('TicketTechMenu');
+                    $tech['leftmenu'] = 'tickettech';
+                    $tech['position'] = ($item['position'] ?? 0) + 1;
+                    $items[]          = $tech;
+                    continue;
                 }
                 $items[] = $item;
             }

@@ -122,6 +122,11 @@ class ReedcrmTicketMoney
     protected $rates = [];
 
     /**
+     * @var int While billing : last date of the time billed, 0 for all of it
+     */
+    protected $billUntil = 0;
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -210,6 +215,7 @@ class ReedcrmTicketMoney
      * Options :
      * - ticket_ids        int[] Load these tickets only (the card, a billing action)
      * - with_closed_to_bill int   1 (default) to add the closed tickets that still hold time to bill
+     * - time_since        int   Also add the tickets with time logged since this date, billed or not (tech view of a month)
      *
      * Every ticket of the customers concerned is read too : the credit of a customer is shared by all its tickets.
      *
@@ -236,7 +242,11 @@ class ReedcrmTicketMoney
                 $sql .= ' OR EXISTS (SELECT 1 FROM ' . MAIN_DB_PREFIX . 'projet_task AS pt';
                 $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . "element_time AS et ON et.elementtype = 'task' AND et.fk_element = pt.rowid";
                 $sql .= ' WHERE pt.fk_projet = t.fk_project AND pt.label = CONCAT(' . $this->getTaskPrefixSql() . ', t.ref)';
-                $sql .= ' AND (et.invoice_id IS NULL OR et.invoice_id = 0))';
+                $sql .= ' AND (et.invoice_id IS NULL OR et.invoice_id = 0';
+                if (!empty($options['time_since'])) {
+                    $sql .= " OR et.element_date >= '" . $this->db->idate((int) $options['time_since']) . "'";
+                }
+                $sql .= '))';
             }
             $sql .= ')';
         }
@@ -395,9 +405,10 @@ class ReedcrmTicketMoney
      *
      * @param  User  $user      User who bills
      * @param  int[] $ticketIds Tickets to bill
+     * @param  int   $until     Bill only the time logged up to this date (end of the month billed), 0 for all of it
      * @return int[]            Ids of the draft invoices created, by customer id ; see $this->errors
      */
-    public function billTickets(User $user, array $ticketIds): array
+    public function billTickets(User $user, array $ticketIds, int $until = 0): array
     {
         global $langs, $mysoc;
 
@@ -405,8 +416,9 @@ class ReedcrmTicketMoney
         require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
         require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
 
-        $this->errors = [];
-        $invoiceIds   = [];
+        $this->errors    = [];
+        $this->billUntil = $until;
+        $invoiceIds      = [];
 
         $product = $this->getProduct();
         if (empty($product)) {
@@ -420,7 +432,7 @@ class ReedcrmTicketMoney
         // Tickets to bill, grouped by customer
         $bySoc = [];
         foreach ($this->getTargets() as $ticket) {
-            if ($ticket->fk_soc > 0 && $ticket->time_to_bill > 0) {
+            if ($ticket->fk_soc > 0 && $this->getSecondsToBill($ticket->id, $until) > 0) {
                 $bySoc[$ticket->fk_soc][] = $ticket;
             }
         }
@@ -465,7 +477,7 @@ class ReedcrmTicketMoney
             $price = $productStatic->getSellPrice($mysoc, $society);
             $error = 0;
             foreach ($tickets as $ticket) {
-                $billedSeconds = self::roundBillable($ticket->time_to_bill);
+                $billedSeconds = self::roundBillable($this->getSecondsToBill($ticket->id, $until));
                 $qty           = round($billedSeconds / 3600, 4);
                 $lineId        = $invoice->addline(
                     $this->getLineDescription($ticket, $billedSeconds),
@@ -504,8 +516,66 @@ class ReedcrmTicketMoney
             $this->db->commit();
             $invoiceIds[$socId] = $invoiceId;
         }
+        $this->billUntil = 0;
 
         return $invoiceIds;
+    }
+
+    /**
+     * Time entries of a ticket still to bill, logged up to a date
+     *
+     * @param  int        $ticketId Ticket id
+     * @param  int        $until    Last date taken, 0 for every entry
+     * @return stdClass[]           Entries (with their part to bill in to_bill)
+     */
+    public function getEntriesToBill(int $ticketId, int $until = 0): array
+    {
+        $entries = [];
+        foreach ($this->timeEntries[$ticketId] ?? [] as $entry) {
+            if ($entry->to_bill > 0 && $entry->invoice_id <= 0 && ($until <= 0 || $entry->date <= $until)) {
+                $entries[] = $entry;
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Time of a ticket still to bill, logged up to a date, before rounding
+     *
+     * @param  int $ticketId Ticket id
+     * @param  int $until    Last date taken, 0 for every entry
+     * @return int           Seconds
+     */
+    public function getSecondsToBill(int $ticketId, int $until = 0): int
+    {
+        $seconds = 0;
+        foreach ($this->getEntriesToBill($ticketId, $until) as $entry) {
+            $seconds += $entry->to_bill;
+        }
+
+        return $seconds;
+    }
+
+    /**
+     * Every time entry loaded, by ticket id, with its part included in the credit and its part to bill
+     *
+     * @return array<int,stdClass[]>
+     */
+    public function getTimeEntries(): array
+    {
+        return $this->timeEntries;
+    }
+
+    /**
+     * Hourly rate (HT) of a customer
+     *
+     * @param  int   $socId Customer id
+     * @return float        Rate, 0 when the billing product is missing
+     */
+    public function getHourlyRate(int $socId): float
+    {
+        return $this->getRate($socId);
     }
 
     /**
@@ -629,8 +699,8 @@ class ReedcrmTicketMoney
      */
     protected function loadTickets(array $socIds): int
     {
-        $sql  = 'SELECT t.rowid, t.ref, t.track_id, t.subject, t.fk_soc, t.fk_project, t.fk_user_assign, t.fk_statut, t.type_code,';
-        $sql .= ' t.datec, t.date_close, s.nom AS soc_name, s.status AS soc_status, p.ref AS project_ref';
+        $sql  = 'SELECT t.rowid, t.ref, t.track_id, t.subject, t.fk_soc, t.fk_project, t.fk_user_assign, t.fk_statut, t.type_code, t.severity_code,';
+        $sql .= ' t.datec, t.date_close, s.nom AS soc_name, s.status AS soc_status, p.ref AS project_ref, p.title AS project_title';
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'ticket AS t';
         $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'societe AS s ON s.rowid = t.fk_soc';
         $sql .= ' LEFT JOIN ' . MAIN_DB_PREFIX . 'projet AS p ON p.rowid = t.fk_project';
@@ -656,6 +726,8 @@ class ReedcrmTicketMoney
                 'soc_status'       => (int) $obj->soc_status,
                 'fk_project'       => (int) $obj->fk_project,
                 'project_ref'      => (string) $obj->project_ref,
+                'project_title'    => (string) $obj->project_title,
+                'severity_code'    => (string) $obj->severity_code,
                 'fk_user_assign'   => (int) $obj->fk_user_assign,
                 'status'           => (int) $obj->fk_statut,
                 'type_code'        => (string) $obj->type_code,
@@ -1127,14 +1199,23 @@ class ReedcrmTicketMoney
         global $langs;
 
         $desc = $langs->transnoentities('TicketMoneyLineTitle', $ticket->ref, $ticket->subject);
-        foreach ($this->timeEntries[$ticket->id] ?? [] as $entry) {
-            if ($entry->to_bill <= 0) {
-                continue;
-            }
+        foreach ($this->getEntriesToBill($ticket->id, $this->billUntil) as $entry) {
             $note  = trim(dol_string_nohtmltag((string) $entry->note));
             $desc .= "\n" . dol_print_date($entry->date, 'day') . ' - ' . self::formatDuration($entry->to_bill) . ($note !== '' ? ' - ' . dol_trunc($note, 120) : '');
         }
-        $desc .= "\n" . $langs->transnoentities('TicketMoneyLineCount', self::formatDuration($ticket->time_total), self::formatDuration($ticket->time_included + $ticket->time_invoiced + $ticket->time_free), self::formatDuration($billedSeconds), getDolGlobalInt('REEDCRM_TICKET_MONEY_ROUNDING_MINUTES', 15));
+
+        // Time counted up to the billed date only : what was logged after it is billed next time
+        $total   = 0;
+        $toBill  = 0;
+        foreach ($this->timeEntries[$ticket->id] ?? [] as $entry) {
+            if ($this->billUntil <= 0 || $entry->date <= $this->billUntil) {
+                $total += $entry->duration;
+            }
+        }
+        foreach ($this->getEntriesToBill($ticket->id, $this->billUntil) as $entry) {
+            $toBill += $entry->to_bill;
+        }
+        $desc .= "\n" . $langs->transnoentities('TicketMoneyLineCount', self::formatDuration($total), self::formatDuration($total - $toBill), self::formatDuration($billedSeconds), getDolGlobalInt('REEDCRM_TICKET_MONEY_ROUNDING_MINUTES', 15));
 
         return $desc;
     }
@@ -1150,10 +1231,7 @@ class ReedcrmTicketMoney
      */
     protected function markInvoiced(stdClass $ticket, int $invoiceId, int $lineId): int
     {
-        foreach ($this->timeEntries[$ticket->id] ?? [] as $entry) {
-            if ($entry->to_bill <= 0 || $entry->invoice_id > 0) {
-                continue;
-            }
+        foreach ($this->getEntriesToBill($ticket->id, $this->billUntil) as $entry) {
             if ($entry->included > 0) {
                 $sql = 'UPDATE ' . MAIN_DB_PREFIX . 'element_time SET element_duration = ' . ((int) $entry->included) . ' WHERE rowid = ' . ((int) $entry->id);
                 if (!$this->db->query($sql)) {
@@ -1173,6 +1251,19 @@ class ReedcrmTicketMoney
         }
 
         return 1;
+    }
+
+    /**
+     * Rank of a ticket priority (its severity) : the most urgent first
+     *
+     * @param  string $severityCode Code of the severity dictionary (BLOCKING, HIGH, NORMAL, LOW)
+     * @return int                  0 for the most urgent
+     */
+    public static function getPriorityRank(string $severityCode): int
+    {
+        $ranks = ['BLOCKING' => 0, 'HIGH' => 1, 'NORMAL' => 2, 'LOW' => 3];
+
+        return $ranks[$severityCode] ?? 2;
     }
 
     /**
