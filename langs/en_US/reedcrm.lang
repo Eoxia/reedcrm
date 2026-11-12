@@ -940,11 +940,11 @@ TodoPropalRelaunchNote = Proposal validated on %s, amount %s, still unanswered.
 TodoInvoiceRelaunchLabel = Relaunch unpaid invoice %s
 TodoInvoiceRelaunchNote = Invoice due on %s, amount %s, still unpaid.
 TodoPropalRelaunchCronLabel = ReedCRM - Relaunches of unanswered proposals
-TodoPropalRelaunchCronComment = Creates an event to do for every proposal validated more than 30 days ago (constant REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) that is neither signed nor refused. The event feeds the "Proposals to relaunch" column of the Todo board.
-TodoPropalRelaunchCronResult = %s proposal relaunch(es) created
+TodoPropalRelaunchCronComment = Creates an event to do for every proposal validated more than 30 days ago (constant REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) that is neither signed nor refused. The event feeds the "Proposals to relaunch" column of the Todo board, it turns Done as soon as the proposal is signed, refused, billed or cancelled.
+TodoPropalRelaunchCronResult = %s proposal relaunch(es) created, %s closed as the proposal no longer awaits an answer
 TodoInvoiceRelaunchCronLabel = ReedCRM - Relaunches of unpaid invoices
-TodoInvoiceRelaunchCronComment = Creates an event to do for every validated invoice still unpaid more than 30 days after its due date (constant REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). The event feeds the "Invoices to relaunch" column of the Todo board.
-TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created
+TodoInvoiceRelaunchCronComment = Creates an event to do for every validated invoice still unpaid more than 30 days after its due date (constant REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). The event feeds the "Invoices to relaunch" column of the Todo board, it turns Done as soon as the invoice is paid, abandoned or set back to draft.
+TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created, %s closed as the invoice is no longer unpaid
 
 # Signed quotes never invoiced
 SignedUnbilledMenu = Signed quotes not invoiced
