@@ -55,6 +55,35 @@ $lifecycleCompact = !empty($lifecycleCompact);
 
         // Each line is escaped on its own so the <br> separating them survives into the tooltip
         $stepTooltip = implode('<br>', array_map('dol_escape_htmltag', $tooltipLines));
+
+        // Documents behind the milestone, the most recent first, as a table under the lines of detail
+        if (!empty($lifecycleStep['documents']['rows'])) {
+            $stepDocuments = $lifecycleStep['documents'];
+
+            $stepTooltip .= '<table class="reedcrm-lifecycle-tooltip-documents"><tr>';
+            foreach (['Ref' => '', 'Date' => '', 'AmountHT' => 'reedcrm-lifecycle-tooltip-amount', 'Status' => ''] as $columnLabel => $columnClass) {
+                $stepTooltip .= '<th' . ($columnClass ? ' class="' . $columnClass . '"' : '') . '>' . dol_escape_htmltag($langs->transnoentities($columnLabel)) . '</th>';
+            }
+            $stepTooltip .= '</tr>';
+            foreach (array_slice($stepDocuments['rows'], 0, REEDCRM_LIFECYCLE_TOOLTIP_DOCUMENT_LIMIT) as $document) {
+                $stepTooltip .= '<tr>';
+                $stepTooltip .= '<td class="reedcrm-lifecycle-tooltip-ref">' . dol_escape_htmltag($document['ref']) . '</td>';
+                $stepTooltip .= '<td>' . (!empty($document['date']) ? dol_print_date($document['date'], 'day', 'tzuser') : '&ndash;') . '</td>';
+                $stepTooltip .= '<td class="reedcrm-lifecycle-tooltip-amount">' . price($document['total_ht'], 0, $langs, 1, -1, -1, $conf->currency) . '</td>';
+                $stepTooltip .= '<td>' . reedcrm_lifecycle_document_status($stepDocuments['element'], $document) . '</td>';
+                $stepTooltip .= '</tr>';
+            }
+            $stepTooltip .= '</table>';
+
+            $hiddenDocumentCount = count($stepDocuments['rows']) - REEDCRM_LIFECYCLE_TOOLTIP_DOCUMENT_LIMIT;
+            if ($hiddenDocumentCount > 0) {
+                $stepTooltip .= '<div class="reedcrm-lifecycle-tooltip-more">' . dol_escape_htmltag($langs->transnoentities('LifecycleTooltipMoreDocuments', $hiddenDocumentCount)) . '</div>';
+            }
+        }
+
+        // The tooltip shows its title as HTML: escaped once more as a whole, the markup comes back out of the
+        // attribute while the text escaped above stays text
+        $stepTooltip = htmlspecialchars($stepTooltip, ENT_QUOTES, 'UTF-8');
         ?>
         <div class="reedcrm-lifecycle-step reedcrm-lifecycle-step-<?php echo dol_escape_htmltag($lifecycleStep['state']); ?><?php echo !empty($lifecycleStep['current']) ? ' reedcrm-lifecycle-step-current' : ''; ?>" data-step="<?php echo dol_escape_htmltag($lifecycleStep['key']); ?>">
             <span class="reedcrm-lifecycle-dot classfortooltip" title="<?php echo $stepTooltip; ?>"><i class="fas <?php echo dol_escape_htmltag($lifecycleStep['picto']); ?>"></i></span>
