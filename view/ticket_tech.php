@@ -49,6 +49,7 @@ saturne_load_langs(['ticket', 'bills', 'projects']);
 
 // Get parameters
 $action = GETPOST('action', 'aZ09');
+$id     = GETPOSTINT('id');
 $socid  = GETPOSTINT('socid');
 $month  = GETPOST('month', 'alpha');
 // The technician is the one who logged the time : me by default, everybody with -1
@@ -73,10 +74,48 @@ $hookmanager->initHooks(['reedcrmtickettech']);
 $permissiontoread  = $user->hasRight('reedcrm', 'read') && $user->hasRight('ticket', 'read');
 $permissiontobill  = $user->hasRight('facture', 'creer');
 $permissiontoquote = $user->hasRight('propal', 'creer');
+// Closing a ticket asks for the same right as on its card (ticket/card.php, $permissiontomanage)
+$permissiontoclose = getDolGlobalString('MAIN_USE_ADVANCED_PERMS') ? $user->hasRight('ticket', 'manage_advance') : $user->hasRight('ticket', 'write');
 saturne_check_access($permissiontoread);
 
 $techUrl = $_SERVER['PHP_SELF'] . '?search_tech=' . $searchTech . '&month=' . $month;
 $listUrl = dol_buildpath('/reedcrm/view/ticket_money.php', 1);
+
+/*
+ * Closing actions
+ */
+
+// Close (solved) or abandon (not solved) a ticket : the time spent is logged first, a ticket closed without time is
+// work that is never billed, so the ticket stays open when that time cannot be logged
+if (in_array($action, ['confirm_reedcrm_close', 'confirm_reedcrm_abandon'], true) && $id > 0 && $permissiontoclose) {
+    if (GETPOST('token', 'alpha') !== currentToken()) {
+        accessforbidden('Bad value for CSRF token');
+    }
+    if (GETPOST('confirm', 'alpha') === 'yes') {
+        require_once __DIR__ . '/../lib/reedcrm_ticket_time.lib.php';
+
+        $ticket  = new Ticket($db);
+        $minutes = GETPOSTINT('reedcrm_close_minutes');
+        $error   = $ticket->fetch($id) > 0 ? '' : $langs->trans('ErrorRecordNotFound');
+        if ($error === '' && $minutes > 0) {
+            $error = reedcrm_ticket_log_time($db, $user, $ticket, $minutes, $langs->transnoentities('TicketTechCloseTimeNote'));
+        }
+        if ($error === '') {
+            if (GETPOSTISSET('contactid')) {
+                $ticket->context['contact_id'] = GETPOSTINT('contactid');
+            }
+            if ($ticket->close($user, $action === 'confirm_reedcrm_abandon' ? 1 : 0) > 0) {
+                setEventMessages($langs->trans('TicketTechClosed', $ticket->ref) . ($minutes > 0 ? ' ' . $langs->trans('TicketMoneyTimeLogged', $minutes) : ''), []);
+            } else {
+                setEventMessages($ticket->error, $ticket->errors, 'errors');
+            }
+        } else {
+            setEventMessages($error, [], 'errors');
+        }
+    }
+    header('Location: ' . $techUrl . '#rtm-tech-todo');
+    exit;
+}
 
 /*
  * Data
@@ -237,6 +276,38 @@ $endLabel   = dol_print_date($monthEnd, 'day');
 $morehtmlright = '<a class="butAction" href="' . dol_escape_htmltag($listUrl . '?mainmenu=ticket&leftmenu=ticketlist') . '">' . $langs->trans('TicketMoneyMenuList') . '</a>';
 print load_fiche_titre($title, $morehtmlright, 'ticket');
 
+// Confirmation of a closing : the questions of the ticket card (who to notify), plus the time still to log
+if (in_array($action, ['reedcrm_close', 'reedcrm_abandon'], true) && $id > 0 && $permissiontoclose) {
+    $ticket = new Ticket($db);
+    if ($ticket->fetch($id) > 0) {
+        $contacts = ['-2' => $langs->trans('TicketNotifyAllTiersAtClose'), '-3' => $langs->trans('TicketNotNotifyTiersAtClose')];
+        foreach ($ticket->getInfosTicketExternalContact(1) as $contact) {
+            $contacts[$contact['id']] = trim($contact['civility'] . ' ' . $contact['lastname'] . ' ' . $contact['firstname']);
+        }
+        $formquestion = [
+            ['name' => 'contactid', 'type' => 'select', 'label' => $langs->trans('NotifyThirdpartyOnTicketClosing'), 'values' => $contacts, 'default' => getDolGlobalString('TICKET_NOTIFY_AT_CLOSING') ? '-2' : '-3'],
+        ];
+        // No time on the ticket yet : the default time is proposed, closing it at zero is a decision, not an oversight
+        $moneyTicket = $money->getTicket($id);
+        if (!empty($ticket->fk_project)) {
+            $default        = ($moneyTicket !== null && $moneyTicket->time_total <= 0) ? getDolGlobalInt('REEDCRM_TICKET_TIME_DEFAULT_MINUTES', 15) : '';
+            $formquestion[] = ['name' => 'reedcrm_close_minutes', 'type' => 'text', 'label' => $langs->trans('TicketTechCloseMinutes'), 'value' => $default, 'morecss' => 'width50'];
+        } else {
+            $formquestion[] = ['type' => 'onecolumn', 'value' => '<span class="rtm-warn">' . $langs->trans('TicketTechCloseNoProject') . '</span>'];
+        }
+        $abandon = $action === 'reedcrm_abandon';
+        print $form->formconfirm(
+            $techUrl . '&id=' . $id,
+            $langs->trans($abandon ? 'TicketTechAbandonTitle' : 'TicketTechCloseTitle', $ticket->ref),
+            $langs->trans($abandon ? 'TicketTechAbandonQuestion' : 'TicketTechCloseQuestion', dol_escape_htmltag($ticket->subject)),
+            $abandon ? 'confirm_reedcrm_abandon' : 'confirm_reedcrm_close',
+            $formquestion,
+            'yes',
+            1
+        );
+    }
+}
+
 // Styles : css/scss/pages/_ticket-money.scss
 print '<div class="rtm-intro">' . $langs->trans('TicketTechIntro') . '</div>';
 
@@ -322,7 +393,25 @@ foreach ($todo as $row) {
     print '</td>';
 
     print '<td class="right rtm-col-time">' . ($row->time_total > 0 ? '<strong>' . ReedcrmTicketMoney::formatDuration($row->time_total) . '</strong>' : '<span class="opacitymedium">—</span>') . '</td>';
-    print '<td class="right nowraponall">' . reedcrm_ticket_money_action_button($money, $row, $listUrl, ['bill' => $permissiontobill, 'quote' => $permissiontoquote]) . '</td>';
+    $closeUrl    = $techUrl . '&action=reedcrm_close&id=' . $row->id . '&token=' . newToken();
+    $closeIsNext = $permissiontoclose && $row->action === ReedcrmTicketMoney::ACTION_CLOSE;
+    print '<td class="right nowraponall">';
+    if ($closeIsNext) {
+        // Dormant ticket : its next action is the closing, done here rather than on the card
+        print '<a class="rtm-action mute" href="' . dol_escape_htmltag($closeUrl) . '"><i class="fas fa-archive paddingright"></i>' . $langs->trans('TicketMoneyActionClose') . '</a>';
+    } else {
+        print reedcrm_ticket_money_action_button($money, $row, $listUrl, ['bill' => $permissiontobill, 'quote' => $permissiontoquote]);
+    }
+    // Closing actions : solved or abandoned, the confirmation asks who to notify and the time still to log
+    if ($permissiontoclose) {
+        print '<div class="rtm-line rtm-close-actions">';
+        if (!$closeIsNext) {
+            print '<a class="rtm-action mute rtm-action-small" href="' . dol_escape_htmltag($closeUrl) . '" title="' . dol_escape_htmltag($langs->trans('TicketTechCloseHelp')) . '"><i class="fas fa-check paddingright"></i>' . $langs->trans('TicketTechClose') . '</a>';
+        }
+        print '<a class="rtm-action mute rtm-action-small" href="' . dol_escape_htmltag($techUrl . '&action=reedcrm_abandon&id=' . $row->id . '&token=' . newToken()) . '" title="' . dol_escape_htmltag($langs->trans('TicketTechAbandonHelp')) . '"><i class="fas fa-times paddingright"></i>' . $langs->trans('TicketTechAbandon') . '</a>';
+        print '</div>';
+    }
+    print '</td>';
     print '</tr>';
 }
 print '</table></div>';
