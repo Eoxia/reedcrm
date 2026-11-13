@@ -78,6 +78,7 @@ window.reedcrm.eventpro.init = function () {
   window.reedcrm.eventpro.initAddContact();
   window.reedcrm.eventpro.initAddProject();
   window.reedcrm.eventpro.initRelaunchTooltips();
+  window.reedcrm.eventpro.initRelaunchStatusSelector();
   window.reedcrm.eventpro.fixDatePickerTriggers();
 };
 
@@ -918,5 +919,325 @@ window.reedcrm.eventpro.initRelaunchTooltips = function () {
         });
       }
     }, 150);
+  });
+};
+
+/**
+ * Status of a relaunch picked from the panel of the widget: the badge opens a selector of the four
+ * statuses of the agenda, one choice writes it
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventpro.initRelaunchStatusSelector = function () {
+  var badges  = '.reedcrm-relaunch-status';
+  var options = '.reedcrm-relaunch-status-option';
+
+  // Namespaced and reset first: the module is initialised more than once on some pages
+  $(document).off('.reedcrmRelaunchStatus')
+    .on('click.reedcrmRelaunchStatus', badges, function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      window.reedcrm.eventpro.toggleRelaunchStatusMenu($(this));
+    })
+    .on('keydown.reedcrmRelaunchStatus', badges, function (event) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        window.reedcrm.eventpro.toggleRelaunchStatusMenu($(this));
+      }
+    })
+    .on('click.reedcrmRelaunchStatus', options, function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      window.reedcrm.eventpro.setRelaunchStatus($(this), false);
+    })
+    // The selector overflows the panel: closed under a pointer that did not move, it would leave the
+    // pointer outside the panel, which closes at once. After a choice made with the mouse it stays
+    // open, the check on the new status, until the pointer leaves it
+    .on('mouseleave.reedcrmRelaunchStatus', '.reedcrm-relaunch-status-menu', function () {
+      window.reedcrm.eventpro.closeRelaunchStatusMenu(false);
+    })
+    .on('keydown.reedcrmRelaunchStatus', options, function (event) {
+      var $option = $(this);
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        window.reedcrm.eventpro.setRelaunchStatus($option, true);
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        var $next = event.key === 'ArrowDown' ? $option.next(options) : $option.prev(options);
+        if ($next.length) {
+          $next.trigger('focus');
+        }
+      } else if (event.key === 'Escape' || event.key === 'Tab') {
+        window.reedcrm.eventpro.closeRelaunchStatusMenu(true);
+      }
+    })
+    // A click anywhere else closes the selector
+    .on('click.reedcrmRelaunchStatus', function (event) {
+      if (!$(event.target).closest('.reedcrm-relaunch-status-menu').length) {
+        window.reedcrm.eventpro.closeRelaunchStatusMenu(false);
+      }
+    });
+};
+
+/**
+ * Badge the selector is open for, null when it is closed
+ *
+ * @type {jQuery|null}
+ */
+window.reedcrm.eventpro.relaunchStatusBadge = null;
+
+/**
+ * Open the selector under a badge, or close it when it is already open for that badge
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param {jQuery} $badge Badge clicked
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventpro.toggleRelaunchStatusMenu = function ($badge) {
+  var current = window.reedcrm.eventpro.relaunchStatusBadge;
+  window.reedcrm.eventpro.closeRelaunchStatusMenu(false);
+  if ((current && current.is($badge)) || $badge.hasClass('is-busy')) {
+    return;
+  }
+
+  var $panel = $badge.closest('.reedcrm-relaunch-panel');
+  var $menu  = $panel.find('.reedcrm-relaunch-status-menu');
+  if (!$menu.length) {
+    return;
+  }
+
+  var status = String($badge.attr('data-status'));
+  $menu.find('.reedcrm-relaunch-status-option').each(function () {
+    $(this).toggleClass('is-current', String($(this).attr('data-status')) === status);
+  });
+
+  $menu.addClass('is-open');
+  window.reedcrm.eventpro.placeRelaunchStatusMenu($badge, $menu);
+
+  $badge.addClass('is-open').attr('aria-expanded', 'true');
+  window.reedcrm.eventpro.relaunchStatusBadge = $badge;
+
+  // A fixed selector would stay behind when the list or the page scrolls: it follows its badge
+  var follow = function () {
+    window.reedcrm.eventpro.placeRelaunchStatusMenu($badge, $menu);
+  };
+  $panel.closest('.reedcrm-relaunch-tooltip-content').on('scroll.reedcrmRelaunchStatus', follow);
+  $(window).on('scroll.reedcrmRelaunchStatus resize.reedcrmRelaunchStatus', follow);
+
+  // Without preventScroll, the focus scrolls the list towards the place of the selector in the markup
+  var $focus = $menu.find('.reedcrm-relaunch-status-option.is-current');
+  ($focus.length ? $focus : $menu.find('.reedcrm-relaunch-status-option').first())[0].focus({ preventScroll: true });
+};
+
+/**
+ * Place the selector under its badge, above it when the window has no room left below
+ *
+ * Fixed, not absolute: the panel clips what overflows it, the selector of the last lines would be cut.
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param {jQuery} $badge Badge the selector is open for
+ * @param {jQuery} $menu  Selector
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventpro.placeRelaunchStatusMenu = function ($badge, $menu) {
+  var rect = $badge[0].getBoundingClientRect();
+
+  // A badge scrolled out of the list takes its selector away with it
+  var $list = $badge.closest('.reedcrm-relaunch-tooltip-content');
+  if ($list.length) {
+    var listRect = $list[0].getBoundingClientRect();
+    if (rect.bottom < listRect.top || rect.top > listRect.bottom) {
+      window.reedcrm.eventpro.closeRelaunchStatusMenu(false);
+      return;
+    }
+  }
+
+  var menuWidth  = $menu.outerWidth();
+  var menuHeight = $menu.outerHeight();
+  var top        = rect.bottom + 4;
+  if (top + menuHeight > window.innerHeight - 8) {
+    top = rect.top - menuHeight - 4;
+  }
+  var left = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8));
+  $menu.css({ top: top + 'px', left: left + 'px' });
+};
+
+/**
+ * Close the selector
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param {Boolean} focusBadge Give the focus back to the badge, after a keyboard close
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventpro.closeRelaunchStatusMenu = function (focusBadge) {
+  var $badge = window.reedcrm.eventpro.relaunchStatusBadge;
+  $('.reedcrm-relaunch-status-menu.is-open').removeClass('is-open');
+  $(window).off('scroll.reedcrmRelaunchStatus resize.reedcrmRelaunchStatus');
+  $('.reedcrm-relaunch-tooltip-content').off('scroll.reedcrmRelaunchStatus');
+  window.reedcrm.eventpro.relaunchStatusBadge = null;
+
+  if ($badge) {
+    $badge.removeClass('is-open').attr('aria-expanded', 'false');
+    if (focusBadge) {
+      $badge.trigger('focus');
+    }
+  }
+};
+
+/**
+ * Write the status picked, then repaint the line and the two buttons of every widget of the page
+ * showing the same project or third party. A relaunch still to come that is closed moves to now: the
+ * dates it carried travel on the badge, so that reopening it from the same panel puts them back.
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @since   1.0.0
+ * @version 1.0.0
+ *
+ * @param {jQuery}  $option  Status picked in the selector
+ * @param {Boolean} keyboard Picked with the keyboard: the selector closes and gives the focus back to the badge
+ *
+ * @returns {void}
+ */
+window.reedcrm.eventpro.setRelaunchStatus = function ($option, keyboard) {
+  var $badge = window.reedcrm.eventpro.relaunchStatusBadge;
+  if (keyboard) {
+    window.reedcrm.eventpro.closeRelaunchStatusMenu(true);
+  }
+  if (!$badge) {
+    return;
+  }
+
+  var status = parseInt($option.attr('data-status'), 10);
+  if (status === parseInt($badge.attr('data-status'), 10) || $badge.hasClass('is-busy')) {
+    return;
+  }
+
+  var $panel    = $badge.closest('.reedcrm-relaunch-panel');
+  var $row      = $badge.closest('tr');
+  var url       = $panel.data('status-url');
+  var projectId = parseInt($panel.data('project-id'), 10) || 0;
+  var socid     = parseInt($panel.data('socid'), 10) || 0;
+  if (!url) {
+    return;
+  }
+
+  var data = {
+    event_id: $badge.data('event-id'),
+    status: status,
+    project_id: projectId,
+    socid: socid,
+    token: $('meta[name=anti-csrf-currenttoken]').attr('content') || ''
+  };
+
+  // Kept as an attribute rather than in the jQuery data cache, which a removal elsewhere can wipe
+  var restore = $badge.attr('data-restore');
+  if (restore) {
+    try {
+      restore = JSON.parse(restore);
+      data.restore_datep = restore.datep;
+      data.restore_datef = restore.datef;
+    } catch (e) {
+      // A broken value only loses the dates to put back, the status is still written
+    }
+  }
+
+  var showError = function (message) {
+    var $error = $('<span class="reedcrm-relaunch-status-error"></span>').text(message || $panel.data('status-error') || '');
+    $badge.after($error);
+    setTimeout(function () {
+      $error.fadeOut(200, function () {
+        $(this).remove();
+      });
+    }, 4000);
+  };
+
+  $row.find('.reedcrm-relaunch-status-error').remove();
+  $badge.addClass('is-busy');
+
+  $.ajax({
+    url: url,
+    type: 'POST',
+    data: data,
+    dataType: 'json',
+    success: function (response) {
+      if (!response || !response.success) {
+        showError(response && response.error);
+        return;
+      }
+
+      var open = window.reedcrm.eventpro.relaunchStatusBadge && window.reedcrm.eventpro.relaunchStatusBadge.is($badge);
+      $badge.attr('class', 'badge ' + response.badge.css + ' reedcrm-relaunch-status' + (open ? ' is-open' : ''))
+        .attr('data-status', response.status);
+      $badge.find('.reedcrm-relaunch-status-label').text(response.badge.label);
+
+      // The selector still open for this badge moves its check on the status written
+      if (open) {
+        $panel.find('.reedcrm-relaunch-status-option').each(function () {
+          $(this).toggleClass('is-current', parseInt($(this).attr('data-status'), 10) === response.status);
+        });
+      }
+
+      // The dates to put back stay on the badge as long as the relaunch is closed
+      if (response.restore) {
+        $badge.attr('data-restore', JSON.stringify(response.restore));
+      } else if (!response.closed) {
+        $badge.removeAttr('data-restore');
+      }
+
+      if (response.date) {
+        $row.find('.reedcrm-relaunch-panel-date').text(response.date);
+      }
+
+      $row.toggleClass('reedcrm-relaunch-line-overdue', response.late_days > 0);
+      $row.find('.reedcrm-relaunch-late-days').remove();
+      if (response.late_label) {
+        $row.find('.reedcrm-relaunch-panel-what').append($('<span class="reedcrm-relaunch-late-days"></span>').text(response.late_label));
+      }
+
+      if (response.segments) {
+        // Same scoping as the counters: the project when there is one, the third party otherwise
+        $('.reedcrm-relaunch-buttons').filter(function () {
+          var $buttons = $(this);
+          if (projectId > 0) {
+            return (parseInt($buttons.data('project-id'), 10) || 0) === projectId;
+          }
+          return (parseInt($buttons.data('project-id'), 10) || 0) === 0 && (parseInt($buttons.data('socid'), 10) || 0) === socid;
+        }).each(function () {
+          var $buttons = $(this);
+          $.each(response.segments, function (scope, segment) {
+            var $segment = $buttons.find('.reedcrm-relaunch-seg-' + scope);
+            $segment.removeClass('is-late is-overdue is-empty').addClass(segment.classes.join(' '));
+            $segment.find('.reedcrm-relaunch-btn-content').html(segment.content);
+          });
+        });
+      }
+    },
+    error: function (xhr) {
+      showError(xhr.responseJSON && xhr.responseJSON.error);
+    },
+    complete: function () {
+      $badge.removeClass('is-busy');
+    }
   });
 };
