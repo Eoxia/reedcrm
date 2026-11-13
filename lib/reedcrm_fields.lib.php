@@ -499,7 +499,7 @@ function reedcrm_load_list_categories(CommonObject $object): array
  */
 function reedcrm_field_categories(array $parameters, CommonObject $object): string
 {
-    global $conf, $langs, $param;
+    global $conf, $param;
 
     $objectId = (int) (!empty($object->id) ? $object->id : ($parameters['obj']->rowid ?? 0));
     if ($objectId <= 0) {
@@ -526,7 +526,7 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
         $tagUrl    = $listUrl . '&search_categories_filter[]=' . $category['id'];
 
         $out .= '<span class="noborderoncategories" style="background: #' . $color . ';">';
-        $out .= '<a class="' . $textColor . '" href="' . dol_escape_htmltag($tagUrl) . '" title="' . dol_escape_htmltag($langs->trans('Categories')) . '">';
+        $out .= '<a class="' . $textColor . '" href="' . dol_escape_htmltag($tagUrl) . '" title="' . dol_escape_htmltag($category['label']) . '">';
         $out .= '<span class="fas fa-tag paddingright"></span>' . dol_escape_htmltag($category['label']);
         $out .= '</a></span>';
     }
