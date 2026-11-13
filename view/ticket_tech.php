@@ -296,10 +296,12 @@ if (in_array($action, ['reedcrm_close', 'reedcrm_abandon'], true) && $id > 0 && 
             $formquestion[] = ['type' => 'onecolumn', 'value' => '<span class="rtm-warn">' . $langs->trans('TicketTechCloseNoProject') . '</span>'];
         }
         $abandon = $action === 'reedcrm_abandon';
+        // trans() encodes its whole result, parameters included : the subject is put in afterwards, escaped once
+        $question = str_replace('__SUBJECT__', dol_escape_htmltag($ticket->subject), $langs->trans($abandon ? 'TicketTechAbandonQuestion' : 'TicketTechCloseQuestion', '__SUBJECT__'));
         print $form->formconfirm(
             $techUrl . '&id=' . $id,
             $langs->trans($abandon ? 'TicketTechAbandonTitle' : 'TicketTechCloseTitle', $ticket->ref),
-            $langs->trans($abandon ? 'TicketTechAbandonQuestion' : 'TicketTechCloseQuestion', dol_escape_htmltag($ticket->subject)),
+            $question,
             $abandon ? 'confirm_reedcrm_abandon' : 'confirm_reedcrm_close',
             $formquestion,
             'yes',
