@@ -21,18 +21,24 @@
  * \brief   Panel listing the relaunches of one bucket, as sketched in issue #873: one line per
  *          event, "date - type - qui - quoi" plus its status. Fed by ajax/get_relaunches_list.php
  *          with a scope, and rendered inside the panel that opens next to the two buttons.
- *          Expects $rows (reedcrm_get_relaunch_rows) and $scope.
+ *          Expects $rows (reedcrm_get_relaunch_rows) and $scope, and $projectId / $socid, which the
+ *          status toggle sends back to repaint the buttons of the same project or third party.
  */
 if (!defined('DOL_DOCUMENT_ROOT')) {
     exit;
 }
 
-global $langs;
+global $langs, $user;
 
 $relaunchTypes = reedcrm_get_relaunch_types();
+$statusChoices = reedcrm_get_relaunch_status_choices();
 $now           = dol_now();
+$hasStatusMenu = false;
 ?>
-<div class="reedcrm-relaunch-panel reedcrm-relaunch-panel-<?php echo dol_escape_htmltag($scope); ?>">
+<div class="reedcrm-relaunch-panel reedcrm-relaunch-panel-<?php echo dol_escape_htmltag($scope); ?>"
+     data-project-id="<?php echo (int) ($projectId ?? 0); ?>" data-socid="<?php echo (int) ($socid ?? 0); ?>"
+     data-status-url="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/set_relaunch_status.php', 1)); ?>"
+     data-status-error="<?php echo dol_escape_htmltag($langs->transnoentitiesnoconv('RelaunchStatusError')); ?>">
     <?php if (empty($rows)) : ?>
         <div class="reedcrm-relaunch-panel-empty">
             <?php echo $langs->trans($scope === 'upcoming' ? 'RelaunchNoUpcoming' : 'RelaunchNoPast'); ?>
@@ -69,10 +75,29 @@ $now           = dol_now();
                         <?php endif; ?>
                     </td>
                     <td class="right reedcrm-relaunch-panel-status">
-                        <span class="badge <?php echo dol_escape_htmltag($state['css']); ?>"><?php echo $langs->trans($state['key']); ?></span>
+                        <?php // The badge opens the status selector, for the user allowed to edit the event ?>
+                        <?php if (reedcrm_user_can_edit_relaunch($user, $row['author_id'], $row['user_id'])) :
+                            $hasStatusMenu = true; ?>
+                            <span class="badge <?php echo dol_escape_htmltag($state['css']); ?> reedcrm-relaunch-status" role="button" tabindex="0" aria-haspopup="menu"
+                                  data-event-id="<?php echo (int) $row['id']; ?>" data-status="<?php echo reedcrm_get_relaunch_status_choice($row['percent']); ?>"
+                                  title="<?php echo dol_escape_htmltag($langs->transnoentitiesnoconv('RelaunchStatusChange')); ?>"><span class="reedcrm-relaunch-status-label"><?php echo $langs->trans($state['key']); ?></span><i class="fas fa-caret-down"></i></span>
+                        <?php else : ?>
+                            <span class="badge <?php echo dol_escape_htmltag($state['css']); ?>"><?php echo $langs->trans($state['key']); ?></span>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
         </table>
+        <?php if ($hasStatusMenu) : ?>
+            <?php // One selector for the whole panel, opened under the badge clicked ?>
+            <div class="reedcrm-relaunch-status-menu" role="menu">
+                <?php foreach ($statusChoices as $statusKey => $statusChoice) : ?>
+                    <span class="reedcrm-relaunch-status-option" role="menuitem" tabindex="-1" data-status="<?php echo (int) $statusKey; ?>">
+                        <span class="badge <?php echo dol_escape_htmltag($statusChoice['css']); ?>"><?php echo $langs->trans($statusChoice['key']); ?></span>
+                        <i class="fas fa-check"></i>
+                    </span>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>

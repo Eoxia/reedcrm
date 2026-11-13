@@ -243,7 +243,7 @@ function reedcrm_get_relaunch_rows(DoliDB $db, int $projectId, int $socid = 0, s
         $order = ' ORDER BY a.datep DESC';
     }
 
-    $sql  = 'SELECT a.id, a.datep, a.percent, a.label, a.note, a.code, a.fk_user_action,';
+    $sql  = 'SELECT a.id, a.datep, a.percent, a.label, a.note, a.code, a.fk_user_action, a.fk_user_author,';
     $sql .= ' u.rowid as user_id, u.lastname as user_lastname, u.firstname as user_firstname, u.photo as user_photo,';
     $sql .= ' (SELECT r.fk_element FROM ' . MAIN_DB_PREFIX . 'actioncomm_resources as r';
     $sql .= '  WHERE r.fk_actioncomm = a.id AND r.element_type = \'socpeople\' LIMIT 1) as contact_id';
@@ -271,6 +271,7 @@ function reedcrm_get_relaunch_rows(DoliDB $db, int $projectId, int $socid = 0, s
             'code'          => (string) $obj->code,
             'type_key'      => reedcrm_get_relaunch_type_key((string) $obj->code),
             'user_id'       => (int) $obj->user_id,
+            'author_id'     => (int) $obj->fk_user_author,
             'user_name'     => trim(trim((string) $obj->user_lastname) . ' ' . trim((string) $obj->user_firstname)),
             'user_photo'    => (string) $obj->user_photo,
             'contact_id'    => (int) $obj->contact_id,
@@ -315,21 +316,125 @@ function reedcrm_get_relaunch_rows(DoliDB $db, int $projectId, int $socid = 0, s
  */
 function reedcrm_get_relaunch_row_state(array $row, int $now): array
 {
-    if ($row['percent'] < 0) {
-        return ['key' => 'ActionNotApplicable', 'css' => 'badge-status8', 'late_days' => 0];
-    }
-    if ($row['percent'] >= 100) {
-        return ['key' => 'Done', 'css' => 'badge-status4', 'late_days' => 0];
-    }
-    if (!empty($row['datep']) && $row['datep'] < $now) {
-        return [
-            'key'       => 'RelaunchOverdue',
-            'css'       => 'badge-status8 reedcrm-relaunch-row-overdue',
-            'late_days' => (int) floor(($now - $row['datep']) / 86400),
-        ];
+    $choices = reedcrm_get_relaunch_status_choices();
+    $status  = reedcrm_get_relaunch_status_choice($row['percent']);
+
+    if ($status === -1 || $status === 100) {
+        return $choices[$status] + ['late_days' => 0];
     }
 
-    return ['key' => 'ToDo', 'css' => 'badge-status1', 'late_days' => 0];
+    // Started or not, a relaunch whose day has passed is still waiting for someone
+    $lateDays = (!empty($row['datep']) && $row['datep'] < $now) ? (int) floor(($now - $row['datep']) / 86400) : 0;
+    if ($status === 0 && !empty($row['datep']) && $row['datep'] < $now) {
+        return ['key' => 'RelaunchOverdue', 'css' => 'badge-status8 reedcrm-relaunch-row-overdue', 'late_days' => $lateDays];
+    }
+
+    return $choices[$status] + ['late_days' => $lateDays];
+}
+
+/**
+ * Statuses offered by the selector of the panel, the four of the native agenda filter, keyed by the
+ * progress written for each one. "Running" writes 50 % as the agenda does.
+ *
+ * @return array<int, array{key: string, css: string}> In the order of the selector
+ */
+function reedcrm_get_relaunch_status_choices(): array
+{
+    return [
+        0   => ['key' => 'ToDo', 'css' => 'badge-status1'],
+        50  => ['key' => 'ActionRunningShort', 'css' => 'badge-status3'],
+        100 => ['key' => 'Done', 'css' => 'badge-status4'],
+        -1  => ['key' => 'ActionNotApplicable', 'css' => 'badge-status9'],
+    ];
+}
+
+/**
+ * Status of the selector matching a progress: any progress between 1 and 99 % is "running".
+ *
+ * @param  int $percent Progress of the event
+ * @return int          Key of reedcrm_get_relaunch_status_choices()
+ */
+function reedcrm_get_relaunch_status_choice(int $percent): int
+{
+    if ($percent < 0) {
+        return -1;
+    }
+    if ($percent >= 100) {
+        return 100;
+    }
+
+    return $percent > 0 ? 50 : 0;
+}
+
+/**
+ * Whether the user may change the status of a relaunch, with the rule of comm/action/card.php:
+ * every event, or the events the user wrote or owns.
+ *
+ * @param  User $user     User
+ * @param  int  $authorId Author of the event
+ * @param  int  $ownerId  Owner of the event
+ * @return bool
+ */
+function reedcrm_user_can_edit_relaunch(User $user, int $authorId, int $ownerId): bool
+{
+    if ($user->hasRight('agenda', 'allactions', 'create')) {
+        return true;
+    }
+
+    return ($authorId == $user->id || $ownerId == $user->id) && $user->hasRight('agenda', 'myactions', 'create');
+}
+
+/**
+ * What the two buttons print for a set of counters: the content of each one and the classes that
+ * colour it. Shared by the widget and by the status toggle of the panel, which repaints the buttons
+ * of the page after a change instead of reloading it.
+ *
+ * @param  array $counts reedcrm_get_relaunch_counts()
+ * @return array<string, array{content: string, classes: string[]}> Keyed by scope, 'past' then 'upcoming'
+ */
+function reedcrm_get_relaunch_segments(array $counts): array
+{
+    global $langs;
+
+    $segments = [
+        'past' => [
+            'picto' => 'headset',
+            'count' => $counts['past'],
+            'day'   => $counts['last'] > 0 ? reedcrm_get_relaunch_day_label($counts['last']) : $langs->trans('RelaunchNever'),
+        ],
+        'upcoming' => [
+            'picto' => $counts['upcoming'] > 0 ? 'bell' : 'bell-slash',
+            'count' => $counts['upcoming'],
+            'day'   => $counts['next'] > 0 ? reedcrm_get_relaunch_day_label($counts['next']) : $langs->trans('RelaunchNothingPlanned'),
+        ],
+    ];
+
+    $result = [];
+    foreach ($segments as $scope => $segment) {
+        $classes = [];
+        if ($scope === 'past' && $counts['overdue'] > 0) {
+            $classes[] = $counts['late'] > 0 ? 'is-late' : 'is-overdue';
+        }
+        if ($segment['count'] === 0) {
+            $classes[] = 'is-empty';
+        }
+
+        // Spans, not divs: the list cells flatten every div they contain (saturne _list-cell.scss)
+        $content  = '<span class="reedcrm-relaunch-line">';
+        $content .= '<i class="fas fa-' . $segment['picto'] . '"></i>';
+        $content .= '<span class="reedcrm-relaunch-count">' . (int) $segment['count'] . '</span>';
+        if ($scope === 'past' && $counts['overdue'] > 0) {
+            $content .= '<span class="reedcrm-relaunch-overdue" title="' . dol_escape_htmltag($langs->trans('RelaunchOverdueCount', $counts['overdue'])) . '">';
+            $content .= '<i class="fas fa-exclamation"></i>' . (int) $counts['overdue'];
+            $content .= '</span>';
+        }
+        $content .= '</span>';
+        $content .= '<span class="reedcrm-relaunch-day">' . $segment['day'] . '</span>';
+
+        $result[$scope] = ['content' => $content, 'classes' => $classes];
+    }
+
+    return $result;
 }
 
 /**
@@ -376,11 +481,9 @@ function reedcrm_render_relaunch_widget(array $params): string
     }
     $createBase .= $extraQuery;
 
+    $states   = reedcrm_get_relaunch_segments($counts);
     $segments = [
         'past' => [
-            'picto' => 'headset',
-            'count' => $counts['past'],
-            'day'   => $counts['last'] > 0 ? reedcrm_get_relaunch_day_label($counts['last']) : $langs->trans('RelaunchNever'),
             'title' => $langs->trans('RelaunchScopePastTooltip'),
             // Without javascript, the link opens the note tab of the form of the page
             'add'   => $fullEventFocus !== '' ? $createBase . '&tab=note#addeventform' : $createBase,
@@ -388,9 +491,6 @@ function reedcrm_render_relaunch_widget(array $params): string
             'focus' => $fullEventFocus,
         ],
         'upcoming' => [
-            'picto' => $counts['upcoming'] > 0 ? 'bell' : 'bell-slash',
-            'count' => $counts['upcoming'],
-            'day'   => $counts['next'] > 0 ? reedcrm_get_relaunch_day_label($counts['next']) : $langs->trans('RelaunchNothingPlanned'),
             'title' => $langs->trans('RelaunchScopeUpcomingTooltip'),
             'add'   => $createBase . '&mode=reminder',
             'addTitle' => $langs->trans('RelaunchAddDirectReminder'),
@@ -403,13 +503,7 @@ function reedcrm_render_relaunch_widget(array $params): string
     $out .= '<div class="reedcrm-relaunch-buttons reedcrm-relaunch-duo" data-project-id="' . $projectId . '" data-socid="' . $socid . '">';
 
     foreach ($segments as $scope => $segment) {
-        $classes = ['reedcrm-relaunch-button', 'reedcrm-relaunch-seg', 'reedcrm-relaunch-seg-' . $scope];
-        if ($scope === 'past' && $counts['overdue'] > 0) {
-            $classes[] = $counts['late'] > 0 ? 'is-late' : 'is-overdue';
-        }
-        if ($segment['count'] === 0) {
-            $classes[] = 'is-empty';
-        }
+        $classes = array_merge(['reedcrm-relaunch-button', 'reedcrm-relaunch-seg', 'reedcrm-relaunch-seg-' . $scope], $states[$scope]['classes']);
 
         $out .= '<div class="' . implode(' ', $classes) . '"';
         $out .= ' data-relaunch-scope="' . $scope . '"';
@@ -421,19 +515,7 @@ function reedcrm_render_relaunch_widget(array $params): string
         $out .= ' data-dialog-title="' . dol_escape_htmltag($segment['title']) . '"';
         $out .= ' data-limit="20">';
 
-        // Spans, not divs: the list cells flatten every div they contain (saturne _list-cell.scss)
-        $out .= '<div class="reedcrm-relaunch-btn-content">';
-        $out .= '<span class="reedcrm-relaunch-line">';
-        $out .= '<i class="fas fa-' . $segment['picto'] . '"></i>';
-        $out .= '<span class="reedcrm-relaunch-count">' . (int) $segment['count'] . '</span>';
-        if ($scope === 'past' && $counts['overdue'] > 0) {
-            $out .= '<span class="reedcrm-relaunch-overdue" title="' . dol_escape_htmltag($langs->trans('RelaunchOverdueCount', $counts['overdue'])) . '">';
-            $out .= '<i class="fas fa-exclamation"></i>' . (int) $counts['overdue'];
-            $out .= '</span>';
-        }
-        $out .= '</span>';
-        $out .= '<span class="reedcrm-relaunch-day">' . $segment['day'] . '</span>';
-        $out .= '</div>';
+        $out .= '<div class="reedcrm-relaunch-btn-content">' . $states[$scope]['content'] . '</div>';
 
         if ($canCreate) {
             if ($mode === 'link' || !empty($segment['focus'])) {

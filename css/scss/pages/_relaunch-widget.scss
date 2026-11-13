@@ -353,6 +353,85 @@ table.liste td[class*="tdoverflowmax"] {
         color: #94a3b8;
         text-align: center;
     }
+
+    /* Badge opening the status selector */
+    .reedcrm-relaunch-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        user-select: none;
+        transition: box-shadow .15s ease, opacity .15s ease;
+
+        .fa-caret-down {
+            font-size: 10px;
+            opacity: .8;
+        }
+
+        &:hover,
+        &:focus-visible,
+        &.is-open {
+            outline: none;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px #94a3b8;
+        }
+
+        &.is-busy {
+            opacity: .5;
+            pointer-events: none;
+        }
+    }
+
+    /* Fixed, placed by the script under the badge: the panel clips what overflows it */
+    .reedcrm-relaunch-status-menu {
+        display: none;
+        position: fixed;
+        z-index: 10001;
+        min-width: 150px;
+        padding: 4px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .16);
+
+        &.is-open {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .reedcrm-relaunch-status-option {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+
+        &:hover,
+        &:focus {
+            outline: none;
+            background: #f1f5f9;
+        }
+
+        .fa-check {
+            visibility: hidden;
+            color: #16a34a;
+            font-size: 11px;
+        }
+
+        &.is-current .fa-check {
+            visibility: visible;
+        }
+    }
+
+    .reedcrm-relaunch-status-error {
+        display: block;
+        margin-top: 2px;
+        color: #b91c1c;
+        font-size: 11px;
+        white-space: normal;
+    }
 }
 
 /* The type dimension the four pills used to carry moves onto the panel line and the reminder form. */
