@@ -300,3 +300,46 @@
     color: #2f3640;
     font-weight: 600;
 }
+
+// Documents behind a milestone, listed in the tooltip of its dot. Dolibarr appends the tooltip to the
+// body, away from the timeline, so the table carries its own class
+.reedcrm-lifecycle-tooltip-documents {
+    width: 100%;
+    margin-top: 8px;
+    border-collapse: collapse;
+
+    th,
+    td {
+        padding: 3px 12px 3px 0;
+        text-align: left;
+        white-space: nowrap;
+        vertical-align: middle;
+
+        &:last-child {
+            padding-right: 0;
+        }
+    }
+
+    th {
+        color: #98a1ab;
+        font-weight: normal;
+    }
+
+    td {
+        border-top: 1px solid #eef0f3;
+    }
+}
+
+.reedcrm-lifecycle-tooltip-ref {
+    font-weight: 600;
+}
+
+th.reedcrm-lifecycle-tooltip-amount,
+td.reedcrm-lifecycle-tooltip-amount {
+    text-align: right;
+}
+
+.reedcrm-lifecycle-tooltip-more {
+    margin-top: 4px;
+    color: #98a1ab;
+}
