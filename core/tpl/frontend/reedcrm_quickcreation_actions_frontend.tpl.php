@@ -63,14 +63,18 @@ if ($action == 'uploadPhoto' && !empty($saturneModule)) {
     $uploadedFiles = isset($_FILES['userfile']) ? $_FILES['userfile'] : [];
     $invalidFile   = false;
     if (!empty($uploadedFiles['tmp_name'])) {
-        $tmpNames = is_array($uploadedFiles['tmp_name']) ? $uploadedFiles['tmp_name'] : [$uploadedFiles['tmp_name']];
-        foreach ($tmpNames as $tmpName) {
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/images.lib.php';
+
+        $tmpNames  = is_array($uploadedFiles['tmp_name']) ? $uploadedFiles['tmp_name'] : [$uploadedFiles['tmp_name']];
+        $origNames = is_array($uploadedFiles['name']) ? $uploadedFiles['name'] : [$uploadedFiles['name']];
+        foreach ($tmpNames as $key => $tmpName) {
             if (empty($tmpName)) {
                 continue;
             }
+            $origName = (string) ($origNames[$key] ?? '');
             $finfo    = new finfo(FILEINFO_MIME_TYPE);
-            $mimeType = $finfo->file($tmpName);
-            if (strpos($mimeType, 'image/') !== 0) {
+            $mimeType = (string) $finfo->file($tmpName);
+            if (strpos($mimeType, 'image/') !== 0 || $mimeType === 'image/svg+xml' || image_format_supported($origName) < 0) {
                 $invalidFile = true;
                 break;
             }
@@ -124,35 +128,41 @@ if ($action == 'delete_audio' && !empty($saturneModule)) {
 }
 
 if ($action == 'add_audio' && !empty($saturneModule) && !empty($_FILES['audio']['tmp_name'])) {
-    $audioModLower  = dol_strtolower($saturneModule);
+    $fileInfo  = new finfo(FILEINFO_MIME_TYPE);
+    $audioType = (string) $fileInfo->file($_FILES['audio']['tmp_name']);
+    $isAudio   = strpos($audioType, 'audio/') === 0 || in_array($audioType, ['video/webm', 'video/mp4', 'application/ogg'], true);
 
-    $uploadDir = !empty($conf->$audioModLower->dir_output)
-        ? $conf->$audioModLower->dir_output
-        : $conf->ecm->dir_output . '/' . $audioModLower;
-    if (!empty($saturneSubDir)) {
-        $uploadDir .= '/' . $saturneSubDir;
-    }
+    if ($isAudio && $_FILES['audio']['size'] <= getDolGlobalInt('MAIN_UPLOAD_DOC') * 1024) {
+        $audioModLower  = dol_strtolower($saturneModule);
 
-    if (!dol_is_dir($uploadDir)) {
-        dol_mkdir($uploadDir);
-    }
-
-    $fileName = dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
-    $destFile = $uploadDir . '/' . $fileName;
-
-    // Recording of the quick creation that describeAudio writes up, only once it is really saved
-    $isQuickCreationAudio = $saturneModule === 'project' && $saturneSubDir === $quickCreationSubDir;
-    if ($isQuickCreationAudio) {
-        unset($_SESSION['reedcrm_quickcreation_audio']);
-    }
-
-    if (move_uploaded_file($_FILES['audio']['tmp_name'], $destFile)) {
-        if ($isQuickCreationAudio) {
-            $_SESSION['reedcrm_quickcreation_audio'] = $fileName;
+        $uploadDir = !empty($conf->$audioModLower->dir_output)
+            ? $conf->$audioModLower->dir_output
+            : $conf->ecm->dir_output . '/' . $audioModLower;
+        if (!empty($saturneSubDir)) {
+            $uploadDir .= '/' . $saturneSubDir;
         }
-        setEventMessages($langs->trans('PhotoWellSent'), null, 'mesgs');
-    } else {
-        setEventMessages($langs->trans('PhotoNotSent'), null, 'errors');
+
+        if (!dol_is_dir($uploadDir)) {
+            dol_mkdir($uploadDir);
+        }
+
+        $fileName = dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
+        $destFile = $uploadDir . '/' . $fileName;
+
+        // Recording of the quick creation that describeAudio writes up, only once it is really saved
+        $isQuickCreationAudio = $saturneModule === 'project' && $saturneSubDir === $quickCreationSubDir;
+        if ($isQuickCreationAudio) {
+            unset($_SESSION['reedcrm_quickcreation_audio']);
+        }
+
+        if (move_uploaded_file($_FILES['audio']['tmp_name'], $destFile)) {
+            if ($isQuickCreationAudio) {
+                $_SESSION['reedcrm_quickcreation_audio'] = $fileName;
+            }
+            setEventMessages($langs->trans('PhotoWellSent'), null, 'mesgs');
+        } else {
+            setEventMessages($langs->trans('PhotoNotSent'), null, 'errors');
+        }
     }
 }
 // --- Fin des actions de la brique média Saturne ---
