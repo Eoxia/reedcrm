@@ -434,6 +434,12 @@ table.liste td[class*="tdoverflowmax"] {
     }
 }
 
+/* "Running" relaunch: blue, like the "En cours" column of the Todo. badge-status3 read as "to do". */
+.badge.reedcrm-relaunch-badge-running {
+    background-color: #3085d6;
+    color: #fff;
+}
+
 /* The type dimension the four pills used to carry moves onto the panel line and the reminder form. */
 .reedcrm-relaunch-type-picto {
     font-size: 13px;

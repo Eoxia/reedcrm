@@ -592,6 +592,13 @@
     box-shadow: $rc-shadow-hover;
   }
 
+  /* "Running" relaunch (pages/_relaunch-widget.scss): tinted pill, same recipe as the theme badges */
+  .badge.reedcrm-relaunch-badge-running {
+    border: 1px solid rgba(48, 133, 214, 0.4);
+    background: rgba(48, 133, 214, 0.12);
+    color: #1d4ed8;
+  }
+
   /* ---- Map ---- */
 
   .reedcrm-map-filters {
