@@ -89,6 +89,7 @@ if (empty($resHook)) {
     // Create
     if ($action === 'add' && $permissiontoadd) {
         $object->label          = GETPOST('label', 'alphanohtml');
+        $object->position       = GETPOSTINT('position');
         $object->note_public    = GETPOST('note_public', 'restricthtml');
         $object->note_private   = GETPOST('note_private', 'restricthtml');
         $object->fk_user_assign = GETPOSTINT('fk_user_assign');
@@ -111,6 +112,7 @@ if (empty($resHook)) {
     // Edit — save update
     if ($action === 'update' && $permissiontoadd) {
         $object->label          = GETPOST('label', 'alphanohtml');
+        $object->position       = GETPOSTINT('position');
         $object->fk_user_assign = GETPOSTINT('fk_user_assign');
         $object->date_start     = dol_mktime(0, 0, 0, GETPOSTINT('date_startmonth'), GETPOSTINT('date_startday'), GETPOSTINT('date_startyear'));
         $object->date_end       = dol_mktime(0, 0, 0, GETPOSTINT('date_endmonth'), GETPOSTINT('date_endday'), GETPOSTINT('date_endyear'));
@@ -277,6 +279,9 @@ if ($action === 'create') {
     print '<tr><td class="fieldrequired titlefieldcreate">' . $langs->trans('Label') . '</td>';
     print '<td><input type="text" name="label" class="flat minwidth300" autofocus required></td></tr>';
 
+    print '<tr><td>' . $form->textwithpicto($langs->trans('Position'), $langs->trans('CallListPositionHelp')) . '</td>';
+    print '<td><input type="number" name="position" class="flat maxwidth75" value="0"></td></tr>';
+
     print '<tr><td>' . $langs->trans('AssignedTo') . '</td>';
     print '<td>' . $form->select_dolusers($user->id, 'fk_user_assign', 1) . '</td></tr>';
 
@@ -311,6 +316,9 @@ if ($action === 'edit' && $object->id > 0) {
 
     print '<tr><td class="fieldrequired titlefieldcreate">' . $langs->trans('Label') . '</td>';
     print '<td><input type="text" name="label" class="flat minwidth300" value="' . dol_escape_htmltag($object->label) . '" required></td></tr>';
+
+    print '<tr><td>' . $form->textwithpicto($langs->trans('Position'), $langs->trans('CallListPositionHelp')) . '</td>';
+    print '<td><input type="number" name="position" class="flat maxwidth75" value="' . ((int) $object->position) . '"></td></tr>';
 
     print '<tr><td>' . $langs->trans('AssignedTo') . '</td>';
     print '<td>' . $form->select_dolusers($object->fk_user_assign, 'fk_user_assign', 1) . '</td></tr>';
@@ -421,7 +429,7 @@ if ($object->id > 0) {
     print dol_get_fiche_head($head, 'card', $title, -1, 'fontawesome_fa-phone_fas_#63ACC9');
 
     $morehtml = '<a href="' . dol_buildpath('/saturne/view/saturne_list.php', 1) . '?object_type=call_list">' . $langs->trans('BackToList') . '</a>';
-    // Walk the call lists by rowid, as the list does, and hand the card the 'id' it reads first :
+    // Walk the call lists by rowid and hand the card the 'id' it reads first :
     // navigating by ref walked them in alphabetical order, archived and (PROV…) records included
     saturne_banner_tab($object, 'id', $morehtml, 1, 'rowid', 'ref', '', false, ['moreHtml' => 1]);
 
@@ -446,6 +454,9 @@ if ($object->id > 0) {
 
     print '<tr><td class="titlefield">' . $langs->trans('Label') . '</td>';
     print '<td>' . dol_escape_htmltag($object->label) . '</td></tr>';
+
+    print '<tr><td>' . $form->textwithpicto($langs->trans('Position'), $langs->trans('CallListPositionHelp')) . '</td>';
+    print '<td>' . ((int) $object->position) . '</td></tr>';
 
     print '<tr><td>' . $langs->trans('AssignedTo') . '</td><td>';
     if (!empty($object->fk_user_assign)) {

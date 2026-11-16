@@ -2299,7 +2299,7 @@ class ActionsReedcrm
             dol_include_once('/reedcrm/class/calllist.class.php');
 
             $callList  = new CallList($this->db);
-            $callLists = $callList->fetchAll('ASC', 'label', 0, 0, ['customsql' => 't.status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')']);
+            $callLists = $callList->fetchAll('ASC', CallList::SORT_FIELDS, 0, 0, ['customsql' => 't.status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')']);
 
             $out  = '<div style="padding: 10px 0 20px 0;">';
             $out .= '<fieldset>';
@@ -2545,8 +2545,9 @@ class ActionsReedcrm
             'hook_name_list' => 'call_list_list',
             'create_url'     => $modulePath . '/view/call_list_card.php',
             'list_url'       => $modulePath . '/view/call_list_list.php',
-            'defaultsort'    => 't.rowid',
-            'defaultorder'   => 'DESC',
+            // Same order as the selectors of the cards and of the PWA: the position, then the label
+            'defaultsort'    => 't.position,t.label',
+            'defaultorder'   => 'ASC,ASC',
             // The call lists are ordered by hand (1 - Hot, 2 - Negotiation...): the sort chosen must stay
             'remember_sort'  => 1,
             'class_path'     => $modulePath . '/class/calllist.class.php',
@@ -2577,6 +2578,33 @@ class ActionsReedcrm
         ];
 
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the getElementProperties hook : tell the core where the class of a call list lives
+     *
+     * The generic Saturne list edits its cells in place through saturne_update_field.php, which loads the
+     * object with fetchObjectByElement() from its element: the core reads call_list as a module of its own,
+     * not enabled, and the position or the label typed in the list of call lists was never saved
+     *
+     * @param  array $parameters Hook metadata (elementType, elementProperties)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function getElementProperties(array $parameters): int
+    {
+        if (($parameters['elementType'] ?? '') === 'call_list') {
+            $this->results = [
+                'module'        => 'reedcrm',
+                'element'       => 'call_list',
+                'subelement'    => 'call_list',
+                'table_element' => 'reedcrm_call_list',
+                'classpath'     => 'reedcrm/class',
+                'classfile'     => 'calllist',
+                'classname'     => 'CallList',
+            ];
+        }
+
+        return 0;
     }
 
     /**
@@ -4065,7 +4093,7 @@ EOT;
         dol_include_once('/reedcrm/class/calllist.class.php');
 
         $callListObj = new CallList($this->db);
-        $callLists   = $callListObj->fetchAll('', '', 0, 0, [
+        $callLists   = $callListObj->fetchAll('ASC', CallList::SORT_FIELDS, 0, 0, [
             'customsql' => 'status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')'
         ]);
 

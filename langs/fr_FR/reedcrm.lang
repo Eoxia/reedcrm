@@ -496,6 +496,7 @@ CallFrom = Appel depuis
 AddToCallList = Ajouter à une liste d'appel
 SelectCallList = Sélectionner une liste d'appel
 NoActiveCallList = Aucune liste d'appel active
+CallListPositionHelp = Ordre de la liste dans la liste des listes d'appel et dans les sélecteurs (fiches, application mobile) : la plus petite position d'abord, puis par libellé à position égale.
 CallListAddedCount = %d élément(s) ajouté(s) à la liste d'appel
 CallListSkippedNoContactElement = L'élément %s a été ignoré car aucun contact ne lui est associé ou le numéro de téléphone est manquant
 CallListLineDuplicateElement = L'élément %s est déjà présent dans cette liste d'appel

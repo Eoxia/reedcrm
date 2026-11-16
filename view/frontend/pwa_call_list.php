@@ -192,7 +192,8 @@ $sqlLists .= " LEFT JOIN " . MAIN_DB_PREFIX . "user u ON u.rowid = cl.fk_user_as
 $sqlLists .= " WHERE cl.entity IN (" . getEntity('call_list') . ")";
 $sqlLists .= " AND cl.status = " . CallList::STATUS_ACTIVE;
 $sqlLists .= " AND (u.employee = 1 OR cl.fk_user_assign = " . ((int) $user->id) . " OR cl.rowid = " . ((int) $object->id) . ")";
-$sqlLists .= " ORDER BY cl.date_creation DESC";
+// Same order as the list and the selectors of the cards, see CallList::SORT_FIELDS
+$sqlLists .= " ORDER BY cl.position ASC, cl.label ASC";
 $resqlLists = $db->query($sqlLists);
 
 $myLists = [];
