@@ -2669,10 +2669,17 @@ class ActionsReedcrm
             require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
             $object->fields['lifecycle'] = ['type' => 'integer', 'label' => 'LifecycleStep', 'helplist' => 'LifecycleStepHelp', 'enabled' => 1, 'position' => 76, 'visible' => 1, 'csslist' => 'minwidth200', 'noedit' => 1, 'otheralias' => '', 'searchmulti' => 1, 'arrayofkeyval' => reedcrm_lifecycle_project_step_labels()];
 
+            // Thirdparty of the opportunity, where the core puts it: the project only carries its id (fk_soc,
+            // hidden). The printFieldListSelect hook selects what the link to the thirdparty needs, sparing one
+            // fetch per row, and its name under the name of the column, on which the column sorts
+            global $langs;
+            $langs->load('companies');
+            $object->fields['thirdparty_name'] = ['type' => 'varchar(255)', 'label' => 'ThirdParty', 'enabled' => 1, 'position' => 20, 'visible' => 1, 'csslist' => 'minwidth150', 'noedit' => 1, 'otheralias' => ''];
+
             // Tags/categories column, like the ticket list has : a project carries its tags in
             // llx_categorie_project, and the tag filter of the list header does the filtering,
             // so the column is neither sortable nor searchable on its own
-            $virtualFields = ['contact_details', 'opportunity_details', 'relauch_commercial', 'photo', 'vocal', 'lifecycle'];
+            $virtualFields = ['contact_details', 'opportunity_details', 'relauch_commercial', 'photo', 'vocal', 'lifecycle', 'thirdparty_name'];
             if (isModEnabled('categorie')) {
                 $object->fields['categories'] = ['label' => 'Categories', 'enabled' => 1, 'position' => 18, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1, 'disablesearch' => 1];
                 $virtualFields[]              = 'categories';
@@ -2739,7 +2746,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSelect hook : select the current lifecycle step of the opportunity list
+     * Overloading the printFieldListSelect hook : select the current lifecycle step and the thirdparty of the
+     * opportunity list
      *
      * @param  array       $parameters Hook metadatas (context, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2752,18 +2760,51 @@ class ActionsReedcrm
         $this->resprints = '';
 
         // Selected under the name of the column, which is what the sort guard of the saturne list accepts
-        if ($this->isLifecycleColumn($parameters, $object)) {
+        if ($this->isProjectListColumn($parameters, $object, 'lifecycle')) {
             require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
 
-            $this->resprints = ', ' . reedcrm_lifecycle_project_current_step_sql('t') . ' AS lifecycle';
+            $this->resprints .= ', ' . reedcrm_lifecycle_project_current_step_sql('t') . ' AS lifecycle';
+        }
+
+        // Read from the thirdparty joined by printFieldListFrom, the sort key under the name of the column
+        if ($this->isProjectListColumn($parameters, $object, 'thirdparty_name')) {
+            global $sortorder;
+
+            require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
+
+            foreach (reedcrm_thirdparty_list_columns() as $property => $column) {
+                $this->resprints .= ', reedcrm_thirdparty.' . $column . ' AS reedcrm_soc_' . $property;
+            }
+            $this->resprints .= ', ' . reedcrm_thirdparty_list_sort_sql('reedcrm_thirdparty', (string) $sortorder) . ' AS thirdparty_name';
         }
 
         return 0;
     }
 
     /**
-     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step, and
-     * the template list on the label of the templates
+     * Overloading the printFieldListFrom hook : join the thirdparty of the opportunity list
+     *
+     * @param  array       $parameters Hook metadatas (context, search, ...)
+     * @param  object|null $object     The object to process, a stdClass from some REST APIs
+     * @param  string      $action     Current action
+     * @return int                     0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function printFieldListFrom(array $parameters, ?object $object, string $action): int
+    {
+        // The value would otherwise be carried over from the previous hook method of this instance
+        $this->resprints = '';
+
+        // One thirdparty at most per project: the join adds no row to the list nor to its count
+        if ($this->isProjectListColumn($parameters, $object, 'thirdparty_name')) {
+            $this->resprints = ' LEFT JOIN ' . $this->db->prefix() . 'societe AS reedcrm_thirdparty ON reedcrm_thirdparty.rowid = t.fk_soc';
+        }
+
+        return 0;
+    }
+
+    /**
+     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step and on
+     * the name of the thirdparty, and the template list on the label of the templates
      *
      * @param  array       $parameters Hook metadatas (context, key, val, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2782,7 +2823,16 @@ class ActionsReedcrm
             return 1;
         }
 
-        if (($parameters['key'] ?? '') !== 'lifecycle' || !$this->isLifecycleColumn($parameters, $object)) {
+        // Name or alias of the thirdparty joined by printFieldListFrom, the project table has no column to filter
+        if (($parameters['key'] ?? '') === 'thirdparty_name' && $this->isProjectListColumn($parameters, $object, 'thirdparty_name')) {
+            if (!is_array($parameters['val']) && (string) $parameters['val'] !== '') {
+                $this->resprints = natural_search(['reedcrm_thirdparty.nom', 'reedcrm_thirdparty.name_alias'], (string) $parameters['val']);
+            }
+
+            return 1;
+        }
+
+        if (($parameters['key'] ?? '') !== 'lifecycle' || !$this->isProjectListColumn($parameters, $object, 'lifecycle')) {
             return 0;
         }
 
@@ -2798,18 +2848,19 @@ class ActionsReedcrm
     }
 
     /**
-     * Check whether the list is the opportunity list carrying the lifecycle column
+     * Check whether the list is the opportunity list carrying the given column
      *
-     * The column is declared by saturneListAddCustomFields on the generic Saturne list only, the
+     * The columns are declared by saturneListAddCustomFields on the generic Saturne list only, the
      * native project list has none to fill
      *
      * @param  array       $parameters Hook metadatas (context, ...)
      * @param  object|null $object     Object of the list, a stdClass with no element from some REST APIs
-     * @return bool                    True when the lifecycle column is to be filled
+     * @param  string      $key        Key of the column (lifecycle, thirdparty_name)
+     * @return bool                    True when the column is to be filled
      */
-    protected function isLifecycleColumn(array $parameters, ?object $object): bool
+    protected function isProjectListColumn(array $parameters, ?object $object, string $key): bool
     {
-        return isset($object->element) && $object->element === 'project' && isset($object->fields['lifecycle']) && $this->isContext($parameters, ['saturnelist']);
+        return isset($object->element) && $object->element === 'project' && isset($object->fields[$key]) && $this->isContext($parameters, ['saturnelist']);
     }
 
     public function saturnePrintFieldListLoopObject(array $parameters, CommonObject $object): int
@@ -2826,6 +2877,7 @@ class ActionsReedcrm
                 'photo'              => 'reedcrm_field_photo',
                 'vocal'              => 'reedcrm_field_vocal',
                 'lifecycle'          => 'reedcrm_field_lifecycle',
+                'thirdparty_name'    => 'reedcrm_field_thirdparty',
                 'fk_opp_status'      => 'reedcrm_field_opp_status',
                 'fk_statut'          => 'reedcrm_field_status_badge',
                 'opp_percent'        => 'reedcrm_field_opp_percent',
