@@ -535,6 +535,80 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
 }
 
 /**
+ * Columns of the thirdparty selected with the rows of the opportunity list.
+ *
+ * getNomUrl() and its tooltip read these properties: the thirdparty of each row is rebuilt from
+ * them, as the native project list does, instead of being fetched line by line. Each column is
+ * selected as reedcrm_soc_<property>.
+ *
+ * @return array<string,string> Columns of llx_societe indexed by property of Societe
+ */
+function reedcrm_thirdparty_list_columns(): array
+{
+    return [
+        'name'             => 'nom',
+        'name_alias'       => 'name_alias',
+        'client'           => 'client',
+        'fournisseur'      => 'fournisseur',
+        'code_client'      => 'code_client',
+        'code_fournisseur' => 'code_fournisseur',
+        'email'            => 'email',
+        'phone'            => 'phone',
+        'address'          => 'address',
+        'zip'              => 'zip',
+        'town'             => 'town',
+        'status'           => 'status',
+    ];
+}
+
+/**
+ * Sort key of the thirdparty column of the opportunity list: the name of the thirdparty.
+ *
+ * Many opportunities have no thirdparty (quick creation, PWA): they come last whatever the order,
+ * rather than filling the first pages of an ascending sort. A flag ahead of the name does it, the
+ * database putting the empty values first in an ascending order.
+ *
+ * @param  string $alias     Alias of the joined thirdparty table
+ * @param  string $sortOrder Order of the list (asc or desc, first one of several)
+ * @return string            SQL expression
+ */
+function reedcrm_thirdparty_list_sort_sql(string $alias, string $sortOrder): string
+{
+    $isDescending = strtolower(trim(explode(',', $sortOrder)[0])) === 'desc';
+
+    return "CONCAT(IF(" . $alias . ".nom IS NULL, '" . ($isDescending ? '0' : '1') . "', '" . ($isDescending ? '1' : '0') . "'), COALESCE(" . $alias . ".nom, ''))";
+}
+
+/**
+ * Render the thirdparty cell of the opportunity list: the link to the thirdparty card.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_thirdparty(array $parameters, CommonObject $object): string
+{
+    global $db;
+
+    // Never an empty string: the list would fall back on its generic rendering, which prints the sort key
+    $row          = $parameters['obj'] ?? null;
+    $thirdpartyId = (int) ($row->fk_soc ?? 0);
+    if ($thirdpartyId <= 0 || !isset($row->reedcrm_soc_name)) {
+        return '<span></span>';
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+    $thirdparty     = new Societe($db);
+    $thirdparty->id = $thirdpartyId;
+    foreach (array_keys(reedcrm_thirdparty_list_columns()) as $property) {
+        $thirdparty->$property = $row->{'reedcrm_soc_' . $property};
+    }
+
+    return '<div class="tdoverflowmax200">' . $thirdparty->getNomUrl(1) . '</div>';
+}
+
+/**
  * Render the lifecycle cell: the timeline of the project card, in its compact form.
  *
  * The timeline is built from the documents the project carries: they are read for the projects of
