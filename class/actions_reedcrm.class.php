@@ -2665,9 +2665,10 @@ class ActionsReedcrm
             $object->fields['photo'] = ['type' => 'varchar(255)', 'label' => 'Photos', 'enabled' => 1, 'position' => 162, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
             $object->fields['vocal'] = ['type' => 'varchar(255)', 'label' => 'Vocal',  'enabled' => 1, 'position' => 163, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1];
 
-            // Lifecycle timeline of the card, in a compact form. The column sorts and filters on the
-            // current step, whose rank the printFieldListSelect hook selects under the name of the
-            // column: the empty otheralias makes the title sort on that name rather than on t.lifecycle
+            // Lifecycle timeline of the card, in a compact form. The column sorts on the current step,
+            // whose rank the printFieldListSelect hook selects under the name of the column: the empty
+            // otheralias makes the title sort on that name rather than on t.lifecycle. It filters on the
+            // milestones reached (printFieldListSearch)
             require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
             $object->fields['lifecycle'] = ['type' => 'integer', 'label' => 'LifecycleStep', 'helplist' => 'LifecycleStepHelp', 'enabled' => 1, 'position' => 76, 'visible' => 1, 'csslist' => 'minwidth200', 'noedit' => 1, 'otheralias' => '', 'searchmulti' => 1, 'arrayofkeyval' => reedcrm_lifecycle_project_step_labels()];
 
@@ -2817,8 +2818,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSearch hook : filter the opportunity list on the current lifecycle step and on
-     * the name of the thirdparty, and the template list on the label of the templates
+     * Overloading the printFieldListSearch hook : filter the opportunity list on the lifecycle milestones reached and
+     * on the name of the thirdparty, and the template list on the label of the templates
      *
      * @param  array       $parameters Hook metadatas (context, key, val, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2852,9 +2853,10 @@ class ActionsReedcrm
 
         require_once __DIR__ . '/../lib/reedcrm_lifecycle.lib.php';
 
+        // The milestones reached, not the current one: Proposal keeps the projects whose proposal got signed or ordered since
         $ranks = array_map('intval', array_filter((array) $parameters['val'], 'is_numeric'));
         if (!empty($ranks)) {
-            $this->resprints = ' AND ' . reedcrm_lifecycle_project_current_step_sql('t') . ' IN (' . implode(',', $ranks) . ')';
+            $this->resprints = ' AND ' . reedcrm_lifecycle_project_reached_steps_sql('t', $ranks);
         }
 
         // The column holds no t.lifecycle the generic filter could read

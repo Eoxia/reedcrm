@@ -1388,7 +1388,7 @@ LifecycleTooltipRelaunchCount = %s relances ReedCRM
 LifecycleTooltipFirstRelaunch = Première relance le %s
 LifecycleTooltipMoreDocuments = Et %s autres
 LifecycleStep = Étape
-LifecycleStepHelp = Dernière étape franchie par l'opportunité sur son fil d'Ariane : la colonne est triée et filtrée sur elle. Le détail d'une étape s'affiche au survol de son point.
+LifecycleStepHelp = Dernière étape franchie par l'opportunité sur son fil d'Ariane : la colonne est triée sur elle. Le filtre garde les opportunités qui ont franchi l'une des étapes choisies, quelle que soit la suite (Devis : toutes celles qui ont un devis). Le détail d'une étape s'affiche au survol de son point.
 
 #
 # Tableaux de bord de pilotage : commercial et Direction (#694)

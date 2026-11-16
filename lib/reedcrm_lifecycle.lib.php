@@ -30,8 +30,9 @@ const REEDCRM_LIFECYCLE_ELEMENTS = ['propal', 'commande', 'facture', 'project'];
 /**
  * Milestones of the project timeline in the order they are reached, with the caption of each
  *
- * The position of a milestone is its rank: the opportunity list sorts and filters its rows on the
- * rank of the last milestone reached, computed in SQL by reedcrm_lifecycle_project_current_step_sql()
+ * The position of a milestone is its rank: the opportunity list sorts its rows on the rank of the last
+ * milestone reached, computed in SQL by reedcrm_lifecycle_project_current_step_sql(), and filters them
+ * on the milestones reached, by reedcrm_lifecycle_project_reached_steps_sql()
  */
 const REEDCRM_LIFECYCLE_PROJECT_STEPS = [
     'creation'  => 'LifecycleStepCreation',
@@ -273,7 +274,7 @@ function reedcrm_get_project_lifecycle_steps(CommonObject $object): array
 /**
  * Build the lifecycle steps of a project from what reedcrm_lifecycle_fetch_projects() read of it
  *
- * Any change to the milestones has to be carried over to reedcrm_lifecycle_project_current_step_sql(),
+ * Any change to the milestones has to be carried over to reedcrm_lifecycle_project_step_conditions(),
  * which tells the opportunity list where each project stands
  *
  * @param  array $project Row of the project, the summaries of its documents under 'documents'
@@ -402,17 +403,65 @@ function reedcrm_lifecycle_fetch_projects(array $projectIds): array
  * SQL expression giving the rank of the last milestone a project reached, -1 when it reached none
  *
  * It mirrors reedcrm_build_project_lifecycle_steps() and reedcrm_lifecycle_mark_current(), so the
- * opportunity list sorts and filters its rows on the very step their timeline flags as current:
- * the milestones are checked from the last one back to the first one, the first one reached wins
+ * opportunity list sorts its rows on the very step their timeline flags as current: the milestones
+ * are checked from the last one back to the first one, the first one reached wins
  *
  * @param  string $alias Alias of the project table in the query
  * @return string        SQL expression, between brackets
  */
 function reedcrm_lifecycle_project_current_step_sql(string $alias): string
 {
+    $ranks = array_flip(array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS));
+
+    $sql = '(CASE';
+    foreach (reedcrm_lifecycle_project_step_conditions($alias) as $stepKey => $condition) {
+        $sql .= ' WHEN ' . $condition . ' THEN ' . $ranks[$stepKey];
+    }
+    $sql .= ' ELSE -1 END)';
+
+    return $sql;
+}
+
+/**
+ * SQL condition true when a project reached at least one of the given milestones, whatever came after
+ *
+ * The filter of the opportunity list reads the milestones the timeline shows as reached rather than the
+ * current one: a project with a signed proposal or an order still answers the Proposal milestone
+ *
+ * @param  string $alias Alias of the project table in the query
+ * @param  int[]  $ranks Ranks of the milestones in REEDCRM_LIFECYCLE_PROJECT_STEPS
+ * @return string        SQL condition, between brackets, matching nothing for unknown milestones
+ */
+function reedcrm_lifecycle_project_reached_steps_sql(string $alias, array $ranks): string
+{
+    $stepKeys   = array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS);
+    $conditions = reedcrm_lifecycle_project_step_conditions($alias);
+
+    $reached = [];
+    foreach ($ranks as $rank) {
+        $stepKey = $stepKeys[(int) $rank] ?? '';
+        if (isset($conditions[$stepKey])) {
+            $reached[] = '(' . $conditions[$stepKey] . ')';
+        }
+    }
+
+    return empty($reached) ? '(1 = 0)' : '(' . implode(' OR ', $reached) . ')';
+}
+
+/**
+ * SQL conditions telling whether a project reached each of its milestones
+ *
+ * They mirror the states of reedcrm_build_project_lifecycle_steps(), from the last milestone back to the
+ * first one, the order the current step is looked for in. A document milestone is left out with the module
+ * of its document, as the timeline does
+ *
+ * @param  string $alias Alias of the project table in the query
+ * @return array<string,string> SQL condition of each milestone, indexed by its key
+ */
+function reedcrm_lifecycle_project_step_conditions(string $alias): array
+{
     global $db;
 
-    $ranks    = array_flip(array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS));
     $now      = "'" . $db->idate(dol_now()) . "'";
     $isClosed = $alias . '.fk_statut = ' . Project::STATUS_CLOSED;
 
@@ -435,13 +484,7 @@ function reedcrm_lifecycle_project_current_step_sql(string $alias): string
     $conditions['start']    = $alias . '.dateo <= ' . $now;
     $conditions['creation'] = $alias . '.datec IS NOT NULL';
 
-    $sql = '(CASE';
-    foreach ($conditions as $stepKey => $condition) {
-        $sql .= ' WHEN ' . $condition . ' THEN ' . $ranks[$stepKey];
-    }
-    $sql .= ' ELSE -1 END)';
-
-    return $sql;
+    return $conditions;
 }
 
 /**
