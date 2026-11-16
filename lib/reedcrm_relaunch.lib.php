@@ -86,25 +86,98 @@ function reedcrm_get_relaunch_late_delay(): int
  */
 function reedcrm_get_relaunch_sql_filter(DoliDB $db, int $projectId, int $socid = 0): string
 {
+    if ($projectId > 0) {
+        $scope = 'a.fk_project = ' . $projectId;
+    } elseif ($socid > 0) {
+        $scope = 'a.fk_soc = ' . $socid;
+    } else {
+        return '';
+    }
+
+    return reedcrm_get_relaunch_scope_sql_filter($scope);
+}
+
+/**
+ * SQL restriction selecting the relaunch events matching a scope condition on the agenda events (alias a).
+ *
+ * @param  string $scope Condition on the events, a correlation with the list row in a subquery
+ * @return string        SQL fragment, empty when the module was never configured
+ */
+function reedcrm_get_relaunch_scope_sql_filter(string $scope): string
+{
     $categoryIds = reedcrm_get_relaunch_category_ids();
     if (empty($categoryIds)) {
         return '';
     }
 
-    if ($projectId > 0) {
-        $scope = ' AND a.fk_project = ' . $projectId;
-    } elseif ($socid > 0) {
-        $scope = ' AND a.fk_soc = ' . $socid;
-    } else {
-        return '';
-    }
-
     $sql = ' AND a.entity IN (' . getEntity('agenda') . ')';
-    $sql .= $scope;
+    $sql .= ' AND ' . $scope;
     $sql .= ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c';
     $sql .= ' WHERE c.fk_categorie IN (' . implode(',', $categoryIds) . '))';
 
     return $sql;
+}
+
+/**
+ * Events still waiting for someone: percent -1 is not applicable, 0 to do, 100 done, only 0..99 is open.
+ *
+ * @return string SQL condition on the agenda events (alias a)
+ */
+function reedcrm_get_relaunch_todo_sql(): string
+{
+    return '(a.percent >= 0 AND a.percent < 100)';
+}
+
+/**
+ * Sort criteria of the relaunch column of the opportunity list, by sort field.
+ *
+ * Each criterion is selected under its own name by reedcrm_get_relaunch_sort_sql(); the project id
+ * after it breaks the ties, which are the rule on counts (most projects have nothing overdue) and
+ * would otherwise let a project show on two pages.
+ *
+ * @return array<string, string> Translation key of the label, by sort field
+ */
+function reedcrm_get_relaunch_sort_keys(): array
+{
+    return [
+        'relaunch_next,t.rowid'    => 'RelaunchSortNext',
+        'relaunch_overdue,t.rowid' => 'RelaunchSortOverdue',
+    ];
+}
+
+/**
+ * Value of one sort criterion of the relaunch column, computed for each project of the list.
+ *
+ * Same buckets as reedcrm_get_relaunch_counts(), so the sort follows the numbers of the widget:
+ * next = the closest date still to do from now on (right button), overdue = still to do while
+ * already past (the "!N" of the left button).
+ *
+ * @param  DoliDB $db        Database handler
+ * @param  string $criterion relaunch_next or relaunch_overdue
+ * @param  string $sortOrder asc or desc
+ * @param  string $alias     Alias of the project table in the list query
+ * @return string            SQL expression, empty for an unknown criterion or an unconfigured module
+ */
+function reedcrm_get_relaunch_sort_sql(DoliDB $db, string $criterion, string $sortOrder, string $alias = 't'): string
+{
+    $filter = reedcrm_get_relaunch_scope_sql_filter('a.fk_project = ' . $alias . '.rowid');
+    if (empty($filter)) {
+        return '';
+    }
+
+    $now   = "'" . $db->idate(dol_now()) . "'";
+    $where = ' FROM ' . MAIN_DB_PREFIX . 'actioncomm as a WHERE ' . reedcrm_get_relaunch_todo_sql() . $filter;
+
+    switch ($criterion) {
+        case 'relaunch_overdue':
+            return '(SELECT COUNT(a.id)' . $where . ' AND a.datep < ' . $now . ')';
+        case 'relaunch_next':
+            $next = '(SELECT MIN(a.datep)' . $where . ' AND a.datep >= ' . $now . ')';
+            // The projects with nothing planned come last in both orders: an ascending sort puts NULL first
+            return strtolower(trim($sortOrder)) === 'desc' ? $next : 'COALESCE(' . $next . ", '9999-12-31 23:59:59')";
+        default:
+            return '';
+    }
 }
 
 /**
@@ -138,8 +211,7 @@ function reedcrm_get_relaunch_counts(DoliDB $db, int $projectId, int $socid = 0)
     $now  = "'" . $db->idate(dol_now()) . "'";
     $late = "'" . $db->idate(dol_now() - reedcrm_get_relaunch_late_delay()) . "'";
 
-    // percent: -1 not applicable, 0 to do, 100 done. Only 0..99 is still waiting for someone.
-    $todo = '(a.percent >= 0 AND a.percent < 100)';
+    $todo = reedcrm_get_relaunch_todo_sql();
 
     $sql  = 'SELECT';
     $sql .= ' SUM(CASE WHEN a.datep < ' . $now . ' THEN 1 ELSE 0 END) as past,';
@@ -231,7 +303,7 @@ function reedcrm_get_relaunch_rows(DoliDB $db, int $projectId, int $socid = 0, s
     }
 
     $now  = "'" . $db->idate(dol_now()) . "'";
-    $todo = '(a.percent >= 0 AND a.percent < 100)';
+    $todo = reedcrm_get_relaunch_todo_sql();
 
     if ($scope === 'upcoming') {
         $filter .= ' AND a.datep >= ' . $now . ' AND ' . $todo;

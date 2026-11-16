@@ -2654,8 +2654,10 @@ class ActionsReedcrm
                 }
             }
 
-            // Commercial relaunch column (call / email / rdv / other counters + quick add)
-            $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1];
+            // Commercial relaunch column (call / email / rdv / other counters + quick add). The column filter
+            // sorts it on the numbers of its two buttons (sortkeys), selected by printFieldListSelect when in use
+            require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+            $object->fields['relauch_commercial'] = ['label' => 'CommercialsRelaunching', 'enabled' => 1, 'position' => 160, 'visible' => 1, 'csslist' => 'center', 'disablesort' => 1, 'disablesearch' => 1, 'sortkeys' => reedcrm_get_relaunch_sort_keys()];
 
             // Photos and voice note taken with the opportunity (quick creation, PWA), read from the
             // project documents directory : neither sortable nor searchable. The type is only there
@@ -2747,9 +2749,9 @@ class ActionsReedcrm
 
     /**
      * Overloading the printFieldListSelect hook : select the current lifecycle step and the thirdparty of the
-     * opportunity list
+     * opportunity list, and the sort criterion of its relaunch column in use
      *
-     * @param  array       $parameters Hook metadatas (context, ...)
+     * @param  array       $parameters Hook metadatas (context, sortfield, sortorder, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
      * @param  string      $action     Current action
      * @return int                     0 < on error, 0 on success, 1 to replace standard code
@@ -2776,6 +2778,18 @@ class ActionsReedcrm
                 $this->resprints .= ', reedcrm_thirdparty.' . $column . ' AS reedcrm_soc_' . $property;
             }
             $this->resprints .= ', ' . reedcrm_thirdparty_list_sort_sql('reedcrm_thirdparty', (string) $sortorder) . ' AS thirdparty_name';
+        }
+
+        // A subquery per project: only the criterion the list is sorted on, and only while it is
+        if (isset($object->element, $object->fields['relauch_commercial']['sortkeys']) && $object->element === 'project' && $this->isContext($parameters, ['saturnelist'])) {
+            require_once __DIR__ . '/../lib/reedcrm_relaunch.lib.php';
+
+            $criterion = trim(explode(',', (string) ($parameters['sortfield'] ?? ''))[0]);
+            $sortOrder = trim(explode(',', (string) ($parameters['sortorder'] ?? ''))[0]);
+            $sortSql   = reedcrm_get_relaunch_sort_sql($this->db, $criterion, $sortOrder, 't');
+            if ($sortSql !== '') {
+                $this->resprints .= ', ' . $sortSql . ' AS ' . $criterion;
+            }
         }
 
         return 0;
