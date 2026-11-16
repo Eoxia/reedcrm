@@ -214,7 +214,7 @@ require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'
         </div>
 
         <!-- Description -->
-        <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
+        <?php if (getDolGlobalInt('REEDCRM_PROJECT_DESCRIPTION_VISIBLE') > 0) : ?>
             <div class="form-group">
                 <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
                 <?php if (ReedcrmVoiceDescription::isEnabled()) : ?>
@@ -310,7 +310,7 @@ require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'
                 </div>
 
                 <!-- 100% Amount -->
-                <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+                <?php if (getDolGlobalInt('REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE') > 0) : ?>
                 <div class="form-group" style="width: 100%; margin-bottom: 0;">
                     <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
                         <span class="input-icon">€</span>
