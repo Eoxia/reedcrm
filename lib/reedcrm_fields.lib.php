@@ -612,8 +612,8 @@ function reedcrm_field_thirdparty(array $parameters, CommonObject $object): stri
  * Render the lifecycle cell: the timeline of the project card, in its compact form.
  *
  * The timeline is built from the documents the project carries: they are read for the projects of
- * the whole page on the first row. The column is sorted and filtered on the current step by the
- * printFieldListSelect and printFieldListSearch hooks.
+ * the whole page on the first row. The column is sorted on the current step by the printFieldListSelect
+ * hook, and filtered on the milestones reached by the printFieldListSearch hook.
  *
  * @param  array        $parameters Hook parameters (key, context, obj, ...)
  * @param  CommonObject $object     The object
