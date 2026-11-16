@@ -334,7 +334,8 @@ function reedcrm_get_relaunch_row_state(array $row, int $now): array
 
 /**
  * Statuses offered by the selector of the panel, the four of the native agenda filter, keyed by the
- * progress written for each one. "Running" writes 50 % as the agenda does.
+ * progress written for each one. "Running" writes 50 % as the agenda does. Its badge is not
+ * badge-status3: eldy paints it almost like badge-status1 and the modern theme exactly like it.
  *
  * @return array<int, array{key: string, css: string}> In the order of the selector
  */
@@ -342,7 +343,7 @@ function reedcrm_get_relaunch_status_choices(): array
 {
     return [
         0   => ['key' => 'ToDo', 'css' => 'badge-status1'],
-        50  => ['key' => 'ActionRunningShort', 'css' => 'badge-status3'],
+        50  => ['key' => 'ActionRunningShort', 'css' => 'reedcrm-relaunch-badge-running'],
         100 => ['key' => 'Done', 'css' => 'badge-status4'],
         -1  => ['key' => 'ActionNotApplicable', 'css' => 'badge-status9'],
     ];
