@@ -79,8 +79,10 @@ $timeTableShownYear    = isset($timeTableYears[$timeTableCurrentYear]) ? $timeTa
                 $timeTableSpentMonth   = $timeTableMonths['spent'][$month];
                 $timeTableBars         = reedcrm_timespent_get_month_bars($timeTablePlannedMonth, $timeTableSpentMonth, $timeTableMax);
                 $timeTableMonthLabel   = $langs->trans('MonthShort' . sprintf('%02d', $month));
-                $timeTableTooltipArgs  = [$timeTableMonthLabel, reedcrm_timespent_format_hours($timeTablePlannedMonth), reedcrm_timespent_format_hours($timeTableSpentMonth)];
-                $timeTableTooltip      = $timeTableBars['over'] > 0 ? $langs->trans('ReedCRMProjectTimeBarOverTitle', ...array_merge($timeTableTooltipArgs, [reedcrm_timespent_format_hours($timeTableSpentMonth - $timeTablePlannedMonth)])) : $langs->trans('ReedCRMProjectTimeBarTitle', ...$timeTableTooltipArgs);
+                // Plain text, escaped once when printed: trans() would turn the "û" of "Août" into an entity, which the
+                // translation of the tooltip would encode a second time
+                $timeTableTooltipArgs  = [$langs->transnoentitiesnoconv('MonthShort' . sprintf('%02d', $month)), reedcrm_timespent_format_hours($timeTablePlannedMonth), reedcrm_timespent_format_hours($timeTableSpentMonth)];
+                $timeTableTooltip      = $timeTableBars['over'] > 0 ? $langs->transnoentitiesnoconv('ReedCRMProjectTimeBarOverTitle', ...array_merge($timeTableTooltipArgs, [reedcrm_timespent_format_hours($timeTableSpentMonth - $timeTablePlannedMonth)])) : $langs->transnoentitiesnoconv('ReedCRMProjectTimeBarTitle', ...$timeTableTooltipArgs);
                 $timeTableMonthClasses = ['reedcrm-project-time-month'];
                 if ($timeTableYear === $timeTableCurrentYear && $month === $timeTableCurrentMonth) {
                     $timeTableMonthClasses[] = 'reedcrm-project-time-current';

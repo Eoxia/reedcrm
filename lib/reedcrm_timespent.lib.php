@@ -307,6 +307,15 @@ function reedcrm_timespent_get_summary(DoliDB $db, CommonObject $object, int $nb
         $summary['task_ref'] = $summary['task_id'] > 0 && !($object instanceof Project) ? (string) $obj->ref : '';
     }
 
+    // On a project, the same planned time as its monthly card: the time sold by its signed proposals, else the
+    // workload of its tasks, year by year
+    if ($object instanceof Project) {
+        $summary['planned'] = 0;
+        foreach (reedcrm_timespent_get_project_monthly($db, $object) as $yearMonths) {
+            $summary['planned'] += (int) round(array_sum($yearMonths['planned']));
+        }
+    }
+
     $resql = $db->query('SELECT et.element_datehour, et.element_duration, et.note, u.login' . $from . ' ORDER BY et.element_datehour DESC, et.rowid DESC' . $db->plimit($nbLatest));
     if ($resql) {
         while ($obj = $db->fetch_object($resql)) {
@@ -318,10 +327,89 @@ function reedcrm_timespent_get_summary(DoliDB $db, CommonObject $object, int $nb
 }
 
 /**
+ * Time sold on a project: the services of its signed proposals, quantity x duration of the service
+ *
+ * Each part of it falls on the date of the service: the intervention dates of the line (one per unit of quantity),
+ * else the service period of the line, else the delivery date of the proposal, else its signature date. A service
+ * whose duration is not in minutes, hours or days (a subscription of a year...) sells no working time.
+ *
+ * @param  DoliDB  $db      Database handler
+ * @param  Project $project Project
+ * @return array            List of ['seconds' => , 'start' => timestamp, 'end' => timestamp], empty when nothing is sold
+ */
+function reedcrm_timespent_get_project_sold_time(DoliDB $db, Project $project): array
+{
+    require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+    require_once __DIR__ . '/../class/reedcrmticketmoney.class.php';
+
+    $sql  = 'SELECT pd.rowid, pd.qty, pd.date_start, pd.date_end, p.duration, pr.date_livraison, pr.date_signature, pr.date_cloture, pr.datep';
+    $sql .= ' FROM ' . MAIN_DB_PREFIX . 'propaldet as pd';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'propal as pr ON pr.rowid = pd.fk_propal';
+    $sql .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'product as p ON p.rowid = pd.fk_product';
+    $sql .= ' WHERE pr.fk_projet = ' . ((int) $project->id);
+    $sql .= ' AND pr.entity IN (' . getEntity('propal') . ')';
+    $sql .= ' AND pr.fk_statut IN (' . Propal::STATUS_SIGNED . ', ' . Propal::STATUS_BILLED . ')';
+    $sql .= ' AND pd.product_type = ' . Product::TYPE_SERVICE . ' AND pd.qty > 0';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return [];
+    }
+
+    $lines = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $unitSeconds = ReedcrmTicketMoney::durationToSeconds((string) $obj->duration);
+        if ($unitSeconds > 0) {
+            $lines[(int) $obj->rowid] = ['obj' => $obj, 'seconds' => (float) $obj->qty * $unitSeconds, 'dates' => []];
+        }
+    }
+    if (empty($lines)) {
+        return [];
+    }
+
+    $sql  = 'SELECT fk_element_line, date_intervention FROM ' . MAIN_DB_PREFIX . 'reedcrm_intervention_date';
+    $sql .= " WHERE element_type = 'propal' AND date_intervention IS NOT NULL AND fk_element_line IN (" . implode(',', array_keys($lines)) . ')';
+    $resql = $db->query($sql);
+    if ($resql) {
+        while ($obj = $db->fetch_object($resql)) {
+            $lines[(int) $obj->fk_element_line]['dates'][] = (int) $db->jdate($obj->date_intervention);
+        }
+    }
+
+    $parts = [];
+    foreach ($lines as $line) {
+        $obj   = $line['obj'];
+        $units = max(1, (int) ceil((float) $obj->qty));
+        $left  = $line['seconds'];
+
+        // A quantity of 2.5 asks for 3 intervention dates: each one holds a third of the time sold
+        foreach (array_slice($line['dates'], 0, $units) as $date) {
+            $parts[] = ['seconds' => $line['seconds'] / $units, 'start' => $date, 'end' => $date];
+            $left   -= $line['seconds'] / $units;
+        }
+        if ($left <= 0) {
+            continue;
+        }
+
+        $lineStart = (int) $db->jdate($obj->date_start);
+        if ($lineStart > 0) {
+            $parts[] = ['seconds' => $left, 'start' => $lineStart, 'end' => ((int) $db->jdate($obj->date_end)) ?: $lineStart];
+        } else {
+            $date    = (int) ($db->jdate($obj->date_livraison) ?: ($db->jdate($obj->date_signature) ?: ($db->jdate($obj->date_cloture) ?: $db->jdate($obj->datep))));
+            $parts[] = ['seconds' => $left, 'start' => $date, 'end' => $date];
+        }
+    }
+
+    return $parts;
+}
+
+/**
  * Time planned and time spent on a project, month by month
  *
- * The workload planned on a task is spread evenly over the days of the task, from its start to its end date.
- * A task without dates takes the ones of the project, or falls on the day it was created.
+ * The time planned is the time sold by the signed proposals of the project, on the month of the service (see
+ * reedcrm_timespent_get_project_sold_time()). A year without any takes the workload planned on the tasks, spread
+ * evenly over the days of each task: a task without dates takes the ones of the project, or falls on the day it was
+ * created.
  *
  * @param  DoliDB  $db      Database handler
  * @param  Project $project Project
@@ -342,21 +430,40 @@ function reedcrm_timespent_get_project_monthly(DoliDB $db, Project $project): ar
         return dol_mktime(0, 0, 0, (int) dol_print_date($date, '%m'), (int) dol_print_date($date, '%d'), (int) dol_print_date($date, '%Y'));
     };
 
+    // A planned time spread evenly over the days from its start to its end, into [year => [month => seconds]]
+    $spread = function (array &$target, int $start, int $end, float $seconds) use ($midnight) {
+        $start  = $midnight($start);
+        $end    = max($start, $midnight($end));
+        $perDay = $seconds / ((int) round(($end - $start) / 86400) + 1);
+        $cursor = $start;
+        while ($cursor <= $end) {
+            $year     = (int) dol_print_date($cursor, '%Y');
+            $month    = (int) dol_print_date($cursor, '%m');
+            $monthEnd = min($end, dol_mktime(0, 0, 0, $month, (int) date('t', mktime(0, 0, 0, $month, 1, $year)), $year));
+            $target[$year][$month] = ($target[$year][$month] ?? 0) + $perDay * ((int) round(($monthEnd - $cursor) / 86400) + 1);
+            $cursor = dol_mktime(0, 0, 0, $month % 12 + 1, 1, $month === 12 ? $year + 1 : $year);
+        }
+    };
+
+    $sold = [];
+    foreach (reedcrm_timespent_get_project_sold_time($db, $project) as $part) {
+        $spread($sold, $part['start'], $part['end'], $part['seconds']);
+    }
+
+    $tasks = [];
     $resql = $db->query('SELECT t.planned_workload, t.dateo, t.datee, t.datec FROM ' . MAIN_DB_PREFIX . 'projet_task as t WHERE t.fk_projet = ' . ((int) $project->id) . ' AND t.planned_workload > 0');
     if ($resql) {
         while ($obj = $db->fetch_object($resql)) {
-            $start = $midnight((int) ($db->jdate($obj->dateo) ?: ($project->date_start ?: $db->jdate($obj->datec))));
-            $end   = max($start, $midnight((int) ($db->jdate($obj->datee) ?: ($project->date_end ?: $start))));
+            $start = (int) ($db->jdate($obj->dateo) ?: ($project->date_start ?: $db->jdate($obj->datec)));
+            $spread($tasks, $start, (int) ($db->jdate($obj->datee) ?: ($project->date_end ?: $start)), (float) $obj->planned_workload);
+        }
+    }
 
-            $perDay = $obj->planned_workload / ((int) round(($end - $start) / 86400) + 1);
-            $cursor = $start;
-            while ($cursor <= $end) {
-                $year     = (int) dol_print_date($cursor, '%Y');
-                $month    = (int) dol_print_date($cursor, '%m');
-                $monthEnd = min($end, dol_mktime(0, 0, 0, $month, (int) date('t', mktime(0, 0, 0, $month, 1, $year)), $year));
-                $add('planned', $year, $month, $perDay * ((int) round(($monthEnd - $cursor) / 86400) + 1));
-                $cursor = dol_mktime(0, 0, 0, $month % 12 + 1, 1, $month === 12 ? $year + 1 : $year);
-            }
+    // The time sold wins over the workload of the tasks year by year: the two would count the same work twice, and a
+    // proposal signed for one year does not erase the workload planned on the tasks of another
+    foreach (array_unique(array_merge(array_keys($sold), array_keys($tasks))) as $year) {
+        foreach (array_sum($sold[$year] ?? []) > 0 ? $sold[$year] : ($tasks[$year] ?? []) as $month => $seconds) {
+            $add('planned', (int) $year, (int) $month, (float) $seconds);
         }
     }
 
