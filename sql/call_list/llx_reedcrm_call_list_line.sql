@@ -14,6 +14,7 @@ CREATE TABLE llx_reedcrm_call_list_line(
     element_type   varchar(255) NOT NULL,
     element_id     integer NOT NULL,
     fk_contact     integer,
+    position       integer DEFAULT 0 NOT NULL,
     status         smallint DEFAULT 0 NOT NULL,
     note           text,
     fk_user_creat  integer NOT NULL,

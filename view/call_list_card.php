@@ -505,7 +505,8 @@ if ($object->id > 0) {
     print load_fiche_titre($langs->trans('CallListLines'), '', 'fontawesome_fa-phone_fas_#63ACC9');
 
     $lines   = $lineObject->fetchAllByCallList($object->id);
-    $colspan = $permissiontodelete ? 7 : 6;
+    $nbLines = count($lines);
+    $colspan = 6 + ($permissiontoadd ? 1 : 0) + ($permissiontodelete ? 1 : 0);
     $ajaxUrl = $permissiontoadd ? dol_buildpath('/reedcrm/ajax/get_element_primary_contact.php', 1) : '';
 
     // Build propal array for native selectarray() (key = rowid, value = label)
@@ -527,6 +528,9 @@ if ($object->id > 0) {
 
     print '<table class="noborder centpercent">';
     print '<tr class="liste_titre">';
+    if ($permissiontoadd) {
+        print '<td class="linecolmove"></td>';
+    }
     print '<td>' . $langs->trans('Lastname') . '</td>';
     print '<td>' . $langs->trans('Firstname') . '</td>';
     print '<td>' . $langs->trans('Phone') . '</td>';
@@ -541,7 +545,7 @@ if ($object->id > 0) {
     $contact = new Contact($db);
 
     if (!empty($lines)) {
-        foreach ($lines as $line) {
+        foreach ($lines as $lineIndex => $line) {
             $lastname   = '';
             $firstname  = '';
             $phone      = '';
@@ -594,7 +598,15 @@ if ($object->id > 0) {
                 }
             }
 
-            print '<tr class="oddeven">';
+            print '<tr class="oddeven call-list-line-row" data-line-id="' . $line->id . '">';
+            // Up / down arrows, as on the lines of the Dolibarr documents, moving the row without reloading the page (js/modules/call_list.js):
+            // both are always there, the JS hiding the up one of the first row and the down one of the last row after each move
+            if ($permissiontoadd) {
+                print '<td class="linecolmove tdlineupdown center nowraponall">';
+                print '<a href="#" role="button" class="lineupdown call-list-line-move' . ($lineIndex === 0 ? ' hideobject' : '') . '" data-direction="up">' . img_up('default', 0, 'imgupforline') . '</a>';
+                print '<a href="#" role="button" class="lineupdown call-list-line-move' . ($lineIndex === $nbLines - 1 ? ' hideobject' : '') . '" data-direction="down">' . img_down('default', 0, 'imgdownforline') . '</a>';
+                print '</td>';
+            }
             print '<td>' . $lastname . '</td>';
             print '<td>' . $firstname . '</td>';
             print '<td>' . ($phone ? '<a href="tel:' . dol_escape_htmltag($phone) . '">' . $phone . '</a>' : '') . '</td>';
@@ -711,6 +723,8 @@ if ($object->id > 0) {
     if ($permissiontoadd) {
         print '<div id="call-list-data" class="hidden"'
             . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
+            . ' data-move-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/move_call_list_line.php', 1)) . '"'
+            . ' data-token="' . newToken() . '"'
             . ' data-label-contact="' . dol_escape_htmltag($langs->trans('ContactToCall')) . '"'
             . ' data-label-no-contact="' . dol_escape_htmltag($langs->trans('NoContact')) . '"'
             . ' data-label-no-phone="' . dol_escape_htmltag($langs->trans('ContactNoPhone')) . '"'

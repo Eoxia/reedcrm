@@ -208,6 +208,7 @@ AddToCallList = Add to call list
 SelectCallList = Select a call list
 NoActiveCallList = No active call list
 CallListPositionHelp = Order of the list in the list of call lists and in the selectors (cards, mobile app): the smallest position first, then by label for an equal position.
+CallListLinePositionHelp = Order of the calls in the list (card, mobile app, PDF), changed by the arrows of the card. A new call goes to the end of the list.
 CallListAddedCount = %d element(s) added to the call list
 CallListSkippedNoContactElement = Element %s was skipped because no contact is associated with it or the phone number is missing
 CallListLineDuplicateElement = Element %s is already in this call list
