@@ -1917,3 +1917,17 @@ TicketTechCloseMinutes = Temps à consigner avant de clore (minutes)
 TicketTechCloseNoProject = Ticket sans projet : aucun temps ne pourra y être consigné, ni facturé.
 TicketTechCloseTimeNote = Temps consigné à la clôture
 TicketTechClosed = %s clos.
+
+# Aperçu des pièces jointes .msg / .eml
+ReedCRMEmailPreview = Aperçu du mail
+ReedCRMEmailPreviewParseError = Impossible de lire le contenu de cet e-mail
+ReedCRMEmailPreviewNetworkError = Le mail n'a pas pu être chargé, vérifiez votre connexion
+ReedCRMEmailPreviewNotFound = Mail introuvable
+ReedCRMEmailPreviewNoSubject = (sans objet)
+ReedCRMEmailPreviewFrom = De
+ReedCRMEmailPreviewTo = À
+ReedCRMEmailPreviewCc = Cc
+ReedCRMEmailPreviewDate = Date
+ReedCRMEmailPreviewAttachments = Pièces jointes (%s)
+ReedCRMEmailPreviewAttachedMessage = mail joint
+ReedCRMEmailPreviewBack = Retour au mail précédent

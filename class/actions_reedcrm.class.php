@@ -1645,6 +1645,13 @@ class ActionsReedcrm
             require __DIR__ . '/../core/tpl/reedcrm_card_empty_fields_toggle.tpl.php';
         }
 
+        // Preview of the .msg/.eml files, wherever Dolibarr lists the files of an object: its card and its
+        // document tab (most of them carry globalcard, the others a context ending with "document")
+        if ((strpos($parameters['context'], 'globalcard') !== false || strpos($parameters['context'], 'document') !== false) && !empty($user->id)) {
+            $langs->load('reedcrm@reedcrm');
+            require __DIR__ . '/../core/tpl/reedcrm_email_preview.tpl.php';
+        }
+
         // Same preference, offered as a setting in the display setup of a user
         if (strpos($parameters['context'], 'userihm') !== false && is_object($object) && $object->id > 0) {
             $langs->load('reedcrm@reedcrm');

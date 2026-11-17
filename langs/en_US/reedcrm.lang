@@ -1910,3 +1910,17 @@ TicketTechCloseMinutes = Time to log before closing (minutes)
 TicketTechCloseNoProject = Ticket without project: no time can be logged on it, nor billed.
 TicketTechCloseTimeNote = Time logged at closing
 TicketTechClosed = %s closed.
+
+# Preview of the .msg / .eml attachments
+ReedCRMEmailPreview = Email preview
+ReedCRMEmailPreviewParseError = Unable to read this e-mail content
+ReedCRMEmailPreviewNetworkError = The email could not be loaded, check your connection
+ReedCRMEmailPreviewNotFound = Email not found
+ReedCRMEmailPreviewNoSubject = (no subject)
+ReedCRMEmailPreviewFrom = From
+ReedCRMEmailPreviewTo = To
+ReedCRMEmailPreviewCc = Cc
+ReedCRMEmailPreviewDate = Date
+ReedCRMEmailPreviewAttachments = Attachments (%s)
+ReedCRMEmailPreviewAttachedMessage = attached email
+ReedCRMEmailPreviewBack = Back to the previous email
