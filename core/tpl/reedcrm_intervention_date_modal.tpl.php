@@ -30,6 +30,9 @@ if (empty($conf) || !is_object($conf)) {
 
 global $langs, $object, $user;
 
+// reedcrm_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
+require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
+
 // The dates live beside the proposal, not inside it : a signed or billed proposal is exactly the one
 // whose interventions are planned, so only the right gates the writing.
 $interventionCanWrite = $user->hasRight('propal', 'creer');
@@ -42,8 +45,8 @@ $interventionElementID = (isset($object) && is_object($object) && $object->eleme
 $interventionModalLoadAssets = !isset($interventionModalLoadAssets) || $interventionModalLoadAssets;
 ?>
 <?php if ($interventionModalLoadAssets) { ?>
-    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/css/temp-framework.css', 1)); ?>">
-    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/css/reedcrm.min.css', 1)); ?>">
+    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/temp-framework.css')); ?>">
+    <link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
 <?php } ?>
 
 <div id="reedcrm-intervention-date-config"
@@ -78,5 +81,5 @@ $interventionModalLoadAssets = !isset($interventionModalLoadAssets) || $interven
 </div>
 
 <?php if ($interventionModalLoadAssets) { ?>
-    <script type="text/javascript" src="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/js/modules/intervention_date.js', 1)); ?>"></script>
+    <script type="text/javascript" src="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/js/modules/intervention_date.js')); ?>"></script>
 <?php } ?>

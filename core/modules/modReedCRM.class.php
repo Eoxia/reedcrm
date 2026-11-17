@@ -33,6 +33,11 @@ require_once DOL_DOCUMENT_ROOT . '/core/modules/DolibarrModules.class.php';
 class modReedCRM extends DolibarrModules
 {
     /**
+     * @var int[] Minimum version of Saturne required by module, same format as need_dolibarr_version: checked by init() and by the Saturne index page
+     */
+    public $need_saturne_version = [23, 6];
+
+    /**
      * Constructor. Define names, constants, directories, boxes, permissions
      *
      * @param DoliDB $db Database handler
@@ -43,8 +48,8 @@ class modReedCRM extends DolibarrModules
 
         parent::__construct($db);
 
-        if (file_exists(__DIR__ . '/../../../saturne/lib/saturne_functions.lib.php')) {
-            require_once __DIR__ . '/../../../saturne/lib/saturne_functions.lib.php';
+        if (file_exists(dol_buildpath('/saturne/lib/saturne_functions.lib.php'))) {
+            dol_include_once('/saturne/lib/saturne_functions.lib.php');
             saturne_load_langs(['reedcrm@reedcrm']);
         } else {
             $this->error++;
@@ -262,8 +267,9 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_CALL_LIST_GENERATE_DOCUMENTS_ADDON', 'chaine', 'pdf_calllist_standard', '', 0, 'current'],
 
             // CONST POCKET
-            // The API key and the imported folder are deliberately left empty: nothing is fetched
-            // from Pocket until an admin fills them in admin/pocket.php
+            // The API key and the imported folder of the shared account are deliberately left empty:
+            // nothing is fetched from it until an admin fills them in admin/pocket.php. Each user may
+            // also set an account of their own on the Pocket tab of their user card.
             $i++ => ['REEDCRM_POCKET_API_KEY', 'chaine', '', '', 0, 'current'],
             $i++ => ['REEDCRM_POCKET_FOLDER_ID', 'chaine', '', '', 0, 'current'],
             $i++ => ['REEDCRM_POCKET_FOLDER_LABEL', 'chaine', '', '', 0, 'current'],
@@ -310,6 +316,7 @@ class modReedCRM extends DolibarrModules
         $this->tabs[] = ['data' => 'project' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/reedcrm/view/procard.php?from_id=__ID__&from_type=project'];
         $this->tabs[] = ['data' => 'thirdparty' . ':+event:' . $pictoReedcrm . $langs->transnoentities('CardPro') . ':reedcrm@reedcrm:1:/reedcrm/view/procard.php?from_id=__ID__&from_type=societe'];
         $this->tabs[] = ['data' => 'thirdparty:+keyyo:' . $pictoReedcrm . $langs->transnoentities('KeyyoCalls') . ':reedcrm@reedcrm:$user->hasRight(\'societe\', \'lire\'):/reedcrm/view/thirdparty_calls.php?id=__ID__'];
+        $this->tabs[] = ['data' => 'user:+pocket:' . $pictoReedcrm . $langs->transnoentities('Pocket') . ':reedcrm@reedcrm:$user->hasRight(\'reedcrm\', \'pocketrecording\', \'write\'):/reedcrm/view/pocketrecording/pocketrecording_user.php?id=__ID__'];
 
         // Pocket recording tabs, driven by the REEDCRM_POCKET_LINK_* constants set in admin/pocket.php.
         // This loop belongs to the constructor: saturne_refresh_module_registrations() instantiates the
@@ -544,8 +551,41 @@ class modReedCRM extends DolibarrModules
                 'unitfrequency' => 86400,
                 'datenextrun'   => dol_mktime(20, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
                 'status'        => 0,
-                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && getDolGlobalString(\'REEDCRM_POCKET_API_KEY\') != \'\'',
+                // No key in the test: the accounts may all be personal ones, the job reports what it walked
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\')',
                 'priority'      => 57
+            ],
+            10 => [
+                'label'         => $langs->transnoentities('PropalUnbilledCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmcron.class.php',
+                'objectname'    => 'ReedcrmCron',
+                'method'        => 'syncPropalUnbilledTag',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('PropalUnbilledCronComment'),
+                // Four times a day: 0h, 6h, 12h and 18h
+                'frequency'     => 6,
+                'unitfrequency' => 3600,
+                'datenextrun'   => dol_mktime(6, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'propal\') && isModEnabled(\'categorie\')',
+                'priority'      => 58
+            ],
+            11 => [
+                'label'         => $langs->transnoentities('PocketTidyReminderCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/pocketcron.class.php',
+                'objectname'    => 'PocketCron',
+                'method'        => 'createTidyReminders',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('PocketTidyReminderCronComment'),
+                // Every quarter of an hour from midnight: the job waits for the time of the Pocket setup
+                'frequency'     => 15,
+                'unitfrequency' => 60,
+                'datenextrun'   => dol_mktime(0, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
+                'priority'      => 59
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -1072,6 +1112,23 @@ class modReedCRM extends DolibarrModules
             'user'     => 0,
         ];
 
+        // The page shows bank data: the direct debit module and its read permission are required on top of ReedCRM
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => $langs->transnoentities('SepaMandateCheckTitle'),
+            'prefix'   => '<i class="fas fa-university pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'sepamandatecheck',
+            'url'      => '/reedcrm/view/sepamandate_check.php',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\') && isModEnabled(\'prelevement\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'read\') && $user->hasRight(\'prelevement\', \'bons\', \'lire\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
         /* SECTION STEERING */
 
         $this->menu[$r++] = [
@@ -1239,21 +1296,6 @@ class modReedCRM extends DolibarrModules
         ];
 
         $this->menu[$r++] = [
-            'fk_menu'  => 'fk_mainmenu=project',
-            'type'     => 'left',
-            'titre'    => $langs->transnoentities('MinimizeMenu'),
-            'prefix'   => '<i class="fas fa-chevron-circle-left pictofixedwidth saturne-toggle-menu"></i>',
-            'leftmenu' => 'minimizemenu',
-            'url'      => '',
-            'langs'    => 'projet@projet',
-            'position' => 1000 + $r,
-            'enabled'  => '$conf->projet->enabled',
-            'perms'    => '$user->rights->projet->lire',
-            'target'   => '',
-            'user'     => 0,
-        ];
-
-        $this->menu[$r++] = [
             'fk_menu'  => 'fk_mainmenu=commercial,fk_leftmenu=propals',
             'type'     => 'left',
             'titre'    => 'Modèle de proposition',
@@ -1282,6 +1324,27 @@ class modReedCRM extends DolibarrModules
     public function init($options = ''): int
     {
         global $conf, $langs, $user;
+
+        // Saturne provides the functions used below : refuse the activation rather than a fatal error when it is missing
+        if (!function_exists('saturne_load_langs')) {
+            $this->error = $langs->trans('activateModuleDependNotSatisfied', $this->name, 'modSaturne', $this->name);
+            return -1;
+        }
+
+        // Saturne ships separately: refuse one older than need_saturne_version, it lacks functions this release calls
+        require_once DOL_DOCUMENT_ROOT . '/core/lib/admin.lib.php';
+        dol_include_once('/saturne/core/modules/modSaturne.class.php');
+        $saturneVersion = class_exists('modSaturne') ? (new modSaturne($this->db))->version : '';
+        if (versioncompare(explode('.', $saturneVersion), $this->need_saturne_version) < 0) {
+            $langs->load('admin'); // activateModuleDependNotSatisfied, not loaded when the Saturne index page runs init()
+            $this->error = $langs->trans('activateModuleDependNotSatisfied', $this->name, 'modSaturne >= ' . versiontostring($this->need_saturne_version) . ' (' . ($saturneVersion ?: '-') . ')', $this->name);
+            return -1;
+        }
+
+        // Dolibarr runs init() before activating $this->depends : activate them first, the Pocket tabs below need isModEnabled() on them
+        if (function_exists('saturne_activate_module_dependencies') && saturne_activate_module_dependencies($this) < 0) {
+            return -1;
+        }
 
         // Permissions
         $this->remove($options);
@@ -1312,13 +1375,19 @@ class modReedCRM extends DolibarrModules
             'reedcrm_firstname'    => ['Label' => 'FirstName',              'type' => 'varchar', 'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 40, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'reedcrm_website'      => ['Label' => 'Website',                'type' => 'url',     'length' => 255, 'elementtype' => ['projet'], 'position' => $this->numero . 45, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'projectphone'         => ['Label' => 'ProjectPhone',           'type' => 'phone',                    'elementtype' => ['projet'], 'position' => $this->numero . 50, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
-            'reedcrm_email'        => ['Label' => 'Email',                  'type' => 'mail',                     'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
+            'reedcrm_email'        => ['Label' => 'Email',                  'type' => 'email',                    'elementtype' => ['projet'], 'position' => $this->numero . 60, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1],
             'opporigin'            => ['Label' => 'OpportunityOrigin',      'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 70, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_input_reason:code:rowid' => null]],
             'projectaddress'       => ['Label' => 'FavoriteAddress',        'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 80, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['reedcrm_address:name:rowid::((element_type:=:\'project\') AND (status:=:1))' => null], 'perms' => '$user->hasRight(\'reedcrm\', \'address\', \'write\')', 'moreparams' => ['css' => 'minwidth100 maxwidth300 widthcentpercentminusx']],
             'opprefusal'           => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['projet'], 'position' => $this->numero . 85, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'project\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
             'commrefusal'          => ['Label' => 'RefusalReason',          'type' => 'sellist',                  'elementtype' => ['propal'], 'position' => $this->numero . 90, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1, 'params' => ['c_refusal_reason:ref:rowid' => null]],
 
             'reedcrm_propal_label' => ['Label' => 'ReedCRMPropalLabel',     'type' => 'varchar', 'length' => 255, 'elementtype' => ['propal'], 'position' => $this->numero . 95, 'list' => 1, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'propal\')', 'alwayseditable' => 1],
+
+            // Billing of the time of a ticket (#1242) : empty = the subscription credit first, then billed
+            'reedcrm_billing'      => ['Label' => 'TicketMoneyBillingMode', 'type' => 'select',                  'elementtype' => ['ticket'], 'position' => $this->numero . 10, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')', 'alwayseditable' => 1, 'params' => ['billable' => 'TicketMoneyBillingBillable', 'free' => 'TicketMoneyBillingFree'], 'help' => 'TicketMoneyBillingModeHelp'],
+            'reedcrm_billing_note' => ['Label' => 'TicketMoneyFreeReason',  'type' => 'varchar', 'length' => 255, 'elementtype' => ['ticket'], 'position' => $this->numero . 20, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')', 'alwayseditable' => 1],
+            // Customer late in paying, ticket handled anyway (#1248) : date it was put under reserve, valid REEDCRM_TICKET_MONEY_RESERVE_DAYS days
+            'reedcrm_reserve'      => ['Label' => 'TicketMoneyReserveSince', 'type' => 'datetime',               'elementtype' => ['ticket'], 'position' => $this->numero . 30, 'list' => 4, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'ticket\')', 'alwayseditable' => 1],
 
             'notation_societe_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['societe'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'societe\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],
             'notation_facture_contact'    => ['Label' => 'NotationObjectContact', 'type' => 'text', 'elementtype' => ['facture'],     'position' => $this->numero . 10, 'list' => 5, 'enabled' => 'isModEnabled(\'reedcrm\') && isModEnabled(\'invoice\')',  'help' => 'NotationObjectContactHelp', 'moreparams' => ['csslist' => 'center']],

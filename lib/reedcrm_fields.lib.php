@@ -22,7 +22,7 @@
  */
 
 /**
- * Render the relaunch commercial field (ActionComm buttons by type).
+ * Render the relaunch commercial field: the two-button widget (past / upcoming).
  *
  * @param  array        $parameters Hook parameters (key, context, ...)
  * @param  CommonObject $object     The object
@@ -30,74 +30,21 @@
  */
 function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $object): string
 {
-    global $conf, $db, $langs, $user;
-
-    $out = '';
-
     if (!isModEnabled('agenda')) {
-        return $out;
+        return '';
     }
 
-    // In the saturne list loop the record id is $object->id (rowid is 0); the raw row
-    // (carrying the real project id and socid) is passed via the hook param 'obj'.
+    // In the saturne list loop the record id is $object->id (rowid is 0); the raw row, carrying
+    // the real project id, is passed through the hook param 'obj'.
     $row       = !empty($parameters['obj']) ? $parameters['obj'] : $object;
     $projectId = (int) (!empty($row->id) ? $row->id : $object->id);
-    $socid     = (int) ($row->socid ?? 0);
 
-    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+    require_once __DIR__ . '/reedcrm_relaunch.lib.php';
 
-    $actionComm = new ActionComm($db);
-
-    $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
-    $actionComms = $actionComm->getActions($socid, $projectId, 'project', $filter, 'a.datec');
-
-    require_once __DIR__ . '/reedcrm_function.lib.php';
-
-    $actonComsByType = [];
-    foreach (reedcrm_get_relaunch_types() as $typeKey => $type) {
-        $actonComsByType[$typeKey] = $type + ['nb' => 0];
-    }
-
-    if (is_array($actionComms) && !empty($actionComms)) {
-        foreach ($actionComms as $ac) {
-            $actonComsByType[reedcrm_get_relaunch_type_key((string) $ac->type_code)]['nb']++;
-        }
-    }
-
-    $cardProUrl = dol_buildpath('/reedcrm/view/procard.php', 1) . '?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId;
-
-    $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
-    $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
-
-    foreach ($actonComsByType as $actionCommType => $actonComByType) {
-        $dialogUrl = dol_buildpath('/reedcrm/ajax/get_relaunches_list.php', 1);
-
-        $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $projectId . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
-        $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '"';
-        // Required by the hover tooltip (eventpro.js): without it the tooltip bails out and never opens
-        $out .= ' data-relaunch-type="' . $actionCommType . '"';
-        $out .= ' data-action-comm-type="' . $actonComByType['actioncode'] . '">';
-
-        $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
-        $out .= '<i class="fas fa-' . $actonComByType['picto'] . '"></i>';
-        $out .= '<span class="reedcrm-plist-relaunch-count">' . $actonComByType['nb'] . '</span>';
-        $out .= '</div>';
-
-        if ($user->hasRight('agenda', 'myactions', 'create')) {
-            $cardProUrlFull = $cardProUrl . '&actioncode=' . $actonComByType['actioncode'];
-            $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-            $out .= '<i class="fas fa-plus"></i>';
-            $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
-            $out .= '</div>';
-        }
-
-        $out .= '</div>';
-    }
-
-    $out .= '</div>';
-    $out .= '</div>';
-
-    return $out;
+    return reedcrm_render_relaunch_widget([
+        'projectId'    => $projectId,
+        'wrapperClass' => 'reedcrm-plist-relaunch-wrapper',
+    ]);
 }
 
 /**
@@ -552,7 +499,7 @@ function reedcrm_load_list_categories(CommonObject $object): array
  */
 function reedcrm_field_categories(array $parameters, CommonObject $object): string
 {
-    global $conf, $langs, $param;
+    global $conf, $param;
 
     $objectId = (int) (!empty($object->id) ? $object->id : ($parameters['obj']->rowid ?? 0));
     if ($objectId <= 0) {
@@ -579,7 +526,7 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
         $tagUrl    = $listUrl . '&search_categories_filter[]=' . $category['id'];
 
         $out .= '<span class="noborderoncategories" style="background: #' . $color . ';">';
-        $out .= '<a class="' . $textColor . '" href="' . dol_escape_htmltag($tagUrl) . '" title="' . dol_escape_htmltag($langs->trans('Categories')) . '">';
+        $out .= '<a class="' . $textColor . '" href="' . dol_escape_htmltag($tagUrl) . '" title="' . dol_escape_htmltag($category['label']) . '">';
         $out .= '<span class="fas fa-tag paddingright"></span>' . dol_escape_htmltag($category['label']);
         $out .= '</a></span>';
     }
@@ -588,11 +535,85 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
 }
 
 /**
+ * Columns of the thirdparty selected with the rows of the opportunity list.
+ *
+ * getNomUrl() and its tooltip read these properties: the thirdparty of each row is rebuilt from
+ * them, as the native project list does, instead of being fetched line by line. Each column is
+ * selected as reedcrm_soc_<property>.
+ *
+ * @return array<string,string> Columns of llx_societe indexed by property of Societe
+ */
+function reedcrm_thirdparty_list_columns(): array
+{
+    return [
+        'name'             => 'nom',
+        'name_alias'       => 'name_alias',
+        'client'           => 'client',
+        'fournisseur'      => 'fournisseur',
+        'code_client'      => 'code_client',
+        'code_fournisseur' => 'code_fournisseur',
+        'email'            => 'email',
+        'phone'            => 'phone',
+        'address'          => 'address',
+        'zip'              => 'zip',
+        'town'             => 'town',
+        'status'           => 'status',
+    ];
+}
+
+/**
+ * Sort key of the thirdparty column of the opportunity list: the name of the thirdparty.
+ *
+ * Many opportunities have no thirdparty (quick creation, PWA): they come last whatever the order,
+ * rather than filling the first pages of an ascending sort. A flag ahead of the name does it, the
+ * database putting the empty values first in an ascending order.
+ *
+ * @param  string $alias     Alias of the joined thirdparty table
+ * @param  string $sortOrder Order of the list (asc or desc, first one of several)
+ * @return string            SQL expression
+ */
+function reedcrm_thirdparty_list_sort_sql(string $alias, string $sortOrder): string
+{
+    $isDescending = strtolower(trim(explode(',', $sortOrder)[0])) === 'desc';
+
+    return "CONCAT(IF(" . $alias . ".nom IS NULL, '" . ($isDescending ? '0' : '1') . "', '" . ($isDescending ? '1' : '0') . "'), COALESCE(" . $alias . ".nom, ''))";
+}
+
+/**
+ * Render the thirdparty cell of the opportunity list: the link to the thirdparty card.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_thirdparty(array $parameters, CommonObject $object): string
+{
+    global $db;
+
+    // Never an empty string: the list would fall back on its generic rendering, which prints the sort key
+    $row          = $parameters['obj'] ?? null;
+    $thirdpartyId = (int) ($row->fk_soc ?? 0);
+    if ($thirdpartyId <= 0 || !isset($row->reedcrm_soc_name)) {
+        return '<span></span>';
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+    $thirdparty     = new Societe($db);
+    $thirdparty->id = $thirdpartyId;
+    foreach (array_keys(reedcrm_thirdparty_list_columns()) as $property) {
+        $thirdparty->$property = $row->{'reedcrm_soc_' . $property};
+    }
+
+    return '<div class="tdoverflowmax200">' . $thirdparty->getNomUrl(1) . '</div>';
+}
+
+/**
  * Render the lifecycle cell: the timeline of the project card, in its compact form.
  *
  * The timeline is built from the documents the project carries: they are read for the projects of
- * the whole page on the first row. The column is sorted and filtered on the current step by the
- * printFieldListSelect and printFieldListSearch hooks.
+ * the whole page on the first row. The column is sorted on the current step by the printFieldListSelect
+ * hook, and filtered on the milestones reached by the printFieldListSearch hook.
  *
  * @param  array        $parameters Hook parameters (key, context, obj, ...)
  * @param  CommonObject $object     The object

@@ -77,96 +77,8 @@ $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt'
     <!-- Label -->
     <div class="todo-card-label<?php echo $permissionToWrite ? ' todo-editable-label' : ''; ?>"><?php echo dol_escape_htmltag($t['label']); ?></div>
 
-    <!-- Third party, project and, for a relaunch, the proposal or the invoice it was raised on -->
-    <?php if (!empty($t['soc_id']) || !empty($t['project_id']) || !empty($t['origin'])) : ?>
-        <div class="todo-card-links">
-            <?php if (!empty($t['origin'])) : ?>
-                <?php
-                // The amount and the counter are glued to the reference they describe: the badge
-                // gives up its right corners so they read as a single chip, and the wrapper keeps
-                // them on one line
-                $originRelaunchCount = (int) ($t['origin']['relaunch_count'] ?? 0);
-                $originHasAmount     = !empty($t['origin']['amount_ht']);
-                $originPicto         = $t['origin']['type'] == 'propal' ? 'fa-file-signature' : 'fa-file-invoice-dollar';
-                ?>
-                <span class="todo-origin-wrapper">
-                    <a class="todo-link-badge todo-link-origin<?php echo ($originRelaunchCount > 0 || $originHasAmount) ? ' todo-link-origin-counted' : ''; ?>" target="_blank" href="<?php echo $t['origin']['url']; ?>">
-                        <i class="fas <?php echo $originPicto; ?>"></i>
-                        <?php echo dol_escape_htmltag($t['origin']['ref']); ?>
-                    </a>
-                    <?php // Lines of the object, shown on hovering its reference the way the risk of a task is on the action plan of Digirisk ?>
-                    <?php if (!empty($t['origin']['lines'])) : ?>
-                        <span class="todo-origin-tooltip">
-                            <span class="todo-origin-tooltip-header">
-                                <i class="fas <?php echo $originPicto; ?>"></i>
-                                <strong><?php echo dol_escape_htmltag($t['origin']['ref']); ?></strong>
-                                <span class="todo-origin-tooltip-total"><?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?></span>
-                            </span>
-                            <?php foreach ($t['origin']['lines'] as $originLine) : ?>
-                                <span class="todo-origin-tooltip-line">
-                                    <span class="todo-origin-tooltip-label"><?php echo dol_escape_htmltag($originLine['label']); ?></span>
-                                    <span class="todo-origin-tooltip-amount"><?php echo dol_escape_htmltag($originLine['amount']); ?></span>
-                                </span>
-                            <?php endforeach; ?>
-                            <?php if (!empty($t['origin']['lines_more'])) : ?>
-                                <span class="todo-origin-tooltip-more"><?php echo dol_escape_htmltag($langs->trans('TodoOriginMoreLines', $t['origin']['lines_more'])); ?></span>
-                            <?php endif; ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($originHasAmount) : ?>
-                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($t['origin']['amount_ht_full']); ?>">
-                            <?php echo dol_escape_htmltag($t['origin']['amount_ht_short']); ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($originRelaunchCount > 0) : ?>
-                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoRelaunchCount', $originRelaunchCount)); ?>">
-                            <i class="fas fa-headset"></i> <?php echo $originRelaunchCount; ?>
-                        </span>
-                    <?php endif; ?>
-                </span>
-            <?php endif; ?>
-            <?php if (!empty($t['soc_id'])) : ?>
-                <a class="todo-link-badge todo-link-soc" target="_blank"
-                   href="<?php echo DOL_URL_ROOT . '/societe/card.php?socid=' . $t['soc_id']; ?>"
-                   title="<?php echo dol_escape_htmltag($t['soc_name']); ?>">
-                    <i class="fas fa-building"></i> <?php echo dol_escape_htmltag($t['soc_name']); ?>
-                </a>
-            <?php endif; ?>
-            <?php if (!empty($t['project_id'])) : ?>
-                <?php
-                // Budget, probability and relaunches of the project are glued to its badge, the way the
-                // amount and the counter of a proposal are to its reference
-                $projectInfos         = $t['project_infos'] ?? [];
-                $projectHasAmount     = !empty($projectInfos['amount_short']);
-                $projectHasPercent    = isset($projectInfos['percent']);
-                $projectRelaunchCount = (int) ($projectInfos['relaunch_count'] ?? 0);
-                $projectCounted       = $projectHasAmount || $projectHasPercent || $projectRelaunchCount > 0;
-                ?>
-                <span class="todo-origin-wrapper todo-project-wrapper">
-                    <a class="todo-link-badge todo-link-project<?php echo $projectCounted ? ' todo-link-origin-counted' : ''; ?>" target="_blank"
-                       href="<?php echo DOL_URL_ROOT . '/projet/card.php?id=' . $t['project_id']; ?>"
-                       title="<?php echo dol_escape_htmltag($t['project_ref'] . ' - ' . $t['project_title']); ?>">
-                        <i class="fas fa-project-diagram"></i> <?php echo dol_escape_htmltag($t['project_title'] ?: $t['project_ref']); ?>
-                    </a>
-                    <?php if ($projectHasAmount) : ?>
-                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($projectInfos['amount_full']); ?>">
-                            <?php echo dol_escape_htmltag($projectInfos['amount_short']); ?>
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($projectHasPercent) : ?>
-                        <span class="todo-origin-amount" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectProbability', $projectInfos['percent'] . '%')); ?>">
-                            <?php echo (int) $projectInfos['percent']; ?>%
-                        </span>
-                    <?php endif; ?>
-                    <?php if ($projectRelaunchCount > 0) : ?>
-                        <span class="todo-relaunch-count" title="<?php echo dol_escape_htmltag($langs->trans('TodoProjectRelaunchCount', $projectRelaunchCount)); ?>">
-                            <i class="fas fa-headset"></i> <?php echo $projectRelaunchCount; ?>
-                        </span>
-                    <?php endif; ?>
-                </span>
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
+    <!-- Third party, contact, project and, for a relaunch, the proposal or the invoice it was raised on -->
+    <?php require __DIR__ . '/todo_kanban_card_links.tpl.php'; ?>
 
     <!-- People: [owner] | [assigned users] [+] -->
     <div class="todo-card-people">
@@ -238,9 +150,14 @@ $startFromOrigin = empty($t['date_start_fmt']) && !empty($t['origin']['date_fmt'
               <?php if ($quickCloseEvent) : ?>data-event-id="<?php echo $t['id']; ?>" title="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"<?php endif; ?>><?php echo dol_escape_htmltag($percentText); ?><?php if ($quickCloseEvent) : ?><i class="fas fa-check-circle reedcrm-quick-close-icon"></i><?php endif; ?></span>
     </div>
 
-    <!-- Location and private note -->
-    <?php if (!empty($t['location']) || !empty($t['note'])) : ?>
+    <!-- Beginning of the summary of the Pocket recording, location and private note -->
+    <?php if (!empty($t['pocket_summary']) || !empty($t['location']) || !empty($t['note'])) : ?>
         <div class="todo-card-footer">
+            <?php if (!empty($t['pocket_summary'])) : ?>
+                <span class="todo-card-note todo-card-pocket-summary" title="<?php echo dol_escape_htmltag($langs->trans('PocketRecordingEventSummary', $t['pocket_summary']['ref'])); ?>">
+                    <i class="fas fa-microphone"></i> <?php echo dol_escape_htmltag($t['pocket_summary']['excerpt']); ?>
+                </span>
+            <?php endif; ?>
             <?php if (!empty($t['location'])) : ?>
                 <span class="todo-card-location" title="<?php echo dol_escape_htmltag($langs->trans('Location')); ?>">
                     <i class="fas fa-map-marker-alt"></i> <?php echo dol_escape_htmltag($t['location']); ?>

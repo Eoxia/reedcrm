@@ -43,6 +43,7 @@ if (isModEnabled('categorie')) {
 
 // load ReedCRM libraries
 require_once __DIR__ . '/../../class/geolocation.class.php';
+require_once __DIR__ . '/../../class/reedcrmvoicedescription.class.php';
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
 
 // Global variables definitions
@@ -121,7 +122,7 @@ $conf->global->MAIN_FAVICON_URL = dol_buildpath('/reedcrm/img/reedcrm_color_512.
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa quickcreation-frontend');
 
 if (empty($permissionToAddProject)) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 

@@ -62,7 +62,7 @@
         </tr>
 
         <tr class="oddeven">
-            <td><?php echo $langs->trans("Project"); ?></td><td colspan="3">
+            <td class="titlefield"><?php echo $langs->trans("Project"); ?></td><td>
                 <div class="reedcrm-project-field-wrapper">
                     <?php
                     // Own id: the eventPro form above the tabs already has a #project_id, select2 would skip this one

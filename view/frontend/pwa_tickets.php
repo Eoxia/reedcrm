@@ -184,7 +184,7 @@ if ($action == 'savecolwidths') {
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-tickets-list');
 
 if (!$user->hasRight('ticket', 'read')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 

@@ -21,7 +21,7 @@
  * \brief       CRUD class for CallList
  */
 
-require_once __DIR__ . '/../../saturne/class/saturneobject.class.php';
+dol_include_once('/saturne/class/saturneobject.class.php');
 // Preload the numbering module class: saturne_require_objects_mod() strips underscores from the
 // element type ('call_list' → 'calllist') and would not find the file in core/modules/reedcrm/call_list/
 require_once __DIR__ . '/../core/modules/reedcrm/call_list/mod_call_list_standard.php';
@@ -64,6 +64,13 @@ class CallList extends SaturneObject
     public const STATUS_ACTIVE   = 1;
 
     /**
+     * Order of the call lists wherever they are listed or offered (list, card and PWA selectors): the
+     * position set by hand, then the label, which keeps the order of the lists numbered in their label
+     * ("1 - Hot", "2 - Negotiation"...) as long as nobody set a position
+     */
+    public const SORT_FIELDS = 't.position,t.label';
+
+    /**
      * @var array Array with all fields and their property.
      */
     public $fields = [
@@ -76,7 +83,8 @@ class CallList extends SaturneObject
         'import_key'     => ['type' => 'varchar(14)',  'label' => 'ImportId',      'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => 0],
         'status'         => ['type' => 'smallint',     'label' => 'Status',        'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 1, 'index' => 1, 'default' => 0],
         'label'          => ['type' => 'varchar(255)', 'label' => 'Label',         'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1, 'searchall' => 1, 'autofocusoncreate' => 1],
-        'note_public'    => ['type' => 'html',         'label' => 'NotePublic',    'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 0],
+        'position'       => ['type' => 'integer',      'label' => 'Position',      'enabled' => 1, 'position' => 85,  'notnull' => 1, 'visible' => 1, 'default' => 0, 'help' => 'CallListPositionHelp'],
+        'note_public'   => ['type' => 'html',         'label' => 'NotePublic',    'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 0],
         'note_private'   => ['type' => 'html',         'label' => 'NotePrivate',   'enabled' => 1, 'position' => 100, 'notnull' => 0, 'visible' => 0],
         'fk_user_assign' => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'AssignedTo', 'enabled' => 1, 'position' => 110, 'notnull' => 0, 'visible' => 1],
         'date_start'     => ['type' => 'datetime',     'label' => 'DateStart',     'enabled' => 1, 'position' => 120, 'notnull' => 0, 'visible' => 1],
@@ -89,6 +97,11 @@ class CallList extends SaturneObject
      * @var string label
      */
     public $label = '';
+
+    /**
+     * @var int position, the smallest first, see SORT_FIELDS
+     */
+    public $position = 0;
 
     /**
      * @var string note_public

@@ -33,7 +33,10 @@ if (!$permissionToAddProject) {
     exit;
 }
 
-require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.tpl.php'; ?>
+// reedcrm_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
+require_once __DIR__ . '/../../../lib/reedcrm_function.lib.php';
+
+require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'); ?>
 
 <?php require_once __DIR__ . '/reedcrm_pwa_header.tpl.php'; ?>
 
@@ -211,9 +214,15 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
         </div>
 
         <!-- Description -->
-        <?php if ($conf->global->REEDCRM_PROJECT_DESCRIPTION_VISIBLE > 0) : ?>
+        <?php if (getDolGlobalInt('REEDCRM_PROJECT_DESCRIPTION_VISIBLE') > 0) : ?>
             <div class="form-group">
                 <textarea name="description" id="description" rows="4" placeholder="<?php echo $langs->trans('Description'); ?> (Détails du lead...)"><?php echo dol_escape_htmltag((GETPOSTISSET('description') ? GETPOST('description', 'restricthtml') : '')); ?></textarea>
+                <?php if (ReedcrmVoiceDescription::isEnabled()) : ?>
+                    <!-- Shown while the AI writes the description from the last voice note -->
+                    <div class="quickcreation-voice-description" data-error="<?php echo dol_escape_htmltag($langs->trans('VoiceDescriptionError')); ?>" data-empty="<?php echo dol_escape_htmltag($langs->trans('VoiceDescriptionEmpty')); ?>">
+                        <i class="fas fa-circle-notch fa-spin"></i> <?php echo $langs->trans('VoiceDescriptionWriting'); ?>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
@@ -249,7 +258,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 }
 
                 $inputType = 'text';
-                if ($value == 'mail') {
+                if ($value == 'mail' || $value == 'email') {
                     $inputType = 'email';
                 }
                 if ($value == 'phone') {
@@ -301,7 +310,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
                 </div>
 
                 <!-- 100% Amount -->
-                <?php if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) : ?>
+                <?php if (getDolGlobalInt('REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE') > 0) : ?>
                 <div class="form-group" style="width: 100%; margin-bottom: 0;">
                     <div class="input-with-icon" style="margin-top: 0; line-height: 1;">
                         <span class="input-icon">€</span>
@@ -361,7 +370,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 </div>
 
 <!-- intl-tel-input (Local libphonenumber integration) -->
-<link rel="stylesheet" href="<?php echo dol_buildpath('/reedcrm/js/intl-tel-input/css/intlTelInput.css', 1); ?>">
+<link rel="stylesheet" href="<?php echo reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css'); ?>">
 <style>
     /* Fix the width issue caused by the library inserting a wrapper */
     .iti { width: 100%; display: block; }
@@ -389,7 +398,7 @@ require_once __DIR__ . '/../../../../saturne/core/tpl/medias/media_editor_modal.
 <?php
 // Data attributes for JS — lang is passed via HTML, no inline script needed
 $defaultLang = substr($langs->defaultlang, 0, 2);
-$utilsPath   = dol_buildpath('/reedcrm/js/intl-tel-input/js/utils.js', 1);
+$utilsPath   = reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/js/utils.js');
 ?>
 <div id="reedcrm-quickcreation-data"
      data-lang="<?php echo dol_escape_htmltag($defaultLang); ?>"

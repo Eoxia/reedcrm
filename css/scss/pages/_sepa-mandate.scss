@@ -1,0 +1,256 @@
+/* SEPA mandate check : figures, filters and one row per bank account with what to fix. */
+
+/* Severity colors, applied as an alpha layer over the row background so the page reads the same in both themes */
+$sepamandate-blocking: #cf4257;
+$sepamandate-warning: #c8871a;
+$sepamandate-ok: #2e9e6c;
+$sepamandate-neutral: #2f6f9f;
+
+.reedcrm-sepamandate-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.reedcrm-sepamandate-tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: $sepamandate-neutral;
+  }
+
+  &.reedcrm-sepamandate-is-blocking:before {
+    background: $sepamandate-blocking;
+  }
+
+  &.reedcrm-sepamandate-is-warning:before {
+    background: $sepamandate-warning;
+  }
+
+  &.reedcrm-sepamandate-is-ok:before {
+    background: $sepamandate-ok;
+  }
+
+  .reedcrm-sepamandate-tile-key {
+    font-size: .78em;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity: .65;
+  }
+
+  .reedcrm-sepamandate-tile-value {
+    font-size: 1.7em;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+
+    small {
+      font-size: .5em;
+      opacity: .6;
+    }
+  }
+
+  .reedcrm-sepamandate-tile-hint {
+    font-size: .8em;
+    opacity: .6;
+  }
+}
+
+.reedcrm-sepamandate-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  .reedcrm-sepamandate-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    > label {
+      font-size: .78em;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      opacity: .65;
+    }
+  }
+
+  /* The checkbox reads as a sentence, its label is not a field title */
+  .reedcrm-sepamandate-filter-check {
+    flex-direction: row;
+    align-items: center;
+    padding-bottom: 6px;
+
+    > label {
+      font-size: 1em;
+      font-weight: normal;
+      letter-spacing: 0;
+      text-transform: none;
+      opacity: 1;
+    }
+  }
+
+  .reedcrm-sepamandate-filter-actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.reedcrm-sepamandate-tablewrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+}
+
+.reedcrm-sepamandate-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 9px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    font-size: .78em;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: .7;
+    border-bottom: 1px solid var(--colortopbordertitle1, #ddd);
+  }
+
+  tbody td {
+    border-top: 1px solid var(--colortopbordertitle1, #eee);
+  }
+
+  /* The left rule carries the severity, so the eye finds the blocking rows without reading the badges */
+  tbody tr {
+    box-shadow: inset 3px 0 0 transparent;
+  }
+
+  .reedcrm-sepamandate-row-blocking {
+    box-shadow: inset 3px 0 0 $sepamandate-blocking;
+    background: rgba(207, 66, 87, .05);
+  }
+
+  .reedcrm-sepamandate-row-warning {
+    box-shadow: inset 3px 0 0 $sepamandate-warning;
+  }
+
+  .reedcrm-sepamandate-empty {
+    text-align: center;
+    opacity: .6;
+  }
+}
+
+.reedcrm-sepamandate-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 11px;
+  font-size: .8em;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &.reedcrm-sepamandate-is-blocking {
+    color: #a3293c;
+    background: rgba(207, 66, 87, .16);
+  }
+
+  &.reedcrm-sepamandate-is-warning {
+    color: #96631b;
+    background: rgba(200, 135, 26, .18);
+  }
+
+  &.reedcrm-sepamandate-is-ok {
+    color: #1f7a52;
+    background: rgba(46, 158, 108, .16);
+  }
+}
+
+.reedcrm-sepamandate-label {
+  font-weight: 600;
+}
+
+.reedcrm-sepamandate-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 8px;
+  font-size: .75em;
+  line-height: 1.7;
+  background: rgba(47, 111, 159, .14);
+
+  &.reedcrm-sepamandate-is-inactive {
+    background: rgba(120, 130, 150, .2);
+  }
+}
+
+/* Second line of a cell: masked IBAN, reason of the written date, invoice references */
+.reedcrm-sepamandate-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: .85em;
+  opacity: .75;
+  white-space: nowrap;
+}
+
+.reedcrm-sepamandate-written {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  &.reedcrm-sepamandate-is-empty {
+    color: $sepamandate-blocking;
+  }
+}
+
+.reedcrm-sepamandate-issues {
+  margin: 0;
+  padding-left: 16px;
+  min-width: 280px;
+
+  li {
+    margin-bottom: 4px;
+    line-height: 1.35;
+  }
+
+  li.reedcrm-sepamandate-is-blocking::marker {
+    color: $sepamandate-blocking;
+  }
+
+  li.reedcrm-sepamandate-is-warning::marker {
+    color: $sepamandate-warning;
+  }
+}
+
+.reedcrm-sepamandate-note {
+  margin-top: 10px;
+  font-size: .85em;
+  opacity: .6;
+}

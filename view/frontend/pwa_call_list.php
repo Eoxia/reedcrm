@@ -45,16 +45,8 @@ saturne_load_langs();
 $id     = GETPOSTINT('id');
 $action = GETPOST('action', 'nohtml');
 
-// LOG ALL REQUESTS TO DEBUG
-$debugFile = $conf->ecm->dir_output . '/debug_upload_top.log';
-file_put_contents($debugFile, "===== REQ to pwa_call_list =====\n", FILE_APPEND);
-file_put_contents($debugFile, "GET: " . print_r($_GET, true) . "\n", FILE_APPEND);
-file_put_contents($debugFile, "POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
-file_put_contents($debugFile, "ACTION: " . $action . "\n", FILE_APPEND);
-
-
 if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcrm', 'call_list', 'read_subordinates') && !$user->hasRight('reedcrm', 'call_list', 'read_all')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
@@ -72,41 +64,21 @@ if ($id > 0) {
 }
 
 if (empty($object->id)) {
-    accessforbidden($langs->trans('RecordNotFound'), 0);
+    accessforbidden($langs->trans('ErrorRecordNotFound'));
     exit;
 }
 
-$canRead = false;
-if ($user->hasRight('reedcrm', 'call_list', 'read_all') || $user->admin) {
-    $canRead = true;
-} elseif ($user->hasRight('reedcrm', 'call_list', 'read_subordinates')) {
-    $childIds = $user->getAllChildIds(1);
-    if (isset($childIds[$object->fk_user_assign])) {
-        $canRead = true;
-    }
-} elseif ($user->hasRight('reedcrm', 'call_list', 'read')) {
-    if ($object->fk_user_assign == $user->id) {
-        $canRead = true;
-    }
-}
-
-if (!$canRead) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+if (!reedcrm_call_list_user_can_read($user, $object)) {
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
 
 // Handle audio upload — JS posts to current URL with action=add_audio
 if ($action === 'add_audio') {
-    $debugFile = $conf->ecm->dir_output . '/debug_upload.log';
-    file_put_contents($debugFile, "add_audio triggered\n", FILE_APPEND);
-    file_put_contents($debugFile, "POST: " . print_r($_POST, true) . "\n", FILE_APPEND);
-    file_put_contents($debugFile, "FILES: " . print_r($_FILES, true) . "\n", FILE_APPEND);
-    
     if (!empty($_FILES['audio']['tmp_name'])) {
         $audioModule   = GETPOST('module_name', 'alpha');
         $audioSubDir   = GETPOST('sub_dir', 'nohtml'); // Allow hyphens/slashes
-        file_put_contents($debugFile, "module=$audioModule subdir=$audioSubDir\n", FILE_APPEND);
         $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
 
         $uploadDir = !empty($conf->$audioModLower->dir_output)
@@ -116,14 +88,10 @@ if ($action === 'add_audio') {
             $uploadDir .= '/' . $audioSubDir;
         }
         if (!dol_is_dir($uploadDir)) {
-            $mkres = dol_mkdir($uploadDir);
-            file_put_contents($debugFile, "mkdir $uploadDir res=$mkres\n", FILE_APPEND);
+            dol_mkdir($uploadDir);
         }
         $destFile = $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
-        $res = move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
-        file_put_contents($debugFile, "move_uploaded_file to $destFile res=$res\n", FILE_APPEND);
-    } else {
-        file_put_contents($debugFile, "FAILED: tmp_name is empty\n", FILE_APPEND);
+        move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
     }
 }
 
@@ -172,7 +140,7 @@ llxHeader('', $title, $helpUrl, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa p
 
 $pwaHeaderCenterHtml = '<div style="background:#e2e8f0;padding:4px 10px;border-radius:12px;font-size:13px;font-weight:bold;color:#475569;">'
     . '<i class="fas fa-phone"></i> ' . dol_escape_htmltag($object->label)
-    . ' — ' . $toCallCount . '/' . count($lines) . ' à appeler'
+    . ' — <span class="pwa-call-list-to-call-count">' . $toCallCount . '</span>/<span class="pwa-call-list-total-count">' . count($lines) . '</span> à appeler'
     . '</div>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
@@ -193,12 +161,18 @@ $statusColors = [
 
 $ajaxUrl          = dol_buildpath('/reedcrm/ajax/update_call_list_line_status.php', 1);
 $actioncommAjaxUrl = dol_buildpath('/reedcrm/ajax/create_call_actioncomm.php', 1);
+$unlinkAjaxUrl     = dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1);
 $createActioncomm  = getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
+// Same right as the line bin of the call list card
+$canUnlink         = $user->hasRight('reedcrm', 'call_list', 'delete');
 $token             = newToken();
 
 print '<div class="pwa-call-list-container"'
     . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
     . ' data-actioncomm-url="' . dol_escape_htmltag($actioncommAjaxUrl) . '"'
+    . ' data-unlink-url="' . dol_escape_htmltag($unlinkAjaxUrl) . '"'
+    . ' data-unlink-confirm="' . dol_escape_htmltag($langs->transnoentities('ConfirmCallListLineUnlink')) . '"'
+    . ' data-unlink-error="' . dol_escape_htmltag($langs->transnoentities('ErrorCallListLineUnlink')) . '"'
     . ' data-create-actioncomm="' . (int) $createActioncomm . '"'
     . ' data-default-list="' . ((int) $object->id === $defaultCallListId ? 1 : 0) . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
@@ -218,7 +192,8 @@ $sqlLists .= " LEFT JOIN " . MAIN_DB_PREFIX . "user u ON u.rowid = cl.fk_user_as
 $sqlLists .= " WHERE cl.entity IN (" . getEntity('call_list') . ")";
 $sqlLists .= " AND cl.status = " . CallList::STATUS_ACTIVE;
 $sqlLists .= " AND (u.employee = 1 OR cl.fk_user_assign = " . ((int) $user->id) . " OR cl.rowid = " . ((int) $object->id) . ")";
-$sqlLists .= " ORDER BY cl.date_creation DESC";
+// Same order as the list and the selectors of the cards, see CallList::SORT_FIELDS
+$sqlLists .= " ORDER BY cl.position ASC, cl.label ASC";
 $resqlLists = $db->query($sqlLists);
 
 $myLists = [];
@@ -346,6 +321,10 @@ if (empty($lines)) {
 
         print '<div class="' . $cardClass . '" data-line-id="' . (int) $line->id . '" data-status="' . $currentStatus . '">';
 
+        if ($canUnlink) {
+            print '<button type="button" class="pwa-call-btn-unlink" data-action="unlink-line" title="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '"><i class="fas fa-unlink"></i></button>';
+        }
+
         // Ligne 1 : Nom + prochain événement en retard ou à venir, comme sur la todo
         print '<div class="pwa-call-card-header">';
         if ($lastname || $firstname) {
@@ -359,6 +338,10 @@ if (empty($lines)) {
             print '<span class="todo-card-upcoming-badge" title="' . dol_escape_htmltag($indicators['next_event_title']) . '"><i class="fas fa-clock"></i> ' . $langs->trans('TodoUpcomingEvent') . '</span>';
         }
         print '</div>';
+
+        if (!empty($line->date_creation)) {
+            print '<div class="pwa-call-added-date"><i class="far fa-calendar-plus"></i> ' . $langs->trans('CallListLineAddedOn', dol_print_date($line->date_creation, 'day', 'tzuser')) . '</div>';
+        }
 
         // Ligne 2 : Gros bouton d'appel vert + bouton copier le numéro
         if ($phone) {

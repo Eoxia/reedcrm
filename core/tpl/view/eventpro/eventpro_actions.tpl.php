@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/view/eventpro/eventpro_actions.tpl.php
  * \ingroup reedcrm
- * \brief   eventPro action handlers (create_contact, create_project, add_event, create_ticket), shared by the
+ * \brief   eventPro action handlers (create_contact, create_project, add_event, create_ticket, send), shared by the
  *          desktop card (view/procard.php) and the mobile App form (view/frontend/pwa_relaunch.php).
  *          Expects $action, $id, $fromType, $object, $actionComm, $category, $isModal, $currentTab,
  *          $langs, $user and $db to be in scope, exactly as the desktop card sets them up.
@@ -222,9 +222,11 @@ if (empty($eventProRedirectAfterTicket)) {
                 $reminderType = 'AC_OTH';
             }
 
-            // A new event, owned by the user to remind: reusing the event created above kept its type
+            // A new event, owned by the user to remind: reusing the event created above kept its type.
+            // $result is deliberately not overwritten: a failed reminder used to be reported to the user
+            // as a failed event, and blocked the opportunity update below.
             $reminderUserId = GETPOSTINT('reminder_user_id') ?: $user->id;
-            $result         = reedcrm_create_call_reminder($db, $user, $reminderLabel, $dateReminder > 0 ? $dateReminder : dol_now(), $reminderUserId, (int) $actionComm->fk_project, (int) $actionComm->socid, GETPOSTINT('contactid'), $reminderType);
+            reedcrm_create_call_reminder($db, $user, $reminderLabel, $dateReminder > 0 ? $dateReminder : dol_now(), $reminderUserId, (int) $actionComm->fk_project, (int) $actionComm->socid, GETPOSTINT('contactid'), $reminderType);
         }
 
         $newOpportunityPercent = GETPOST('new_opportunity_percent');
@@ -259,6 +261,49 @@ if (empty($eventProRedirectAfterTicket)) {
             }
             setEventMessages($actionComm->error, $actionComm->errors, 'errors');
         }
+    }
+
+    // Action to add a direct reminder, without logging a completed event first (#873). This is what
+    // the right-hand button of the relaunch widget posts.
+    if ($action == 'add_reminder') {
+        $reminderDate  = dol_mktime(GETPOSTINT('reminder_hour'), GETPOSTINT('reminder_min'), 0, GETPOSTINT('reminder_month'), GETPOSTINT('reminder_day'), GETPOSTINT('reminder_year'), 'tzuserrel');
+        $reminderLabel = trim(GETPOST('reminder_title', 'alphanohtml'));
+        $reminderNote  = GETPOST('description', 'restricthtml');
+
+        $reminderId = -1;
+        if ($reminderLabel !== '') {
+            $reminderId = reedcrm_create_call_reminder(
+                $db,
+                $user,
+                $reminderLabel,
+                $reminderDate > 0 ? $reminderDate : dol_now(),
+                GETPOSTINT('reminder_user_id') ?: $user->id,
+                GETPOSTINT('project_id') ?: ($fromType == 'project' ? (int) $id : 0),
+                GETPOSTINT('socid'),
+                GETPOSTINT('contactid'),
+                GETPOST('actioncode', 'aZ09') ?: 'AC_OTH',
+                [],
+                $reminderNote !== '' ? ['note' => $reminderNote] : []
+            );
+        }
+
+        if ($reminderId > 0) {
+            if ($isModal) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => $langs->trans('RelaunchReminderCreated')]);
+                exit;
+            }
+            setEventMessages($langs->trans('RelaunchReminderCreated'), null);
+            header('Location: ' . $eventProRedirectAfterEvent);
+            exit;
+        }
+
+        if ($isModal) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => $langs->trans('RelaunchReminderTitleRequired')]);
+            exit;
+        }
+        setEventMessages($langs->trans('RelaunchReminderTitleRequired'), null, 'errors');
     }
 
     // Action to create ticket
@@ -370,5 +415,32 @@ if (empty($eventProRedirectAfterTicket)) {
         } else {
             // Stay on ticket tab to show errors
             $currentTab = 'ticket';
+        }
+    }
+
+    // Action of the email tab: the core send form posts "send" to apply a template, to attach or remove a file
+    // and to send. Nothing handled it, so the card rendered an empty page
+    if ($action == 'send' && !empty($permissiontoadd)) {
+        if (GETPOST('cancel', 'alpha')) {
+            $action     = '';
+            $currentTab = 'note';
+        } else {
+            // Applying a template only shows the form again, filled with it
+            if (GETPOST('modelselected', 'alpha')) {
+                $action = 'presend';
+            }
+
+            $eventProSendTriggers = ['societe' => 'COMPANY_SENTBYMAIL', 'project' => 'PROJECT_SENTBYMAIL'];
+            $triggersendname      = $eventProSendTriggers[$object->element] ?? '';
+            if ($object->element == 'project') {
+                $autocopy = 'MAIN_MAIL_AUTOCOPY_PROJECT_TO';
+            }
+            // Once sent, the include redirects to PHP_SELF?<paramname>=<id>: the card also needs its type
+            $paramname = 'from_type=' . $fromType . '&from_id';
+            include DOL_DOCUMENT_ROOT . '/core/actions_sendmails.inc.php';
+
+            // Not sent (template, file, error): the email tab shows the form again
+            $action     = '';
+            $currentTab = 'email';
         }
     }

@@ -63,7 +63,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
 require_once __DIR__ . '/../class/calllist.class.php';
 $object = new CallList($db);
 
-require_once __DIR__ . '/../../saturne/core/tpl/actions/admin_conf_actions.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/actions/admin_conf_actions.tpl.php');
 
 $modelName = GETPOST('model_name', 'alpha');
 $type      = GETPOST('type', 'alpha');
@@ -124,7 +124,7 @@ print load_fiche_titre($langs->trans('Configs', $langs->trans('CallList')), '', 
 unset($documentPath);
 unset($objectModSubdir);
 $filelist = [];
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_numbering_module_view.tpl.php');
 
 // Document Model
 $dir = dol_buildpath('/reedcrm/core/modules/reedcrm/call_list/doc/');
@@ -138,7 +138,7 @@ if (is_dir($dir)) {
         closedir($handle);
     }
 }
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/object_document_model_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/object_document_model_view.tpl.php');
 
 // Automations on call list line status change (PWA status buttons)
 print load_fiche_titre($langs->trans('Config'), '', '');

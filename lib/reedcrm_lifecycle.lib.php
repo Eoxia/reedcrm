@@ -30,8 +30,9 @@ const REEDCRM_LIFECYCLE_ELEMENTS = ['propal', 'commande', 'facture', 'project'];
 /**
  * Milestones of the project timeline in the order they are reached, with the caption of each
  *
- * The position of a milestone is its rank: the opportunity list sorts and filters its rows on the
- * rank of the last milestone reached, computed in SQL by reedcrm_lifecycle_project_current_step_sql()
+ * The position of a milestone is its rank: the opportunity list sorts its rows on the rank of the last
+ * milestone reached, computed in SQL by reedcrm_lifecycle_project_current_step_sql(), and filters them
+ * on the milestones reached, by reedcrm_lifecycle_project_reached_steps_sql()
  */
 const REEDCRM_LIFECYCLE_PROJECT_STEPS = [
     'creation'  => 'LifecycleStepCreation',
@@ -45,16 +46,23 @@ const REEDCRM_LIFECYCLE_PROJECT_STEPS = [
 ];
 
 /**
+ * Number of documents listed in the tooltip of a milestone, the others being counted on its last line
+ */
+const REEDCRM_LIFECYCLE_TOOLTIP_DOCUMENT_LIMIT = 10;
+
+/**
  * Build the lifecycle steps of an object
  *
  * Each step is an array holding:
- *  - key     : stable identifier of the milestone
- *  - label   : short caption printed under the dot
- *  - date    : timestamp of the milestone, null as long as it has not happened
- *  - state   : done | todo | late | ko
- *  - current : set on the last milestone actually reached
- *  - picto   : Font Awesome class of the dot
- *  - detail  : lines of plain text describing the milestone, shown in the tooltip
+ *  - key       : stable identifier of the milestone
+ *  - label     : short caption printed under the dot
+ *  - date      : timestamp of the milestone, null as long as it has not happened
+ *  - state     : done | todo | late | ko
+ *  - current   : set on the last milestone actually reached
+ *  - picto     : Font Awesome class of the dot
+ *  - detail    : lines of plain text describing the milestone, shown in the tooltip
+ *  - documents : documents standing behind the milestone, listed in the tooltip under the lines of detail
+ *                (element and rows, see reedcrm_lifecycle_document_summaries()), empty when there are none
  *
  * @param  CommonObject $object Object shown by the card
  * @return array                Ordered steps, empty when the object has no timeline
@@ -163,7 +171,7 @@ function reedcrm_get_order_lifecycle_steps(CommonObject $object): array
     }
 
     $status     = (int) $row['fk_statut'];
-    $sent       = reedcrm_lifecycle_sent_summary('commande', (int) $object->id);
+    $sent       = reedcrm_lifecycle_sent_summary('order', (int) $object->id);
     $isClosed   = ($status == Commande::STATUS_CLOSED);
     $isCanceled = ($status == Commande::STATUS_CANCELED);
 
@@ -215,7 +223,7 @@ function reedcrm_get_invoice_lifecycle_steps(CommonObject $object): array
     $status      = (int) $row['fk_statut'];
     $isPaid      = !empty($row['paye']);
     $isAbandoned = ($status == Facture::STATUS_ABANDONED);
-    $sent        = reedcrm_lifecycle_sent_summary('facture', (int) $object->id);
+    $sent        = reedcrm_lifecycle_sent_summary('invoice', (int) $object->id);
     $payments    = reedcrm_lifecycle_payment_summary((int) $object->id);
 
     $steps   = [];
@@ -266,7 +274,7 @@ function reedcrm_get_project_lifecycle_steps(CommonObject $object): array
 /**
  * Build the lifecycle steps of a project from what reedcrm_lifecycle_fetch_projects() read of it
  *
- * Any change to the milestones has to be carried over to reedcrm_lifecycle_project_current_step_sql(),
+ * Any change to the milestones has to be carried over to reedcrm_lifecycle_project_step_conditions(),
  * which tells the opportunity list where each project stands
  *
  * @param  array $project Row of the project, the summaries of its documents under 'documents'
@@ -274,7 +282,7 @@ function reedcrm_get_project_lifecycle_steps(CommonObject $object): array
  */
 function reedcrm_build_project_lifecycle_steps(array $project): array
 {
-    global $langs;
+    global $langs, $user;
 
     $isClosed = ((int) $project['fk_statut'] == Project::STATUS_CLOSED);
     $captions = REEDCRM_LIFECYCLE_PROJECT_STEPS;
@@ -287,11 +295,20 @@ function reedcrm_build_project_lifecycle_steps(array $project): array
     $steps[]   = reedcrm_lifecycle_step('start', $langs->transnoentities($captions['start']), $startDate, 'fa-play', [], reedcrm_lifecycle_deadline_state($startDate, true));
 
     // A document milestone is only read, hence only shown, when the module of the document is enabled
-    $documentPictos = ['proposal' => 'fa-file-alt', 'signature' => 'fa-file-signature', 'order' => 'fa-shopping-cart', 'billing' => 'fa-file-invoice-dollar'];
+    $documentPictos   = ['proposal' => 'fa-file-alt', 'signature' => 'fa-file-signature', 'order' => 'fa-shopping-cart', 'billing' => 'fa-file-invoice-dollar'];
+    $documentElements = ['proposal' => 'propal', 'signature' => 'propal', 'order' => 'commande', 'billing' => 'facture'];
     foreach ($documentPictos as $stepKey => $picto) {
         if (isset($project['documents'][$stepKey])) {
             $documents = $project['documents'][$stepKey];
-            $steps[]   = reedcrm_lifecycle_step($stepKey, $langs->transnoentities($captions[$stepKey]), $documents['first'], $picto, reedcrm_lifecycle_count_detail($documents['count']));
+            $element   = $documentElements[$stepKey];
+            $step      = reedcrm_lifecycle_step($stepKey, $langs->transnoentities($captions[$stepKey]), $documents['first'], $picto, reedcrm_lifecycle_count_detail($documents['count']));
+
+            // The tooltip lists the documents themselves to whoever may read them, their number stands in for them otherwise
+            if (!empty($documents['rows']) && $user->hasRight($element, 'lire')) {
+                $step['detail']    = [];
+                $step['documents'] = ['element' => $element, 'rows' => $documents['rows']];
+            }
+            $steps[] = $step;
         }
     }
 
@@ -339,24 +356,43 @@ function reedcrm_lifecycle_fetch_projects(array $projectIds): array
     }
     $db->free($resql);
 
+    // The documents are read row by row rather than counted: the tooltip of their milestone lists them
     $documents = [];
     if (isModEnabled('propal')) {
         // Neither the project card nor the list load the proposal class on their own, and its statuses are read below
         require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
 
-        $documents['proposal']  = reedcrm_lifecycle_project_summaries('propal', $projectIds, 'datec');
-        $documents['signature'] = reedcrm_lifecycle_project_summaries('propal', $projectIds, 'date_signature', 'fk_statut IN (' . Propal::STATUS_SIGNED . ', ' . Propal::STATUS_BILLED . ')');
+        $proposals       = reedcrm_lifecycle_project_documents('propal', $projectIds, ['t.datec', 't.date_signature', 't.fk_statut']);
+        $signedProposals = [];
+        foreach ($proposals as $projectId => $rows) {
+            $signedProposals[$projectId] = array_values(array_filter($rows, function (array $row): bool {
+                return in_array((int) $row['fk_statut'], [Propal::STATUS_SIGNED, Propal::STATUS_BILLED]);
+            }));
+        }
+
+        $documents['proposal']  = reedcrm_lifecycle_document_summaries($proposals, 'datec');
+        $documents['signature'] = reedcrm_lifecycle_document_summaries($signedProposals, 'date_signature');
     }
     if (isModEnabled('order')) {
-        $documents['order'] = reedcrm_lifecycle_project_summaries('commande', $projectIds, 'date_creation');
+        $documents['order'] = reedcrm_lifecycle_document_summaries(reedcrm_lifecycle_project_documents('commande', $projectIds, ['t.date_creation', 't.fk_statut', 't.facture']), 'date_creation');
     }
     if (isModEnabled('invoice')) {
-        $documents['billing'] = reedcrm_lifecycle_project_summaries('facture', $projectIds, 'datec');
+        require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+
+        // The amount already paid tells an unpaid invoice from a started one. It is reckoned as the invoice
+        // list does: the payments, plus the credit notes and the deposits used on the invoice
+        $alreadyPaid  = 'COALESCE((SELECT SUM(pf.amount) FROM ' . MAIN_DB_PREFIX . 'paiement_facture AS pf WHERE pf.fk_facture = t.rowid), 0)';
+        $alreadyPaid .= ' + COALESCE((SELECT SUM(rc.amount_ttc) FROM ' . MAIN_DB_PREFIX . 'societe_remise_except AS rc';
+        $alreadyPaid .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'facture AS fs ON fs.rowid = rc.fk_facture_source';
+        $alreadyPaid .= ' WHERE rc.fk_facture = t.rowid AND fs.type IN (' . Facture::TYPE_CREDIT_NOTE . ', ' . Facture::TYPE_DEPOSIT . ')), 0)';
+
+        $invoices             = reedcrm_lifecycle_project_documents('facture', $projectIds, ['t.datec', 't.fk_statut', 't.paye', 't.type', '(' . $alreadyPaid . ') AS alreadypaid']);
+        $documents['billing'] = reedcrm_lifecycle_document_summaries($invoices, 'datec');
     }
 
     foreach (array_keys($projects) as $projectId) {
         foreach ($documents as $stepKey => $summaries) {
-            $projects[$projectId]['documents'][$stepKey] = $summaries[$projectId] ?? ['count' => 0, 'first' => null, 'last' => null];
+            $projects[$projectId]['documents'][$stepKey] = $summaries[$projectId] ?? ['count' => 0, 'first' => null, 'last' => null, 'rows' => []];
         }
     }
 
@@ -367,17 +403,65 @@ function reedcrm_lifecycle_fetch_projects(array $projectIds): array
  * SQL expression giving the rank of the last milestone a project reached, -1 when it reached none
  *
  * It mirrors reedcrm_build_project_lifecycle_steps() and reedcrm_lifecycle_mark_current(), so the
- * opportunity list sorts and filters its rows on the very step their timeline flags as current:
- * the milestones are checked from the last one back to the first one, the first one reached wins
+ * opportunity list sorts its rows on the very step their timeline flags as current: the milestones
+ * are checked from the last one back to the first one, the first one reached wins
  *
  * @param  string $alias Alias of the project table in the query
  * @return string        SQL expression, between brackets
  */
 function reedcrm_lifecycle_project_current_step_sql(string $alias): string
 {
+    $ranks = array_flip(array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS));
+
+    $sql = '(CASE';
+    foreach (reedcrm_lifecycle_project_step_conditions($alias) as $stepKey => $condition) {
+        $sql .= ' WHEN ' . $condition . ' THEN ' . $ranks[$stepKey];
+    }
+    $sql .= ' ELSE -1 END)';
+
+    return $sql;
+}
+
+/**
+ * SQL condition true when a project reached at least one of the given milestones, whatever came after
+ *
+ * The filter of the opportunity list reads the milestones the timeline shows as reached rather than the
+ * current one: a project with a signed proposal or an order still answers the Proposal milestone
+ *
+ * @param  string $alias Alias of the project table in the query
+ * @param  int[]  $ranks Ranks of the milestones in REEDCRM_LIFECYCLE_PROJECT_STEPS
+ * @return string        SQL condition, between brackets, matching nothing for unknown milestones
+ */
+function reedcrm_lifecycle_project_reached_steps_sql(string $alias, array $ranks): string
+{
+    $stepKeys   = array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS);
+    $conditions = reedcrm_lifecycle_project_step_conditions($alias);
+
+    $reached = [];
+    foreach ($ranks as $rank) {
+        $stepKey = $stepKeys[(int) $rank] ?? '';
+        if (isset($conditions[$stepKey])) {
+            $reached[] = '(' . $conditions[$stepKey] . ')';
+        }
+    }
+
+    return empty($reached) ? '(1 = 0)' : '(' . implode(' OR ', $reached) . ')';
+}
+
+/**
+ * SQL conditions telling whether a project reached each of its milestones
+ *
+ * They mirror the states of reedcrm_build_project_lifecycle_steps(), from the last milestone back to the
+ * first one, the order the current step is looked for in. A document milestone is left out with the module
+ * of its document, as the timeline does
+ *
+ * @param  string $alias Alias of the project table in the query
+ * @return array<string,string> SQL condition of each milestone, indexed by its key
+ */
+function reedcrm_lifecycle_project_step_conditions(string $alias): array
+{
     global $db;
 
-    $ranks    = array_flip(array_keys(REEDCRM_LIFECYCLE_PROJECT_STEPS));
     $now      = "'" . $db->idate(dol_now()) . "'";
     $isClosed = $alias . '.fk_statut = ' . Project::STATUS_CLOSED;
 
@@ -400,13 +484,7 @@ function reedcrm_lifecycle_project_current_step_sql(string $alias): string
     $conditions['start']    = $alias . '.dateo <= ' . $now;
     $conditions['creation'] = $alias . '.datec IS NOT NULL';
 
-    $sql = '(CASE';
-    foreach ($conditions as $stepKey => $condition) {
-        $sql .= ' WHEN ' . $condition . ' THEN ' . $ranks[$stepKey];
-    }
-    $sql .= ' ELSE -1 END)';
-
-    return $sql;
+    return $conditions;
 }
 
 /**
@@ -470,13 +548,14 @@ function reedcrm_lifecycle_step(string $key, string $label, ?int $date, string $
     }
 
     return [
-        'key'     => $key,
-        'label'   => $label,
-        'date'    => $date,
-        'state'   => $state,
-        'current' => false,
-        'picto'   => $picto,
-        'detail'  => $detail
+        'key'       => $key,
+        'label'     => $label,
+        'date'      => $date,
+        'state'     => $state,
+        'current'   => false,
+        'picto'     => $picto,
+        'detail'    => $detail,
+        'documents' => []
     ];
 }
 
@@ -706,7 +785,10 @@ function reedcrm_lifecycle_date(array $row, string $field): ?int
 /**
  * Summary of the mails carrying the object, taken from the events the agenda records on its own
  *
- * @param  string $elementType Element type stored by the agenda (propal, commande, facture)
+ * ActionComm::create() stores the orders and the invoices as order and invoice, not under the element
+ * of their object: the type to pass is the one the agenda keeps, never $object->element
+ *
+ * @param  string $elementType Element type stored by the agenda (propal, order, invoice)
  * @param  int    $objectId    Id of the object
  * @return array               count, first and last sending
  */
@@ -754,41 +836,106 @@ function reedcrm_lifecycle_linked_summary(string $sourceType, int $sourceId, str
 }
 
 /**
- * Summary of the documents attached to each of several projects
+ * Documents attached to each of several projects
  *
- * @param  string $table      Table of the documents, without the Dolibarr prefix
- * @param  int[]  $projectIds Ids of the projects
- * @param  string $dateField  Column holding the date to read
- * @param  string $extraWhere Additional condition on that table, without the leading AND
- * @return array              count, first and last document, indexed by project id; a project
- *                            carrying no document is left out
+ * @param  string   $table      Table of the documents, without the Dolibarr prefix
+ * @param  int[]    $projectIds Ids of the projects
+ * @param  string[] $columns    Expressions to select besides the id, the ref and the amount, on the table
+ *                              aliased t: the dates of the milestones and what the status of the document
+ *                              is told from
+ * @return array                Rows of the documents, as read from the database, indexed by project id;
+ *                              a project carrying no document is left out
  */
-function reedcrm_lifecycle_project_summaries(string $table, array $projectIds, string $dateField, string $extraWhere = ''): array
+function reedcrm_lifecycle_project_documents(string $table, array $projectIds, array $columns): array
 {
     global $db;
 
-    $sql  = 'SELECT t.fk_projet, COUNT(t.rowid) AS nb, MIN(t.' . $dateField . ') AS datemin, MAX(t.' . $dateField . ') AS datemax';
+    $sql  = 'SELECT t.rowid, t.fk_projet, t.ref, t.total_ht, ' . implode(', ', $columns);
     $sql .= ' FROM ' . MAIN_DB_PREFIX . $table . ' AS t';
     $sql .= ' WHERE t.fk_projet IN (' . implode(',', array_map('intval', $projectIds)) . ')';
     $sql .= ' AND t.entity IN (' . getEntity($table) . ')';
-    if (!empty($extraWhere)) {
-        $sql .= ' AND t.' . $extraWhere;
-    }
-    $sql .= ' GROUP BY t.fk_projet';
 
     $resql = $db->query($sql);
     if (!$resql) {
-        dol_syslog('reedcrm_lifecycle_project_summaries ' . $db->lasterror(), LOG_ERR);
+        dol_syslog('reedcrm_lifecycle_project_documents ' . $db->lasterror(), LOG_ERR);
         return [];
     }
 
-    $summaries = [];
-    while ($obj = $db->fetch_object($resql)) {
-        $summaries[(int) $obj->fk_projet] = reedcrm_lifecycle_summary_from_row($obj);
+    $documents = [];
+    while ($row = $db->fetch_array($resql)) {
+        $documents[(int) $row['fk_projet']][] = $row;
     }
     $db->free($resql);
 
+    return $documents;
+}
+
+/**
+ * Summary of the documents of each project dating a milestone, the documents themselves included
+ *
+ * @param  array  $documents Rows returned by reedcrm_lifecycle_project_documents(), indexed by project id
+ * @param  string $dateField Column dating the milestone
+ * @return array             count, first and last document, and under 'rows' the documents, the most recent
+ *                           first, each dated by that column under 'date'; indexed by project id
+ */
+function reedcrm_lifecycle_document_summaries(array $documents, string $dateField): array
+{
+    $summaries = [];
+    foreach ($documents as $projectId => $rows) {
+        $dates = [];
+        foreach ($rows as $index => $row) {
+            $rows[$index]['date'] = reedcrm_lifecycle_date($row, $dateField);
+            if ($rows[$index]['date'] !== null) {
+                $dates[] = $rows[$index]['date'];
+            }
+        }
+
+        // An undated document goes to the end of the list, the id breaking the ties
+        usort($rows, function (array $a, array $b): int {
+            return [(int) $b['date'], (int) $b['rowid']] <=> [(int) $a['date'], (int) $a['rowid']];
+        });
+
+        $summaries[$projectId] = [
+            'count' => count($rows),
+            'first' => empty($dates) ? null : min($dates),
+            'last'  => empty($dates) ? null : max($dates),
+            'rows'  => $rows
+        ];
+    }
+
     return $summaries;
+}
+
+/**
+ * Status badge of a document listed in the tooltip of a milestone
+ *
+ * @param  string $element  Element of the document: propal, commande or facture
+ * @param  array  $document Row returned by reedcrm_lifecycle_project_documents()
+ * @return string           HTML of the badge, empty for any other element
+ */
+function reedcrm_lifecycle_document_status(string $element, array $document): string
+{
+    global $db;
+
+    // Every tooltip of every row of the list prints badges: one object per element lends its status labels to all of them
+    static $statusObjects = [];
+
+    switch ($element) {
+        case 'propal':
+            require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+            $statusObjects[$element] = $statusObjects[$element] ?? new Propal($db);
+            return $statusObjects[$element]->LibStatut((int) $document['fk_statut'], 5);
+        case 'commande':
+            require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
+            $statusObjects[$element] = $statusObjects[$element] ?? new Commande($db);
+            return $statusObjects[$element]->LibStatut((int) $document['fk_statut'], (int) $document['facture'], 5);
+        case 'facture':
+            require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+            $statusObjects[$element] = $statusObjects[$element] ?? new Facture($db);
+            return $statusObjects[$element]->LibStatut((int) $document['paye'], (int) $document['fk_statut'], 5, (float) $document['alreadypaid'], (int) $document['type']);
+        default:
+            return '';
+    }
 }
 
 /**

@@ -70,7 +70,7 @@ print '<style>
 </style>';
 
 if (!$user->hasRight('projet', 'lire')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 

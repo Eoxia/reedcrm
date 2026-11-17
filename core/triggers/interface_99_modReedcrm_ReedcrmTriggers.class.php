@@ -182,6 +182,14 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                 set_notation_object_contact($object);
                 break;
 
+            // An invoice paid, abandoned or back to draft has nothing left to relaunch on the todo board
+            case 'BILL_PAYED':
+            case 'BILL_CANCEL':
+            case 'BILL_UNVALIDATE':
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'invoice', (int) $object->id);
+                break;
+
             case 'USER_CREATE':
                 require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
                 // Employees only: an external user (client contact with a login) gets no call list
@@ -197,8 +205,16 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
             
             case 'PROPAL_CREATE':          $this->tagStateEvent('propal', $object->id, 'propal_draft', $user, 'Proposition créée (Brouillon)'); break;
             case 'PROPAL_VALIDATE':        $this->tagStateEvent('propal', $object->id, 'propal_valid', $user, 'Proposition validée (Ouverte)'); break;
-            case 'PROPAL_CLASSIFY_BILLED': $this->tagStateEvent('propal', $object->id, 'propal_billed', $user, 'Proposition classée facturée'); break;
-            
+            case 'PROPAL_CLASSIFY_BILLED':
+                $this->tagStateEvent('propal', $object->id, 'propal_billed', $user, 'Proposition classée facturée');
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'propal', (int) $object->id);
+                break;
+            case 'PROPAL_CANCEL':
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'propal', (int) $object->id);
+                break;
+
             case 'PROPAL_CLOSE_SIGNED':
                 $this->tagStateEvent('propal', $object->id, 'propal_signed', $user, 'Proposition signée');
                 // Execute standard hook legacy code below
@@ -206,7 +222,11 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                 if ($action === 'PROPAL_CLOSE_REFUSED') {
                     $this->tagStateEvent('propal', $object->id, 'propal_notsigned', $user, 'Proposition refusée');
                 }
-                
+
+                // An answered proposal has nothing left to relaunch on the todo board
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'propal', (int) $object->id);
+
                 if (isset($_SESSION['LAST_ACTION_CREATED'])) {
                     $actioncomm->fetch($_SESSION['LAST_ACTION_CREATED']);
                     if ($actioncomm->id > 0 && $actioncomm->elementtype == 'propal' && !empty(GETPOST('note_private'))) {

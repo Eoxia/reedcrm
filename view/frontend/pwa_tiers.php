@@ -29,7 +29,7 @@ $conf->global->MAIN_FAVICON_URL = dol_buildpath('/reedcrm/img/reedcrm_color_512.
 llxHeader('', $title, $help_url, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-tiers-list');
 
 if (!$user->rights->societe->lire) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 

@@ -1,0 +1,844 @@
+/* Home page of ReedCRM (reedcrmindex.php): period toolbar, key figure tiles and the cards below them. */
+
+/* One accent per figure, and a single blue for the data: the current year in full, the year before in grey. */
+$home-ink:       #1d2433;
+$home-muted:     #6b7486;
+$home-line:      rgba(29, 36, 51, .09);
+$home-surface:   #fff;
+$home-soft:      #f5f7fa;
+$home-data:      #2a78d6;
+$home-data-soft: #c3d7f2;
+$home-previous:  #c7ccd4;
+$home-alert:     #c0392b;
+$home-tones: (
+  revenue:  #2a78d6,
+  signed:   #1baf7a,
+  pipeline: #6250d6,
+  cash:     #eb6834
+);
+
+.reedcrm-home {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 8px;
+  color: $home-ink;
+}
+
+/* Period and scope: plain links, the page is read again with its new filters */
+.reedcrm-home__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.reedcrm-home__range {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: $home-muted;
+}
+
+.reedcrm-home__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reedcrm-home-segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 8px;
+  background: $home-soft;
+  border: 1px solid $home-line;
+
+  .reedcrm-home-segmented__item {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: $home-muted;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+      color: $home-ink;
+    }
+
+    &.is-active {
+      color: $home-ink;
+      background: $home-surface;
+      box-shadow: 0 1px 2px rgba(29, 36, 51, .12);
+    }
+  }
+}
+
+/* Key figures: one tile per question, the whole tile opens the list behind the figure */
+.reedcrm-home__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 600px) {
+    gap: 10px;
+  }
+}
+
+.reedcrm-home-kpi {
+  --home-tone: #{$home-data};
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid $home-line;
+  border-radius: 10px;
+  background: $home-surface;
+  color: $home-ink;
+  text-decoration: none;
+  transition: border-color .15s, box-shadow .15s;
+
+  &:hover {
+    border-color: var(--home-tone);
+    box-shadow: 0 2px 10px rgba(29, 36, 51, .08);
+    text-decoration: none;
+  }
+
+  @each $tone, $color in $home-tones {
+    &.reedcrm-home-kpi--#{$tone} {
+      --home-tone: #{$color};
+    }
+  }
+
+  .reedcrm-home-kpi__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .reedcrm-home-kpi__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    color: var(--home-tone);
+    background: color-mix(in srgb, var(--home-tone) 12%, transparent);
+  }
+
+  .reedcrm-home-kpi__title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: $home-muted;
+  }
+
+  .reedcrm-home-kpi__value {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .reedcrm-home-kpi__trend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .reedcrm-home-kpi__compare,
+  .reedcrm-home-kpi__detail {
+    font-size: 12.5px;
+    color: $home-muted;
+  }
+
+  .reedcrm-home-kpi__alert {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: $home-alert;
+  }
+
+  // Two tiles a row on a phone: the figure shrinks rather than the tiles piling up
+  @media (max-width: 600px) {
+    padding: 12px;
+
+    .reedcrm-home-kpi__icon {
+      display: none;
+    }
+
+    .reedcrm-home-kpi__title {
+      font-size: 11px;
+    }
+
+    .reedcrm-home-kpi__value {
+      font-size: 20px;
+    }
+  }
+}
+
+/* Cards: twelve columns, the chart and the pipeline side by side, then the lists three by three */
+.reedcrm-home__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.reedcrm-home-card {
+  grid-column: span 12;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid $home-line;
+  border-radius: 10px;
+  background: $home-surface;
+
+  &.reedcrm-home-card--wide {
+    grid-column: span 8;
+  }
+
+  &.reedcrm-home-card--narrow,
+  &.reedcrm-home-card--third {
+    grid-column: span 4;
+  }
+
+  &.reedcrm-home-card--half {
+    grid-column: span 6;
+  }
+
+  @media (max-width: 1200px) {
+    &.reedcrm-home-card--wide,
+    &.reedcrm-home-card--narrow,
+    &.reedcrm-home-card--half {
+      grid-column: span 12;
+    }
+
+    &.reedcrm-home-card--third {
+      grid-column: span 6;
+    }
+  }
+
+  @media (max-width: 767px) {
+    &.reedcrm-home-card--third {
+      grid-column: span 12;
+    }
+  }
+
+  .reedcrm-home-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+  }
+
+  .reedcrm-home-card__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: $home-ink;
+
+    i {
+      color: $home-muted;
+    }
+  }
+
+  .reedcrm-home-card__figure {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 17px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reedcrm-home-card__more {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+
+    i {
+      font-size: .85em;
+    }
+  }
+
+  .reedcrm-home-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid $home-line;
+    font-size: 12.5px;
+    color: $home-muted;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    &.reedcrm-home-card__footer--alert a {
+      font-weight: 600;
+      color: $home-alert;
+    }
+  }
+}
+
+.reedcrm-home-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 4px;
+  font-size: 13px;
+  color: $home-muted;
+}
+
+// A card stretched to the height of its row keeps its empty state in the middle
+.reedcrm-home-card > .reedcrm-home-empty,
+.reedcrm-home-tabs__panel > .reedcrm-home-empty {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.reedcrm-home-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 12px;
+  color: $home-muted;
+
+  .reedcrm-home-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &:before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    &.reedcrm-home-legend__item--current:before,
+    &.reedcrm-home-legend__item--weighted:before {
+      background: $home-data;
+    }
+
+    &.reedcrm-home-legend__item--previous:before {
+      background: $home-previous;
+    }
+
+    &.reedcrm-home-legend__item--amount:before {
+      background: $home-data-soft;
+    }
+  }
+}
+
+/* Revenue chart: the bars are drawn in a stretched SVG, the axis and the months in HTML so their text keeps its size.
+   The plot grows with its card, as high as the pipeline next to it. */
+.reedcrm-home-chart {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-rows: minmax(220px, 1fr) auto;
+  row-gap: 6px;
+
+  .reedcrm-home-chart__ticks {
+    position: relative;
+  }
+
+  .reedcrm-home-chart__tick {
+    position: absolute;
+    right: 10px;
+    font-size: 11px;
+    color: $home-muted;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    transform: translateY(-50%);
+
+    @for $i from 1 through 5 {
+      &:nth-child(#{$i}) {
+        top: ($i - 1) * 25%;
+      }
+    }
+  }
+
+  .reedcrm-home-chart__plot {
+    position: relative;
+    border-bottom: 1px solid rgba(29, 36, 51, .25);
+    background-image: linear-gradient(to bottom, $home-line 1px, transparent 1px);
+    background-size: 100% 25%;
+  }
+
+  .reedcrm-home-chart__bars {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .reedcrm-home-chart__bar--current {
+    fill: $home-data;
+  }
+
+  .reedcrm-home-chart__bar--previous {
+    fill: $home-previous;
+  }
+
+  .reedcrm-home-chart__hit {
+    fill: transparent;
+    cursor: default;
+
+    &.is-hovered {
+      fill: rgba(29, 36, 51, .05);
+    }
+  }
+
+  .reedcrm-home-chart__months {
+    grid-column: 2;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    font-size: 11.5px;
+    color: $home-muted;
+    text-align: center;
+    text-transform: capitalize;
+  }
+
+  .reedcrm-home-chart__tooltip {
+    position: absolute;
+    top: 8px;
+    z-index: 5;
+    min-width: 170px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: $home-ink;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.5;
+    pointer-events: none;
+    box-shadow: 0 4px 14px rgba(29, 36, 51, .2);
+    transform: translateX(-50%);
+
+    strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .reedcrm-home-chart__tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .reedcrm-home-chart__tooltip-key {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      opacity: .8;
+
+      &:before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: $home-data;
+      }
+
+      &.reedcrm-home-chart__tooltip-key--previous:before {
+        background: $home-previous;
+      }
+    }
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 48px minmax(0, 1fr);
+
+    .reedcrm-home-chart__months span:nth-child(even) {
+      visibility: hidden;
+    }
+  }
+}
+
+.reedcrm-home-chart__table {
+  font-size: 12.5px;
+
+  summary {
+    cursor: pointer;
+    color: $home-muted;
+  }
+
+  table {
+    margin-top: 8px;
+  }
+}
+
+/* Pipeline: one row per stage, the gross amount as a light bar and its weighted part over it */
+.reedcrm-home-pipe {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .reedcrm-home-pipe__stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 4px 12px;
+    padding: 8px 6px;
+    border-radius: 8px;
+    color: $home-ink;
+    text-decoration: none;
+
+    &:hover {
+      background: $home-soft;
+      text-decoration: none;
+    }
+  }
+
+  .reedcrm-home-pipe__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .reedcrm-home-pipe__count {
+    padding: 0 7px;
+    border-radius: 10px;
+    background: $home-soft;
+    border: 1px solid $home-line;
+    font-size: 11px;
+    font-weight: 600;
+    color: $home-muted;
+  }
+
+  .reedcrm-home-pipe__amount {
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .reedcrm-home-pipe__bar {
+    grid-column: 1 / -1;
+    display: block;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: $home-soft;
+  }
+
+  .reedcrm-home-pipe__amount-bar {
+    fill: $home-data-soft;
+  }
+
+  .reedcrm-home-pipe__weighted-bar {
+    fill: $home-data;
+  }
+
+  .reedcrm-home-pipe__weighted {
+    grid-column: 1 / -1;
+    font-size: 11.5px;
+    color: $home-muted;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Short lists: what, for whom and when on the left, the amount on the right */
+.reedcrm-home-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .reedcrm-home-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid $home-line;
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 2px;
+    }
+  }
+
+  .reedcrm-home-list__main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .reedcrm-home-list__title {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .reedcrm-home-list__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+    font-size: 12px;
+    color: $home-muted;
+
+    a {
+      color: inherit;
+    }
+  }
+
+  .reedcrm-home-list__date {
+    white-space: nowrap;
+  }
+
+  .reedcrm-home-list__value {
+    flex: 0 0 auto;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: $home-ink;
+  }
+}
+
+/* Last actions: a timeline with the type of the event as its marker */
+.reedcrm-home-feed {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  .reedcrm-home-feed__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid $home-line;
+
+    &:first-child {
+      border-top: 0;
+      padding-top: 2px;
+    }
+  }
+
+  .reedcrm-home-feed__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba($home-data, .1);
+    color: $home-data;
+    font-size: 12px;
+  }
+
+  .reedcrm-home-feed__main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .reedcrm-home-feed__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: $home-ink;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .reedcrm-home-feed__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 12px;
+    font-size: 12px;
+    color: $home-muted;
+
+    a {
+      color: inherit;
+    }
+  }
+
+  .reedcrm-home-feed__aside {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: $home-muted;
+    white-space: nowrap;
+  }
+}
+
+/* Products: two tabs, the last sales and the stock nobody bought for months */
+.reedcrm-home-tabs {
+  display: inline-flex;
+  gap: 4px;
+
+  .reedcrm-home-tabs__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    font: inherit;
+    font-size: 12.5px;
+    color: $home-muted;
+    cursor: pointer;
+
+    &:hover {
+      color: $home-ink;
+    }
+
+    &.is-active {
+      border-color: $home-line;
+      background: $home-soft;
+      color: $home-ink;
+      font-weight: 600;
+    }
+  }
+
+  .reedcrm-home-tabs__count {
+    padding: 0 6px;
+    border-radius: 10px;
+    background: rgba($home-alert, .1);
+    color: $home-alert;
+    font-size: 11px;
+    font-weight: 600;
+  }
+}
+
+.reedcrm-home-tabs__panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+/* Fixed layout: the product and the customer share what the date and the quantity leave, cut with an ellipsis */
+.reedcrm-home-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  .reedcrm-home-table__date {
+    width: 120px;
+  }
+
+  .reedcrm-home-table__qty {
+    width: 70px;
+  }
+
+  // On a phone the product keeps the room, its customer is one click away on the document
+  @media (max-width: 600px) {
+    .reedcrm-home-table__date {
+      width: 96px;
+    }
+
+    .reedcrm-home-table__qty {
+      width: 56px;
+    }
+
+    .reedcrm-home-table__customer {
+      display: none;
+    }
+  }
+
+  th {
+    padding: 0 8px 8px;
+    border-bottom: 1px solid $home-line;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: $home-muted;
+
+    &.right {
+      text-align: right;
+    }
+  }
+
+  td {
+    padding: 8px;
+    border-bottom: 1px solid $home-line;
+    vertical-align: top;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+
+  th:first-child,
+  td:first-child {
+    padding-left: 0;
+  }
+
+  th:last-child,
+  td:last-child {
+    padding-right: 0;
+  }
+
+  .reedcrm-home-table__sub {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11.5px;
+    color: $home-muted;
+
+    a {
+      color: inherit;
+    }
+  }
+}

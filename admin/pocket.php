@@ -37,8 +37,8 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 // Load ReedCRM libraries
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
 require_once __DIR__ . '/../lib/reedcrm_pocketrecording.lib.php';
-require_once __DIR__ . '/../class/pocketapi.class.php';
-require_once __DIR__ . '/../class/pocketsync.class.php';
+require_once __DIR__ . '/../class/pocketaccount.class.php';
+require_once __DIR__ . '/../class/pocketcron.class.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -61,75 +61,35 @@ $form = new Form($db);
  * Actions
  */
 
-if ($action == 'set_pocket_api_key' && $permissiontoread) {
-    // The key is only rewritten when the field carries something: an untouched masked field must
-    // never wipe a working key.
-    $apiKey = trim(GETPOST('pocket_api_key', 'alphanohtml'));
-    if ($apiKey !== '') {
-        dolibarr_set_const($db, 'REEDCRM_POCKET_API_KEY', $apiKey, 'chaine', 0, '', $conf->entity);
+// The shared account: the one of the users who did not set a key of their own
+$pocketAccount = PocketAccount::getShared($db);
+
+if ($permissiontoread && reedcrm_pocket_process_account_action($action, $pocketAccount, $user)) {
+    header('Location: ' . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+// Daily reminder to file the calls, empty time to disable it
+if ($action == 'set_pocket_tidy_reminder' && $permissiontoread) {
+    $tidyReminderTime = GETPOST('pocket_tidy_reminder_time', 'alphanohtml');
+
+    if ($tidyReminderTime === '') {
+        dolibarr_del_const($db, PocketCron::TIDY_REMINDER_TIME, $conf->entity);
         setEventMessage($langs->trans('SavedConfig'));
-    }
+    } elseif (preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $tidyReminderTime)) {
+        dolibarr_set_const($db, PocketCron::TIDY_REMINDER_TIME, $tidyReminderTime, 'chaine', 0, '', $conf->entity);
 
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit;
-}
-
-if ($action == 'del_pocket_api_key' && $permissiontoread) {
-    dolibarr_del_const($db, 'REEDCRM_POCKET_API_KEY', $conf->entity);
-    dolibarr_del_const($db, 'REEDCRM_POCKET_FOLDER_ID', $conf->entity);
-    dolibarr_del_const($db, 'REEDCRM_POCKET_FOLDER_LABEL', $conf->entity);
-    setEventMessage($langs->trans('SavedConfig'));
-
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit;
-}
-
-if ($action == 'set_pocket_folder' && $permissiontoread) {
-    $folderId = GETPOST('pocket_folder_id', 'alphanohtml');
-
-    // The label is denormalised so the recordings list and the sync stay readable even when the
-    // API is unreachable.
-    $folderLabel = '';
-    if ($folderId !== '') {
-        $pocketApi = new PocketApi($db);
-        foreach ((array) $pocketApi->getFolders() as $folder) {
-            if ($folder['id'] === $folderId) {
-                $folderLabel = $folder['label'];
-                break;
-            }
+        // The time is the one the admin reads on their clock, the server may well run in UTC
+        $browserTimezone = (string) ($_SESSION['dol_tz_string'] ?? '');
+        if (in_array($browserTimezone, DateTimeZone::listIdentifiers(), true)) {
+            dolibarr_set_const($db, PocketCron::TIDY_REMINDER_TZ, $browserTimezone, 'chaine', 0, '', $conf->entity);
+        } else {
+            dolibarr_del_const($db, PocketCron::TIDY_REMINDER_TZ, $conf->entity);
         }
-    }
 
-    dolibarr_set_const($db, 'REEDCRM_POCKET_FOLDER_ID', $folderId, 'chaine', 0, '', $conf->entity);
-    dolibarr_set_const($db, 'REEDCRM_POCKET_FOLDER_LABEL', $folderLabel, 'chaine', 0, '', $conf->entity);
-    setEventMessage($langs->trans('SavedConfig'));
-
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit;
-}
-
-if ($action == 'test_pocket_connection' && $permissiontoread) {
-    $pocketApi = new PocketApi($db);
-    $folders   = $pocketApi->getFolders();
-
-    if ($folders === null) {
-        setEventMessages($langs->trans('PocketConnectionFailed', $pocketApi->error), [], 'errors');
+        setEventMessage($langs->trans('SavedConfig'));
     } else {
-        setEventMessage($langs->trans('PocketConnectionSucceeded', count($folders)));
-    }
-
-    header('Location: ' . $_SERVER['PHP_SELF']);
-    exit;
-}
-
-if ($action == 'sync_pocket_recordings' && $permissiontoread) {
-    $pocketSync = new PocketSync($db);
-    $report     = $pocketSync->syncRecordings($user);
-
-    if (!empty($pocketSync->error)) {
-        setEventMessages($pocketSync->error, [], 'errors');
-    } else {
-        setEventMessage($langs->trans('PocketSyncReport', $report['created'], $report['updated'], $report['skipped'], $report['errors']));
+        setEventMessages($langs->trans('ErrorBadValueForParameter', dol_escape_htmltag($tidyReminderTime), $langs->transnoentities('PocketTidyReminderTime')), [], 'errors');
     }
 
     header('Location: ' . $_SERVER['PHP_SELF']);
@@ -188,115 +148,40 @@ print load_fiche_titre($title, $linkback, 'reedcrm_color@reedcrm');
 $head = reedcrm_admin_prepare_head();
 print dol_get_fiche_head($head, 'pocket', $title, -1, 'reedcrm_color@reedcrm');
 
-$apiKey      = getDolGlobalString('REEDCRM_POCKET_API_KEY');
-$folderId    = getDolGlobalString('REEDCRM_POCKET_FOLDER_ID');
-$folderLabel = getDolGlobalString('REEDCRM_POCKET_FOLDER_LABEL');
+$pocketFormUrl = $_SERVER['PHP_SELF'];
+require_once __DIR__ . '/../core/tpl/reedcrm_pocket_account_setup.tpl.php';
 
-// Connection
-print load_fiche_titre($langs->trans('PocketConnection'), '', '');
-
-print '<table class="noborder centpercent">';
-print '<tr class="liste_titre">';
-print '<td>' . $langs->trans('Parameter') . '</td>';
-print '<td>' . $langs->trans('Value') . '</td>';
-print '<td class="center">' . $langs->trans('Action') . '</td>';
-print '</tr>';
-
-print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
-print '<input type="hidden" name="token" value="' . newToken() . '">';
-print '<input type="hidden" name="action" value="set_pocket_api_key">';
-print '<tr class="oddeven">';
-print '<td>' . $form->textwithpicto($langs->trans('PocketApiKey'), $langs->trans('PocketApiKeyHelp')) . '</td>';
-print '<td>';
-// The stored key is never sent back to the browser, only the hint of the one in place.
-print '<input type="password" class="minwidth300" name="pocket_api_key" autocomplete="new-password" placeholder="' . ($apiKey !== '' ? dol_escape_htmltag(dol_trunc($apiKey, 10, 'right', 'UTF-8', 1)) : 'pk_...') . '">';
-print '</td>';
-print '<td class="center">';
-print '<input type="submit" class="button" value="' . $langs->trans('Save') . '">';
-if ($apiKey !== '') {
-    print ' <a class="button butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?action=del_pocket_api_key&token=' . newToken() . '">' . $langs->trans('Delete') . '</a>';
-}
-print '</td>';
-print '</tr>';
-print '</form>';
-
-print '<tr class="oddeven">';
-print '<td>' . $langs->trans('PocketConnectionState') . '</td>';
-print '<td>';
-print $apiKey !== '' ? '<span class="badge badge-status4 badge-status">' . $langs->trans('PocketApiKeySet') . '</span>' : '<span class="opacitymedium">' . $langs->trans('PocketApiKeyMissing') . '</span>';
-print '</td>';
-print '<td class="center">';
-if ($apiKey !== '') {
-    print '<a class="button" href="' . $_SERVER['PHP_SELF'] . '?action=test_pocket_connection&token=' . newToken() . '">' . $langs->trans('PocketTestConnection') . '</a>';
-} else {
-    print '<span class="butActionRefused classfortooltip">' . $langs->trans('PocketTestConnection') . '</span>';
-}
-print '</td>';
-print '</tr>';
-
-print '</table>';
-
-// Imported folder
-print load_fiche_titre($langs->trans('PocketFolderTitle'), '', '');
+// Personal accounts, set by each user on the Pocket tab of their user card
+print load_fiche_titre($langs->trans('PocketPersonalAccounts'), '', '');
 
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
-print '<td>' . $langs->trans('Parameter') . '</td>';
-print '<td>' . $langs->trans('Value') . '</td>';
+print '<td>' . $langs->trans('User') . '</td>';
+print '<td>' . $langs->trans('PocketFolder') . '</td>';
 print '<td class="center">' . $langs->trans('Action') . '</td>';
 print '</tr>';
 
-print '<form method="POST" action="' . $_SERVER['PHP_SELF'] . '">';
-print '<input type="hidden" name="token" value="' . newToken() . '">';
-print '<input type="hidden" name="action" value="set_pocket_folder">';
-print '<tr class="oddeven">';
-print '<td>' . $form->textwithpicto($langs->trans('PocketFolder'), $langs->trans('PocketFolderHelp')) . '</td>';
-print '<td>';
+$personalAccounts = PocketAccount::getAllPersonal($db);
+if (empty($personalAccounts)) {
+    print '<tr class="oddeven"><td colspan="3"><span class="opacitymedium">' . $langs->trans('PocketNoPersonalAccount') . '</span></td></tr>';
+}
 
-if ($apiKey === '') {
-    print '<span class="opacitymedium">' . $langs->trans('PocketApiKeyMissing') . '</span>';
-} else {
-    $pocketApi = new PocketApi($db);
-    $folders   = $pocketApi->getFolders();
-
-    if ($folders === null) {
-        // The API is down or the key is wrong: keep the configured folder visible instead of
-        // silently offering an empty selector that would clear it on save.
-        print '<span class="error">' . dol_escape_htmltag($pocketApi->error) . '</span>';
-        if ($folderId !== '') {
-            print '<br><span class="opacitymedium">' . dol_escape_htmltag($folderLabel ?: $folderId) . '</span>';
-        }
-    } else {
-        $folderOptions = ['' => $langs->trans('PocketNoFolderSelected')];
-        foreach ($folders as $folder) {
-            $folderOptions[$folder['id']] = str_repeat('&nbsp;&nbsp;', $folder['depth']) . $folder['label'];
-        }
-        print $form->selectarray('pocket_folder_id', $folderOptions, $folderId, 0, 0, 0, '', 1, 0, 0, '', 'minwidth300');
+$accountOwner = new User($db);
+foreach ($personalAccounts as $personalAccount) {
+    if ($accountOwner->fetch($personalAccount->fk_user) <= 0) {
+        continue;
     }
-}
 
-print '</td>';
-print '<td class="center">';
-print '<input type="submit" class="button"' . ($apiKey === '' ? ' disabled' : '') . ' value="' . $langs->trans('Save') . '">';
-print '</td>';
-print '</tr>';
-print '</form>';
-
-print '<tr class="oddeven">';
-print '<td>' . $form->textwithpicto($langs->trans('PocketManualSync'), $langs->trans('PocketManualSyncHelp')) . '</td>';
-print '<td>';
-print $folderId !== '' ? dol_escape_htmltag($folderLabel ?: $folderId) : '<span class="opacitymedium">' . $langs->trans('PocketFolderMissing') . '</span>';
-print '</td>';
-print '<td class="center">';
-if ($apiKey !== '' && $folderId !== '') {
-    print '<a class="button" href="' . $_SERVER['PHP_SELF'] . '?action=sync_pocket_recordings&token=' . newToken() . '">' . $langs->trans('PocketSyncNow') . '</a>';
-} else {
-    print '<span class="butActionRefused classfortooltip">' . $langs->trans('PocketSyncNow') . '</span>';
+    print '<tr class="oddeven">';
+    print '<td>' . $accountOwner->getNomUrl(-1) . '</td>';
+    print '<td>' . ($personalAccount->folderId !== '' ? dol_escape_htmltag($personalAccount->folderLabel ?: $personalAccount->folderId) : '<span class="opacitymedium">' . $langs->trans('PocketFolderMissing') . '</span>') . '</td>';
+    print '<td class="center"><a class="button" href="' . dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_user.php', 1) . '?id=' . $accountOwner->id . '">' . $langs->trans('Modify') . '</a></td>';
+    print '</tr>';
 }
-print '</td>';
-print '</tr>';
 
 print '</table>';
+
+require_once __DIR__ . '/../core/tpl/reedcrm_pocket_tidy_reminder_setup.tpl.php';
 
 // Linkable elements, driven by the REEDCRM_POCKET_LINK_* constants
 $linkableObjects            = reedcrm_pocket_get_linkable_objects();
@@ -304,7 +189,7 @@ $enabledObjectTypes         = reedcrm_pocket_get_enabled_linked_object_types();
 $linkedObjectUsage          = reedcrm_pocket_get_linked_object_usage();
 $linkedObjectExtraFieldName = REEDCRM_POCKET_LINK_ELEMENT_TYPE;
 
-require_once __DIR__ . '/../../saturne/core/tpl/admin/object/linked_object_view.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/admin/object/linked_object_view.tpl.php');
 
 // Page end
 print dol_get_fiche_end();
