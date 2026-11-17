@@ -80,7 +80,7 @@ window.reedcrm.timespentBlock.init = function () {
 };
 
 /**
- * Move the time card of the project at the top right of the card, beside its header blocks
+ * Move the time card of the project into the status column of the banner, under the lifecycle timeline
  *
  * @memberof ReedCRM_TimespentBlock
  *
@@ -95,9 +95,10 @@ window.reedcrm.timespentBlock.mountTable = function () {
     return;
   }
 
-  // Floated right after the status block, it stands beside the reference and the header blocks of the project
+  // That column is shorter than the header blocks of the project beside it: the card fills it without making the
+  // banner taller. Put after it, the grid of the banner would give the card a whole row of its own
   if ($('div.statusref').length) {
-    $('div.statusref').first().after($table);
+    $('div.statusref').first().append($table);
   } else {
     $('div.tabBar').first().prepend($table);
   }
@@ -132,7 +133,8 @@ window.reedcrm.timespentBlock.switchYear = function () {
 };
 
 /**
- * Show the year displayed and hide the arrows leading to no year
+ * Show the year displayed, grey the arrows leading to no year and frame the card in red when the year went beyond
+ * the planned time
  *
  * @memberof ReedCRM_TimespentBlock
  *
@@ -142,13 +144,15 @@ window.reedcrm.timespentBlock.switchYear = function () {
  * @returns {void}
  */
 window.reedcrm.timespentBlock.refreshYearNav = function () {
-  const $charts = $('#reedcrm-project-time .reedcrm-project-time-chart');
+  const $card   = $('#reedcrm-project-time');
+  const $charts = $card.find('.reedcrm-project-time-chart');
   const $shown  = $charts.filter(':not([hidden])');
   const index   = $charts.index($shown);
 
-  $('.reedcrm-project-time-year').text($shown.data('year'));
-  $('.reedcrm-project-time-year-nav[data-step="-1"]').prop('disabled', index <= 0);
-  $('.reedcrm-project-time-year-nav[data-step="1"]').prop('disabled', index >= $charts.length - 1);
+  $card.find('.reedcrm-project-time-year').text($shown.data('year'));
+  $card.find('.reedcrm-project-time-year-nav[data-step="-1"]').prop('disabled', index <= 0);
+  $card.find('.reedcrm-project-time-year-nav[data-step="1"]').prop('disabled', index >= $charts.length - 1);
+  $card.toggleClass('reedcrm-project-time-is-over', $card.find('.reedcrm-project-time-kpis:not([hidden]) .reedcrm-project-time-kpi-over').length > 0);
 };
 
 /**

@@ -253,14 +253,12 @@ $reedcrm-project-time-ink: #0f172a;
 $reedcrm-project-time-muted: #64748b;
 $reedcrm-project-time-border: #e2e8f0;
 
-// Beside the header blocks of the project, which keep the 600px they need on the left
+// At the bottom of the status column of the banner, right aligned like the blocks above it
 .reedcrm-project-time {
-    float: right;
-    clear: right;
     box-sizing: border-box;
-    width: clamp(420px, calc(100% - 600px), 540px);
+    width: 500px;
     max-width: 100%;
-    margin-top: 6px;
+    margin: 8px 0 0 auto;
     padding: 8px 12px 6px;
     font-size: 12px;
     line-height: 1.3;
@@ -274,6 +272,12 @@ $reedcrm-project-time-border: #e2e8f0;
     &[hidden],
     [hidden] {
         display: none;
+    }
+
+    // The year shown went beyond the planned time
+    &.reedcrm-project-time-is-over {
+        border-color: $reedcrm-project-time-over;
+        box-shadow: 0 0 0 2px rgba(229, 72, 77, 0.12);
     }
 }
 
