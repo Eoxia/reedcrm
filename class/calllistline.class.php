@@ -240,7 +240,7 @@ class CallListLine extends SaturneObject
      * @param  int    $fkCallList ID of the parent CallList
      * @param  int    $lineId     ID of the line to move
      * @param  string $direction  'up' or 'down'
-     * @return int                <0 if KO, 0 if nothing to move, >0 if OK
+     * @return int                -1 if KO, 0 if nothing to move, 1 if OK
      */
     public function moveInCallList(User $user, int $fkCallList, int $lineId, string $direction): int
     {
