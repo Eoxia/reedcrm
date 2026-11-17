@@ -707,17 +707,17 @@ EventDefaultDuration=Default duration of the events
 EventDefaultDurationDescription=Duration in minutes offered beside the date in the quick event creation. It sets the end date and, once the event is done, is logged as time spent on the related project.
 EventDurationHelp=Duration in minutes: sets the end date and, when the event is done, is logged as time spent on the related project
 ReedCRMProjectTimeTitle=Project time
-ReedCRMProjectTimePlanned=Planned time
+ReedCRMProjectTimeTitleShort=Time
 ReedCRMProjectTimePlannedShort=Planned
 ReedCRMProjectTimePlannedHelp=Workload planned on the tasks, spread over the days between their start and end dates
 ReedCRMProjectTimeSpent=Time spent
 ReedCRMProjectTimeSpentShort=Spent
-ReedCRMProjectTimeGap=Gap (spent - planned)
-ReedCRMProjectTimeGapShort=Gap
+ReedCRMProjectTimeOver=Time spent beyond the planned time, summed month by month
+ReedCRMProjectTimeOverShort=Over
 ReedCRMProjectTimeYearTotal=Year total
-ReedCRMProjectTimeMonthlyAverage=Monthly average
-ReedCRMProjectTimeMonthlyAverageShort=Avg.
+ReedCRMProjectTimeMonthlyAverage=Monthly average: %s
 ReedCRMProjectTimeBarTitle=%s: planned %s, spent %s
+ReedCRMProjectTimeBarOverTitle=%s: planned %s, spent %s, over by %s
 ReedCRMProjectTimeChartTitle=Monthly comparison: planned time / time spent
 
 # PWA nav

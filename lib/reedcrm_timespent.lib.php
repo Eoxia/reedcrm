@@ -407,49 +407,61 @@ function reedcrm_timespent_format_hours_short(float $seconds, bool $signed = fal
 }
 
 /**
- * Top of the hours axis of the project chart: the first round number of hours above the largest month of the year
+ * Duration in hours for the totals of the project card, its "h" set apart so that the figures read at a glance
  *
- * @param  array $months Months of a year returned by reedcrm_timespent_get_project_monthly()
- * @return float         Seconds
+ * @param  float  $seconds Duration in seconds
+ * @return string          HTML
  */
-function reedcrm_timespent_chart_axis_max(array $months): float
+function reedcrm_timespent_format_hours_html(float $seconds): string
 {
-    $maxHours = max(max($months['planned']), max($months['spent'])) / 3600;
-    foreach ([1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000] as $hours) {
-        if ($maxHours <= $hours) {
-            return $hours * 3600;
-        }
-    }
-
-    return ceil($maxHours / 1000) * 1000 * 3600;
+    return str_replace('h', '<span class="reedcrm-project-time-unit">h</span>', reedcrm_timespent_format_hours($seconds));
 }
 
 /**
- * Bars of the time planned against the time spent on a project, one pair per month, drawn above the month columns
- * of the project table: the SVG is stretched over those twelve columns, hence its 100 units per month
+ * Totals of a year of the project chart
  *
- * @param  array  $months  Months of a year returned by reedcrm_timespent_get_project_monthly()
- * @param  float  $axisMax Top of the hours axis, in seconds
- * @return string          SVG, colored by _timespent-block.scss
+ * @param  array $months Months of a year returned by reedcrm_timespent_get_project_monthly()
+ * @return array         ['planned' => seconds, 'spent' => seconds, 'over' => seconds spent beyond the planned time, month
+ *                       by month, 'average' => seconds spent per month holding time]
  */
-function reedcrm_timespent_render_project_chart(array $months, float $axisMax): string
+function reedcrm_timespent_get_year_totals(array $months): array
 {
-    global $langs;
-
-    $svg  = '<svg class="reedcrm-project-time-chart" viewBox="0 0 1200 100" preserveAspectRatio="none" role="img" aria-label="' . $langs->trans('ReedCRMProjectTimeChartTitle') . '">';
-    $svg .= '<line class="reedcrm-project-time-chart-grid" x1="0" x2="1200" y1="50" y2="50" vector-effect="non-scaling-stroke"></line>';
-
+    $totals = ['planned' => 0.0, 'spent' => 0.0, 'over' => 0.0, 'average' => 0.0];
+    $active = 0;
     for ($month = 1; $month <= 12; $month++) {
-        $tooltip = $langs->trans('ReedCRMProjectTimeBarTitle', $langs->trans('MonthShort' . sprintf('%02d', $month)), reedcrm_timespent_format_hours($months['planned'][$month]), reedcrm_timespent_format_hours($months['spent'][$month]));
-        foreach (['planned' => 18, 'spent' => 52] as $kind => $offset) {
-            $height = round($months[$kind][$month] / $axisMax * 100, 1);
-            $svg   .= '<rect class="reedcrm-project-time-chart-' . $kind . '" x="' . (($month - 1) * 100 + $offset) . '" y="' . (100 - $height) . '" width="30" height="' . $height . '"><title>' . $tooltip . '</title></rect>';
-        }
+        $totals['planned'] += $months['planned'][$month];
+        $totals['spent']   += $months['spent'][$month];
+        $totals['over']    += max(0, $months['spent'][$month] - $months['planned'][$month]);
+        $active            += ($months['planned'][$month] > 0 || $months['spent'][$month] > 0) ? 1 : 0;
+    }
+    $totals['average'] = $totals['spent'] / max(1, $active);
+
+    return $totals;
+}
+
+/**
+ * Heights of the bars of a month of the project chart, as steps of 2.5 % of the largest month of the year: the
+ * stylesheet holds one class per step, so that the heights need no inline style. A time keeps at least one step.
+ * The spent bar is split at the planned time: within it, then the part beyond it stacked on top.
+ *
+ * @param  float $planned Time planned on the month, in seconds
+ * @param  float $spent   Time spent on the month, in seconds
+ * @param  float $max     Largest planned or spent time of a month of the year, in seconds
+ * @return array          ['planned' => step, 'within' => step, 'over' => step], steps from 0 to 40
+ */
+function reedcrm_timespent_get_month_bars(float $planned, float $spent, float $max): array
+{
+    $step = function (float $seconds) use ($max): int {
+        return ($seconds <= 0 || $max <= 0) ? 0 : max(1, min(40, (int) round($seconds / $max * 40)));
+    };
+
+    $bars = ['planned' => $step($planned), 'within' => $step(min($spent, $planned)), 'over' => 0];
+    if (round(($spent - $planned) / 60) > 0) {
+        $bars['over']   = max(1, $step($spent) - $bars['within']);
+        $bars['within'] = min($bars['within'], 40 - $bars['over']);
     }
 
-    $svg .= '</svg>';
-
-    return $svg;
+    return $bars;
 }
 
 /**

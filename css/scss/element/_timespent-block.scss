@@ -244,195 +244,259 @@ $reedcrm-timespent-avatar-colors: #3182ce, #38a169, #d69e2e, #e53e3e, #805ad5, #
     }
 }
 
-// Monthly table of the time planned and spent on a project, with its chart, kept small at the top right of the card
-$reedcrm-project-time-planned: #4a5a9a;
-$reedcrm-project-time-spent: #e07a50;
+// Card of the time planned and spent on a project, at the top right of the card: the totals of the year beside the
+// title, one bar per month underneath (planned in light blue, spent over it in blue, beyond the planned time in red)
+$reedcrm-project-time-planned: #cfe3ff;
+$reedcrm-project-time-spent: #1a7ff0;
+$reedcrm-project-time-over: #e5484d;
+$reedcrm-project-time-ink: #0f172a;
+$reedcrm-project-time-muted: #64748b;
+$reedcrm-project-time-border: #e2e8f0;
 
 // Beside the header blocks of the project, which keep the 600px they need on the left
 .reedcrm-project-time {
     float: right;
     clear: right;
-    width: clamp(420px, calc(100% - 600px), 560px);
+    box-sizing: border-box;
+    width: clamp(420px, calc(100% - 600px), 540px);
     max-width: 100%;
-    padding-top: 6px;
-    font-size: 10px;
+    margin-top: 6px;
+    padding: 8px 12px 6px;
+    font-size: 12px;
     line-height: 1.3;
     text-align: left;
-    color: #4a5568;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid $reedcrm-project-time-border;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 
-    &[hidden] {
+    &[hidden],
+    [hidden] {
         display: none;
     }
 }
 
+// Every piece of the line sits on the baseline of its text: centered boxes of different font sizes put the
+// figures higher than the labels
 .reedcrm-project-time-header {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 2px 10px;
-    padding-bottom: 2px;
+    align-items: baseline;
+    gap: 4px 8px;
 }
 
 .reedcrm-project-time-title {
-    font-weight: 600;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    color: $reedcrm-project-time-ink;
 
     .fa-clock {
-        color: #64748b;
+        margin-right: 2px;
+        color: $reedcrm-project-time-muted;
     }
 }
 
 .reedcrm-project-time-years {
     display: inline-flex;
-    align-items: center;
+    align-items: baseline;
     gap: 2px;
+    font-size: 12.5px;
     font-weight: 600;
+    color: $reedcrm-project-time-muted;
 }
 
+// Centered on the year rather than on its baseline, greyed when no year lies that way
 .reedcrm-project-time-year-nav {
-    padding: 0 3px;
+    display: inline-flex;
+    align-self: center;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    padding: 0;
     font-size: 9px;
-    color: #4a5568;
+    line-height: 1;
+    color: $reedcrm-project-time-muted;
     background: none;
     border: none;
+    border-radius: 4px;
+    box-shadow: none;
     cursor: pointer;
+
+    &:hover:not(:disabled) {
+        color: $reedcrm-project-time-ink;
+        background: #f1f5f9;
+    }
 
     &:disabled {
         opacity: 0.3;
         cursor: default;
     }
-}
 
-.reedcrm-project-time-legend {
-    display: inline-flex;
-    gap: 8px;
-    margin-left: auto;
-
-    span::before {
-        content: "";
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        margin-right: 3px;
-        vertical-align: -1px;
+    // The middle of the line box falls under the middle of the figures, which have no descender
+    i {
+        transform: translateY(-1px);
     }
 }
 
-.reedcrm-project-time-legend-planned::before {
-    background: $reedcrm-project-time-planned;
+// Totals of the year at the right of the title, the square of each total doubling as the legend of the bars
+.reedcrm-project-time-kpis {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 12px;
+    margin-left: auto;
 }
 
-.reedcrm-project-time-legend-spent::before {
+.reedcrm-project-time-kpi {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    font-size: 11px;
+    white-space: nowrap;
+    color: $reedcrm-project-time-muted;
+
+    &::before {
+        content: "";
+        align-self: center;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+    }
+
+    strong {
+        font-size: 13px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: $reedcrm-project-time-ink;
+    }
+}
+
+// The "h" of 195h40 set apart, smaller and lighter than the figures around it
+.reedcrm-project-time-unit {
+    margin: 0 1px;
+    font-size: 10px;
+    font-weight: 500;
+    color: $reedcrm-project-time-muted;
+}
+
+.reedcrm-project-time-kpi-planned::before {
+    background: $reedcrm-project-time-planned;
+    box-shadow: inset 0 0 0 1px #a9cdfb;
+}
+
+.reedcrm-project-time-kpi-spent::before {
     background: $reedcrm-project-time-spent;
 }
 
-// Fits the card on a computer, scrolls sideways on a phone
-.reedcrm-project-time-scroll {
-    overflow-x: auto;
+.reedcrm-project-time-kpi-over {
+    &::before {
+        background: $reedcrm-project-time-over;
+    }
 
-    &[hidden] {
-        display: none;
+    strong {
+        color: #c4262c;
     }
 }
 
-// Fixed layout: the twelve month columns share the same width, the chart above them lines up with their figures
-.reedcrm-project-time-table {
-    width: 100%;
-    min-width: 420px;
-    table-layout: fixed;
-    border-collapse: collapse;
-    white-space: nowrap;
-
-    .reedcrm-project-time-col-label {
-        width: 42px;
-    }
-
-    .reedcrm-project-time-col-sum {
-        width: 44px;
-    }
-
-    // Month figures centered under their pair of bars
-    th,
-    td {
-        padding: 1px 0;
-        overflow: hidden;
-        text-align: center;
-    }
-
-    th:first-child,
-    td:first-child {
-        text-align: left;
-        font-weight: 600;
-    }
-
-    th:nth-last-child(-n + 2),
-    td:nth-last-child(-n + 2) {
-        padding-right: 2px;
-        text-align: right;
-    }
-
-    tr:not(.reedcrm-project-time-chart-row) {
-        border-bottom: 1px solid #edf2f7;
-    }
-
-    .reedcrm-project-time-months th {
-        font-size: 9px;
-        font-weight: 600;
-        color: #718096;
-        border-top: 1px solid #a0aec0;
-    }
-
-    .reedcrm-project-time-sum {
-        font-weight: 700;
-    }
-
-    .reedcrm-project-time-over {
-        font-weight: 600;
-        color: #c53030;
-        background: #fdecee;
-    }
-
-    .reedcrm-project-time-under {
-        font-weight: 600;
-        color: #2f855a;
-        background: #eaf6ee;
-    }
-}
-
-// Chart row: the bars over the month columns, the top of the hours axis in the label column
-.reedcrm-project-time-chart-row td {
-    height: 46px;
-    padding: 0;
-    vertical-align: bottom;
-}
-
-.reedcrm-project-time-table .reedcrm-project-time-chart-axis {
-    font-weight: normal;
-    color: #a0aec0;
-
-    span {
-        display: block;
-
-        &:first-child {
-            padding-bottom: 20px;
-        }
-    }
-}
-
+// Twelve equal columns: the bar of the month on a common baseline, its name underneath. The top padding leaves
+// room for the figure standing on the highest bar.
 .reedcrm-project-time-chart {
-    display: block;
-    width: 100%;
-    height: 46px;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 4px;
+    padding-top: 16px;
 }
 
-.reedcrm-project-time-chart-grid {
-    stroke: #e2e8f0;
-    stroke-dasharray: 3 3;
+.reedcrm-project-time-month {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    text-align: center;
 }
 
-.reedcrm-project-time-chart-planned {
-    fill: $reedcrm-project-time-planned;
+.reedcrm-project-time-track {
+    position: relative;
+    height: 40px;
+    border-bottom: 1px solid #cbd5e1;
 }
 
-.reedcrm-project-time-chart-spent {
-    fill: $reedcrm-project-time-spent;
+// The three parts of the bar share its width: the planned time behind, the time spent over it, the excess on top
+.reedcrm-project-time-bar-planned,
+.reedcrm-project-time-bar-spent,
+.reedcrm-project-time-bar-over {
+    position: absolute;
+    left: 50%;
+    width: 60%;
+    max-width: 22px;
+    border-radius: 3px 3px 0 0;
+    transform: translateX(-50%);
+}
+
+.reedcrm-project-time-bar-planned,
+.reedcrm-project-time-bar-spent {
+    bottom: 0;
+}
+
+.reedcrm-project-time-bar-planned {
+    background: $reedcrm-project-time-planned;
+}
+
+.reedcrm-project-time-bar-spent {
+    background: $reedcrm-project-time-spent;
+}
+
+.reedcrm-project-time-bar-over {
+    background: $reedcrm-project-time-over;
+}
+
+// Under the red part, the blue one keeps square corners
+.reedcrm-project-time-month-over .reedcrm-project-time-bar-spent {
+    border-radius: 0;
+}
+
+// Above the bar, red when the month went beyond the planned time
+.reedcrm-project-time-value {
+    position: absolute;
+    left: 50%;
+    padding-bottom: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    color: #334155;
+    transform: translateX(-50%);
+}
+
+.reedcrm-project-time-month-over .reedcrm-project-time-value {
+    color: #c4262c;
+}
+
+// One class per step of 2.5 % of the largest month, for the height of a part and for where it starts:
+// the bars need no inline style
+@for $step from 0 through 40 {
+    .reedcrm-project-time-h#{$step} {
+        height: $step * 2.5%;
+    }
+
+    .reedcrm-project-time-b#{$step} {
+        bottom: $step * 2.5%;
+    }
+}
+
+.reedcrm-project-time-label {
+    padding-top: 3px;
+    overflow: hidden;
+    font-size: 10px;
+    white-space: nowrap;
+    color: $reedcrm-project-time-muted;
+}
+
+.reedcrm-project-time-current .reedcrm-project-time-label {
+    font-weight: 700;
+    color: $reedcrm-project-time-ink;
 }

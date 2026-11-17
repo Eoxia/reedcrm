@@ -80,7 +80,7 @@ window.reedcrm.timespentBlock.init = function () {
 };
 
 /**
- * Move the monthly table of the project at the top right of the card, under the lifecycle of the project
+ * Move the time card of the project at the top right of the card, beside its header blocks
  *
  * @memberof ReedCRM_TimespentBlock
  *
@@ -107,7 +107,7 @@ window.reedcrm.timespentBlock.mountTable = function () {
 };
 
 /**
- * Show the table of the previous or the next year holding time
+ * Show the totals and the bars of the previous or the next year holding time
  *
  * @memberof ReedCRM_TimespentBlock
  *
@@ -117,19 +117,22 @@ window.reedcrm.timespentBlock.mountTable = function () {
  * @returns {void}
  */
 window.reedcrm.timespentBlock.switchYear = function () {
-  const $shown  = $('#reedcrm-project-time .reedcrm-project-time-scroll:not([hidden])');
-  const $target = parseInt($(this).data('step'), 10) < 0 ? $shown.prevAll('.reedcrm-project-time-scroll').first() : $shown.nextAll('.reedcrm-project-time-scroll').first();
-  if (!$target.length) {
+  const $charts = $('#reedcrm-project-time .reedcrm-project-time-chart');
+  const index   = $charts.index($charts.filter(':not([hidden])')) + parseInt($(this).data('step'), 10);
+  if (index < 0 || index >= $charts.length) {
     return;
   }
 
-  $shown.prop('hidden', true);
-  $target.prop('hidden', false);
+  // The totals in the header and the bars underneath carry the year they belong to
+  const year = String($charts.eq(index).data('year'));
+  $('#reedcrm-project-time [data-year]').each(function () {
+    $(this).prop('hidden', String($(this).data('year')) !== year);
+  });
   window.reedcrm.timespentBlock.refreshYearNav();
 };
 
 /**
- * Show the year displayed and disable the arrows leading to no year
+ * Show the year displayed and hide the arrows leading to no year
  *
  * @memberof ReedCRM_TimespentBlock
  *
@@ -139,11 +142,13 @@ window.reedcrm.timespentBlock.switchYear = function () {
  * @returns {void}
  */
 window.reedcrm.timespentBlock.refreshYearNav = function () {
-  const $shown = $('#reedcrm-project-time .reedcrm-project-time-scroll:not([hidden])');
+  const $charts = $('#reedcrm-project-time .reedcrm-project-time-chart');
+  const $shown  = $charts.filter(':not([hidden])');
+  const index   = $charts.index($shown);
 
   $('.reedcrm-project-time-year').text($shown.data('year'));
-  $('.reedcrm-project-time-year-nav[data-step="-1"]').prop('disabled', !$shown.prevAll('.reedcrm-project-time-scroll').length);
-  $('.reedcrm-project-time-year-nav[data-step="1"]').prop('disabled', !$shown.nextAll('.reedcrm-project-time-scroll').length);
+  $('.reedcrm-project-time-year-nav[data-step="-1"]').prop('disabled', index <= 0);
+  $('.reedcrm-project-time-year-nav[data-step="1"]').prop('disabled', index >= $charts.length - 1);
 };
 
 /**
