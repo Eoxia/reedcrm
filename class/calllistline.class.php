@@ -75,6 +75,7 @@ class CallListLine extends SaturneObject
         'element_type'  => ['type' => 'varchar(255)', 'label' => 'ElementType',    'enabled' => 1, 'position' => 50,  'notnull' => 1, 'visible' => 1],
         'element_id'    => ['type' => 'integer',      'label' => 'ElementId',      'enabled' => 1, 'position' => 60,  'notnull' => 1, 'visible' => 0],
         'fk_contact'    => ['type' => 'integer:Contact:contact/class/contact.class.php', 'label' => 'Contact', 'enabled' => 1, 'position' => 70, 'notnull' => 0, 'visible' => 1],
+        'position'      => ['type' => 'integer',      'label' => 'Position',       'enabled' => 1, 'position' => 75,  'notnull' => 1, 'visible' => 1, 'default' => 0, 'help' => 'CallListLinePositionHelp'],
         'status'        => ['type' => 'smallint',     'label' => 'Status',         'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1, 'default' => 0],
         'note'          => ['type' => 'text',         'label' => 'Note',           'enabled' => 1, 'position' => 90,  'notnull' => 0, 'visible' => 1],
         'fk_user_creat' => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserAuthor', 'enabled' => 1, 'position' => 500, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1],
@@ -100,6 +101,11 @@ class CallListLine extends SaturneObject
      * @var int fk_contact
      */
     public $fk_contact = 0;
+
+    /**
+     * @var int position, the smallest first, see fetchAllByCallList()
+     */
+    public $position = 0;
 
     /**
      * @var string note
@@ -195,7 +201,8 @@ class CallListLine extends SaturneObject
     }
 
     /**
-     * Fetch all lines of a given call list.
+     * Fetch all lines of a given call list, in the order they are to be called: the position set by the
+     * arrows of the card, then the order they were added in, the only order of the calls added before it
      *
      * @param  int   $fkCallList ID of the parent CallList
      * @return array Array of CallListLine objects, or empty array
@@ -206,7 +213,7 @@ class CallListLine extends SaturneObject
         $sql .= ' WHERE fk_call_list = ' . ((int) $fkCallList);
         $sql .= ' AND entity IN (' . getEntity($this->element) . ')';
         $sql .= ' AND status != ' . self::STATUS_DELETED;
-        $sql .= ' ORDER BY rowid ASC';
+        $sql .= ' ORDER BY position ASC, rowid ASC';
 
         $lines = [];
 
@@ -222,6 +229,60 @@ class CallListLine extends SaturneObject
         }
 
         return $lines;
+    }
+
+    /**
+     * Move a line of a call list one step up or down: the lines are numbered 1..n in their current order,
+     * the calls of the same position keeping the order they were added in, then the line swaps its
+     * position with its neighbour. Nothing happens past the first or the last line.
+     *
+     * @param  User   $user       User that moves the line
+     * @param  int    $fkCallList ID of the parent CallList
+     * @param  int    $lineId     ID of the line to move
+     * @param  string $direction  'up' or 'down'
+     * @return int                <0 if KO, 0 if nothing to move, >0 if OK
+     */
+    public function moveInCallList(User $user, int $fkCallList, int $lineId, string $direction): int
+    {
+        $lines = $this->fetchAllByCallList($fkCallList);
+        $index = null;
+        foreach ($lines as $rank => $line) {
+            if ((int) $line->id === $lineId) {
+                $index = $rank;
+                break;
+            }
+        }
+
+        if ($index === null) {
+            return 0;
+        }
+        $target = $direction === 'up' ? $index - 1 : $index + 1;
+        if (!isset($lines[$target])) {
+            return 0;
+        }
+
+        $movedLine      = $lines[$index];
+        $lines[$index]  = $lines[$target];
+        $lines[$target] = $movedLine;
+
+        $this->db->begin();
+        foreach ($lines as $rank => $line) {
+            // Only the lines whose position changes: all of them the first time, then the two swapped ones
+            if ((int) $line->position === $rank + 1) {
+                continue;
+            }
+            $sql  = 'UPDATE ' . $this->db->prefix() . $this->table_element;
+            $sql .= ' SET position = ' . ((int) ($rank + 1)) . ', fk_user_modif = ' . ((int) $user->id);
+            $sql .= ' WHERE rowid = ' . ((int) $line->id);
+            if (!$this->db->query($sql)) {
+                $this->error = $this->db->lasterror();
+                $this->db->rollback();
+                return -1;
+            }
+        }
+        $this->db->commit();
+
+        return 1;
     }
 
     /**
@@ -264,6 +325,16 @@ class CallListLine extends SaturneObject
                 $this->error = $langs->trans('CallListWidgetNoContact');
             }
             return -1;
+        }
+
+        // A new call goes to the end of the list, after the ones ordered by hand
+        if (empty($this->position) && $this->fk_call_list > 0) {
+            $sql   = 'SELECT MAX(position) AS max_position FROM ' . $this->db->prefix() . $this->table_element;
+            $sql  .= ' WHERE fk_call_list = ' . ((int) $this->fk_call_list);
+            $resql = $this->db->query($sql);
+            if ($resql && ($obj = $this->db->fetch_object($resql))) {
+                $this->position = (int) $obj->max_position + 1;
+            }
         }
 
         return parent::create($user, $notrigger);
