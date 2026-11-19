@@ -372,7 +372,13 @@ function store_call_event($user_id, $contact_id, $caller, $callee) {
 }
 
 /**
- * Récupérer les événements d'appel non traités pour un utilisateur depuis ActionComm
+ * Incoming calls received by the Keyyo webhook and not shown yet to the user
+ *
+ * Only the events written by store_call_event() qualify: a relaunch "Phone call" typed by hand is also an AC_TEL at 0 %,
+ * and check_call_events.php would show it as an incoming call then close it.
+ *
+ * @param  int      $user_id Id of the user who owns the calls
+ * @return object[]          Pending calls, with the contact fields and the caller/callee read from extraparams
  */
 function get_pending_call_events($user_id) {
     global $db;
@@ -382,8 +388,13 @@ function get_pending_call_events($user_id) {
     $sql .= "FROM " . MAIN_DB_PREFIX . "actioncomm a ";
     $sql .= "LEFT JOIN " . MAIN_DB_PREFIX . "socpeople c ON a.fk_contact = c.rowid ";
     $sql .= "WHERE a.fk_user_action = " . (int)$user_id . " ";
+    $sql .= "AND a.entity IN (" . getEntity('agenda') . ") ";
     $sql .= "AND a.code = 'AC_TEL' ";
     $sql .= "AND a.percent = 0 ";
+    // Written by store_call_event() only (a relaunch has no caller), as a bare string: extraparams is JSON encoded twice by ActionComm
+    $sql .= "AND a.extraparams LIKE '%caller%' ";
+    // A call already happened: a relaunch planned later is never an incoming call
+    $sql .= "AND a.datep <= '" . $db->idate(dol_now()) . "' ";
     $sql .= "ORDER BY a.datep DESC";
 
     $resql = $db->query($sql);
@@ -393,6 +404,9 @@ function get_pending_call_events($user_id) {
         while ($obj = $db->fetch_object($resql)) {
             if (!empty($obj->extraparams)) {
                 $extraparams = json_decode($obj->extraparams, true);
+                if (is_string($extraparams)) {
+                    $extraparams = json_decode($extraparams, true);
+                }
                 if (is_array($extraparams)) {
                     $obj->caller = $extraparams['caller'] ?? '';
                     $obj->callee = $extraparams['callee'] ?? '';
