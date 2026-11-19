@@ -1705,9 +1705,9 @@ class ActionsReedcrm
                 $object->fetch_thirdparty();
             }
 
-            // Red banner on top of the card while the proposal carries the "not billed" tag
+            // Red banner on top of the card while the proposal carries the "not billed" tag and no invoice bills it yet
             require_once __DIR__ . '/../lib/reedcrm_propal_unbilled.lib.php';
-            if (reedcrmPropalUnbilledHasTag($this->db, (int) $object->id)) {
+            if (reedcrmPropalUnbilledIsTaggedAndUnbilled($this->db, (int) $object->id)) {
                 global $conf, $langs;
 
                 $langs->load('reedcrm@reedcrm');
