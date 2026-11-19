@@ -189,20 +189,26 @@ function reedcrmPropalUnbilledSync(DoliDB $db, int $tagID)
 }
 
 /**
- * Does the proposal carry the "not billed" tag ?
+ * Does the proposal carry the "not billed" tag while no invoice bills it ?
+ *
+ * The tag is only synchronised by the cron job, every 6 hours: an invoice made in between leaves the
+ * tag on the proposal for a while. The billing is therefore checked live, so a billed proposal never
+ * says it is not billed.
  *
  * @param  DoliDB $db       Database handler
  * @param  int    $propalID Proposal id
  * @return bool
  */
-function reedcrmPropalUnbilledHasTag(DoliDB $db, int $propalID): bool
+function reedcrmPropalUnbilledIsTaggedAndUnbilled(DoliDB $db, int $propalID): bool
 {
     $tagID = getDolGlobalInt('REEDCRM_PROPAL_UNBILLED_TAG');
     if ($tagID <= 0 || $propalID <= 0 || !isModEnabled('categorie')) {
         return false;
     }
 
-    $sql   = 'SELECT 1 FROM ' . MAIN_DB_PREFIX . 'categorie_propal WHERE fk_categorie = ' . $tagID . ' AND fk_propal = ' . $propalID;
+    $sql  = 'SELECT 1 FROM ' . MAIN_DB_PREFIX . 'propal as pr';
+    $sql .= ' WHERE pr.rowid = ' . $propalID . ' AND ' . reedcrmPropalUnbilledTaggedSql($tagID);
+    $sql .= ' AND NOT ' . reedcrmPropalUnbilledBilledSql();
     $resql = $db->query($sql);
 
     return $resql && $db->num_rows($resql) > 0;
