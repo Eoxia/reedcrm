@@ -76,14 +76,15 @@ $actioncomm->type_code       = 'AC_TEL';
 $actioncomm->label           = $langs->transnoentities('CallFrom') . ' ' . dol_escape_htmltag($callList->label);
 $actioncomm->datep           = dol_now();
 $actioncomm->datef           = dol_now();
-$actioncomm->percent         = 100;
+// The call is over once its button is clicked: done. ActionComm reads percentage and socid, percent and fk_soc were lost
+$actioncomm->percentage      = 100;
 $actioncomm->userownerid     = $user->id;
-$actioncomm->fk_user_author  = $user->id;
+$actioncomm->authorid        = $user->id;
 
 if (!empty($line->fk_contact)) {
     $actioncomm->socpeopleassigned[$line->fk_contact] = ['id' => $line->fk_contact, 'mandatory' => 0];
     if (!empty($contact->socid)) {
-        $actioncomm->fk_soc = $contact->socid;
+        $actioncomm->socid = $contact->socid;
     }
 }
 
