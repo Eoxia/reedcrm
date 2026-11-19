@@ -552,9 +552,10 @@ abstract class ReedcrmSalesIndicators
      */
     protected function loadCalls(int $from): void
     {
+        // Bare caller, without quotes: ActionComm encodes extraparams twice, a backslash stands before each quote
         $sql  = 'SELECT a.fk_user_action, DATE(a.datep) AS day,';
-        $sql .= " SUM(CASE WHEN a.extraparams LIKE '%\"caller\"%' THEN 0 ELSE 1 END) AS nb_outgoing,";
-        $sql .= " SUM(CASE WHEN a.extraparams LIKE '%\"caller\"%' THEN 1 ELSE 0 END) AS nb_incoming";
+        $sql .= " SUM(CASE WHEN a.extraparams LIKE '%caller%' THEN 0 ELSE 1 END) AS nb_outgoing,";
+        $sql .= " SUM(CASE WHEN a.extraparams LIKE '%caller%' THEN 1 ELSE 0 END) AS nb_incoming";
         $sql .= ' FROM ' . MAIN_DB_PREFIX . 'actioncomm AS a';
         $sql .= ' WHERE a.entity IN (' . getEntity('agenda') . ')';
         $sql .= " AND a.code = '" . self::CALL_EVENT_CODE . "'";
