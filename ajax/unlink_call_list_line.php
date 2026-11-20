@@ -18,7 +18,7 @@
 /**
  * \file    ajax/unlink_call_list_line.php
  * \ingroup reedcrm
- * \brief   Removes a CallListLine from its call list via AJAX POST (PWA call list).
+ * \brief   Removes a CallListLine from its call list via AJAX POST (call list card and App call list).
  */
 
 if (file_exists('../reedcrm.main.inc.php')) {
@@ -39,7 +39,7 @@ saturne_load_langs();
 
 header('Content-Type: application/json');
 
-// Same right as the line bin of the call list card
+// Same right as deleting the call list
 if (!$user->hasRight('reedcrm', 'call_list', 'delete')) {
     echo json_encode(['success' => false, 'error' => $langs->transnoentities('NotEnoughPermissions')]);
     exit;
@@ -59,7 +59,7 @@ if (!reedcrm_call_list_user_can_read($user, $callList)) {
     exit;
 }
 
-// Soft delete, like the call list card: the line leaves the list, its media and events stay
+// The line leaves the list, its media and events stay
 if ($line->delete($user) < 0) {
     echo json_encode(['success' => false, 'error' => $line->error]);
     exit;

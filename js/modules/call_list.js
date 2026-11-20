@@ -12,6 +12,55 @@ window.saturne.call_list.event = function() {
     $(document).on('submit', '#add-call-line-form', window.saturne.call_list.onSubmit);
     // Namespaced: the card loads this file beside reedcrm.min.js, which bundles it, a second binding would move the row twice
     $(document).off('click.callListLineMove').on('click.callListLineMove', '.call-list-line-move', window.saturne.call_list.onMoveClick);
+    $(document).off('click.callListLineUnlink').on('click.callListLineUnlink', '.call-list-line-unlink', window.saturne.call_list.onUnlinkClick);
+};
+
+/**
+ * Unlink the line from the call list after confirmation, with the endpoint and the messages of the App:
+ * the row leaves the page without reloading it, unless it was the last one, to show the empty list
+ */
+window.saturne.call_list.onUnlinkClick = function(event) {
+    event.preventDefault();
+
+    var $link = $(this);
+    var $row  = $link.closest('.call-list-line-row');
+    var $data = $('#call-list-data');
+    if ($link.hasClass('loading') || !window.confirm($data.attr('data-unlink-confirm'))) {
+        return;
+    }
+
+    var showError = function(message) {
+        if ($.jnotify) {
+            $.jnotify(message, 'error', true);
+        } else {
+            window.alert(message);
+        }
+    };
+
+    $link.addClass('loading');
+    $.ajax({
+        url: $data.attr('data-unlink-url'),
+        type: 'POST',
+        dataType: 'json',
+        data: { line_id: $row.data('lineId'), token: $data.attr('data-token') }
+    }).done(function(res) {
+        if (!res || !res.success) {
+            showError(res && res.error ? res.error : $data.attr('data-unlink-error'));
+            return;
+        }
+        $row.fadeOut(200, function() {
+            $row.remove();
+            if (!$('.call-list-line-row').length) {
+                window.location.reload();
+                return;
+            }
+            window.saturne.call_list.refreshMoveArrows();
+        });
+    }).fail(function() {
+        showError($data.attr('data-unlink-error'));
+    }).always(function() {
+        $link.removeClass('loading');
+    });
 };
 
 /**

@@ -424,13 +424,14 @@ function reedcrm_call_list_line_record_status_change(DoliDB $db, User $user, Cal
  * - soc_name: the third party of that object
  * - late / upcoming: same rule as a todo card, applied to the next event still to do on the
  *   object or on its project, the one the line is about to deal with
+ * - last_call_date / last_call_label: the last call made about the object or its project
  *
  * Everything is read in batch, a fixed number of queries whatever the number of lines.
  *
  * @param  DoliDB         $db    Database handler
  * @param  CallListLine[] $lines Lines of the call list
  * @return array                 [line id => ['origin' => [], 'soc_name' => , 'late' => , 'upcoming' => , 'next_event_title' => ,
- *                               'next_event_date' => , 'next_event_label' => ]]
+ *                               'next_event_date' => , 'next_event_label' => , 'last_call_date' => , 'last_call_label' => ]]
  */
 function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
 {
@@ -495,6 +496,7 @@ function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
 
     $relaunchCounts = reedcrmTodoCountRelaunches($db, $origins);
     $nextEvents     = reedcrm_call_list_get_next_events($db, $origins);
+    $lastCalls      = reedcrm_call_list_get_last_calls($db, $origins);
 
     $now      = dol_now();
     $today    = dol_getdate($now);
@@ -513,6 +515,8 @@ function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
             'next_event_title' => !empty($nextEvent) ? $nextEvent['label'] . ' - ' . dol_print_date($nextEvent['datep'], 'dayhour') : '',
             'next_event_date'  => !empty($nextEvent) ? $nextEvent['datep'] : 0,
             'next_event_label' => !empty($nextEvent) ? $nextEvent['label'] : '',
+            'last_call_date'   => $lastCalls[$lineId]['datep'] ?? 0,
+            'last_call_label'  => $lastCalls[$lineId]['label'] ?? '',
         ];
     }
 
@@ -522,8 +526,7 @@ function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
 /**
  * Return the next event still to do on the object of each line, or on its project.
  *
- * "Still to do" is the todo rule: a percentage between 0 and 99 and a start date. Without the
- * right on every action, only the events the user owns or is assigned to count, as on the todo.
+ * "Still to do" is the todo rule: a percentage between 0 and 99 and a start date.
  *
  * @param  DoliDB $db      Database handler
  * @param  array  $origins Objects of the lines, indexed by line ID (see reedcrm_call_list_get_line_indicators())
@@ -531,7 +534,43 @@ function reedcrm_call_list_get_line_indicators(DoliDB $db, array $lines): array
  */
 function reedcrm_call_list_get_next_events(DoliDB $db, array $origins): array
 {
+    return reedcrm_call_list_get_closest_events($db, $origins, 'a.percent >= 0 AND a.percent < 100 AND a.datep IS NOT NULL', 'ASC');
+}
+
+/**
+ * Return the last call made about the object of each line, or about its project.
+ *
+ * A call made is a phone event (AC_TEL, the type of the calls the call list and the App record)
+ * that has started and is no longer to do: done, or without status (-1). A reminder to call back
+ * is a phone event too, still to do: it is not a call made.
+ *
+ * @param  DoliDB $db      Database handler
+ * @param  array  $origins Objects of the lines, indexed by line ID (see reedcrm_call_list_get_line_indicators())
+ * @return array           [line id => ['datep' => timestamp, 'label' => string]]
+ */
+function reedcrm_call_list_get_last_calls(DoliDB $db, array $origins): array
+{
+    $condition = "a.code = 'AC_TEL' AND (a.percent < 0 OR a.percent >= 100) AND a.datep <= '" . $db->idate(dol_now()) . "'";
+
+    return reedcrm_call_list_get_closest_events($db, $origins, $condition, 'DESC');
+}
+
+/**
+ * Return, for each line, the first event met on its object or on its project, in the order of their start date.
+ *
+ * Without the right on every action, only the events the user owns or is assigned to count, as on the todo.
+ *
+ * @param  DoliDB $db        Database handler
+ * @param  array  $origins   Objects of the lines, indexed by line ID (see reedcrm_call_list_get_line_indicators())
+ * @param  string $condition SQL condition on the events (alias a)
+ * @param  string $order     ASC for the closest to come, DESC for the latest
+ * @return array             [line id => ['datep' => timestamp, 'label' => string]]
+ */
+function reedcrm_call_list_get_closest_events(DoliDB $db, array $origins, string $condition, string $order): array
+{
     global $user;
+
+    $order = $order === 'DESC' ? 'DESC' : 'ASC';
 
     if (!isModEnabled('agenda')) {
         return [];
@@ -562,12 +601,12 @@ function reedcrm_call_list_get_next_events(DoliDB $db, array $origins): array
     $sql  = 'SELECT a.id, a.label, a.datep, a.elementtype, a.fk_element, a.fk_project';
     $sql .= ' FROM ' . $db->prefix() . 'actioncomm as a';
     $sql .= ' WHERE a.entity IN (' . getEntity('agenda') . ')';
-    $sql .= ' AND a.percent >= 0 AND a.percent < 100 AND a.datep IS NOT NULL';
+    $sql .= ' AND ' . $condition;
     $sql .= ' AND (' . implode(' OR ', $linkConditions) . ')';
     if (!$user->hasRight('agenda', 'allactions', 'read')) {
         $sql .= ' AND ' . reedcrmTodoGetUserCondition((int) $user->id);
     }
-    $sql .= ' ORDER BY a.datep ASC, a.id ASC';
+    $sql .= ' ORDER BY a.datep ' . $order . ', a.id ' . $order;
 
     $resql = $db->query($sql);
     if (!$resql) {
@@ -578,7 +617,7 @@ function reedcrm_call_list_get_next_events(DoliDB $db, array $origins): array
     $firstByObject  = [];
     $firstByProject = [];
     while ($obj = $db->fetch_object($resql)) {
-        // Rows come ordered on the date: the first one met is the next one
+        // Rows come ordered on the date: the first one met is the one wanted
         $event = ['datep' => (int) $db->jdate($obj->datep), 'label' => (string) $obj->label];
         if (!empty($obj->elementtype) && !isset($firstByObject[$obj->elementtype][(int) $obj->fk_element])) {
             $firstByObject[$obj->elementtype][(int) $obj->fk_element] = $event;
@@ -589,19 +628,19 @@ function reedcrm_call_list_get_next_events(DoliDB $db, array $origins): array
     }
     $db->free($resql);
 
-    $nextEvents = [];
+    $events = [];
     foreach ($origins as $lineId => $origin) {
         $candidates = array_filter([
             $firstByObject[$origin['event_element']][$origin['id']] ?? [],
             $firstByProject[$origin['project']] ?? [],
         ]);
         if (!empty($candidates)) {
-            usort($candidates, function ($a, $b) {
-                return $a['datep'] <=> $b['datep'];
+            usort($candidates, function ($a, $b) use ($order) {
+                return $order === 'DESC' ? $b['datep'] <=> $a['datep'] : $a['datep'] <=> $b['datep'];
             });
-            $nextEvents[$lineId] = $candidates[0];
+            $events[$lineId] = $candidates[0];
         }
     }
 
-    return $nextEvents;
+    return $events;
 }

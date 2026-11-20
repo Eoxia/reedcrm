@@ -207,19 +207,6 @@ if (empty($resHook)) {
         exit;
     }
 
-    // Delete line
-    if ($action === 'delete_line' && $permissiontodelete) {
-        $lineId       = GETPOSTINT('line_id');
-        $lineToDelete = new CallListLine($db);
-
-        if ($lineToDelete->fetch($lineId) > 0 && $lineToDelete->fk_call_list == $object->id) {
-            $lineToDelete->delete($user);
-        }
-
-        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
-        exit;
-    }
-
     // Generate PDF
     if ($action === 'builddoc' && $permissiontoadd) {
         require_once __DIR__ . '/../core/modules/reedcrm/call_list/doc/pdf_calllist_standard.modules.php';
@@ -506,7 +493,9 @@ if ($object->id > 0) {
 
     $lines   = $lineObject->fetchAllByCallList($object->id);
     $nbLines = count($lines);
-    $colspan = 6 + ($permissiontoadd ? 1 : 0) + ($permissiontodelete ? 1 : 0);
+    $colspan = 7 + ($permissiontoadd ? 1 : 0) + ($permissiontodelete ? 1 : 0);
+    // Last call made about each line, as on the cards of the App
+    $lineIndicators = reedcrm_call_list_get_line_indicators($db, $lines);
     $ajaxUrl = $permissiontoadd ? dol_buildpath('/reedcrm/ajax/get_element_primary_contact.php', 1) : '';
 
     // Build propal array for native selectarray() (key = rowid, value = label)
@@ -536,6 +525,7 @@ if ($object->id > 0) {
     print '<td>' . $langs->trans('Phone') . '</td>';
     print '<td>' . $langs->trans('Source') . '</td>';
     print '<td>' . $langs->trans('Status') . '</td>';
+    print '<td>' . $langs->trans('CallListLastCall') . '</td>';
     print '<td>' . $langs->trans('Note') . '</td>';
     if ($permissiontodelete) {
         print '<td class="center"></td>';
@@ -633,13 +623,16 @@ if ($object->id > 0) {
                 print $line->getLibStatut(5);
             }
             print '</td>';
+            $lastCallDate = $lineIndicators[(int) $line->id]['last_call_date'] ?? 0;
+            print '<td class="nowraponall"' . ($lastCallDate ? ' title="' . dol_escape_htmltag($lineIndicators[(int) $line->id]['last_call_label']) . '"' : '') . '>';
+            print $lastCallDate ? dol_print_date($lastCallDate, 'dayhour', 'tzuser') : '';
+            print '</td>';
             print '<td>' . dol_escape_htmltag($line->note) . '</td>';
 
+            // Unlinked, not deleted: the person or the object stays, only the line leaves the list (js/modules/call_list.js)
             if ($permissiontodelete) {
                 print '<td class="center">';
-                print '<a href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&action=delete_line&line_id=' . $line->id . '&token=' . newToken() . '">';
-                print img_delete();
-                print '</a>';
+                print '<a href="#" role="button" class="call-list-line-unlink">' . img_picto($langs->trans('CallListLineUnlink'), 'unlink') . '</a>';
                 print '</td>';
             }
             print '</tr>';
@@ -720,10 +713,14 @@ if ($object->id > 0) {
 
     print '</table>';
 
-    if ($permissiontoadd) {
+    if ($permissiontoadd || $permissiontodelete) {
         print '<div id="call-list-data" class="hidden"'
             . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
             . ' data-move-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/move_call_list_line.php', 1)) . '"'
+            // Same endpoint and same messages as the unlink button of the App
+            . ' data-unlink-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1)) . '"'
+            . ' data-unlink-confirm="' . dol_escape_htmltag($langs->transnoentities('ConfirmCallListLineUnlink')) . '"'
+            . ' data-unlink-error="' . dol_escape_htmltag($langs->transnoentities('ErrorCallListLineUnlink')) . '"'
             . ' data-token="' . newToken() . '"'
             . ' data-label-contact="' . dol_escape_htmltag($langs->trans('ContactToCall')) . '"'
             . ' data-label-no-contact="' . dol_escape_htmltag($langs->trans('NoContact')) . '"'
