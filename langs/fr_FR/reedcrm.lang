@@ -834,6 +834,8 @@ CallListLineAddedOn = Dans la liste depuis le %s
 CallListLineUnlink = Délier de la liste d'appel
 ConfirmCallListLineUnlink = Délier cette personne de la liste d'appel ?
 ErrorCallListLineUnlink = Impossible de délier cette personne de la liste d'appel
+CallListLastCall = Dernier appel
+CallListLineLastCall = Dernier appel le %s
 
 # Relaunch widget - Widget de relance (#873)
 RelaunchScopePastTooltip = Historique des relances

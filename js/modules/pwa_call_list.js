@@ -78,7 +78,8 @@ window.reedcrm.pwaCallList.event = function () {
 
 /**
  * Record the call as an event of the agenda when the number is tapped, if the setup asks for it
- * (REEDCRM_CALL_LIST_CREATE_ACTIONCOMM). The link itself goes on dialling.
+ * (REEDCRM_CALL_LIST_CREATE_ACTIONCOMM). The link itself goes on dialling. Once recorded, the
+ * card shows it as its last call.
  *
  * @returns {void}
  */
@@ -88,10 +89,18 @@ window.reedcrm.pwaCallList.logCall = function () {
     return;
   }
 
+  var $card = $(this).closest('.pwa-call-card');
   $.ajax({
     url: $container.attr('data-actioncomm-url'),
     type: 'POST',
-    data: {line_id: $(this).closest('.pwa-call-card').attr('data-line-id'), token: $container.attr('data-token')}
+    dataType: 'json',
+    data: {line_id: $card.attr('data-line-id'), token: $container.attr('data-token')},
+    success: function (data) {
+      if (data && data.success && data.last_call) {
+        $card.find('.pwa-call-last-call').removeClass('hideobject').attr('title', data.last_call_label || '');
+        $card.find('.pwa-call-last-call-text').text(data.last_call);
+      }
+    }
   });
 };
 

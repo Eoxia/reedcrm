@@ -170,14 +170,26 @@
     }
 }
 
-/* Date the line was added to the call list */
-.pwa-call-added-date {
+/* Date the line was added to the call list, then the last call made */
+.pwa-call-added-date,
+.pwa-call-last-call {
     display: flex;
     align-items: center;
     gap: 6px;
     margin-top: 4px;
     font-size: 14px;
     color: #64748b;
+}
+
+.pwa-call-last-call {
+    // Same specificity as the hideobject of eldy, loaded before this file
+    &.hideobject {
+        display: none;
+    }
+
+    i {
+        color: #16a34a;
+    }
 }
 
 /* Chips of the todo cards (object + amount + relaunches, third party), scaled up for the phone */

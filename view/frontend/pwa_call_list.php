@@ -107,7 +107,7 @@ $unlinkAjaxUrl     = dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1)
 // Same endpoint as the arrows of the call list card, the move itself being handled by js/modules/call_list.js
 $moveAjaxUrl       = dol_buildpath('/reedcrm/ajax/move_call_list_line.php', 1);
 $createActioncomm  = getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
-// Same right as the line bin of the call list card
+// Same right as the unlink button of the call list card
 $canUnlink         = $user->hasRight('reedcrm', 'call_list', 'delete');
 // Same rights as the arrows of the call list card and the relaunch bar of the opportunity page
 $canMove           = $user->hasRight('reedcrm', 'call_list', 'write');
@@ -284,6 +284,12 @@ if (empty($lines)) {
         if (!empty($line->date_creation)) {
             print '<div class="pwa-call-added-date"><i class="far fa-calendar-plus"></i> ' . $langs->trans('CallListLineAddedOn', dol_print_date($line->date_creation, 'day', 'tzuser')) . '</div>';
         }
+
+        // Last call made about the object or its project. Always rendered: tapping the number fills it (js/modules/pwa_call_list.js)
+        $lastCallDate = $indicators['last_call_date'] ?? 0;
+        print '<div class="pwa-call-last-call' . ($lastCallDate ? '' : ' hideobject') . '"' . ($lastCallDate ? ' title="' . dol_escape_htmltag($indicators['last_call_label']) . '"' : '') . '>';
+        print '<i class="fas fa-phone-alt"></i> <span class="pwa-call-last-call-text">' . ($lastCallDate ? $langs->trans('CallListLineLastCall', dol_print_date($lastCallDate, 'dayhour', 'tzuser')) : '') . '</span>';
+        print '</div>';
 
         // Ligne 2 : Gros bouton d'appel vert + bouton copier le numéro
         if ($phone) {

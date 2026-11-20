@@ -73,7 +73,8 @@ saturne_load_langs();
 
 $actioncomm                  = new ActionComm($db);
 $actioncomm->type_code       = 'AC_TEL';
-$actioncomm->label           = $langs->transnoentities('CallFrom') . ' ' . dol_escape_htmltag($callList->label);
+// Raw, as the events of the status changes: escaped where shown, an escaped label printed "&mdash;" in the agenda
+$actioncomm->label           = $langs->transnoentities('CallFrom') . ' ' . $callList->label;
 $actioncomm->datep           = dol_now();
 $actioncomm->datef           = dol_now();
 // The call is over once its button is clicked: done. ActionComm reads percentage and socid, percent and fk_soc were lost
@@ -94,6 +95,11 @@ if ($line->element_type === 'propal' && !empty($line->element_id)) {
 } elseif ($line->element_type === 'project' && !empty($line->element_id)) {
     $actioncomm->fk_element  = $line->element_id;
     $actioncomm->elementtype = 'project';
+    // The agenda of the project, its relaunch buttons and the last call of the line read the project here, not in the element
+    $actioncomm->fk_project  = $line->element_id;
+} elseif ($line->element_type === 'facture' && !empty($line->element_id)) {
+    $actioncomm->fk_element  = $line->element_id;
+    $actioncomm->elementtype = 'invoice';
 }
 
 $result = $actioncomm->create($user);
@@ -103,5 +109,10 @@ if ($result <= 0) {
     exit;
 }
 
-echo json_encode(['success' => true]);
+// Shown at once on the card as its last call (view/frontend/pwa_call_list.php)
+echo json_encode([
+    'success'         => true,
+    'last_call'       => $langs->transnoentities('CallListLineLastCall', dol_print_date($actioncomm->datep, 'dayhour', 'tzuser')),
+    'last_call_label' => $actioncomm->label,
+]);
 exit;
