@@ -810,3 +810,39 @@ label > .reedcrm-event-duration {
     flex-shrink: 0;
     padding-left: 14px;
 }
+
+// Voice note beside the description of a new event (App form): the description takes what the record and
+// play buttons leave, stacked on its right
+.eventpro-description-with-voice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    > label {
+        flex: 1;
+        min-width: 0;
+    }
+
+    [id$="master-media-row-container-audio"] {
+        padding: 0;
+    }
+
+    .saturne-audio-controls {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 0;
+    }
+
+    .saturne-media-btn {
+        width: 48px;
+        min-width: 48px;
+        height: 48px;
+        border-radius: 10px;
+    }
+}
+
+// Parts of the shared note tab shown in the App only (section titles, pages/_pwa-opportunity.scss): the boxes of
+// the desktop card carry placeholders instead
+.eventpro-app-only {
+    display: none;
+}

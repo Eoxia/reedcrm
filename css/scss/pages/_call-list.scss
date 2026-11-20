@@ -21,6 +21,9 @@
 // Arrows of the call list card (js/modules/call_list.js): the swapped rows slide to their new place, the moved one over
 // its neighbour, then it flashes like a closed event row
 tr.call-list-line-row {
+    // Not an anchor of the scroll of the page: a row moved by its arrows made the browser scroll after it
+    overflow-anchor: none;
+
     &.call-list-line-sliding {
         position: relative;
         transition: transform 0.25s ease;

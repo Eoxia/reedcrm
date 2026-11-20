@@ -24,6 +24,8 @@
  *          $langs, $user and $db to be in scope, exactly as the desktop card sets them up.
  *          Both pages redirect to themselves by default; a caller may override the destination with
  *          $eventProRedirectAfterEvent / $eventProRedirectAfterTicket before including this file.
+ *          A page offering the voice note beside the description sets $eventProVoiceContext
+ *          (reedcrm_eventpro_voice_context()): the recording is then attached to the new event.
  */
 
 if (!defined('DOL_DOCUMENT_ROOT')) {
@@ -195,6 +197,11 @@ if (empty($eventProRedirectAfterTicket)) {
 
         $category->fetch(getDolGlobalInt('REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG'));
         $category->add_type($actionComm, 'actioncomm');
+
+        // Voice note recorded beside the description, on the pages offering it ($eventProVoiceContext, App)
+        if ($result > 0 && !empty($eventProVoiceContext) && reedcrm_eventpro_voice_attach($actionComm, $eventProVoiceContext) < 0) {
+            setEventMessages($langs->trans('ErrorEventVoiceNotAttached'), null, 'warnings');
+        }
 
         // The duration of a done event is time spent on its project, logged on the commercial follow-up task.
         // An event still to do has not taken any time yet.

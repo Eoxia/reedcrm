@@ -19,7 +19,8 @@
 /**
  * \file    js/modules/pwa_call_list.js
  * \ingroup reedcrm
- * \brief   PWA call list view: copy phone number to clipboard with visual feedback, unlink a line, counters and nav badge sync
+ * \brief   PWA call list view: copy phone number to clipboard with visual feedback, log the call, unlink a line, counters and nav badge sync.
+ *          The arrows moving a card are handled by js/modules/call_list.js, as on the call list card.
  */
 
 if (!window.reedcrm) {
@@ -40,10 +41,9 @@ window.reedcrm.pwaCallList.init = function () {
 
 /**
  * Keep the header counters, and the nav badge on the user's default call list, in sync
- * while lines change status or are unlinked.
+ * while lines are unlinked.
  *
- * The status buttons only update the card data-status attribute and the unlink button
- * removes the card, so watch both instead of hooking into their AJAX calls.
+ * The unlink button removes the card, so watch the container instead of hooking into its AJAX call.
  *
  * @returns {void}
  */
@@ -61,7 +61,7 @@ window.reedcrm.pwaCallList.watchToCallCount = function () {
     if (isDefaultList && window.reedcrm.pwaNav) {
       window.reedcrm.pwaNav.setBadge('call_list', toCallCount);
     }
-  }).observe(container, {attributes: true, attributeFilter: ['data-status'], childList: true, subtree: true});
+  }).observe(container, {childList: true});
 };
 
 /**
@@ -71,8 +71,28 @@ window.reedcrm.pwaCallList.watchToCallCount = function () {
  */
 window.reedcrm.pwaCallList.event = function () {
   $(document).on('click', '[data-action="copy-phone"]', window.reedcrm.pwaCallList.copyPhone);
+  $(document).on('click', '.pwa-call-list-container .pwa-call-btn-call', window.reedcrm.pwaCallList.logCall);
   $(document).on('click', '[data-action="unlink-line"]', window.reedcrm.pwaCallList.unlinkLine);
   $(document).on('change', '#pwa-call-list-select', window.reedcrm.pwaCallList.switchList);
+};
+
+/**
+ * Record the call as an event of the agenda when the number is tapped, if the setup asks for it
+ * (REEDCRM_CALL_LIST_CREATE_ACTIONCOMM). The link itself goes on dialling.
+ *
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.logCall = function () {
+  var $container = $(this).closest('.pwa-call-list-container');
+  if ($container.attr('data-create-actioncomm') !== '1') {
+    return;
+  }
+
+  $.ajax({
+    url: $container.attr('data-actioncomm-url'),
+    type: 'POST',
+    data: {line_id: $(this).closest('.pwa-call-card').attr('data-line-id'), token: $container.attr('data-token')}
+  });
 };
 
 /**

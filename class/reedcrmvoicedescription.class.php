@@ -157,7 +157,7 @@ class ReedcrmVoiceDescription
         $mimeType = (string) $finfo->file($filePath);
 
         $body = [
-            'file'            => new CURLFile($filePath, $mimeType, 'recording.' . $this->audioExtension($mimeType, $filePath)),
+            'file'            => new CURLFile($filePath, $mimeType, 'recording.' . self::audioExtension($mimeType, $filePath)),
             'model'           => getDolGlobalString('AI_API_CHATGPT_MODEL_TRANSCRIPT', self::TRANSCRIPTION_MODEL),
             'response_format' => 'json'
         ];
@@ -266,13 +266,13 @@ class ReedcrmVoiceDescription
     }
 
     /**
-     * Extension under which the recording is sent, from its actual format.
+     * Extension of a recording, from its actual format: the browsers record WebM or MP4, posted as .wav.
      *
      * @param  string $mimeType MIME type read in the file.
      * @param  string $filePath Full path of the recording, its own extension being the fallback.
-     * @return string           Extension known by the OpenAI transcription.
+     * @return string           Extension known by the OpenAI transcription and by the browsers.
      */
-    private function audioExtension(string $mimeType, string $filePath): string
+    public static function audioExtension(string $mimeType, string $filePath): string
     {
         $extensions = [
             'audio/webm'     => 'webm',
