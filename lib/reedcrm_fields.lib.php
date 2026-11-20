@@ -130,17 +130,26 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
 
     $statusId = (int) $object->fk_opp_status;
 
-    // Lead statuses are loaded once per page request (avoids an N+1 query per row)
+    // Lead statuses are loaded once per page request (avoids an N+1 query per row). The dictionary has no entity
+    // column, and inactive statuses are kept: a project may still carry one
     static $leadStatuses = null;
     if ($leadStatuses === null) {
         $leadStatuses = [];
-        $sql  = 'SELECT rowid, code, label FROM ' . MAIN_DB_PREFIX . 'c_lead_status';
-        $sql .= ' WHERE active = 1 AND entity IN (' . getEntity('c_lead_status') . ')';
-        $sql .= ' ORDER BY position ASC';
+        $langs->load('projects');
+        $sql  = 'SELECT rowid, code, label, active FROM ' . MAIN_DB_PREFIX . 'c_lead_status';
+        $sql .= ' ORDER BY position ASC, rowid ASC';
         $resql = $db->query($sql);
         if ($resql) {
             while ($row = $db->fetch_object($resql)) {
-                $leadStatuses[(int) $row->rowid] = ['code' => $row->code, 'label' => $row->label];
+                // Same label as the screens of Dolibarr: the translation of OppStatus<code> when there is one. Saturne
+                // gives that key the label of the dictionary when the status was renamed there
+                $transKey  = 'OppStatus' . $row->code;
+                $transText = $langs->transnoentitiesnoconv($transKey);
+                $leadStatuses[(int) $row->rowid] = [
+                    'code'   => $row->code,
+                    'label'  => $transText !== $transKey ? $transText : (string) $row->label,
+                    'active' => (int) $row->active,
+                ];
             }
             $db->free($resql);
         }
@@ -153,7 +162,7 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
         if (empty($statusId) || !isset($leadStatuses[$statusId])) {
             return '';
         }
-        return '<span class="reedcrm-opp-status reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '">' . dol_escape_htmltag($langs->trans($leadStatuses[$statusId]['label'])) . '</span>';
+        return '<span class="reedcrm-opp-status reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '">' . dol_escape_htmltag($leadStatuses[$statusId]['label']) . '</span>';
     }
 
     // Inline editable select (saved through the generic saturne_update_field endpoint)
@@ -161,8 +170,12 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
     $out .= ' data-field="fk_opp_status" data-element="' . dol_escape_htmltag($object->element) . '" data-id="' . (int) $object->id . '">';
     $out .= '<option value="0"' . (empty($statusId) ? ' selected' : '') . '>&nbsp;</option>';
     foreach ($leadStatuses as $rowid => $leadStatus) {
+        // An inactive status is offered only to the project that still carries it
+        if (empty($leadStatus['active']) && $rowid !== $statusId) {
+            continue;
+        }
         $selected = ($rowid === $statusId) ? ' selected' : '';
-        $out     .= '<option value="' . $rowid . '"' . $selected . '>' . dol_escape_htmltag($langs->trans($leadStatus['label'])) . '</option>';
+        $out     .= '<option value="' . $rowid . '"' . $selected . '>' . dol_escape_htmltag($leadStatus['label']) . '</option>';
     }
     $out .= '</select>';
 
