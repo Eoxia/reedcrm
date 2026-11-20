@@ -32,9 +32,9 @@ if (file_exists('../reedcrm.main.inc.php')) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-dol_include_once('/saturne/lib/medias.lib.php');
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
 require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
+require_once __DIR__ . '/../../lib/reedcrm_relaunch.lib.php';
 require_once __DIR__ . '/../../class/calllist.class.php';
 require_once __DIR__ . '/../../class/calllistline.class.php';
 
@@ -42,8 +42,7 @@ global $conf, $db, $langs, $user;
 
 saturne_load_langs();
 
-$id     = GETPOSTINT('id');
-$action = GETPOST('action', 'nohtml');
+$id = GETPOSTINT('id');
 
 if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcrm', 'call_list', 'read_subordinates') && !$user->hasRight('reedcrm', 'call_list', 'read_all')) {
     accessforbidden($langs->trans('NotEnoughPermissions'));
@@ -71,49 +70,6 @@ if (empty($object->id)) {
 if (!reedcrm_call_list_user_can_read($user, $object)) {
     accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
-}
-
-
-// Handle audio upload — JS posts to current URL with action=add_audio
-if ($action === 'add_audio') {
-    if (!empty($_FILES['audio']['tmp_name'])) {
-        $audioModule   = GETPOST('module_name', 'alpha');
-        $audioSubDir   = GETPOST('sub_dir', 'nohtml'); // Allow hyphens/slashes
-        $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
-
-        $uploadDir = !empty($conf->$audioModLower->dir_output)
-            ? $conf->$audioModLower->dir_output
-            : $conf->ecm->dir_output . '/' . $audioModLower;
-        if (!empty($audioSubDir)) {
-            $uploadDir .= '/' . $audioSubDir;
-        }
-        if (!dol_is_dir($uploadDir)) {
-            dol_mkdir($uploadDir);
-        }
-        $destFile = $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
-        move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
-    }
-}
-
-
-// Handle audio delete — JS posts to current URL with action=delete_audio
-if ($action === 'delete_audio') {
-    $audioModule   = GETPOST('module_name', 'alpha');
-    $audioSubDir   = GETPOST('sub_dir', 'alpha');
-    $audioFilename = GETPOST('filename', 'alpha');
-    $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
-
-    $uploadDir = !empty($conf->$audioModLower->dir_output)
-        ? $conf->$audioModLower->dir_output
-        : $conf->ecm->dir_output . '/' . $audioModLower;
-    if (!empty($audioSubDir)) {
-        $uploadDir .= '/' . $audioSubDir;
-    }
-    $filePath = $uploadDir . '/' . basename($audioFilename);
-    if (!empty($audioFilename) && file_exists($filePath)) {
-        dol_delete_file($filePath);
-    }
-    // Fall through — page renders normally so JS can parse the updated audio block
 }
 
 $lines = $lineObject->fetchAllByCallList($object->id);
@@ -144,31 +100,22 @@ $pwaHeaderCenterHtml = '<div style="background:#e2e8f0;padding:4px 10px;border-r
     . '</div>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
-$statusLabels = [
-    CallListLine::STATUS_TO_CALL   => 'À appeler',
-    CallListLine::STATUS_CALLED    => 'Appelé',
-    CallListLine::STATUS_NO_ANSWER => 'Pas de rép.',
-    CallListLine::STATUS_CALLBACK  => 'Rappel',
-];
-$statusColors = [
-    CallListLine::STATUS_TO_CALL   => '#3b82f6',
-    CallListLine::STATUS_CALLED    => '#22c55e',
-    CallListLine::STATUS_NO_ANSWER => '#ef4444',
-    CallListLine::STATUS_CALLBACK  => '#f97316',
-];
-
 // Page styles live in css/scss/pages/_pwa-call-list.scss (compiled into reedcrm.min.css)
 
-$ajaxUrl          = dol_buildpath('/reedcrm/ajax/update_call_list_line_status.php', 1);
 $actioncommAjaxUrl = dol_buildpath('/reedcrm/ajax/create_call_actioncomm.php', 1);
 $unlinkAjaxUrl     = dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1);
+// Same endpoint as the arrows of the call list card, the move itself being handled by js/modules/call_list.js
+$moveAjaxUrl       = dol_buildpath('/reedcrm/ajax/move_call_list_line.php', 1);
 $createActioncomm  = getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
 // Same right as the line bin of the call list card
 $canUnlink         = $user->hasRight('reedcrm', 'call_list', 'delete');
+// Same rights as the arrows of the call list card and the relaunch bar of the opportunity page
+$canMove           = $user->hasRight('reedcrm', 'call_list', 'write');
+$canAddEvent       = $user->hasRight('agenda', 'myactions', 'create') && $user->hasRight('reedcrm', 'eventpro', 'write');
 $token             = newToken();
 
 print '<div class="pwa-call-list-container"'
-    . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
+    . ' data-move-url="' . dol_escape_htmltag($moveAjaxUrl) . '"'
     . ' data-actioncomm-url="' . dol_escape_htmltag($actioncommAjaxUrl) . '"'
     . ' data-unlink-url="' . dol_escape_htmltag($unlinkAjaxUrl) . '"'
     . ' data-unlink-confirm="' . dol_escape_htmltag($langs->transnoentities('ConfirmCallListLineUnlink')) . '"'
@@ -177,7 +124,7 @@ print '<div class="pwa-call-list-container"'
     . ' data-default-list="' . ((int) $object->id === $defaultCallListId ? 1 : 0) . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
 
-// Saturne expects an input named "token" in the DOM for AJAX uploads
+// Saturne reads the token of its AJAX calls from an input named "token" in the DOM
 print '<input type="hidden" name="token" value="' . dol_escape_htmltag($token) . '">';
 
 $dateStart = $object->date_start ? dol_print_date($object->date_start, 'day') : '—';
@@ -252,7 +199,7 @@ if (empty($lines)) {
 } else {
     $contact = new Contact($db);
 
-    foreach ($lines as $line) {
+    foreach ($lines as $lineIndex => $line) {
         $lastname   = '';
         $firstname  = '';
         $phone      = '';
@@ -268,15 +215,11 @@ if (empty($lines)) {
         $sourceTitleHtml = '';
         $oppPercent = null;
         $oppProjectId = 0;
-        $saturneModule = 'reedcrm';
-        $saturneSubdir = 'calllistline/' . (int) $line->id;
 
         if ($line->element_type === 'propal' && isModEnabled('propale')) {
             require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
             $propal = new Propal($db);
             if ($propal->fetch($line->element_id) > 0) {
-                $saturneModule = 'propal';
-                $saturneSubdir = dol_sanitizeFileName($propal->ref);
                 if ($propal->fk_project > 0) {
                     require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
                     $project = new Project($db);
@@ -291,8 +234,6 @@ if (empty($lines)) {
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
             $project = new Project($db);
             if ($project->fetch($line->element_id) > 0) {
-                $saturneModule = 'projet';
-                $saturneSubdir = dol_sanitizeFileName($project->ref);
                 $sourceTitleHtml = $project->title;
                 $oppPercent = $project->opp_percent;
                 $oppProjectId = $project->id;
@@ -312,7 +253,8 @@ if (empty($lines)) {
         $indicators    = $lineIndicators[(int) $line->id] ?? [];
         $origin        = $indicators['origin'] ?? [];
 
-        $cardClass = 'pwa-call-card';
+        // call-list-line-row: moved by its arrows like the rows of the call list card (js/modules/call_list.js)
+        $cardClass = 'pwa-call-card call-list-line-row';
         if (!empty($indicators['late'])) {
             $cardClass .= ' pwa-call-card--late';
         } elseif (!empty($indicators['upcoming'])) {
@@ -410,25 +352,30 @@ if (empty($lines)) {
             }
         }
 
-        // Ligne 4 : Actions
-        print '<div class="pwa-call-actions">';
-        print '<div class="pwa-call-status-btns">';
-        
-        $statusIcons = [
-            CallListLine::STATUS_CALLED    => 'fas fa-check',
-            CallListLine::STATUS_NO_ANSWER => 'fas fa-times',
-            CallListLine::STATUS_CALLBACK  => 'fas fa-voicemail',
-        ];
-        
-        foreach ($statusIcons as $val => $iconClass) {
-            $isActive = ($val === $currentStatus) ? ' pwa-status-btn--active' : '';
-            $color    = $statusColors[$val] ?? '#94a3b8';
-            print '<button class="pwa-status-btn' . $isActive . '" data-status="' . (int) $val . '" style="--status-color:' . dol_escape_htmltag($color) . '" title="' . dol_escape_htmltag($statusLabels[$val]) . '"><i class="' . $iconClass . '"></i></button>';
+        // Ligne 4 : les deux boutons ReedCRM de l'opportunité (événement passé / à venir), comme dans la barre
+        // de la page opportunité, puis les flèches qui priorisent l'appel dans la liste
+        $relaunchHtml = '';
+        if ($oppProjectId > 0) {
+            $relaunchHtml = reedcrm_render_relaunch_widget([
+                'projectId'  => $oppProjectId,
+                'mode'       => 'link',
+                'canCreate'  => $canAddEvent,
+                // The event form keeps the way back to the call list in its header
+                'extraQuery' => '&call_list_id=' . (int) $object->id,
+            ]);
         }
-        print '</div>';
-
-        print saturne_render_media_block($saturneModule, $saturneSubdir, 'cll_' . (int) $line->id, '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => false]);
-        print '</div>';
+        if ($relaunchHtml !== '' || $canMove) {
+            print '<div class="pwa-call-actions">';
+            print $relaunchHtml;
+            if ($canMove) {
+                // Both always rendered, the JS hiding the up one of the first card and the down one of the last card after each move
+                print '<div class="pwa-call-move-btns">';
+                print '<button type="button" class="pwa-call-btn-move call-list-line-move' . ($lineIndex === 0 ? ' hideobject' : '') . '" data-direction="up" title="' . dol_escape_htmltag($langs->trans('CallListLineMoveUp')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineMoveUp')) . '"><i class="fas fa-arrow-up"></i></button>';
+                print '<button type="button" class="pwa-call-btn-move call-list-line-move' . ($lineIndex === count($lines) - 1 ? ' hideobject' : '') . '" data-direction="down" title="' . dol_escape_htmltag($langs->trans('CallListLineMoveDown')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineMoveDown')) . '"><i class="fas fa-arrow-down"></i></button>';
+                print '</div>';
+            }
+            print '</div>';
+        }
 
         print '<div class="pwa-call-error" style="display:none;"></div>';
 
@@ -437,79 +384,6 @@ if (empty($lines)) {
 }
 
 print '</div>';
-
-print '<script>
-(function () {
-    var container  = document.querySelector(".pwa-call-list-container");
-    if (!container) return;
-    var ajaxUrl          = container.dataset.ajaxUrl;
-    var actioncommUrl    = container.dataset.actioncommUrl;
-    var createActioncomm = container.dataset.createActioncomm === "1";
-    var token            = container.dataset.token;
-    var statusLabels = ' . json_encode($statusLabels) . ';
-    var statusColors = ' . json_encode($statusColors) . ';
-
-    window.saturne = window.saturne || {};
-    window.saturne.toolbox = window.saturne.toolbox || {};
-    window.saturne.toolbox.getToken = function() {
-        return token;
-    };
-
-    document.querySelectorAll(".pwa-call-btn-call").forEach(function (link) {
-        link.addEventListener("click", function () {
-            if (!createActioncomm) return;
-            var card   = link.closest(".pwa-call-card");
-            var lineId = card.dataset.lineId;
-            var body   = new URLSearchParams();
-            body.append("line_id", lineId);
-            body.append("token",   token);
-            fetch(actioncommUrl, { method: "POST", body: body });
-        });
-    });
-
-    document.querySelectorAll(".pwa-status-btn").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            var card      = btn.closest(".pwa-call-card");
-            var lineId    = card.dataset.lineId;
-            var newStatus = parseInt(btn.dataset.status, 10);
-            var currentSt = parseInt(card.dataset.status, 10);
-            if (currentSt === newStatus) {
-                newStatus = 0; // Toggle off if clicking the already active button
-            }
-            var errorEl   = card.querySelector(".pwa-call-error");
-
-            var body = new URLSearchParams();
-            body.append("line_id", lineId);
-            body.append("status",  newStatus);
-            body.append("token",   token);
-
-            fetch(ajaxUrl, { method: "POST", body: body })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                        if (data.success) {
-                            card.querySelectorAll(".pwa-status-btn").forEach(function (b) {
-                                b.classList.toggle("pwa-status-btn--active", parseInt(b.dataset.status, 10) === newStatus);
-                            });
-                        card.dataset.status   = newStatus;
-                        errorEl.style.display = "none";
-                        if (newStatus !== 0) {
-                            card.parentNode.appendChild(card);
-                        }
-                    } else {
-                        errorEl.textContent   = data.error || "Erreur inconnue";
-                        errorEl.style.display = "block";
-                        setTimeout(function () { errorEl.style.display = "none"; }, 3000);
-                    }
-                })
-                .catch(function () {
-                    errorEl.textContent   = "Erreur réseau";
-                    errorEl.style.display = "block";
-                    setTimeout(function () { errorEl.style.display = "none"; }, 3000);
-                });
-        });
-    });
-}());
-</script>';
 
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
 

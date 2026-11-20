@@ -227,8 +227,10 @@ table.liste td[class*="tdoverflowmax"] {
 }
 
 /* App bar of the opportunity page: the two buttons share the whole width of the sticky bar, with
- * a bigger hit area - it is the main action of the page. */
-.pwa-opp-relaunch-bar {
+ * a bigger hit area - it is the main action of the page. Same buttons on the cards of the App call
+ * list, where the arrows of the call take the right edge. */
+.pwa-opp-relaunch-bar,
+.pwa-call-actions {
     .reedcrm-relaunch-wrapper {
         display: flex;
         width: 100%;
@@ -296,6 +298,49 @@ table.liste td[class*="tdoverflowmax"] {
 
             i {
                 font-size: 13px;
+            }
+        }
+    }
+}
+
+/* Call card: the frame takes what the arrows leave */
+.pwa-call-actions .reedcrm-relaunch-wrapper {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+}
+
+/* On a phone, the card is narrower than the bar of the opportunity page: the frame takes the whole
+ * row (the arrows going underneath, see _pwa-call-list.scss) and tightens, so that the day and the
+ * "+" of each button stay in sight. */
+@media (max-width: 600px) {
+    .pwa-call-actions {
+        .reedcrm-relaunch-wrapper {
+            flex-basis: 100%;
+            gap: 8px;
+            padding: 6px;
+        }
+
+        .reedcrm-relaunch-logo {
+            width: 20px;
+            height: 20px;
+            padding-right: 8px;
+        }
+
+        .reedcrm-relaunch-buttons.reedcrm-relaunch-duo {
+            gap: 8px;
+
+            .reedcrm-relaunch-seg .reedcrm-relaunch-btn-content {
+                min-width: 0;
+                padding: 4px 6px;
+            }
+
+            .reedcrm-relaunch-seg .reedcrm-relaunch-day {
+                font-size: 11px;
+            }
+
+            .reedcrm-relaunch-seg .reedcrm-relaunch-add {
+                width: 34px;
             }
         }
     }
@@ -557,21 +602,29 @@ table.liste td[class*="tdoverflowmax"] {
     #reedcrm-modal-title-data {
         display: none;
     }
+}
 
+/* Its titled sections, taken up by the complete event form of the App (reedcrm_pwa_relaunch_form.tpl.php):
+ * the two forms open from the two buttons of the same widget. */
+.reedcrm-reminder-form,
+.pwa-relaunch-form {
     .reedcrm-reminder-field {
         margin-bottom: 16px;
+    }
 
-        > label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 0 0 6px;
-            color: #475569;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: .02em;
-            text-transform: uppercase;
-        }
+    // The titles of the shared note tab (eventpro-field-title, and the status one) are spans, shown so in the App only
+    .reedcrm-reminder-field > label,
+    .eventpro-field-title,
+    .event-status-row__label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 0 0 6px;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
     }
 
     .reedcrm-reminder-label-picto {
@@ -580,7 +633,9 @@ table.liste td[class*="tdoverflowmax"] {
         font-size: 13px;
         text-align: center;
     }
+}
 
+.reedcrm-reminder-form {
     input[type="text"]#reminder_title {
         width: 100%;
         padding: 9px 11px;

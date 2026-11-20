@@ -75,6 +75,9 @@
 .pwa-call-list-container {
     padding: 15px;
     padding-bottom: 80px;
+    /* A card moved by its arrows changes what sits above the screen: the scroll anchoring of the browser
+       then scrolled the page to keep the card in sight. The card moves, the page stays where it is */
+    overflow-anchor: none;
 }
 
 .pwa-call-list-header {
@@ -348,64 +351,94 @@
     line-height: 1.2;
 }
 
+/* Last row of the card: the ReedCRM buttons of the opportunity (laid out with the widget, in
+   _relaunch-widget.scss), then the arrows putting the call higher or lower in the list */
 .pwa-call-actions {
     display: flex;
     align-items: stretch;
     gap: 8px;
-
-    [id$="master-media-row-container-audio"] {
-        padding: 0;
-        display: flex;
-        align-items: stretch;
-    }
-
-    .saturne-audio-controls {
-        margin-top: 0;
-        gap: 8px;
-        align-items: stretch;
-    }
-
-    .saturne-play-recording-wrapper {
-        display: flex;
-        align-items: stretch;
-    }
-
-    .saturne-media-btn {
-        width: 48px;
-        min-width: 48px;
-        height: auto;
-        min-height: 0;
-        border-radius: 10px;
-    }
-
-    .saturne-recording-indicator {
-        display: none !important;
-    }
 }
 
-.pwa-call-status-btns {
+.pwa-call-move-btns {
     display: flex;
     gap: 8px;
-    flex: 1;
+    flex-shrink: 0;
+    /* Kept on the right when the line has no opportunity, hence no ReedCRM buttons */
+    margin-left: auto;
 }
 
-.pwa-status-btn {
-    flex: 1;
-    padding: 10px;
-    font-size: 1.2rem;
-    border-radius: 10px;
-    border: 2px solid var(--status-color);
-    background: transparent;
-    color: var(--status-color);
-    cursor: pointer;
+.pwa-call-btn-move {
+    width: 56px;
+    /* As high as the frame of the ReedCRM buttons beside them (2 x 6px of padding, 50px buttons, 2 x 1px of border),
+       on every card: alone on a card without opportunity, they kept their 44px and differed from one card to the next */
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s, color 0.15s;
+    padding: 0;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    color: #475569;
+    font-size: 18px;
+    cursor: pointer;
 
-    &--active {
-        background: var(--status-color);
-        color: #fff;
+    &:active {
+        background: #e2e8f0;
+    }
+
+    /* No way up for the first card nor down for the last one: hidden, but the other arrow keeps its place */
+    &.hideobject {
+        display: flex;
+        visibility: hidden;
+    }
+}
+
+/* On a phone, the ReedCRM buttons need the whole width of the card: the arrows go underneath, half each */
+@media (max-width: 600px) {
+    .pwa-call-actions {
+        flex-wrap: wrap;
+    }
+
+    .pwa-call-move-btns {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .pwa-call-btn-move {
+        flex: 1;
+        width: auto;
+        height: 44px;
+    }
+}
+
+/* Card moved by its arrows (js/modules/call_list.js): its neighbour slides around it, then it flashes,
+   in the same tint as on the call list card */
+.pwa-call-card {
+    &.call-list-line-sliding {
+        transition: transform 0.25s ease;
+    }
+
+    &.call-list-line-moved {
+        z-index: 1;
+        animation: reedcrm-pwa-call-card-flash 1.5s ease-out;
+    }
+}
+
+@keyframes reedcrm-pwa-call-card-flash {
+    0%, 40% {
+        background-color: #e6eef0;
+        box-shadow: 0 0 0 3px rgba(1, 71, 81, .35);
+    }
+    100% {
+        background-color: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pwa-call-card.call-list-line-sliding {
+        transition: none;
     }
 }
 

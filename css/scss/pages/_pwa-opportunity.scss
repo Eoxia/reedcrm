@@ -274,12 +274,41 @@
 
     input[type="text"],
     input[type="email"],
+    input[type="number"],
     textarea,
     select {
         padding: 10px 12px;
         border: 1px solid #cbd5e1;
         border-radius: 8px;
         font-size: 16px; /* < 16px makes iOS Safari zoom on focus */
+    }
+
+    /* Every field at one height, the one of the "+" beside the contact: eldy sets the text fields and the
+       select2 boxes at 28px, while the native selects (hour, minute) grew with their padding */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    .select2-container .select2-selection--single {
+        box-sizing: border-box;
+        height: 42px;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .select2-container .select2-selection--single {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+
+        .select2-selection__rendered {
+            padding-left: 12px;
+            font-size: 16px;
+            line-height: 40px;
+        }
+
+        .select2-selection__arrow {
+            height: 40px;
+        }
     }
 
     textarea {
@@ -296,24 +325,55 @@
         margin: 0;
         padding: 0;
 
+        /* !important: Saturne pads every cell of a grid with .5em !important, which set the note tab off
+           the sections above it. The space between the fields is the one of the sections */
         > div {
             width: 100%;
-            margin: 0;
-            padding: 0;
+            margin: 0 0 16px;
+            padding: 0 !important;
+        }
+
+        /* The fields of the automatic reminder are a cell of that grid too, with the padding of their panel */
+        > .reminder-fields {
+            padding: 12px !important;
         }
     }
 
-    /* The tab bar is desktop-sized by default */
+    /* The tab bar is desktop-sized by default: a soft segmented control, as on the desktop card */
     .tabs {
         display: flex;
-        margin: 16px 0 12px;
-        border-bottom: 1px solid #e2e8f0;
+        gap: 4px;
+        margin: 4px 0 16px;
+        padding: 4px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
         overflow-x: auto;
 
         .tabsElem {
             flex: 1 1 0;
             min-width: 0;
             text-align: center;
+        }
+
+        div.tab {
+            margin: 0;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+        }
+
+        /* !important: eldy underlines the active tab and spaces it with !important */
+        div.tab.tabactive {
+            margin: 0 !important;
+            border-bottom: none !important;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .1);
+
+            a.tab {
+                color: #2563eb;
+                font-weight: 600;
+            }
         }
 
         .tab {
@@ -344,6 +404,17 @@
         display: block;
         width: 100%;
 
+        /* The theme gives the rows and their cells the height of one line of the table (2.2em, and 40px
+           !important under 570px): stacked, the label and its field overflowed on the next row */
+        tr,
+        td {
+            height: auto !important;
+        }
+
+        tr {
+            margin-bottom: 12px;
+        }
+
         tbody,
         tr,
         td {
@@ -355,10 +426,16 @@
             padding-right: 0 !important;
         }
 
-        td.titlefield {
-            padding-bottom: 2px !important;
-            font-weight: 600;
+        /* Labels written like the titles of the sections of the form (pages/_relaunch-widget.scss), the one of
+           the description included, which the template puts in a td.tdtop */
+        td.titlefield,
+        td.tdtop {
+            padding-bottom: 6px !important;
             color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
         }
     }
 
@@ -370,12 +447,17 @@
         max-width: 100% !important;
     }
 
+    /* Same button as the direct reminder form */
     .butAction {
-        display: block;
-        width: 100%;
-        margin: 16px 0 0;
-        padding: 14px;
-        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 20px 0 0;
+    }
+
+    /* Titles of the shared note tab, hidden on the desktop card (pages/_event-pro.scss) */
+    .eventpro-app-only.reedcrm-reminder-label-picto {
+        display: inline-block;
     }
 }
 
@@ -442,47 +524,71 @@
     margin-top: 12px;
 }
 
-.pwa-relaunch-row {
+/* When: the date and the hour of the event, in the grey panel of the direct reminder form */
+.pwa-relaunch-when {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #f5f8f9;
 
-    .pwa-relaunch-type {
-        flex: 1 1 100%;
-    }
-
-    .pwa-relaunch-date {
-        flex: 1 1 100%;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 6px;
-
-        input,
-        select {
-            width: auto !important;
-        }
+    input,
+    select {
+        width: auto !important;
+        background: #fff;
     }
 }
 
-.pwa-relaunch-form .event-status-row {
-    display: flex;
+/* jQuery UI puts the calendar button inside the box of the date, after the field: the box makes room for it,
+   or the hour slid over it. The note tab moves the one of its own dates out (view_eventpro_actioncomm_note.tpl.php),
+   not the other tabs. */
+.pwa-relaunch-form .divfordateinput {
+    display: inline-flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
+}
 
-    select {
-        width: auto !important;
+/* Status: titled like the other sections (pages/_relaunch-widget.scss), the select under its title */
+.pwa-relaunch-form .event-status-row {
+    margin-bottom: 16px;
+
+    label {
+        display: block;
     }
+
+    /* Narrow like the "Who" of the reminder form: the form stretches every select2 to the whole width,
+       while its box stays at the 200px of the select */
+    select,
+    .select2-container {
+        width: auto !important;
+        min-width: 200px;
+    }
+}
+
+/* The box asking for a reminder reads as a choice of its own, its fields in the grey panel under it */
+.pwa-relaunch-form .eventpro-reminder-toggle {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+    color: #334155;
 }
 
 .pwa-relaunch-form .reminder-fields {
-    margin-top: 12px;
-    padding: 12px;
-    border-left: 3px solid #3b82f6;
-    background: #f8fafc;
+    border-radius: 6px;
+    background: #f5f8f9;
+
+    > div {
+        margin-bottom: 12px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
 
     .reminder-type-row,
     .reminder-date-row,
@@ -491,11 +597,26 @@
         align-items: center;
         flex-wrap: wrap;
         gap: 6px;
-        margin-top: 8px;
 
         input,
         select {
             width: auto !important;
         }
+
+        // Its title takes a line of its own, the field goes under it
+        .eventpro-field-title {
+            flex: 0 0 100%;
+        }
+    }
+
+    /* Narrow like the "Who" of the reminder form, see the status above */
+    .select2-container {
+        width: auto !important;
+        min-width: 200px;
+    }
+
+    // The picto standing for the title on the desktop card
+    .reminder-user-row > .fa-user {
+        display: none;
     }
 }

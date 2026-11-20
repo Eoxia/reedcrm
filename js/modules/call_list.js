@@ -33,10 +33,11 @@ window.saturne.call_list.onMoveClick = function(event) {
     window.saturne.call_list.moveRow($row, $neighbour, direction);
     window.saturne.call_list.refreshMoveArrows();
 
-    var $data = $('#call-list-data');
+    // #call-list-data on the card, the cards container in the App
+    var $data = $('[data-move-url]').first();
     var send  = function() {
         return $.ajax({
-            url: $data.data('moveUrl'),
+            url: $data.attr('data-move-url'),
             type: 'POST',
             dataType: 'json',
             data: { line_id: $row.data('lineId'), direction: direction, token: $data.attr('data-token') }

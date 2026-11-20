@@ -635,3 +635,137 @@ function reedcrm_project_summary_header(CommonObject $object): string
 
     return $out;
 }
+
+/**
+ * Upload context of the voice note recorded beside the description of a new event. The event does not exist
+ * yet, so the recording waits in a temporary folder tied to the element the form is opened from (element and id:
+ * a proposal and a project may share an id).
+ *
+ * @param  string $fromType Element type the event form is opened from (project, societe, ...)
+ * @param  int    $fromId   Id of that element
+ * @return string           Context for saturne_get_upload_token()
+ */
+function reedcrm_eventpro_voice_context(string $fromType, int $fromId): string
+{
+    return 'reedcrm_eventpro_voice_' . $fromType . '_' . $fromId;
+}
+
+/**
+ * Temporary folder of that voice note, in the documents of the projects like the uploads of the quick creation:
+ * the Saturne voice block plays its recordings through document.php, which already guards that module part.
+ *
+ * @param  string $context Context from reedcrm_eventpro_voice_context()
+ * @return string          Sub-directory of the project documents
+ */
+function reedcrm_eventpro_voice_subdir(string $context): string
+{
+    dol_include_once('/saturne/lib/medias.lib.php');
+
+    return 'tmp/' . saturne_get_upload_token($context);
+}
+
+/**
+ * Record and play buttons of that voice note, printed beside the description by the note tab.
+ *
+ * @param  string $voiceSubDir Folder from reedcrm_eventpro_voice_subdir()
+ * @return string              HTML output
+ */
+function reedcrm_eventpro_voice_block(string $voiceSubDir): string
+{
+    global $conf;
+
+    $voiceDir     = $conf->project->dir_output . '/' . $voiceSubDir;
+    $voiceDirSeen = dol_is_dir($voiceDir);
+
+    $out = saturne_render_media_block('project', $voiceSubDir, 'eventpro_voice_', '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => false]);
+
+    // The block creates its folder as soon as it is shown: every form left without a voice note would leave one, empty
+    if (!$voiceDirSeen) {
+        dol_delete_dir($voiceDir);
+    }
+
+    return $out;
+}
+
+/**
+ * Record or delete a voice note of the event form: saturne/js/modules/audio.js posts both to the URL of the page,
+ * then reads the voice block back from the page it gets in return.
+ *
+ * @param  string $action      Action of the page
+ * @param  string $voiceSubDir Folder from reedcrm_eventpro_voice_subdir()
+ * @return void
+ */
+function reedcrm_eventpro_voice_actions(string $action, string $voiceSubDir): void
+{
+    global $conf;
+
+    // The posted folder must be the one of this form exactly: the only barrier against a path traversal
+    if (!in_array($action, ['add_audio', 'delete_audio'], true) || GETPOST('module_name', 'alpha') !== 'project' || GETPOST('sub_dir', 'alphanohtml') !== $voiceSubDir) {
+        return;
+    }
+
+    $uploadDir = $conf->project->dir_output . '/' . $voiceSubDir;
+
+    if ($action === 'delete_audio') {
+        $fileName = basename(GETPOST('filename', 'alpha'));
+        if ($fileName !== '' && dol_is_file($uploadDir . '/' . $fileName)) {
+            dol_delete_file($uploadDir . '/' . $fileName);
+        }
+        return;
+    }
+
+    if (empty($_FILES['audio']['tmp_name']) || $_FILES['audio']['size'] > getDolGlobalInt('MAIN_UPLOAD_DOC') * 1024) {
+        return;
+    }
+
+    // The browser records WebM or MP4, posted as .wav: the content decides, not the name
+    $fileInfo  = new finfo(FILEINFO_MIME_TYPE);
+    $audioType = (string) $fileInfo->file($_FILES['audio']['tmp_name']);
+    if (strpos($audioType, 'audio/') !== 0 && !in_array($audioType, ['video/webm', 'video/mp4', 'application/ogg'], true)) {
+        return;
+    }
+
+    if (!dol_is_dir($uploadDir)) {
+        dol_mkdir($uploadDir);
+    }
+    move_uploaded_file($_FILES['audio']['tmp_name'], $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav');
+}
+
+/**
+ * Attach the voice notes recorded in the form to the event just created: they go to its documents (Documents
+ * tab of the event), under the extension of what the browser really recorded, then the temporary folder goes.
+ *
+ * @param  ActionComm $actionComm Event just created
+ * @param  string     $context    Context from reedcrm_eventpro_voice_context()
+ * @return int                    Number of voice notes attached, -1 if one could not be moved
+ */
+function reedcrm_eventpro_voice_attach(ActionComm $actionComm, string $context): int
+{
+    global $conf;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+    require_once __DIR__ . '/../class/reedcrmvoicedescription.class.php';
+
+    $voiceDir = $conf->project->dir_output . '/' . reedcrm_eventpro_voice_subdir($context);
+    $files    = dol_is_dir($voiceDir) ? dol_dir_list($voiceDir, 'files') : [];
+
+    $attached = 0;
+    if (!empty($files)) {
+        // Same folder as the Documents tab of the event (comm/action/document.php)
+        $eventDir = $conf->agenda->dir_output . '/' . dol_sanitizeFileName((string) $actionComm->id);
+        dol_mkdir($eventDir);
+
+        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+        foreach ($files as $file) {
+            $extension = ReedcrmVoiceDescription::audioExtension((string) $fileInfo->file($file['fullname']), $file['fullname']);
+            if (!dol_move($file['fullname'], $eventDir . '/' . pathinfo($file['name'], PATHINFO_FILENAME) . '.' . $extension)) {
+                return -1;
+            }
+            $attached++;
+        }
+    }
+
+    saturne_invalidate_upload_token($context, 'project', 'tmp');
+
+    return $attached;
+}
