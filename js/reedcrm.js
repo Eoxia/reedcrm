@@ -1421,29 +1421,65 @@ window.reedcrm.call_list_widget.onSelectChange = function() {
     btn.prop('disabled', !$(this).val());
 };
 
-window.reedcrm.call_list_widget.handleAdd = function() {
-    if ($(this).prop('disabled')) return;
+window.reedcrm.isValidPhone = function(phone) {
+    var trimmed = $.trim(phone || '');
+    if (!trimmed) {
+        return false;
+    }
+    // Mirrors Dolibarr Validate::isPhone() character set + E.164 / FR length rules, no external call
+    if (!/^[+0-9. ()-]+$/i.test(trimmed)) {
+        return false;
+    }
+    var plusCount = (trimmed.match(/\+/g) || []).length;
+    if (plusCount > 1 || (plusCount === 1 && trimmed.indexOf('+') !== 0)) {
+        return false;
+    }
+    var digits = trimmed.replace(/\D+/g, '');
+    if (!digits) {
+        return false;
+    }
+    if (/^0[1-9]/.test(digits)) {
+        return /^0[1-9]\d{8}$/.test(digits);
+    }
+    if (trimmed.indexOf('+33') === 0) {
+        return /^330?[1-9]\d{8}$/.test(digits);
+    }
+    if (digits.indexOf('0033') === 0) {
+        return /^00330?[1-9]\d{8}$/.test(digits);
+    }
+    if (digits.indexOf('00') === 0) {
+        return /^00\d{6,15}$/.test(digits);
+    }
+    return /^\d{6,15}$/.test(digits);
+};
 
-    var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+window.reedcrm.call_list_widget.submitAdd = function(wrapper, ajaxUrl, callListId, manualPhone, onSuccess) {
     var elementType = wrapper.data('element-type');
     var elementId   = wrapper.data('element-id');
-    var ajaxUrl     = wrapper.data('ajax-url');
-    var callListId  = wrapper.find('.reedcrm-call-list-select').val();
     var token       = $('input[name="token"]').val() || '';
-
-    if (!callListId) return;
 
     var fd = new FormData();
     fd.append('element_type', elementType);
     fd.append('element_id', elementId);
-    fd.append('call_list_id', callListId);
+    if (callListId) {
+        fd.append('call_list_id', callListId);
+    }
+    if (manualPhone) {
+        fd.append('manual_phone', manualPhone);
+    }
     fd.append('token', token);
 
     fetch(ajaxUrl, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.success) {
+                wrapper.find('.reedcrm-call-list-phone-prompt').remove();
+                if (typeof onSuccess === 'function') {
+                    onSuccess(res);
+                }
                 $.jnotify(res.message);
+            } else if (res.need_phone && !manualPhone) {
+                window.reedcrm.call_list_widget.showPhonePrompt(wrapper, ajaxUrl, callListId, !!res.can_save_on_project, onSuccess);
             } else {
                 $.jnotify(res.message, 'error');
             }
@@ -1453,30 +1489,96 @@ window.reedcrm.call_list_widget.handleAdd = function() {
         });
 };
 
-window.reedcrm.call_list_widget.handleAddDefault = function() {
-    var star        = $(this);
-    var wrapper     = star.closest('.reedcrm-add-to-call-list-wrapper');
-    var elementType = wrapper.data('element-type');
-    var elementId   = wrapper.data('element-id');
-    var ajaxUrl     = wrapper.data('default-ajax-url');
-    var token       = $('input[name="token"]').val() || '';
+window.reedcrm.call_list_widget.showPhonePrompt = function(wrapper, ajaxUrl, callListId, canSaveOnProject, onSuccess) {
+    wrapper.find('.reedcrm-call-list-phone-prompt').remove();
 
-    var fd = new FormData();
-    fd.append('element_type', elementType);
-    fd.append('element_id', elementId);
-    fd.append('token', token);
+    var placeholder = canSaveOnProject
+        ? (wrapper.data('enter-phone-label') || 'Téléphone')
+        : (wrapper.data('enter-phone-generic-label') || wrapper.data('enter-phone-label') || 'Téléphone');
+    var requiredMsg = wrapper.data('phone-required-label') || placeholder;
+    var invalidMsg  = wrapper.data('phone-invalid-label') || requiredMsg;
+    var saveLabel   = wrapper.data('save-label') || 'OK';
+    var cancelLabel = wrapper.data('cancel-label') || '×';
 
-    fetch(ajaxUrl, { method: 'POST', body: fd })
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-            if (res.success) {
-                star.addClass('is-active');
-                $.jnotify(res.message);
-            } else {
-                $.jnotify(res.message, 'error');
+    var $prompt = $('<div class="reedcrm-call-list-phone-prompt"></div>');
+    var $row    = $('<div class="reedcrm-call-list-phone-prompt-row"></div>');
+    var $input  = $('<input type="tel" class="reedcrm-call-list-phone-input" autocomplete="tel">').attr('placeholder', placeholder);
+    var $save   = $('<button type="button" class="reedcrm-call-list-phone-save"><i class="fas fa-check"></i></button>').attr('title', saveLabel);
+    var $cancel = $('<button type="button" class="reedcrm-call-list-phone-cancel">&times;</button>').attr('title', cancelLabel);
+    var $err    = $('<div class="call-list-phone-error hidden"></div>');
+
+    $row.append($input, $save, $cancel);
+    $prompt.append($row, $err);
+    wrapper.append($prompt);
+    $input.focus();
+
+    var validatePrompt = function(requireNonEmpty) {
+        var val = $.trim($input.val());
+        if (!val) {
+            if (requireNonEmpty) {
+                $input.addClass('is-invalid-phone');
+                $err.text(requiredMsg).removeClass('hidden');
+                return false;
             }
-        })
-        .catch(function() {
-            $.jnotify('Erreur réseau', 'error');
-        });
+            $input.removeClass('is-invalid-phone');
+            $err.addClass('hidden').text('');
+            return true;
+        }
+        if (!window.reedcrm.isValidPhone(val)) {
+            $input.addClass('is-invalid-phone');
+            $err.text(invalidMsg).removeClass('hidden');
+            return false;
+        }
+        $input.removeClass('is-invalid-phone');
+        $err.addClass('hidden').text('');
+        return true;
+    };
+
+    $input.on('input', function() {
+        validatePrompt(false);
+    });
+
+    var submitPhone = function() {
+        if (!validatePrompt(true)) {
+            $input.focus();
+            return;
+        }
+        window.reedcrm.call_list_widget.submitAdd(wrapper, ajaxUrl, callListId, $.trim($input.val()), onSuccess);
+    };
+
+    $save.on('click', submitPhone);
+    $cancel.on('click', function() {
+        $prompt.remove();
+    });
+    $input.on('keydown', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            submitPhone();
+        } else if (e.which === 27) {
+            e.preventDefault();
+            $prompt.remove();
+        }
+    });
+};
+
+window.reedcrm.call_list_widget.handleAdd = function() {
+    if ($(this).prop('disabled')) return;
+
+    var wrapper    = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+    var ajaxUrl    = wrapper.data('ajax-url');
+    var callListId = wrapper.find('.reedcrm-call-list-select').val();
+
+    if (!callListId) return;
+
+    window.reedcrm.call_list_widget.submitAdd(wrapper, ajaxUrl, callListId, '');
+};
+
+window.reedcrm.call_list_widget.handleAddDefault = function() {
+    var star    = $(this);
+    var wrapper = star.closest('.reedcrm-add-to-call-list-wrapper');
+    var ajaxUrl = wrapper.data('default-ajax-url');
+
+    window.reedcrm.call_list_widget.submitAdd(wrapper, ajaxUrl, 0, '', function() {
+        star.addClass('is-active');
+    });
 };

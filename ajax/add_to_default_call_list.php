@@ -39,6 +39,8 @@ header('Content-Type: application/json');
 
 $elementType = GETPOST('element_type', 'aZ09');
 $elementId   = GETPOSTINT('element_id');
+$manualPhone = GETPOST('manual_phone', 'alphanohtml');
+$fkContact   = GETPOSTINT('fk_contact');
 
 if (empty($elementType) || empty($elementId)) {
     echo json_encode(['success' => false, 'message' => 'Missing parameters']);
@@ -57,5 +59,5 @@ if ($callListId <= 0) {
     exit;
 }
 
-echo json_encode(reedcrm_add_element_to_call_list($db, $user, $callListId, $elementType, $elementId));
+echo json_encode(reedcrm_add_element_to_call_list($db, $user, $callListId, $elementType, $elementId, $manualPhone, $fkContact));
 exit;

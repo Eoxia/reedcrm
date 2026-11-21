@@ -514,6 +514,20 @@ CallListWidgetError = Erreur lors de l'ajout
 DefaultCallListLabel = Liste d'appel — %s
 AddToMyCallList = Ajouter à ma liste d'appel
 DefaultCallListNotFound = Aucune liste d'appel par défaut pour cet utilisateur
+CallListPhoneSourceProject = Téléphone de l'opportunité
+CallListPhoneSourceContact = Contact associé
+CallListPhoneSourceThirdparty = Téléphone du tiers
+CallListPhoneSourceThirdpartyContact = Contact du tiers
+CallListNoPhoneFound = Aucun téléphone trouvé
+CallListEnterPhonePlaceholder = Saisir un téléphone (enregistré sur l'opportunité)
+CallListEnterPhoneGenericPlaceholder = Saisir un téléphone...
+CallListPhoneRequired = Veuillez saisir un numéro
+CallListInvalidPhone = Format invalide (ex. 0612345678 ou +33...)
+CallListSaveAndAdd = Enregistrer et ajouter
+CallListShortTelOpp = Tél. opp.
+CallListShortTelTiers = Tél. tiers
+CallListShortTelContact = Tél. contact
+CallListOppPhonePlaceholder = Ajouter / modifier tél. opp.
 
 # PWA Documents Bar
 PwaShowPiecesTitle = Liste des pièces à afficher dans le listing de la PWA
