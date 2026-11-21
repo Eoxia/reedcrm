@@ -265,9 +265,56 @@ class CallListLine extends SaturneObject
         $lines[$index]  = $lines[$target];
         $lines[$target] = $movedLine;
 
+        return $this->savePositions($user, $lines);
+    }
+
+    /**
+     * Reorder all lines of a call list according to an explicit array of line IDs (drag & drop).
+     * Any existing line absent from $orderedLineIds is preserved at the end in its current order.
+     *
+     * @param  User  $user           User that reorders the lines
+     * @param  int   $fkCallList     ID of the parent CallList
+     * @param  int[] $orderedLineIds Ordered list of line IDs
+     * @return int                   -1 if KO, 0 if empty/unchanged, 1 if OK
+     */
+    public function reorderInCallList(User $user, int $fkCallList, array $orderedLineIds): int
+    {
+        $lines = $this->fetchAllByCallList($fkCallList);
+        if (empty($lines)) {
+            return 0;
+        }
+
+        $byId = [];
+        foreach ($lines as $line) {
+            $byId[(int) $line->id] = $line;
+        }
+
+        $reordered = [];
+        foreach ($orderedLineIds as $id) {
+            $lid = (int) $id;
+            if (isset($byId[$lid])) {
+                $reordered[] = $byId[$lid];
+                unset($byId[$lid]);
+            }
+        }
+        foreach ($byId as $remaining) {
+            $reordered[] = $remaining;
+        }
+
+        return $this->savePositions($user, $reordered);
+    }
+
+    /**
+     * Persist sequential 1..n positions for an ordered list of CallListLine objects.
+     *
+     * @param  User           $user  Acting user
+     * @param  CallListLine[] $lines Ordered lines
+     * @return int                   -1 if KO, 1 if OK
+     */
+    private function savePositions(User $user, array $lines): int
+    {
         $this->db->begin();
         foreach ($lines as $rank => $line) {
-            // Only the lines whose position changes: all of them the first time, then the two swapped ones
             if ((int) $line->position === $rank + 1) {
                 continue;
             }

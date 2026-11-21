@@ -3,6 +3,11 @@ window.saturne.call_list = {};
 
 window.saturne.call_list.init = function() {
     window.saturne.call_list.event();
+    window.saturne.call_list.initSortable();
+    if ($('.reedcrm-relaunch-button').length && window.reedcrm && window.reedcrm.eventpro && typeof window.reedcrm.eventpro.init === 'function' && !window.reedcrm.eventpro._callListInitialized) {
+        window.reedcrm.eventpro._callListInitialized = true;
+        window.reedcrm.eventpro.init();
+    }
 };
 
 window.saturne.call_list.event = function() {
@@ -13,6 +18,7 @@ window.saturne.call_list.event = function() {
     // Namespaced: the card loads this file beside reedcrm.min.js, which bundles it, a second binding would move the row twice
     $(document).off('click.callListLineMove').on('click.callListLineMove', '.call-list-line-move', window.saturne.call_list.onMoveClick);
     $(document).off('click.callListLineUnlink').on('click.callListLineUnlink', '.call-list-line-unlink', window.saturne.call_list.onUnlinkClick);
+    $(document).off('change.callListStatus').on('change.callListStatus', '.call-list-status-select', window.saturne.call_list.onLineStatusChange);
     $(document).off('change.callListPhoneChoice').on('change.callListPhoneChoice', 'input[name="phone_choice"]', window.saturne.call_list.onPhoneChoiceChange);
     $(document).off('focus.callListManualPhone input.callListManualPhone').on('focus.callListManualPhone input.callListManualPhone', '#call_line_manual_phone', window.saturne.call_list.onManualPhoneInput);
 };
@@ -141,6 +147,96 @@ window.saturne.call_list.refreshMoveArrows = function() {
     $rows.find('.call-list-line-move').removeClass('hideobject');
     $rows.first().find('.call-list-line-move[data-direction="up"]').addClass('hideobject');
     $rows.last().find('.call-list-line-move[data-direction="down"]').addClass('hideobject');
+};
+
+window.saturne.call_list.initSortable = function() {
+    var $tbody = $('.call-list-lines-table tbody');
+    if (!$tbody.length || !$.fn.sortable || !$('.call-list-drag-handle').length) {
+        return;
+    }
+
+    $tbody.sortable({
+        items: 'tr.call-list-line-row',
+        handle: '.call-list-drag-handle',
+        axis: 'y',
+        cursor: 'grabbing',
+        placeholder: 'call-list-sort-placeholder',
+        helper: function(e, tr) {
+            var $originals = tr.children();
+            var $helper    = tr.clone();
+            $helper.children().each(function(index) {
+                $(this).width($originals.eq(index).outerWidth());
+            });
+            return $helper;
+        },
+        stop: function(event, ui) {
+            window.saturne.call_list.refreshMoveArrows();
+            var $row = ui.item;
+            $row.removeClass('call-list-line-moved');
+            window.saturne.call_list.lastLayout = $row[0].offsetHeight;
+            $row.addClass('call-list-line-moved');
+
+            var orderedIds = $('.call-list-line-row').map(function() {
+                return $(this).data('lineId');
+            }).get();
+
+            var $data = $('#call-list-data');
+            var send  = function() {
+                return $.ajax({
+                    url: $data.attr('data-move-url'),
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        line_id: $row.data('lineId'),
+                        order: orderedIds,
+                        token: $data.attr('data-token')
+                    }
+                });
+            };
+
+            var request = window.saturne.call_list.moveQueue.then(send, send);
+            request.done(function(res) {
+                if (!res || !res.success) {
+                    window.location.reload();
+                }
+            }).fail(function() {
+                window.location.reload();
+            });
+            window.saturne.call_list.moveQueue = request;
+        }
+    });
+};
+
+window.saturne.call_list.onLineStatusChange = function() {
+    var $select    = $(this);
+    var $data      = $('#call-list-data');
+    var lineId     = $select.data('lineId');
+    var newStatus  = parseInt($select.val(), 10);
+    var prevStatus = parseInt($select.attr('data-prev-status'), 10);
+
+    $select.prop('disabled', true);
+    $.ajax({
+        url: $data.attr('data-status-url'),
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            line_id: lineId,
+            status: newStatus,
+            token: $data.attr('data-token')
+        }
+    }).done(function(res) {
+        if (res && res.success) {
+            $select.removeClass('call-list-status-0 call-list-status-1 call-list-status-2 call-list-status-3')
+                   .addClass('call-list-status-' + newStatus)
+                   .attr('data-prev-status', String(newStatus));
+        } else {
+            $select.val(String(prevStatus));
+        }
+    }).fail(function() {
+        $select.val(String(prevStatus));
+    }).always(function() {
+        $select.prop('disabled', false);
+    });
 };
 
 window.saturne.call_list.onTypeChange = function() {

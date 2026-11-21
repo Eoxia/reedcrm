@@ -42,8 +42,9 @@ if (!$user->hasRight('reedcrm', 'call_list', 'write')) {
 
 $lineId    = GETPOSTINT('line_id');
 $direction = GETPOST('direction', 'aZ09');
+$order     = GETPOST('order', 'array');
 
-if ($lineId <= 0 || !in_array($direction, ['up', 'down'], true)) {
+if ($lineId <= 0 || (empty($order) && !in_array($direction, ['up', 'down'], true))) {
     echo json_encode(['success' => false, 'error' => 'Invalid parameters']);
     exit;
 }
@@ -54,7 +55,13 @@ if ($line->fetch($lineId) <= 0) {
     exit;
 }
 
-if ($line->moveInCallList($user, (int) $line->fk_call_list, $lineId, $direction) < 0) {
+if (!empty($order)) {
+    $res = $line->reorderInCallList($user, (int) $line->fk_call_list, array_map('intval', $order));
+} else {
+    $res = $line->moveInCallList($user, (int) $line->fk_call_list, $lineId, $direction);
+}
+
+if ($res < 0) {
     echo json_encode(['success' => false, 'error' => $line->error]);
     exit;
 }
