@@ -13,6 +13,8 @@ window.saturne.call_list.event = function() {
     // Namespaced: the card loads this file beside reedcrm.min.js, which bundles it, a second binding would move the row twice
     $(document).off('click.callListLineMove').on('click.callListLineMove', '.call-list-line-move', window.saturne.call_list.onMoveClick);
     $(document).off('click.callListLineUnlink').on('click.callListLineUnlink', '.call-list-line-unlink', window.saturne.call_list.onUnlinkClick);
+    $(document).off('change.callListPhoneChoice').on('change.callListPhoneChoice', 'input[name="phone_choice"]', window.saturne.call_list.onPhoneChoiceChange);
+    $(document).off('focus.callListManualPhone input.callListManualPhone').on('focus.callListManualPhone input.callListManualPhone', '#call_line_manual_phone', window.saturne.call_list.onManualPhoneInput);
 };
 
 /**
@@ -159,6 +161,22 @@ window.saturne.call_list.onTypeChange = function() {
     window.saturne.call_list.resetContact();
 };
 
+window.saturne.call_list.escapeHtml = function(str) {
+    return $('<span>').text(str || '').html();
+};
+
+window.saturne.call_list.onPhoneChoiceChange = function() {
+    var $checked = $('input[name="phone_choice"]:checked');
+    var contactId = $checked.data('contactId') || '';
+    $('#fk_contact_hidden').val(contactId ? String(contactId) : '');
+    $('.call-list-phone-choice').removeClass('is-selected');
+    $checked.closest('.call-list-phone-choice').addClass('is-selected');
+    if ($checked.val() !== 'project') {
+        $('#call_line_manual_phone').removeClass('is-invalid-phone');
+        $('#call_line_manual_phone_error').addClass('hidden').text('');
+    }
+};
+
 window.saturne.call_list.onElementChange = function() {
     var elementId   = $(this).val();
     var elementType = $('#call_line_element_type').val();
@@ -174,19 +192,55 @@ window.saturne.call_list.onElementChange = function() {
         dataType: 'json',
         data: { element_type: elementType, element_id: elementId },
         success: function(res) {
-            if (res && res.success && res.contact_id) {
-                var html = '<b>' + res.lastname + ' ' + res.firstname + '</b>';
-                if (res.phone) {
-                    html += ' — ' + res.phone;
-                } else {
-                    html += ' <span class="opacitymedium badge badge-status1">⚠ ' + $data.data('labelNoPhone') + '</span>';
-                }
-                $('#call_line_contact_info').html(html);
-                $('#fk_contact_hidden').val(res.contact_id);
-            } else {
-                $('#call_line_contact_info').html('<span class="opacitymedium">' + $data.data('labelNoContact') + '</span>');
-                $('#fk_contact_hidden').val('');
+            if (!res || !res.success) {
+                window.saturne.call_list.resetContact();
+                return;
             }
+
+            var esc     = window.saturne.call_list.escapeHtml;
+            var choices = Array.isArray(res.phone_choices) ? res.phone_choices : [];
+            var showOpp = !!res.can_save_on_project || !res.found;
+            var oppChecked = res.source === 'project_phone' || !res.found;
+
+            var oppPlaceholder = res.can_save_on_project
+                ? ($data.data('labelOppPhonePlaceholder') || $data.data('labelEnterPhone'))
+                : ($data.data('labelEnterPhoneGeneric') || $data.data('labelEnterPhone'));
+
+            var html = '<div class="call-list-phone-choices">';
+
+            if (showOpp) {
+                var oppLabel = res.can_save_on_project
+                    ? ($data.data('labelTelOpp') || 'Tél. opp.')
+                    : ($data.data('labelNoPhoneFound') || 'Téléphone');
+                html += '<div class="call-list-phone-choice call-list-phone-choice--opp' + (oppChecked ? ' is-selected' : '') + '">'
+                    + '<div class="call-list-phone-choice-row">'
+                    + '<label class="call-list-phone-choice-label">'
+                    + '<input type="radio" name="phone_choice" value="project" data-contact-id="0"' + (oppChecked ? ' checked' : '') + '>'
+                    + '<span class="call-list-phone-choice-title">' + esc(oppLabel) + '</span>'
+                    + '</label>'
+                    + '<input type="tel" name="manual_phone" id="call_line_manual_phone" class="flat" value="' + esc(res.project_phone || '') + '" placeholder="' + esc(oppPlaceholder) + '" autocomplete="tel">'
+                    + '</div>'
+                    + '<div class="call-list-phone-error hidden" id="call_line_manual_phone_error"></div>'
+                    + '</div>';
+            }
+
+            choices.forEach(function(choice) {
+                var isSelected = !oppChecked && !!choice.selected;
+                var typeTitle  = choice.type === 'thirdparty'
+                    ? ($data.data('labelTelTiers') || 'Tél. tiers')
+                    : ($data.data('labelTelContact') || 'Tél. contact') + (choice.label ? ' (' + choice.label + ')' : '');
+
+                html += '<label class="call-list-phone-choice' + (isSelected ? ' is-selected' : '') + '" title="' + esc(choice.label || '') + '">'
+                    + '<input type="radio" name="phone_choice" value="' + esc(choice.type) + '" data-contact-id="' + esc(String(choice.contact_id || 0)) + '"' + (isSelected ? ' checked' : '') + '>'
+                    + '<span class="call-list-phone-choice-title">' + esc(typeTitle) + '</span>'
+                    + '<span class="call-list-phone-choice-num">' + esc(choice.phone) + '</span>'
+                    + '</label>';
+            });
+
+            html += '</div>';
+
+            $('#call_line_contact_info').html(html);
+            window.saturne.call_list.onPhoneChoiceChange();
         },
         error: function() {
             window.saturne.call_list.resetContact();
@@ -196,8 +250,57 @@ window.saturne.call_list.onElementChange = function() {
 
 window.saturne.call_list.resetContact = function() {
     var $data = $('#call-list-data');
-    $('#call_line_contact_info').html('<span class="opacitymedium">' + $data.data('labelContact') + ' : —</span>');
+    $('#call_line_contact_info').html('<span class="opacitymedium">' + window.saturne.call_list.escapeHtml($data.data('labelContact')) + ' : —</span>');
     $('#fk_contact_hidden').val('');
+};
+
+window.saturne.call_list.validateManualPhone = function(requireNonEmpty) {
+    var $manualPhone = $('#call_line_manual_phone');
+    var $errorBox    = $('#call_line_manual_phone_error');
+    var $data        = $('#call-list-data');
+    if (!$manualPhone.length) {
+        return true;
+    }
+
+    var val = $.trim($manualPhone.val());
+    if (val === '') {
+        if (requireNonEmpty) {
+            $manualPhone.addClass('is-invalid-phone');
+            $errorBox.text($data.data('labelPhoneRequired') || '').removeClass('hidden');
+            return false;
+        }
+        $manualPhone.removeClass('is-invalid-phone');
+        $errorBox.addClass('hidden').text('');
+        return true;
+    }
+
+    var isValid = window.reedcrm && typeof window.reedcrm.isValidPhone === 'function'
+        ? window.reedcrm.isValidPhone(val)
+        : /^[+0-9. ()-]{6,20}$/.test(val);
+
+    if (!isValid) {
+        $manualPhone.addClass('is-invalid-phone');
+        $errorBox.text($data.data('labelPhoneInvalid') || '').removeClass('hidden');
+        return false;
+    }
+
+    $manualPhone.removeClass('is-invalid-phone');
+    $errorBox.addClass('hidden').text('');
+    return true;
+};
+
+window.saturne.call_list.onManualPhoneInput = function(event) {
+    var $oppRadio = $('input[name="phone_choice"][value="project"]');
+    if ($oppRadio.length && !$oppRadio.prop('checked')) {
+        $oppRadio.prop('checked', true);
+        window.saturne.call_list.onPhoneChoiceChange();
+    }
+
+    if (event.type === 'focus') {
+        return;
+    }
+
+    window.saturne.call_list.validateManualPhone(false);
 };
 
 window.saturne.call_list.onSubmit = function(e) {
@@ -205,6 +308,13 @@ window.saturne.call_list.onSubmit = function(e) {
     var elementId = type === 'project' ? $('#project_id').val() : $('#propal_id').val();
     if (!elementId) {
         e.preventDefault();
+        return false;
+    }
+
+    var selectedChoice = $('input[name="phone_choice"]:checked').val() || '';
+    if (selectedChoice === 'project' && !window.saturne.call_list.validateManualPhone(true)) {
+        e.preventDefault();
+        $('#call_line_manual_phone').focus();
         return false;
     }
 };

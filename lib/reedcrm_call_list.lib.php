@@ -138,20 +138,532 @@ function reedcrm_call_list_user_can_read(User $user, CallList $callList): bool
 }
 
 /**
- * Add an element (project / propal / facture) to a call list.
+ * Fetch a supported call-list source element (project, propal or facture).
  *
- * Shared business core used by both the select widget endpoint and the
- * default-list star endpoint. Resolves the first external contact (excluding
- * PROJECTADDRESS), guards against duplicates, and creates the CallListLine.
+ * @param  DoliDB                    $db          Database handler
+ * @param  string                    $elementType 'project' | 'propal' | 'facture'
+ * @param  int                       $elementId   Element id
+ * @return Project|Propal|Facture|null            Loaded object, or null if unsupported / not found
+ */
+function reedcrm_call_list_fetch_element(DoliDB $db, string $elementType, int $elementId)
+{
+    if ($elementId <= 0) {
+        return null;
+    }
+
+    $element = null;
+    if ($elementType === 'project' && isModEnabled('projet')) {
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+        $element = new Project($db);
+    } elseif ($elementType === 'propal' && isModEnabled('propale')) {
+        require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+        $element = new Propal($db);
+    } elseif ($elementType === 'facture' && isModEnabled('facture')) {
+        require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+        $element = new Facture($db);
+    }
+
+    if ($element === null || $element->fetch($elementId) <= 0) {
+        return null;
+    }
+
+    return $element;
+}
+
+/**
+ * Return the best available phone number on a Contact (pro -> mobile -> perso).
+ *
+ * @param  Contact $contact Loaded contact
+ * @return string           Trimmed phone number, or ''
+ */
+function reedcrm_call_list_pick_contact_phone(Contact $contact): string
+{
+    foreach ([$contact->phone_pro, $contact->phone_mobile, $contact->phone_perso] as $candidate) {
+        $trimmed = trim((string) $candidate);
+        if ($trimmed !== '') {
+            return $trimmed;
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Resolve the linked Project (opportunity) of a call-list element and load its extrafields.
+ *
+ * @param  DoliDB       $db          Database handler
+ * @param  CommonObject $element     Loaded element
+ * @param  string       $elementType 'project' | 'propal' | 'facture'
+ * @return Project|null              Loaded project with optionals, or null
+ */
+function reedcrm_call_list_resolve_project(DoliDB $db, CommonObject $element, string $elementType): ?Project
+{
+    $project = null;
+
+    if ($elementType === 'project' && $element instanceof Project) {
+        $project = $element;
+    } elseif (!empty($element->fk_project) && isModEnabled('projet')) {
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+        $candidate = new Project($db);
+        if ($candidate->fetch((int) $element->fk_project) > 0) {
+            $project = $candidate;
+        }
+    }
+
+    if ($project !== null && (!is_array($project->array_options) || empty($project->array_options))) {
+        $project->fetch_optionals();
+    }
+
+    return $project;
+}
+
+/**
+ * Collect unique external contact ids linked to a Dolibarr object (excluding PROJECTADDRESS).
+ *
+ * @param  CommonObject $element Loaded element
+ * @return int[]                 Ordered list of unique positive contact ids
+ */
+function reedcrm_call_list_collect_contact_ids(CommonObject $element): array
+{
+    $allContacts = $element->liste_contact(-1, 'external');
+    if (!is_array($allContacts) || empty($allContacts)) {
+        return [];
+    }
+
+    $ids = [];
+    foreach ($allContacts as $c) {
+        if (($c['code'] ?? '') === 'PROJECTADDRESS') {
+            continue;
+        }
+        $cid = (int) ($c['id'] ?? 0);
+        if ($cid > 0 && !in_array($cid, $ids, true)) {
+            $ids[] = $cid;
+        }
+    }
+
+    return $ids;
+}
+
+/**
+ * Resolve contact and phone number for an element following the call-list fallback chain:
+ *   1. Opportunity (Project) phone extrafield (options_projectphone)
+ *   2. Associated contact on the element (or its linked project / projectaddress)
+ *   3. Thirdparty phone (Societe::$phone)
+ *   4. Active contacts of the thirdparty having a phone number
+ *
+ * @param  DoliDB $db          Database handler
+ * @param  string $elementType 'project' | 'propal' | 'facture'
+ * @param  int    $elementId   Element id
+ * @return array               Resolution payload
+ */
+function reedcrm_call_list_resolve_element_contact(DoliDB $db, string $elementType, int $elementId): array
+{
+    require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+    require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+    $result = [
+        'found'               => false,
+        'contact_id'          => 0,
+        'lastname'            => '',
+        'firstname'           => '',
+        'phone'               => '',
+        'source'              => '',
+        'project_id'          => 0,
+        'socid'               => 0,
+        'can_save_on_project' => false,
+        'project_phone'       => '',
+        'thirdparty_contacts' => [],
+        'phone_choices'       => [],
+    ];
+
+    $element = reedcrm_call_list_fetch_element($db, $elementType, $elementId);
+    if ($element === null) {
+        return $result;
+    }
+
+    $project   = reedcrm_call_list_resolve_project($db, $element, $elementType);
+    $projectId = $project !== null ? (int) $project->id : 0;
+    $socid     = !empty($element->socid) ? (int) $element->socid : ($project !== null && !empty($project->socid) ? (int) $project->socid : 0);
+
+    $result['project_id']          = $projectId;
+    $result['socid']               = $socid;
+    $result['can_save_on_project'] = ($projectId > 0);
+
+    $thirdparty = null;
+    if ($socid > 0) {
+        $socCandidate = new Societe($db);
+        if ($socCandidate->fetch($socid) > 0) {
+            $thirdparty = $socCandidate;
+        }
+    }
+
+    // Collect contact ids linked to the element (and to its linked project if different)
+    $elementContactIds = reedcrm_call_list_collect_contact_ids($element);
+    if ($project !== null) {
+        if ($projectId !== (int) $element->id || $elementType !== 'project') {
+            foreach (reedcrm_call_list_collect_contact_ids($project) as $cid) {
+                if (!in_array($cid, $elementContactIds, true)) {
+                    $elementContactIds[] = $cid;
+                }
+            }
+        }
+        $projectAddressId = (int) ($project->array_options['options_projectaddress'] ?? 0);
+        if ($projectAddressId > 0 && !in_array($projectAddressId, $elementContactIds, true)) {
+            $elementContactIds[] = $projectAddressId;
+        }
+    }
+
+    // Preload first linked contact for display fallback when opportunity phone is used
+    $firstContactObj = null;
+    if (!empty($elementContactIds)) {
+        $candidate = new Contact($db);
+        if ($candidate->fetch($elementContactIds[0]) > 0) {
+            $firstContactObj = $candidate;
+        }
+    }
+
+    $projectPhone            = $project !== null ? trim((string) ($project->array_options['options_projectphone'] ?? '')) : '';
+    $result['project_phone'] = $projectPhone;
+    $thirdpartyPhone         = $thirdparty !== null ? trim((string) $thirdparty->phone) : '';
+
+    // Collect all contacts with a phone (element contacts first, then thirdparty contacts), deduplicated by contact id
+    $seenContactIds  = [];
+    $elementContacts = [];
+    foreach ($elementContactIds as $cid) {
+        $contact = new Contact($db);
+        if ($contact->fetch($cid) <= 0) {
+            continue;
+        }
+        $seenContactIds[$cid] = true;
+        $phone                = reedcrm_call_list_pick_contact_phone($contact);
+        if ($phone !== '') {
+            $elementContacts[] = [
+                'contact_id' => (int) $contact->id,
+                'lastname'   => (string) $contact->lastname,
+                'firstname'  => (string) $contact->firstname,
+                'phone'      => $phone,
+            ];
+        }
+    }
+
+    $tpContacts = [];
+    if ($socid > 0) {
+        $sql  = 'SELECT rowid FROM ' . $db->prefix() . 'socpeople';
+        $sql .= ' WHERE fk_soc = ' . $socid;
+        $sql .= ' AND statut = 1';
+        $sql .= ' AND entity IN (' . getEntity('socpeople') . ')';
+        $sql .= ' ORDER BY rowid ASC';
+
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $tpCid = (int) $obj->rowid;
+                if (isset($seenContactIds[$tpCid])) {
+                    continue;
+                }
+                $tpContact = new Contact($db);
+                if ($tpContact->fetch($tpCid) <= 0) {
+                    continue;
+                }
+                $tpPhone = reedcrm_call_list_pick_contact_phone($tpContact);
+                if ($tpPhone !== '') {
+                    $seenContactIds[$tpCid] = true;
+                    $tpContacts[]           = [
+                        'contact_id' => (int) $tpContact->id,
+                        'lastname'   => (string) $tpContact->lastname,
+                        'firstname'  => (string) $tpContact->firstname,
+                        'phone'      => $tpPhone,
+                    ];
+                }
+            }
+            $db->free($resql);
+        }
+    }
+
+    // Build all phone choices available for the UX selector (thirdparty + all contacts)
+    $allContactsWithPhone = array_merge($elementContacts, $tpContacts);
+    $defaultChoiceKey     = '';
+
+    // Resolve winning cascade source:
+    // 1. Opportunity phone -> 2. Element contact -> 3. Thirdparty phone -> 4. Thirdparty contact
+    if ($projectPhone !== '') {
+        $lastname  = $project !== null ? trim((string) ($project->array_options['options_reedcrm_lastname'] ?? '')) : '';
+        $firstname = $project !== null ? trim((string) ($project->array_options['options_reedcrm_firstname'] ?? '')) : '';
+
+        if ($lastname === '' && $firstname === '' && $firstContactObj !== null) {
+            $lastname  = (string) $firstContactObj->lastname;
+            $firstname = (string) $firstContactObj->firstname;
+        } elseif ($lastname === '' && $thirdparty !== null) {
+            $lastname = (string) $thirdparty->name;
+        }
+
+        $result['found']     = true;
+        $result['lastname']  = $lastname;
+        $result['firstname'] = $firstname;
+        $result['phone']     = $projectPhone;
+        $result['source']    = 'project_phone';
+        $defaultChoiceKey    = 'project';
+    } elseif (!empty($elementContacts)) {
+        $first                = $elementContacts[0];
+        $result['found']      = true;
+        $result['contact_id'] = $first['contact_id'];
+        $result['lastname']   = $first['lastname'];
+        $result['firstname']  = $first['firstname'];
+        $result['phone']      = $first['phone'];
+        $result['source']     = 'element_contact';
+        $defaultChoiceKey     = 'contact_' . $first['contact_id'];
+    } elseif ($thirdparty !== null && $thirdpartyPhone !== '') {
+        $result['found']    = true;
+        $result['lastname'] = (string) $thirdparty->name;
+        $result['phone']    = $thirdpartyPhone;
+        $result['source']   = 'thirdparty';
+        $defaultChoiceKey   = 'thirdparty';
+    } elseif (!empty($tpContacts)) {
+        $first                         = $tpContacts[0];
+        $result['found']               = true;
+        $result['contact_id']          = $first['contact_id'];
+        $result['lastname']            = $first['lastname'];
+        $result['firstname']           = $first['firstname'];
+        $result['phone']               = $first['phone'];
+        $result['source']              = 'thirdparty_contact';
+        $result['thirdparty_contacts'] = $tpContacts;
+        $defaultChoiceKey              = 'contact_' . $first['contact_id'];
+    } else {
+        // No phone found anywhere: provide best available display name as context
+        if ($firstContactObj !== null) {
+            $result['lastname']  = (string) $firstContactObj->lastname;
+            $result['firstname'] = (string) $firstContactObj->firstname;
+        } elseif ($project !== null && (!empty($project->array_options['options_reedcrm_lastname']) || !empty($project->array_options['options_reedcrm_firstname']))) {
+            $result['lastname']  = (string) ($project->array_options['options_reedcrm_lastname'] ?? '');
+            $result['firstname'] = (string) ($project->array_options['options_reedcrm_firstname'] ?? '');
+        } elseif ($thirdparty !== null) {
+            $result['lastname'] = (string) $thirdparty->name;
+        }
+    }
+
+    if ($thirdparty !== null && $thirdpartyPhone !== '') {
+        $result['phone_choices'][] = [
+            'key'        => 'thirdparty',
+            'type'       => 'thirdparty',
+            'label'      => (string) $thirdparty->name,
+            'phone'      => $thirdpartyPhone,
+            'contact_id' => 0,
+            'selected'   => ($defaultChoiceKey === 'thirdparty'),
+        ];
+    }
+
+    foreach ($allContactsWithPhone as $cItem) {
+        $key = 'contact_' . $cItem['contact_id'];
+        $result['phone_choices'][] = [
+            'key'        => $key,
+            'type'       => 'contact',
+            'label'      => trim($cItem['firstname'] . ' ' . $cItem['lastname']),
+            'phone'      => $cItem['phone'],
+            'contact_id' => $cItem['contact_id'],
+            'selected'   => ($defaultChoiceKey === $key),
+        ];
+    }
+
+    return $result;
+}
+
+/**
+ * Validate a phone number locally using Dolibarr's native Validate::isPhone() and regex rules
+ * without any external call.
+ *
+ * Accepts:
+ * - French national numbers: 0[1-9] + 8 digits (10 digits total, separators space/./-/() allowed)
+ * - French international numbers: +33 / 0033 + optional 0 + [1-9] + 8 digits
+ * - Other international numbers: 6 to 15 digits (or 8 to 17 when prefixed with 00)
+ *
+ * @param  DoliDB $db    Database handler
+ * @param  string $phone Phone number to validate
+ * @return bool          true if valid
+ */
+function reedcrm_call_list_is_valid_phone(DoliDB $db, string $phone): bool
+{
+    global $langs;
+
+    $trimmed = trim($phone);
+    if ($trimmed === '') {
+        return false;
+    }
+
+    // Native Dolibarr phone character validator (no external call)
+    require_once DOL_DOCUMENT_ROOT . '/core/class/validate.class.php';
+    $validate = new Validate($db, $langs);
+    if (!$validate->isPhone($trimmed)) {
+        return false;
+    }
+
+    // '+' may only appear as the leading character
+    if (!preg_match('/^\+?[0-9][0-9\s.\-()]*$/', preg_replace('/^\(\s*/', '', $trimmed))) {
+        return false;
+    }
+    if (substr_count($trimmed, '+') > 1 || (strpos($trimmed, '+') !== false && strpos($trimmed, '+') !== 0)) {
+        return false;
+    }
+
+    $digits = preg_replace('/\D+/', '', $trimmed);
+    if ($digits === null || $digits === '') {
+        return false;
+    }
+
+    // French national format (01..09): strictly 10 digits
+    if (preg_match('/^0[1-9]/', $digits)) {
+        return (bool) preg_match('/^0[1-9]\d{8}$/', $digits);
+    }
+
+    // French international format (+33 or 0033)
+    if (strpos($trimmed, '+33') === 0) {
+        return (bool) preg_match('/^330?[1-9]\d{8}$/', $digits);
+    }
+    if (strpos($digits, '0033') === 0) {
+        return (bool) preg_match('/^00330?[1-9]\d{8}$/', $digits);
+    }
+
+    // Generic international format (ITU-T E.164: max 15 digits, or +2 for 00 prefix)
+    if (strpos($digits, '00') === 0) {
+        return (bool) preg_match('/^00\d{6,15}$/', $digits);
+    }
+
+    return (bool) preg_match('/^\d{6,15}$/', $digits);
+}
+
+/**
+ * Save a manually entered phone number on the element's opportunity (options_projectphone),
+ * or fallback to its first associated contact / thirdparty when no project is linked.
  *
  * @param  DoliDB $db          Database handler
  * @param  User   $user        Acting user
- * @param  int    $callListId  Target call list id
  * @param  string $elementType 'project' | 'propal' | 'facture'
  * @param  int    $elementId   Element id
- * @return array               ['success' => bool, 'message' => string]
+ * @param  string $phone       Phone number to store
+ * @return array               ['success' => bool, 'saved_on' => string, 'message' => string]
  */
-function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListId, string $elementType, int $elementId): array
+function reedcrm_call_list_save_element_phone(DoliDB $db, User $user, string $elementType, int $elementId, string $phone): array
+{
+    global $langs;
+
+    $langs->load('reedcrm@reedcrm');
+
+    $cleanPhone = trim($phone);
+    if ($cleanPhone === '') {
+        return ['success' => false, 'saved_on' => '', 'message' => $langs->transnoentitiesnoconv('CallListPhoneRequired')];
+    }
+    if (!reedcrm_call_list_is_valid_phone($db, $cleanPhone)) {
+        return ['success' => false, 'saved_on' => '', 'message' => $langs->transnoentitiesnoconv('CallListInvalidPhone')];
+    }
+
+    $element = reedcrm_call_list_fetch_element($db, $elementType, $elementId);
+    if ($element === null) {
+        return ['success' => false, 'saved_on' => '', 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')];
+    }
+
+    $project = reedcrm_call_list_resolve_project($db, $element, $elementType);
+    if ($project !== null) {
+        $project->array_options['options_projectphone'] = $cleanPhone;
+        if ($project->updateExtraField('projectphone', null, $user) > 0) {
+            return ['success' => true, 'saved_on' => 'project', 'message' => ''];
+        }
+
+        return ['success' => false, 'saved_on' => '', 'message' => $project->error ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
+    }
+
+    // Orphan propal/facture without a linked project: persist on its first external contact or thirdparty
+    $contactIds = reedcrm_call_list_collect_contact_ids($element);
+    if (!empty($contactIds)) {
+        require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+        $contact = new Contact($db);
+        if ($contact->fetch($contactIds[0]) > 0) {
+            $contact->phone_pro = $cleanPhone;
+            if ($contact->update($contact->id, $user) > 0) {
+                return ['success' => true, 'saved_on' => 'contact', 'message' => ''];
+            }
+
+            return ['success' => false, 'saved_on' => '', 'message' => $contact->error ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
+        }
+    }
+
+    if (!empty($element->socid)) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+        $soc = new Societe($db);
+        if ($soc->fetch((int) $element->socid) > 0) {
+            $soc->phone = $cleanPhone;
+            if ($soc->update($soc->id, $user) > 0) {
+                return ['success' => true, 'saved_on' => 'thirdparty', 'message' => ''];
+            }
+
+            return ['success' => false, 'saved_on' => '', 'message' => $soc->error ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
+        }
+    }
+
+    return ['success' => false, 'saved_on' => '', 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoContact')];
+}
+
+/**
+ * Resolve display coordinates (lastname, firstname, phone) for a CallListLine,
+ * falling back to the element resolution chain when fk_contact is empty or lacks a phone.
+ *
+ * @param  DoliDB       $db   Database handler
+ * @param  CallListLine $line Call list line
+ * @return array              ['lastname' => string, 'firstname' => string, 'phone' => string] (raw values)
+ */
+function reedcrm_call_list_get_line_contact_display(DoliDB $db, CallListLine $line): array
+{
+    require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+
+    $lastname  = '';
+    $firstname = '';
+    $phone     = '';
+
+    if (!empty($line->fk_contact)) {
+        $contact = new Contact($db);
+        if ($contact->fetch((int) $line->fk_contact) > 0) {
+            $lastname  = (string) $contact->lastname;
+            $firstname = (string) $contact->firstname;
+            $phone     = reedcrm_call_list_pick_contact_phone($contact);
+        }
+    }
+
+    if ($phone === '' || ($lastname === '' && $firstname === '')) {
+        $resolved = reedcrm_call_list_resolve_element_contact($db, (string) $line->element_type, (int) $line->element_id);
+        if ($lastname === '' && $firstname === '') {
+            $lastname  = (string) $resolved['lastname'];
+            $firstname = (string) $resolved['firstname'];
+        }
+        if ($phone === '' && !empty($resolved['phone'])) {
+            $phone = (string) $resolved['phone'];
+        }
+    }
+
+    return [
+        'lastname'  => $lastname,
+        'firstname' => $firstname,
+        'phone'     => $phone,
+    ];
+}
+
+/**
+ * Add an element (project / propal / facture) to a call list.
+ *
+ * Shared business core used by the card form, select widget endpoint, default-list star endpoint
+ * and list mass actions. Resolves phone/contact via the fallback chain (opportunity -> element contact
+ * -> thirdparty -> thirdparty contacts), optionally persists a manually entered phone on the opportunity,
+ * guards against duplicates, and creates the CallListLine.
+ *
+ * @param  DoliDB $db                Database handler
+ * @param  User   $user              Acting user
+ * @param  int    $callListId        Target call list id
+ * @param  string $elementType       'project' | 'propal' | 'facture'
+ * @param  int    $elementId         Element id
+ * @param  string $manualPhone       Optional phone entered when none was found or when editing opportunity phone
+ * @param  int    $selectedContactId Optional explicit contact id (e.g. chosen from thirdparty contacts)
+ * @param  string $note              Optional line note
+ * @param  string $phoneSource       Optional explicit choice from card UI ('project' | 'thirdparty' | 'contact' | '')
+ * @return array                     ['success' => bool, 'message' => string, 'need_phone' => bool]
+ */
+function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListId, string $elementType, int $elementId, string $manualPhone = '', int $selectedContactId = 0, string $note = '', string $phoneSource = ''): array
 {
     global $langs;
 
@@ -174,72 +686,72 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
         return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetDuplicate')];
     }
 
-    $element = null;
-    if ($elementType === 'project' && isModEnabled('projet')) {
-        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-        $element = new Project($db);
-    } elseif ($elementType === 'propal' && isModEnabled('propale')) {
-        require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-        $element = new Propal($db);
-    } elseif ($elementType === 'facture' && isModEnabled('facture')) {
-        require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
-        $element = new Facture($db);
-    }
-
-    if ($element === null || $element->fetch($elementId) <= 0) {
+    if (reedcrm_call_list_fetch_element($db, $elementType, $elementId) === null) {
         return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')];
     }
 
-    $contacts = array_filter(
-        (array) $element->liste_contact(-1, 'external'),
-        static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
-    );
+    $cleanManualPhone = trim($manualPhone);
+    $fkContact        = 0;
 
-    if (empty($contacts)) {
-        // No linked Dolibarr contact: for a project, fall back to its own coordinates
-        // (ReedCRM extrafields). The line is created without fk_contact and the name/phone
-        // are resolved from the project at display time (see call_list_card / pwa_call_list).
-        if ($elementType === 'project') {
-            $element->fetch_optionals();
-            $projectPhone = trim((string) ($element->array_options['options_projectphone'] ?? ''));
-            if ($projectPhone !== '') {
-                $newLine               = new CallListLine($db);
-                $newLine->fk_call_list = $callListId;
-                $newLine->element_type = $elementType;
-                $newLine->element_id   = $elementId;
-                $newLine->fk_contact   = 0;
-                $newLine->status       = CallListLine::STATUS_TO_CALL;
-
-                if ($newLine->create($user) <= 0) {
-                    return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')];
-                }
-
-                return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1))];
+    if ($phoneSource === 'project') {
+        $saveResult = reedcrm_call_list_save_element_phone($db, $user, $elementType, $elementId, $cleanManualPhone);
+        if (empty($saveResult['success'])) {
+            return ['success' => false, 'message' => $saveResult['message'] ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
+        }
+    } elseif ($phoneSource === 'contact') {
+        if ($selectedContactId <= 0) {
+            return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoContact')];
+        }
+        $contactObj = new Contact($db);
+        if ($contactObj->fetch($selectedContactId) <= 0 || reedcrm_call_list_pick_contact_phone($contactObj) === '') {
+            return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoPhone')];
+        }
+        $fkContact = (int) $contactObj->id;
+    } elseif ($phoneSource === 'thirdparty') {
+        $resolved = reedcrm_call_list_resolve_element_contact($db, $elementType, $elementId);
+        if (empty($resolved['found'])) {
+            return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoContact')];
+        }
+        $fkContact = 0;
+    } else {
+        if ($cleanManualPhone !== '') {
+            $saveResult = reedcrm_call_list_save_element_phone($db, $user, $elementType, $elementId, $cleanManualPhone);
+            if (empty($saveResult['success'])) {
+                return ['success' => false, 'message' => $saveResult['message'] ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
             }
         }
 
-        return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoContact')];
-    }
+        if ($selectedContactId > 0) {
+            $contactObj = new Contact($db);
+            if ($contactObj->fetch($selectedContactId) > 0 && reedcrm_call_list_pick_contact_phone($contactObj) !== '') {
+                $fkContact = (int) $contactObj->id;
+            }
+        }
 
-    $firstContact = reset($contacts);
-
-    $contactObj = new Contact($db);
-    if ($contactObj->fetch((int) $firstContact['id']) <= 0) {
-        return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')];
-    }
-    if (empty($contactObj->phone_pro) && empty($contactObj->phone_mobile) && empty($contactObj->phone_perso)) {
-        return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetNoPhone')];
+        if ($fkContact === 0) {
+            $resolved = reedcrm_call_list_resolve_element_contact($db, $elementType, $elementId);
+            if (empty($resolved['found'])) {
+                return [
+                    'success'             => false,
+                    'need_phone'          => true,
+                    'can_save_on_project' => !empty($resolved['can_save_on_project']),
+                    'message'             => $langs->transnoentitiesnoconv('CallListWidgetNoContact'),
+                ];
+            }
+            $fkContact = (int) $resolved['contact_id'];
+        }
     }
 
     $newLine               = new CallListLine($db);
     $newLine->fk_call_list = $callListId;
     $newLine->element_type = $elementType;
     $newLine->element_id   = $elementId;
-    $newLine->fk_contact   = (int) $contactObj->id;
+    $newLine->fk_contact   = $fkContact;
     $newLine->status       = CallListLine::STATUS_TO_CALL;
+    $newLine->note         = $note;
 
     if ($newLine->create($user) <= 0) {
-        return ['success' => false, 'message' => $langs->transnoentitiesnoconv('CallListWidgetError')];
+        return ['success' => false, 'message' => $newLine->error ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
     }
 
     return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1))];

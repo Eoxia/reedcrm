@@ -171,20 +171,18 @@ if (empty($resHook)) {
 
     // Add line
     if ($action === 'add_line' && $permissiontoadd) {
-        $lineObject->fk_call_list = $object->id;
-        $lineObject->element_type = GETPOST('element_type', 'aZ09');
-        $lineObject->element_id   = $lineObject->element_type === 'project' ? GETPOSTINT('project_id') : GETPOSTINT('propal_id');
-        $lineObject->fk_contact   = GETPOSTINT('fk_contact');
-        $lineObject->status       = CallListLine::STATUS_TO_CALL;
-        $lineObject->note         = GETPOST('line_note', 'restricthtml');
+        $elementType = GETPOST('element_type', 'aZ09');
+        $elementId   = $elementType === 'project' ? GETPOSTINT('project_id') : GETPOSTINT('propal_id');
+        $fkContact   = GETPOSTINT('fk_contact');
+        $manualPhone = GETPOST('manual_phone', 'alphanohtml');
+        $phoneChoice = GETPOST('phone_choice', 'aZ09');
+        $lineNote    = GETPOST('line_note', 'restricthtml');
 
-        if (!empty($lineObject->element_type) && $lineObject->element_id > 0) {
-            if ($lineObject->existsByElement($object->id, $lineObject->element_type, $lineObject->element_id)) {
-                setEventMessages($langs->trans('CallListLineDuplicate'), null, 'warnings');
-            } else {
-                if ($lineObject->create($user) <= 0) {
-                    setEventMessages($lineObject->error, $lineObject->errors, 'errors');
-                }
+        if (!empty($elementType) && $elementId > 0) {
+            $addResult = reedcrm_add_element_to_call_list($db, $user, (int) $object->id, $elementType, $elementId, $manualPhone, $fkContact, $lineNote, $phoneChoice);
+            if (empty($addResult['success'])) {
+                $style = ($addResult['message'] === $langs->transnoentitiesnoconv('CallListWidgetDuplicate')) ? 'warnings' : 'errors';
+                setEventMessages($addResult['message'], null, $style);
             }
         }
 
@@ -532,60 +530,17 @@ if ($object->id > 0) {
     }
     print '</tr>';
 
-    $contact = new Contact($db);
-
     if (!empty($lines)) {
         foreach ($lines as $lineIndex => $line) {
-            $lastname   = '';
-            $firstname  = '';
-            $phone      = '';
-            $sourceLink = '';
+            $displayInfo = reedcrm_call_list_get_line_contact_display($db, $line);
+            $lastname    = dol_escape_htmltag($displayInfo['lastname']);
+            $firstname   = dol_escape_htmltag($displayInfo['firstname']);
+            $phone       = dol_escape_htmltag($displayInfo['phone']);
+            $sourceLink  = '';
 
-            if (!empty($line->fk_contact)) {
-                $contact->fetch($line->fk_contact);
-                $lastname  = dol_escape_htmltag($contact->lastname);
-                $firstname = dol_escape_htmltag($contact->firstname);
-                $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
-            }
-
-            if ($line->element_type === 'propal' && isModEnabled('propale')) {
-                require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-                $propal = new Propal($db);
-                if ($propal->fetch($line->element_id) > 0) {
-                    $sourceLink = $propal->getNomUrl(1);
-                    if ((empty($line->fk_contact) || empty($lastname)) && $propal->socid > 0) {
-                        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-                        $soc = new Societe($db);
-                        $soc->fetch($propal->socid);
-                        $lastname = dol_escape_htmltag($soc->name);
-                        $phone    = dol_escape_htmltag($soc->phone);
-                    }
-                }
-            } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
-                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-                $project = new Project($db);
-                if ($project->fetch($line->element_id) > 0) {
-                    $sourceLink = $project->getNomUrl(1);
-                    if (empty($line->fk_contact) || empty($lastname)) {
-                        $project->fetch_optionals();
-                        if (!empty($project->array_options['options_projectaddress'])) {
-                            $contact->fetch($project->array_options['options_projectaddress']);
-                            $lastname  = dol_escape_htmltag($contact->lastname);
-                            $firstname = dol_escape_htmltag($contact->firstname);
-                            $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
-                        } elseif (!empty($project->array_options['options_reedcrm_lastname']) || !empty($project->array_options['options_projectphone'])) {
-                            $lastname  = dol_escape_htmltag($project->array_options['options_reedcrm_lastname'] ?? '');
-                            $firstname = dol_escape_htmltag($project->array_options['options_reedcrm_firstname'] ?? '');
-                            $phone     = dol_escape_htmltag($project->array_options['options_projectphone'] ?? '');
-                        } elseif ($project->socid > 0) {
-                            require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-                            $soc = new Societe($db);
-                            $soc->fetch($project->socid);
-                            $lastname = dol_escape_htmltag($soc->name);
-                            $phone    = dol_escape_htmltag($soc->phone);
-                        }
-                    }
-                }
+            $sourceElement = reedcrm_call_list_fetch_element($db, (string) $line->element_type, (int) $line->element_id);
+            if ($sourceElement !== null) {
+                $sourceLink = $sourceElement->getNomUrl(1);
             }
 
             print '<tr class="oddeven call-list-line-row" data-line-id="' . $line->id . '">';
@@ -649,21 +604,21 @@ if ($object->id > 0) {
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="add_line">';
         print '<input type="hidden" name="fk_contact" id="fk_contact_hidden" value="">';
-        print '<table class="nobordernopadding call-list-add-form">';
+        print '<table class="nobordernopadding centpercent call-list-add-form">';
 
         // Label row
         print '<tr>';
-        print '<td class="nowraponall opacitymedium">' . $langs->trans('SelectElementType') . '</td>';
-        print '<td class="nowraponall opacitymedium">' . $langs->trans('SelectElement') . '</td>';
+        print '<td class="nowraponall opacitymedium call-list-add-col-compact">' . $langs->trans('SelectElementType') . '</td>';
+        print '<td class="nowraponall opacitymedium call-list-add-col-compact">' . $langs->trans('SelectElement') . '</td>';
         print '<td></td>';
-        print '<td></td>';
+        print '<td class="call-list-add-col-submit"></td>';
         print '</tr>';
 
         // Input row — all inputs on the same baseline
         print '<tr>';
 
         // Type select
-        print '<td class="valignmiddle nowraponall">';
+        print '<td class="valignmiddle nowraponall call-list-add-col-compact">';
         print '<select name="element_type" id="call_line_element_type" class="flat">';
         if (isModEnabled('propale')) {
             print '<option value="propal">' . $langs->trans('ElementTypePropal') . '</option>';
@@ -675,7 +630,7 @@ if ($object->id > 0) {
         print '</td>';
 
         // Element select — two native Dolibarr selectors, shown/hidden by JS
-        print '<td class="valignmiddle nowraponall">';
+        print '<td class="valignmiddle nowraponall call-list-add-col-compact">';
 
         if (isModEnabled('propale')) {
             $propalVisible = true;
@@ -703,7 +658,7 @@ if ($object->id > 0) {
         print '</td>';
 
         // Submit
-        print '<td class="valignmiddle nowraponall"><input type="submit" class="button" value="' . dol_escape_htmltag($langs->trans('Add')) . '"></td>';
+        print '<td class="valignmiddle nowraponall right call-list-add-col-submit"><input type="submit" class="button" value="' . dol_escape_htmltag($langs->trans('Add')) . '"></td>';
 
         print '</tr>';
         print '</table>';
@@ -725,6 +680,19 @@ if ($object->id > 0) {
             . ' data-label-contact="' . dol_escape_htmltag($langs->trans('ContactToCall')) . '"'
             . ' data-label-no-contact="' . dol_escape_htmltag($langs->trans('NoContact')) . '"'
             . ' data-label-no-phone="' . dol_escape_htmltag($langs->trans('ContactNoPhone')) . '"'
+            . ' data-label-no-phone-found="' . dol_escape_htmltag($langs->trans('CallListNoPhoneFound')) . '"'
+            . ' data-label-enter-phone="' . dol_escape_htmltag($langs->trans('CallListEnterPhonePlaceholder')) . '"'
+            . ' data-label-enter-phone-generic="' . dol_escape_htmltag($langs->trans('CallListEnterPhoneGenericPlaceholder')) . '"'
+            . ' data-label-phone-required="' . dol_escape_htmltag($langs->trans('CallListPhoneRequired')) . '"'
+            . ' data-label-phone-invalid="' . dol_escape_htmltag($langs->trans('CallListInvalidPhone')) . '"'
+            . ' data-label-source-project="' . dol_escape_htmltag($langs->trans('CallListPhoneSourceProject')) . '"'
+            . ' data-label-source-contact="' . dol_escape_htmltag($langs->trans('CallListPhoneSourceContact')) . '"'
+            . ' data-label-source-thirdparty="' . dol_escape_htmltag($langs->trans('CallListPhoneSourceThirdparty')) . '"'
+            . ' data-label-source-thirdparty-contact="' . dol_escape_htmltag($langs->trans('CallListPhoneSourceThirdpartyContact')) . '"'
+            . ' data-label-tel-opp="' . dol_escape_htmltag($langs->trans('CallListShortTelOpp')) . '"'
+            . ' data-label-tel-tiers="' . dol_escape_htmltag($langs->trans('CallListShortTelTiers')) . '"'
+            . ' data-label-tel-contact="' . dol_escape_htmltag($langs->trans('CallListShortTelContact')) . '"'
+            . ' data-label-opp-phone-placeholder="' . dol_escape_htmltag($langs->trans('CallListOppPhonePlaceholder')) . '"'
             . '></div>';
 
         print '<script src="' . reedcrm_asset_full_url('/reedcrm/js/modules/call_list.js') . '"></script>';

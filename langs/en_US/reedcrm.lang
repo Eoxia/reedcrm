@@ -225,6 +225,20 @@ CallListWidgetError = Error while adding
 DefaultCallListLabel = Call list — %s
 AddToMyCallList = Add to my call list
 DefaultCallListNotFound = No default call list for this user
+CallListPhoneSourceProject = Opportunity phone
+CallListPhoneSourceContact = Linked contact
+CallListPhoneSourceThirdparty = Third-party phone
+CallListPhoneSourceThirdpartyContact = Third-party contact
+CallListNoPhoneFound = No phone number found
+CallListEnterPhonePlaceholder = Enter a phone number (saved on opportunity)
+CallListEnterPhoneGenericPlaceholder = Enter a phone number...
+CallListPhoneRequired = Please enter a phone number
+CallListInvalidPhone = Invalid format (e.g. 0612345678 or +33...)
+CallListSaveAndAdd = Save and add
+CallListShortTelOpp = Opp. phone
+CallListShortTelTiers = Third-party phone
+CallListShortTelContact = Contact phone
+CallListOppPhonePlaceholder = Add / edit opp. phone
 
 # PWA Documents Bar
 PwaShowPiecesTitle = List of documents to display in the PWA listing

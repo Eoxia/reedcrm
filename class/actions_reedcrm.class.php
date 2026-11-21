@@ -2110,50 +2110,20 @@ class ActionsReedcrm
                 return -1;
             }
 
+            dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
+
             $isProjectContext = strpos($parameters['context'], 'projectlist') !== false;
             $elementType      = $isProjectContext ? 'project' : 'propal';
-
-            if ($isProjectContext) {
-                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-                $element = new Project($this->db);
-            } else {
-                require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-                $element = new Propal($this->db);
-            }
-
-            $lineObject = new CallListLine($this->db);
-            $countAdded = 0;
+            $countAdded       = 0;
 
             foreach ($toSelect as $selectedId) {
-                if ($element->fetch((int) $selectedId) <= 0) {
-                    continue;
+                $addResult = reedcrm_add_element_to_call_list($this->db, $user, $fkCallList, $elementType, (int) $selectedId);
+                if (!empty($addResult['success'])) {
+                    $countAdded++;
+                } elseif (!empty($addResult['message'])) {
+                    $style = ($addResult['message'] === $langs->transnoentitiesnoconv('CallListWidgetDuplicate')) ? 'warnings' : 'errors';
+                    setEventMessages($addResult['message'], null, $style);
                 }
-
-                $contacts = array_filter(
-                    (array) $element->liste_contact(-1, 'external'),
-                    static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
-                );
-                if (empty($contacts)) {
-                    setEventMessages($langs->trans('CallListSkippedNoContactElement', $element->ref), null, 'errors');
-                    continue;
-                }
-
-                $firstContact = reset($contacts);
-                $fkContact    = (int) $firstContact['id'];
-
-                if ($lineObject->existsByElement($fkCallList, $elementType, (int) $selectedId)) {
-                    setEventMessages($langs->trans('CallListLineDuplicateElement', $element->ref), null, 'warnings');
-                    continue;
-                }
-
-                $newLine               = new CallListLine($this->db);
-                $newLine->fk_call_list = $fkCallList;
-                $newLine->element_type = $elementType;
-                $newLine->element_id   = (int) $selectedId;
-                $newLine->fk_contact   = $fkContact;
-                $newLine->status       = CallListLine::STATUS_TO_CALL;
-                $newLine->create($user);
-                $countAdded++;
             }
 
             if ($countAdded > 0) {
@@ -3772,7 +3742,13 @@ EOT;
         $html .= ' data-element-type="' . dol_escape_htmltag($elementType) . '"';
         $html .= ' data-element-id="' . (int) $elementId . '"';
         $html .= ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"';
-        $html .= ' data-default-ajax-url="' . dol_escape_htmltag($defaultAjaxUrl) . '">';
+        $html .= ' data-default-ajax-url="' . dol_escape_htmltag($defaultAjaxUrl) . '"';
+        $html .= ' data-enter-phone-label="' . dol_escape_htmltag($langs->trans('CallListEnterPhonePlaceholder')) . '"';
+        $html .= ' data-enter-phone-generic-label="' . dol_escape_htmltag($langs->trans('CallListEnterPhoneGenericPlaceholder')) . '"';
+        $html .= ' data-phone-required-label="' . dol_escape_htmltag($langs->trans('CallListPhoneRequired')) . '"';
+        $html .= ' data-phone-invalid-label="' . dol_escape_htmltag($langs->trans('CallListInvalidPhone')) . '"';
+        $html .= ' data-save-label="' . dol_escape_htmltag($langs->trans('CallListSaveAndAdd')) . '"';
+        $html .= ' data-cancel-label="' . dol_escape_htmltag($langs->trans('Cancel')) . '">';
         $html .= '<img src="' . dol_escape_htmltag($logoPath) . '" class="reedcrm-add-to-call-list-logo" width="18" height="18" alt="ReedCRM" />';
         $html .= '<i class="fas fa-phone" style="color:#64748b;"></i>';
         $html .= '<i class="fas fa-star reedcrm-call-list-default-btn" title="' . dol_escape_htmltag($langs->trans('AddToMyCallList')) . '"></i>';

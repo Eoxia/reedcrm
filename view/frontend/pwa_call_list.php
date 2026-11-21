@@ -200,17 +200,11 @@ if (empty($lines)) {
     $contact = new Contact($db);
 
     foreach ($lines as $lineIndex => $line) {
-        $lastname   = '';
-        $firstname  = '';
-        $phone      = '';
-        $sourceHtml = '';
-
-        if (!empty($line->fk_contact)) {
-            $contact->fetch($line->fk_contact);
-            $lastname  = dol_escape_htmltag($contact->lastname);
-            $firstname = dol_escape_htmltag($contact->firstname);
-            $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
-        }
+        $displayInfo = reedcrm_call_list_get_line_contact_display($db, $line);
+        $lastname    = dol_escape_htmltag($displayInfo['lastname']);
+        $firstname   = dol_escape_htmltag($displayInfo['firstname']);
+        $phone       = dol_escape_htmltag($displayInfo['phone']);
+        $sourceHtml  = '';
 
         $sourceTitleHtml = '';
         $oppPercent = null;
@@ -230,6 +224,18 @@ if (empty($lines)) {
                     }
                 }
             }
+        } elseif ($line->element_type === 'facture' && isModEnabled('facture')) {
+            require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+            $facture = new Facture($db);
+            if ($facture->fetch($line->element_id) > 0 && $facture->fk_project > 0) {
+                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                $project = new Project($db);
+                if ($project->fetch($facture->fk_project) > 0) {
+                    $sourceTitleHtml = $project->title;
+                    $oppPercent = $project->opp_percent;
+                    $oppProjectId = $project->id;
+                }
+            }
         } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
             $project = new Project($db);
@@ -237,15 +243,6 @@ if (empty($lines)) {
                 $sourceTitleHtml = $project->title;
                 $oppPercent = $project->opp_percent;
                 $oppProjectId = $project->id;
-
-                if (empty($line->fk_contact) || empty($lastname)) {
-                    $projectContact = reedcrm_get_project_contact_details($project);
-                    if ($projectContact['lastname'] !== '' || $projectContact['firstname'] !== '' || $projectContact['phone'] !== '') {
-                        $lastname  = dol_escape_htmltag($projectContact['lastname']);
-                        $firstname = dol_escape_htmltag($projectContact['firstname']);
-                        $phone     = dol_escape_htmltag($projectContact['phone']);
-                    }
-                }
             }
         }
 

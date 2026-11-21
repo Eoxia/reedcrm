@@ -307,13 +307,15 @@ class CallListLine extends SaturneObject
                     $hasPhone = true;
                 }
             }
-        } elseif ($this->element_type === 'project' && $this->element_id > 0) {
-            require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-            $project = new Project($this->db);
-            if ($project->fetch($this->element_id) > 0) {
-                $project->fetch_optionals();
-                if (!empty(trim((string) ($project->array_options['options_projectphone'] ?? '')))) {
-                    $hasPhone = true;
+        }
+
+        if (!$hasPhone && !empty($this->element_type) && $this->element_id > 0) {
+            dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
+            $resolved = reedcrm_call_list_resolve_element_contact($this->db, (string) $this->element_type, (int) $this->element_id);
+            if (!empty($resolved['found']) && !empty($resolved['phone'])) {
+                $hasPhone = true;
+                if (empty($this->fk_contact) && !empty($resolved['contact_id'])) {
+                    $this->fk_contact = (int) $resolved['contact_id'];
                 }
             }
         }
