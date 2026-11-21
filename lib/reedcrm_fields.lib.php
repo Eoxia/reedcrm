@@ -136,7 +136,7 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
     if ($leadStatuses === null) {
         $leadStatuses = [];
         $langs->load('projects');
-        $sql  = 'SELECT rowid, code, label, active FROM ' . MAIN_DB_PREFIX . 'c_lead_status';
+        $sql  = 'SELECT rowid, code, label, percent, active FROM ' . MAIN_DB_PREFIX . 'c_lead_status';
         $sql .= ' ORDER BY position ASC, rowid ASC';
         $resql = $db->query($sql);
         if ($resql) {
@@ -146,9 +146,10 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
                 $transKey  = 'OppStatus' . $row->code;
                 $transText = $langs->transnoentitiesnoconv($transKey);
                 $leadStatuses[(int) $row->rowid] = [
-                    'code'   => $row->code,
-                    'label'  => $transText !== $transKey ? $transText : (string) $row->label,
-                    'active' => (int) $row->active,
+                    'code'    => $row->code,
+                    'label'   => $transText !== $transKey ? $transText : (string) $row->label,
+                    'percent' => $row->percent !== null ? (float) $row->percent : null,
+                    'active'  => (int) $row->active,
                 ];
             }
             $db->free($resql);
@@ -168,14 +169,15 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
     // Inline editable select (saved through the generic saturne_update_field endpoint)
     $out  = '<select class="saturne-inline-select reedcrm-opp-status-select reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '"';
     $out .= ' data-field="fk_opp_status" data-element="' . dol_escape_htmltag($object->element) . '" data-id="' . (int) $object->id . '">';
-    $out .= '<option value="0"' . (empty($statusId) ? ' selected' : '') . '>&nbsp;</option>';
+    $out .= '<option value="0" data-code="" data-percent=""' . (empty($statusId) ? ' selected' : '') . '>&nbsp;</option>';
     foreach ($leadStatuses as $rowid => $leadStatus) {
         // An inactive status is offered only to the project that still carries it
         if (empty($leadStatus['active']) && $rowid !== $statusId) {
             continue;
         }
-        $selected = ($rowid === $statusId) ? ' selected' : '';
-        $out     .= '<option value="' . $rowid . '"' . $selected . '>' . dol_escape_htmltag($leadStatus['label']) . '</option>';
+        $selected   = ($rowid === $statusId) ? ' selected' : '';
+        $defaultPct = isset($leadStatus['percent']) ? rtrim(rtrim(sprintf('%.2f', $leadStatus['percent']), '0'), '.') : '';
+        $out       .= '<option value="' . $rowid . '" data-code="' . dol_escape_htmltag($leadStatus['code']) . '" data-percent="' . dol_escape_htmltag($defaultPct) . '"' . $selected . '>' . dol_escape_htmltag($leadStatus['label']) . '</option>';
     }
     $out .= '</select>';
 
@@ -278,35 +280,43 @@ function reedcrm_field_opp_percent(array $parameters, CommonObject $object): str
     global $langs, $user;
 
     $oppPercent = $object->opp_percent;
+    $canEdit    = $user->hasRight('projet', 'creer');
+    $rowId      = (int) $object->id;
 
-    if (!isset($oppPercent)) {
+    if (!isset($oppPercent) && !$canEdit) {
         return '';
     }
 
-    if ($oppPercent < 20) {
-        $statusBadge = 8;
-        $rowColor    = 'rgba(107, 114, 128, 0.08)';
-    } elseif ($oppPercent < 60) {
-        $statusBadge = 1;
-        $rowColor    = 'rgba(239, 68, 68, 0.08)';
-    } else {
-        $statusBadge = 4;
-        $rowColor    = 'rgba(34, 197, 94, 0.08)';
+    $out = '';
+    if (isset($oppPercent)) {
+        if ($oppPercent < 20) {
+            $statusBadge = 8;
+            $rowColor    = 'rgba(107, 114, 128, 0.08)';
+        } elseif ($oppPercent < 60) {
+            $statusBadge = 1;
+            $rowColor    = 'rgba(239, 68, 68, 0.08)';
+        } else {
+            $statusBadge = 4;
+            $rowColor    = 'rgba(34, 197, 94, 0.08)';
+        }
+
+        $out .= '<style data-opp-row-style="' . $rowId . '">tr[data-rowid="' . $rowId . '"]{background-color:' . $rowColor . '!important}</style>';
     }
 
-    $rowId = (int) $object->id;
-    $out   = '<style>tr[data-rowid="' . $rowId . '"]{background-color:' . $rowColor . '!important}</style>';
-
     // Inline editable percentage when the user can edit projects, otherwise the read-only badge
-    if ($user->hasRight('projet', 'creer')) {
+    if ($canEdit) {
         // Format with 2 decimals first, then trim only the trailing decimal zeros (so 60 stays "60", not "6")
-        $displayValue = rtrim(rtrim(sprintf('%.2f', (float) $oppPercent), '0'), '.');
+        $displayValue = isset($oppPercent) ? rtrim(rtrim(sprintf('%.2f', (float) $oppPercent), '0'), '.') : '';
+        $errorLabel   = $langs->transnoentities('OppPercentRangeError');
+        if ($errorLabel === 'OppPercentRangeError') {
+            $errorLabel = '0 à 100 %';
+        }
         $out .= '<span class="saturne-inline-percent">';
-        $out .= '<span class="contenteditable" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityProbabilityShort')) . '" data-field="opp_percent" data-id="' . $rowId . '" data-element="' . dol_escape_htmltag($object->element) . '" data-table="' . dol_escape_htmltag($object->table_element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($displayValue) . '</span>';
+        $out .= '<span class="contenteditable" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityProbabilityShort')) . '" data-field="opp_percent" data-id="' . $rowId . '" data-element="' . dol_escape_htmltag($object->element) . '" data-table="' . dol_escape_htmltag($object->table_element) . '" data-type="number" data-validate-pattern="^(?:100(?:[.,]0{1,2})?|[0-9]{1,2}(?:[.,][0-9]{1,2})?)$" data-success="Enregistré" data-error="' . dol_escape_htmltag($errorLabel) . '">' . dol_escape_htmltag($displayValue) . '</span>';
         $out .= '<span class="saturne-inline-percent-suffix">%</span>';
         $out .= '</span>';
     } else {
-        $out .= dolGetBadge($oppPercent . ' %', '', 'status' . $statusBadge);
+        $out .= dolGetBadge($oppPercent . ' %', '', 'status' . ($statusBadge ?? 8));
     }
 
     return $out;
@@ -337,10 +347,30 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
 }
 
 /**
+ * Render the opportunity amount cell (inline-editable when the user can edit projects).
+ *
+ * @param  CommonObject $object The project object
+ * @return string               HTML output
+ */
+function reedcrm_field_opp_amount(CommonObject $object): string
+{
+    global $conf, $langs, $user;
+
+    $hasAmount = isset($object->opp_amount) && $object->opp_amount !== '' && $object->opp_amount !== null;
+    if ($user->hasRight('projet', 'creer')) {
+        $amountNum = $hasAmount ? rtrim(rtrim(number_format((float) $object->opp_amount, 2, '.', ''), '0'), '.') : '';
+
+        return '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityAmount')) . '" data-field="opp_amount" data-id="' . (int) $object->id . '" data-element="' . dol_escape_htmltag($object->element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($amountNum) . '</span> ' . dol_escape_htmltag($conf->currency);
+    }
+
+    return $hasAmount ? price((float) $object->opp_amount, 0, $langs, 1, -1, -1, $conf->currency) : '';
+}
+
+/**
  * Render the merged "Opportunité" cell: status + probability (both inline-editable) + amount.
  *
- * Reuses reedcrm_field_opp_status and reedcrm_field_opp_percent so inline editing keeps working,
- * and appends the opportunity amount. All values come from standard project fields on $object.
+ * Reuses reedcrm_field_opp_status, reedcrm_field_opp_percent and reedcrm_field_opp_amount so inline
+ * editing keeps working. All values come from standard project fields on $object.
  *
  * @param  array        $parameters Hook parameters (key, context, ...)
  * @param  CommonObject $object     The object
@@ -348,19 +378,9 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
  */
 function reedcrm_field_opportunity_details(array $parameters, CommonObject $object): string
 {
-    global $conf, $langs, $user;
-
     $statusHtml  = reedcrm_field_opp_status($parameters, $object);
     $percentHtml = reedcrm_field_opp_percent($parameters, $object);
-
-    // Amount (budget): inline-editable when the user can write (even when empty), otherwise formatted price
-    $hasAmount = isset($object->opp_amount) && $object->opp_amount !== '' && $object->opp_amount !== null;
-    if ($user->hasRight('projet', 'creer')) {
-        $amountNum  = $hasAmount ? rtrim(rtrim(number_format((float) $object->opp_amount, 2, '.', ''), '0'), '.') : '';
-        $amountHtml = '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityAmount')) . '" data-field="opp_amount" data-id="' . (int) $object->id . '" data-element="' . dol_escape_htmltag($object->element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($amountNum) . '</span> ' . dol_escape_htmltag($conf->currency);
-    } else {
-        $amountHtml = $hasAmount ? price((float) $object->opp_amount, 0, $langs, 1, -1, -1, $conf->currency) : '';
-    }
+    $amountHtml  = reedcrm_field_opp_amount($object);
 
     $out  = '<div class="reedcrm-opp-cell">';
     $out .= '<div class="reedcrm-opp-cell-row">' . $statusHtml . '</div>';

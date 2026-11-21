@@ -528,6 +528,8 @@ CallListShortTelOpp = Tél. opp.
 CallListShortTelTiers = Tél. tiers
 CallListShortTelContact = Tél. contact
 CallListOppPhonePlaceholder = Ajouter / modifier tél. opp.
+CallListCustomOrder = Ordre personnalisé (glisser-déposer)
+CallListDragToReorder = Glisser pour réordonner
 
 # PWA Documents Bar
 PwaShowPiecesTitle = Liste des pièces à afficher dans le listing de la PWA
@@ -1977,3 +1979,4 @@ ReedCRMEmailPreviewDate = Date
 ReedCRMEmailPreviewAttachments = Pièces jointes (%s)
 ReedCRMEmailPreviewAttachedMessage = mail joint
 ReedCRMEmailPreviewBack = Retour au mail précédent
+OppPercentRangeError = Valeur attendue entre 0 et 100 %%

@@ -239,6 +239,8 @@ CallListShortTelOpp = Opp. phone
 CallListShortTelTiers = Third-party phone
 CallListShortTelContact = Contact phone
 CallListOppPhonePlaceholder = Add / edit opp. phone
+CallListCustomOrder = Custom order (drag and drop)
+CallListDragToReorder = Drag to reorder
 
 # PWA Documents Bar
 PwaShowPiecesTitle = List of documents to display in the PWA listing
@@ -1970,3 +1972,4 @@ ReedCRMEmailPreviewDate = Date
 ReedCRMEmailPreviewAttachments = Attachments (%s)
 ReedCRMEmailPreviewAttachedMessage = attached email
 ReedCRMEmailPreviewBack = Back to the previous email
+OppPercentRangeError = Value must be between 0 and 100%%

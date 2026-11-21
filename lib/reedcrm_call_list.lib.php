@@ -1156,3 +1156,168 @@ function reedcrm_call_list_get_closest_events(DoliDB $db, array $origins, string
 
     return $events;
 }
+
+/**
+ * Batch-load standard ReedCRM list context (projects, thirdparties, lifecycle steps and source links)
+ * for all lines of a call list without N+1 queries.
+ *
+ * @param  DoliDB         $db             Database handler
+ * @param  CallListLine[] $lines          Call list lines
+ * @param  array          $lineIndicators Indicators returned by reedcrm_call_list_get_line_indicators()
+ * @return array                          ['projects' => Project[], 'thirdparties' => Societe[], 'lifecycle' => array, 'sources' => string[]]
+ */
+function reedcrm_call_list_get_lines_standard_context(DoliDB $db, array $lines, array $lineIndicators): array
+{
+    require_once __DIR__ . '/reedcrm_fields.lib.php';
+    require_once __DIR__ . '/reedcrm_lifecycle.lib.php';
+
+    $context = [
+        'projects'     => [],
+        'thirdparties' => [],
+        'lifecycle'    => [],
+        'sources'      => [],
+    ];
+
+    if (empty($lines)) {
+        return $context;
+    }
+
+    $projectIds = [];
+    $socIds     = [];
+    $propalIds  = [];
+    $factureIds = [];
+
+    foreach ($lines as $line) {
+        $origin = $lineIndicators[(int) $line->id]['origin'] ?? [];
+        if (!empty($origin['project'])) {
+            $projectIds[(int) $origin['project']] = (int) $origin['project'];
+        }
+        if (!empty($origin['soc_id'])) {
+            $socIds[(int) $origin['soc_id']] = (int) $origin['soc_id'];
+        }
+        if ($line->element_type === 'propal' && !empty($line->element_id)) {
+            $propalIds[(int) $line->element_id] = (int) $line->element_id;
+        } elseif ($line->element_type === 'facture' && !empty($line->element_id)) {
+            $factureIds[(int) $line->element_id] = (int) $line->element_id;
+        }
+    }
+
+    // 1. Batch-load projects (opportunities)
+    if (!empty($projectIds) && isModEnabled('projet')) {
+        require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+
+        $sql  = 'SELECT rowid, ref, title, fk_soc, fk_opp_status, opp_percent, opp_amount, fk_statut';
+        $sql .= ' FROM ' . $db->prefix() . 'projet';
+        $sql .= ' WHERE rowid IN (' . implode(',', $projectIds) . ')';
+
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $proj                = new Project($db);
+                $proj->id            = (int) $obj->rowid;
+                $proj->ref           = (string) $obj->ref;
+                $proj->title         = (string) $obj->title;
+                $proj->socid         = (int) $obj->fk_soc;
+                $proj->fk_opp_status = (int) $obj->fk_opp_status;
+                $proj->opp_percent   = $obj->opp_percent !== null ? (float) $obj->opp_percent : null;
+                $proj->opp_amount    = $obj->opp_amount !== null ? (float) $obj->opp_amount : null;
+                $proj->fk_statut     = (int) $obj->fk_statut;
+                $proj->statut        = (int) $obj->fk_statut;
+
+                $context['projects'][$proj->id] = $proj;
+                if ($proj->socid > 0) {
+                    $socIds[$proj->socid] = $proj->socid;
+                }
+            }
+            $db->free($resql);
+        }
+
+        $context['lifecycle'] = reedcrm_lifecycle_fetch_projects(array_values($projectIds));
+    }
+
+    // 2. Batch-load thirdparties with the columns required by Societe::getNomUrl(1)
+    if (!empty($socIds)) {
+        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+        $socCols = reedcrm_thirdparty_list_columns();
+        $select  = ['rowid'];
+        foreach ($socCols as $prop => $col) {
+            $select[] = $col . ' AS reedcrm_soc_' . $prop;
+        }
+
+        $sql  = 'SELECT ' . implode(', ', $select);
+        $sql .= ' FROM ' . $db->prefix() . 'societe';
+        $sql .= ' WHERE rowid IN (' . implode(',', $socIds) . ')';
+
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $soc     = new Societe($db);
+                $soc->id = (int) $obj->rowid;
+                foreach (array_keys($socCols) as $prop) {
+                    $soc->$prop = $obj->{'reedcrm_soc_' . $prop};
+                }
+                $context['thirdparties'][$soc->id] = $soc;
+            }
+            $db->free($resql);
+        }
+    }
+
+    // 3. Batch-load propal / facture objects for native getNomUrl(1)
+    $propalsById  = [];
+    $facturesById = [];
+    if (!empty($propalIds) && isModEnabled('propale')) {
+        require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
+        $sql   = 'SELECT rowid, ref, ref_client, fk_statut, total_ht, fk_soc FROM ' . $db->prefix() . 'propal WHERE rowid IN (' . implode(',', $propalIds) . ')';
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $p             = new Propal($db);
+                $p->id         = (int) $obj->rowid;
+                $p->ref        = (string) $obj->ref;
+                $p->ref_client = (string) $obj->ref_client;
+                $p->statut     = (int) $obj->fk_statut;
+                $p->total_ht   = (float) $obj->total_ht;
+                $p->socid      = (int) $obj->fk_soc;
+                $propalsById[$p->id] = $p;
+            }
+            $db->free($resql);
+        }
+    }
+    if (!empty($factureIds) && isModEnabled('facture')) {
+        require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+        $sql   = 'SELECT rowid, ref, ref_client, fk_statut, paye, type, total_ht, fk_soc FROM ' . $db->prefix() . 'facture WHERE rowid IN (' . implode(',', $factureIds) . ')';
+        $resql = $db->query($sql);
+        if ($resql) {
+            while ($obj = $db->fetch_object($resql)) {
+                $f             = new Facture($db);
+                $f->id         = (int) $obj->rowid;
+                $f->ref        = (string) $obj->ref;
+                $f->ref_client = (string) $obj->ref_client;
+                $f->statut     = (int) $obj->fk_statut;
+                $f->paye       = (int) $obj->paye;
+                $f->type       = (int) $obj->type;
+                $f->total_ht   = (float) $obj->total_ht;
+                $f->socid      = (int) $obj->fk_soc;
+                $facturesById[$f->id] = $f;
+            }
+            $db->free($resql);
+        }
+    }
+
+    foreach ($lines as $line) {
+        $lid = (int) $line->id;
+        $eid = (int) $line->element_id;
+        if ($line->element_type === 'project' && isset($context['projects'][$eid])) {
+            $context['sources'][$lid] = $context['projects'][$eid]->getNomUrl(1);
+        } elseif ($line->element_type === 'propal' && isset($propalsById[$eid])) {
+            $context['sources'][$lid] = $propalsById[$eid]->getNomUrl(1);
+        } elseif ($line->element_type === 'facture' && isset($facturesById[$eid])) {
+            $context['sources'][$lid] = $facturesById[$eid]->getNomUrl(1);
+        } else {
+            $context['sources'][$lid] = '';
+        }
+    }
+
+    return $context;
+}
