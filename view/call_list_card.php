@@ -532,18 +532,18 @@ if ($object->id > 0) {
 
     // Column visibility (persisted per user via Dolibarr native selectedfields)
     $arrayfields = [
-        'origin'      => ['label' => 'Source',                      'checked' => 1, 'position' => 10],
-        'thirdparty'  => ['label' => 'ThirdParty',                  'checked' => 1, 'position' => 20],
-        'contact'     => ['label' => 'Contact',                     'checked' => 1, 'position' => 30],
-        'phone'       => ['label' => 'Phone',                       'checked' => 1, 'position' => 40],
-        'opp_status'  => ['label' => 'OpportunityStatusShort',      'checked' => 1, 'position' => 50],
-        'opp_percent' => ['label' => 'OpportunityProbabilityShort', 'checked' => 1, 'position' => 60],
-        'opp_amount'  => ['label' => 'OpportunityAmountShort',      'checked' => 1, 'position' => 70],
-        'lifecycle'   => ['label' => 'LifecycleStep',               'checked' => 1, 'position' => 80],
-        'relaunch'    => ['label' => 'CommercialsRelaunching',      'checked' => 1, 'position' => 90],
-        'status'      => ['label' => 'Status',                      'checked' => 1, 'position' => 100],
-        'last_call'   => ['label' => 'CallListLastCall',            'checked' => 1, 'position' => 110],
-        'note'        => ['label' => 'Note',                        'checked' => 1, 'position' => 120],
+        'origin'      => ['label' => 'Source',                      'checked' => '1', 'position' => 10],
+        'thirdparty'  => ['label' => 'ThirdParty',                  'checked' => '1', 'position' => 20],
+        'contact'     => ['label' => 'Contact',                     'checked' => '1', 'position' => 30],
+        'phone'       => ['label' => 'Phone',                       'checked' => '1', 'position' => 40],
+        'opp_status'  => ['label' => 'OpportunityStatusShort',      'checked' => '1', 'position' => 50],
+        'opp_percent' => ['label' => 'OpportunityProbabilityShort', 'checked' => '1', 'position' => 60],
+        'opp_amount'  => ['label' => 'OpportunityAmountShort',      'checked' => '1', 'position' => 70],
+        'lifecycle'   => ['label' => 'LifecycleStep',               'checked' => '1', 'position' => 80],
+        'relaunch'    => ['label' => 'CommercialsRelaunching',      'checked' => '1', 'position' => 90],
+        'status'      => ['label' => 'Status',                      'checked' => '1', 'position' => 100],
+        'last_call'   => ['label' => 'CallListLastCall',            'checked' => '1', 'position' => 110],
+        'note'        => ['label' => 'Note',                        'checked' => '1', 'position' => 120],
     ];
     $selectedfields = $form->multiSelectArrayWithCheckbox('selectedfields', $arrayfields, $contextpage);
 

@@ -316,7 +316,7 @@ function reedcrm_field_opp_percent(array $parameters, CommonObject $object): str
         $out .= '<span class="saturne-inline-percent-suffix">%</span>';
         $out .= '</span>';
     } else {
-        $out .= dolGetBadge($oppPercent . ' %', '', 'status' . ($statusBadge ?? 8));
+        $out .= dolGetBadge($oppPercent . ' %', '', 'status' . $statusBadge);
     }
 
     return $out;
