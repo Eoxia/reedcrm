@@ -61,7 +61,7 @@ class ReedcrmCron
      *
      * @param  string    $className Object className
      * @param  string    $filter    Filter
-     * @return int                  0 < if KO, > 0 if OK
+     * @return int                  0 if OK, -1 if at least one object could not be updated (listed in $this->errors)
      * @throws Exception
      */
     public function updateNotationObjectContacts(string $className, string $filter = ''): int
@@ -80,18 +80,24 @@ class ReedcrmCron
 
         $objects = saturne_fetch_all_object_type($className, '', '', 0, 0, ['customsql' => 't.entity = ' . $conf->entity . ' ' . $filter]);
 
-        if (is_array($objects) &&!empty($objects)) {
+        if (is_array($objects) && !empty($objects)) {
+            $nbUpdated = 0;
             foreach ($objects as $object) {
                 $result = set_notation_object_contact($object);
                 if ($result < 0) {
-                    return -1;
+                    // Keep going: one refused object (ex. empty required extrafield) must not block the others
+                    $objectErrors   = array_filter(array_merge([$object->error], $object->errors));
+                    $objectErrors   = $objectErrors ?: [$langs->transnoentities('ErrorUnknown')];
+                    $this->errors[] = ($object->ref ?: $object->id) . ' : ' . implode(', ', array_unique($objectErrors));
+                } else {
+                    $nbUpdated++;
                 }
             }
-            $this->output = $langs->transnoentities('NotationObjectContactsUpdated', count($objects),  $langs->transnoentities($className . 'Mins'));
+            $this->output = $langs->transnoentities('NotationObjectContactsUpdated', $nbUpdated, $langs->transnoentities($className . 'Mins'));
         } else {
             $this->output = $langs->transnoentities('NoObject', $langs->transnoentities($className . 'Min'));
         }
-        return 0;
+        return empty($this->errors) ? 0 : -1;
     }
 
     /**
