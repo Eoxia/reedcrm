@@ -92,11 +92,11 @@ class ActionsReedcrm
      *
      * @param array $parameters
      * @param CommonObject $object
-     * @param string $action
+     * @param string|null $action
      * @param HookManager $hookmanager
      * @return int
      */
-    public function menuLeftMenuItems(array $parameters, &$object, string &$action, $hookmanager)
+    public function menuLeftMenuItems(array $parameters, &$object, ?string &$action, $hookmanager)
     {
         global $langs, $user;
 
@@ -197,11 +197,11 @@ class ActionsReedcrm
      *
      * @param  array        $parameters Hook metadatas (context, etc...)
      * @param  CommonObject $object     The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-     * @param  string       $action     Current action (if set). Generally create or edit or null
+     * @param  string|null  $action     Current action (if set). Generally create or edit or null
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function addMoreBoxStatsCustomer(array $parameters, CommonObject $object, string $action): int
+    public function addMoreBoxStatsCustomer(array $parameters, CommonObject $object, ?string $action): int
     {
         global $conf, $langs, $user;
 
@@ -254,11 +254,11 @@ class ActionsReedcrm
      *
      * @param  array        $parameters Hook metadatas (context, etc...)
      * @param  CommonObject $object     The object to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
-     * @param  string       $action     Current action (if set). Generally create or edit or null
+     * @param  string|null  $action     Current action (if set). Generally create or edit or null
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function addMoreRecentObjects(array $parameters, CommonObject $object, string $action): int
+    public function addMoreRecentObjects(array $parameters, CommonObject $object, ?string $action): int
     {
         global $conf, $db, $langs, $user;
 
@@ -476,11 +476,11 @@ class ActionsReedcrm
      *
      * @param  array        $parameters Hook metadatas (context, etc...)
      * @param  CommonObject $object     Current object
-     * @param  string       $action     Current action
+     * @param  string|null  $action     Current action
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function doActions(array $parameters, $object, string $action): int
+    public function doActions(array $parameters, $object, ?string $action): int
     {
         // "I just hung up" button of the cards linked to Pocket: the last recording is imported and
         // attached here, then the card is reloaded so a refresh never replays the import.
@@ -2381,10 +2381,10 @@ class ActionsReedcrm
      *
      * @param  array       $parameters Hook metadatas (context, search, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
-     * @param  string      $action     Current action
+     * @param  string|null $action     Current action
      * @return int                     0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListWhere(array $parameters, ?object $object, string $action): int
+    public function printFieldListWhere(array $parameters, ?object $object, ?string $action): int
     {
         // The value would otherwise be carried over from the previous hook method of this instance
         $this->resprints = '';
@@ -2409,10 +2409,10 @@ class ActionsReedcrm
      *
      * @param  array       $parameters Hook metadatas (context, sortfield, sortorder, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
-     * @param  string      $action     Current action
+     * @param  string|null $action     Current action
      * @return int                     0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListSelect(array $parameters, ?object $object, string $action): int
+    public function printFieldListSelect(array $parameters, ?object $object, ?string $action): int
     {
         // The value would otherwise be carried over from the previous hook method of this instance
         $this->resprints = '';
@@ -2456,10 +2456,10 @@ class ActionsReedcrm
      *
      * @param  array       $parameters Hook metadatas (context, search, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
-     * @param  string      $action     Current action
+     * @param  string|null $action     Current action
      * @return int                     0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListFrom(array $parameters, ?object $object, string $action): int
+    public function printFieldListFrom(array $parameters, ?object $object, ?string $action): int
     {
         // The value would otherwise be carried over from the previous hook method of this instance
         $this->resprints = '';
@@ -2478,10 +2478,10 @@ class ActionsReedcrm
      *
      * @param  array       $parameters Hook metadatas (context, key, val, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
-     * @param  string      $action     Current action
+     * @param  string|null $action     Current action
      * @return int                     0 < on error, 0 on success, 1 to replace standard code
      */
-    public function printFieldListSearch(array $parameters, ?object $object, string $action): int
+    public function printFieldListSearch(array $parameters, ?object $object, ?string $action): int
     {
         $this->resprints = '';
 
@@ -2783,10 +2783,10 @@ class ActionsReedcrm
      *
      * @param  array        $parameters Hook metadata (context, etc...)
      * @param  CommonObject $object     The proposal being created
-     * @param  string       $action     Current action
+     * @param  string|null  $action     Current action
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      */
-    public function tabContentCreateProposal(array $parameters, $object, string $action): int
+    public function tabContentCreateProposal(array $parameters, $object, ?string $action): int
     {
         global $langs, $origin;
 
@@ -2825,10 +2825,10 @@ class ActionsReedcrm
      *
      * @param  array        $parameters Hook metadata (context, objFrom)
      * @param  CommonObject $object     The proposal just created
-     * @param  string       $action     Current action
+     * @param  string|null  $action     Current action
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      */
-    public function createFrom(array $parameters, $object, string $action): int
+    public function createFrom(array $parameters, $object, ?string $action): int
     {
         $objFrom = $parameters['objFrom'] ?? null;
         if (!$this->isContext($parameters, ['propalcard']) || !$objFrom instanceof Propal || (int) $objFrom->id !== GETPOSTINT('reedcrm_propal_model')) {
@@ -2857,11 +2857,11 @@ class ActionsReedcrm
      *
      * @param  array        $parameters Hook metadatas (context, etc...)
      * @param  CommonObject $object     Current object
-     * @param  string       $action     Current action
+     * @param  string|null  $action     Current action
      * @return int                      0 < on error, 0 on success, 1 to replace standard code
      * @throws Exception
      */
-    public function getTooltipContent(array $parameters, CommonObject $object, string $action): int
+    public function getTooltipContent(array $parameters, CommonObject $object, ?string $action): int
     {
         // The contexts of the hook manager pile up over a request: once a project tooltip is built,
         // for instance the one of the project a proposal belongs to, projectdao stays in the context
@@ -3770,10 +3770,10 @@ EOT;
      *
      * @param array             $parameters Hook parameters
      * @param CommonObject|null $object     Current object
-     * @param string            $action     Current action
+     * @param string|null       $action     Current action
      * @return int                          0 < on error, 0 on success, 1 to replace standard code
      */
-    public function pdf_build_address(array $parameters, ?CommonObject $object, string &$action): int
+    public function pdf_build_address(array $parameters, ?CommonObject $object, ?string &$action): int
     {
         global $db;
 
@@ -3850,12 +3850,12 @@ EOT;
      * under every service line of a proposal. It is the last hook of the description cell, and the
      * return value stays 0 so the native supplier block is still displayed.
      *
-     * @param  array  $parameters Hook metadata (context, etc...)
-     * @param  object $object     Object the displayed line belongs to
-     * @param  string $action     Current action
-     * @return int                0 on success
+     * @param  array       $parameters Hook metadata (context, etc...)
+     * @param  object      $object     Object the displayed line belongs to
+     * @param  string|null $action     Current action
+     * @return int                     0 on success
      */
-    public function objectLineView_ProductSupplier(array $parameters, $object, string $action): int
+    public function objectLineView_ProductSupplier(array $parameters, $object, ?string $action): int
     {
         global $db, $langs, $user;
 
