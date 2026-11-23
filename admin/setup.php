@@ -70,7 +70,7 @@ if (isModEnabled('agenda')) {
 }
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->reedcrm->adminpage->read;
+$permissiontoread = $user->hasRight('reedcrm', 'adminpage', 'read');
 saturne_check_access($permissiontoread);
 
 /*
