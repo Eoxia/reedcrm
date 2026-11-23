@@ -55,7 +55,7 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
         $this->family      = 'demo';
         $this->description = 'ReedCRM triggers';
         $this->version     = '23.3.2';
-        $this->picto       = 'reedcrm@reedcrm';
+        $this->picto       = 'reedcrm_color@reedcrm';
     }
 
     /**
