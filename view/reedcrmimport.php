@@ -63,7 +63,7 @@ $actioncomm    = new ActionComm($db);
 $reedcrmNotify = new ReedcrmNotify($db);
 $contact       = new Contact($db);
 // Security check - Protection if external user
-$permissionToRead = $user->rights->reedcrm->adminpage->read;
+$permissionToRead = $user->hasRight('reedcrm', 'adminpage', 'read');
 saturne_check_access($permissionToRead);
 
 $formconfirm = '';
