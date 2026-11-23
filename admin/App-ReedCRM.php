@@ -51,7 +51,7 @@ $action = GETPOST('action', 'alpha');
 $form = new Form($db);
 
 // Security check - Protection if external user
-$permissionToRead = $user->rights->reedcrm->adminpage->read;
+$permissionToRead = $user->hasRight('reedcrm', 'adminpage', 'read');
 saturne_check_access($permissionToRead);
 
 /*
