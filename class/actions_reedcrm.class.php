@@ -2707,7 +2707,7 @@ class ActionsReedcrm
 
         if (strpos($parameters['context'], 'propalcard') !== false && $object instanceof Propal) {
             $picto            = img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule"');
-            $extraFieldsNames = ['reedcrm_propal_label', 'commrefusal'];
+            $extraFieldsNames = ['reedcrm_propal_label', 'commstatus', 'commrefusal'];
             foreach ($extraFieldsNames as $extraFieldsName) {
                 if (!empty($extrafields->attributes['propal']['label'][$extraFieldsName])) {
                     $extrafields->attributes['propal']['label'][$extraFieldsName] = $picto . $langs->transnoentities($extrafields->attributes['propal']['label'][$extraFieldsName]);
