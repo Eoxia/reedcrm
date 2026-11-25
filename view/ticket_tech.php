@@ -298,6 +298,7 @@ if (in_array($action, ['reedcrm_close', 'reedcrm_abandon'], true) && $id > 0 && 
         $abandon = $action === 'reedcrm_abandon';
         // trans() encodes its whole result, parameters included : the subject is put in afterwards, escaped once
         $question = str_replace('__SUBJECT__', dol_escape_htmltag($ticket->subject), $langs->trans($abandon ? 'TicketTechAbandonQuestion' : 'TicketTechCloseQuestion', '__SUBJECT__'));
+        // Height 'auto' : the default 250 px cuts the question, placed after the contacts and the time to log
         print $form->formconfirm(
             $techUrl . '&id=' . $id,
             $langs->trans($abandon ? 'TicketTechAbandonTitle' : 'TicketTechCloseTitle', $ticket->ref),
@@ -305,7 +306,8 @@ if (in_array($action, ['reedcrm_close', 'reedcrm_abandon'], true) && $id > 0 && 
             $abandon ? 'confirm_reedcrm_abandon' : 'confirm_reedcrm_close',
             $formquestion,
             'yes',
-            1
+            1,
+            'auto'
         );
     }
 }
