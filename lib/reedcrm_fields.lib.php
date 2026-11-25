@@ -613,6 +613,73 @@ function reedcrm_thirdparty_list_sort_sql(string $alias, string $sortOrder): str
 }
 
 /**
+ * Extrafields of the project shown in the contact details cell of the opportunity list.
+ *
+ * Only those defined on the instance are kept: one deleted by an administrator would end the
+ * query of the list in an SQL error.
+ *
+ * @param  array    $extrafieldLabels Labels of the extrafields of the project, indexed by name
+ * @return string[]                   Names of the extrafields, last name and first name first
+ */
+function reedcrm_contact_list_extrafields(array $extrafieldLabels): array
+{
+    return array_values(array_intersect(['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone', 'reedcrm_website'], array_keys($extrafieldLabels)));
+}
+
+/**
+ * Sort key of the contact details column of the opportunity list: the name of the contact, last name then first name.
+ *
+ * The projects without a contact name come last whatever the order, as in the thirdparty column.
+ *
+ * @param  string   $alias           Alias of the joined table of the project extrafields
+ * @param  string[] $extrafieldNames Extrafields of the cell (reedcrm_contact_list_extrafields)
+ * @param  string   $sortOrder       Order of the list (asc or desc, first one of several)
+ * @return string                    SQL expression
+ */
+function reedcrm_contact_list_sort_sql(string $alias, array $extrafieldNames, string $sortOrder): string
+{
+    $nameColumns = [];
+    foreach (array_intersect(['reedcrm_lastname', 'reedcrm_firstname'], $extrafieldNames) as $extrafieldName) {
+        $nameColumns[] = $alias . '.' . $extrafieldName;
+    }
+    if (empty($nameColumns)) {
+        return "''";
+    }
+
+    $isDescending = strtolower(trim(explode(',', $sortOrder)[0])) === 'desc';
+    $name         = "TRIM(CONCAT_WS(' ', " . implode(', ', $nameColumns) . "))";
+
+    return "CONCAT(CASE WHEN " . $name . " = '' THEN '" . ($isDescending ? '0' : '1') . "' ELSE '" . ($isDescending ? '1' : '0') . "' END, " . $name . ")";
+}
+
+/**
+ * Filter of the contact details column of the opportunity list: each word typed is looked for in the
+ * name, the email, the phone or the website of the contact.
+ *
+ * In a subquery: the list counts its records without the join of the extrafields, a condition on
+ * that join would end the count in an SQL error.
+ *
+ * @param  DoliDB   $db              Database handler
+ * @param  string   $alias           Alias of the project table
+ * @param  string[] $extrafieldNames Extrafields of the cell (reedcrm_contact_list_extrafields)
+ * @param  string   $search          Text typed in the filter
+ * @return string                    SQL condition, starting with AND, empty when there is nothing to filter
+ */
+function reedcrm_contact_list_search_sql(DoliDB $db, string $alias, array $extrafieldNames, string $search): string
+{
+    if (empty($extrafieldNames) || trim($search) === '') {
+        return '';
+    }
+
+    $columns = [];
+    foreach ($extrafieldNames as $extrafieldName) {
+        $columns[] = 'reedcrm_contact.' . $extrafieldName;
+    }
+
+    return ' AND EXISTS (SELECT 1 FROM ' . $db->prefix() . 'projet_extrafields AS reedcrm_contact WHERE reedcrm_contact.fk_object = ' . $alias . '.rowid' . natural_search($columns, $search) . ')';
+}
+
+/**
  * Render the thirdparty cell of the opportunity list: the link to the thirdparty card.
  *
  * @param  array        $parameters Hook parameters (key, context, obj, ...)
