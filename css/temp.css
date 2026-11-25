@@ -102,7 +102,9 @@
 	Version : 1.0.0
 --------------------------------------------------------------*/
 
-.template-pwa label {
+/* The event type chips are labels with their own style (scss/pages/_relaunch-widget.scss): left out of the label
+   boxes below, without changing their specificity for the other labels */
+.template-pwa label:not(:where(.reedcrm-reminder-type-choice)) {
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -114,10 +116,10 @@
 .template-pwa label:has(textarea) {
     align-items: flex-start;
 }
-.template-pwa label:focus-within {
+.template-pwa label:not(:where(.reedcrm-reminder-type-choice)):focus-within {
     border-color: #000;
 }
-.template-pwa label > *:not(input, textarea, select) {
+.template-pwa label:not(:where(.reedcrm-reminder-type-choice)) > *:not(input, textarea, select) {
     padding: 0.7em 0.5em;
 }
 .template-pwa label input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
