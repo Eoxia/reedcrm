@@ -31,6 +31,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
+dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
 
 global $db, $user;
 
@@ -49,81 +50,25 @@ if (!$user->hasRight('reedcrm', 'call_list', 'read')) {
     exit;
 }
 
-$object = null;
-
-if ($elementType === 'propal' && isModEnabled('propale')) {
-    require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-    $object = new Propal($db);
-} elseif ($elementType === 'project' && isModEnabled('projet')) {
-    require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-    $object = new Project($db);
-}
-
-if ($object === null) {
-    echo json_encode(['success' => false, 'error' => 'Unsupported element type']);
-    exit;
-}
-
-$result = $object->fetch($elementId);
-if ($result <= 0) {
+$element = reedcrm_call_list_fetch_element($db, $elementType, $elementId);
+if ($element === null) {
     echo json_encode(['success' => false, 'error' => 'Element not found']);
     exit;
 }
 
-$allContacts = $object->liste_contact(-1, 'external');
-$contacts    = array_filter(
-    is_array($allContacts) ? $allContacts : [],
-    static function ($c) { return $c['code'] !== 'PROJECTADDRESS'; }
-);
+$resolved = reedcrm_call_list_resolve_element_contact($db, $elementType, $elementId);
 
-$object->fetch_optionals();
-$contactId = 0;
-
-// Priority 1: First external contact (excluding PROJECTADDRESS code)
-if (!empty($contacts)) {
-    $firstContact = reset($contacts);
-    $contactId    = (int) $firstContact['id'];
-}
-// Priority 2: Project's extrafield 'projectaddress'
-elseif ($elementType === 'project' && !empty($object->array_options['options_projectaddress'])) {
-    $contactId = (int) $object->array_options['options_projectaddress'];
-}
-
-if ($contactId > 0) {
-    $contact = new Contact($db);
-    $contact->fetch($contactId);
-
-    echo json_encode([
-        'success'    => true,
-        'contact_id' => $contactId,
-        'lastname'   => $contact->lastname,
-        'firstname'  => $contact->firstname,
-        'phone'      => $contact->phone_pro ?: $contact->phone_mobile ?: '',
-    ]);
-} elseif ($elementType === 'project' && (!empty($object->array_options['options_reedcrm_lastname']) || !empty($object->array_options['options_projectphone']))) {
-    // Priority 3: Fallback to ReedCRM Lead Extrafields
-    echo json_encode([
-        'success'    => true,
-        'contact_id' => 0,
-        'lastname'   => $object->array_options['options_reedcrm_lastname'] ?? '',
-        'firstname'  => $object->array_options['options_reedcrm_firstname'] ?? '',
-        'phone'      => $object->array_options['options_projectphone'] ?? '',
-    ]);
-} else {
-    // Priority 4: Fallback to Thirdparty (Societe)
-    if ($object->socid > 0) {
-        require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-        $soc = new Societe($db);
-        $soc->fetch($object->socid);
-        echo json_encode([
-            'success'    => true,
-            'contact_id' => 0,
-            'lastname'   => $soc->name,
-            'firstname'  => '',
-            'phone'      => $soc->phone,
-        ]);
-    } else {
-        echo json_encode(['success' => true, 'contact_id' => 0, 'lastname' => '', 'firstname' => '', 'phone' => '']);
-    }
-}
+echo json_encode([
+    'success'             => true,
+    'found'               => (bool) $resolved['found'],
+    'contact_id'          => (int) $resolved['contact_id'],
+    'lastname'            => (string) $resolved['lastname'],
+    'firstname'           => (string) $resolved['firstname'],
+    'phone'               => (string) $resolved['phone'],
+    'source'              => (string) $resolved['source'],
+    'project_phone'       => (string) $resolved['project_phone'],
+    'can_save_on_project' => (bool) $resolved['can_save_on_project'],
+    'thirdparty_contacts' => $resolved['thirdparty_contacts'],
+    'phone_choices'       => $resolved['phone_choices'],
+]);
 exit;

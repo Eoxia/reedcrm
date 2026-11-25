@@ -45,6 +45,10 @@ $quickCloseDelayMonths = max(1, getDolGlobalInt('REEDCRM_QUICK_CLOSE_DELAY_MONTH
 // of the module configuration: the pills read faster, the list takes less room in the modal
 $quickCloseTypeDisplay = getDolGlobalString('REEDCRM_QUICK_CLOSE_TYPE_DISPLAY', 'buttons') === 'select' ? 'select' : 'buttons';
 
+// Most characters the name of the rescheduled event keeps: ActionComm::create() cuts a longer one and
+// ends it with "…", without a word, while the field opens on the name of the closed event, up to 255
+$quickCloseNewLabelMaxLength = 128;
+
 // On the event card the badge sits alone in the banner, the list markers the JS relies on are missing.
 // The event is handed over here, a system event (percentage -1) and a done one have no progress to close.
 $quickCloseCardID    = 0;
@@ -69,7 +73,7 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
 <link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
 
 <div id="reedcrm-quick-close-config"
-     data-url="<?php echo dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/quick_close_event.php', 1)); ?>"
+     data-url="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/quick_close_event.php', 1)); ?>"
      data-token="<?php echo dol_escape_htmltag(newToken()); ?>"
      data-default-unit="<?php echo dol_escape_htmltag($quickCloseDelayUnit); ?>"
      data-default-days="<?php echo (int) $quickCloseDelayValue; ?>"
@@ -79,9 +83,18 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
      data-card-event-type="<?php echo dol_escape_htmltag($quickCloseCardType); ?>"
      data-trans-tooltip="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTooltip')); ?>"
      data-trans-error="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventError')); ?>"
-     data-trans-date-required="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDateRequired')); ?>"></div>
+     data-trans-date-required="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDateRequired')); ?>"
+     data-trans-time-invalid="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTimeInvalid')); ?>"
+     data-trans-new-label-count="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabelCount', '%s', $quickCloseNewLabelMaxLength)); ?>"
+     data-trans-new-label-too-long="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabelTooLong', $quickCloseNewLabelMaxLength)); ?>"
+     data-trans-title-close="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTitle')); ?>"
+     data-trans-title-progress="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventProgressTitle')); ?>"
+     data-trans-confirm-close="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?>"
+     data-trans-confirm-progress="<?php echo dol_escape_htmltag($langs->trans('Save')); ?>"></div>
 
-<div class="wpeo-modal modal-reedcrm-quick-close" id="reedcrm-quick-close-modal">
+<?php // Saturne closes any modal on a click on its backdrop, a selection released there included: the JS of the
+      // module closes this one itself, only when the press started on the backdrop ?>
+<div class="wpeo-modal modal-reedcrm-quick-close modal-close-only-with-button" id="reedcrm-quick-close-modal">
     <div class="modal-container">
         <div class="modal-header">
             <h2 class="modal-title"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTitle')); ?></h2>
@@ -93,6 +106,16 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
             <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-event-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventCurrentLabel')); ?></label>
             <input type="text" id="reedcrm-quick-close-event-label" class="reedcrm-quick-close-event-label" maxlength="255" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventCurrentLabelPlaceholder')); ?>">
 
+            <?php // 100% closes the event, which is what the modal is opened for. A lower percentage only
+                  // records how far it went, the event stays to do ?>
+            <div class="reedcrm-quick-close-percentage">
+                <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-percentage"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventPercentage')); ?></label>
+                <input type="range" id="reedcrm-quick-close-percentage-range" class="reedcrm-quick-close-percentage-range" min="0" max="100" step="5" value="100">
+                <input type="number" id="reedcrm-quick-close-percentage" class="reedcrm-quick-close-percentage-value" min="0" max="100" step="1" value="100">
+                <span>%</span>
+            </div>
+            <span class="reedcrm-quick-close-percentage-help"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventPercentageHelp')); ?></span>
+
             <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-comment"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDescription')); ?></label>
             <textarea id="reedcrm-quick-close-comment" class="reedcrm-quick-close-comment" rows="4" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventDescriptionPlaceholder')); ?>"></textarea>
 
@@ -103,7 +126,10 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
 
             <div class="reedcrm-quick-close-delay" id="reedcrm-quick-close-delay">
                 <label class="reedcrm-quick-close-label" for="reedcrm-quick-close-new-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabel')); ?></label>
-                <input type="text" id="reedcrm-quick-close-new-label" class="reedcrm-quick-close-new-label" maxlength="128" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabelPlaceholder')); ?>">
+                <?php // No maxlength: a pasted name stays whole, the counter shows what is too much and the JS
+                      // refuses the closure until it is shortened ?>
+                <input type="text" id="reedcrm-quick-close-new-label" class="reedcrm-quick-close-new-label" data-max-length="<?php echo $quickCloseNewLabelMaxLength; ?>" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventNewLabelPlaceholder')); ?>">
+                <span id="reedcrm-quick-close-new-label-counter" class="reedcrm-quick-close-counter" aria-live="polite"></span>
 
                 <?php // Type of the reminder being raised. Nothing is preselected when the page cannot
                       // tell the type of the closed event: the reminder then simply repeats it ?>
@@ -147,11 +173,23 @@ if (is_object($object) && $object->element === 'action' && $object->id > 0
                     <span><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventOnDate')); ?></span>
                     <input type="date" id="reedcrm-quick-close-delay-date" class="reedcrm-quick-close-delay-date" min="<?php echo dol_print_date(dol_now(), '%Y-%m-%d'); ?>">
                 </label>
+
+                <?php // The day the choice above falls on, worked out as soon as it changes, and the hour
+                      // of the new event. Left empty, the hour is the one the endpoint gives it.
+                      // A plain text field: a time field refuses an hour typed without its minutes,
+                      // here "16" or "16h30" is enough, the JS writes it back as 16:00 or 16:30 ?>
+                <div class="reedcrm-quick-close-delay-result">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="reedcrm-quick-close-delay-result-date" class="reedcrm-quick-close-delay-result-date"></span>
+                    <label for="reedcrm-quick-close-delay-time"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventAtTime')); ?></label>
+                    <input type="text" id="reedcrm-quick-close-delay-time" class="reedcrm-quick-close-delay-time" maxlength="8" autocomplete="off" placeholder="<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTimePlaceholder')); ?>">
+                </div>
+                <span class="reedcrm-quick-close-delay-help"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventTimeHelp')); ?></span>
             </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="wpeo-button button-grey reedcrm-quick-close-cancel"><?php echo dol_escape_htmltag($langs->trans('Cancel')); ?></button>
-            <button type="button" class="wpeo-button button-blue reedcrm-quick-close-confirm"><i class="fas fa-check"></i>&nbsp;<?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?></button>
+            <button type="button" class="wpeo-button button-blue reedcrm-quick-close-confirm"><i class="fas fa-check"></i>&nbsp;<span class="reedcrm-quick-close-confirm-label"><?php echo dol_escape_htmltag($langs->trans('QuickCloseEventConfirm')); ?></span></button>
         </div>
     </div>
 </div>

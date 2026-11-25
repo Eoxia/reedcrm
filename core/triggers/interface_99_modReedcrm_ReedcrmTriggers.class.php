@@ -38,6 +38,11 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
     protected $db;
 
     /**
+     * @var string Trigger version.
+     */
+    public $version;
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -49,8 +54,8 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'ReedCRM triggers';
-        $this->version     = '23.3.2';
-        $this->picto       = 'reedcrm@reedcrm';
+        $this->version     = '23.4.0';
+        $this->picto       = 'reedcrm_color@reedcrm';
     }
 
     /**
@@ -145,6 +150,13 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
             return 0; // If module is not enabled, we do nothing
         }
 
+        // Every event of the instance comes through here, also those another module sends with an object that is not
+        // a CommonObject (ExternalAccess passes its Context on externalAccessInitController): none of them concerns
+        // ReedCRM, and the event prepared below reads an id that such an object may lack
+        if (!($object instanceof CommonObject)) {
+            return 0;
+        }
+
         // Data and type of action are stored into $object and $action
         dol_syslog("Trigger '" . $this->name . "' for action '$action' launched by " . __FILE__ . '. id=' . $object->id);
 
@@ -177,6 +189,14 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                 set_notation_object_contact($object);
                 break;
 
+            // An invoice paid, abandoned or back to draft has nothing left to relaunch on the todo board
+            case 'BILL_PAYED':
+            case 'BILL_CANCEL':
+            case 'BILL_UNVALIDATE':
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'invoice', (int) $object->id);
+                break;
+
             case 'USER_CREATE':
                 require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
                 // Employees only: an external user (client contact with a login) gets no call list
@@ -192,8 +212,16 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
             
             case 'PROPAL_CREATE':          $this->tagStateEvent('propal', $object->id, 'propal_draft', $user, 'Proposition créée (Brouillon)'); break;
             case 'PROPAL_VALIDATE':        $this->tagStateEvent('propal', $object->id, 'propal_valid', $user, 'Proposition validée (Ouverte)'); break;
-            case 'PROPAL_CLASSIFY_BILLED': $this->tagStateEvent('propal', $object->id, 'propal_billed', $user, 'Proposition classée facturée'); break;
-            
+            case 'PROPAL_CLASSIFY_BILLED':
+                $this->tagStateEvent('propal', $object->id, 'propal_billed', $user, 'Proposition classée facturée');
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'propal', (int) $object->id);
+                break;
+            case 'PROPAL_CANCEL':
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'propal', (int) $object->id);
+                break;
+
             case 'PROPAL_CLOSE_SIGNED':
                 $this->tagStateEvent('propal', $object->id, 'propal_signed', $user, 'Proposition signée');
                 // Execute standard hook legacy code below
@@ -201,7 +229,11 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
                 if ($action === 'PROPAL_CLOSE_REFUSED') {
                     $this->tagStateEvent('propal', $object->id, 'propal_notsigned', $user, 'Proposition refusée');
                 }
-                
+
+                // An answered proposal has nothing left to relaunch on the todo board
+                require_once __DIR__ . '/../../lib/reedcrm_todo.lib.php';
+                reedcrmTodoCloseSettledRelaunches($this->db, $user, 'propal', (int) $object->id);
+
                 if (isset($_SESSION['LAST_ACTION_CREATED'])) {
                     $actioncomm->fetch($_SESSION['LAST_ACTION_CREATED']);
                     if ($actioncomm->id > 0 && $actioncomm->elementtype == 'propal' && !empty(GETPOST('note_private'))) {

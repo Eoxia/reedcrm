@@ -19,7 +19,7 @@
 /**
  * \file    js/modules/pwa_nav.js
  * \ingroup reedcrm
- * \brief   PWA bottom nav: burger drawer + per-user favorite items (star toggle, AJAX persistence)
+ * \brief   PWA bottom nav: burger drawer + per-user favorite items (star toggle, AJAX persistence) + red badges
  */
 
 if (!window.reedcrm) {
@@ -169,7 +169,33 @@ window.reedcrm.pwaNav.renderBar = function () {
       'data-nav-slug': $(this).attr('data-nav-slug')
     });
     $navItem.append($link.find('i').clone());
-    $navItem.append($('<span>').text($link.find('span').text()));
+    $navItem.append($('<span>').text($link.children('span').not('.pwa-nav-badge').text()));
+    $navItem.append($link.find('.pwa-nav-badge').clone());
     $bar.append($navItem);
+  });
+};
+
+/**
+ * Show, update or remove the red badge of a nav item, in the bar and in the drawer.
+ *
+ * Mirrors reedcrm_pwa_nav_badge_html() (lib/reedcrm_pwa_nav.lib.php).
+ *
+ * @param  {string} slug  Nav item slug (data-nav-slug)
+ * @param  {number} count Counter value, 0 removes the badge
+ * @returns {void}
+ */
+window.reedcrm.pwaNav.setBadge = function (slug, count) {
+  var $targets = $('.pwa-nav-item[data-nav-slug="' + slug + '"], .pwa-nav-drawer-item[data-nav-slug="' + slug + '"] .pwa-nav-drawer-link');
+
+  $targets.each(function () {
+    var $badge = $(this).find('.pwa-nav-badge');
+    if (count <= 0) {
+      $badge.remove();
+      return;
+    }
+    if (!$badge.length) {
+      $badge = $('<span>', {'class': 'pwa-nav-badge'}).appendTo(this);
+    }
+    $badge.text(count > 99 ? '99+' : count);
   });
 };

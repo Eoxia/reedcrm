@@ -19,7 +19,8 @@
 /**
  * \file    js/modules/pwa_call_list.js
  * \ingroup reedcrm
- * \brief   PWA call list view: copy phone number to clipboard with visual feedback
+ * \brief   PWA call list view: copy phone number to clipboard with visual feedback, log the call, unlink a line, counters and nav badge sync.
+ *          The arrows moving a card are handled by js/modules/call_list.js, as on the call list card.
  */
 
 if (!window.reedcrm) {
@@ -35,6 +36,32 @@ window.reedcrm.pwaCallList = {};
  */
 window.reedcrm.pwaCallList.init = function () {
   window.reedcrm.pwaCallList.event();
+  window.reedcrm.pwaCallList.watchToCallCount();
+};
+
+/**
+ * Keep the header counters, and the nav badge on the user's default call list, in sync
+ * while lines are unlinked.
+ *
+ * The unlink button removes the card, so watch the container instead of hooking into its AJAX call.
+ *
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.watchToCallCount = function () {
+  var container = document.querySelector('.pwa-call-list-container');
+  if (!container || !window.MutationObserver) {
+    return;
+  }
+  var isDefaultList = container.dataset.defaultList === '1';
+
+  new MutationObserver(function () {
+    var toCallCount = container.querySelectorAll('.pwa-call-card[data-status="0"]').length;
+    $('.pwa-call-list-to-call-count').text(toCallCount);
+    $('.pwa-call-list-total-count').text(container.querySelectorAll('.pwa-call-card').length);
+    if (isDefaultList && window.reedcrm.pwaNav) {
+      window.reedcrm.pwaNav.setBadge('call_list', toCallCount);
+    }
+  }).observe(container, {childList: true});
 };
 
 /**
@@ -44,7 +71,98 @@ window.reedcrm.pwaCallList.init = function () {
  */
 window.reedcrm.pwaCallList.event = function () {
   $(document).on('click', '[data-action="copy-phone"]', window.reedcrm.pwaCallList.copyPhone);
+  $(document).on('click', '.pwa-call-list-container .pwa-call-btn-call', window.reedcrm.pwaCallList.logCall);
+  $(document).on('click', '[data-action="unlink-line"]', window.reedcrm.pwaCallList.unlinkLine);
   $(document).on('change', '#pwa-call-list-select', window.reedcrm.pwaCallList.switchList);
+  $(window).on('pageshow', window.reedcrm.pwaCallList.resetListSelector);
+};
+
+/**
+ * Record the call as an event of the agenda when the number is tapped, if the setup asks for it
+ * (REEDCRM_CALL_LIST_CREATE_ACTIONCOMM). The link itself goes on dialling. Once recorded, the
+ * card shows it as its last call.
+ *
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.logCall = function () {
+  var $container = $(this).closest('.pwa-call-list-container');
+  if ($container.attr('data-create-actioncomm') !== '1') {
+    return;
+  }
+
+  var $card = $(this).closest('.pwa-call-card');
+  $.ajax({
+    url: $container.attr('data-actioncomm-url'),
+    type: 'POST',
+    dataType: 'json',
+    data: {line_id: $card.attr('data-line-id'), token: $container.attr('data-token')},
+    success: function (data) {
+      if (data && data.success && data.last_call) {
+        $card.find('.pwa-call-last-call').removeClass('hideobject').attr('title', data.last_call_label || '');
+        $card.find('.pwa-call-last-call-text').text(data.last_call);
+      }
+    }
+  });
+};
+
+/**
+ * Remove the line of the card from the call list, after confirmation.
+ *
+ * Once the last card is gone, reload so the page shows its empty state.
+ *
+ * @param  {Event} e Click event
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.unlinkLine = function (e) {
+  e.preventDefault();
+
+  var $btn       = $(this);
+  var $card      = $btn.closest('.pwa-call-card');
+  var $container = $btn.closest('.pwa-call-list-container');
+  if ($btn.hasClass('loading') || !window.confirm($container.attr('data-unlink-confirm'))) {
+    return;
+  }
+
+  $btn.addClass('loading');
+  $.ajax({
+    url: $container.attr('data-unlink-url'),
+    type: 'POST',
+    data: {line_id: $card.attr('data-line-id'), token: $container.attr('data-token')},
+    dataType: 'json',
+    success: function (data) {
+      if (!data.success) {
+        window.reedcrm.pwaCallList.showError($card, data.error || $container.attr('data-unlink-error'));
+        return;
+      }
+      $card.fadeOut(200, function () {
+        $card.remove();
+        if (!$container.find('.pwa-call-card').length) {
+          window.location.reload();
+        }
+      });
+    },
+    error: function () {
+      window.reedcrm.pwaCallList.showError($card, $container.attr('data-unlink-error'));
+    },
+    complete: function () {
+      $btn.removeClass('loading');
+    }
+  });
+};
+
+/**
+ * Show an error at the bottom of a card for a few seconds.
+ *
+ * @param  {Object} $card   jQuery call card
+ * @param  {String} message Error message
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.showError = function ($card, message) {
+  var $error = $card.find('.pwa-call-error');
+  $error.text(message).show();
+  setTimeout(function () {
+    $error.hide();
+  }, 3000);
 };
 
 /**
@@ -56,6 +174,27 @@ window.reedcrm.pwaCallList.switchList = function () {
   var listId = $(this).val();
   if (listId) {
     window.location.href = '?id=' + listId;
+  }
+};
+
+/**
+ * Put the selector back on the call list the page displays when the browser serves the page again from its cache
+ * on a back navigation: the page keeps the list picked before leaving it, while it still displays the previous one.
+ *
+ * @param {Event} event pageshow event
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.resetListSelector = function (event) {
+  if (!event.originalEvent || !event.originalEvent.persisted) {
+    return;
+  }
+  var $select = $('#pwa-call-list-select');
+  var $displayedList = $select.find('option').filter(function () {
+    return this.defaultSelected;
+  });
+  if ($displayedList.length) {
+    // The namespace refreshes select2 without the change handler, which would leave the page again
+    $select.val($displayedList.val()).trigger('change.select2');
   }
 };
 

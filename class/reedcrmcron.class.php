@@ -37,6 +37,16 @@ class ReedcrmCron
     public string $output = '';
 
     /**
+     * @var string Error read by the cron manager when a job fails
+     */
+    public string $error = '';
+
+    /**
+     * @var string[] Errors read by the cron manager when a job fails
+     */
+    public array $errors = [];
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -51,7 +61,7 @@ class ReedcrmCron
      *
      * @param  string    $className Object className
      * @param  string    $filter    Filter
-     * @return int                  0 < if KO, > 0 if OK
+     * @return int                  0 if OK, -1 if at least one object could not be updated (listed in $this->errors)
      * @throws Exception
      */
     public function updateNotationObjectContacts(string $className, string $filter = ''): int
@@ -63,24 +73,56 @@ class ReedcrmCron
         require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture-rec.class.php';
 
         // Load Saturne libraries
-        require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+        dol_include_once('/saturne/lib/object.lib.php');
 
         // Load ReedCRM libraries
         require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
         $objects = saturne_fetch_all_object_type($className, '', '', 0, 0, ['customsql' => 't.entity = ' . $conf->entity . ' ' . $filter]);
 
-        if (is_array($objects) &&!empty($objects)) {
+        if (is_array($objects) && !empty($objects)) {
+            $nbUpdated = 0;
             foreach ($objects as $object) {
                 $result = set_notation_object_contact($object);
                 if ($result < 0) {
-                    return -1;
+                    // Keep going: one refused object (ex. empty required extrafield) must not block the others
+                    $objectErrors   = array_filter(array_merge([$object->error], $object->errors));
+                    $objectErrors   = $objectErrors ?: [$langs->transnoentities('ErrorUnknown')];
+                    $this->errors[] = ($object->ref ?: $object->id) . ' : ' . implode(', ', array_unique($objectErrors));
+                } else {
+                    $nbUpdated++;
                 }
             }
-            $this->output = $langs->transnoentities('NotationObjectContactsUpdated', count($objects),  $langs->transnoentities($className . 'Mins'));
+            $this->output = $langs->transnoentities('NotationObjectContactsUpdated', $nbUpdated, $langs->transnoentities($className . 'Mins'));
         } else {
             $this->output = $langs->transnoentities('NoObject', $langs->transnoentities($className . 'Min'));
         }
+        return empty($this->errors) ? 0 : -1;
+    }
+
+    /**
+     * Tag the signed proposals not billed yet and untag the billed ones (Cronjob)
+     *
+     * Same synchronisation as the button of the proposals setup page, so the tag follows the invoices
+     * made since the last run without anybody clicking it.
+     *
+     * @return int 0 if OK, < 0 if KO
+     */
+    public function syncPropalUnbilledTag(): int
+    {
+        global $langs, $user;
+
+        require_once __DIR__ . '/../lib/reedcrm_propal_unbilled.lib.php';
+
+        $langs->load('reedcrm@reedcrm');
+
+        $result = reedcrmPropalUnbilledSync($this->db, reedcrmPropalUnbilledGetTagID($this->db, $user));
+        if (!is_array($result)) {
+            $this->error = $langs->transnoentities('PropalUnbilledSyncError');
+            return -1;
+        }
+
+        $this->output = $langs->transnoentities('PropalUnbilledSyncDone', (string) $result['tagged'], (string) $result['untagged']);
         return 0;
     }
 }

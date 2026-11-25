@@ -91,7 +91,7 @@ foreach ($days as $day) {
 
 // Prepare JS arrays
 $urlBase           = dol_buildpath('/projet/list.php', 1);
-$currentPageUrl    = dol_buildpath('/custom/reedcrm/view/frontend/pwa_home.php', 1);
+$currentPageUrl    = dol_buildpath('/reedcrm/view/frontend/pwa_home.php', 1);
 $jsLabels          = [];
 $jsCounts          = [];
 $jsCounts50        = [];

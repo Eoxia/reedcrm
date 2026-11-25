@@ -1,0 +1,243 @@
+/* Recurring invoices follow-up (view/recurringinvoicefollowup_list.php): month navigation, figures,
+   chart and movements of the subscriptions */
+
+.rcf-dash {
+  margin: 0 0 14px;
+}
+
+.rcf-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 1.1em;
+
+  .rcf-month {
+    font-weight: bold;
+    text-transform: capitalize;
+    min-width: 150px;
+    text-align: center;
+  }
+
+  a {
+    text-decoration: none;
+    padding: 4px 10px;
+    border: 1px solid var(--colortopbordertitle1, #ccc);
+    border-radius: 7px;
+
+    &:hover {
+      border-color: #2f6f9f;
+      color: #2f6f9f;
+    }
+  }
+
+  select {
+    padding: 5px 9px;
+    border: 1px solid var(--colortopbordertitle1, #ccc);
+    border-radius: 7px;
+    background: var(--colorbacklinepair2, #fff);
+    font-size: .95em;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #2f6f9f;
+    }
+  }
+}
+
+.rcf-datesel {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.rcf-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 10px;
+}
+
+.rcf-tile {
+  position: relative;
+  overflow: hidden;
+  padding: 10px 12px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  &:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #2f6f9f;
+  }
+
+  &.warn:before {
+    background: #c8871a;
+  }
+
+  &.crit:before {
+    background: #cf4257;
+  }
+
+  &.good:before {
+    background: #2e9e6c;
+  }
+
+  .k {
+    font-size: .82em;
+    color: #777;
+    font-weight: 600;
+  }
+
+  .v {
+    font-size: 1.7em;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  &.warn .v {
+    color: #c8871a;
+  }
+
+  &.crit .v {
+    color: #cf4257;
+  }
+
+  &.good .v {
+    color: #2e9e6c;
+  }
+}
+
+.rcf-chartbox {
+  overflow: hidden;
+  margin: 8px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+}
+
+.rcf-charttitle {
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: .9em;
+  color: #555;
+}
+
+.rcf-canvaswrap {
+  position: relative;
+  height: 230px;
+  width: 100%;
+
+  canvas {
+    max-height: 230px;
+  }
+}
+
+.rcf-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border: 1px solid;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: .86em;
+  white-space: nowrap;
+
+  &.done {
+    background: #e6f5ee;
+    color: #1b7048;
+    border-color: #a9dcc5;
+  }
+
+  &.todo {
+    background: #fdf3e0;
+    color: #8f5c0d;
+    border-color: #f0d3a0;
+  }
+
+  &.late {
+    background: #fdeaed;
+    color: #a02536;
+    border-color: #f2b8c1;
+  }
+}
+
+.rcf-tilelink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    border-color: #2f6f9f;
+  }
+}
+
+.rcf-tileon {
+  box-shadow: 0 0 0 2px #2f6f9f inset;
+}
+
+.rcf-mvt {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin: 8px 0 14px;
+}
+
+.rcf-mvtbox {
+  overflow: hidden;
+  border: 1px solid var(--colortopbordertitle1, #ddd);
+  border-radius: 8px;
+  background: var(--colorbacklinepair2, #fff);
+
+  &.in .rcf-mvthead {
+    color: #2e9e6c;
+  }
+
+  &.out .rcf-mvthead {
+    color: #cf4257;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  td {
+    padding: 5px 12px;
+    border-top: 1px solid var(--colortopbordertitle1, #f0f0f0);
+    font-size: .92em;
+
+    &.a {
+      text-align: right;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+  }
+}
+
+.rcf-mvthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--colortopbordertitle1, #eee);
+  font-weight: 600;
+
+  .amt {
+    font-size: 1.05em;
+  }
+}
+
+.rcf-mvtempty {
+  padding: 12px;
+  text-align: center;
+}

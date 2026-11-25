@@ -135,7 +135,8 @@ if (empty($reshook)) {
 $title   = $langs->trans('RecurringInvoiceFollowup') . (dol_strlen($object->ref) > 0 && $action != 'create' ? ' ' . $object->ref : '');
 $helpUrl = '';
 
-saturne_header(1, '', $title, $helpUrl);
+// No media of this page goes through the media library: its gallery would only weigh on the page
+saturne_header(0, '', $title, $helpUrl);
 
 // Fields shown in the create/update forms (editable, visible on form).
 $formFields = ['fk_soc', 'fk_facture_rec', 'period', 'prestation', 'montant_ttc', 'date_derniere_facture', 'facture_creee', 'facture_envoyee', 'facture_payee', 'paiement_ok', 'date_relance', 'nb_relances', 'client_contacte', 'date_contact', 'temps_sav', 'digirisk_existant', 'digirisk_ajour', 'acces_ok', 'version_dolibarr', 'version_digirisk', 'date_maj_du', 'dernier_audit_du', 'besoin', 'proposition', 'reaction', 'montant_pr', 'commentaire'];

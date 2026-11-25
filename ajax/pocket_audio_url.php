@@ -40,7 +40,7 @@ if (file_exists('../reedcrm.main.inc.php')) {
     die('Include of reedcrm main fails');
 }
 
-require_once __DIR__ . '/../class/pocketapi.class.php';
+require_once __DIR__ . '/../class/pocketaccount.class.php';
 require_once __DIR__ . '/../class/pocketrecording.class.php';
 
 global $db, $langs, $user;
@@ -63,8 +63,9 @@ if ($id <= 0 || $recording->fetch($id) <= 0) {
 }
 
 // The URL Pocket signs is short lived, so it is resolved when the user actually presses play
-// rather than on every card render, and it is never stored.
-$pocketApi = new PocketApi($db);
+// rather than on every card render, and it is never stored. Only the account holding the
+// recording may sign it.
+$pocketApi = PocketAccount::getForRecording($db, $recording)->getApi();
 $audioUrl  = $pocketApi->getAudioUrl($recording->pocket_id);
 
 if (empty($audioUrl)) {

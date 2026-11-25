@@ -1,0 +1,163 @@
+@use 'tokens' as *;
+
+/* ReedCRM modern theme: Pocket recording card (summary, transcript, audio, Pocket blocks, linked
+   objects) and the attach form of the Pocket tab of the business objects */
+
+#{$rc-scope} {
+  .reedcrm-pocket-summary,
+  .reedcrm-pocket-transcript {
+    padding: 16px 20px;
+    @include rc-card;
+    color: $rc-text;
+  }
+
+  .reedcrm-pocket-summary {
+    h1,
+    h2,
+    h3 {
+      color: $rc-text;
+    }
+  }
+
+  .reedcrm-pocket-summary-block[data-url] .reedcrm-pocket-summary:hover {
+    border-color: $rc-primary;
+  }
+
+  .reedcrm-pocket-summary-edit {
+    border-color: $rc-primary;
+    border-radius: $rc-radius-lg;
+    box-shadow: $rc-ring;
+  }
+
+  .reedcrm-pocket-audio-load {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: $rc-radius;
+    background: $rc-primary;
+    box-shadow: 0 1px 2px rgba(13, 138, 255, 0.35);
+    font-size: 13px;
+    font-weight: 600;
+    transition: background-color $rc-transition;
+
+    &:hover {
+      background: $rc-primary-strong;
+      opacity: 1;
+    }
+
+    &.error {
+      background: $rc-danger;
+    }
+  }
+
+  .reedcrm-pocket-status-menu,
+  .reedcrm-pocket-object-results {
+    border-color: $rc-border;
+    border-radius: $rc-radius;
+    box-shadow: $rc-shadow-hover;
+
+    li:hover,
+    li[data-key]:hover {
+      background: $rc-surface-soft;
+    }
+  }
+
+  /* ---- Pocket blocks embedded in the summary ---- */
+
+  .reedcrm-pocket-block {
+    border-color: $rc-border;
+    border-left: 3px solid $rc-primary;
+    border-radius: $rc-radius;
+    background: $rc-surface;
+  }
+
+  .reedcrm-pocket-block-title,
+  .reedcrm-pocket-timeline-step,
+  .reedcrm-pocket-tree-label {
+    color: $rc-text;
+  }
+
+  .reedcrm-pocket-chart-track {
+    background: $rc-border-soft;
+  }
+
+  .reedcrm-pocket-chart-value,
+  .reedcrm-pocket-timeline-detail,
+  .reedcrm-pocket-tree-text {
+    color: $rc-muted;
+  }
+
+  .reedcrm-pocket-timeline li::before {
+    background: $rc-primary;
+    font-weight: 700;
+  }
+
+  .reedcrm-pocket-flow-node,
+  .reedcrm-pocket-tree-answer {
+    border-color: $rc-border;
+    border-radius: $rc-radius-pill;
+    background: $rc-surface-soft;
+  }
+
+  .reedcrm-pocket-flow-node + .reedcrm-pocket-flow-node::before,
+  .reedcrm-pocket-tree-target::before {
+    color: $rc-primary;
+  }
+
+  /* ---- Attach form above the linked objects ---- */
+
+  .reedcrm-pocket-link-form {
+    gap: 10px;
+    color: $rc-text-soft;
+
+    input.button {
+      height: 32px;
+      margin: 0;
+      padding: 0 16px !important;
+      border: 1px solid transparent;
+      border-radius: $rc-radius;
+      background: $rc-primary;
+      color: #ffffff !important;
+      font-family: $rc-font;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: none;
+
+      &:disabled {
+        border-color: $rc-border;
+        background: $rc-surface-soft;
+        color: $rc-faint !important;
+        opacity: 1;
+      }
+    }
+  }
+
+  /* ---- Action items ---- */
+
+  .pocket-action-progress {
+    .pocket-action-progress-bar {
+      background: $rc-border-soft;
+    }
+
+    .pocket-action-progress-fill {
+      background: $rc-primary;
+    }
+  }
+
+  .pocket-action-row td.pocket-action-col-date .pocket-action-due-date {
+    border-radius: $rc-radius-sm;
+
+    &:focus {
+      border-color: $rc-primary;
+    }
+  }
+
+  .pocket-action-create-event:not(.error) {
+    border-color: $rc-primary;
+    color: $rc-primary;
+
+    &:hover {
+      background: $rc-primary;
+      color: #ffffff;
+    }
+  }
+}

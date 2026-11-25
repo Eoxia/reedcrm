@@ -63,7 +63,7 @@ $subDir = 'tmp/' . saturne_get_upload_token($uploadContext);
     }
     </style>
     <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <?php print saturne_render_media_block('project', $subDir, 'quickcreation_', '', ['show_photo' => true, 'show_audio' => true]); ?>
+        <?php print reedcrm_quickcreation_media_block($subDir); ?>
     </div>
 
     <div class="media-logical-block block-actions" style="margin-left: auto;">

@@ -86,13 +86,13 @@ saturne_check_access($permissiontoread);
 
 // Only opportunities (projects) are exposed in the App for now; the desktop card handles the other types
 if ($fromType !== 'project' || !isModEnabled('project')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
 $object = new Project($db);
 if ($id <= 0 || $object->fetch($id) <= 0) {
-    accessforbidden($langs->trans('RecordNotFound'), 0);
+    accessforbidden($langs->trans('ErrorRecordNotFound'));
     exit;
 }
 $object->fetch_optionals();
@@ -102,7 +102,7 @@ $object->fetch_thirdparty();
  * Actions
  */
 
-$backUrl  = dol_buildpath('/custom/reedcrm/view/frontend/pwa_opportunity.php', 1);
+$backUrl  = dol_buildpath('/reedcrm/view/frontend/pwa_opportunity.php', 1);
 $backUrl .= '?from_id=' . (int) $object->id . '&from_type=project';
 if ($callListId > 0) {
     $backUrl .= '&call_list_id=' . $callListId;
@@ -111,6 +111,13 @@ if ($callListId > 0) {
 $eventProRedirectAfterEvent  = $backUrl;
 $eventProRedirectAfterTicket = $backUrl;
 
+// Voice note beside the description: recorded before the event exists, attached to it by add_event
+$eventProVoiceContext = reedcrm_eventpro_voice_context($fromType, (int) $object->id);
+$eventProVoiceSubDir  = reedcrm_eventpro_voice_subdir($eventProVoiceContext);
+if ($permissiontoadd) {
+    reedcrm_eventpro_voice_actions($action, $eventProVoiceSubDir);
+}
+
 $parameters = ['id' => $id];
 $resHook    = $hookmanager->executeHooks('doActions', $parameters, $object, $action); // Note that $action and $object may have been modified by some hooks
 if ($resHook < 0) {
@@ -118,7 +125,7 @@ if ($resHook < 0) {
 }
 
 if (empty($resHook)) {
-    // create_contact / add_event / create_ticket, shared with the desktop card (view/procard.php)
+    // create_contact / create_project / add_event / create_ticket, shared with the desktop card (view/procard.php)
     require __DIR__ . '/../../core/tpl/view/eventpro/eventpro_actions.tpl.php';
 }
 
@@ -129,11 +136,11 @@ if (empty($resHook)) {
 $title   = $langs->trans('QuickEventCreation');
 $helpUrl = 'FR:Module_ReedCRM';
 $moreJS  = [
-    '/custom/saturne/js/saturne.min.js',
-    '/custom/reedcrm/js/reedcrm.min.js',
-    '/custom/reedcrm/js/modules/eventpro.js'
+    '/saturne/js/saturne.min.js',
+    '/reedcrm/js/reedcrm.min.js',
+    '/reedcrm/js/modules/eventpro.js'
 ];
-$moreCSS = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreCSS = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -141,12 +148,13 @@ $conf->dol_hide_leftmenu = 1;
 llxHeader('', $title, $helpUrl, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa pwa-relaunch');
 
 $pwaHeaderCenterHtml  = '<a class="pwa-opp-back" href="' . dol_escape_htmltag($backUrl) . '">';
-$pwaHeaderCenterHtml .= '<i class="fas fa-arrow-left"></i> ' . dol_escape_htmltag($langs->trans('BackToOpportunity'));
+$pwaHeaderCenterHtml .= '<span class="pwa-opp-back-arrow"><i class="fas fa-arrow-left"></i></span>';
+$pwaHeaderCenterHtml .= '<span class="pwa-opp-back-label">' . dol_escape_htmltag($langs->trans('BackToOpportunity')) . '</span>';
 $pwaHeaderCenterHtml .= '</a>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
 if (empty($permissiontoadd)) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
@@ -161,7 +169,15 @@ require __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_opportunity_head.tpl.php
 // Keep the picked event type when switching tabs, otherwise the shortcut the user came from is lost
 $eventProTabExtraParams = '&actioncode=' . urlencode($actionCode) . ($callListId > 0 ? '&call_list_id=' . $callListId : '');
 
-require __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_relaunch_form.tpl.php';
+// The right-hand button of the relaunch widget asks for the short reminder form (#873)
+if (GETPOST('mode', 'aZ09') === 'reminder') {
+    require_once __DIR__ . '/../../lib/reedcrm_relaunch.lib.php';
+    require __DIR__ . '/../../core/tpl/view/eventpro/view_eventpro_reminder.tpl.php';
+} else {
+    // Printed beside the description by the note tab (view_eventpro_actioncomm_note.tpl.php)
+    $eventProVoiceBlock = reedcrm_eventpro_voice_block($eventProVoiceSubDir);
+    require __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_relaunch_form.tpl.php';
+}
 
 print '</div>';
 

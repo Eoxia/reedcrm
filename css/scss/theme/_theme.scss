@@ -1,0 +1,9 @@
+/* ReedCRM modern theme: the ReedCRM components on top of the shared theme of Saturne, imported last
+   so that it wins over the legacy partials. Every rule is scoped by $rc-scope (see _tokens.scss). */
+
+@use 'todo';
+@use 'opportunity';
+@use 'dashboard';
+@use 'calendar';
+@use 'pocket';
+@use 'eventpro';

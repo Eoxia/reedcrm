@@ -1,4 +1,133 @@
+.call-list-lines-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+
+    .call-list-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+}
+
+.call-list-lines-table {
+    td,
+    th {
+        vertical-align: middle;
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .call-list-source-cell {
+        max-width: 175px;
+
+        .call-list-source-ref {
+            white-space: nowrap;
+        }
+
+        .call-list-source-title {
+            display: block;
+            margin-top: 2px;
+            max-width: 165px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .call-list-order-reset {
+        color: #94a3b8;
+        cursor: pointer;
+
+        &.is-active,
+        &:hover {
+            color: #0284c7;
+        }
+    }
+
+    .call-list-drag-handle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        cursor: grab;
+        margin-right: 4px;
+        padding: 2px 3px;
+
+        &:hover {
+            color: #0284c7;
+        }
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
+    tr.call-list-sort-placeholder td {
+        height: 44px;
+        background: #e0f2fe !important;
+        border-top: 2px dashed #0284c7;
+        border-bottom: 2px dashed #0284c7;
+    }
+
+    .call-list-status-select {
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    .call-list-status-0 {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+
+    .call-list-status-1 {
+        background-color: #f0fdf4;
+        border-color: #86efac;
+        color: #15803d;
+    }
+
+    .call-list-status-2 {
+        background-color: #fef2f2;
+        border-color: #fca5a5;
+        color: #b91c1c;
+    }
+
+    .call-list-status-3 {
+        background-color: #fffbeb;
+        border-color: #fcd34d;
+        color: #a16207;
+    }
+
+    .reedcrm-call-link {
+        color: #0284c7;
+        font-weight: 500;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .saturne-inline-percent .contenteditable:empty,
+    .reedcrm-opp-cell-amount .contenteditable:empty {
+        display: inline-block;
+        min-width: 28px;
+        min-height: 18px;
+        border-bottom: 1px dashed #cbd5e1;
+    }
+}
+
+.call-list-add-box {
+    margin-top: 0;
+    width: 100%;
+    min-width: 0;
+}
+
 .call-list-add-form {
+    width: 100%;
+
     td {
         padding-right: 12px;
         vertical-align: middle;
@@ -8,6 +137,11 @@
         }
     }
 
+    .call-list-add-col-compact,
+    .call-list-add-col-submit {
+        width: 1%;
+    }
+
     #call-line-propal-wrap,
     #call-line-project-wrap {
         max-width: 300px;
@@ -15,6 +149,116 @@
         .select2-container {
             width: 300px !important;
         }
+    }
+
+    .call-list-phone-choices {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .call-list-phone-choice {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background: #f8fafc;
+        cursor: pointer;
+        font-size: 13px;
+        transition: border-color 0.15s ease, background-color 0.15s ease;
+
+        input[type="radio"] {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .call-list-phone-choice-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .call-list-phone-choice-num {
+            color: #334155;
+        }
+
+        &.is-selected {
+            border-color: #0284c7;
+            background: #f0f9ff;
+        }
+
+        &--opp {
+            cursor: default;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+
+            .call-list-phone-choice-row {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .call-list-phone-choice-label {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                margin: 0;
+            }
+        }
+
+        #call_line_manual_phone {
+            width: 185px;
+            max-width: 100%;
+
+            &.is-invalid-phone {
+                border-color: #dc2626;
+                box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+            }
+        }
+    }
+}
+
+.call-list-phone-error {
+    color: #dc2626;
+    font-size: 11px;
+    line-height: 1.25;
+    margin-top: 2px;
+}
+
+// Arrows of the call list card (js/modules/call_list.js): the swapped rows slide to their new place, the moved one over
+// its neighbour, then it flashes like a closed event row
+tr.call-list-line-row {
+    // Not an anchor of the scroll of the page: a row moved by its arrows made the browser scroll after it
+    overflow-anchor: none;
+
+    &.call-list-line-sliding {
+        position: relative;
+        transition: transform 0.25s ease;
+    }
+
+    &.call-list-line-moved {
+        z-index: 1;
+
+        > td {
+            animation: reedcrm-call-list-line-flash 1.5s ease-out;
+        }
+    }
+}
+
+// Held during the slide and a little after, then faded out
+@keyframes reedcrm-call-list-line-flash {
+    0%,
+    40%  { background-color: rgba(1, 71, 81, .18); }
+    100% { background-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    tr.call-list-line-row.call-list-line-sliding {
+        transition: none;
     }
 }
 
@@ -82,4 +326,212 @@
         }
     }
 
+    .reedcrm-call-list-phone-prompt {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        margin-left: 4px;
+
+        .reedcrm-call-list-phone-prompt-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .reedcrm-call-list-phone-input {
+            width: 185px;
+            padding: 3px 6px;
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+            font-size: 13px;
+            background: #fff;
+
+            &.is-invalid-phone {
+                border-color: #dc2626;
+                box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+            }
+        }
+
+        .reedcrm-call-list-phone-save {
+            background: #28a745;
+            border: 1px solid #28a745;
+            color: #fff;
+            border-radius: 4px;
+            padding: 3px 7px;
+            cursor: pointer;
+        }
+
+        .reedcrm-call-list-phone-cancel {
+            background: #fff;
+            border: 1px solid #cbd5e0;
+            color: #64748b;
+            border-radius: 4px;
+            padding: 2px 7px;
+            cursor: pointer;
+        }
+    }
+
+}
+
+// Call lists column of the opportunity list: one pill per list, the pen opens the checklist
+.reedcrm-call-lists-cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+
+    .reedcrm-call-lists-pills {
+        display: contents;
+    }
+
+    .reedcrm-call-list-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        max-width: 180px;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 0.85em;
+        line-height: 1.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-decoration: none;
+
+        &:hover {
+            background: #e0e7ff;
+        }
+
+        .fas {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+    }
+
+    .reedcrm-call-list-pill-archived {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .reedcrm-call-lists-edit {
+        border: 1px dashed #cbd5e1;
+        background: transparent;
+        color: #94a3b8;
+        border-radius: 999px;
+        width: 24px;
+        height: 22px;
+        padding: 0;
+        cursor: pointer;
+        font-size: 0.75em;
+
+        &:hover {
+            border-style: solid;
+            border-color: #6366f1;
+            color: #4f46e5;
+        }
+    }
+}
+
+.reedcrm-call-lists-popover {
+    position: absolute;
+    z-index: 1060;
+    min-width: 270px;
+    max-width: 320px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    font-size: 0.9em;
+
+    .reedcrm-call-lists-popover-title {
+        padding: 2px 6px 6px;
+        color: #64748b;
+        font-size: 0.8em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .reedcrm-call-lists-search {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 6px;
+    }
+
+    .reedcrm-call-lists-options {
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    .reedcrm-call-lists-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 6px;
+        border-radius: 5px;
+        cursor: pointer;
+
+        &:hover {
+            background: #f1f5f9;
+        }
+
+        input {
+            margin: 0;
+        }
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .reedcrm-call-list-phone-prompt {
+        margin-top: 6px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+
+        .reedcrm-call-list-phone-prompt-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .reedcrm-call-list-phone-input {
+            flex: 1;
+            min-width: 0;
+            padding: 3px 6px;
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+
+            &.is-invalid-phone {
+                border-color: #dc2626;
+            }
+        }
+
+        .reedcrm-call-list-phone-save {
+            background: #28a745;
+            border: 1px solid #28a745;
+            color: #fff;
+            border-radius: 4px;
+            padding: 3px 7px;
+            cursor: pointer;
+        }
+
+        .reedcrm-call-list-phone-cancel {
+            background: #fff;
+            border: 1px solid #cbd5e0;
+            color: #64748b;
+            border-radius: 4px;
+            padding: 2px 7px;
+            cursor: pointer;
+        }
+
+        .call-list-phone-error {
+            color: #dc2626;
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+    }
 }

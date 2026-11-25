@@ -304,21 +304,21 @@ print '</div></div>';
 print '<table class="border centpercent tableforfieldcreate">';
 
 // Type of event
-if ($conf->global->REEDCRM_EVENT_TYPE_CODE_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_TYPE_CODE_VISIBLE') > 0) {
     print '<tr><td class="titlefieldcreate fieldrequired"><label for="actioncode">' . $langs->trans('Type') . '</label></td>';
     print '<td>' . $formactions->select_type_actions(GETPOSTISSET('actioncode') ? GETPOST('actioncode', 'aZ09') : $conf->global->REEDCRM_EVENT_TYPE_CODE_VALUE, 'actioncode', 'systemauto', 0, -1, 0, 1) . '</td>';
     print '</tr>';
 }
 
 // Label
-if ($conf->global->REEDCRM_EVENT_LABEL_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_LABEL_VISIBLE') > 0) {
     print '<tr><td><label for="label">' . $langs->trans('Label') . '</label></td>';
     print '<td><input type="text" id="label" name="label" class="maxwidth500 widthcentpercentminusx" maxlength="' .getDolGlobalInt('REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE') . '" value="' . dol_escape_htmltag((GETPOSTISSET('label') ? GETPOST('label') : '')) . '"></td>';
     print '</tr>';
 }
 
 // Date start
-if ($conf->global->REEDCRM_EVENT_DATE_START_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_DATE_START_VISIBLE') > 0) {
     print '<tr><td class="titlefieldcreate fieldrequired">' . $langs->trans('DateStart') . '</td>';
     $dateStart = dol_mktime(GETPOST('datestarthour', 'int'), GETPOST('datestartmin', 'int'), GETPOST('datestartsec', 'int'), GETPOST('datestartmonth', 'int'), GETPOST('datestartday', 'int'), GETPOST('datestartyear', 'int'), 'tzuser');
     print '<td>' . $form->selectDate((!empty($dateStart) ? $dateStart : dol_now()), 'datestart', 1, 1, 1, 'action', 1, 2, 0, 'fulldaystart', '', '', '', 1, '', '', 'tzuserrel') . '</td>';
@@ -326,7 +326,7 @@ if ($conf->global->REEDCRM_EVENT_DATE_START_VISIBLE > 0) {
 }
 
 // Date end
-if ($conf->global->REEDCRM_EVENT_DATE_END_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_DATE_END_VISIBLE') > 0) {
     print '<tr><td class="titlefieldcreate">' . $langs->trans('DateEnd') . '</td>';
     $dateEnd = dol_mktime(GETPOST('dateendhour', 'int'), GETPOST('dateendmin', 'int'), GETPOST('dateendsec', 'int'), GETPOST('dateendmonth', 'int'), GETPOST('dateendday', 'int'), GETPOST('dateendyear', 'int'), 'tzuser');
     print '<td>' . $form->selectDate($dateEnd, 'dateend', 1, 1, 1, 'action', 1, 0, 0, 'fulldaystart', '', '', '', 1, '', '', 'tzuserrel') . '</td>';
@@ -334,7 +334,7 @@ if ($conf->global->REEDCRM_EVENT_DATE_END_VISIBLE > 0) {
 }
 
 // Status
-if ($conf->global->REEDCRM_EVENT_STATUS_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_STATUS_VISIBLE') > 0) {
     print '<tr><td class="titlefieldcreate"><label for="status">' . $langs->trans('Status') . '</label></td>';
     $listofstatus = [
         'NA' => $langs->trans('ActionNotApplicable'),
@@ -363,7 +363,7 @@ if (isModEnabled('project') && $fromtype == 'project') {
 
     if (!empty($conf->global->PROJECT_USE_OPPORTUNITIES)) {
         // Opportunity status
-        if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE > 0) {
+        if (getDolGlobalInt('REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE') > 0) {
             print '<tr><td>' . $langs->trans('OpportunityStatus') . '</td>';
             print '<td>' . $formproject->selectOpportunityStatus('opp_status', $project->opp_status, 0, 0, 0, '', 0, 1) . '</td>';
             print '</tr>';
@@ -371,7 +371,7 @@ if (isModEnabled('project') && $fromtype == 'project') {
     }
 
     // TimeSpent
-    if ($conf->global->REEDCRM_TASK_TIMESPENT_VISIBLE > 0) {
+    if (getDolGlobalInt('REEDCRM_TASK_TIMESPENT_VISIBLE') > 0) {
         print '<tr><td class="titlefieldcreate"><label for="timespent">' . $langs->trans('TimeSpent') . '</label></td>';
         print '<td><input type="number" id="timespent" name="timespent" class="maxwidth100 widthcentpercentminusx" value="' . (GETPOSTISSET('timespent') ? GETPOST('timespent') : $conf->global->REEDCRM_TASK_TIMESPENT_VALUE) . '"></td>';
         print '</tr>';
@@ -379,7 +379,7 @@ if (isModEnabled('project') && $fromtype == 'project') {
 }
 
 // Description
-if ($conf->global->REEDCRM_EVENT_DESCRIPTION_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_DESCRIPTION_VISIBLE') > 0) {
     print '<tr><td class="titlefieldcreate"><label for="description">' . $langs->trans('Description') . '</label></td><td>';
     require_once DOL_DOCUMENT_ROOT.'/core/class/doleditor.class.php';
     $doleditor = new DolEditor('note', (GETPOSTISSET('note') ? GETPOST('note', 'restricthtml') : ''), '', 120, 'dolibarr_notes', 'In', true, true, isModEnabled('fckeditor'), ROWS_4, '90%');
@@ -388,7 +388,7 @@ if ($conf->global->REEDCRM_EVENT_DESCRIPTION_VISIBLE > 0) {
 }
 
 // Categories
-if (isModEnabled('categorie') && $conf->global->REEDCRM_EVENT_CATEGORIES_VISIBLE > 0) {
+if (isModEnabled('categorie') && getDolGlobalInt('REEDCRM_EVENT_CATEGORIES_VISIBLE') > 0) {
     print '<tr><td>' . $langs->trans('Categories') . '</td><td>';
     $cate_arbo = $form->select_all_categories(Categorie::TYPE_ACTIONCOMM, '', 'parent', 64, 0, 1);
     $category->fetch($conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG);
