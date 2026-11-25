@@ -40,7 +40,7 @@ if (file_exists(__DIR__ . '/../saturne/saturne.main.inc.php')) {
 } elseif (file_exists(__DIR__ . '/../../saturne/saturne.main.inc.php')) {
     require_once __DIR__ . '/../../saturne/saturne.main.inc.php';
 } else {
-    die('Include of saturne main fails');
+    die('Include of saturne main fails: install Saturne next to this module (same parent folder, usually custom/; if this module is a symbolic link, next to its target)');
 }
 
 require_once __DIR__ . '/../lib/reedcrm_function.lib.php';

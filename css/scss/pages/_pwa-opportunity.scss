@@ -7,22 +7,48 @@
     padding-bottom: 110px;
 }
 
-/* Back link injected in the fixed App header */
+/* Back link injected in the fixed App header: the arrow is a round button sized for a thumb,
+   the label wraps on two lines (as the header of the call list) so the "x/y to call" count stays visible */
+.pwa-header-center {
+    min-width: 0;
+}
+
 .pwa-opp-back {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     max-width: 100%;
-    padding: 4px 10px;
-    border-radius: 12px;
+    min-width: 0;
+    padding: 4px 12px 4px 4px;
+    border-radius: 22px;
     background: #e2e8f0;
     color: #475569 !important;
     font-size: 13px;
     font-weight: bold;
+    line-height: 1.25;
     text-decoration: none !important;
-    white-space: nowrap;
+}
+
+.pwa-opp-back-arrow {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    color: #1e293b;
+    font-size: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.pwa-opp-back-label {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 /* ------------------------------------------------------------------ Head */
@@ -183,6 +209,12 @@
     white-space: nowrap;
 }
 
+/* Event still to do and past its date: red, as the late flag of the todo cards */
+.pwa-opp-event-date--late {
+    color: #e05353;
+    font-weight: 700;
+}
+
 .pwa-opp-event-edit {
     /* Out of the flow: it would otherwise wrap onto an empty line of its own */
     position: absolute;
@@ -218,51 +250,7 @@
     border-top: 1px solid #e2e8f0;
     box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
 
-    .reedcrm-relaunch-buttons {
-        justify-content: space-between;
-        gap: 12px;
-    }
-
-    /* Bigger hit area than the desktop list widget: this bar is the main action of the page */
-    .reedcrm-relaunch-button {
-        flex: 1;
-        min-width: 0;
-        height: 46px;
-        border-radius: 10px;
-        padding: 0;
-        color: #fff;
-        overflow: visible;
-    }
-
-    .reedcrm-relaunch-btn-content {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        height: 100%;
-        font-size: 18px;
-    }
-
-    .count-zero .reedcrm-relaunch-btn-content {
-        opacity: 0.75;
-    }
-
-    .reedcrm-relaunch-add {
-        position: absolute;
-        top: -10px;
-        right: -8px;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        background: #1e293b;
-        border: 2px solid #fff;
-        color: #fff !important;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none !important;
-    }
+    /* The two buttons inside the bar are laid out with the widget, in _relaunch-widget.scss */
 }
 
 /* --------------------------------------------------------- Relaunch form */
@@ -286,12 +274,41 @@
 
     input[type="text"],
     input[type="email"],
+    input[type="number"],
     textarea,
     select {
         padding: 10px 12px;
         border: 1px solid #cbd5e1;
         border-radius: 8px;
         font-size: 16px; /* < 16px makes iOS Safari zoom on focus */
+    }
+
+    /* Every field at one height, the one of the "+" beside the contact: eldy sets the text fields and the
+       select2 boxes at 28px, while the native selects (hour, minute) grew with their padding */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    select,
+    .select2-container .select2-selection--single {
+        box-sizing: border-box;
+        height: 42px;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .select2-container .select2-selection--single {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+
+        .select2-selection__rendered {
+            padding-left: 12px;
+            font-size: 16px;
+            line-height: 40px;
+        }
+
+        .select2-selection__arrow {
+            height: 40px;
+        }
     }
 
     textarea {
@@ -308,24 +325,55 @@
         margin: 0;
         padding: 0;
 
+        /* !important: Saturne pads every cell of a grid with .5em !important, which set the note tab off
+           the sections above it. The space between the fields is the one of the sections */
         > div {
             width: 100%;
-            margin: 0;
-            padding: 0;
+            margin: 0 0 16px;
+            padding: 0 !important;
+        }
+
+        /* The fields of the automatic reminder are a cell of that grid too, with the padding of their panel */
+        > .reminder-fields {
+            padding: 12px !important;
         }
     }
 
-    /* The tab bar is desktop-sized by default */
+    /* The tab bar is desktop-sized by default: a soft segmented control, as on the desktop card */
     .tabs {
         display: flex;
-        margin: 16px 0 12px;
-        border-bottom: 1px solid #e2e8f0;
+        gap: 4px;
+        margin: 4px 0 16px;
+        padding: 4px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
         overflow-x: auto;
 
         .tabsElem {
             flex: 1 1 0;
             min-width: 0;
             text-align: center;
+        }
+
+        div.tab {
+            margin: 0;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+        }
+
+        /* !important: eldy underlines the active tab and spaces it with !important */
+        div.tab.tabactive {
+            margin: 0 !important;
+            border-bottom: none !important;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .1);
+
+            a.tab {
+                color: #2563eb;
+                font-weight: 600;
+            }
         }
 
         .tab {
@@ -356,6 +404,17 @@
         display: block;
         width: 100%;
 
+        /* The theme gives the rows and their cells the height of one line of the table (2.2em, and 40px
+           !important under 570px): stacked, the label and its field overflowed on the next row */
+        tr,
+        td {
+            height: auto !important;
+        }
+
+        tr {
+            margin-bottom: 12px;
+        }
+
         tbody,
         tr,
         td {
@@ -367,10 +426,16 @@
             padding-right: 0 !important;
         }
 
-        td.titlefield {
-            padding-bottom: 2px !important;
-            font-weight: 600;
+        /* Labels written like the titles of the sections of the form (pages/_relaunch-widget.scss), the one of
+           the description included, which the template puts in a td.tdtop */
+        td.titlefield,
+        td.tdtop {
+            padding-bottom: 6px !important;
             color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            text-transform: uppercase;
         }
     }
 
@@ -382,12 +447,17 @@
         max-width: 100% !important;
     }
 
+    /* Same button as the direct reminder form */
     .butAction {
-        display: block;
-        width: 100%;
-        margin: 16px 0 0;
-        padding: 14px;
-        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 20px 0 0;
+    }
+
+    /* Titles of the shared note tab, hidden on the desktop card (pages/_event-pro.scss) */
+    .eventpro-app-only.reedcrm-reminder-label-picto {
+        display: inline-block;
     }
 }
 
@@ -410,7 +480,8 @@
     }
 }
 
-.reedcrm-contact-field-wrapper .reedcrm-add-contact-btn {
+// Scoped to the mobile form: the desktop eventPro card has its own button style (pages/_event-pro.scss)
+.pwa-relaunch-form .reedcrm-add-contact-btn {
     flex: 0 0 auto;
     width: 42px;
     height: 42px;
@@ -420,6 +491,17 @@
     color: #fff;
     font-size: 16px;
     cursor: pointer;
+}
+
+// Ticket tab: a null flex basis beats the forced 100% width of the PWA selects, which would push the "+"
+// on its own line. The button keeps the desktop style, as high as the select: the stacked ticket rows
+// have a fixed height, a 42px button would overflow on the next one.
+.pwa-relaunch-form .reedcrm-project-field-wrapper {
+    > select,
+    > .select2-container {
+        flex: 1;
+        min-width: 0;
+    }
 }
 
 .pwa-relaunch-form .reedcrm-add-contact-form {
@@ -442,48 +524,99 @@
     margin-top: 12px;
 }
 
-.pwa-relaunch-row {
+/* When: the date and the hour of the event, in the grey panel of the direct reminder form */
+.pwa-relaunch-when {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #f5f8f9;
 
-    .pwa-relaunch-type {
-        flex: 1 1 100%;
-    }
-
-    .pwa-relaunch-date {
-        flex: 1 1 100%;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 6px;
-
-        input,
-        select {
-            width: auto !important;
-        }
+    input,
+    select {
+        width: auto !important;
+        background: #fff;
     }
 }
 
-.pwa-relaunch-form .reminder-fields {
-    margin-top: 12px;
-    padding: 12px;
-    border-left: 3px solid #3b82f6;
-    background: #f8fafc;
+/* jQuery UI puts the calendar button inside the box of the date, after the field: the box makes room for it,
+   or the hour slid over it. The note tab moves the one of its own dates out (view_eventpro_actioncomm_note.tpl.php),
+   not the other tabs. */
+.pwa-relaunch-form .divfordateinput {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
 
+/* Status: titled like the other sections (pages/_relaunch-widget.scss), the select under its title */
+.pwa-relaunch-form .event-status-row {
+    margin-bottom: 16px;
+
+    label {
+        display: block;
+    }
+
+    /* Narrow like the "Who" of the reminder form: the form stretches every select2 to the whole width,
+       while its box stays at the 200px of the select */
+    select,
+    .select2-container {
+        width: auto !important;
+        min-width: 200px;
+    }
+}
+
+/* The box asking for a reminder reads as a choice of its own, its fields in the grey panel under it */
+.pwa-relaunch-form .eventpro-reminder-toggle {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+    color: #334155;
+}
+
+.pwa-relaunch-form .reminder-fields {
+    border-radius: 6px;
+    background: #f5f8f9;
+
+    > div {
+        margin-bottom: 12px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .reminder-type-row,
     .reminder-date-row,
     .reminder-user-row {
         display: flex;
         align-items: center;
         flex-wrap: wrap;
         gap: 6px;
-        margin-top: 8px;
 
         input,
         select {
             width: auto !important;
         }
+
+        // Its title takes a line of its own, the field goes under it
+        .eventpro-field-title {
+            flex: 0 0 100%;
+        }
+    }
+
+    /* Narrow like the "Who" of the reminder form, see the status above */
+    .select2-container {
+        width: auto !important;
+        min-width: 200px;
+    }
+
+    // The picto standing for the title on the desktop card
+    .reminder-user-row > .fa-user {
+        display: none;
     }
 }

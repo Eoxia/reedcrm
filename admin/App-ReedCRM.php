@@ -51,14 +51,14 @@ $action = GETPOST('action', 'alpha');
 $form = new Form($db);
 
 // Security check - Protection if external user
-$permissionToRead = $user->rights->reedcrm->adminpage->read;
+$permissionToRead = $user->hasRight('reedcrm', 'adminpage', 'read');
 saturne_check_access($permissionToRead);
 
 /*
  * Actions
  */
 
-$startUrl = dol_buildpath('custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 3);
+$startUrl = dol_buildpath('/reedcrm/view/frontend/quickcreation.php?source=pwa', 3);
 
 if ($action == 'generate_QRCode') {
     $urlToEncode = GETPOST('urlToEncode');

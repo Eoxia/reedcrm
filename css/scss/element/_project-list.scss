@@ -1,3 +1,22 @@
+// Photo column of the opportunity list: same size and corners as the Coordonnées block of the row.
+// The thumb is rendered inline by Saturne, it sits on the text baseline and leaves a gap under it
+.reedcrm-list-photo {
+    display: flex;
+    justify-content: center;
+
+    .inline-block,
+    a,
+    img {
+        display: block;
+    }
+
+    img.photo {
+        width: 66px;
+        height: 66px;
+        border-radius: 4px;
+    }
+}
+
 // Quick-access actions in the project ref cell (call / email / preview)
 .reedcrm-ref-cell {
     display: flex;
@@ -93,57 +112,6 @@
 
 .reedcrm-status-dot-2 {
     background: #6c7a89;
-}
-
-// Density: tighten the merged cells and rows so more opportunities fit without scrolling.
-// Applied only in "compact" mode (per-user toggle in the customize bar); "comfortable" keeps the
-// roomier default. Scoped via :has on the customize bar's data-density marker.
-body:has(.reedcrm-kpi-customize-bar[data-density="compact"]) {
-    table.liste tbody { font-size: 12px; }
-
-    .reedcrm-opp-cell,
-    .reedcrm-dates-cell {
-        gap: 0;
-        font-size: 12px;
-        line-height: 1.15;
-    }
-
-    .reedcrm-opp-cell-amount i { margin-right: 2px; }
-
-    .reedcrm-dates-cell .reedcrm-dates-row > i {
-        font-size: 11px;
-    }
-
-    .reedcrm-plist-coordonnees {
-        padding: 0 3px;
-        gap: 5px;
-        font-size: 11px;
-
-        .reedcrm-plist-coordonnees-name,
-        .reedcrm-plist-coordonnees-email,
-        .reedcrm-plist-coordonnees-website {
-            margin-bottom: 0;
-            line-height: 1.15;
-            font-size: 11px;
-        }
-
-        .reedcrm-plist-coordonnees-avatar { display: none; }
-    }
-
-    // Smaller relaunch buttons (they were the tallest element in each row)
-    .reedcrm-plist-relaunch-wrapper .reedcrm-plist-relaunch-buttons .reedcrm-relaunch-button .reedcrm-plist-relaunch-btn-content {
-        width: 34px;
-        height: 26px;
-        font-size: 0.8em;
-    }
-
-    // Compact the inline opportunity status select
-    .reedcrm-opp-status-select,
-    .saturne-inline-select {
-        height: 22px;
-        padding: 0 2px;
-        font-size: 11px;
-    }
 }
 
 // Merged dates cell (start + end)

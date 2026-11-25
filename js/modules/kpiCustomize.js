@@ -60,8 +60,7 @@ window.reedcrm.kpiCustomize.event = function () {
  * @returns {String} The AJAX endpoint URL
  */
 window.reedcrm.kpiCustomize.url = function () {
-  var root = (window.saturne && window.saturne.config && window.saturne.config.urlRoot) ? window.saturne.config.urlRoot : '';
-  return root + '/custom/reedcrm/ajax/save_kpi_layout.php';
+  return window.reedcrm.moduleUrl('/ajax/save_kpi_layout.php');
 };
 
 /**

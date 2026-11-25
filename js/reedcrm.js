@@ -50,6 +50,47 @@ if (!window.reedcrm) {
   window.reedcrm.scriptsLoaded = false;
 }
 
+if (!window.reedcrm.moduleUrl) {
+  /**
+   * URL of a file of the ReedCRM module.
+   *
+   * custom/ is only a convention: the module can be served from any alternative root
+   * ($dolibarr_main_document_root_alt). Its URL is therefore read from the script that loaded
+   * this code (reedcrm.min.js or one of its sources) instead of being rebuilt around '/custom/'.
+   * Kept in a closure: load_list_script() walks every property of window.reedcrm.
+   *
+   * @memberof ReedCRM_Init
+   *
+   * @since   23.3.2
+   * @version 23.3.2
+   *
+   * @param  {String} path Path inside the module, starting with a slash (e.g. '/ajax/file.php')
+   * @return {String}      URL of the file
+   */
+  window.reedcrm.moduleUrl = (function() {
+    const fromSrc = function(src) {
+      const match = (src || '').match(/^(.*\/reedcrm)\/js\//);
+      return match ? match[1] : '';
+    };
+    // Only reliable while the script runs for the first time, hence read here and not on call
+    let base = fromSrc(document.currentScript && document.currentScript.src);
+
+    return function(path) {
+      if (!base) {
+        document.querySelectorAll('script[src*="/reedcrm/js/"]').forEach(function(script) {
+          base = base || fromSrc(script.src);
+        });
+      }
+      if (!base) {
+        // Last resort, the former guess: the standard custom/ folder under the Dolibarr root
+        const position = document.URL.indexOf('/custom/');
+        base = (position > 0 ? document.URL.substring(0, position) : '') + '/custom/reedcrm';
+      }
+      return base + (path || '');
+    };
+  })();
+}
+
 if (!window.reedcrm.scriptsLoaded) {
   /**
    * ReedCRM init.
@@ -354,13 +395,8 @@ window.saturne.contact_inline.startCompanyEdit = function(e) {
             return;
         }
         
-        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
-        if (!url) {
-            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
         
-        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppsocid&token=' + token;
+        let ajaxUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateoppsocid&token=') + token;
         
         aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
         hiddenSelectorWrap.hide();
@@ -455,12 +491,7 @@ window.saturne.contact_inline.startOriginEdit = function(e) {
         let projId = $('#reedcrm-inline-data').data('project-id');
         let token = $('input[name="token"]').val() || '';
         
-        let url = 'undefined' != typeof dolibarr_main_url_root && dolibarr_main_url_root ? dolibarr_main_url_root : '';
-        if (!url) {
-            if (document.URL.indexOf('/projet/') > 0) url = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
-        let ajaxUrl = url + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateopporigin';
+        let ajaxUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateopporigin');
         
         aTag.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6;"></i> Enregistrement...');
         hiddenSelectorWrap.hide();
@@ -548,13 +579,8 @@ window.saturne.contact_inline.startInlineEdit = function(e) {
     }
     
     if (isPhone && typeof window.intlTelInput !== 'undefined') {
-        let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-        if (!baseRoot) {
-            if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
         input[0].iti = window.intlTelInput(input[0], {
-            utilsScript: baseRoot + '/custom/reedcrm/js/intl-tel-input/js/utils.js',
+            utilsScript: window.reedcrm.moduleUrl('/js/intl-tel-input/js/utils.js'),
             initialCountry: "fr",
             preferredCountries: ["fr", "be", "ch", "lu", "ca"],
             nationalMode: false,
@@ -612,12 +638,7 @@ window.saturne.contact_inline.submitTitleDetail = function(span, input, original
     let projectId = span.data('project-id');
     let token = $('input[name="token"]').val() || '';
     
-    let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-    if (!baseRoot) {
-        if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-        else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-    }
-    let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateopptitle';
+    let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateopptitle');
     if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateopptitle';
     
     $.ajax({
@@ -711,12 +732,7 @@ window.saturne.contact_inline.submitContactDetail = function(span, input, origin
     
     let token = $('input[name="token"]').val() || '';
     
-    let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-    if (!baseRoot) {
-        if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-        else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-    }
-    let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppcontact';
+    let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateoppcontact');
     if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateoppcontact';
     
     $.ajax({
@@ -791,12 +807,7 @@ window.saturne.contact_inline.editPercent = function(e) {
         span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6; line-height: 22px;"></i>');
         let token = $('input[name="token"]').val() || '';
         
-        let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-        if (!baseRoot) {
-            if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
-        let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateopppercent';
+        let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateopppercent');
         if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateopppercent';
         
         $.ajax({
@@ -866,12 +877,7 @@ window.saturne.contact_inline.editAmount = function(e) {
         span.html('<i class="fas fa-spinner fa-spin" style="color: #9b59b6; line-height: 22px;"></i>');
         let token = $('input[name="token"]').val() || '';
         
-        let baseRoot = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-        if (!baseRoot) {
-            if (document.URL.indexOf('/projet/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/projet/'));
-            else if (document.URL.indexOf('/custom/') > 0) baseRoot = document.URL.substring(0, document.URL.indexOf('/custom/'));
-        }
-        let targetUrl = baseRoot + '/custom/reedcrm/view/frontend/quickcreation.php?action=updateoppamount';
+        let targetUrl = window.reedcrm.moduleUrl('/view/frontend/quickcreation.php?action=updateoppamount');
         if (document.URL.indexOf('quickcreation.php') > 0) targetUrl = document.URL.split('?')[0] + '?action=updateoppamount';
         
         $.ajax({
@@ -952,11 +958,7 @@ window.saturne.pwa_selectors.init = function() {
 };
 
 window.saturne.pwa_selectors.getBaseUrl = function() {
-    var url = (typeof dolibarr_main_url_root !== 'undefined' && dolibarr_main_url_root) ? dolibarr_main_url_root : '';
-    if (!url) {
-        if (document.URL.indexOf('/custom/') > 0) url = document.URL.substring(0, document.URL.indexOf('/custom/'));
-    }
-    return url + '/custom/reedcrm/view/frontend/quickcreation.php';
+    return window.reedcrm.moduleUrl('/view/frontend/quickcreation.php');
 };
 
 window.saturne.pwa_selectors.event = function() {
@@ -998,7 +1000,7 @@ window.saturne.pwa_selectors.event = function() {
                     dataType: 'json',
                     delay:    200,
                     cache:    true,
-                    data:     function(p) { return { action: 'search_tiers_ajax', q: p.term || '' }; },
+                    data:     function(p) { return { action: 'search_tiers_ajax', q: p.term || '', token: window.saturne.toolbox.getToken() }; },
                     processResults: function(d) { return { results: d.results || [] }; }
                 }
             });
@@ -1111,7 +1113,7 @@ window.saturne.pwa_selectors.event = function() {
         $panel.html('<div class="pwa-contact-loading-inline"><i class="fas fa-spinner fa-spin"></i> Chargement...</div>');
 
         // Fetch contacts and build native <ul> — no Select2, no "Searching...", list appears immediately
-        $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '' }, function(data) {
+        $.getJSON(baseUrl, { action: 'search_contact_ajax', socid: tiersId, q: '', token: window.saturne.toolbox.getToken() }, function(data) {
             var results = (data && data.results) ? data.results : [];
             var $ul = $('<ul class="pwa-contact-list">');
             if (results.length === 0) {
@@ -1375,7 +1377,7 @@ window.saturne.quickcreation_form.initContactSelect = function() {
     $(document).on('change','#socid, #search_socid', toggleCW);
     $(document).on('change','#contactid', function() {
         var cid=$(this).val(); if (!cid||cid<=0) return;
-        var fd=new FormData(); fd.append('action','get_contact_details'); fd.append('contactid',cid);
+        var fd=new FormData(); fd.append('action','get_contact_details'); fd.append('contactid',cid); fd.append('token',window.saturne.toolbox.getToken());
         fetch(window.location.href,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(c) {
             if (!c||!c.id) return;
             var pi=document.getElementById('projectphone'); if (pi&&c.phone) { pi.value=c.phone; pi.dispatchEvent(new Event('input',{bubbles:true})); }
@@ -1419,29 +1421,65 @@ window.reedcrm.call_list_widget.onSelectChange = function() {
     btn.prop('disabled', !$(this).val());
 };
 
-window.reedcrm.call_list_widget.handleAdd = function() {
-    if ($(this).prop('disabled')) return;
+window.reedcrm.isValidPhone = function(phone) {
+    var trimmed = $.trim(phone || '');
+    if (!trimmed) {
+        return false;
+    }
+    // Mirrors Dolibarr Validate::isPhone() character set + E.164 / FR length rules, no external call
+    if (!/^[+0-9. ()-]+$/i.test(trimmed)) {
+        return false;
+    }
+    var plusCount = (trimmed.match(/\+/g) || []).length;
+    if (plusCount > 1 || (plusCount === 1 && trimmed.indexOf('+') !== 0)) {
+        return false;
+    }
+    var digits = trimmed.replace(/\D+/g, '');
+    if (!digits) {
+        return false;
+    }
+    if (/^0[1-9]/.test(digits)) {
+        return /^0[1-9]\d{8}$/.test(digits);
+    }
+    if (trimmed.indexOf('+33') === 0) {
+        return /^330?[1-9]\d{8}$/.test(digits);
+    }
+    if (digits.indexOf('0033') === 0) {
+        return /^00330?[1-9]\d{8}$/.test(digits);
+    }
+    if (digits.indexOf('00') === 0) {
+        return /^00\d{6,15}$/.test(digits);
+    }
+    return /^\d{6,15}$/.test(digits);
+};
 
-    var wrapper     = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+window.reedcrm.call_list_widget.submitAdd = function(wrapper, ajaxUrl, callListId, manualPhone, onSuccess) {
     var elementType = wrapper.data('element-type');
     var elementId   = wrapper.data('element-id');
-    var ajaxUrl     = wrapper.data('ajax-url');
-    var callListId  = wrapper.find('.reedcrm-call-list-select').val();
     var token       = $('input[name="token"]').val() || '';
-
-    if (!callListId) return;
 
     var fd = new FormData();
     fd.append('element_type', elementType);
     fd.append('element_id', elementId);
-    fd.append('call_list_id', callListId);
+    if (callListId) {
+        fd.append('call_list_id', callListId);
+    }
+    if (manualPhone) {
+        fd.append('manual_phone', manualPhone);
+    }
     fd.append('token', token);
 
     fetch(ajaxUrl, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.success) {
+                wrapper.find('.reedcrm-call-list-phone-prompt').remove();
+                if (typeof onSuccess === 'function') {
+                    onSuccess(res);
+                }
                 $.jnotify(res.message);
+            } else if (res.need_phone && !manualPhone) {
+                window.reedcrm.call_list_widget.showPhonePrompt(wrapper, ajaxUrl, callListId, !!res.can_save_on_project, onSuccess);
             } else {
                 $.jnotify(res.message, 'error');
             }
@@ -1451,30 +1489,96 @@ window.reedcrm.call_list_widget.handleAdd = function() {
         });
 };
 
-window.reedcrm.call_list_widget.handleAddDefault = function() {
-    var star        = $(this);
-    var wrapper     = star.closest('.reedcrm-add-to-call-list-wrapper');
-    var elementType = wrapper.data('element-type');
-    var elementId   = wrapper.data('element-id');
-    var ajaxUrl     = wrapper.data('default-ajax-url');
-    var token       = $('input[name="token"]').val() || '';
+window.reedcrm.call_list_widget.showPhonePrompt = function(wrapper, ajaxUrl, callListId, canSaveOnProject, onSuccess) {
+    wrapper.find('.reedcrm-call-list-phone-prompt').remove();
 
-    var fd = new FormData();
-    fd.append('element_type', elementType);
-    fd.append('element_id', elementId);
-    fd.append('token', token);
+    var placeholder = canSaveOnProject
+        ? (wrapper.data('enter-phone-label') || 'Téléphone')
+        : (wrapper.data('enter-phone-generic-label') || wrapper.data('enter-phone-label') || 'Téléphone');
+    var requiredMsg = wrapper.data('phone-required-label') || placeholder;
+    var invalidMsg  = wrapper.data('phone-invalid-label') || requiredMsg;
+    var saveLabel   = wrapper.data('save-label') || 'OK';
+    var cancelLabel = wrapper.data('cancel-label') || '×';
 
-    fetch(ajaxUrl, { method: 'POST', body: fd })
-        .then(function(r) { return r.json(); })
-        .then(function(res) {
-            if (res.success) {
-                star.addClass('is-active');
-                $.jnotify(res.message);
-            } else {
-                $.jnotify(res.message, 'error');
+    var $prompt = $('<div class="reedcrm-call-list-phone-prompt"></div>');
+    var $row    = $('<div class="reedcrm-call-list-phone-prompt-row"></div>');
+    var $input  = $('<input type="tel" class="reedcrm-call-list-phone-input" autocomplete="tel">').attr('placeholder', placeholder);
+    var $save   = $('<button type="button" class="reedcrm-call-list-phone-save"><i class="fas fa-check"></i></button>').attr('title', saveLabel);
+    var $cancel = $('<button type="button" class="reedcrm-call-list-phone-cancel">&times;</button>').attr('title', cancelLabel);
+    var $err    = $('<div class="call-list-phone-error hidden"></div>');
+
+    $row.append($input, $save, $cancel);
+    $prompt.append($row, $err);
+    wrapper.append($prompt);
+    $input.focus();
+
+    var validatePrompt = function(requireNonEmpty) {
+        var val = $.trim($input.val());
+        if (!val) {
+            if (requireNonEmpty) {
+                $input.addClass('is-invalid-phone');
+                $err.text(requiredMsg).removeClass('hidden');
+                return false;
             }
-        })
-        .catch(function() {
-            $.jnotify('Erreur réseau', 'error');
-        });
+            $input.removeClass('is-invalid-phone');
+            $err.addClass('hidden').text('');
+            return true;
+        }
+        if (!window.reedcrm.isValidPhone(val)) {
+            $input.addClass('is-invalid-phone');
+            $err.text(invalidMsg).removeClass('hidden');
+            return false;
+        }
+        $input.removeClass('is-invalid-phone');
+        $err.addClass('hidden').text('');
+        return true;
+    };
+
+    $input.on('input', function() {
+        validatePrompt(false);
+    });
+
+    var submitPhone = function() {
+        if (!validatePrompt(true)) {
+            $input.focus();
+            return;
+        }
+        window.reedcrm.call_list_widget.submitAdd(wrapper, ajaxUrl, callListId, $.trim($input.val()), onSuccess);
+    };
+
+    $save.on('click', submitPhone);
+    $cancel.on('click', function() {
+        $prompt.remove();
+    });
+    $input.on('keydown', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            submitPhone();
+        } else if (e.which === 27) {
+            e.preventDefault();
+            $prompt.remove();
+        }
+    });
+};
+
+window.reedcrm.call_list_widget.handleAdd = function() {
+    if ($(this).prop('disabled')) return;
+
+    var wrapper    = $(this).closest('.reedcrm-add-to-call-list-wrapper');
+    var ajaxUrl    = wrapper.data('ajax-url');
+    var callListId = wrapper.find('.reedcrm-call-list-select').val();
+
+    if (!callListId) return;
+
+    window.reedcrm.call_list_widget.submitAdd(wrapper, ajaxUrl, callListId, '');
+};
+
+window.reedcrm.call_list_widget.handleAddDefault = function() {
+    var star    = $(this);
+    var wrapper = star.closest('.reedcrm-add-to-call-list-wrapper');
+    var ajaxUrl = wrapper.data('default-ajax-url');
+
+    window.reedcrm.call_list_widget.submitAdd(wrapper, ajaxUrl, 0, '', function() {
+        star.addClass('is-active');
+    });
 };

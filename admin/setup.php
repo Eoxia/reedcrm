@@ -45,6 +45,7 @@ if (isModEnabled('agenda')) {
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 require_once __DIR__ . '/../lib/reedcrm.lib.php';
+require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
 // Global variables definitions
 global $conf, $db, $langs, $user;
@@ -69,7 +70,7 @@ if (isModEnabled('agenda')) {
 }
 
 // Security check - Protection if external user
-$permissiontoread = $user->rights->reedcrm->adminpage->read;
+$permissiontoread = $user->hasRight('reedcrm', 'adminpage', 'read');
 saturne_check_access($permissiontoread);
 
 /*
@@ -108,6 +109,11 @@ if ($action == 'set_config') {
         dolibarr_set_const($db, 'REEDCRM_EVENT_LABEL_MAX_LENGTH_VALUE', $quickEventLabelLength, 'integer', 0, '', $conf->entity);
     }
     dolibarr_set_const($db, 'REEDCRM_EVENT_STATUS_VALUE', $statusEvent, 'integer', 0, '', $conf->entity);
+    foreach (array_keys(reedcrm_get_event_default_durations()) as $relaunchTypeKey) {
+        if (GETPOSTISSET('event_duration_' . $relaunchTypeKey)) {
+            dolibarr_set_const($db, 'REEDCRM_EVENT_DURATION_' . strtoupper($relaunchTypeKey), max(0, GETPOSTINT('event_duration_' . $relaunchTypeKey)), 'integer', 0, '', $conf->entity);
+        }
+    }
 
     $projectCommercialInherit = GETPOST('project_commercial_inherit', 'int');
     dolibarr_set_const($db, 'REEDCRM_PROJECT_COMMERCIAL_INHERIT', $projectCommercialInherit, 'integer', 0, '', $conf->entity);
@@ -244,7 +250,7 @@ print '<td class="center">';
 //print ajax_constantonoff('REEDCRM_THIRDPARTY_CLIENT_VISIBLE');
 print '</td>';
 
-if ($conf->global->REEDCRM_THIRDPARTY_CLIENT_VISIBLE > 0 && isModEnabled('societe')) {
+if (getDolGlobalInt('REEDCRM_THIRDPARTY_CLIENT_VISIBLE') > 0 && isModEnabled('societe')) {
     print '<td>' . $formcompany->selectProspectCustomerType($conf->global->REEDCRM_THIRDPARTY_CLIENT_VALUE, 'client', 'customerprospect', 'form', 'minwidth200') . '</td>';
 } else {
     print '<td></td>';
@@ -422,7 +428,7 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE');
 print '</td>';
 
-if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE > 0 && isModEnabled('project')) {
+if (getDolGlobalInt('REEDCRM_PROJECT_OPPORTUNITY_STATUS_VISIBLE') > 0 && isModEnabled('project')) {
     print '<td>';
     print $formproject->selectOpportunityStatus('project_opportunity_status', $conf->global->REEDCRM_PROJECT_OPPORTUNITY_STATUS_VALUE, 1, 0, 0, 0, 'minwidth200', 0, 1);
     print '</td>';
@@ -440,7 +446,7 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE');
 print '</td>';
 
-if ($conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VISIBLE') > 0) {
     print '<td><input type="number" name="project_opportunity_amount" class="minwidth200" value="' . $conf->global->REEDCRM_PROJECT_OPPORTUNITY_AMOUNT_VALUE . '"></td>';
 } else {
     print '<td></td>';
@@ -481,6 +487,24 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_PROJECT_DESCRIPTION_VISIBLE');
 print '</td></td><td></td></tr>';
 
+// Description written by the AI from the voice note
+if (getDolGlobalInt('REEDCRM_PROJECT_DESCRIPTION_VISIBLE') > 0) {
+    require_once __DIR__ . '/../class/reedcrmvoicedescription.class.php';
+
+    print '<tr class="oddeven"><td>';
+    print $langs->trans('VoiceDescription');
+    print '</td><td>';
+    print $langs->trans('VoiceDescriptionHelp');
+    if (!ReedcrmVoiceDescription::isAvailable()) {
+        print '<br><span class="warning">' . $langs->trans('VoiceDescriptionNeedsChatGPT') . '</span>';
+    }
+    print '</td>';
+
+    print '<td class="center">';
+    print ajax_constantonoff('REEDCRM_PROJECT_DESCRIPTION_FROM_VOICE');
+    print '</td><td></td></tr>';
+}
+
 // Extrafields
 print '<tr class="oddeven"><td>';
 print $langs->trans('Extrafields');
@@ -517,7 +541,7 @@ print '<td class="center">';
 //print ajax_constantonoff('REEDCRM_TASK_LABEL_VISIBLE');
 print '</td>';
 
-if ($conf->global->REEDCRM_TASK_LABEL_VISIBLE > 0 && isModEnabled('project')) {
+if (getDolGlobalInt('REEDCRM_TASK_LABEL_VISIBLE') > 0 && isModEnabled('project')) {
     print '<td><input type="text" id="task_label" name="task_label" value="' . $conf->global->REEDCRM_TASK_LABEL_VALUE . '"></td>';
 } else {
     print '<td></td>';
@@ -535,7 +559,7 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_TASK_TIMESPENT_VISIBLE');
 print '</td>';
 
-if ($conf->global->REEDCRM_TASK_TIMESPENT_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_TASK_TIMESPENT_VISIBLE') > 0) {
     print '<td><input type="number" id="timespent" name="timespent" value="' . $conf->global->REEDCRM_TASK_TIMESPENT_VALUE . '"></td>';
 } else {
     print '<td></td>';
@@ -556,7 +580,7 @@ print '<td class="center">';
 //print ajax_constantonoff('REEDCRM_EVENT_TYPE_CODE_VISIBLE');
 print '</td>';
 
-if ($conf->global->REEDCRM_EVENT_TYPE_CODE_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_TYPE_CODE_VISIBLE') > 0) {
     print '<td>';
     print $formactions->select_type_actions($conf->global->REEDCRM_EVENT_TYPE_CODE_VALUE, 'actioncode', 'systemauto', 0, -1, 0, 1);
     print '</td>';
@@ -608,6 +632,25 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_EVENT_DATE_END_VISIBLE');
 print '</td></td><td></td></tr>';
 
+// Default duration of each type of event
+print '<tr class="oddeven"><td>';
+print $langs->trans('EventDefaultDuration');
+print '</td><td>';
+print $langs->trans('EventDefaultDurationDescription');
+print '</td>';
+
+print '<td class="center"></td>';
+
+print '<td>';
+$relaunchTypeOptions = reedcrm_get_relaunch_type_options();
+foreach (reedcrm_get_event_default_durations() as $relaunchTypeKey => $relaunchTypeDuration) {
+    print '<div class="nowraponall paddingbottom">';
+    print '<input type="number" id="event_duration_' . $relaunchTypeKey . '" name="event_duration_' . $relaunchTypeKey . '" class="width50 right" min="0" value="' . $relaunchTypeDuration . '"> ' . $langs->trans('MinuteShort');
+    print ' <label for="event_duration_' . $relaunchTypeKey . '">' . $relaunchTypeOptions[reedcrm_get_relaunch_types()[$relaunchTypeKey]['actioncode']] . '</label>';
+    print '</div>';
+}
+print '</td></tr>';
+
 // Status
 print '<tr class="oddeven"><td>';
 print $langs->trans('Status');
@@ -619,7 +662,7 @@ print '<td class="center">';
 print ajax_constantonoff('REEDCRM_EVENT_STATUS_VISIBLE');
 print '</td>';
 
-if ($conf->global->REEDCRM_EVENT_STATUS_VISIBLE > 0) {
+if (getDolGlobalInt('REEDCRM_EVENT_STATUS_VISIBLE') > 0) {
     $listofstatus = [
         'NA' => $langs->trans('ActionNotApplicable'),
         0    => $langs->trans('ActionsToDoShort'),
@@ -717,9 +760,9 @@ print '</td></td></tr>';
 
 
 $offsetUnits = [
-    'd' => $langs->trans('Jour'),    // Jour
-    'i' => $langs->trans('Minute'), // Minute
-    's' => $langs->trans('Seconde') // Seconde
+    'd' => $langs->trans('Day'),
+    'i' => $langs->trans('Minute'),
+    's' => $langs->trans('Second')
 ];
 // Remind offset unit
 print '<tr class="oddeven"><td>';

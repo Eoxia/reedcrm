@@ -75,6 +75,9 @@
 .pwa-call-list-container {
     padding: 15px;
     padding-bottom: 80px;
+    /* A card moved by its arrows changes what sits above the screen: the scroll anchoring of the browser
+       then scrolled the page to keep the card in sight. The card moves, the page stays where it is */
+    overflow-anchor: none;
 }
 
 .pwa-call-list-header {
@@ -101,17 +104,146 @@
 }
 
 .pwa-call-card {
+    position: relative;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     padding: 16px;
     margin-bottom: 16px;
+
+    /* Next event late or to come: same flags as the todo cards */
+    &--late {
+        border-left: 4px solid #e05353;
+    }
+
+    &--upcoming {
+        border-left: 4px solid #63acc9;
+    }
+}
+
+/* Unlink the line from the call list: discreet, in the top right corner, away from the call button */
+.pwa-call-btn-unlink {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: #fee2e2;
+        border-color: #e05353;
+        color: #e05353;
+    }
+
+    &.loading {
+        opacity: 0.5;
+        pointer-events: none;
+    }
 }
 
 .pwa-call-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+    /* Room for the unlink button in the corner */
+    padding-right: 44px;
+
+    .todo-card-late-badge,
+    .todo-card-upcoming-badge {
+        flex-shrink: 0;
+        align-self: flex-start;
+        margin-top: 8px;
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+}
+
+/* Date the line was added to the call list, then the last call made */
+.pwa-call-added-date,
+.pwa-call-last-call {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.pwa-call-last-call {
+    // Same specificity as the hideobject of eldy, loaded before this file
+    &.hideobject {
+        display: none;
+    }
+
+    i {
+        color: #16a34a;
+    }
+}
+
+/* Chips of the todo cards (object + amount + relaunches, third party), scaled up for the phone */
+.pwa-call-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .todo-link-badge,
+    .todo-origin-amount,
+    .todo-relaunch-count {
+        padding: 5px 12px;
+        font-size: 15px;
+    }
+
+    .pwa-call-percent {
+        margin-left: auto;
+    }
+}
+
+/* Next event still to do, in clear (no hover on a phone to read the badge tooltip):
+   red with the warning triangle once its date has passed */
+.pwa-call-next-event {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #475569;
+
+    &--late .pwa-call-next-event-date {
+        color: #e05353;
+    }
+}
+
+.pwa-call-next-event-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pwa-call-next-event-label {
+    /* Free text: readable, but never more than two lines on the card */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-width: 0;
+    word-break: break-word;
 }
 
 .pwa-call-name {
@@ -231,64 +363,94 @@
     line-height: 1.2;
 }
 
+/* Last row of the card: the ReedCRM buttons of the opportunity (laid out with the widget, in
+   _relaunch-widget.scss), then the arrows putting the call higher or lower in the list */
 .pwa-call-actions {
     display: flex;
     align-items: stretch;
     gap: 8px;
-
-    [id$="master-media-row-container-audio"] {
-        padding: 0;
-        display: flex;
-        align-items: stretch;
-    }
-
-    .saturne-audio-controls {
-        margin-top: 0;
-        gap: 8px;
-        align-items: stretch;
-    }
-
-    .saturne-play-recording-wrapper {
-        display: flex;
-        align-items: stretch;
-    }
-
-    .saturne-media-btn {
-        width: 48px;
-        min-width: 48px;
-        height: auto;
-        min-height: 0;
-        border-radius: 10px;
-    }
-
-    .saturne-recording-indicator {
-        display: none !important;
-    }
 }
 
-.pwa-call-status-btns {
+.pwa-call-move-btns {
     display: flex;
     gap: 8px;
-    flex: 1;
+    flex-shrink: 0;
+    /* Kept on the right when the line has no opportunity, hence no ReedCRM buttons */
+    margin-left: auto;
 }
 
-.pwa-status-btn {
-    flex: 1;
-    padding: 10px;
-    font-size: 1.2rem;
-    border-radius: 10px;
-    border: 2px solid var(--status-color);
-    background: transparent;
-    color: var(--status-color);
-    cursor: pointer;
+.pwa-call-btn-move {
+    width: 56px;
+    /* As high as the frame of the ReedCRM buttons beside them (2 x 6px of padding, 50px buttons, 2 x 1px of border),
+       on every card: alone on a card without opportunity, they kept their 44px and differed from one card to the next */
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s, color 0.15s;
+    padding: 0;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    color: #475569;
+    font-size: 18px;
+    cursor: pointer;
 
-    &--active {
-        background: var(--status-color);
-        color: #fff;
+    &:active {
+        background: #e2e8f0;
+    }
+
+    /* No way up for the first card nor down for the last one: hidden, but the other arrow keeps its place */
+    &.hideobject {
+        display: flex;
+        visibility: hidden;
+    }
+}
+
+/* On a phone, the ReedCRM buttons need the whole width of the card: the arrows go underneath, half each */
+@media (max-width: 600px) {
+    .pwa-call-actions {
+        flex-wrap: wrap;
+    }
+
+    .pwa-call-move-btns {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .pwa-call-btn-move {
+        flex: 1;
+        width: auto;
+        height: 44px;
+    }
+}
+
+/* Card moved by its arrows (js/modules/call_list.js): its neighbour slides around it, then it flashes,
+   in the same tint as on the call list card */
+.pwa-call-card {
+    &.call-list-line-sliding {
+        transition: transform 0.25s ease;
+    }
+
+    &.call-list-line-moved {
+        z-index: 1;
+        animation: reedcrm-pwa-call-card-flash 1.5s ease-out;
+    }
+}
+
+@keyframes reedcrm-pwa-call-card-flash {
+    0%, 40% {
+        background-color: #e6eef0;
+        box-shadow: 0 0 0 3px rgba(1, 71, 81, .35);
+    }
+    100% {
+        background-color: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pwa-call-card.call-list-line-sliding {
+        transition: none;
     }
 }
 

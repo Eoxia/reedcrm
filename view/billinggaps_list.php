@@ -86,18 +86,8 @@ if ($resU && $oU = $db->fetch_object($resU)) {
     $unpaidRest = (float) $oU->reste;
 }
 
+// Styles of the intro and of the figures: css/scss/pages/_billing-gaps.scss
 saturne_header(0, '', $title, '');
-
-print '<style>
-.rbg-intro{margin:0 0 14px;color:#777}
-.rbg-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0 0 20px}
-.rbg-tile{border:1px solid var(--colortopbordertitle1,#ddd);border-radius:8px;padding:12px 14px;background:var(--colorbacklinepair2,#fff);position:relative;overflow:hidden}
-.rbg-tile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#cf4257}
-.rbg-tile.warn:before{background:#c8871a}.rbg-tile.info:before{background:#2f6f9f}.rbg-tile.viol:before{background:#6f42c1}
-.rbg-tile .k{font-size:.82em;color:#777;font-weight:600}
-.rbg-tile .v{font-size:1.7em;font-weight:800;line-height:1.15}
-.rbg-tile .a{font-size:.9em;color:#555;font-weight:600}
-</style>';
 
 print load_fiche_titre('<i class="fas fa-file-invoice-dollar paddingright"></i>' . $title, '', '');
 print '<div class="rbg-intro">' . $langs->trans('BillingGapsIntro') . '</div>';

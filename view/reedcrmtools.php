@@ -58,7 +58,7 @@ $reedcrmNotify = new ReedcrmNotify($db);
 $contact       = new Contact($db);
 
 // Security check - Protection if external user
-$permissionToRead = $user->rights->reedcrm->adminpage->read;
+$permissionToRead = $user->hasRight('reedcrm', 'adminpage', 'read');
 saturne_check_access($permissionToRead);
 
 /*
@@ -191,7 +191,7 @@ if (is_array($actionComms) && !empty($actionComms)) {
 print '</td>';
 
 print '<td class="center">';
-if ($user->rights->facture->creer) {
+if ($user->hasRight('facture', 'creer')) {
     print '<input type="submit" class="button" name="update_object_contact" value="' . $langs->trans('Validate') . '">';
 } else {
     print '<span class="butActionRefused classfortooltip" title="' . dol_escape_htmltag($langs->trans('PermissionDenied')) . '">' . $langs->trans('Validate') . '</span>';

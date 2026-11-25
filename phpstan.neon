@@ -49,7 +49,24 @@ parameters:
     # herite (SaturneObject, SaturneSignature, les libs saturne_*).
     # A garder en phase avec le sparse-checkout de .github/workflows/quality.yml.
     scanDirectories:
-        - ../saturne/
+        # Le socle est scanne par dossier, et non en entier, parce qu il porte des
+        # bouchons de classes du coeur pour ses propres outils : dev/phan/stubs.php
+        # (DolibarrModules, DoliDB, Odf...) et le bootstrap PHPUnit de tests/
+        # (DoliDB, Conf, Translate, User, HookManager). Scannes, ils gagnent contre
+        # les vraies classes et toute la baseline se remplit de faux positifs.
+        #
+        # Cette forme est preferee a une liste d exclusions parce qu une exclusion
+        # s efface par accident lors d un alignement de fichier, et la CI redevient
+        # alors verte a tort. Ici il n y a aucune ligne a defendre.
+        #
+        # Contrepartie assumee : si Saturne place un jour une classe hors de ces trois
+        # dossiers, elle remontera en class.notFound. C est un echec visible, donc
+        # preferable a une CI verte qui ne verifie plus rien.
+        # Releve du 2026-09-28 : 17 classes dans class/, 4 dans core/, aucune ailleurs.
+        # lib/ n en porte aucune mais contient les fonctions saturne_*.
+        - ../saturne/class/
+        - ../saturne/core/
+        - ../saturne/lib/
         - ../../ai/class/
         - ../../api/class/
         - ../../bookmarks/class/
@@ -70,6 +87,7 @@ parameters:
         - ../../cron/class/
         - ../../ecm/class/
         - ../../expedition/class/
+        - ../../expensereport/class/
         - ../../fichinter/class/
         - ../../fourn/class/
         - ../../holiday/class/
@@ -116,7 +134,13 @@ parameters:
         # ('development', 'dolibarr', 'experimental'), alors que tous les modules y
         # mettent leur numero de version. Fige dans la baseline, ce message casse la
         # CI a chaque bump de version : il est ignore par motif.
+        # Le trigger redeclare $version avec son type, ce qui suffit ; cette regle reste
+        # en filet si la redeclaration saute lors d'un alignement du fichier.
         - '#^Property DolibarrTriggers\:\:\$version \(.*\) does not accept .*\.$#'
+        # Contrepartie de cette redeclaration : le coeur type la propriete plus
+        # etroitement que string. Ce message-la ne contient aucun numero, il ne
+        # bouge donc pas d'une version a l'autre.
+        - '#^PHPDoc type string of property .*\:\:\$version is not covariant with PHPDoc type .* of overridden property DolibarrTriggers\:\:\$version\.$#'
         # Dolibarr ne documente jamais le type des valeurs d'un tableau (`@return array`),
         # donc cette erreur tomberait sur chaque nouveau fichier sans jamais pouvoir etre
         # resorbee.

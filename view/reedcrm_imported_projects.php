@@ -44,7 +44,7 @@ global $conf, $db, $langs, $user;
 saturne_load_langs();
 
 // Security check - Protection if external user
-$permissionToRead = $user->rights->reedcrm->adminpage->read;
+$permissionToRead = $user->hasRight('reedcrm', 'adminpage', 'read');
 saturne_check_access($permissionToRead);
 
 $reedcrmEntityDir = '';
@@ -65,7 +65,7 @@ $helpUrl = 'FR:Module_ReedCRM';
 
 saturne_header(0, '', $title, $helpUrl);
 
-print load_fiche_titre($title, '<a href="' . dol_buildpath('/custom/reedcrm/view/reedcrmimport.php', 1) . '" class="butAction">' . $langs->trans('NewImport') . '</a>', 'wrench');
+print load_fiche_titre($title, '<a href="' . dol_buildpath('/reedcrm/view/reedcrmimport.php', 1) . '" class="butAction">' . $langs->trans('NewImport') . '</a>', 'wrench');
 
 $historyFiles = [];
 if (is_dir($importHistoryDir)) {

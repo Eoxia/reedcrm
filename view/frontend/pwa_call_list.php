@@ -32,8 +32,9 @@ if (file_exists('../reedcrm.main.inc.php')) {
 }
 
 require_once DOL_DOCUMENT_ROOT . '/contact/class/contact.class.php';
-dol_include_once('/saturne/lib/medias.lib.php');
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
+require_once __DIR__ . '/../../lib/reedcrm_call_list.lib.php';
+require_once __DIR__ . '/../../lib/reedcrm_relaunch.lib.php';
 require_once __DIR__ . '/../../class/calllist.class.php';
 require_once __DIR__ . '/../../class/calllistline.class.php';
 
@@ -41,13 +42,22 @@ global $conf, $db, $langs, $user;
 
 saturne_load_langs();
 
-$id     = GETPOSTINT('id');
-$action = GETPOST('action', 'nohtml');
+$id = GETPOSTINT('id');
 
 if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcrm', 'call_list', 'read_subordinates') && !$user->hasRight('reedcrm', 'call_list', 'read_all')) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
+
+// Without an explicit id (PWA nav), reopen the last call list the user was on, failing that their own default call list.
+// An explicit id (selector, mobile view link of the call list card, back link of the opportunity page) opens that list
+if ($id <= 0) {
+    $id = reedcrm_call_list_get_last_opened($db, $user);
+}
+if ($id <= 0) {
+    $id = reedcrm_get_or_create_user_default_call_list($db, $user);
+}
+$defaultCallListId = isset($user->conf->REEDCRM_DEFAULT_CALL_LIST) ? (int) $user->conf->REEDCRM_DEFAULT_CALL_LIST : 0;
 
 $object     = new CallList($db);
 $lineObject = new CallListLine($db);
@@ -57,73 +67,21 @@ if ($id > 0) {
 }
 
 if (empty($object->id)) {
-    accessforbidden($langs->trans('RecordNotFound'), 0);
+    accessforbidden($langs->trans('ErrorRecordNotFound'));
     exit;
 }
 
-$canRead = false;
-if ($user->hasRight('reedcrm', 'call_list', 'read_all') || $user->admin) {
-    $canRead = true;
-} elseif ($user->hasRight('reedcrm', 'call_list', 'read_subordinates')) {
-    $childIds = $user->getAllChildIds(1);
-    if (isset($childIds[$object->fk_user_assign])) {
-        $canRead = true;
-    }
-} elseif ($user->hasRight('reedcrm', 'call_list', 'read')) {
-    if ($object->fk_user_assign == $user->id) {
-        $canRead = true;
-    }
-}
-
-if (!$canRead) {
-    accessforbidden($langs->trans('NotEnoughPermissions'), 0);
+if (!reedcrm_call_list_user_can_read($user, $object)) {
+    accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
 
-
-// Handle audio upload — JS posts to current URL with action=add_audio
-if ($action === 'add_audio') {
-    if (!empty($_FILES['audio']['tmp_name'])) {
-        $audioModule   = GETPOST('module_name', 'alpha');
-        $audioSubDir   = GETPOST('sub_dir', 'nohtml'); // Allow hyphens/slashes
-        $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
-
-        $uploadDir = !empty($conf->$audioModLower->dir_output)
-            ? $conf->$audioModLower->dir_output
-            : $conf->ecm->dir_output . '/' . $audioModLower;
-        if (!empty($audioSubDir)) {
-            $uploadDir .= '/' . $audioSubDir;
-        }
-        if (!dol_is_dir($uploadDir)) {
-            dol_mkdir($uploadDir);
-        }
-        $destFile = $uploadDir . '/' . dol_print_date(dol_now(), 'dayhourlog') . '_audio.wav';
-        move_uploaded_file($_FILES['audio']['tmp_name'], $destFile);
-    }
-}
-
-
-// Handle audio delete — JS posts to current URL with action=delete_audio
-if ($action === 'delete_audio') {
-    $audioModule   = GETPOST('module_name', 'alpha');
-    $audioSubDir   = GETPOST('sub_dir', 'alpha');
-    $audioFilename = GETPOST('filename', 'alpha');
-    $audioModLower = !empty($audioModule) ? dol_strtolower($audioModule) : 'reedcrm';
-
-    $uploadDir = !empty($conf->$audioModLower->dir_output)
-        ? $conf->$audioModLower->dir_output
-        : $conf->ecm->dir_output . '/' . $audioModLower;
-    if (!empty($audioSubDir)) {
-        $uploadDir .= '/' . $audioSubDir;
-    }
-    $filePath = $uploadDir . '/' . basename($audioFilename);
-    if (!empty($audioFilename) && file_exists($filePath)) {
-        dol_delete_file($filePath);
-    }
-    // Fall through — page renders normally so JS can parse the updated audio block
-}
+reedcrm_call_list_set_last_opened($db, $user, (int) $object->id);
 
 $lines = $lineObject->fetchAllByCallList($object->id);
+
+// Same indicators as the todo cards: object + amount + relaunches, third party, late / upcoming
+$lineIndicators = reedcrm_call_list_get_line_indicators($db, $lines);
 
 $toCallCount = 0;
 foreach ($lines as $line) {
@@ -134,8 +92,8 @@ foreach ($lines as $line) {
 
 $title   = dol_escape_htmltag($object->label);
 $helpUrl = 'FR:Module_ReedCRM';
-$moreJS  = ['/custom/saturne/js/saturne.min.js', '/custom/reedcrm/js/reedcrm.min.js'];
-$moreCSS = ['/custom/saturne/css/saturne.min.css', '/custom/reedcrm/css/reedcrm.min.css'];
+$moreJS  = ['/saturne/js/saturne.min.js', '/reedcrm/js/reedcrm.min.js'];
+$moreCSS = ['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css'];
 
 $conf->dol_hide_topmenu  = 1;
 $conf->dol_hide_leftmenu = 1;
@@ -144,37 +102,35 @@ llxHeader('', $title, $helpUrl, '', 0, 0, $moreJS, $moreCSS, '', 'template-pwa p
 
 $pwaHeaderCenterHtml = '<div style="background:#e2e8f0;padding:4px 10px;border-radius:12px;font-size:13px;font-weight:bold;color:#475569;">'
     . '<i class="fas fa-phone"></i> ' . dol_escape_htmltag($object->label)
-    . ' — ' . $toCallCount . '/' . count($lines) . ' à appeler'
+    . ' — <span class="pwa-call-list-to-call-count">' . $toCallCount . '</span>/<span class="pwa-call-list-total-count">' . count($lines) . '</span> à appeler'
     . '</div>';
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_header.tpl.php';
 
-$statusLabels = [
-    CallListLine::STATUS_TO_CALL   => 'À appeler',
-    CallListLine::STATUS_CALLED    => 'Appelé',
-    CallListLine::STATUS_NO_ANSWER => 'Pas de rép.',
-    CallListLine::STATUS_CALLBACK  => 'Rappel',
-];
-$statusColors = [
-    CallListLine::STATUS_TO_CALL   => '#3b82f6',
-    CallListLine::STATUS_CALLED    => '#22c55e',
-    CallListLine::STATUS_NO_ANSWER => '#ef4444',
-    CallListLine::STATUS_CALLBACK  => '#f97316',
-];
-
 // Page styles live in css/scss/pages/_pwa-call-list.scss (compiled into reedcrm.min.css)
 
-$ajaxUrl          = dol_buildpath('/custom/reedcrm/ajax/update_call_list_line_status.php', 1);
-$actioncommAjaxUrl = dol_buildpath('/custom/reedcrm/ajax/create_call_actioncomm.php', 1);
+$actioncommAjaxUrl = dol_buildpath('/reedcrm/ajax/create_call_actioncomm.php', 1);
+$unlinkAjaxUrl     = dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1);
+// Same endpoint as the arrows of the call list card, the move itself being handled by js/modules/call_list.js
+$moveAjaxUrl       = dol_buildpath('/reedcrm/ajax/move_call_list_line.php', 1);
 $createActioncomm  = getDolGlobalInt('REEDCRM_CALL_LIST_CREATE_ACTIONCOMM');
+// Same right as the unlink button of the call list card
+$canUnlink         = $user->hasRight('reedcrm', 'call_list', 'delete');
+// Same rights as the arrows of the call list card and the relaunch bar of the opportunity page
+$canMove           = $user->hasRight('reedcrm', 'call_list', 'write');
+$canAddEvent       = $user->hasRight('agenda', 'myactions', 'create') && $user->hasRight('reedcrm', 'eventpro', 'write');
 $token             = newToken();
 
 print '<div class="pwa-call-list-container"'
-    . ' data-ajax-url="' . dol_escape_htmltag($ajaxUrl) . '"'
+    . ' data-move-url="' . dol_escape_htmltag($moveAjaxUrl) . '"'
     . ' data-actioncomm-url="' . dol_escape_htmltag($actioncommAjaxUrl) . '"'
+    . ' data-unlink-url="' . dol_escape_htmltag($unlinkAjaxUrl) . '"'
+    . ' data-unlink-confirm="' . dol_escape_htmltag($langs->transnoentities('ConfirmCallListLineUnlink')) . '"'
+    . ' data-unlink-error="' . dol_escape_htmltag($langs->transnoentities('ErrorCallListLineUnlink')) . '"'
     . ' data-create-actioncomm="' . (int) $createActioncomm . '"'
+    . ' data-default-list="' . ((int) $object->id === $defaultCallListId ? 1 : 0) . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
 
-// Saturne expects an input named "token" in the DOM for AJAX uploads
+// Saturne reads the token of its AJAX calls from an input named "token" in the DOM
 print '<input type="hidden" name="token" value="' . dol_escape_htmltag($token) . '">';
 
 $dateStart = $object->date_start ? dol_print_date($object->date_start, 'day') : '—';
@@ -189,7 +145,8 @@ $sqlLists .= " LEFT JOIN " . MAIN_DB_PREFIX . "user u ON u.rowid = cl.fk_user_as
 $sqlLists .= " WHERE cl.entity IN (" . getEntity('call_list') . ")";
 $sqlLists .= " AND cl.status = " . CallList::STATUS_ACTIVE;
 $sqlLists .= " AND (u.employee = 1 OR cl.fk_user_assign = " . ((int) $user->id) . " OR cl.rowid = " . ((int) $object->id) . ")";
-$sqlLists .= " ORDER BY cl.date_creation DESC";
+// Same order as the list and the selectors of the cards, see CallList::SORT_FIELDS
+$sqlLists .= " ORDER BY cl.position ASC, cl.label ASC";
 $resqlLists = $db->query($sqlLists);
 
 $myLists = [];
@@ -218,7 +175,9 @@ if ($resqlLists) {
     }
 }
 
-print '<select id="pwa-call-list-select" class="pwa-call-list-select">';
+// Without autocomplete, the browser would restore on a back navigation the list picked before leaving the page,
+// over the one the page displays
+print '<select id="pwa-call-list-select" class="pwa-call-list-select" autocomplete="off">';
 if (!empty($myLists)) {
     print '<optgroup label="' . dol_escape_htmltag($langs->trans('MyCallLists')) . '">';
     foreach ($myLists as $lst) {
@@ -248,34 +207,21 @@ if (empty($lines)) {
 } else {
     $contact = new Contact($db);
 
-    foreach ($lines as $line) {
-        $lastname   = '';
-        $firstname  = '';
-        $phone      = '';
-        $sourceHtml = '';
+    foreach ($lines as $lineIndex => $line) {
+        $displayInfo = reedcrm_call_list_get_line_contact_display($db, $line);
+        $lastname    = dol_escape_htmltag($displayInfo['lastname']);
+        $firstname   = dol_escape_htmltag($displayInfo['firstname']);
+        $phone       = dol_escape_htmltag($displayInfo['phone']);
+        $sourceHtml  = '';
 
-        if (!empty($line->fk_contact)) {
-            $contact->fetch($line->fk_contact);
-            $lastname  = dol_escape_htmltag($contact->lastname);
-            $firstname = dol_escape_htmltag($contact->firstname);
-            $phone     = dol_escape_htmltag($contact->phone_pro ?: $contact->phone_mobile ?: '');
-        }
-
-        $sourceRefHtml = '';
         $sourceTitleHtml = '';
         $oppPercent = null;
-        $oppAmount  = null;
         $oppProjectId = 0;
-        $saturneModule = 'reedcrm';
-        $saturneSubdir = 'calllistline/' . (int) $line->id;
 
         if ($line->element_type === 'propal' && isModEnabled('propale')) {
             require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
             $propal = new Propal($db);
             if ($propal->fetch($line->element_id) > 0) {
-                $sourceRefHtml = $propal->getNomUrl(1);
-                $saturneModule = 'propal';
-                $saturneSubdir = dol_sanitizeFileName($propal->ref);
                 if ($propal->fk_project > 0) {
                     require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
                     $project = new Project($db);
@@ -285,42 +231,69 @@ if (empty($lines)) {
                         $oppProjectId = $project->id;
                     }
                 }
-                $oppAmount = $propal->total_ttc;
+            }
+        } elseif ($line->element_type === 'facture' && isModEnabled('facture')) {
+            require_once DOL_DOCUMENT_ROOT . '/compta/facture/class/facture.class.php';
+            $facture = new Facture($db);
+            if ($facture->fetch($line->element_id) > 0 && $facture->fk_project > 0) {
+                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
+                $project = new Project($db);
+                if ($project->fetch($facture->fk_project) > 0) {
+                    $sourceTitleHtml = $project->title;
+                    $oppPercent = $project->opp_percent;
+                    $oppProjectId = $project->id;
+                }
             }
         } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
             require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
             $project = new Project($db);
             if ($project->fetch($line->element_id) > 0) {
-                $sourceRefHtml = $project->getNomUrl(1);
-                $saturneModule = 'projet';
-                $saturneSubdir = dol_sanitizeFileName($project->ref);
                 $sourceTitleHtml = $project->title;
                 $oppPercent = $project->opp_percent;
-                $oppAmount  = $project->opp_amount;
                 $oppProjectId = $project->id;
-
-                if (empty($line->fk_contact) || empty($lastname)) {
-                    $projectContact = reedcrm_get_project_contact_details($project);
-                    if ($projectContact['lastname'] !== '' || $projectContact['firstname'] !== '' || $projectContact['phone'] !== '') {
-                        $lastname  = dol_escape_htmltag($projectContact['lastname']);
-                        $firstname = dol_escape_htmltag($projectContact['firstname']);
-                        $phone     = dol_escape_htmltag($projectContact['phone']);
-                    }
-                }
             }
         }
 
         $currentStatus = (int) $line->status;
+        $indicators    = $lineIndicators[(int) $line->id] ?? [];
+        $origin        = $indicators['origin'] ?? [];
 
-        print '<div class="pwa-call-card" data-line-id="' . (int) $line->id . '" data-status="' . $currentStatus . '">';
+        // call-list-line-row: moved by its arrows like the rows of the call list card (js/modules/call_list.js)
+        $cardClass = 'pwa-call-card call-list-line-row';
+        if (!empty($indicators['late'])) {
+            $cardClass .= ' pwa-call-card--late';
+        } elseif (!empty($indicators['upcoming'])) {
+            $cardClass .= ' pwa-call-card--upcoming';
+        }
 
-        // Ligne 1 : Nom et % opp
+        print '<div class="' . $cardClass . '" data-line-id="' . (int) $line->id . '" data-status="' . $currentStatus . '">';
+
+        if ($canUnlink) {
+            print '<button type="button" class="pwa-call-btn-unlink" data-action="unlink-line" title="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '"><i class="fas fa-unlink"></i></button>';
+        }
+
+        // Ligne 1 : Nom + prochain événement en retard ou à venir, comme sur la todo
         print '<div class="pwa-call-card-header">';
         if ($lastname || $firstname) {
             print '<span class="pwa-call-name"><i class="fas fa-user" style="color:#94a3b8;"></i> ' . $lastname . ' ' . $firstname . '</span>';
         } else {
             print '<span class="pwa-call-name pwa-call-name--empty"><i class="fas fa-user-slash" style="color:#cbd5e1;"></i> Contact non renseigné</span>';
         }
+        if (!empty($indicators['late'])) {
+            print '<span class="todo-card-late-badge" title="' . dol_escape_htmltag($indicators['next_event_title']) . '"><i class="fas fa-exclamation-circle"></i> ' . $langs->trans('TodoLateEvent') . '</span>';
+        } elseif (!empty($indicators['upcoming'])) {
+            print '<span class="todo-card-upcoming-badge" title="' . dol_escape_htmltag($indicators['next_event_title']) . '"><i class="fas fa-clock"></i> ' . $langs->trans('TodoUpcomingEvent') . '</span>';
+        }
+        print '</div>';
+
+        if (!empty($line->date_creation)) {
+            print '<div class="pwa-call-added-date"><i class="far fa-calendar-plus"></i> ' . $langs->trans('CallListLineAddedOn', dol_print_date($line->date_creation, 'day', 'tzuser')) . '</div>';
+        }
+
+        // Last call made about the object or its project. Always rendered: tapping the number fills it (js/modules/pwa_call_list.js)
+        $lastCallDate = $indicators['last_call_date'] ?? 0;
+        print '<div class="pwa-call-last-call' . ($lastCallDate ? '' : ' hideobject') . '"' . ($lastCallDate ? ' title="' . dol_escape_htmltag($indicators['last_call_label']) . '"' : '') . '>';
+        print '<i class="fas fa-phone-alt"></i> <span class="pwa-call-last-call-text">' . ($lastCallDate ? $langs->trans('CallListLineLastCall', dol_print_date($lastCallDate, 'dayhour', 'tzuser')) : '') . '</span>';
         print '</div>';
 
         // Ligne 2 : Gros bouton d'appel vert + bouton copier le numéro
@@ -333,23 +306,46 @@ if (empty($lines)) {
             print '<div><span class="pwa-call-phone" style="color:#94a3b8;"><i class="fas fa-phone-slash" style="color:#94a3b8;"></i> Pas de téléphone</span></div>';
         }
 
-        // Ligne 3 : Picto + Objet + Montant
-        if ($sourceRefHtml) {
-            $amountStr = ($oppAmount !== null) ? price($oppAmount, 0, $langs, 0, 0, -1, $conf->currency) : '';
-            print '<div class="pwa-call-ref">' . $sourceRefHtml;
-            if ($amountStr) {
-                print '<span class="pwa-call-sep">|</span><strong>' . $amountStr . '</strong>';
+        // Ligne 3 : puces des cartes de la todo (objet + montant HT arrondi + relances, tiers) puis % opp
+        if (!empty($origin)) {
+            $originCounted = !empty($origin['amount_ht']) || !empty($origin['relaunch_count']);
+            print '<div class="pwa-call-indicators">';
+            print '<span class="todo-origin-wrapper">';
+            print '<a class="todo-link-badge todo-link-origin' . ($originCounted ? ' todo-link-origin-counted' : '') . '" href="' . dol_escape_htmltag($origin['url']) . '">';
+            print '<i class="fas ' . $origin['picto'] . '"></i> ' . dol_escape_htmltag($origin['ref']) . '</a>';
+            if (!empty($origin['amount_ht'])) {
+                print '<span class="todo-origin-amount" title="' . dol_escape_htmltag($origin['amount_ht_full']) . '">' . dol_escape_htmltag($origin['amount_ht_short']) . '</span>';
+            }
+            if (!empty($origin['relaunch_count'])) {
+                print '<span class="todo-relaunch-count" title="' . dol_escape_htmltag($langs->trans('TodoRelaunchCount', $origin['relaunch_count'])) . '"><i class="fas fa-headset"></i> ' . $origin['relaunch_count'] . '</span>';
+            }
+            print '</span>';
+            if (!empty($indicators['soc_name'])) {
+                print '<span class="todo-link-badge todo-link-soc" title="' . dol_escape_htmltag($indicators['soc_name']) . '"><i class="fas fa-building"></i> ' . dol_escape_htmltag($indicators['soc_name']) . '</span>';
             }
             if ($oppPercent !== null) {
-                print '<span class="pwa-call-sep">|</span><span class="pwa-call-percent">' . round($oppPercent) . ' %</span>';
+                print '<span class="pwa-call-percent">' . round($oppPercent) . ' %</span>';
             }
             print '</div>';
-            
+
+            // Prochain événement à faire, en clair : un téléphone n'a pas de survol pour lire l'infobulle du badge
+            if (!empty($indicators['next_event_date'])) {
+                $isLate = !empty($indicators['late']);
+                print '<div class="pwa-call-next-event' . ($isLate ? ' pwa-call-next-event--late' : '') . '">';
+                print '<span class="pwa-call-next-event-date"' . ($isLate ? ' title="' . dol_escape_htmltag($langs->trans('TodoLateEvent')) . '"' : '') . '>';
+                print '<i class="fas ' . ($isLate ? 'fa-exclamation-triangle' : 'fa-clock') . '"></i> ' . dol_print_date($indicators['next_event_date'], 'dayhour', 'tzuser');
+                print '</span>';
+                if ($indicators['next_event_label'] !== '') {
+                    print '<span class="pwa-call-next-event-label">' . dol_escape_htmltag($indicators['next_event_label']) . '</span>';
+                }
+                print '</div>';
+            }
+
             if ($oppProjectId > 0) {
                 // Drill down to the App opportunity page, keeping the call list in the header.
                 // Rendered as an explicit disclosure row: a plain coloured title reads as decoration
                 // on a card that already holds five buttons, and nobody finds it.
-                $oppUrl = dol_buildpath('/custom/reedcrm/view/frontend/pwa_opportunity.php', 1)
+                $oppUrl = dol_buildpath('/reedcrm/view/frontend/pwa_opportunity.php', 1)
                     . '?from_id=' . (int) $oppProjectId . '&from_type=project&call_list_id=' . (int) $object->id;
                 print '<a class="pwa-call-opp-link" href="' . dol_escape_htmltag($oppUrl) . '">';
                 print '<span class="pwa-call-opp-link-body">';
@@ -367,25 +363,30 @@ if (empty($lines)) {
             }
         }
 
-        // Ligne 4 : Actions
-        print '<div class="pwa-call-actions">';
-        print '<div class="pwa-call-status-btns">';
-        
-        $statusIcons = [
-            CallListLine::STATUS_CALLED    => 'fas fa-check',
-            CallListLine::STATUS_NO_ANSWER => 'fas fa-times',
-            CallListLine::STATUS_CALLBACK  => 'fas fa-voicemail',
-        ];
-        
-        foreach ($statusIcons as $val => $iconClass) {
-            $isActive = ($val === $currentStatus) ? ' pwa-status-btn--active' : '';
-            $color    = $statusColors[$val] ?? '#94a3b8';
-            print '<button class="pwa-status-btn' . $isActive . '" data-status="' . (int) $val . '" style="--status-color:' . dol_escape_htmltag($color) . '" title="' . dol_escape_htmltag($statusLabels[$val]) . '"><i class="' . $iconClass . '"></i></button>';
+        // Ligne 4 : les deux boutons ReedCRM de l'opportunité (événement passé / à venir), comme dans la barre
+        // de la page opportunité, puis les flèches qui priorisent l'appel dans la liste
+        $relaunchHtml = '';
+        if ($oppProjectId > 0) {
+            $relaunchHtml = reedcrm_render_relaunch_widget([
+                'projectId'  => $oppProjectId,
+                'mode'       => 'link',
+                'canCreate'  => $canAddEvent,
+                // The event form keeps the way back to the call list in its header
+                'extraQuery' => '&call_list_id=' . (int) $object->id,
+            ]);
         }
-        print '</div>';
-
-        print saturne_render_media_block($saturneModule, $saturneSubdir, 'cll_' . (int) $line->id, '', ['show_photo' => false, 'show_audio' => true, 'show_gallery' => false]);
-        print '</div>';
+        if ($relaunchHtml !== '' || $canMove) {
+            print '<div class="pwa-call-actions">';
+            print $relaunchHtml;
+            if ($canMove) {
+                // Both always rendered, the JS hiding the up one of the first card and the down one of the last card after each move
+                print '<div class="pwa-call-move-btns">';
+                print '<button type="button" class="pwa-call-btn-move call-list-line-move' . ($lineIndex === 0 ? ' hideobject' : '') . '" data-direction="up" title="' . dol_escape_htmltag($langs->trans('CallListLineMoveUp')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineMoveUp')) . '"><i class="fas fa-arrow-up"></i></button>';
+                print '<button type="button" class="pwa-call-btn-move call-list-line-move' . ($lineIndex === count($lines) - 1 ? ' hideobject' : '') . '" data-direction="down" title="' . dol_escape_htmltag($langs->trans('CallListLineMoveDown')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineMoveDown')) . '"><i class="fas fa-arrow-down"></i></button>';
+                print '</div>';
+            }
+            print '</div>';
+        }
 
         print '<div class="pwa-call-error" style="display:none;"></div>';
 
@@ -394,79 +395,6 @@ if (empty($lines)) {
 }
 
 print '</div>';
-
-print '<script>
-(function () {
-    var container  = document.querySelector(".pwa-call-list-container");
-    if (!container) return;
-    var ajaxUrl          = container.dataset.ajaxUrl;
-    var actioncommUrl    = container.dataset.actioncommUrl;
-    var createActioncomm = container.dataset.createActioncomm === "1";
-    var token            = container.dataset.token;
-    var statusLabels = ' . json_encode($statusLabels) . ';
-    var statusColors = ' . json_encode($statusColors) . ';
-
-    window.saturne = window.saturne || {};
-    window.saturne.toolbox = window.saturne.toolbox || {};
-    window.saturne.toolbox.getToken = function() {
-        return token;
-    };
-
-    document.querySelectorAll(".pwa-call-btn-call").forEach(function (link) {
-        link.addEventListener("click", function () {
-            if (!createActioncomm) return;
-            var card   = link.closest(".pwa-call-card");
-            var lineId = card.dataset.lineId;
-            var body   = new URLSearchParams();
-            body.append("line_id", lineId);
-            body.append("token",   token);
-            fetch(actioncommUrl, { method: "POST", body: body });
-        });
-    });
-
-    document.querySelectorAll(".pwa-status-btn").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-            var card      = btn.closest(".pwa-call-card");
-            var lineId    = card.dataset.lineId;
-            var newStatus = parseInt(btn.dataset.status, 10);
-            var currentSt = parseInt(card.dataset.status, 10);
-            if (currentSt === newStatus) {
-                newStatus = 0; // Toggle off if clicking the already active button
-            }
-            var errorEl   = card.querySelector(".pwa-call-error");
-
-            var body = new URLSearchParams();
-            body.append("line_id", lineId);
-            body.append("status",  newStatus);
-            body.append("token",   token);
-
-            fetch(ajaxUrl, { method: "POST", body: body })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                        if (data.success) {
-                            card.querySelectorAll(".pwa-status-btn").forEach(function (b) {
-                                b.classList.toggle("pwa-status-btn--active", parseInt(b.dataset.status, 10) === newStatus);
-                            });
-                        card.dataset.status   = newStatus;
-                        errorEl.style.display = "none";
-                        if (newStatus !== 0) {
-                            card.parentNode.appendChild(card);
-                        }
-                    } else {
-                        errorEl.textContent   = data.error || "Erreur inconnue";
-                        errorEl.style.display = "block";
-                        setTimeout(function () { errorEl.style.display = "none"; }, 3000);
-                    }
-                })
-                .catch(function () {
-                    errorEl.textContent   = "Erreur réseau";
-                    errorEl.style.display = "block";
-                    setTimeout(function () { errorEl.style.display = "none"; }, 3000);
-                });
-        });
-    });
-}());
-</script>';
 
 require_once __DIR__ . '/../../core/tpl/frontend/reedcrm_pwa_bottom_nav.tpl.php';
 

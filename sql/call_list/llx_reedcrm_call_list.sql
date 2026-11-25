@@ -15,6 +15,7 @@ CREATE TABLE llx_reedcrm_call_list(
     import_key     varchar(14),
     status         smallint DEFAULT 0 NOT NULL,
     label          varchar(255) NOT NULL,
+    position       integer DEFAULT 0 NOT NULL,
     note_public    text,
     note_private   text,
     fk_user_assign integer,

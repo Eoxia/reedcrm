@@ -20,7 +20,8 @@
  * \file    js/modules/todo_kanban.js
  * \ingroup reedcrm
  * \brief   Kanban board of the todo tab: drag & drop between event statuses and
- *          inline edition of the agenda events (label, dates, owner, assigned users).
+ *          inline edition of the agenda events (label, dates, owner, assigned users,
+ *          third party, contact and project).
  */
 
 if (!window.reedcrm) {
@@ -149,6 +150,8 @@ window.reedcrm.todoKanban.event = function () {
 
   $(document).on('input', '.todo-owner-search, .todo-assigned-search', window.reedcrm.todoKanban.filterOptions);
 
+  $(document).on('click', '.todo-links-btn', window.reedcrm.todoKanban.toggleLinksPanel);
+
   $(document).on('click', '.todo-column-sort', window.reedcrm.todoKanban.toggleColumnSort);
 
   $(document).on('click', '.todo-load-more', function (event) {
@@ -161,12 +164,12 @@ window.reedcrm.todoKanban.event = function () {
   $(document).on('click', function () {
     window.reedcrm.todoKanban.closeDropdowns();
   });
-  $(document).on('click', '.todo-owner-dropdown, .todo-assigned-dropdown', function (event) {
+  $(document).on('click', '.todo-owner-dropdown, .todo-assigned-dropdown, .todo-links-panel', function (event) {
     event.stopPropagation();
   });
 
   // Interacting with a control of the card must never start a drag
-  $(document).on('mousedown', '.todo-editable-label, .todo-editable-date, .todo-card-progress, .todo-initial-owner, .todo-owner-dropdown, .todo-assigned-dropdown, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge', function (event) {
+  $(document).on('mousedown', '.todo-editable-label, .todo-editable-date, .todo-card-progress, .todo-initial-owner, .todo-owner-dropdown, .todo-assigned-dropdown, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge, .todo-links-btn, .todo-links-panel', function (event) {
     event.stopPropagation();
   });
 };
@@ -202,6 +205,8 @@ window.reedcrm.todoKanban.closeDropdowns = function () {
     $(this).removeClass('visible');
     $(this).closest('.todo-card').removeClass('todo-card-dropdown-open');
   });
+
+  window.reedcrm.todoKanban.closeLinksPanel();
 };
 
 /**
@@ -210,9 +215,10 @@ window.reedcrm.todoKanban.closeDropdowns = function () {
  * @param  {Object}   params    Query parameters, action included
  * @param  {jQuery}   $card     Card to flag while the call runs
  * @param  {Function} onSuccess Called with the JSON payload when the update went through
+ * @param  {Function} [onError] Called when it did not
  * @returns {void}
  */
-window.reedcrm.todoKanban.request = function (params, $card, onSuccess) {
+window.reedcrm.todoKanban.request = function (params, $card, onSuccess, onError) {
   var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
 
   params.token = window.saturne.toolbox.getToken();
@@ -231,11 +237,17 @@ window.reedcrm.todoKanban.request = function (params, $card, onSuccess) {
         }
       } else {
         window.reedcrm.todoKanban.flag($card, 'todo-card-error', 3000);
+        if (onError) {
+          onError();
+        }
       }
     },
     error: function () {
       $card.removeClass('todo-card-saving');
       window.reedcrm.todoKanban.flag($card, 'todo-card-error', 3000);
+      if (onError) {
+        onError();
+      }
     }
   });
 };
@@ -377,6 +389,17 @@ window.reedcrm.todoKanban.editDate = function (event) {
       function (response) {
         $date.data('raw', response.raw);
         $date.find('.todo-date-value').text(response.formatted || '-');
+        // The date of the origin object only stood in for a missing one
+        if ($date.hasClass('todo-date-origin')) {
+          $date.removeClass('todo-date-origin').attr('title', $date.data('title-default'));
+        }
+
+        // A relaunch just planned belongs to the column of its percentage from now on
+        if (field === 'date_start') {
+          var cardPercent = parseInt($card.data('percent'), 10);
+          window.reedcrm.todoKanban.paintCard($card, cardPercent);
+          window.reedcrm.todoKanban.moveToColumn($card, cardPercent);
+        }
       }
     );
   }
@@ -492,7 +515,7 @@ window.reedcrm.todoKanban.paintQuickClose = function ($card, percent) {
 
 /**
  * Return the column a card belongs to, mirroring reedcrmTodoGetColumnForEvent(): a relaunch
- * stays in its own backlog as long as it is neither done nor dropped.
+ * stays in its own backlog as long as it is neither done, dropped, nor planned.
  *
  * @param  {jQuery} $card   Card to place
  * @param  {number} percent Percentage of the event
@@ -500,6 +523,8 @@ window.reedcrm.todoKanban.paintQuickClose = function ($card, percent) {
  */
 window.reedcrm.todoKanban.findColumn = function ($card, percent) {
   var code   = String($card.data('event-code') || '');
+  // Giving a date to a relaunch is what takes it out of its backlog
+  var dated  = String($card.find('.todo-date-start').data('raw') || '') !== '';
   var $found = null;
 
   $('.todo-column').each(function () {
@@ -507,7 +532,7 @@ window.reedcrm.todoKanban.findColumn = function ($card, percent) {
     var columnCode  = String($column.data('code') || '');
 
     if (columnCode) {
-      if (columnCode === code && percent >= 0 && percent < 100) {
+      if (columnCode === code && !dated && percent >= 0 && percent < 100) {
         $found = $column;
         return false;
       }
@@ -794,6 +819,243 @@ window.reedcrm.todoKanban.removeAssigned = function (event) {
 };
 
 /**
+ * Open or close the links panel of a card: its third party, contact and project, picked on the fly.
+ *
+ * The panel is rendered once for the whole board and moved under the links of the card it serves,
+ * so a board of hundreds of cards carries a single set of selectors.
+ *
+ * @param  {Event} event Click event
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.toggleLinksPanel = function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  var $panel     = $('#todoLinksPanel');
+  var $card      = $(this).closest('.todo-card');
+  var openedHere = $panel.hasClass('visible') && $panel.closest('.todo-card').is($card);
+
+  window.reedcrm.todoKanban.closeDropdowns();
+  if (openedHere || !$panel.length) {
+    return;
+  }
+
+  window.reedcrm.todoKanban.initLinksPanel($panel);
+  $card.find('.todo-card-links').after($panel);
+  window.reedcrm.todoKanban.fillLinksPanel($card);
+  $panel.addClass('visible');
+  $card.addClass('todo-card-dropdown-open');
+};
+
+/**
+ * Close the links panel and put it back beside the board: left inside a card, it would go along
+ * with it when its column is read again.
+ *
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.closeLinksPanel = function () {
+  var $panel = $('#todoLinksPanel');
+
+  if (!$panel.hasClass('visible')) {
+    return;
+  }
+
+  $panel.find('.todo-links-select').each(function () {
+    if ($(this).data('select2')) {
+      $(this).select2('close');
+    }
+  });
+  $panel.removeClass('visible');
+  $panel.closest('.todo-card').removeClass('todo-card-dropdown-open');
+  $('.todo-board').before($panel);
+};
+
+/**
+ * Turn the selectors of the links panel into searches, on their first opening.
+ *
+ * Each one is saved as soon as a value is picked or cleared.
+ *
+ * @param  {jQuery} $panel Links panel
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.initLinksPanel = function ($panel) {
+  if ($panel.data('initialized') || typeof $.fn.select2 === 'undefined') {
+    return;
+  }
+  $panel.data('initialized', 1);
+
+  $panel.find('.todo-links-select').each(function () {
+    var $select = $(this);
+    var field   = $select.data('field');
+
+    $select.select2({
+      width: '100%',
+      placeholder: $select.data('placeholder'),
+      allowClear: true,
+      // Inside the panel, a click in the list is not a click outside of it
+      dropdownParent: $panel,
+      language: typeof select2arrayoflanguage === 'undefined' ? 'en' : select2arrayoflanguage,
+      ajax: {
+        url: document.URL,
+        dataType: 'json',
+        delay: 250,
+        data: function (params) {
+          return {
+            action: 'searchLinkTargets',
+            type: $select.data('type'),
+            search: params.term || '',
+            // Contacts and projects are searched among those of the third party of the card
+            socid: window.reedcrm.todoKanban.getCardLinks($panel.closest('.todo-card')).socid.id || 0,
+            token: window.saturne.toolbox.getToken()
+          };
+        },
+        processResults: function (response) {
+          return {results: (response && response.results) || []};
+        }
+      }
+    });
+
+    $select.on('select2:select', function (selectEvent) {
+      window.reedcrm.todoKanban.saveLink($panel, field, selectEvent.params.data.id);
+    });
+    $select.on('select2:clear', function () {
+      window.reedcrm.todoKanban.saveLink($panel, field, 0);
+    });
+  });
+};
+
+/**
+ * Read the third party, contact and project a card carries.
+ *
+ * @param  {jQuery} $card Card
+ * @returns {Object}      {socid: {id, text}, contactid: {id, text}, projectid: {id, text}}
+ */
+window.reedcrm.todoKanban.getCardLinks = function ($card) {
+  var links = {};
+
+  try {
+    links = JSON.parse($card.find('.todo-card-links').attr('data-links') || '{}');
+  } catch (error) {
+    links = {};
+  }
+
+  ['socid', 'contactid', 'projectid'].forEach(function (field) {
+    links[field] = links[field] || {id: 0, text: ''};
+  });
+
+  return links;
+};
+
+/**
+ * Show in the selectors of the links panel what the card carries.
+ *
+ * @param  {jQuery} $card Card the panel serves
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.fillLinksPanel = function ($card) {
+  var links = window.reedcrm.todoKanban.getCardLinks($card);
+
+  $('#todoLinksPanel').find('.todo-links-select').each(function () {
+    var $select = $(this);
+    var link    = links[$select.data('field')];
+
+    $select.empty().append(new Option('', '', false, false));
+    if (link.id > 0) {
+      $select.append(new Option(link.text, link.id, true, true));
+    }
+    $select.trigger('change.select2');
+  });
+};
+
+/**
+ * Save the third party, the contact or the project picked in the links panel.
+ *
+ * The links of the card come back rendered: picking a contact or a project may bring its third
+ * party along, and changing the third party drops a contact or a project belonging to another.
+ *
+ * @param  {jQuery} $panel Links panel
+ * @param  {string} field  'socid', 'contactid' or 'projectid'
+ * @param  {number} value  ID picked, 0 to clear
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.saveLink = function ($panel, field, value) {
+  var $card = $panel.closest('.todo-card');
+
+  if (!$card.length) {
+    return;
+  }
+
+  window.reedcrm.todoKanban.request(
+    {action: 'updateEventLinks', event_id: $card.data('event-id'), field: field, value: value},
+    $card,
+    function (response) {
+      if (response.html) {
+        $card.find('.todo-card-links').replaceWith(response.html);
+      }
+      window.reedcrm.todoKanban.fillLinksPanel($card);
+    },
+    function () {
+      // Back to what the card still carries
+      window.reedcrm.todoKanban.fillLinksPanel($card);
+    }
+  );
+};
+
+/**
+ * Whether a card dropped in a column would stay there.
+ *
+ * A relaunch backlog holds cards on their code, no percentage puts a card in it, and a
+ * relaunch only leaves its backlog once done, dropped or planned: the same rule as the receive
+ * callback, shared with the highlight of the columns while a card is dragged.
+ *
+ * @param  {jQuery} $card   Dragged card
+ * @param  {jQuery} $column Column the card would be dropped in
+ * @returns {boolean}       True if the card would stay in the column
+ */
+window.reedcrm.todoKanban.canLand = function ($card, $column) {
+  var minimum = parseInt($column.data('percent-min'), 10);
+  var maximum = parseInt($column.data('percent-max'), 10);
+  var percent = parseInt($card.data('percent'), 10);
+
+  if (isNaN(minimum)) {
+    return false;
+  }
+  if (isNaN(percent) || percent < minimum || percent > maximum) {
+    percent = minimum;
+  }
+
+  var $wouldLand = window.reedcrm.todoKanban.findColumn($card, percent);
+
+  return !!$wouldLand && $wouldLand[0] === $column[0];
+};
+
+/**
+ * Tell why a dropped card went back to where it came from.
+ *
+ * A refused move used to be silent: on a board made of relaunches, the drag & drop looked
+ * broken to the user.
+ *
+ * @param  {jQuery} $column Column the card was dropped in
+ * @returns {void}
+ */
+window.reedcrm.todoKanban.notifyRefusedMove = function ($column) {
+  // A relaunch backlog only takes the relaunches the cron creates; any other refusal is a
+  // relaunch leaving its backlog for a column other than done or not applicable
+  var key     = $column.data('code') ? 'move-refused-backlog-label' : 'move-refused-relaunch-label';
+  var message = String($('.todo-board').data(key) || '');
+
+  if (!message) {
+    return;
+  }
+  // jnotify is loaded by main.inc.php unless it has been disabled
+  if (typeof $.jnotify !== 'function') {
+    alert(message);
+    return;
+  }
+  $.jnotify(message, 'warning', false, { remove: function () {} });
+};
+
+/**
  * Make the columns of the board sortable and save the status a dropped card lands on.
  *
  * @returns {void}
@@ -809,7 +1071,20 @@ window.reedcrm.todoKanban.initSortable = function () {
     placeholder: 'todo-card-placeholder',
     tolerance: 'pointer',
     cursor: 'grabbing',
-    cancel: '.todo-editable-label, .todo-inline-edit, .todo-editable-date, .todo-date-input, .todo-card-progress, .todo-progress-bar, .todo-initial-owner, .todo-owner-dropdown, .todo-owner-search, .todo-assigned-dropdown, .todo-assigned-search, .todo-user-option, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge',
+    cancel: '.todo-editable-label, .todo-inline-edit, .todo-editable-date, .todo-date-input, .todo-card-progress, .todo-progress-bar, .todo-initial-owner, .todo-owner-dropdown, .todo-owner-search, .todo-assigned-dropdown, .todo-assigned-search, .todo-user-option, .todo-add-assigned-btn, .todo-initial-wrapper, .todo-remove-assigned, .todo-load-more, .todo-card-ref, .todo-link-badge, .todo-links-btn, .todo-links-panel',
+    // While a card is dragged, the columns that would keep it stand out and the others fade
+    start: function (event, ui) {
+      var $card = ui.item;
+      var $from = $card.closest('.todo-column');
+
+      $('.todo-column').not($from).each(function () {
+        var allowed = window.reedcrm.todoKanban.canLand($card, $(this));
+        $(this).toggleClass('todo-column-drop-allowed', allowed).toggleClass('todo-column-drop-refused', !allowed);
+      });
+    },
+    stop: function () {
+      $('.todo-column').removeClass('todo-column-drop-allowed todo-column-drop-refused');
+    },
     receive: function (event, ui) {
       var $card   = ui.item;
       var $column = $(this).closest('.todo-column');
@@ -823,12 +1098,11 @@ window.reedcrm.todoKanban.initSortable = function () {
         percent = minimum;
       }
 
-      // A relaunch backlog holds cards on their code, no percentage puts a card in it, and
-      // a relaunch only leaves its backlog once done or dropped. Any other move would be
-      // undone by the next reload: send the card back where it came from instead.
-      var $wouldLand = window.reedcrm.todoKanban.findColumn($card, percent);
-      if (isNaN(minimum) || !$wouldLand || $wouldLand[0] !== $column[0]) {
+      // A move the next reload would undo (see canLand): send the card back where it came
+      // from, and say why
+      if (!window.reedcrm.todoKanban.canLand($card, $column)) {
         ui.sender.sortable('cancel');
+        window.reedcrm.todoKanban.notifyRefusedMove($column);
         return;
       }
 
@@ -869,6 +1143,7 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
 
   var offset    = replace ? 0 : (parseInt($body.attr('data-offset'), 10) || 0);
   var direction = $column.find('.todo-column-sort').attr('data-direction') === 'desc' ? 'desc' : 'asc';
+  var sortKey   = $column.find('.todo-column-sort').attr('data-sort') === 'probability' ? 'probability' : 'date';
   var separator = window.saturne.toolbox.getQuerySeparator(document.URL);
 
   $button.addClass('todo-load-more-loading');
@@ -879,6 +1154,7 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
       column: columnKey,
       offset: offset,
       direction: direction,
+      sort: sortKey,
       token: window.saturne.toolbox.getToken()
     }),
     type: 'POST',
@@ -890,6 +1166,10 @@ window.reedcrm.todoKanban.loadMore = function (columnKey, replace) {
       }
 
       if (replace) {
+        // The links panel may have been opened on one of these cards meanwhile
+        if ($body.find('#todoLinksPanel').length) {
+          window.reedcrm.todoKanban.closeLinksPanel();
+        }
         $body.children('.todo-card').remove();
       }
       $body.children('.todo-empty').remove();
@@ -949,7 +1229,8 @@ window.reedcrm.todoKanban.syncLoadMore = function ($column, remaining) {
 };
 
 /**
- * Turn the way a column is sorted, on a click on its title.
+ * Turn the way a column is sorted, on a click on its title: the column stays sorted on what
+ * its menu last picked, its date or the probability of its opportunities.
  *
  * @param  {Event} event Click event
  * @returns {void}
@@ -962,7 +1243,8 @@ window.reedcrm.todoKanban.toggleColumnSort = function (event) {
 
   window.reedcrm.todoKanban.applyColumnSort(
     $button.attr('data-column'),
-    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc'
+    $button.attr('data-direction') === 'asc' ? 'desc' : 'asc',
+    $button.attr('data-sort')
   );
 };
 
@@ -971,17 +1253,21 @@ window.reedcrm.todoKanban.toggleColumnSort = function (event) {
  * asked for it: a click on the title or the column menu.
  *
  * @param  {string} columnKey Key of the column
- * @param  {string} direction 'asc' (oldest first) or 'desc' (newest first)
+ * @param  {string} direction 'asc' (oldest or least likely first) or 'desc' (newest or most likely first)
+ * @param  {string} sortKey   'date' or 'probability'
  * @returns {void}
  */
-window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction) {
+window.reedcrm.todoKanban.applyColumnSort = function (columnKey, direction, sortKey) {
   var $button = $('.todo-column-sort[data-column="' + columnKey + '"]');
+
+  sortKey = sortKey === 'probability' ? 'probability' : 'date';
 
   // The cards move under an open selector, close it first
   window.reedcrm.todoKanban.closeDropdowns();
 
-  // The stylesheet reads the way off the button to darken the matching arrow
-  $button.attr('data-direction', direction);
+  // The stylesheet reads the way and the key off the button to darken the matching arrow and
+  // show the percent sign, its tooltip tells what a click on it sorts on
+  $button.attr('data-direction', direction).attr('data-sort', sortKey).attr('title', $button.attr('data-title-' + sortKey) || '');
 
   window.reedcrm.todoKanban.sortColumn(columnKey);
 };
@@ -1102,15 +1388,17 @@ window.reedcrm.todoKanban.initColumnMenu = function () {
     window.reedcrm.todoKanban.toggleColumnMenu($(this));
   });
 
-  $popover.on('click', '.action-sort-asc, .action-sort-desc', function (event) {
+  $popover.on('click', '.action-sort-asc, .action-sort-desc, .action-sort-probability-asc, .action-sort-probability-desc', function (event) {
     event.preventDefault();
     event.stopPropagation();
 
     var columnKey = window.reedcrm.todoKanban.openMenuColumn;
-    var direction = $(this).hasClass('action-sort-asc') ? 'asc' : 'desc';
+    var $action   = $(this);
+    var direction = ($action.hasClass('action-sort-asc') || $action.hasClass('action-sort-probability-asc')) ? 'asc' : 'desc';
+    var sortKey   = ($action.hasClass('action-sort-probability-asc') || $action.hasClass('action-sort-probability-desc')) ? 'probability' : 'date';
 
     window.reedcrm.todoKanban.closeColumnMenu();
-    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction);
+    window.reedcrm.todoKanban.applyColumnSort(columnKey, direction, sortKey);
   });
 
   $popover.on('click', '.action-hide', function (event) {

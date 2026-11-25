@@ -41,7 +41,7 @@ require_once DOL_DOCUMENT_ROOT . '/user/class/user.class.php';
 // Load ReedCRM libraries
 require_once __DIR__ . '/../../class/pocketrecording.class.php';
 require_once __DIR__ . '/../../class/pocketactionitem.class.php';
-require_once __DIR__ . '/../../class/pocketapi.class.php';
+require_once __DIR__ . '/../../class/pocketaccount.class.php';
 require_once __DIR__ . '/../../class/pocketsync.class.php';
 require_once __DIR__ . '/../../lib/reedcrm_pocketrecording.lib.php';
 
@@ -70,7 +70,8 @@ $permissiontodelete  = $user->hasRight('reedcrm', 'pocketrecording', 'delete');
 
 saturne_check_access($permissiontoread);
 
-if ($id > 0 && $object->fetch($id) <= 0) {
+// A recording only comes from the Pocket import: without one there is nothing to show (no creation form)
+if ($id <= 0 || $object->fetch($id) <= 0) {
     accessforbidden($langs->trans('ErrorRecordNotFound'));
 }
 
@@ -80,7 +81,7 @@ if ($id > 0 && $object->fetch($id) <= 0) {
 
 // The thirdparty is set from the banner, as on every Saturne card. The template writes the field
 // the banner form names and reloads the object, so the view below already shows the new value.
-require_once __DIR__ . '/../../../saturne/core/tpl/actions/banner_actions.tpl.php';
+require_once dol_buildpath('/saturne/core/tpl/actions/banner_actions.tpl.php');
 
 // Attaching from the card: the objects offered are the ones of the thirdparty of the recording
 if ($action == 'link_object' && $permissiontoadd) {
@@ -114,8 +115,9 @@ if ($action == 'unlink_object' && $permissiontoadd) {
     exit;
 }
 
+// Pocket only answers the detail and the audio of a recording to the account holding it
 if ($action == 'refresh_from_pocket' && $permissiontoadd) {
-    $pocketSync = new PocketSync($db);
+    $pocketSync = new PocketSync($db, PocketAccount::getForRecording($db, $object));
     $recording  = $pocketSync->api->getRecording($object->pocket_id);
 
     if ($recording === null) {
@@ -140,7 +142,7 @@ if ($action == 'refresh_from_pocket' && $permissiontoadd) {
 
 // The signed audio URL expires quickly, it is resolved on demand and never stored
 if ($action == 'play_audio' && $permissiontoread) {
-    $pocketApi = new PocketApi($db);
+    $pocketApi = PocketAccount::getForRecording($db, $object)->getApi();
     $audioUrl  = $pocketApi->getAudioUrl($object->pocket_id);
 
     if (empty($audioUrl)) {
@@ -155,7 +157,7 @@ if ($action == 'play_audio' && $permissiontoread) {
 if ($action == 'confirm_delete' && $confirm == 'yes' && $permissiontodelete) {
     if ($object->delete($user) > 0) {
         setEventMessage($langs->trans('RecordDeleted'));
-        header('Location: ' . dol_buildpath('/custom/reedcrm/view/pocketrecording/pocketrecording_list.php', 1));
+        header('Location: ' . dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_list.php', 1));
         exit;
     }
 
@@ -182,9 +184,10 @@ if (!empty($object->duration)) {
 if (!empty($object->pocket_folder_label)) {
     $moreHtmlRef .= '<br>' . $langs->trans('PocketFolder') . ': ' . dol_escape_htmltag($object->pocket_folder_label);
 }
+$moreHtmlRef .= '<br>' . $langs->trans('PocketAccount') . ': ' . dol_escape_htmltag(PocketAccount::getForRecording($db, $object)->getName());
 $moreHtmlRef .= '</div>';
 
-$linkBack = '<a href="' . dol_buildpath('/custom/reedcrm/view/pocketrecording/pocketrecording_list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans('BackToList') . '</a>';
+$linkBack = '<a href="' . dol_buildpath('/reedcrm/view/pocketrecording/pocketrecording_list.php', 1) . '?restore_lastsearch_values=1">' . $langs->trans('BackToList') . '</a>';
 saturne_banner_tab($object, 'id', $linkBack, 1, 'rowid', 'ref', $moreHtmlRef);
 
 // The status is changed on the badge of the banner, where it is read, instead of taking a row of
@@ -197,7 +200,7 @@ if ($permissiontoadd) {
     }
 
     print '<span class="reedcrm-pocket-status-picker" hidden';
-    print ' data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_recording.php', 1)) . '"';
+    print ' data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_recording.php', 1)) . '"';
     print ' data-recording-id="' . $object->id . '"';
     print ' data-token="' . newToken() . '"';
     print ' data-title="' . dol_escape_htmltag($langs->trans('PocketChangeStatus')) . '"';
@@ -224,10 +227,18 @@ if ($show == 'transcript') {
 
     print '<tr><td class="titlefield">' . $langs->trans('PocketTags') . '</td><td>' . dol_escape_htmltag($object->pocket_tags) . '</td></tr>';
 
+    // The event of the call, created by the synchronisation once Pocket processed the recording
+    if ($object->fk_actioncomm > 0) {
+        $recordingEvent = new ActionComm($db);
+        if ($recordingEvent->fetch($object->fk_actioncomm) > 0) {
+            print '<tr><td>' . $langs->trans('Event') . '</td><td>' . $recordingEvent->getNomUrl(1) . ' ' . $recordingEvent->getLibStatut(5) . '</td></tr>';
+        }
+    }
+
     // The URL Pocket signs expires within the hour, so the player carries the endpoint that
     // resolves it rather than the URL itself: the native <audio> is injected on the first play
     print '<tr><td>' . $langs->trans('PocketAudio') . '</td><td>';
-    print '<div class="reedcrm-pocket-audio" data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_audio_url.php', 1) . '?id=' . $object->id) . '">';
+    print '<div class="reedcrm-pocket-audio" data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_audio_url.php', 1) . '?id=' . $object->id) . '">';
     print '<span class="reedcrm-pocket-audio-load"><i class="fas fa-play"></i>' . $langs->trans('PocketPlayAudio') . '</span>';
     print '</div>';
     print '</td></tr>';
@@ -245,7 +256,7 @@ if ($show == 'transcript') {
 
     print '<div class="reedcrm-pocket-summary-block"';
     if ($permissiontoadd) {
-        print ' data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_recording.php', 1)) . '"';
+        print ' data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_recording.php', 1)) . '"';
         print ' data-recording-id="' . $object->id . '"';
         print ' data-token="' . newToken() . '"';
     }
@@ -269,7 +280,7 @@ if ($show == 'transcript') {
     // and the created event belong to Dolibarr and must survive a re-import from Pocket.
     $actionItemStatic = new PocketActionItem($db);
     $actionItems      = $actionItemStatic->fetchAllByRecording($object->id);
-    $actionItemUrl    = dol_buildpath('/custom/reedcrm/ajax/pocket_action_item.php', 1);
+    $actionItemUrl    = dol_buildpath('/reedcrm/ajax/pocket_action_item.php', 1);
     $eventStatic      = new ActionComm($db);
 
     print '<br>';
@@ -438,7 +449,7 @@ if ($show != 'transcript') {
         print '<input type="hidden" name="token" value="' . newToken() . '">';
         print '<input type="hidden" name="action" value="link_object">';
         print '<input type="hidden" name="object_to_link" value="">';
-        print '<div class="reedcrm-pocket-link-form" data-url="' . dol_escape_htmltag(dol_buildpath('/custom/reedcrm/ajax/pocket_recording.php', 1)) . '"';
+        print '<div class="reedcrm-pocket-link-form" data-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/pocket_recording.php', 1)) . '"';
         print ' data-recording-id="' . $object->id . '" data-token="' . newToken() . '">';
 
         print '<span>' . $langs->trans('PocketLinkObject') . '</span>';

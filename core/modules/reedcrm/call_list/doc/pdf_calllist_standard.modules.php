@@ -119,60 +119,21 @@ class pdf_calllist_standard extends ModelePDFCallList
                 $y       = $this->drawTableHeader($pdf, $outputlangs, $y);
             }
 
-            $lastname  = '';
-            $firstname = '';
-            $phone     = '';
-            $sourceRef = '';
-            $amount    = '';
+            dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
+            $displayInfo = reedcrm_call_list_get_line_contact_display($this->db, $line);
+            $lastname    = $displayInfo['lastname'];
+            $firstname   = $displayInfo['firstname'];
+            $phone       = $displayInfo['phone'];
+            $sourceRef   = '';
+            $amount      = '';
 
-            if (!empty($line->fk_contact)) {
-                $contact->fetch($line->fk_contact);
-                $lastname  = $contact->lastname;
-                $firstname = $contact->firstname;
-                $phone     = $contact->phone_pro ?: $contact->phone_mobile ?: '';
-            }
-
-            if ($line->element_type === 'propal' && isModEnabled('propale')) {
-                require_once DOL_DOCUMENT_ROOT . '/comm/propal/class/propal.class.php';
-                $p = new Propal($this->db);
-                if ($p->fetch($line->element_id) > 0) {
-                    $sourceRef = $p->ref;
-                    $amount    = !empty($p->total_ht) ? price($p->total_ht) . ' ' . $outputlangs->transnoentities('HT') : '';
-
-                    if (empty($line->fk_contact) || (empty($lastname) && empty($phone))) {
-                        $p->fetch_thirdparty();
-                        if (is_object($p->thirdparty)) {
-                            $lastname = $p->thirdparty->name;
-                            $phone    = $p->thirdparty->phone;
-                        }
-                    }
-                }
-            } elseif ($line->element_type === 'project' && isModEnabled('projet')) {
-                require_once DOL_DOCUMENT_ROOT . '/projet/class/project.class.php';
-                $p = new Project($this->db);
-                if ($p->fetch($line->element_id) > 0) {
-                    $sourceRef = $p->ref;
-                    $amount    = !empty($p->opp_amount) ? price($p->opp_amount) : '';
-
-                    if (empty($line->fk_contact) || (empty($lastname) && empty($phone))) {
-                        $p->fetch_optionals();
-                        if (!empty($p->array_options['options_projectaddress'])) {
-                            $contact->fetch($p->array_options['options_projectaddress']);
-                            $lastname  = $contact->lastname;
-                            $firstname = $contact->firstname;
-                            $phone     = $contact->phone_pro ?: $contact->phone_mobile ?: '';
-                        } elseif (!empty($p->array_options['options_reedcrm_lastname']) || !empty($p->array_options['options_projectphone'])) {
-                            $lastname  = $p->array_options['options_reedcrm_lastname'] ?? '';
-                            $firstname = $p->array_options['options_reedcrm_firstname'] ?? '';
-                            $phone     = $p->array_options['options_projectphone'] ?? '';
-                        } elseif ($p->socid > 0) {
-                            require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-                            $soc = new Societe($this->db);
-                            $soc->fetch($p->socid);
-                            $lastname = $soc->name;
-                            $phone    = $soc->phone;
-                        }
-                    }
+            $sourceElement = reedcrm_call_list_fetch_element($this->db, (string) $line->element_type, (int) $line->element_id);
+            if ($sourceElement !== null) {
+                $sourceRef = (string) $sourceElement->ref;
+                if ($line->element_type === 'project') {
+                    $amount = !empty($sourceElement->opp_amount) ? price($sourceElement->opp_amount) : '';
+                } else {
+                    $amount = !empty($sourceElement->total_ht) ? price($sourceElement->total_ht) . ' ' . $outputlangs->transnoentities('HT') : '';
                 }
             }
 
