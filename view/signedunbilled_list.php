@@ -194,28 +194,7 @@ foreach ($rows as $r) {
     }
 }
 
-print '<style>
-.rsu-intro{margin:0 0 14px;color:#777}
-.rsu-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0 0 16px}
-.rsu-tile{border:1px solid var(--colortopbordertitle1,#ddd);border-radius:8px;padding:12px 14px;background:var(--colorbacklinepair2,#fff);position:relative;overflow:hidden}
-.rsu-tile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#cf4257}
-.rsu-tile.warn:before{background:#c8871a}.rsu-tile.info:before{background:#2f6f9f}.rsu-tile.good:before{background:#2e9e6c}
-.rsu-tile .k{font-size:.82em;color:#777;font-weight:600}
-.rsu-tile .v{font-size:1.7em;font-weight:800;line-height:1.15}
-.rsu-tile .a{font-size:.9em;color:#555;font-weight:600}
-.rsu-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin:0 0 12px;padding:12px 14px;border:1px solid var(--colortopbordertitle1,#ddd);border-radius:8px;background:var(--colorbacklinepair2,#fff)}
-.rsu-filters label{display:block;font-size:.8em;color:#777;font-weight:600;margin-bottom:3px}
-.rsu-filters select,.rsu-filters input{padding:5px 8px;border:1px solid var(--colortopbordertitle1,#ccc);border-radius:6px;background:transparent;color:inherit}
-.rsu-badge{display:inline-block;padding:2px 8px;border-radius:11px;font-size:.8em;font-weight:700;white-space:nowrap}
-.rsu-badge.todo{background:#fbe9ec;color:#a3293c}
-.rsu-badge.chain{background:#e6f4ec;color:#1f7a52}
-.rsu-badge.amount{background:#fdf1de;color:#96631b}
-.rsu-badge.products{background:#eaf1f8;color:#2f6f9f}
-.rsu-inv{display:block;font-size:.85em;margin-top:3px}
-.rsu-age{font-weight:700}
-.rsu-age.mid{color:#c8871a}.rsu-age.old{color:#cf4257}
-.rsu-actions{display:flex;gap:5px;justify-content:flex-end;white-space:nowrap}
-</style>';
+// Styles of the figures, criteria and badges: css/scss/pages/_signed-unbilled.scss
 
 print load_fiche_titre('<i class="fas fa-file-signature paddingright"></i>' . $title, '', '');
 print '<div class="rsu-intro">' . $langs->trans('SignedUnbilledIntro') . '</div>';

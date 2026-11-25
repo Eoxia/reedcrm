@@ -211,19 +211,13 @@ parameters:
 			path: class/actions_reedcrm.class.php
 
 		-
-			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''CommercialsRelaunch…'', enabled\: 1, position\: 160, visible\: 1, csslist\: ''center'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
+			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''CommercialsRelaunch…'', enabled\: 1, position\: 160, visible\: 1, csslist\: ''center'', disablesort\: 1, disablesearch\: 1, sortkeys\: array\<string, string\>\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: class/actions_reedcrm.class.php
 
 		-
 			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''ContactDetails'', enabled\: 1, position\: 151, visible\: 1, csslist\: ''center'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: class/actions_reedcrm.class.php
-
-		-
-			message: '#^Property CommonObject\:\:\$fields \(array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\) does not accept non\-empty\-array\<string, array\{label\: ''ContactInformations'', enabled\: 1, position\: 161, visible\: 1, csslist\: ''minwidth200'', disablesort\: 1\}\|array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\>\.$#'
 			identifier: assign.propertyType
 			count: 1
 			path: class/actions_reedcrm.class.php
@@ -307,31 +301,31 @@ parameters:
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type array of property Address\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
+			message: '#^PHPDoc type array of property ReedcrmAddress\:\:\$fields is not covariant with PHPDoc type array\<string, array\{type\: string, label\: string, langfile\?\: string, enabled\: int\<0, 2\>\|string, position\: int, notnull\?\: int, visible\: int\<\-6, 6\>\|string, alwayseditable\?\: int\<0, 1\>\|string, \.\.\.\}\> of overridden property CommonObject\:\:\$fields\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int of property Address\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
+			message: '#^PHPDoc type int of property ReedcrmAddress\:\:\$isextrafieldmanaged is not covariant with PHPDoc type int\<0, 1\> of overridden property SaturneObject\:\:\$isextrafieldmanaged\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int of property Address\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
+			message: '#^PHPDoc type int of property ReedcrmAddress\:\:\$ismultientitymanaged is not covariant with PHPDoc type int\<0, 1\>\|string of overridden property SaturneObject\:\:\$ismultientitymanaged\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int\|string of property Address\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
+			message: '#^PHPDoc type int\|string of property ReedcrmAddress\:\:\$date_creation is not covariant with PHPDoc type ''''\|int\|null of overridden property CommonObject\:\:\$date_creation\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
 
 		-
-			message: '#^PHPDoc type int\|string of property Address\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
+			message: '#^PHPDoc type int\|string of property ReedcrmAddress\:\:\$tms is not covariant with PHPDoc type int of overridden property CommonObject\:\:\$tms\.$#'
 			identifier: property.phpDocType
 			count: 1
 			path: class/address.class.php
@@ -1723,12 +1717,6 @@ parameters:
 			path: view/reedcrmimport.php
 
 		-
-			message: '#^Parameter \#5 \$formquestion of method Form\:\:formconfirm\(\) expects array\<array\{name\?\: string, value\?\: bool\|float\|string, values\?\: array\<string\>, default\?\: string, label\?\: string, type\: string, size\?\: int\|string, morecss\?\: string, \.\.\.\}\|string\>\|string\|null, array\{array\{type\: ''hidden'', name\: ''import_file'', value\: string\}, array\{type\: ''multiselect'', label\: mixed, name\: ''existing_category…'', values\: array\<int, string\>, default\: array\{\}, morecss\: ''minwidth300''\}, array\{type\: ''text'', label\: mixed, name\: ''category_name''\}\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: view/reedcrmimport.php
-
-		-
 			message: '#^Parameter \#2 \$noTrigger of method SaturneObject\:\:create\(\) expects int\<0, 1\>, true given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1781,6 +1769,7 @@ parameters:
 			identifier: missingType.parameter
 			count: 1
 			path: webhook/keyyo_webhook.php
+
 		-
 			message: '#^Parameter \#1 \$id of method Project\:\:fetch\(\) expects int, string given\.$#'
 			identifier: argument.type
@@ -1810,18 +1799,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: class/actions_reedcrm.class.php
-
-		-
-			message: '#^Property DolibarrModules\:\:\$dictionaries \(array\{\}\|array\{langs\: string, tabname\: array\<string\>, tablib\: array\<string\>, tabsql\: array\<string\>, tabsqlsort\: array\<string\>, tabfield\: array\<string\>, tabfieldvalue\: array\<string\>, tabfieldinsert\: array\<string\>, \.\.\.\}\) does not accept array\{langs\: ''reedcrm@reedcrm'', tabname\: array\{''llx_c_commercial…'', ''llx_c_refusal_reason'', ''llx_c_address_type''\}, tablib\: array\{''CommercialStatus'', ''RefusalReason'', ''AddressType''\}, tabsql\: array\{non\-falsy\-string, non\-falsy\-string, non\-falsy\-string\}, tabsqlsort\: array\{''position ASC'', ''position ASC'', ''position ASC''\}, tabfield\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldvalue\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldinsert\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, \.\.\.\}\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: core/modules/modReedCRM.class.php
-
-		-
-			message: '#^Property DolibarrModules\:\:\$menu \(1\|array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\>\) does not accept non\-empty\-array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\|array\{fk_menu\: ''fk_mainmenu\=reedcrm'', type\: ''top'', titre\: ''ReedCRM'', prefix\: ''\<i class\="fas fa…'', mainmenu\: ''reedcrm'', leftmenu\: '''', url\: ''/reedcrm…'', langs\: ''reedcrm@reedcrm'', \.\.\.\}\>\.$#'
-			identifier: assign.propertyType
-			count: 1
-			path: core/modules/modReedCRM.class.php
 
 		-
 			message: '#^Cannot access property \$id on object\|false\.$#'
@@ -2032,3 +2009,14 @@ parameters:
 			identifier: assign.propertyType
 			count: 1
 			path: view/quickevent.php
+		-
+			message: '#^Property DolibarrModules\:\:\$dictionaries \(array\{\}\|array\{langs\: string, tabname\: array\<string\>, tablib\: array\<string\>, tabsql\: array\<string\>, tabsqlsort\: array\<string\>, tabfield\: array\<string\>, tabfieldvalue\: array\<string\>, tabfieldinsert\: array\<string\>, \.\.\.\}\) does not accept array\{langs\: ''reedcrm@reedcrm'', tabname\: array\{''llx_c_commercial…'', ''llx_c_refusal_reason'', ''llx_c_address_type''\}, tablib\: array\{''CommercialStatus'', ''RefusalReason'', ''AddressType''\}, tabsql\: array\{non\-falsy\-string, non\-falsy\-string, non\-falsy\-string\}, tabsqlsort\: array\{''position ASC'', ''position ASC'', ''position ASC''\}, tabfield\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldvalue\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, tabfieldinsert\: array\{''ref,label…'', ''ref,label…'', ''ref,label…''\}, \.\.\.\}\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modReedCRM.class.php
+
+		-
+			message: '#^Property DolibarrModules\:\:\$menu \(1\|array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\>\) does not accept non\-empty\-array\<array\{commentgroup\?\: string, mainmenu\: string, leftmenu\: string, langs\: string, enabled\: int\|string, target\: string, titre\: string, user\: int, \.\.\.\}\|array\{fk_menu\: ''fk_mainmenu\=reedcrm'', type\: ''top'', titre\: ''ReedCRM'', prefix\: ''\<i class\="fas fa…'', mainmenu\: ''reedcrm'', leftmenu\: '''', url\: ''/reedcrm…'', langs\: ''reedcrm@reedcrm'', \.\.\.\}\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: core/modules/modReedCRM.class.php

@@ -1,33 +1,11 @@
-// Styles for the ReedCRM dashboard "upcoming call reminders" panel (reedcrmindex.php).
-// Reuses the native Saturne .wpeo-infobox chrome (white card, radius, soft shadow) so the panel
-// reads as a real dashboard card. The signature element is the calendar-style date tile per row.
+// Styles for the "upcoming call reminders" card of the ReedCRM home page (reedcrmindex.php).
+// The card itself is a .reedcrm-home-card; the signature element is the calendar-style date tile per row.
 
 $reedcrm-reminders-accent: #0d8aff;
 $reedcrm-reminders-ink:    #1d2433;
 $reedcrm-reminders-muted:  #7a869a;
 
-// The card is rendered above the dashboard by the saturneIndex hook, then moved into the graph
-// grid (top-right cell) by js/modules/dashboard_reminders.js. This slot right-aligns the card as a
-// fallback; once inside the grid, .wpeo-grid controls the cell width and padding.
-.reedcrm-reminders-slot {
-  width: 380px;
-  max-width: 100%;
-  margin-left: auto;
-  margin-bottom: 1.2em;
-
-  @media (max-width: 767px) {
-    width: 100%;
-  }
-}
-
-#graph-dashboard > .reedcrm-reminders-slot {
-  margin: 0;
-}
-
 .reedcrm-reminders {
-  width: 100%;
-  padding: 1.1em 1.25em;
-
   .reedcrm-reminders__count {
     flex: 0 0 auto;
     min-width: 22px;
@@ -41,20 +19,6 @@ $reedcrm-reminders-muted:  #7a869a;
     color: $reedcrm-reminders-accent;
     background: rgba($reedcrm-reminders-accent, 0.12);
     border-radius: 11px;
-  }
-
-  .wpeo-infobox__body {
-    margin-top: 0.5em;
-  }
-
-  .reedcrm-reminders__empty {
-    display: flex;
-    align-items: center;
-    gap: 0.45em;
-    padding: 0.4em 0;
-    font-size: 13px;
-    font-style: italic;
-    color: $reedcrm-reminders-muted;
   }
 
   .reedcrm-reminders__list {

@@ -22,7 +22,7 @@
  */
 
 /**
- * Render the relaunch commercial field (ActionComm buttons by type).
+ * Render the relaunch commercial field: the two-button widget (past / upcoming).
  *
  * @param  array        $parameters Hook parameters (key, context, ...)
  * @param  CommonObject $object     The object
@@ -30,74 +30,21 @@
  */
 function reedcrm_field_relaunch_commercial(array $parameters, CommonObject $object): string
 {
-    global $conf, $db, $langs, $user;
-
-    $out = '';
-
     if (!isModEnabled('agenda')) {
-        return $out;
+        return '';
     }
 
-    // In the saturne list loop the record id is $object->id (rowid is 0); the raw row
-    // (carrying the real project id and socid) is passed via the hook param 'obj'.
+    // In the saturne list loop the record id is $object->id (rowid is 0); the raw row, carrying
+    // the real project id, is passed through the hook param 'obj'.
     $row       = !empty($parameters['obj']) ? $parameters['obj'] : $object;
     $projectId = (int) (!empty($row->id) ? $row->id : $object->id);
-    $socid     = (int) ($row->socid ?? 0);
 
-    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+    require_once __DIR__ . '/reedcrm_relaunch.lib.php';
 
-    $actionComm = new ActionComm($db);
-
-    $filter      = ' AND a.id IN (SELECT c.fk_actioncomm FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm as c WHERE c.fk_categorie = ' . $conf->global->REEDCRM_ACTIONCOMM_COMMERCIAL_RELAUNCH_TAG . ')';
-    $actionComms = $actionComm->getActions($socid, $projectId, 'project', $filter, 'a.datec');
-
-    require_once __DIR__ . '/reedcrm_function.lib.php';
-
-    $actonComsByType = [];
-    foreach (reedcrm_get_relaunch_types() as $typeKey => $type) {
-        $actonComsByType[$typeKey] = $type + ['nb' => 0];
-    }
-
-    if (is_array($actionComms) && !empty($actionComms)) {
-        foreach ($actionComms as $ac) {
-            $actonComsByType[reedcrm_get_relaunch_type_key((string) $ac->type_code)]['nb']++;
-        }
-    }
-
-    $cardProUrl = '/custom/reedcrm/view/procard.php?from_id=' . $projectId . '&from_type=project&project_id=' . $projectId;
-
-    $out .= '<div class="reedcrm-plist-relaunch-wrapper">';
-    $out .= '<div class="reedcrm-plist-relaunch-buttons reedcrm-relaunch-buttons">';
-
-    foreach ($actonComsByType as $actionCommType => $actonComByType) {
-        $dialogUrl = dol_buildpath('custom/reedcrm/ajax/get_relaunches_list.php', 1);
-
-        $out .= '<div id="btn-relaunch-' . $actionCommType . '-' . $projectId . '" class="ui-dialog-open reedcrm-relaunch-button reedcrm-plist-relaunch-btn-' . $actionCommType . '"';
-        $out .= ' data-dialog-id="dialog-relaunch-' . $actionCommType . '-' . $projectId . '" data-dialog-title="' . $langs->trans($actionCommType) . '" data-dialog-icon="fas fa-' . $actonComByType['picto'] . '" data-dialog-align="center" data-dialog-url="' . $dialogUrl . '" data-dialog-footer="none" data-project-id="' . $projectId . '"';
-        // Required by the hover tooltip (eventpro.js): without it the tooltip bails out and never opens
-        $out .= ' data-relaunch-type="' . $actionCommType . '"';
-        $out .= ' data-action-comm-type="' . $actonComByType['actioncode'] . '">';
-
-        $out .= '<div class="reedcrm-plist-relaunch-btn-content">';
-        $out .= '<i class="fas fa-' . $actonComByType['picto'] . '"></i>';
-        $out .= '<span class="reedcrm-plist-relaunch-count">' . $actonComByType['nb'] . '</span>';
-        $out .= '</div>';
-
-        if ($user->hasRight('agenda', 'myactions', 'create')) {
-            $cardProUrlFull = DOL_URL_ROOT . $cardProUrl . '&actioncode=' . $actonComByType['actioncode'];
-            $out .= '<div class="reedcrm-plist-relaunch-add modal-open reedcrm-modal-open" title="' . dol_escape_htmltag($langs->trans('QuickEventCreation')) . '" data-project-id="' . $projectId . '" data-modal-url="' . dol_escape_htmltag($cardProUrlFull) . '">';
-            $out .= '<i class="fas fa-plus"></i>';
-            $out .= '<input type="hidden" class="modal-options" data-modal-to-open="eventproCardModal">';
-            $out .= '</div>';
-        }
-
-        $out .= '</div>';
-    }
-
-    $out .= '</div>';
-    $out .= '</div>';
-
-    return $out;
+    return reedcrm_render_relaunch_widget([
+        'projectId'    => $projectId,
+        'wrapperClass' => 'reedcrm-plist-relaunch-wrapper',
+    ]);
 }
 
 /**
@@ -183,17 +130,27 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
 
     $statusId = (int) $object->fk_opp_status;
 
-    // Lead statuses are loaded once per page request (avoids an N+1 query per row)
+    // Lead statuses are loaded once per page request (avoids an N+1 query per row). The dictionary has no entity
+    // column, and inactive statuses are kept: a project may still carry one
     static $leadStatuses = null;
     if ($leadStatuses === null) {
         $leadStatuses = [];
-        $sql  = 'SELECT rowid, code, label FROM ' . MAIN_DB_PREFIX . 'c_lead_status';
-        $sql .= ' WHERE active = 1 AND entity IN (' . getEntity('c_lead_status') . ')';
-        $sql .= ' ORDER BY position ASC';
+        $langs->load('projects');
+        $sql  = 'SELECT rowid, code, label, percent, active FROM ' . MAIN_DB_PREFIX . 'c_lead_status';
+        $sql .= ' ORDER BY position ASC, rowid ASC';
         $resql = $db->query($sql);
         if ($resql) {
             while ($row = $db->fetch_object($resql)) {
-                $leadStatuses[(int) $row->rowid] = ['code' => $row->code, 'label' => $row->label];
+                // Same label as the screens of Dolibarr: the translation of OppStatus<code> when there is one. Saturne
+                // gives that key the label of the dictionary when the status was renamed there
+                $transKey  = 'OppStatus' . $row->code;
+                $transText = $langs->transnoentitiesnoconv($transKey);
+                $leadStatuses[(int) $row->rowid] = [
+                    'code'    => $row->code,
+                    'label'   => $transText !== $transKey ? $transText : (string) $row->label,
+                    'percent' => $row->percent !== null ? (float) $row->percent : null,
+                    'active'  => (int) $row->active,
+                ];
             }
             $db->free($resql);
         }
@@ -206,16 +163,21 @@ function reedcrm_field_opp_status(array $parameters, CommonObject $object): stri
         if (empty($statusId) || !isset($leadStatuses[$statusId])) {
             return '';
         }
-        return '<span class="reedcrm-opp-status reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '">' . dol_escape_htmltag($langs->trans($leadStatuses[$statusId]['label'])) . '</span>';
+        return '<span class="reedcrm-opp-status reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '">' . dol_escape_htmltag($leadStatuses[$statusId]['label']) . '</span>';
     }
 
     // Inline editable select (saved through the generic saturne_update_field endpoint)
     $out  = '<select class="saturne-inline-select reedcrm-opp-status-select reedcrm-opp-status-' . dol_escape_htmltag($currentCode) . '"';
     $out .= ' data-field="fk_opp_status" data-element="' . dol_escape_htmltag($object->element) . '" data-id="' . (int) $object->id . '">';
-    $out .= '<option value="0"' . (empty($statusId) ? ' selected' : '') . '>&nbsp;</option>';
+    $out .= '<option value="0" data-code="" data-percent=""' . (empty($statusId) ? ' selected' : '') . '>&nbsp;</option>';
     foreach ($leadStatuses as $rowid => $leadStatus) {
-        $selected = ($rowid === $statusId) ? ' selected' : '';
-        $out     .= '<option value="' . $rowid . '"' . $selected . '>' . dol_escape_htmltag($langs->trans($leadStatus['label'])) . '</option>';
+        // An inactive status is offered only to the project that still carries it
+        if (empty($leadStatus['active']) && $rowid !== $statusId) {
+            continue;
+        }
+        $selected   = ($rowid === $statusId) ? ' selected' : '';
+        $defaultPct = isset($leadStatus['percent']) ? rtrim(rtrim(sprintf('%.2f', $leadStatus['percent']), '0'), '.') : '';
+        $out       .= '<option value="' . $rowid . '" data-code="' . dol_escape_htmltag($leadStatus['code']) . '" data-percent="' . dol_escape_htmltag($defaultPct) . '"' . $selected . '>' . dol_escape_htmltag($leadStatus['label']) . '</option>';
     }
     $out .= '</select>';
 
@@ -235,7 +197,44 @@ function reedcrm_field_photo(array $parameters, CommonObject $object): string
 
     $projectDir = $conf->project->multidir_output[$conf->entity] . '/' . dol_sanitizeFileName($object->ref) . '/';
 
-    return saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 30, 30, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, '', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpg|gif)$']);
+    // A project has no favorite media : 'ref' names no file of its directory, and an empty field name
+    // would be read as a property for each file found. No placeholder either, most rows have no photo.
+    // 66px is the height of the Coordonnées block of the same row
+    $out  = '<div class="reedcrm-list-photo">';
+    $out .= saturne_show_medias_linked('projet', $projectDir, 'small', 1, -1, 0, 0, 66, 66, 0, 1, 0, dol_sanitizeFileName($object->ref), $object, 'ref', 0, 0, 0, 0, '', 1, ['useAi' => 0, 'filter' => '\.(png|jpe?g|gif|webp)$', 'hideNoPhoto' => 1]);
+    $out .= '</div>';
+
+    return $out;
+}
+
+/**
+ * Render the vocal field: a play button on the last voice note of the project.
+ *
+ * @param  array        $parameters Hook parameters (key, context, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_vocal(array $parameters, CommonObject $object): string
+{
+    global $conf;
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+
+    $projectRef = dol_sanitizeFileName($object->ref);
+    $audioFiles = dol_dir_list($conf->project->multidir_output[$conf->entity] . '/' . $projectRef, 'files', 0, '\.(mp3|ogg|wav|m4a|aac|webm|opus)$', null, 'date', SORT_DESC);
+
+    // Never an empty string: the list would fall back on its generic rendering of a field that does not exist
+    $out = '<div class="reedcrm-vocal-cell">';
+    if (!empty($audioFiles)) {
+        $lastAudio = $audioFiles[0];
+        $fileUrl   = DOL_URL_ROOT . '/document.php?modulepart=projet&file=' . urlencode($projectRef . '/' . $lastAudio['name']);
+        $out .= '<div class="reedcrm-vocal-player reedcrm-vocal-player-purple" data-audio-url="' . dol_escape_htmltag($fileUrl) . '" title="' . dol_escape_htmltag($lastAudio['name']) . '">';
+        $out .= '<i class="fas fa-play"></i><span class="reedcrm-vocal-time"></span>';
+        $out .= '</div>';
+    }
+    $out .= '</div>';
+
+    return $out;
 }
 /**
  * Render the status field as a colored badge (pastille).
@@ -281,31 +280,39 @@ function reedcrm_field_opp_percent(array $parameters, CommonObject $object): str
     global $langs, $user;
 
     $oppPercent = $object->opp_percent;
+    $canEdit    = $user->hasRight('projet', 'creer');
+    $rowId      = (int) $object->id;
 
-    if (!isset($oppPercent)) {
+    if (!isset($oppPercent) && !$canEdit) {
         return '';
     }
 
-    if ($oppPercent < 20) {
-        $statusBadge = 8;
-        $rowColor    = 'rgba(107, 114, 128, 0.08)';
-    } elseif ($oppPercent < 60) {
-        $statusBadge = 1;
-        $rowColor    = 'rgba(239, 68, 68, 0.08)';
-    } else {
-        $statusBadge = 4;
-        $rowColor    = 'rgba(34, 197, 94, 0.08)';
+    $out = '';
+    if (isset($oppPercent)) {
+        if ($oppPercent < 20) {
+            $statusBadge = 8;
+            $rowColor    = 'rgba(107, 114, 128, 0.08)';
+        } elseif ($oppPercent < 60) {
+            $statusBadge = 1;
+            $rowColor    = 'rgba(239, 68, 68, 0.08)';
+        } else {
+            $statusBadge = 4;
+            $rowColor    = 'rgba(34, 197, 94, 0.08)';
+        }
+
+        $out .= '<style data-opp-row-style="' . $rowId . '">tr[data-rowid="' . $rowId . '"]{background-color:' . $rowColor . '!important}</style>';
     }
 
-    $rowId = (int) $object->id;
-    $out   = '<style>tr[data-rowid="' . $rowId . '"]{background-color:' . $rowColor . '!important}</style>';
-
     // Inline editable percentage when the user can edit projects, otherwise the read-only badge
-    if ($user->hasRight('projet', 'creer')) {
+    if ($canEdit) {
         // Format with 2 decimals first, then trim only the trailing decimal zeros (so 60 stays "60", not "6")
-        $displayValue = rtrim(rtrim(sprintf('%.2f', (float) $oppPercent), '0'), '.');
+        $displayValue = isset($oppPercent) ? rtrim(rtrim(sprintf('%.2f', (float) $oppPercent), '0'), '.') : '';
+        $errorLabel   = $langs->transnoentities('OppPercentRangeError');
+        if ($errorLabel === 'OppPercentRangeError') {
+            $errorLabel = '0 à 100 %';
+        }
         $out .= '<span class="saturne-inline-percent">';
-        $out .= '<span class="contenteditable" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityProbabilityShort')) . '" data-field="opp_percent" data-id="' . $rowId . '" data-element="' . dol_escape_htmltag($object->element) . '" data-table="' . dol_escape_htmltag($object->table_element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($displayValue) . '</span>';
+        $out .= '<span class="contenteditable" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityProbabilityShort')) . '" data-field="opp_percent" data-id="' . $rowId . '" data-element="' . dol_escape_htmltag($object->element) . '" data-table="' . dol_escape_htmltag($object->table_element) . '" data-type="number" data-validate-pattern="^(?:100(?:[.,]0{1,2})?|[0-9]{1,2}(?:[.,][0-9]{1,2})?)$" data-success="Enregistré" data-error="' . dol_escape_htmltag($errorLabel) . '">' . dol_escape_htmltag($displayValue) . '</span>';
         $out .= '<span class="saturne-inline-percent-suffix">%</span>';
         $out .= '</span>';
     } else {
@@ -340,10 +347,30 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
 }
 
 /**
+ * Render the opportunity amount cell (inline-editable when the user can edit projects).
+ *
+ * @param  CommonObject $object The project object
+ * @return string               HTML output
+ */
+function reedcrm_field_opp_amount(CommonObject $object): string
+{
+    global $conf, $langs, $user;
+
+    $hasAmount = isset($object->opp_amount) && $object->opp_amount !== '' && $object->opp_amount !== null;
+    if ($user->hasRight('projet', 'creer')) {
+        $amountNum = $hasAmount ? rtrim(rtrim(number_format((float) $object->opp_amount, 2, '.', ''), '0'), '.') : '';
+
+        return '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityAmount')) . '" data-field="opp_amount" data-id="' . (int) $object->id . '" data-element="' . dol_escape_htmltag($object->element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($amountNum) . '</span> ' . dol_escape_htmltag($conf->currency);
+    }
+
+    return $hasAmount ? price((float) $object->opp_amount, 0, $langs, 1, -1, -1, $conf->currency) : '';
+}
+
+/**
  * Render the merged "Opportunité" cell: status + probability (both inline-editable) + amount.
  *
- * Reuses reedcrm_field_opp_status and reedcrm_field_opp_percent so inline editing keeps working,
- * and appends the opportunity amount. All values come from standard project fields on $object.
+ * Reuses reedcrm_field_opp_status, reedcrm_field_opp_percent and reedcrm_field_opp_amount so inline
+ * editing keeps working. All values come from standard project fields on $object.
  *
  * @param  array        $parameters Hook parameters (key, context, ...)
  * @param  CommonObject $object     The object
@@ -351,19 +378,9 @@ function reedcrm_field_ref_with_actions(array $parameters, CommonObject $object)
  */
 function reedcrm_field_opportunity_details(array $parameters, CommonObject $object): string
 {
-    global $conf, $langs, $user;
-
     $statusHtml  = reedcrm_field_opp_status($parameters, $object);
     $percentHtml = reedcrm_field_opp_percent($parameters, $object);
-
-    // Amount (budget): inline-editable when the user can write (even when empty), otherwise formatted price
-    $hasAmount = isset($object->opp_amount) && $object->opp_amount !== '' && $object->opp_amount !== null;
-    if ($user->hasRight('projet', 'creer')) {
-        $amountNum  = $hasAmount ? rtrim(rtrim(number_format((float) $object->opp_amount, 2, '.', ''), '0'), '.') : '';
-        $amountHtml = '<span class="contenteditable reedcrm-ce-inline" contenteditable="true" role="textbox" aria-label="' . dol_escape_htmltag($langs->trans('OpportunityAmount')) . '" data-field="opp_amount" data-id="' . (int) $object->id . '" data-element="' . dol_escape_htmltag($object->element) . '" data-type="number" data-success="Enregistré" data-error="Valeur invalide">' . dol_escape_htmltag($amountNum) . '</span> ' . dol_escape_htmltag($conf->currency);
-    } else {
-        $amountHtml = $hasAmount ? price((float) $object->opp_amount, 0, $langs, 1, -1, -1, $conf->currency) : '';
-    }
+    $amountHtml  = reedcrm_field_opp_amount($object);
 
     $out  = '<div class="reedcrm-opp-cell">';
     $out .= '<div class="reedcrm-opp-cell-row">' . $statusHtml . '</div>';
@@ -426,26 +443,21 @@ function reedcrm_field_date_details(array $parameters, CommonObject $object): st
 }
 
 /**
- * Load, for a whole page of listed objects, the categories carried by each of them.
+ * Ids of the objects shown on the current page of a saturne list.
  *
- * The categories live in llx_categorie_<element>, so rendering them row by row would cost one
- * query per line. The page ids are read back from the list query ($sqlForList, exposed by the
- * saturne list TPL) and every tag of the page is loaded in a single query.
+ * The loop renders the rows one by one: a column reading data stored elsewhere loads it for the
+ * whole page on the first row instead. The page is read back from the list query ($sqlForList,
+ * exposed by the saturne list TPL) with the sort and the pagination of the list.
  *
- * @param  CommonObject $object The listed object (gives the element, hence the link table)
- * @return array                Categories (id, label, color) indexed by object id
+ * @return int[] Ids of the objects of the page, empty outside a saturne list
  */
-function reedcrm_load_list_categories(CommonObject $object): array
+function reedcrm_load_list_page_ids(): array
 {
     global $db, $limit, $offset, $sortfield, $sortorder, $sqlForList;
 
     if (empty($sqlForList)) {
         return [];
     }
-
-    $element   = $object->element;
-    $linkTable = MAIN_DB_PREFIX . 'categorie_' . $element;
-    $linkField = 'fk_' . $element;
 
     $sql   = 'SELECT listpage.rowid FROM (' . $sqlForList;
     $sql  .= $db->order($sortfield, $sortorder);
@@ -462,6 +474,27 @@ function reedcrm_load_list_categories(CommonObject $object): array
     }
     $db->free($resql);
 
+    return $objectIds;
+}
+
+/**
+ * Load, for a whole page of listed objects, the categories carried by each of them.
+ *
+ * The categories live in llx_categorie_<element>, so rendering them row by row would cost one
+ * query per line. Every tag of the page is loaded in a single query instead.
+ *
+ * @param  CommonObject $object The listed object (gives the element, hence the link table)
+ * @return array                Categories (id, label, color) indexed by object id
+ */
+function reedcrm_load_list_categories(CommonObject $object): array
+{
+    global $db;
+
+    $element   = $object->element;
+    $linkTable = MAIN_DB_PREFIX . 'categorie_' . $element;
+    $linkField = 'fk_' . $element;
+
+    $objectIds = reedcrm_load_list_page_ids();
     if (empty($objectIds)) {
         return [];
     }
@@ -499,7 +532,7 @@ function reedcrm_load_list_categories(CommonObject $object): array
  */
 function reedcrm_field_categories(array $parameters, CommonObject $object): string
 {
-    global $conf, $langs, $param;
+    global $conf, $param;
 
     $objectId = (int) (!empty($object->id) ? $object->id : ($parameters['obj']->rowid ?? 0));
     if ($objectId <= 0) {
@@ -526,10 +559,346 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
         $tagUrl    = $listUrl . '&search_categories_filter[]=' . $category['id'];
 
         $out .= '<span class="noborderoncategories" style="background: #' . $color . ';">';
-        $out .= '<a class="' . $textColor . '" href="' . dol_escape_htmltag($tagUrl) . '" title="' . dol_escape_htmltag($langs->trans('Categories')) . '">';
+        $out .= '<a class="' . $textColor . '" href="' . dol_escape_htmltag($tagUrl) . '" title="' . dol_escape_htmltag($category['label']) . '">';
         $out .= '<span class="fas fa-tag paddingright"></span>' . dol_escape_htmltag($category['label']);
         $out .= '</a></span>';
     }
 
     return $out;
+}
+
+/**
+ * Label of a call list without the prefix of the default lists: "Liste d'appel — Jean Dupont" gives
+ * "Jean Dupont". The headset of the pill already says it is a call list. The prefix depends on the
+ * language the list was created in (DefaultCallListLabel), both are removed.
+ *
+ * @param  string $label Label of the call list
+ * @return string        Label without the prefix
+ */
+function reedcrm_call_list_short_label(string $label): string
+{
+    global $langs;
+
+    foreach (array_unique([$langs->transnoentitiesnoconv('CallList'), 'Call list', "Liste d'appel"]) as $prefix) {
+        if (preg_match('/^' . preg_quote($prefix, '/') . '\s*[—–-]\s*(.+)$/u', $label, $matches)) {
+            return $matches[1];
+        }
+    }
+
+    return $label;
+}
+
+/**
+ * Load, for a whole page of listed opportunities, the call lists each of them is on.
+ *
+ * One query for the page instead of one per row, like the tags. Only the lists the user may see
+ * are kept (all of them, their subordinates' ones or their own, by right).
+ *
+ * @return array Call lists by project id: [projectId => [['id', 'line_id', 'label', 'status'], ...]]
+ */
+function reedcrm_load_list_call_lists(): array
+{
+    global $db, $user;
+
+    dol_include_once('/reedcrm/class/calllist.class.php');
+    dol_include_once('/reedcrm/class/calllistline.class.php');
+    dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
+
+    $objectIds = reedcrm_load_list_page_ids();
+    if (empty($objectIds)) {
+        return [];
+    }
+
+    $sql   = 'SELECT line.rowid AS line_id, line.element_id, cl.rowid, cl.label, cl.status, cl.fk_user_assign';
+    $sql  .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_call_list_line AS line';
+    $sql  .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'reedcrm_call_list AS cl ON cl.rowid = line.fk_call_list';
+    $sql  .= " WHERE line.element_type = 'project'";
+    $sql  .= ' AND line.element_id IN (' . implode(',', $objectIds) . ')';
+    // An unlinked line stays in the table with the deleted status
+    $sql  .= ' AND line.status != ' . CallListLine::STATUS_DELETED;
+    $sql  .= ' AND cl.entity IN (' . getEntity('call_list') . ')';
+    $sql  .= ' ORDER BY cl.position ASC, cl.label ASC';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return [];
+    }
+
+    $callList  = new CallList($db);
+    $callLists = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $callList->fk_user_assign = (int) $obj->fk_user_assign;
+        if (!reedcrm_call_list_user_can_read($user, $callList)) {
+            continue;
+        }
+        $callLists[(int) $obj->element_id][] = ['id' => (int) $obj->rowid, 'line_id' => (int) $obj->line_id, 'label' => reedcrm_call_list_short_label($obj->label), 'title' => $obj->label, 'status' => (int) $obj->status];
+    }
+    $db->free($resql);
+
+    return $callLists;
+}
+
+/**
+ * Settings of the call lists column, printed once on the page and read by call_lists_column.js.
+ *
+ * The lists an opportunity can be added to are the draft and active ones the user may see, like
+ * the widget of the cards. The phone labels are those the widget prompt reads.
+ *
+ * @return string HTML output
+ */
+function reedcrm_call_lists_column_settings(): string
+{
+    global $db, $langs, $user;
+
+    $callList  = new CallList($db);
+    $available = $callList->fetchAll('ASC', CallList::SORT_FIELDS, 0, 0, ['customsql' => 't.status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')']);
+
+    $lists = [];
+    if (is_array($available)) {
+        foreach ($available as $availableList) {
+            if ($availableList instanceof CallList && reedcrm_call_list_user_can_read($user, $availableList)) {
+                $lists[] = ['id' => (int) $availableList->id, 'label' => reedcrm_call_list_short_label($availableList->label), 'title' => $availableList->label];
+            }
+        }
+    }
+
+    $out  = '<div id="reedcrm-call-lists-settings" class="hidden"';
+    $out .= ' data-lists="' . dol_escape_htmltag(json_encode($lists)) . '"';
+    $out .= ' data-add-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/add_to_call_list.php', 1)) . '"';
+    $out .= ' data-unlink-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1)) . '"';
+    $out .= ' data-card-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/view/call_list_card.php', 1)) . '"';
+    $out .= ' data-can-unlink="' . ($user->hasRight('reedcrm', 'call_list', 'delete') ? 1 : 0) . '"';
+    $out .= ' data-title-label="' . dol_escape_htmltag($langs->trans('CallLists')) . '"';
+    $out .= ' data-empty-label="' . dol_escape_htmltag($langs->trans('NoActiveCallList')) . '"';
+    $out .= ' data-unlink-forbidden-label="' . dol_escape_htmltag($langs->trans('NotEnoughPermissions')) . '"';
+    $out .= ' data-enter-phone-label="' . dol_escape_htmltag($langs->trans('CallListEnterPhonePlaceholder')) . '"';
+    $out .= ' data-enter-phone-generic-label="' . dol_escape_htmltag($langs->trans('CallListEnterPhoneGenericPlaceholder')) . '"';
+    $out .= ' data-phone-required-label="' . dol_escape_htmltag($langs->trans('CallListPhoneRequired')) . '"';
+    $out .= ' data-phone-invalid-label="' . dol_escape_htmltag($langs->trans('CallListInvalidPhone')) . '"';
+    $out .= ' data-save-label="' . dol_escape_htmltag($langs->trans('CallListSaveAndAdd')) . '"';
+    $out .= ' data-cancel-label="' . dol_escape_htmltag($langs->trans('Cancel')) . '"></div>';
+
+    return $out;
+}
+
+/**
+ * Render the call lists cell of the opportunity list: one pill per list, linking to its card, and
+ * the pen opening the checklist that adds the opportunity to a list or takes it off one.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_call_lists(array $parameters, CommonObject $object): string
+{
+    global $conf, $langs, $user;
+
+    $objectId = (int) (!empty($object->id) ? $object->id : ($parameters['obj']->rowid ?? 0));
+    if ($objectId <= 0) {
+        return '';
+    }
+
+    if (!isset($conf->cache['reedcrmListCallLists'])) {
+        $conf->cache['reedcrmListCallLists'] = reedcrm_load_list_call_lists();
+    }
+
+    $out = '';
+    $canWrite = $user->hasRight('reedcrm', 'call_list', 'write');
+    if ($canWrite && empty($conf->cache['reedcrmListCallListsSettings'])) {
+        $conf->cache['reedcrmListCallListsSettings'] = 1;
+        $out .= reedcrm_call_lists_column_settings();
+    }
+
+    $cardUrl = dol_buildpath('/reedcrm/view/call_list_card.php', 1);
+
+    $out .= '<div class="reedcrm-call-lists-cell" data-element-type="project" data-element-id="' . $objectId . '">';
+    $out .= '<span class="reedcrm-call-lists-pills">';
+    foreach ($conf->cache['reedcrmListCallLists'][$objectId] ?? [] as $callList) {
+        $archived = !in_array($callList['status'], [CallList::STATUS_DRAFT, CallList::STATUS_ACTIVE]);
+        $out .= '<a class="reedcrm-call-list-pill' . ($archived ? ' reedcrm-call-list-pill-archived' : '') . '" href="' . dol_escape_htmltag($cardUrl . '?id=' . $callList['id']) . '"';
+        $out .= ' data-call-list-id="' . $callList['id'] . '" data-line-id="' . $callList['line_id'] . '" title="' . dol_escape_htmltag($callList['title']) . '">';
+        $out .= '<span class="fas fa-headset"></span>' . dol_escape_htmltag($callList['label']) . '</a>';
+    }
+    $out .= '</span>';
+    if ($canWrite) {
+        $out .= '<button type="button" class="reedcrm-call-lists-edit" title="' . dol_escape_htmltag($langs->trans('AddToCallList')) . '"><span class="fas fa-pen"></span></button>';
+    }
+    $out .= '</div>';
+
+    return $out;
+}
+
+/**
+ * Columns of the thirdparty selected with the rows of the opportunity list.
+ *
+ * getNomUrl() and its tooltip read these properties: the thirdparty of each row is rebuilt from
+ * them, as the native project list does, instead of being fetched line by line. Each column is
+ * selected as reedcrm_soc_<property>.
+ *
+ * @return array<string,string> Columns of llx_societe indexed by property of Societe
+ */
+function reedcrm_thirdparty_list_columns(): array
+{
+    return [
+        'name'             => 'nom',
+        'name_alias'       => 'name_alias',
+        'client'           => 'client',
+        'fournisseur'      => 'fournisseur',
+        'code_client'      => 'code_client',
+        'code_fournisseur' => 'code_fournisseur',
+        'email'            => 'email',
+        'phone'            => 'phone',
+        'address'          => 'address',
+        'zip'              => 'zip',
+        'town'             => 'town',
+        'status'           => 'status',
+    ];
+}
+
+/**
+ * Sort key of the thirdparty column of the opportunity list: the name of the thirdparty.
+ *
+ * Many opportunities have no thirdparty (quick creation, PWA): they come last whatever the order,
+ * rather than filling the first pages of an ascending sort. A flag ahead of the name does it, the
+ * database putting the empty values first in an ascending order.
+ *
+ * @param  string $alias     Alias of the joined thirdparty table
+ * @param  string $sortOrder Order of the list (asc or desc, first one of several)
+ * @return string            SQL expression
+ */
+function reedcrm_thirdparty_list_sort_sql(string $alias, string $sortOrder): string
+{
+    $isDescending = strtolower(trim(explode(',', $sortOrder)[0])) === 'desc';
+
+    return "CONCAT(IF(" . $alias . ".nom IS NULL, '" . ($isDescending ? '0' : '1') . "', '" . ($isDescending ? '1' : '0') . "'), COALESCE(" . $alias . ".nom, ''))";
+}
+
+/**
+ * Extrafields of the project shown in the contact details cell of the opportunity list.
+ *
+ * Only those defined on the instance are kept: one deleted by an administrator would end the
+ * query of the list in an SQL error.
+ *
+ * @param  array    $extrafieldLabels Labels of the extrafields of the project, indexed by name
+ * @return string[]                   Names of the extrafields, last name and first name first
+ */
+function reedcrm_contact_list_extrafields(array $extrafieldLabels): array
+{
+    return array_values(array_intersect(['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone', 'reedcrm_website'], array_keys($extrafieldLabels)));
+}
+
+/**
+ * Sort key of the contact details column of the opportunity list: the name of the contact, last name then first name.
+ *
+ * The projects without a contact name come last whatever the order, as in the thirdparty column.
+ *
+ * @param  string   $alias           Alias of the joined table of the project extrafields
+ * @param  string[] $extrafieldNames Extrafields of the cell (reedcrm_contact_list_extrafields)
+ * @param  string   $sortOrder       Order of the list (asc or desc, first one of several)
+ * @return string                    SQL expression
+ */
+function reedcrm_contact_list_sort_sql(string $alias, array $extrafieldNames, string $sortOrder): string
+{
+    $nameColumns = [];
+    foreach (array_intersect(['reedcrm_lastname', 'reedcrm_firstname'], $extrafieldNames) as $extrafieldName) {
+        $nameColumns[] = $alias . '.' . $extrafieldName;
+    }
+    if (empty($nameColumns)) {
+        return "''";
+    }
+
+    $isDescending = strtolower(trim(explode(',', $sortOrder)[0])) === 'desc';
+    $name         = "TRIM(CONCAT_WS(' ', " . implode(', ', $nameColumns) . "))";
+
+    return "CONCAT(CASE WHEN " . $name . " = '' THEN '" . ($isDescending ? '0' : '1') . "' ELSE '" . ($isDescending ? '1' : '0') . "' END, " . $name . ")";
+}
+
+/**
+ * Filter of the contact details column of the opportunity list: each word typed is looked for in the
+ * name, the email, the phone or the website of the contact.
+ *
+ * In a subquery: the list counts its records without the join of the extrafields, a condition on
+ * that join would end the count in an SQL error.
+ *
+ * @param  DoliDB   $db              Database handler
+ * @param  string   $alias           Alias of the project table
+ * @param  string[] $extrafieldNames Extrafields of the cell (reedcrm_contact_list_extrafields)
+ * @param  string   $search          Text typed in the filter
+ * @return string                    SQL condition, starting with AND, empty when there is nothing to filter
+ */
+function reedcrm_contact_list_search_sql(DoliDB $db, string $alias, array $extrafieldNames, string $search): string
+{
+    if (empty($extrafieldNames) || trim($search) === '') {
+        return '';
+    }
+
+    $columns = [];
+    foreach ($extrafieldNames as $extrafieldName) {
+        $columns[] = 'reedcrm_contact.' . $extrafieldName;
+    }
+
+    return ' AND EXISTS (SELECT 1 FROM ' . $db->prefix() . 'projet_extrafields AS reedcrm_contact WHERE reedcrm_contact.fk_object = ' . $alias . '.rowid' . natural_search($columns, $search) . ')';
+}
+
+/**
+ * Render the thirdparty cell of the opportunity list: the link to the thirdparty card.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_thirdparty(array $parameters, CommonObject $object): string
+{
+    global $db;
+
+    // Never an empty string: the list would fall back on its generic rendering, which prints the sort key
+    $row          = $parameters['obj'] ?? null;
+    $thirdpartyId = (int) ($row->fk_soc ?? 0);
+    if ($thirdpartyId <= 0 || !isset($row->reedcrm_soc_name)) {
+        return '<span></span>';
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
+
+    $thirdparty     = new Societe($db);
+    $thirdparty->id = $thirdpartyId;
+    foreach (array_keys(reedcrm_thirdparty_list_columns()) as $property) {
+        $thirdparty->$property = $row->{'reedcrm_soc_' . $property};
+    }
+
+    return '<div class="tdoverflowmax200">' . $thirdparty->getNomUrl(1) . '</div>';
+}
+
+/**
+ * Render the lifecycle cell: the timeline of the project card, in its compact form.
+ *
+ * The timeline is built from the documents the project carries: they are read for the projects of
+ * the whole page on the first row. The column is sorted on the current step by the printFieldListSelect
+ * hook, and filtered on the milestones reached by the printFieldListSearch hook.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_lifecycle(array $parameters, CommonObject $object): string
+{
+    global $conf;
+
+    require_once __DIR__ . '/reedcrm_lifecycle.lib.php';
+
+    if (!isset($conf->cache['reedcrmListLifecycle'])) {
+        $conf->cache['reedcrmListLifecycle'] = reedcrm_lifecycle_fetch_projects(reedcrm_load_list_page_ids());
+    }
+
+    $project          = $conf->cache['reedcrmListLifecycle'][(int) $object->id] ?? [];
+    $lifecycleSteps   = !empty($project) ? reedcrm_lifecycle_mark_current(reedcrm_build_project_lifecycle_steps($project)) : [];
+    $lifecycleElement = $object->element;
+    $lifecycleCompact = true;
+
+    // Never an empty string: the list would fall back on its generic rendering of a field that does not exist
+    ob_start();
+    print '<div class="reedcrm-lifecycle-cell">';
+    require __DIR__ . '/../core/tpl/reedcrm_lifecycle_timeline.tpl.php';
+    print '</div>';
+
+    return ob_get_clean();
 }

@@ -37,7 +37,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/doleditor.class.php';
 require_once DOL_DOCUMENT_ROOT . '/categories/class/categorie.class.php';
 
 // Load Saturne librairies
-require_once __DIR__ . '/../../saturne/lib/object.lib.php';
+dol_include_once('/saturne/lib/object.lib.php');
 
 // Load ReedCRM librairies
 require_once __DIR__ . '/../class/geolocation.class.php';
@@ -55,7 +55,7 @@ $contactAddress = GETPOST('address_detail');
 // Get parameters
 $fromId      = GETPOST('from_id', 'int');
 $contactID   = GETPOST('contact_id', 'int');
-$objectType  = GETPOSTISSET('from_type') ? GETPOST('from_type', 'alpha') : GETPOST('object_type', 'alpha');
+$objectType  = (GETPOSTISSET('from_type') ? GETPOST('from_type', 'alpha') : GETPOST('object_type', 'alpha')) ?: 'project'; // the project tab always passes it, a cut link must not end in a fatal error
 $ref         = GETPOST('ref', 'alpha');
 $action      = GETPOST('action', 'aZ09');
 $contextpage = GETPOST('contextpage', 'aZ') ? GETPOST('contextpage', 'aZ') : $objectType . 'address'; // To manage different context of search
@@ -64,7 +64,13 @@ $backtopage  = GETPOST('backtopage', 'alpha');
 
 // Initialize technical objects
 $objectInfos  = saturne_get_objects_metadata($objectType);
-$className    = $objectInfos['class_name'];
+$className    = $objectInfos['class_name'] ?? '';
+if (!empty($className) && !class_exists($className) && !empty($objectInfos['class_path'])) {
+    dol_include_once('/' . ltrim($objectInfos['class_path'], '/'));
+}
+if (empty($className) || !class_exists($className)) {
+    accessforbidden($langs->trans('ErrorBadParameters'));
+}
 $objectLinked = new $className($db);
 $contact      = new Contact($db);
 $geolocation  = new Geolocation($db);

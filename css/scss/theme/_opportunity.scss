@@ -1,0 +1,113 @@
+@use 'tokens' as *;
+
+/* ReedCRM modern theme: columns ReedCRM adds to the opportunity list (saturne_list.php, object_type
+   project): quick actions, relaunch counters and the coordinates block of the contact */
+
+#{$rc-scope} {
+  .reedcrm-row-action {
+    width: 24px;
+    height: 24px;
+    border-color: $rc-border;
+    border-radius: 6px;
+    color: $rc-muted;
+
+    &:hover {
+      border-color: $rc-primary;
+      color: $rc-primary;
+    }
+  }
+
+  .reedcrm-list-photo img.photo {
+    border-radius: $rc-radius;
+  }
+
+  .reedcrm-opp-cell-amount {
+    color: $rc-text;
+
+    i {
+      color: $rc-faint;
+    }
+  }
+
+  .reedcrm-dates-cell .reedcrm-dates-row > i {
+    color: $rc-faint;
+  }
+
+  .reedcrm-status-dot[data-tooltip]:hover::after {
+    border-radius: 6px;
+    background: $rc-text;
+  }
+
+  .reedcrm-status-dot[data-tooltip]:hover::before {
+    border-top-color: $rc-text;
+  }
+
+  /* ---- Relaunch counters: the four colours stay (call, email, meeting, other), on rounded tiles ---- */
+
+  .reedcrm-plist-relaunch-wrapper .reedcrm-plist-relaunch-buttons .reedcrm-relaunch-button {
+    .reedcrm-plist-relaunch-btn-content {
+      border-radius: $rc-radius-sm;
+      box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.12);
+      font-weight: 600;
+    }
+
+    /* The quick add: a white bubble with a blue plus, the purple one came from the old palette */
+    .reedcrm-plist-relaunch-add {
+      border: 1px solid $rc-border !important;
+      background-color: $rc-surface !important;
+      box-shadow: $rc-shadow-sm;
+      color: $rc-primary !important;
+      font-size: 0.75em !important;
+
+      &:hover {
+        border-color: $rc-primary !important;
+        background-color: $rc-primary !important;
+        box-shadow: $rc-shadow-hover;
+        color: #ffffff !important;
+      }
+    }
+  }
+
+  .reedcrm-plist-relaunch-wrapper .reedcrm-plist-progress-wrapper {
+    .reedcrm-plist-progress-bg {
+      background-color: $rc-border-soft;
+    }
+
+    .reedcrm-plist-progress-text {
+      color: $rc-text-soft;
+
+      i {
+        color: $rc-faint;
+      }
+    }
+  }
+
+  /* ---- Coordinates of the contact ---- */
+
+  .reedcrm-plist-coordonnees {
+    padding: 4px 8px 4px 4px;
+    border: 1px solid $rc-border;
+    border-radius: $rc-radius;
+    background: $rc-surface-soft;
+
+    .reedcrm-plist-coordonnees-avatar {
+      border-color: $rc-border;
+      border-radius: $rc-radius-sm;
+    }
+
+    .reedcrm-plist-coordonnees-box {
+      .reedcrm-plist-coordonnees-name,
+      .reedcrm-plist-coordonnees-email {
+        color: $rc-text;
+
+        i {
+          color: $rc-faint;
+        }
+      }
+
+      .reedcrm-plist-coordonnees-phone-wrapper .inline-edit-contact {
+        color: $rc-text-soft;
+      }
+    }
+  }
+}

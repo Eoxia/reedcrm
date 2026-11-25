@@ -18,7 +18,7 @@
 /**
  * \file    core/tpl/todo/todo_filters.tpl.php
  * \ingroup reedcrm
- * \brief   Criteria bar of the todo board (user, period, type of event, text)
+ * \brief   Criteria bar of the todo board (user, period, type of event, probability, text)
  *
  * Variables expected from calling PHP:
  * - $todoFilters array     Criteria from reedcrmTodoGetFilters()
@@ -93,6 +93,15 @@ if ($menuId > 0) {
                 </option>
             <?php endforeach; ?>
         </select>
+    </div>
+
+    <?php // Probability of the opportunity of the project, read like the numeric search fields of the Dolibarr lists ?>
+    <div class="tdf-field">
+        <label for="search_probability"><i class="fas fa-percent"></i> <?php echo $langs->trans('TodoFilterProbability'); ?></label>
+        <input type="text" class="flat tdf-text tdf-probability" id="search_probability" name="search_probability"
+               value="<?php echo dol_escape_htmltag($todoFilters['probability']); ?>"
+               placeholder="<?php echo dol_escape_htmltag($langs->transnoentities('TodoFilterProbabilityPlaceholder')); ?>"
+               title="<?php echo dol_escape_htmltag($langs->transnoentities('TodoFilterProbabilityHelp')); ?>">
     </div>
 
     <div class="tdf-field">

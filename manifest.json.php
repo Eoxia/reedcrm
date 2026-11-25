@@ -95,38 +95,38 @@ $manifest->icons      = [];
 //$manifest->icons[] = $img;
 
 $img               = new stdClass();
-$img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color_192.png', 1);
+$img->src          = dol_buildpath('/reedcrm/img/reedcrm_color_192.png', 1);
 $img->type         = 'image/png';
 $img->sizes        = '192x192';
 $manifest->icons[] = $img;
 
 $img               = new stdClass();
-$img->src          = dol_buildpath('/custom/reedcrm/img/reedcrm_color_512.png', 1);
+$img->src          = dol_buildpath('/reedcrm/img/reedcrm_color_512.png', 1);
 $img->type         = 'image/png';
 $img->sizes        = '512x512';
 $manifest->icons[] = $img;
 
-$manifest->id               = dol_buildpath('/custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 1);
-$manifest->start_url        = dol_buildpath('/custom/reedcrm/view/frontend/quickcreation.php?source=pwa', 1);
+$manifest->id               = dol_buildpath('/reedcrm/view/frontend/quickcreation.php?source=pwa', 1);
+$manifest->start_url        = dol_buildpath('/reedcrm/view/frontend/quickcreation.php?source=pwa', 1);
 $manifest->background_color = '#ffffff';
 $manifest->display          = 'standalone';
 $manifest->display_override = ['window-controls-overlay'];
 // Scope is limited to the App pages: a scope covering the whole Dolibarr install makes the
 // installed App capture every Dolibarr URL (third party, proposal, ticket) and reopen it in its
 // own window, and leaves no way out since no navigation is out of scope anymore
-$manifest->scope            = dol_buildpath('/custom/reedcrm/view/frontend/', 1);
+$manifest->scope            = dol_buildpath('/reedcrm/view/frontend/', 1);
 $manifest->theme_color      = '#ffffff';
 $manifest->description      = 'ReedCRMDescription';
 
 $img                     = new stdClass();
-$img->src                = dol_buildpath('/custom/reedcrm/img/reedcrm_color_512.png', 1);
+$img->src                = dol_buildpath('/reedcrm/img/reedcrm_color_512.png', 1);
 $img->type               = 'image/png';
 $img->sizes              = '512x512';
 $img->form_factor        = 'narrow';
 $manifest->screenshots[] = $img;
 
 $img                     = new stdClass();
-$img->src                = dol_buildpath('/custom/reedcrm/img/reedcrm_color_512.png', 1);
+$img->src                = dol_buildpath('/reedcrm/img/reedcrm_color_512.png', 1);
 $img->type               = 'image/png';
 $img->sizes              = '512x512';
 $img->form_factor        = 'wide';

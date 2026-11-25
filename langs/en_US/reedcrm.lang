@@ -57,6 +57,13 @@ ImportProjectsFromCSV = Import projects from CSV
 ImportProjectsDescription = Select a CSV file to automatically create projects.
 CSVExpectedColumns = File must contain columns: Prenom, Nom, Email, Tel, Note.
 UploadImport = Import
+ViewImportHistory = Import history
+ImportHistory = Import history
+ChooseExistingTag = Choose an existing tag
+OrCreateNewTag = Or create a new tag
+SelectOrCreate = -- Select a tag --
+TagAlreadyExistsTitle = Tag already exists
+TagAlreadyExistsQuestion = The tag "%s" already exists. Do you want to use it for this import?
 ConfirmImportProjectsTitle = Import projects
 ConfirmImportProjectsQuestion = Enter the category name to assign to the imported projects.
 CategoryName = Category name
@@ -69,6 +76,26 @@ ImportParametersMissing = Missing import parameters.
 CategoryCreationError = Unable to create category.
 ProjectsImported = %s projects imported out of %s rows.
 ProjectsImportErrors = %s rows could not be imported.
+CSVAssigneesColumn = Optional: a column listing the people to assign, chosen when importing.
+AssigneesColumn = Assignees column
+AssigneesColumnHelp = Each person of this column is added to the opportunity as "Sales representative assigned to the project". A person is recognized by ID, login, email, full name, first name alone or first name followed by the initial of the last name. Separate several people with a comma, "/", "&" or "and".
+ImportAssigneesNotFound = Unrecognized people (unknown or homonyms), opportunities imported without them: %s
+ImportAssignmentErrors = %s assignments could not be saved.
+CSVReminderColumns = Optional: a text column and a due date column to add a reminder to the todo, chosen when importing.
+ReminderLabelColumn = Reminder text column
+ReminderLabelColumnHelp = The text of this column becomes the label of a "To do" reminder event linked to the opportunity. It shows in the todo of the people assigned to the opportunity, or in yours when nobody is. Without text, the reminder is named "Reminder: First name Last name". "None", "-" or "I don't know" count as an empty cell.
+ReminderDateColumn = Reminder due date column
+ReminderDateColumnHelp = Due date (end date) of the reminder, as DD/MM/YYYY or YYYY-MM-DD, optionally followed by a time (14:30 or 14h30); without a time, 9:00. The reminder starts when imported. A missing or unreadable due date gives a reminder without due date, the value of the file ("3-6 months"…) is kept in its note. A past due date gives a late reminder, without notification.
+ImportRemindersCreated = %s reminders added to the todo.
+ImportRemindersWithoutText = %s reminders created without text, labelled "Reminder: First name Last name".
+ImportRemindersWithoutDueDate = %s reminders created without due date: missing or unreadable date (accepted formats: DD/MM/YYYY or YYYY-MM-DD, time optional). The value of the file is kept in the note of the reminder.
+ImportRemindersOverdue = %s reminders created with a due date already past: they are late in the todo, without notification.
+ImportReminderDueDateAsWritten = Due date written in the import file: %s
+ImportReminderErrors = %s reminders could not be saved.
+CSVNoteColumn = Optional: a column of notes from 0 to 10 giving the probability of the opportunity (1 = 10%), chosen when importing.
+NoteColumn = Note column (probability)
+NoteColumnHelp = Note from 0 to 10 turned into the probability of the opportunity: 1 = 10%, 2 = 20%… 10 = 100% (2.5 = 25%). The opportunity also gets the matching status of the dictionary (prospection, qualification…). An empty cell leaves the row without probability. When it is the "Note" column expected by the import, a note no longer fills the description; a text still does.
+ImportNotesInvalid = %s notes not used: unreadable value or out of 0 to 10.
 NbLines = Number of lines
 
 # Relaunch table headers (Date and Status come from main.lang)
@@ -76,7 +103,6 @@ RelaunchWho = Who
 RelaunchWhat = What
 
 # Dashboard graphs
-OpportunitySources = Distribution of opportunity sources
 
 # Map / Geolocation - Carte / Géolocalisation
 ShowRoute = Show Route
@@ -134,6 +160,7 @@ ReedCRMStatusAsBadge = Status: badge
 CallList = Call list
 CallLists = Call lists
 NewCallList = New call list
+CallListPDF = Call list (PDF)
 # Derived keys auto-built by the generic saturne_list.php from the element name (call_list)
 Call_listList = Call lists
 NewCall_list = New call list
@@ -180,6 +207,10 @@ CallFrom = Call from
 AddToCallList = Add to call list
 SelectCallList = Select a call list
 NoActiveCallList = No active call list
+CallListPositionHelp = Order of the list in the list of call lists and in the selectors (cards, mobile app): the smallest position first, then by label for an equal position.
+CallListLinePositionHelp = Order of the calls in the list (card, mobile app, PDF), changed by the arrows of the card or of the app. A new call goes to the end of the list.
+CallListLineMoveUp = Move the call up the list
+CallListLineMoveDown = Move the call down the list
 CallListAddedCount = %d element(s) added to the call list
 CallListSkippedNoContactElement = Element %s was skipped because no contact is associated with it or the phone number is missing
 CallListLineDuplicateElement = Element %s is already in this call list
@@ -194,6 +225,22 @@ CallListWidgetError = Error while adding
 DefaultCallListLabel = Call list — %s
 AddToMyCallList = Add to my call list
 DefaultCallListNotFound = No default call list for this user
+CallListPhoneSourceProject = Opportunity phone
+CallListPhoneSourceContact = Linked contact
+CallListPhoneSourceThirdparty = Third-party phone
+CallListPhoneSourceThirdpartyContact = Third-party contact
+CallListNoPhoneFound = No phone number found
+CallListEnterPhonePlaceholder = Enter a phone number (saved on opportunity)
+CallListEnterPhoneGenericPlaceholder = Enter a phone number...
+CallListPhoneRequired = Please enter a phone number
+CallListInvalidPhone = Invalid format (e.g. 0612345678 or +33...)
+CallListSaveAndAdd = Save and add
+CallListShortTelOpp = Opp. phone
+CallListShortTelTiers = Third-party phone
+CallListShortTelContact = Contact phone
+CallListOppPhonePlaceholder = Add / edit opp. phone
+CallListCustomOrder = Custom order (drag and drop)
+CallListDragToReorder = Drag to reorder
 
 # PWA Documents Bar
 PwaShowPiecesTitle = List of documents to display in the PWA listing
@@ -262,6 +309,30 @@ QuickTaskCreations = quick task adds
 QuickEventCreation = Quick event add
 QuickEventCreations = quick event adds
 QuickCreationFrontendSuccess = Opportunity quick add completed successfully
+QuickCreationRemindMeLater = Remind me later
+QuickCreationReminderDate = Reminder date
+QuickCreationReminderIn3Days = In 3 days
+QuickCreationReminderIn1Week = In 1 week
+QuickCreationReminderIn1Month = In 1 month
+QuickCreationReminderTitlePlaceholder = Reminder subject (optional)
+QuickCreationReminderDefaultLabel = Reminder: %s
+QuickCreationReminderCreated = Reminder scheduled for %s
+ErrorQuickCreationReminderDateInPast = The reminder date must be in the future
+ErrorQuickCreationReminder = The opportunity was created, but not its reminder
+
+# Voice description - Description written by the AI from the voice note
+VoiceDescription = Description written from the voice note
+VoiceDescriptionHelp = After each voice note of the quick add, the AI transcribes it then writes the description. The voice note is sent to OpenAI, with the ChatGPT key of the AI module.
+VoiceDescriptionNeedsChatGPT = Unavailable: enable the AI module with the ChatGPT service and fill in its key
+VoiceDescriptionWriting = The AI is writing the description from the voice note…
+VoiceDescriptionError = The description could not be written
+VoiceDescriptionEmpty = This voice note holds nothing to add to the description
+VoiceDescriptionNotConfigured = Writing the description from the voice note is not enabled
+VoiceDescriptionNoRecording = No voice note to transcribe
+VoiceDescriptionRecordingTooLong = The voice note is over 25 MB, the transcription limit
+VoiceDescriptionInvalidAnswer = Unexpected answer from the AI service
+VoiceDescriptionHttpError = The AI service answered with HTTP error %s
+VoiceDescriptionNotWritten = The AI did not write the description (%s)
 
 # Commercial / sales
 CommercialFollowUp = Sales follow-up
@@ -284,6 +355,9 @@ ProjectContactSameAsThirdPartyContact = Project contact same as third party cont
 OpportunityStatusDescription = Opportunity status selection <br> Default value: <b> Prospection </b>
 OpportunityAmountDescription = Opportunity amount selection <br> Default value: <b> 3000 € </b>
 ProspectCustomerDescription = Third-party nature selection <br> Default value: <b> Prospect </b>
+
+# Propal Extrafield
+ReedCRMPropalLabel = Label
 
 # Product kit
 ProductKitConf = Fill the quote line description with the kit composition
@@ -379,7 +453,6 @@ CommercialStatus = Commercial status
 CommercialStatusHelp = Commercial status of the commercial proposal
 RefusalReason = Refusal reason
 RefusalReasonHelp = Reason for refusing the commercial proposal
-PropalStatusCommRepartition = Distribution of open commercial proposal statuses
 PropalRefusalReasonRepartition = Distribution of commercial proposal refusal reasons
 
 # Billing contact notation
@@ -428,7 +501,6 @@ ReloadOppPercent = Compute undefined opportunity probabilities
 LabelLength = Label length
 LabelLengthDescription = Maximum size of the label field
 WarningTaskLabelCustom = Warning, you are getting close to the maximum allowed number of characters (%d)
-ProductLastSellList = Latest product sales (Order and Invoice)
 
 # Menu / lists
 Opportunities = Opportunities
@@ -436,7 +508,6 @@ OpenedPropals = Open proposals
 RecurringInvoices = Recurring invoices
 
 # Call notifications widget
-ProjectOpportunitiesList = The last 5 project opportunities
 LatestCreatedOpportunities = Latest created opportunities
 OppPercent = Opportunity percentage
 ButtonActions = Actions
@@ -470,6 +541,15 @@ EmailSubject = Email subject
 EmailContent = Email content
 EmailTo = Recipient
 CustomerNote = Customer note
+EventProOpenTickets = Open tickets
+EventProAllOpenTickets = All open tickets
+EventProOpenNotes = Open notes
+EventProAllOpenNotes = All open notes
+EventProNewNote = New note
+EventProNoProposal = No commercial proposal
+EventProNoOpenTickets = No open ticket
+EventProNoOpenNotes = No open note
+EventProNoProject = No project
 SendEmail = Send an email
 EventCreated = Event created successfully
 EmailFormReady = Email form ready
@@ -498,9 +578,32 @@ PropalStatusBilled = Billed
 ShippingDateEqualsCreationDate = Set shipping date equal to creation date
 ShippingDateEqualsCreationDateHelp = When a shipment is created, if no shipping date is entered, it automatically takes the creation date.
 
+TicketTimeTaskPrefix=Task label prefix
+TicketTimeTaskPrefixDescription=Prefix used to automatically find the task the time spent on a ticket is logged into (based on its label).
+
+TicketTimeTaskSuffix=Task label suffix
+TicketTimeTaskSuffixDescription=Choose what has to be added after the prefix in the task label.
+TicketTimeTaskSuffixTicketRef=Ticket reference (e.g. TS2606-0005)
+TicketTimeTaskSuffixProjectRef=Project reference
+TicketTimeTaskSuffixProjectLabel=Project label
+TicketTimeTaskSuffixNone=Nothing (prefix only)
+
+TicketTimeTitleMaxLength=Max length of the event title
+TicketTimeTitleMaxLengthDescription=Maximum number of characters kept for the event title in the agenda (truncated automatically, recommended max: 255).
+
+TicketTimeDefaultMinutes=Default time (minutes)
+TicketTimeDefaultMinutesDescription=The default time prefilled in the quick entry block of the ticket.
+
 ReadMyCallLists=Read my call lists
 ReadSubordinatesCallLists=Read subordinates call lists
 ReadAllCallLists=Read all call lists
+
+# Proposals - List columns
+PropalList=Proposal list
+RelauchCommercial=Sales follow-up
+ContactDetails=Contact details
+
+ProjectList=Project list
 
 # Dashboard - Upcoming reminders
 UpcomingCallReminders = Upcoming reminders
@@ -578,6 +681,8 @@ FollowupAuditMarkDone = Mark the audit done on this date (rolls the cycle to nex
 FollowupAuditRealDate = Real audit completion date
 FollowupAuditDoneRolled = Audit done on %s — next audit on %s
 FollowupProposalSent = Proposal sent
+FollowupProposalOrInvoice = Proposal / Invoice
+FollowupAuditToBill = To invoice
 FollowupAuditPrSigned = Quote signed
 FollowupSignedUnbilled = Signed Digirisk / DU quotes not invoiced
 FollowupSignedUnbilledEmpty = No signed Digirisk / DU quote left to invoice
@@ -586,6 +691,33 @@ FollowupAuditInvoiced = Invoiced
 FollowupAuditPaid = Paid
 FollowupDuLostCount = Lost DU (>3y)
 FollowupLinkedQuote = Linked quote
+FollowupLinkedInvoice = Linked invoice
+FollowupLinkProposal = Quotes of the client
+FollowupLinkInvoice = Invoices of the client
+FollowupLinkNoDocument = No document for this client
+FollowupLinkDocument = Link a quote or an invoice
+FollowupTrackingFromDocument = taken from the document
+FollowupLinkPickClient = Pick a client first
+FollowupAuditAddedOtherMonth = This audit is planned in %s: that month is now displayed.
+FollowupAuditAddNoThirdParty = Pick a client to add an audit.
+FollowupAuditDoneOn = Done on %s
+FollowupAuditCorrectDoneDate = Correct the completion date (the next audit is moved to this date + 1 year)
+FollowupNextAuditPlanned = Planned (yearly)
+FollowupAuditPlannedTag = theoretical date
+FollowupAuditRdv = Client appointment
+FollowupAuditRdvPlan = Plan the appointment with the client: the date goes into the intervention calendar
+FollowupAuditRdvMove = Move the appointment: the intervention date follows in the calendar
+FollowupAuditRdvLater = Appointment to plan later
+FollowupAuditRdvOn = Appointment on %s
+FollowupAuditRdvCount = Planned appointments
+FollowupAuditRdvPlanned = Appointment of %s saved and put into the intervention calendar.
+FollowupAuditRdvCleared = Appointment cancelled: the line goes back to its planned date.
+FollowupAuditRdvNoIntervention = Appointment saved, but nothing was put into the calendar (feature disabled or missing permission).
+FollowupAuditRdvInterventionFailed = Appointment saved, but the intervention could not be created.
+FollowupAuditRdvInCalendar = See in the intervention calendar
+FollowupAuditRdvNoProposal = Appointment saved, but this client has no DU quote: the intervention date is set on the service line of the quote. Create the quote, then plan the appointment again.
+FollowupLinkedIntervention = Linked intervention date
+FollowupInterventionLabel = Document Unique audit
 FollowupProposalAmount = Proposal amount
 FollowupProposalSentCount = Proposals sent
 FollowupMarkProposalSent = Check: commercial proposal (quote) sent today
@@ -658,8 +790,38 @@ BillingGapDueSince = Past due since
 FollowupChartDuAmount = DU amount (proposed / invoiced / lost)
 FollowupChartProposed = Proposed
 FollowupCreateProposal = Create the quote for this client
+FollowupCreateInvoice = Create the invoice for this client (from the quote if there is one)
 FollowupChartInvoiced = Invoiced
 PleaseLinkProjectFirst=Please first link a project to the ticket
+ReedCRMLogTimeWithMessage=Log the time spent along with this message
+ReedCRMTimeEntriesLatest=Latest time entries (%s/%s):
+ReedCRMNoTimeEntries=No time logged yet.
+TicketTimeTaskDescription=Task generated automatically for the ticket %s
+ReedCRMTimeSpentEventLabel=Time logged (%s min)
+ReedCRMTimeSpentEventDuration=Time: %s min
+ReedCRMTimeSpentEventComment=Comment:
+ReedCRMTimeSpentPerUser=Time spent per user
+ReedCRMTimeSpentPerTask=Time spent per task
+ReedCRMTimeSpentTotalTicket=Total time spent:
+ReedCRMTimeSpentTotalProject=Total time spent on the project:
+ReedCRMTimeSpentSaveError=The time spent could not be saved
+ReedCRMTimeSpentInvalidMinutes=Please type a time greater than 0
+EventDefaultDuration=Default duration of the events
+EventDefaultDurationDescription=Duration in minutes offered beside the date in the quick event creation. It sets the end date and, once the event is done, is logged as time spent on the related project.
+EventDurationHelp=Duration in minutes: sets the end date and, when the event is done, is logged as time spent on the related project
+ReedCRMProjectTimeTitle=Project time
+ReedCRMProjectTimeTitleShort=Time
+ReedCRMProjectTimePlannedShort=Planned
+ReedCRMProjectTimePlannedHelp=Time sold on the signed proposals of the project (quantity × duration of the services), on the month of the service. A year without any signed proposal takes the workload planned on the tasks, spread between their start and end dates
+ReedCRMProjectTimeSpent=Time spent
+ReedCRMProjectTimeSpentShort=Spent
+ReedCRMProjectTimeOver=Time spent beyond the planned time, summed month by month
+ReedCRMProjectTimeOverShort=Over
+ReedCRMProjectTimeYearTotal=Year total
+ReedCRMProjectTimeMonthlyAverage=Monthly average: %s
+ReedCRMProjectTimeBarTitle=%s: planned %s, spent %s
+ReedCRMProjectTimeBarOverTitle=%s: planned %s, spent %s, over by %s
+ReedCRMProjectTimeChartTitle=Monthly comparison: planned time / time spent
 
 # PWA nav
 BackToDolibarr = Back to Dolibarr
@@ -674,7 +836,36 @@ NoPhoneNumber = No phone number
 NoEventOnOpportunity = No event on this opportunity yet
 ToCallShort = to call
 SeeOpportunityTimeline = See the history
+CallListLineAddedOn = In the list since %s
+CallListLineUnlink = Unlink from the call list
+ConfirmCallListLineUnlink = Unlink this person from the call list?
+ErrorCallListLineUnlink = Could not unlink this person from the call list
+CallListLastCall = Last call
+CallListLineLastCall = Last call on %s
 
+# Relaunch widget (#873)
+RelaunchScopePastTooltip = Relaunch history
+RelaunchScopeUpcomingTooltip = Upcoming relaunches
+RelaunchAddFullEvent = Add a complete event
+RelaunchAddDirectReminder = Add a direct reminder
+RelaunchOverdue = Overdue
+RelaunchOverdueCount = %s overdue relaunch(es)
+RelaunchLateBy = %s day(s) late
+RelaunchNoPast = No past relaunch
+RelaunchNoUpcoming = No upcoming relaunch
+RelaunchDaysAgo = %s d ago
+RelaunchNever = Never
+RelaunchNothingPlanned = Nothing planned
+RelaunchNoTitle = Untitled
+RelaunchWhen = When
+RelaunchStatusChange = Change the status
+RelaunchStatusError = The status could not be changed
+RelaunchStatusNotARelaunch = This event is not a relaunch
+RelaunchSortNext = Date of the next reminder
+RelaunchSortOverdue = Number of overdue reminders
+RelaunchInOneDay = Tomorrow
+RelaunchInThreeDays = In 3 days
+RelaunchInOneWeek = In 1 week
 #
 # Ticket dashboard
 #
@@ -764,6 +955,50 @@ TicketStaleList = The %s open tickets with no message for more than %s days
 NbOfTicketsWithTimeDescription = Number of tickets holding at least one time entry, over the number of analysed tickets: the tickets still open plus the ones created or closed over the period.
 TimeSpentOnAssignedTickets = Time on their tickets
 
+#
+# Todo - agenda event board
+#
+TodoBoard = Todo
+TodoAllUsers = Every user
+TodoAllTypes = Every type
+TodoSearchPlaceholder = Label, place or third party
+TodoFilterHideAuto = Hide the automatic events
+TodoFilterHideAutoHelp = The events traced by Dolibarr itself are not actions to carry out
+TodoFilterCount = %s event(s)
+TodoNoEvent = No event
+TodoNoLabel = No label
+TodoLateEvent = Late
+TodoUnassigned = Unassigned
+TodoAddAssigned = Assign a user
+TodoRemoveAssigned = Remove the assignment
+TodoEditLinks = Third party, contact and project of the event
+TodoLoadMore = Show %s more
+TodoSortByDate = Sort by start date
+TodoColumnWidth = Column width
+TodoColumnGap = Spacing
+TodoVisibleColumns = Displayed columns
+TodoColumnOptions = Column options
+TodoSortDateAsc = Sort by ascending date
+TodoSortDateDesc = Sort by descending date
+TodoGroup = Group
+TodoFreeze = Freeze
+TodoHideColumn = Hide
+TodoComingSoon = Coming soon
+
+# Todo - automatic relaunches (crons)
+TodoColumnPropalRelaunch = Proposals to relaunch
+TodoColumnInvoiceRelaunch = Invoices to relaunch
+TodoPropalRelaunchLabel = Relaunch proposal %s
+TodoPropalRelaunchNote = Proposal validated on %s, amount %s, still unanswered.
+TodoInvoiceRelaunchLabel = Relaunch unpaid invoice %s
+TodoInvoiceRelaunchNote = Invoice due on %s, amount %s, still unpaid.
+TodoPropalRelaunchCronLabel = ReedCRM - Relaunches of unanswered proposals
+TodoPropalRelaunchCronComment = Creates an event to do for every proposal validated more than 30 days ago (constant REEDCRM_TODO_PROPAL_RELAUNCH_DAYS) that is neither signed nor refused. The event feeds the "Proposals to relaunch" column of the Todo board, it turns Done as soon as the proposal is signed, refused, billed or cancelled.
+TodoPropalRelaunchCronResult = %s proposal relaunch(es) created, %s closed as the proposal no longer awaits an answer
+TodoInvoiceRelaunchCronLabel = ReedCRM - Relaunches of unpaid invoices
+TodoInvoiceRelaunchCronComment = Creates an event to do for every validated invoice still unpaid more than 30 days after its due date (constant REEDCRM_TODO_INVOICE_RELAUNCH_DAYS). The event feeds the "Invoices to relaunch" column of the Todo board, it turns Done as soon as the invoice is paid, abandoned or set back to draft.
+TodoInvoiceRelaunchCronResult = %s invoice relaunch(es) created, %s closed as the invoice is no longer unpaid
+
 # Signed quotes never invoiced
 SignedUnbilledMenu = Signed quotes not invoiced
 SignedUnbilledIntro = Signed proposals with no invoice linked. Every line is cross-checked against the customer invoices to spot the ones actually billed separately (standalone invoice, via the order or the contract).
@@ -833,7 +1068,7 @@ PocketRecordingDate = Recording date
 PocketFolder = Pocket folder
 PocketFolderId = Pocket folder identifier
 PocketFolderTitle = Imported folder
-PocketFolderHelp = Only the recordings of this folder are imported into Dolibarr. As long as no folder is selected, no synchronisation happens.
+PocketFolderHelp = Only the recordings of this folder are imported into Dolibarr, and "I just hung up" picks the last one filed in it. As long as no folder is selected, no synchronisation happens.
 PocketFolderMissing = No Pocket folder selected
 PocketNoFolderSelected = -- No folder --
 PocketTags = Pocket tags
@@ -852,7 +1087,16 @@ PocketSummaryEditedHint = Summary edited by hand: Pocket will not write it again
 PocketRecordingStatusNew = New
 PocketRecordingStatusProcessed = Processed
 PocketRecordingStatusArchived = Archived
-PocketConnection = Pocket connection
+PocketAccount = Pocket account
+PocketSharedAccount = Shared Pocket account
+PocketSharedAccountHelp = Used by the users who did not enter a key of their own on the Pocket tab of their user card.
+PocketPersonalAccount = Personal Pocket account
+PocketPersonalAccountHelp = Key and folder of this user only. They replace the shared account of the module setup for their "I just hung up" button, and the synchronisation imports this folder too.
+PocketPersonalAccounts = Personal Pocket accounts
+PocketNoPersonalAccount = No user entered a Pocket key of their own
+PocketUsesSharedAccount = No personal key: this user works with the shared Pocket account of the module setup (folder %s).
+PocketNoSharedAccount = Neither a personal key nor a shared Pocket account: the "I just hung up" button is not offered to this user.
+PocketNoAccountConfigured = No Pocket account configured (key and folder): nothing to synchronise
 PocketConnectionState = Connection state
 PocketApiKey = Pocket API key
 PocketApiKeyHelp = A pk_... key created from the Pocket application. It grants read access to the recordings, transcripts and audio files of the account.
@@ -867,8 +1111,9 @@ PocketManualSync = Manual synchronisation
 PocketManualSyncHelp = Imports the recordings of the configured folder right away. The scheduled job runs the very same operation.
 PocketSyncNow = Synchronise now
 PocketSyncReport = Pocket synchronisation: %s created, %s updated, %s skipped, %s failed
+PocketSyncAccounts = Pocket accounts synchronised: %s
 PocketSyncCronLabel = Pocket recordings synchronisation
-PocketSyncCronComment = Imports the recordings of the configured Pocket folder, along with their summary, transcript and action items
+PocketSyncCronComment = Imports the recordings of the folder of every configured Pocket account, shared or personal, along with their summary, transcript and action items
 PocketRefreshFromApi = Refresh from Pocket
 PocketRefreshDone = Recording refreshed from Pocket
 PocketRefreshFailed = Refreshing from Pocket failed
@@ -909,11 +1154,7 @@ PocketActionItemTodo = To do
 PocketActionItemDone = Done
 PocketActionItemDismissed = Deleted
 PocketActionItemEdited = Rewritten action
-PocketChangeStatus = Change the status
 PocketSummaryEdited = Rewritten summary
-PocketSummaryEditedHint = This summary was rewritten in Dolibarr: Pocket synchronisations no longer overwrite it.
-PocketEditSummary = Click to edit the summary
-PocketSummaryEditHelp = The summary is written in markdown, Pocket blocks included. It is saved when the field loses the focus, and is no longer overwritten by the synchronisations: empty it to get the Pocket one back.
 
 #
 # Pocket - attach from the business objects
@@ -933,13 +1174,6 @@ PocketNoObjectFound = No object found
 PocketObjectLinked = Object attached
 PocketObjectUnlinked = Object detached
 PocketUnlinkObject = Detach this object
-PocketLinkObject = Attach an object
-PocketUnlinkObject = Detach this object
-PocketAllObjectTypes = Every type
-PocketSearchObject = Search by reference or label
-PocketNoObjectFound = No object found
-PocketObjectLinked = Object attached
-PocketObjectUnlinked = Object detached
 
 #
 # Menu - Left menu sections
@@ -957,12 +1191,19 @@ DataManagementMenu = Data management
 
 # Quick close of an event
 QuickCloseEventTitle = Close the event
-QuickCloseEventTooltip = Close this event
-QuickCloseEventDescription = Description
+QuickCloseEventTooltip = Close this event or change its progress
+QuickCloseEventProgressTitle = Update the event
+QuickCloseEventPercentage = Progress
+QuickCloseEventPercentageHelp = At 100%, the event is closed. Below, only its progress changes.
+QuickCloseEventProgressSaved = Event progress set to %s
+QuickCloseEventProgressSavedAndRescheduled = Event progress set to %s, new event scheduled on %s
+QuickCloseEventDescription = Action description
 QuickCloseEventDescriptionPlaceholder = Appended to the event description (optional)
 QuickCloseEventReschedule = Schedule the same event again for later
 QuickCloseEventNewLabel = New event name
 QuickCloseEventNewLabelPlaceholder = Name of the closed event
+QuickCloseEventNewLabelCount = %s / %s characters
+QuickCloseEventNewLabelTooLong = The name of the new event is over %s characters: shorten it, or its end would be cut
 QuickCloseEventCurrentLabel = Event name
 QuickCloseEventCurrentLabelPlaceholder = Rename the event if needed
 QuickCloseEventNewType = Reminder type
@@ -977,17 +1218,25 @@ RelaunchTypeCall = Call
 RelaunchTypeEmail = Email
 RelaunchTypeRdv = Meeting
 RelaunchTypeOther = Other
+RelaunchReminderCreated = Reminder created
+RelaunchReminderTitlePlaceholder = Reminder subject
+RelaunchReminderTitleRequired = The reminder subject is required
+ErrorEventVoiceNotAttached = The event is created, but the voice note could not be attached to it
 QuickCloseEventInMonths = In
 QuickCloseEventInMonthsSuffix = months
 QuickCloseEventInDays = In
 QuickCloseEventInDaysSuffix = days
 QuickCloseEventOnDate = On
 QuickCloseEventDateRequired = Pick the date of the rescheduled event
+QuickCloseEventAtTime = at
+QuickCloseEventTimeHelp = Optional hour, "16" is enough for 16:00: without it, the new event takes the current hour, or the hour of the closed event for a picked day.
+QuickCloseEventTimePlaceholder = hh:mm
+QuickCloseEventTimeInvalid = The hour of the new event is not valid (e.g. 16, 16:30)
 QuickCloseEventConfirm = Close
 QuickCloseEventDone = Event closed
 QuickCloseEventDoneAndRescheduled = Event closed, new event scheduled on %s
 QuickCloseEventNotTodo = This event is not a to-do one, it cannot be closed
-QuickCloseEventError = Closing the event failed
+QuickCloseEventError = Saving the event failed
 QuickCloseEvents = quick event closures
 QuickCloseEventInMonthsLabel = In a number of months
 QuickCloseEventInDaysLabel = In a number of days
@@ -1047,9 +1296,680 @@ InterventionDateProductTagLabel = Tags of the services to plan
 InterventionDateProductTagDescription = Only the service lines whose product carries one of these tags get intervention dates. Free lines, the ones without a product, are out of scope. As long as no tag is chosen, no line can be planned.
 InterventionDateNoProductTagWarning = No service tag is selected: no service line can be planned. Pick the tags in the ReedCRM setup, Proposals tab.
 
+# Follow-up of the other client commitments (assistance, training, sprint)
+FollowupTrackingsOfMonth = Other follow-ups of the month
+FollowupTrackingPlanned = Planned
+FollowupTrackingLabel = Subject
+FollowupTrackingAdd = Add the follow-up
+FollowupTrackingAdded = Follow-up added
+FollowupTrackingDone = Follow-up closed on %s
+FollowupTrackingMarkDone = Close this follow-up (on the appointment date if it is filled in, today otherwise)
+FollowupNoTrackingThisMonth = No follow-up this month. Add it with the line below.
+FollowupTrackingRdvNoProposal = Appointment saved, but no quote is linked: the intervention calendar works on a quote line. Link a quote to this line to show it there.
+FollowupTrackingTypeAssistance = Assistance
+FollowupTrackingTypeFormation = Training
+FollowupTrackingTypeSprint = Sprint
+FollowupTrackingTypeOther = Other
+FollowupLineCount = Lines
+
 # Card empty fields toggle
 CardHideEmptyFields = Hide the empty fields
 CardShowAllFields = Show every field
 CardEmptyFieldsHiddenCount = %s hidden
 CardEmptyFieldsTooltip = Hides or shows the fields of this card left without a value. The choice is kept for all your cards.
 CardEmptyFieldsUserParam = Empty fields on the cards
+
+# Opportunity stats - Opportunities per month
+OpportunityStatsMenu = Opportunities per month
+OpportunityStatsTitle = Opportunities per month
+OpportunityStatsTag = Tag
+OpportunityStatsEveryTag = Every tag
+OpportunityStatsDepth = Depth
+OpportunityStatsLastYears = Last %s years
+OpportunityStatsDateType = Reference date
+OpportunityStatsDateCreation = Creation date
+OpportunityStatsDateStart = Start date
+OpportunityStatsAverage = Average
+OpportunityStatsAverageHint = The average divides the total by the months elapsed, so the months the running year has not lived yet do not drag it down.
+OpportunityStatsDateStartWarning = The count runs on the start date: the opportunities left without one are missing from the table.
+OpportunityStatsTotalYear = Total %s
+OpportunityStatsPerMonth = Per month
+OpportunityStatsBestMonth = Best month
+OpportunityStatsVersusYear = Against %s
+OpportunityStatsSameWindow = %s over the same window
+OpportunityStatsNoComparison = No comparison
+
+# Todo - automatic relaunches (crons)
+TodoMoveRefusedRelaunch = A relaunch stays in its column until it is handled: drop it in "%s" or "%s".
+TodoMoveRefusedBacklog = This column only takes the relaunches created automatically.
+TodoUpcomingEvent = Upcoming
+TodoRelaunchCount = %s relaunch(es) on this object
+TodoProjectBudget = Budget of the project: %s
+TodoProjectOpportunityAmount = Opportunity amount: %s
+TodoProjectProbability = Opportunity probability: %s
+TodoProjectStep = Stage
+TodoProjectThirdParty = Third party
+TodoProjectContact = Contact
+TodoProjectPhone = Phone
+TodoProjectEmail = Email
+TodoProjectOrigin = Origin
+TodoProjectRelaunches = Relaunches
+TodoSortByProbability = Sort by opportunity probability
+TodoSortProbabilityAsc = Sort by increasing probability
+TodoSortProbabilityDesc = Sort by decreasing probability
+TodoFilterProbability = Probability
+TodoFilterProbabilityPlaceholder = e.g. >= 50
+TodoFilterProbabilityHelp = Probability of the opportunity of the project, with an operator as in the Dolibarr lists: >= 50, < 20, 30, or several conditions separated by a space (>= 20 <= 60). Events without probability are then hidden.
+TodoOriginAmountHT = Amount excl. tax: %s
+TodoOriginDatePropal = Proposal validated on %s
+TodoOriginDateInvoice = Invoice due on %s
+TodoOriginMoreLines = + %s more line(s)
+
+# Not billed proposals
+PropalUnbilledTag = Not billed
+PropalUnbilledSetupTitle = Not billed proposals
+PropalUnbilledTagLabel = Tag of the not billed proposals
+PropalUnbilledTagDescription = A red banner is displayed on top of the card of every proposal carrying this tag, whether it was put by the button below or by hand.
+PropalUnbilledTagNotCreated = Not created yet: it will be on the first run
+PropalUnbilledSync = Automatically tag the not billed proposals
+PropalUnbilledSyncDescription = A proposal is not billed when it is signed and no invoice is linked to it, neither directly nor through the order or the contract created from it (abandoned invoices do not count). The tag is put on these proposals and removed from the billed proposals still carrying it. A scheduled job also updates it 4 times a day.
+PropalUnbilledPendingChanges = To tag: %s not billed proposal(s) - To untag: %s billed proposal(s)
+PropalUnbilledSyncButton = Tag the not billed proposals
+PropalUnbilledSyncDone = Tag put on %s proposal(s), removed from %s proposal(s)
+PropalUnbilledSyncError = Unable to update the tag of the not billed proposals
+PropalUnbilledBanner = This proposal is not billed
+PropalUnbilledCronLabel = ReedCRM - Tag of the not billed proposals
+PropalUnbilledCronComment = Puts the "Not billed" tag on the signed proposals with no linked invoice and removes it from the billed ones, like the button of the proposals setup page. Run 4 times a day (0h, 6h, 12h and 18h).
+
+# Proposal templates
+PropalModelList = Proposal templates
+PropalModelListHelp = Here are all the commercial proposals carrying the tag <b>%s</b>. Click <i>Create</i> to make a new proposal based on the template.
+PropalModelCreate = Create
+PropalModel = Proposal template
+PropalModelSelect = Select a template
+PropalModelHelp = The lines of the template are copied into the new proposal, and so are its notes when you type none.
+PropalModelCreateFromProject = Create a proposal from a template
+PropalModelNotFound = The template picked is no longer a proposal template: the proposal was created without its lines.
+
+# Not billed contracts
+ContractUnbilledBanner = This contract is not billed
+
+# Lifecycle timeline
+LifecycleStepCreation = Creation
+LifecycleStepValidation = Validation
+LifecycleStepSending = Sending
+LifecycleStepReception = Reception
+LifecycleStepRelaunch = Follow-ups
+LifecycleStepValidityEnd = Validity
+LifecycleStepSignature = Signature
+LifecycleStepRefusal = Refusal
+LifecycleStepBilling = Billing
+LifecycleStepDelivery = Delivery
+LifecycleStepShipping = Shipping
+LifecycleStepClosing = Closing
+LifecycleStepCancellation = Cancellation
+LifecycleStepDueDate = Due date
+LifecycleStepPayment = Payment
+LifecycleStepAbandon = Abandon
+LifecycleStepProjectStart = Start
+LifecycleStepProjectEnd = Planned end
+LifecycleStepFirstProposal = Proposal
+LifecycleStepFirstOrder = Order
+LifecycleStepFirstInvoice = Invoice
+LifecycleTooltipPending = Step not reached yet
+LifecycleTooltipOverdue = Date is past
+LifecycleTooltipBy = By %s
+LifecycleTooltipSentCount = %s mails sent
+LifecycleTooltipLastSending = Last sending on %s
+LifecycleTooltipLinkedCount = %s linked documents
+LifecycleTooltipPaymentCount = %s payments
+LifecycleTooltipPaidAmount = %s paid out of %s
+LifecycleTooltipCommercialStatus = Commercial status: %s
+LifecycleTooltipNoStatusDate = The commercial status keeps no date
+LifecycleTooltipRelaunchCount = %s ReedCRM follow-ups
+LifecycleTooltipFirstRelaunch = First follow-up on %s
+LifecycleTooltipMoreDocuments = And %s more
+LifecycleStep = Step
+LifecycleStepHelp = Last milestone the opportunity reached on its timeline: the column is sorted on it. The filter keeps the opportunities that reached one of the chosen milestones, whatever came next (Proposal: all those with a proposal). Hover a dot for the detail of its step.
+
+#
+# Steering dashboards: sales and management (#694)
+#
+MenuSectionSteering = Steering
+SalesDashboard = Sales dashboard
+DirectionDashboard = Management dashboard
+ReadSalesDashboard = Read the sales dashboard (own figures)
+ReadSalesDashboardOfTeam = Read the sales figures of the whole team
+ReadDirectionDashboard = Read the management dashboard
+
+# Sales goals
+SalesGoals = Sales goals
+SalesTeam = Sales team
+SalesTeamGroup = Sales team group
+SalesTeamGroupDescription = The members of this group make up the team the dashboards describe and can be given personal goals. Without a group, the team is anybody with a sales activity (calls, opportunities, proposals).
+SalesGoalCallsPerDay = Calls per working day
+SalesGoalCallsPerDayDescription = Number of outgoing calls expected each working day, weekends and public holidays excluded. Leave empty for no goal.
+SalesGoalSignedPerMonth = Proposals signed per month
+SalesGoalSignedPerMonthDescription = Number of proposals expected to reach the signed status each month.
+SalesGoalSignedAmountPerMonth = Amount signed per month (excl. tax)
+SalesGoalSignedAmountPerMonthDescription = Amount excluding tax of the proposals expected to be signed each month.
+SalesGoalOpportunitiesPerMonth = Opportunities created per month
+SalesGoalOpportunitiesPerMonthDescription = Number of new opportunities expected each month.
+SalesPersonalGoals = Personal goals
+SalesPersonalGoalsDescription = An empty field keeps the team goal, shown in grey.
+SalesPersonalGoalsNeedGroup = Pick the sales team group first to set personal goals.
+SalesGoal = Goal
+SalesGoalProgressReached = Goal reached (%s)
+SalesGoalProgressOntrack = On the expected pace (%s of the goal)
+SalesGoalProgressLate = Behind the expected pace (%s of the goal)
+SalesComparedWith = Change compared with the period from %s to %s
+
+# Filters
+SalesPeriodFilter = Period
+SalesPeriodWeek = Current week
+SalesPeriodMonth = Current month
+SalesPeriodPreviousMonth = Previous month
+SalesPeriodPreviousQuarter = Previous quarter
+SalesPeriodPreviousYear = Previous fiscal year
+SalesPeriodQuarter = Current quarter
+SalesPeriodYear = Current fiscal year
+SalesPeriodLastTwelveMonths = Last 12 months
+SalesUserFilter = Sales representative
+SalesWholeTeam = Whole team
+DirectionWholeCompany = Whole company
+
+# Sales dashboard
+SalesToday = Today
+SalesCallsMadeToday = Calls made today
+SalesCallsMadeDescription = "Phone call" events dated in the past and done, not applicable or recorded after the fact. A planned call only counts once done; the incoming Keyyo calls are counted apart.
+SalesCallsMadeThisWeek = Calls made this week
+SalesIncomingCallsToday = Incoming calls today
+SalesIncomingCallsDescription = Calls received and logged by the Keyyo telephony: they do not count towards the call goal.
+SalesActionsDueToday = Actions due today
+SalesActionsLate = Late actions
+SalesRelaunchesWaiting = Follow-ups waiting
+SalesRelaunchesWaitingDescription = To-do events without a date, such as the automatic follow-ups of proposals and invoices.
+SalesCallListLinesToCall = Contacts to call (call lists)
+SalesGoalsOfPeriod = Goals: %s
+SalesCallsMade = Calls made
+SalesCallsPerWorkingDay = Calls per working day
+SalesCallsPerWorkingDayDescription = Average over the working days already elapsed in the period, compared with the daily goal.
+SalesProposalsSignedDescription = Proposals that reached the signed status over the period, on their signature date.
+SalesSignedAmount = Amount signed excl. tax
+SalesOpportunitiesCreated = Opportunities created
+SalesEffortLeft = Effort left
+SalesEffortLeftDescription = What is left to reach the goals of the period, spread over the %s working days left, today included.
+SalesEffortCallsPerDay = %s calls a day
+SalesEffortProposals = %s proposals to sign
+SalesWorkingDaysLeft = %s working days left
+SalesPipeline = Pipeline
+SalesOpenOpportunities = Open opportunities
+SalesWeightedPipeline = Weighted pipeline
+SalesWeightedPipelineDescription = Sum of the amounts of the open opportunities multiplied by their probability.
+SalesProposalsAwaitingSignature = Proposals awaiting signature
+SalesOpportunitiesWithoutAction = Opportunities without next action
+SalesOpportunitiesWithoutActionDescription = Open opportunities without any to-do event: nobody planned to follow them up.
+SalesStaleOpportunities = No activity for %s days
+SalesConversion = Conversion
+SalesCallsPerOpportunity = Calls per opportunity created
+SalesCallsPerOpportunityDescription = Number of calls made over the period for each opportunity created over the same period.
+SalesOpportunityToProposalRate = Opportunities turned into proposals
+SalesOpportunityToProposalRateDescription = Share of the opportunities created over the period that already have at least one proposal.
+SalesSignatureRate = Proposal signature rate
+SalesSignatureRateDescription = Proposals signed over the period, over the proposals signed or refused over the same period.
+SalesWinRate = Opportunity win rate
+SalesWinRateDescription = Opportunities won over the period, over the opportunities won or lost over the same period.
+SalesMeanSignatureDelay = Mean signature delay
+SalesAverageSignedDeal = Average signed deal
+SalesNbDays = %s d
+SalesCallsPerDay = Calls per working day
+SalesCallsPerWeek = Calls per week
+SalesWeekOf = Week of %s
+SalesSignaturesPerMonth = Proposals signed per month
+SalesFunnel = Sales funnel of the period
+SalesProposalsIssued = Proposals issued
+SalesProposalsSigned = Proposals signed
+SalesOpenOpportunitiesStatus = Open opportunities per stage
+NbOfOpportunities = Number of opportunities
+NoStatus = No status
+SalesTeamBoard = Sales team board
+SalesCallsOfPeriod = Calls of the period
+SalesTodoList = Actions due today and late
+SalesLateBy = Late by
+SalesOpportunitiesToFollowUp = Opportunities to follow up
+SalesPendingProposals = Proposals awaiting signature
+SalesWaitingFor = Waiting for
+
+# Management dashboard
+DirectionRevenue = Revenue: %s
+DirectionBilledRevenue = Billed revenue excl. tax
+DirectionBilledRevenueDescription = Amount excluding tax of the validated invoices of the period, credit notes deducted, deposits excluded. Change compared with the same span of the previous period.
+DirectionRecurringPart = Recurring share
+DirectionRecurringPartDescription = Share of the billed revenue coming from a recurring invoice template.
+DirectionSignedRevenue = Signed revenue excl. tax
+DirectionSignedUnbilled = Signed not billed
+DirectionSignedUnbilledDescription = Signed proposals without a linked invoice, with the same rule as the "not billed" tag of the proposals.
+DirectionRecurring = Recurring billing
+DirectionMonthlyRecurringRevenue = Monthly recurring revenue (MRR)
+DirectionMonthlyRecurringRevenueDescription = Amount excluding tax of the active recurring invoice templates, brought back to a month according to their frequency.
+DirectionAnnualRecurringRevenue = Annual recurring revenue (ARR)
+DirectionActiveSubscriptions = Active subscriptions
+DirectionNbCustomers = %s customers
+DirectionRecurringToBill = To bill within %s days
+DirectionRecurringLate = Templates late on generation
+DirectionRecurringLateDescription = Active templates whose next invoice date is past: an invoice should have been generated.
+DirectionNewSubscriptions = New subscriptions over the period
+DirectionPipeline = Pipeline
+DirectionReceivables = Collections and unpaid invoices
+DirectionOutstanding = Customer outstanding incl. tax
+DirectionOutstandingDescription = Amount left to pay on the validated invoices not settled, payments and applied credit notes deducted.
+DirectionOverdue = Of which overdue
+DirectionInvoicesVeryLate = Invoices more than %s days late
+DirectionCollected = Collected over the period
+DirectionMeanPaymentDelay = Mean payment delay
+DirectionMeanPaymentDelayDescription = For the invoices settled over the period, time between the invoice date and the last payment.
+DirectionSalesTeam = Sales team
+DirectionSalesRepresentatives = Sales representatives
+DirectionSalesRepresentativesDescription = Members of the sales team group, or else anybody with a sales activity.
+DirectionCallsPerDayPerRepresentative = Calls per day per representative
+DirectionNewCustomers = New customers
+DirectionNewCustomersDescription = Third parties who signed their very first proposal over the period.
+DirectionRevenuePerMonth = Billed revenue excl. tax per month, per fiscal year
+DirectionRecurringRevenueShare = Recurring and one-off revenue per month
+DirectionRecurringRevenue = Recurring
+DirectionOneOffRevenue = One-off
+DirectionSignedPerMonth = Amount signed excl. tax per month, per fiscal year
+DirectionOpportunitiesPerMonth = Opportunities created per month, per fiscal year
+DirectionPipelineFunnel = Funnel: gross, weighted and signed pipeline
+DirectionGrossPipeline = Gross pipeline
+DirectionPipelineByStage = Open pipeline per stage (amount excl. tax)
+DirectionOpportunitySources = Origin of the opportunities over the period
+DirectionOpportunitiesWon = Opportunities won
+DirectionUnknownOrigin = Origin not set
+DirectionLostReasons = Loss and refusal reasons over the period
+DirectionNoReason = Reason not set
+DirectionUnpaidAge = Age of the unpaid amounts (incl. tax)
+DirectionNotDueYet = Not due yet
+DirectionOutstandingEvolution = Customer outstanding over time
+DirectionSignedPerUser = Signatures per sales representative over the period
+DirectionTeamPerformance = Sales team performance over the period
+DirectionTopOpportunities = Biggest open opportunities
+DirectionNextAction = Next action
+DirectionRecurringFollowUp = Recurring billing follow-up
+DirectionRecurringTemplate = Template
+DirectionMonthlyAmount = Monthly excl. tax
+DirectionNextInvoice = Next invoice
+DirectionLastInvoice = Last invoice
+DirectionInvoicesGenerated = Invoices generated
+DirectionUnpaidInvoices = Most late unpaid invoices
+
+#
+# SEPA mandate check
+#
+SepaMandateCheckTitle = SEPA mandate check
+SepaMandateRuleIntro = This page tells, bank account by bank account, what will keep a SEPA direct debit from leaving correctly. It changes nothing: each row links to the bank accounts tab of the third party to fix it.
+SepaMandateRuleFallback = With your Dolibarr version (%s), the signature date written in the file is the mandate signature date, or the creation date of the bank account when there is none.
+SepaMandateRuleNofallback = Warning: with your Dolibarr version (%s), when a direct debit request designates a given bank account, the file takes the mandate signature date with no fallback. When it is not filled in, the date goes out empty and the bank rejects the file, unless the Dolibarr fix #42020 is installed.
+SepaMandateRuleUncertain = With your Dolibarr version (%s), the Dolibarr fix #42020 may not be included: a bank account designated by a request and without a mandate signature date is therefore reported as blocking, to be safe.
+SepaMandateCheckedAccounts = Bank accounts checked
+SepaMandateAccountsBlocking = Bank accounts with a blocking issue
+SepaMandateAccountsWarning = Bank accounts to watch
+SepaMandateFailingRequests = Pending requests that will fail
+SepaMandateFailingRequestsHint = out of all the pending direct debit requests
+SepaMandateThirdpartiesInError = Third parties without a usable bank account
+SepaMandateSeverity = Severity
+SepaMandateSeverityBlocking = Blocking
+SepaMandateSeverityWarning = To watch
+SepaMandateSeverityOk = Correct
+SepaMandateFilterAll = All rows
+SepaMandateFilterIssues = Blocking or to watch
+SepaMandateFilterPending = Only bank accounts with a pending request
+SepaMandateBankAccount = Bank account
+SepaMandateRum = UMR
+SepaMandateDateRum = Mandate signature date
+SepaMandateDateWritten = Date written in the file
+SepaMandatePendingRequests = Pending requests
+SepaMandateIssues = What to fix
+SepaMandateNone = No bank account matches these filters.
+SepaMandateNoUsableAccount = No usable bank account
+SepaMandateNoLabel = Unnamed bank account
+SepaMandateNoIban = No IBAN
+SepaMandateNoIssue = Nothing to report
+SepaMandateDateEmpty = empty
+SepaMandateDateReasonMandate = mandate signature date
+SepaMandateDateReasonCreation = creation date of the bank account, for lack of a signature date
+SepaMandateDateReasonEmpty = no date to write
+SepaMandateDateReasonEmptyunlessfix = empty, unless the Dolibarr fix #42020 is installed
+SepaMandateFix = Fix
+SepaMandateFixOnThirdparty = Open the bank accounts tab of the third party
+SepaMandateReadOnlyNote = IBANs are never shown in full. The check follows the rules Dolibarr applies when it creates a direct debit order: a validated, unpaid invoice with a pending request.
+SepaMandateIssueDateMissingEmpty = Mandate signature date missing. This bank account is designated by a pending request: with Dolibarr %s, the file will leave with an empty signature date and the bank will reject it, unless the Dolibarr fix #42020 is installed. Fill in the mandate signature date on the bank account.
+SepaMandateIssueDateMissingUncertain = Mandate signature date missing. This bank account is designated by a pending request: if your Dolibarr version (%s) does not include the fix #42020, the file will leave with an empty signature date and the bank will reject it. Fill in the mandate signature date on the bank account.
+SepaMandateIssueDateMissingNoDate = Mandate signature date missing, and the bank account has no creation date: the file will leave with an empty signature date. Fill in the mandate signature date on the bank account.
+SepaMandateIssueDateMissingFallback = Mandate signature date missing: Dolibarr will write the creation date of the bank account instead (%s), which is not the day the customer signed. Fill in the actual signature date.
+SepaMandateIssueDateFuture = Mandate signature date in the future (%s): a direct debit cannot rely on a mandate not signed yet, the bank will reject the line. Correct the signature date.
+SepaMandateIssueRumMissing = Unique mandate reference (UMR) missing: Dolibarr will make one up, which will not match the mandate signed by the customer. Copy the UMR of the signed mandate.
+SepaMandateIssueRumDuplicate = Same mandate reference (UMR) as %s: each mandate needs its own reference, or the bank mixes them up. Correct the UMR of one of the bank accounts.
+SepaMandateIssueIbanMissing = IBAN missing: no direct debit can leave on this bank account. Copy the IBAN from the signed mandate.
+SepaMandateIssueIbanInvalid = Invalid IBAN (its check digits do not match): Dolibarr will leave the invoice out of the direct debit file. Copy the IBAN from the signed mandate.
+SepaMandateIssueBicMissing = BIC missing: Dolibarr will leave the invoice out of the direct debit file. Fill in the BIC of the customer's bank.
+SepaMandateIssueBicInvalid = Malformed BIC (%s): it has 8 or 11 characters, letters and digits, no space. Dolibarr will leave the invoice out of the direct debit file.
+SepaMandateIssueDuplicateDefault = This third party has several default bank accounts: Dolibarr will stop the creation of the direct debit order. Keep only one as default.
+SepaMandateIssueDesignatedInactive = This bank account is disabled, but a pending request designates it: Dolibarr will still debit this account. Enable it again if it is right, otherwise delete the request and make it again on the right bank account.
+SepaMandateIssueDesignatedMissing = The request of invoice %s designates a bank account that no longer exists: Dolibarr will debit the default bank account of the third party instead. Check it is the right account.
+SepaMandateIssueNoAccount = %s pending direct debit request(s), but no bank account is recorded for this third party: nothing can be debited. Add the bank account of the signed mandate.
+SepaMandateIssueNoDefault = %s pending direct debit request(s), but no bank account is set as default: Dolibarr will not put these invoices in the file. Set the bank account of the mandate as default.
+
+#
+# Pocket - "I just hung up" button
+#
+PocketHangup = I just hung up
+PocketHangupWith = I just hung up with %s
+PocketHangupHelp = Import the last recording of the Pocket folder %s and attach it to this record
+PocketHangupAttached = Last Pocket recording attached: %s
+PocketHangupAlreadyLinked = The last Pocket recording is already attached to this record: %s
+PocketHangupNoRecordingInFolder = No recording in the Pocket folder %s: file the call in this folder from the Pocket application, then try again
+PocketHangupNotFiled = The last recording of the Pocket folder %s is dated %s: file the call that just ended in this folder from the Pocket application, then try again
+PocketHangupImportFailed = The import of the last Pocket recording failed
+
+#
+# Pocket - reminder to file the calls
+#
+PocketTidyReminderTitle = Reminder to file the calls
+PocketTidyReminderTime = Time of the daily reminder
+PocketTidyReminderTimeHelp = Every day at this time, when recordings that reached Pocket during the last 24 hours sit in no folder, an event "File N Pocket calls" listing them is created with a notification: for the owner of each personal key, and for the users of the shared account. Nothing is created when everything is filed.
+PocketTidyReminderOff = -- Disabled --
+PocketTidyReminderNext = Next reminder
+PocketTidyReminderPending = (at the next run of the scheduled job)
+PocketTidyReminderSharedRecipients = Recipients of the shared account
+PocketTidyReminderSharedRecipientsHelp = Active users allowed to create Pocket recordings and without a personal key. Each personal key notifies its owner.
+PocketTidyReminderNoRecipient = No user works with the shared account
+PocketTidyReminderJob = Scheduled job
+PocketTidyReminderJobMissing = Scheduled job missing: disable then enable the ReedCRM module to declare it
+PocketTidyReminderCronDisabled = The Scheduled jobs module is disabled: the reminder will never be created
+PocketTidyReminderNoBrowserNotification = The browser notifications of the agenda are disabled: the event will be created without notification. Enable them in the <a href="%s">reminder setup of the agenda</a>.
+PocketTidyReminderCronLabel = Reminder to file the Pocket calls
+PocketTidyReminderCronComment = At the time set in the Pocket setup of ReedCRM, create for each account an event with a notification listing the recordings of the last 24 hours that sit in no folder
+PocketTidyReminderCronResult = Pocket filing reminders: %s created, %s account(s) checked
+PocketTidyReminderDisabled = No time set for the Pocket filing reminder: nothing to do
+PocketTidyReminderNextRun = Next Pocket filing reminder: %s
+PocketTidyReminderLabel = File %s Pocket call
+PocketTidyReminderLabelPlural = File %s Pocket calls
+PocketTidyReminderNote = Recordings that reached Pocket since %s and sit in no folder. File the calls in their folder from the Pocket application (folder imported into ReedCRM: %s): until they are, neither "I just hung up" nor the synchronisation picks them up.
+PocketTidyReminderUntitled = Untitled
+PocketTidyReminderDuration = duration %s
+PocketTidyReminderMore = … and %s more
+
+#
+# Pocket - event of the recording
+#
+PocketRecordingEventLabel = Pocket call %s
+PocketRecordingEventHelp = Created by the synchronisation for each recording Pocket processed, in progress until the call is handled. Pocket does not tell a call from a meeting: the Phone call type is set by default, switch it to Meeting if it was one.
+PocketRecordingActionEventHelp = Created from an action item of this Pocket recording
+PocketRecordingEventSummary = Beginning of the summary of the Pocket recording %s
+
+#
+# Home page of the module
+#
+HomeRange = From %s to %s
+HomeScopeMine = My figures
+HomeComparedWithMonth = vs previous month
+HomeComparedWithQuarter = vs previous quarter
+HomeComparedWithYear = vs previous fiscal year
+HomeRevenue = Revenue excl. tax
+HomeRevenueFiscalYear = Fiscal year %s: %s
+HomeRevenueMonthlyAverage = Average: %s per month
+HomeSignedProposals = Signed proposals excl. tax
+HomeSignedDetail = %s signed · %s pending (%s)
+HomePipeline = Open pipeline
+HomePipelineDetail = Weighted %s · %s opportunities
+HomeCollected = Payments incl. tax
+HomeCollectedDetail = Left to collect: %s
+HomeCollectedLate = of which %s overdue
+HomeRevenueChart = Revenue excl. tax over 12 months
+HomeRevenueChartCurrent = Last 12 months
+HomeRevenueChartPrevious = One year earlier
+HomeRevenueChartCompared = Compared with the 12 previous months: %s
+HomeRevenueChartDetail = See the detail per month
+HomeChange = Change
+HomePipelineTitle = Pipeline
+HomePipelineAmount = Gross
+HomePipelineWeighted = Weighted
+HomePipelineWeightedValue = weighted %s
+HomePipelineNoStage = No stage
+HomePipelineEmpty = No open opportunity
+HomePipelineWon = Won over the period: %s · %s
+HomeSignedTitle = Signed proposals
+HomeSignedEmpty = No proposal signed over the period
+HomePaymentsTitle = Payments
+HomePaymentsEmpty = No payment received over the period
+HomeLateInvoices = %s overdue invoice(s) · %s
+HomeSeeAll = See all
+HomeLastEvents = Last actions done
+HomeLastEventsEmpty = No action done lately
+HomeSeeAgenda = See the agenda
+HomeProductSales = Last sale per product
+HomeProductRecent = Last sales
+HomeProductDormant = No sale for %s months
+HomeProductDormantMore = … and %s more product(s)
+HomeProductEmpty = No product sold yet
+HomeProductDormantEmpty = No product in stock without sales
+HomeLastSale = Last sale
+HomeNeverSold = Never sold
+HomeDaysAgo = %s days ago
+
+#
+# Miscellaneous - generic labels
+#
+Calls = Calls
+NoEvents = No event
+Tag = Tag
+Visible = Visible
+Inactive = Inactive
+RecordNotFound = Record not found
+CommercialProposals = Commercial proposals
+DateDeadline = Deadline
+EstimatedWeight = Estimated weight
+CardPro = Pro card
+EventPro = Pro event
+QuickEvent = Quick event creation
+TicketCreated = Ticket created
+AIAnalyseImage = Analysis of image %s
+ErrorMapFeatureEncoding = The map data could not be encoded
+EmptyValue = Empty value
+Latitude = Latitude
+Longitude = Longitude
+PermissionDenied = Permission denied
+Propal = Proposal
+ErrorBadValue = Bad value
+ReedCRM = ReedCRM
+
+
+#
+# Call list - card actions
+#
+ValidateCallList = Validate the call list
+ConfirmValidateCallList = Are you sure you want to validate this call list?
+ArchiveCallList = Archive the call list
+ConfirmArchiveCallList = Are you sure you want to archive this call list?
+DeleteCallList = Delete the call list
+ConfirmDeleteCallList = Are you sure you want to delete this call list?
+
+#
+# Tickets and money (#1242)
+#
+
+TicketMoneyTitle = Tickets to handle
+TicketMoneyMenuList = Tickets to handle (€)
+TicketMoneyFullList = Full list
+TicketMoneyIntro = One ticket = one action that brings money. The most money at stake first, one button per line: the next action.
+TicketMoneyNeedsTimePerTicket = Time is attached to a ticket only when the suffix of the time task is "Ticket reference" (Ticket tab of the ReedCRM setup): otherwise times and amounts stay at zero.
+TicketMoneyNoProduct = Time billing product not found (ref "%s"): no amount can be computed. Set it in the Ticket tab of the ReedCRM setup.
+TicketMoneyTile_bill = To bill
+TicketMoneyTile_relaunch = Overdue at these customers
+TicketMoneyTile_quote = Quotes to make
+TicketMoneyTile_unbillable = Not billable
+TicketMoneyTile_close = Dormant
+TicketMoneyTilesTickets = %s ticket(s)
+TicketMoneyTilesCustomers = %s customer(s) · credit frozen
+TicketMoneyTileQuoteSub = commercial requests without a quote
+TicketMoneyTileUnbillableSub = no customer or no project
+TicketMoneyTileCloseSub = no activity for %s days
+TicketMoneyEverybody = Whole team
+TicketMoneyMine = My tickets
+TicketMoneySearchPlaceholder = Ref, subject, customer, project
+TicketMoneyCoverage = Coverage
+TicketMoneyTime = Time
+TicketMoneyToBill = To bill
+TicketMoneyNextAction = Next action
+TicketMoneyNone = Nothing to handle: no ticket matches.
+TicketMoneyCommercial = Commercial
+TicketMoneyClosed = Closed
+TicketMoneyAge = opened %s days ago
+TicketMoneyIdle = nothing for %s days
+TicketMoneyNobody = nobody assigned
+TicketMoneyNoThirdparty = No customer
+TicketMoneyOverdue = %s incl. tax overdue
+TicketMoneyOverdueTooltip = %s overdue invoice(s), the oldest due on %s
+TicketMoneyUpToDate = Up to date
+TicketMoneyCreditFrozen = Credit frozen
+TicketMoneyCreditFrozenHelp = overdue invoices: all the time is billable
+TicketMoneyCreditLeft = %s left of %s
+TicketMoneyUntil = until %s
+TicketMoneyNoSubscription = No subscription
+TicketMoneyNoSubscriptionHelp = no subscription billed for a year: all the time is billable
+TicketMoneyIncluded = %s included
+TicketMoneyInvoiced = %s already billed
+TicketMoneyFree = %s free
+TicketMoneyThisTicket = This ticket
+TicketMoneyLeftToBill = %s excl. tax to bill
+TicketMoneyNothingLeftToBill = nothing to bill
+TicketMoneyBillingMode = Time billing
+TicketMoneyBillingModeHelp = Empty: the time first uses the support credit of the customer subscription, then it is billed. Billable: never taken from the credit. Free: never billed (reason required).
+TicketMoneyBillingBillable = Billable outside the credit
+TicketMoneyBillingFree = Free
+TicketMoneyFreeReason = Reason of the commercial gesture
+TicketMoneyFreeConfirm = Give away the time of ticket %s? It will never be billed.
+TicketMoneyFreeNeedsReason = A free ticket needs a reason.
+TicketMoneyBillingSaved = Billing mode of the ticket saved.
+TicketMoneyTimeLogged = %s min logged on the ticket.
+TicketMoneyActionOpen = Open
+TicketMoneyActionAttachThirdparty = Attach a customer
+TicketMoneyActionRelaunch = Chase %s
+TicketMoneyActionRelaunchShort = Chase
+TicketMoneyActionBill = Bill %s
+TicketMoneyActionQuote = Make the quote
+TicketMoneyActionQuoteAnother = New quote
+TicketMoneyActionAttachProject = Attach a project
+TicketMoneyActionLogTime = Log time
+TicketMoneyActionClose = Close
+TicketMoneyActionFree = Give away
+TicketMoneyActionFreeHelp = The time of this ticket will never be billed (reason asked)
+TicketMoneyActionBillable = Billable
+TicketMoneyActionBillableHelp = The time of this ticket is billed without using the support credit
+TicketMoneyActionAuto = Normal rule
+TicketMoneyActionAutoHelp = The time first uses the support credit, then it is billed
+TicketMoneyBackToList = All the tickets to handle
+TicketMoneyTotalToBill = Total to bill (%s tickets shown)
+TicketMoneyMassBill = Bill the selection
+TicketMoneyMassBillHelp = one draft invoice per customer, one line per ticket
+TicketMoneyLegend = Support credit: a billed subscription (%s) opens the duration of the product for one year; the time of the customer tickets uses it in chronological order. Customer with overdue invoices: credit frozen, everything is billable. Rate: product %s (%s excl. tax/h), rounded up to %s min per ticket. Invoices are created as drafts.
+TicketMoneyNothingToBill = No time to bill on these tickets.
+TicketMoneyInvoiceCreated = Draft invoice created: check it, then validate it.
+TicketMoneyInvoicesCreated = %s draft invoices created:
+TicketMoneyInvoiceNote = Invoice of the time spent on tickets %s
+TicketMoneyProposalNote = Quote created from ticket %s: %s
+TicketMoneyLineTitle = Support - ticket %s: %s
+TicketMoneyLineCount = Time spent %s, of which %s included, already billed or free. Billed: %s (rounded up to %s min).
+TicketMoneyConfig = Tickets and money
+TicketMoneySubscriptionProducts = Subscription products
+TicketMoneySubscriptionProductsDescription = Comma separated refs. An invoice of one of them opens a support credit equal to the duration of the product, valid one year.
+TicketMoneyProductRef = Time billing product
+TicketMoneyProductRefDescription = Ref of the product that bills one hour of support (price and VAT taken from the product).
+TicketMoneyRoundingMinutes = Billing rounding (minutes)
+TicketMoneyRoundingMinutesDescription = The time to bill of each ticket is rounded up to the next multiple.
+TicketMoneyDormantDays = Ticket dormant after (days)
+TicketMoneyDormantDaysDescription = An open ticket without any activity for this number of days is offered for closing. 0 to never offer it.
+TicketMoneyOverdueGraceDays = Late payment tolerance (days)
+TicketMoneyOverdueGraceDaysDescription = An invoice counts as overdue, and freezes the credit, only after this number of days late.
+TicketMoneyMenu = "Money" list in the Tickets menu
+TicketMoneyMenuDescription = The List and My tickets entries open the tickets to handle; the native list stays under "Full list".
+TicketMoneyBanner = Money banner on the ticket card
+TicketMoneyBannerDescription = Customer up to date or not, support credit, time and amount to bill of the ticket, with the action buttons.
+TicketMoneyGroup_relaunch = Chase the overdue invoices
+TicketMoneyGroup_bill = Bill the time
+TicketMoneyGroup_quote = Make the quotes
+TicketMoneyGroup_attach_thirdparty = Attach a customer
+TicketMoneyGroup_attach_project = Attach a project
+TicketMoneyGroup_log_time = Log the time
+TicketMoneyGroup_close = Close the dormant ones
+TicketMoneyGroup_none = In progress, nothing to do
+TicketMoneyGroupCount = %s ticket(s)
+TicketMoneyGroupOverdue = %s incl. tax overdue at %s customer(s)
+TicketMoneyGroupToBill = %s excl. tax of time to bill
+TicketMoneyGroup_reserve = Handle under reserve
+TicketMoneyActionReserve = Handle under reserve
+TicketMoneyActionReserveHelp = The customer has overdue invoices: handle this ticket anyway, subject to payment, for %s days. The support credit stays frozen, the time stays billable.
+TicketMoneyActionUnreserve = Lift the reserve
+TicketMoneyActionUnreserveHelp = The ticket goes back to "Chase the overdue invoices"
+TicketMoneyReserveUntil = Under reserve until %s
+TicketMoneyReserveSaved = %s: handled under reserve until %s.
+TicketMoneyReserveRemoved = %s: reserve lifted, the ticket goes back to "Chase the overdue invoices".
+TicketMoneyReserveSince = Handled under reserve since
+TicketMoneyReserveDays = Length of a reserve (days)
+TicketMoneyReserveDaysDescription = A ticket of a customer late in paying, handled under reserve, goes back to "Chase the overdue invoices" after this number of days if the customer still has not paid.
+TicketTechMenu = Tech view
+TicketTechTitle = Tech view: to do and to bill
+TicketTechIntro = First what has to be done, the highest priority first; then what can be billed at the end of the month, per technician and per customer.
+TicketTechMine = My tickets
+TicketTechTileTodo = To do
+TicketTechTileTodoSub = of which %s urgent (high or blocking)
+TicketTechTileToBill = To bill on %s
+TicketTechTileToBillSub = %s of time, %s customer(s)
+TicketTechTileLogged = Logged in %s
+TicketTechTileLoggedSub = of which %s included, %s free
+TicketTechTodo = To do, by priority
+TicketTechPriority = Priority
+TicketTechNothingTodo = No open ticket: nothing to do.
+TicketTechToBill = To bill on %s
+TicketTechTechnician = Technician
+TicketTechIncluded = Included (subscriptions)
+TicketTechFree = Free
+TicketTechTimeToBill = Time to bill
+TicketTechAmountToBill = Amount excl. tax
+TicketTechTickets = Tickets
+TicketTechNothingToBill = Nothing to bill on %s.
+TicketTechBillUntil = Bill on %s
+TicketTechBillAll = Bill everything
+TicketTechBillAllConfirm = Create %s draft invoices, one per customer, with the time logged up to %s?
+TicketTechLegend = The technician is the one who logged the time. "To bill": time not billed yet, logged up to %s, outside the support credit and the free tickets, at the rate of the billing product, rounded per ticket. The button bills all the time of the customer's tickets up to that date, whoever logged it; the time logged after stays to bill. Invoices are created as drafts.
+TicketTechTileToBillMine = of which %s of my time
+TicketTechShare = Technician's share (excl. tax)
+TicketTechShareHelp = Time to bill logged by this technician, at the customer's rate, before the rounding per ticket. The sum of the shares can be a little below the billed total.
+TicketTechClose = Close
+TicketTechCloseHelp = Close the ticket as solved
+TicketTechAbandon = Abandon
+TicketTechAbandonHelp = Close the ticket as not solved
+TicketTechCloseTitle = Close ticket %s
+TicketTechCloseQuestion = Is "%s" solved?
+TicketTechAbandonTitle = Abandon ticket %s
+TicketTechAbandonQuestion = Close "%s" without solving it?
+TicketTechCloseMinutes = Time to log before closing (minutes)
+TicketTechCloseNoProject = Ticket without project: no time can be logged on it, nor billed.
+TicketTechCloseTimeNote = Time logged at closing
+TicketTechClosed = %s closed.
+
+# Preview of the .msg / .eml attachments
+ReedCRMEmailPreview = Email preview
+ReedCRMEmailPreviewParseError = Unable to read this e-mail content
+ReedCRMEmailPreviewNetworkError = The email could not be loaded, check your connection
+ReedCRMEmailPreviewNotFound = Email not found
+ReedCRMEmailPreviewNoSubject = (no subject)
+ReedCRMEmailPreviewFrom = From
+ReedCRMEmailPreviewTo = To
+ReedCRMEmailPreviewCc = Cc
+ReedCRMEmailPreviewDate = Date
+ReedCRMEmailPreviewAttachments = Attachments (%s)
+ReedCRMEmailPreviewAttachedMessage = attached email
+ReedCRMEmailPreviewBack = Back to the previous email
+OppPercentRangeError = Value must be between 0 and 100%%

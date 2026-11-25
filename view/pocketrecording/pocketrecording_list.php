@@ -117,6 +117,19 @@ if ($action == 'link_recording' && $permissiontoadd && $fromId > 0 && !empty($fr
     exit;
 }
 
+// Same gesture as the button of the card the tab belongs to, offered again here: the user who
+// clicked the tab first should not have to go back to the card to attach the call that just ended
+if ($action == 'add_pocket_hangup' && reedcrm_pocket_can_hangup() && $fromId > 0 && !empty($fromType)) {
+    $hangupMetadata = reedcrm_pocket_get_object_metadata_from_link_name($fromType);
+
+    if (!empty($hangupMetadata['object']) && $hangupMetadata['object']->fetch($fromId) > 0) {
+        reedcrm_pocket_process_hangup($hangupMetadata['object'], $fromType, $user);
+    }
+
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?fromtype=' . urlencode($fromType) . '&fromid=' . $fromId);
+    exit;
+}
+
 if ($action == 'unlink_recording' && $permissiontoadd && $fromId > 0 && !empty($fromType)) {
     $recordingToUnlink = new PocketRecording($db);
 
@@ -129,6 +142,27 @@ if ($action == 'unlink_recording' && $permissiontoadd && $fromId > 0 && !empty($
     }
 
     header('Location: ' . $_SERVER['PHP_SELF'] . '?fromtype=' . urlencode($fromType) . '&fromid=' . $fromId);
+    exit;
+}
+
+// The cron synchronisation run on the spot. The list shows the recordings of every account, so every
+// account is fetched, and the user stays on the list to see what came in.
+if ($action == 'sync_pocket_recordings' && $permissiontoadd) {
+    require_once __DIR__ . '/../../class/pocketsync.class.php';
+
+    $outcome = PocketSync::syncAllAccounts($db, $user);
+    $report  = $outcome['report'];
+
+    if ($outcome['accounts'] == 0) {
+        setEventMessages($langs->trans('PocketNoAccountConfigured'), [], 'warnings');
+    } else {
+        setEventMessage($langs->trans('PocketSyncReport', $report['created'], $report['updated'], $report['skipped'], $report['errors']));
+        if (!empty($outcome['errors'])) {
+            setEventMessages('', $outcome['errors'], 'errors');
+        }
+    }
+
+    header('Location: ' . $_SERVER['PHP_SELF'] . ($fromId > 0 ? '?fromtype=' . urlencode($fromType) . '&fromid=' . $fromId : ''));
     exit;
 }
 
@@ -249,6 +283,9 @@ if ($fromId > 0 && !empty($fromType) && $permissiontoadd) {
     print '<input type="hidden" name="fromtype" value="' . dol_escape_htmltag($fromType) . '">';
     print '<input type="hidden" name="fromid" value="' . $fromId . '">';
     print '<div class="reedcrm-pocket-link-form">';
+    if (!empty($fromObject)) {
+        print reedcrm_pocket_hangup_button($fromObject, $_SERVER['PHP_SELF'] . '?fromtype=' . urlencode($fromType) . '&fromid=' . $fromId);
+    }
     if (empty($linkableRecordings)) {
         print '<span class="opacitymedium">' . $langs->trans('PocketNoRecordingToLink') . '</span>';
     } else {
@@ -269,8 +306,8 @@ print '<input type="hidden" name="fromtype" value="' . dol_escape_htmltag($fromT
 print '<input type="hidden" name="fromid" value="' . $fromId . '">';
 
 $newCardButton = '';
-if ($user->hasRight('reedcrm', 'adminpage', 'read')) {
-    $newCardButton = dolGetButtonTitle($langs->trans('PocketSyncNow'), '', 'fa fa-sync', dol_buildpath('/custom/reedcrm/admin/pocket.php', 1) . '?action=sync_pocket_recordings&token=' . newToken());
+if ($permissiontoadd) {
+    $newCardButton = dolGetButtonTitle($langs->trans('PocketSyncNow'), '', 'fa fa-sync', $_SERVER['PHP_SELF'] . '?action=sync_pocket_recordings&token=' . newToken() . $moreUrlParameters);
 }
 
 print_barre_liste($title, $page, $_SERVER['PHP_SELF'], $moreUrlParameters, $sortfield, $sortorder, '', $num, $nbtotalofrecords, 'fa-microphone', 0, $newCardButton, '', $limit, 0, 0, 1);
