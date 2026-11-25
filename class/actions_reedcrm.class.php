@@ -2284,7 +2284,7 @@ class ActionsReedcrm
             // Merge the individual contact extrafields into one "Coordonnées" column. It sorts on the name of the
             // contact, which the printFieldListSelect hook selects under the name of the column (empty otheralias),
             // and filters on the values of the cell (printFieldListSearch)
-            $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'otheralias' => ''];
+            $object->fields['contact_details'] = ['type' => 'varchar(255)', 'label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'otheralias' => ''];
             foreach (['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone'] as $efName) {
                 if (isset($extrafields->attributes[$object->table_element]['list'][$efName])) {
                     $extrafields->attributes[$object->table_element]['list'][$efName] = 0;
