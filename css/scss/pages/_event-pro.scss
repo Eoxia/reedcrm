@@ -92,8 +92,9 @@
             }
         }
 
-        // Labels: preserve flex row (picto + input side by side)
-        .template-pwa label {
+        // Labels: preserve flex row (picto + input side by side). The type chips are labels too, with their own
+        // style (pages/_relaunch-widget.scss): left out, without changing the specificity for the other labels
+        .template-pwa label:not(:where(.reedcrm-reminder-type-choice)) {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
