@@ -809,6 +809,128 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
 }
 
 /**
+ * Call lists the lines of a call list can be copied or moved to: the draft and active ones the user can see, but that one.
+ *
+ * @param  DoliDB $db         Database handler
+ * @param  User   $user       Acting user
+ * @param  int    $callListId Call list the lines are in
+ * @return array<int,string>  Label of each call list by id, in the order of the call lists
+ */
+function reedcrm_call_list_get_transfer_targets(DoliDB $db, User $user, int $callListId): array
+{
+    dol_include_once('/reedcrm/class/calllist.class.php');
+
+    $callList  = new CallList($db);
+    $callLists = $callList->fetchAll('ASC', CallList::SORT_FIELDS, 0, 0, ['customsql' => 't.status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ') AND t.rowid != ' . $callListId]);
+
+    $targets = [];
+    if (is_array($callLists)) {
+        foreach ($callLists as $targetList) {
+            if ($targetList instanceof CallList && reedcrm_call_list_user_can_read($user, $targetList)) {
+                $targets[(int) $targetList->id] = (string) $targetList->label;
+            }
+        }
+    }
+
+    return $targets;
+}
+
+/**
+ * Copy or move lines of a call list to another call list.
+ *
+ * A copy is a new line of the target list, to be called there: same element, contact and note, status "to call".
+ * A move keeps the line itself, its status, its note and its date of entry. Both go to the end of the target list.
+ * An element already in the target list stays where it is, in both cases: a call list never holds it twice.
+ *
+ * @param  DoliDB $db           Database handler
+ * @param  User   $user         Acting user
+ * @param  int    $callListId   Call list the lines are in
+ * @param  int[]  $lineIds      Lines to copy or move
+ * @param  int    $targetListId Call list to copy or move them to
+ * @param  bool   $move         true to move the lines, false to copy them
+ * @return array{done: int, duplicates: int, errors: string[], target: ?CallList} Lines copied or moved, lines left
+ *                                                                                as their element is already in the
+ *                                                                                target list, errors, target list
+ */
+function reedcrm_call_list_transfer_lines(DoliDB $db, User $user, int $callListId, array $lineIds, int $targetListId, bool $move): array
+{
+    global $langs;
+
+    dol_include_once('/reedcrm/class/calllist.class.php');
+    dol_include_once('/reedcrm/class/calllistline.class.php');
+
+    $langs->load('reedcrm@reedcrm');
+
+    $result = ['done' => 0, 'duplicates' => 0, 'errors' => [], 'target' => null];
+
+    // The same lists as the selector: the user may see both, the target still takes calls
+    $callList   = new CallList($db);
+    $targetList = new CallList($db);
+    if ($callList->fetch($callListId) <= 0 || $targetList->fetch($targetListId) <= 0 || $targetListId === $callListId) {
+        $result['errors'][] = $langs->transnoentitiesnoconv('CallListNotFound');
+        return $result;
+    }
+    if (!reedcrm_call_list_user_can_read($user, $callList) || !reedcrm_call_list_user_can_read($user, $targetList)) {
+        $result['errors'][] = $langs->transnoentitiesnoconv('NotEnoughPermissions');
+        return $result;
+    }
+    if (!in_array((int) $targetList->status, [CallList::STATUS_DRAFT, CallList::STATUS_ACTIVE], true)) {
+        $result['errors'][] = $langs->transnoentitiesnoconv('CallListCannotAddToArchivedList');
+        return $result;
+    }
+    $result['target'] = $targetList;
+
+    $lineObject = new CallListLine($db);
+    foreach (array_unique(array_map('intval', $lineIds)) as $lineId) {
+        $line = new CallListLine($db);
+        if ($lineId <= 0 || $line->fetch($lineId) <= 0 || (int) $line->fk_call_list !== $callListId || (int) $line->status === CallListLine::STATUS_DELETED) {
+            continue;
+        }
+
+        if ($lineObject->existsByElement($targetListId, (string) $line->element_type, (int) $line->element_id)) {
+            $result['duplicates']++;
+            continue;
+        }
+
+        if ($move) {
+            // At the end of the target list, as a new call would be
+            $line->fk_call_list = $targetListId;
+            $line->position     = reedcrm_call_list_next_position($db, $targetListId);
+            $saved              = $line->update($user);
+        } else {
+            $saved = $line->copyToCallList($user, $targetListId);
+        }
+
+        if ($saved > 0) {
+            $result['done']++;
+        } else {
+            $result['errors'][] = $line->error ?: $langs->transnoentitiesnoconv('CallListWidgetError');
+        }
+    }
+
+    return $result;
+}
+
+/**
+ * Position of a call added at the end of a call list, after the ones ordered by hand.
+ *
+ * @param  DoliDB $db         Database handler
+ * @param  int    $callListId Call list
+ * @return int                Position
+ */
+function reedcrm_call_list_next_position(DoliDB $db, int $callListId): int
+{
+    $sql   = 'SELECT MAX(position) AS max_position FROM ' . $db->prefix() . 'reedcrm_call_list_line';
+    $sql  .= ' WHERE fk_call_list = ' . $callListId;
+    $resql = $db->query($sql);
+    if ($resql && ($obj = $db->fetch_object($resql))) {
+        return (int) $obj->max_position + 1;
+    }
+
+    return 0;
+}
+
+/**
  * Create follow-up records after a call list line status change (PWA status buttons).
  *
  * Behaviors are driven by the ReedCRM PWA admin toggles:

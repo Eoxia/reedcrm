@@ -73,6 +73,8 @@ window.reedcrm.pwaCallList.event = function () {
   $(document).on('click', '[data-action="copy-phone"]', window.reedcrm.pwaCallList.copyPhone);
   $(document).on('click', '.pwa-call-list-container .pwa-call-btn-call', window.reedcrm.pwaCallList.logCall);
   $(document).on('click', '[data-action="unlink-line"]', window.reedcrm.pwaCallList.unlinkLine);
+  $(document).on('click', '[data-action="transfer-line"]', window.reedcrm.pwaCallList.toggleTransfer);
+  $(document).on('click', '.pwa-call-transfer-btn', window.reedcrm.pwaCallList.transferLine);
   $(document).on('change', '#pwa-call-list-select', window.reedcrm.pwaCallList.switchList);
   $(window).on('pageshow', window.reedcrm.pwaCallList.resetListSelector);
 };
@@ -148,6 +150,110 @@ window.reedcrm.pwaCallList.unlinkLine = function (e) {
       $btn.removeClass('loading');
     }
   });
+};
+
+/**
+ * Open or close, at the bottom of a card, the panel picking the call list to copy or move the call to.
+ *
+ * @param  {Event} e Click event
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.toggleTransfer = function (e) {
+  e.preventDefault();
+
+  var $btn   = $(this);
+  var $card  = $btn.closest('.pwa-call-card');
+  var $panel = $card.find('.pwa-call-transfer');
+  if ($panel.length) {
+    $panel.remove();
+    $btn.removeClass('active');
+    return;
+  }
+
+  var template = document.getElementById('pwa-call-transfer-template');
+  if (!template) {
+    return;
+  }
+  $card.find('.pwa-call-error').before(document.importNode(template.content, true));
+  $btn.addClass('active');
+};
+
+/**
+ * Copy or move the call to the call list picked in the panel of its card. A moved call leaves the page,
+ * as an unlinked one does.
+ *
+ * @param  {Event} e Click event
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.transferLine = function (e) {
+  e.preventDefault();
+
+  var $btn       = $(this);
+  var $card      = $btn.closest('.pwa-call-card');
+  var $panel     = $btn.closest('.pwa-call-transfer');
+  var $buttons   = $panel.find('.pwa-call-transfer-btn');
+  var $container = $btn.closest('.pwa-call-list-container');
+  if ($buttons.hasClass('loading')) {
+    return;
+  }
+
+  $buttons.addClass('loading');
+  $.ajax({
+    url: $container.attr('data-transfer-url'),
+    type: 'POST',
+    data: {
+      line_id: $card.attr('data-line-id'),
+      target_list_id: $panel.find('.pwa-call-transfer-target').val(),
+      mode: $btn.attr('data-transfer-mode'),
+      token: $container.attr('data-token')
+    },
+    dataType: 'json',
+    success: function (data) {
+      if (!data.success) {
+        window.reedcrm.pwaCallList.showError($card, data.error || $container.attr('data-transfer-error'));
+        return;
+      }
+      if (data.moved) {
+        $card.fadeOut(200, function () {
+          $card.remove();
+          if (!$container.find('.pwa-call-card').length) {
+            window.location.reload();
+            return;
+          }
+          if (window.saturne.call_list) {
+            window.saturne.call_list.refreshMoveArrows();
+          }
+        });
+        return;
+      }
+      $panel.remove();
+      $card.find('[data-action="transfer-line"]').removeClass('active');
+      window.reedcrm.pwaCallList.showSuccess($card, data.message);
+    },
+    error: function () {
+      window.reedcrm.pwaCallList.showError($card, $container.attr('data-transfer-error'));
+    },
+    complete: function () {
+      $buttons.removeClass('loading');
+    }
+  });
+};
+
+/**
+ * Show a confirmation at the bottom of a card for a few seconds.
+ *
+ * @param  {Object} $card   jQuery call card
+ * @param  {String} message Confirmation message
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.showSuccess = function ($card, message) {
+  var $success = $('<div class="pwa-call-success"></div>').text(message);
+  $card.find('.pwa-call-error').before($success);
+  setTimeout(function () {
+    $success.fadeOut(200, function () {
+      $success.remove();
+    });
+  }, 3000);
 };
 
 /**

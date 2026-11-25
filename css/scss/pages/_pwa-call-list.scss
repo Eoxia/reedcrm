@@ -152,6 +152,82 @@
     }
 }
 
+/* Copy or move to another call list: in the corner, under the unlink button when there is one, in the room the
+   header keeps for it, so that the name and the late badge keep their width */
+.pwa-call-btn-transfer {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    color: #64748b;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover,
+    &:focus-visible,
+    &.active {
+        background: #e0f2fe;
+        border-color: #0284c7;
+        color: #0284c7;
+    }
+}
+
+.pwa-call-btn-unlink ~ .pwa-call-btn-transfer {
+    top: 58px;
+}
+
+.pwa-call-transfer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    .pwa-call-transfer-target {
+        width: 100%;
+        min-height: 42px;
+        font-size: 15px;
+    }
+
+    .pwa-call-transfer-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .pwa-call-transfer-btn {
+        flex: 1;
+        min-height: 42px;
+        border: 1px solid #0284c7;
+        border-radius: 8px;
+        background: #fff;
+        color: #0284c7;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: #e0f2fe;
+        }
+
+        &.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    }
+}
+
 .pwa-call-card-header {
     display: flex;
     justify-content: space-between;
@@ -461,6 +537,16 @@
     padding: 8px 12px;
     margin-top: 8px;
     color: #dc2626;
+    font-size: 0.85rem;
+}
+
+.pwa-call-success {
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    color: #15803d;
     font-size: 0.85rem;
 }
 

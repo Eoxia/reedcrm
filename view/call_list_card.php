@@ -52,6 +52,8 @@ $action      = GETPOST('action', 'aZ09');
 $show        = GETPOST('show', 'aZ09');
 $backtopage  = GETPOST('backtopage', 'alpha');
 $cancel      = GETPOST('cancel', 'aZ09');
+$massaction  = GETPOST('massaction', 'alpha');
+$toselect    = array_map('intval', GETPOST('toselect', 'array'));
 $contextpage = 'calllistlinescard';
 
 $object     = new CallList($db);
@@ -190,6 +192,28 @@ if (empty($resHook)) {
                 $style = ($addResult['message'] === $langs->transnoentitiesnoconv('CallListWidgetDuplicate')) ? 'warnings' : 'errors';
                 setEventMessages($addResult['message'], null, $style);
             }
+        }
+
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
+        exit;
+    }
+
+    // Copy or move the checked lines to another call list. Moving takes them off this list, as the unlink button
+    // does, hence the same right
+    $transferMode = GETPOST('confirm_transfer', 'aZ09');
+    if (($transferMode === 'copy' && $permissiontoadd) || ($transferMode === 'move' && $permissiontoadd && $permissiontodelete)) {
+        $transfer   = reedcrm_call_list_transfer_lines($db, $user, (int) $object->id, $toselect, GETPOSTINT('transfer_target'), $transferMode === 'move');
+        // The lists are known by their label, the ref links to the card
+        // Tags only: the message is escaped again on display, an entity would show as such
+        $targetLink = $transfer['target'] !== null ? $transfer['target']->getNomUrl(1) . ' ' . dol_escape_htmltag($transfer['target']->label, 0, 0, '', 1) : '';
+        if ($transfer['done'] > 0) {
+            setEventMessages($langs->trans($transferMode === 'move' ? 'CallListLinesMoved' : 'CallListLinesCopied', $transfer['done'], $targetLink), null);
+        }
+        if ($transfer['duplicates'] > 0) {
+            setEventMessages($langs->trans('CallListTransferDuplicates', $transfer['duplicates'], $targetLink), null, 'warnings');
+        }
+        if (!empty($transfer['errors'])) {
+            setEventMessages('', array_unique($transfer['errors']), 'errors');
         }
 
         header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $object->id);
@@ -493,8 +517,6 @@ if ($object->id > 0) {
     // =====================================================================
     // Call list lines
     // =====================================================================
-    print load_fiche_titre($langs->trans('CallListLines'), '', 'fontawesome_fa-phone_fas_#63ACC9');
-
     $lines   = $lineObject->fetchAllByCallList($object->id);
     // Batch-load line indicators and standard ReedCRM list context (projects, thirdparties, lifecycle, source links)
     $lineIndicators  = reedcrm_call_list_get_line_indicators($db, $lines);
@@ -714,7 +736,19 @@ if ($object->id > 0) {
             $visibleColCount++;
         }
     }
-    $colspan = $visibleColCount + ($permissiontoadd ? 1 : 0) + 1;
+    // Copy or move the checked lines to another call list: the mass action asks for the target list, then
+    // confirm_transfer does it. Moving takes the lines off this list, as the unlink button does, hence its right
+    $arrayOfMassActions = [];
+    if ($permissiontoadd) {
+        $arrayOfMassActions['precopy_to_call_list'] = img_picto('', 'fontawesome_fa-copy_fas', 'class="pictofixedwidth"') . $langs->trans('CallListCopyToList');
+        if ($permissiontodelete) {
+            $arrayOfMassActions['premove_to_call_list'] = img_picto('', 'fontawesome_fa-share_fas', 'class="pictofixedwidth"') . $langs->trans('CallListMoveToList');
+        }
+    }
+    $isTransferAsked = isset($arrayOfMassActions[$massaction]) && !empty($toselect);
+
+    // The checkboxes come first: the table is wider than the screen, the last column needs a scroll to be seen
+    $colspan = $visibleColCount + ($permissiontoadd ? 1 : 0) + (empty($arrayOfMassActions) ? 0 : 1) + 1;
 
     $param = '&id=' . (int) $object->id;
     if ($searchOrigin !== '') {
@@ -759,6 +793,8 @@ if ($object->id > 0) {
         }
     }
 
+    // The title moved into the form to carry the mass actions: the section has to start below the floating blocks above
+    print '<div class="clearboth"></div>';
     print '<div class="call-list-lines-section">';
     print '<form method="POST" id="searchFormList" name="searchFormList" action="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '">';
     print '<input type="hidden" name="token" value="' . newToken() . '">';
@@ -766,11 +802,33 @@ if ($object->id > 0) {
     print '<input type="hidden" name="sortfield" value="' . dol_escape_htmltag($sortfield) . '">';
     print '<input type="hidden" name="sortorder" value="' . dol_escape_htmltag($sortorder) . '">';
 
+    print load_fiche_titre($langs->trans('CallListLines'), $form->selectMassAction('', $arrayOfMassActions), 'fontawesome_fa-phone_fas_#63ACC9');
+
+    if ($isTransferAsked) {
+        $transferMode    = $massaction === 'premove_to_call_list' ? 'move' : 'copy';
+        $transferTargets = reedcrm_call_list_get_transfer_targets($db, $user, (int) $object->id);
+
+        print '<div class="call-list-transfer-box">';
+        print img_picto('', $transferMode === 'move' ? 'fontawesome_fa-share_fas' : 'fontawesome_fa-copy_fas', 'class="pictofixedwidth"');
+        print '<span class="call-list-transfer-label">' . $langs->trans($transferMode === 'move' ? 'CallListMoveLinesTo' : 'CallListCopyLinesTo', count($toselect)) . '</span>';
+        if (!empty($transferTargets)) {
+            print $form->selectarray('transfer_target', $transferTargets, '', 0, 0, 0, '', 0, 0, 0, '', 'minwidth200 flat', 1);
+            print '<button type="submit" class="button smallpaddingimp" name="confirm_transfer" value="' . $transferMode . '">' . $langs->trans('Confirm') . '</button>';
+        } else {
+            print '<span class="opacitymedium">' . $langs->trans('CallListTransferNoTarget') . '</span>';
+        }
+        print '<button type="submit" class="button button-cancel smallpaddingimp" name="massaction" value="0">' . $langs->trans('Cancel') . '</button>';
+        print '</div>';
+    }
+
     print '<div class="div-table-responsive call-list-table-wrap">';
     print '<table class="tagtable nobottomiftotal liste listwithfilterbefore centpercent call-list-lines-table">';
 
     // Filter row (standard Dolibarr liste_titre_filter)
     print '<tr class="liste_titre liste_titre_filter">';
+    if (!empty($arrayOfMassActions)) {
+        print '<td class="liste_titre center">' . $form->showCheckAddButtons('checkforselect', 1) . '</td>';
+    }
     if ($permissiontoadd) {
         print '<td class="liste_titre"></td>';
     }
@@ -823,6 +881,9 @@ if ($object->id > 0) {
 
     // Sortable column header row
     print '<tr class="liste_titre">';
+    if (!empty($arrayOfMassActions)) {
+        print '<th class="liste_titre"></th>';
+    }
     if ($permissiontoadd) {
         $resetSortUrl = $_SERVER['PHP_SELF'] . '?id=' . (int) $object->id . '&sortfield=position&sortorder=ASC';
         print '<th class="linecolmove center" title="' . dol_escape_htmltag($langs->trans('CallListCustomOrder')) . '">';
@@ -887,6 +948,12 @@ if ($object->id > 0) {
             }
 
             print '<tr class="oddeven call-list-line-row" ' . $rowAttr . '>';
+            // Kept checked while the target list of a copy or a move is asked for, to be sent with it
+            if (!empty($arrayOfMassActions)) {
+                print '<td class="center">';
+                print '<input id="cb' . (int) $line->id . '" class="flat checkforselect" type="checkbox" name="toselect[]" value="' . (int) $line->id . '"' . ($isTransferAsked && in_array((int) $line->id, $toselect, true) ? ' checked' : '') . '>';
+                print '</td>';
+            }
             // Drag handle + up / down arrows (enabled in default custom position order without active filters)
             if ($permissiontoadd) {
                 print '<td class="linecolmove tdlineupdown center nowraponall">';
