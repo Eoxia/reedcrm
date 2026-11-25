@@ -54,7 +54,7 @@ class InterfaceReedCRMTriggers extends DolibarrTriggers
         $this->name        = preg_replace('/^Interface/i', '', get_class($this));
         $this->family      = 'demo';
         $this->description = 'ReedCRM triggers';
-        $this->version     = '23.3.2';
+        $this->version     = '23.4.0';
         $this->picto       = 'reedcrm_color@reedcrm';
     }
 
