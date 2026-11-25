@@ -74,6 +74,7 @@ window.reedcrm.pwaCallList.event = function () {
   $(document).on('click', '.pwa-call-list-container .pwa-call-btn-call', window.reedcrm.pwaCallList.logCall);
   $(document).on('click', '[data-action="unlink-line"]', window.reedcrm.pwaCallList.unlinkLine);
   $(document).on('change', '#pwa-call-list-select', window.reedcrm.pwaCallList.switchList);
+  $(window).on('pageshow', window.reedcrm.pwaCallList.resetListSelector);
 };
 
 /**
@@ -173,6 +174,27 @@ window.reedcrm.pwaCallList.switchList = function () {
   var listId = $(this).val();
   if (listId) {
     window.location.href = '?id=' + listId;
+  }
+};
+
+/**
+ * Put the selector back on the call list the page displays when the browser serves the page again from its cache
+ * on a back navigation: the page keeps the list picked before leaving it, while it still displays the previous one.
+ *
+ * @param {Event} event pageshow event
+ * @returns {void}
+ */
+window.reedcrm.pwaCallList.resetListSelector = function (event) {
+  if (!event.originalEvent || !event.originalEvent.persisted) {
+    return;
+  }
+  var $select = $('#pwa-call-list-select');
+  var $displayedList = $select.find('option').filter(function () {
+    return this.defaultSelected;
+  });
+  if ($displayedList.length) {
+    // The namespace refreshes select2 without the change handler, which would leave the page again
+    $select.val($displayedList.val()).trigger('change.select2');
   }
 };
 

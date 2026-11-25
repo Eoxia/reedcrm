@@ -49,7 +49,11 @@ if (!$user->hasRight('reedcrm', 'call_list', 'read') && !$user->hasRight('reedcr
     exit;
 }
 
-// Without an explicit id (PWA nav), open the user's own default call list
+// Without an explicit id (PWA nav), reopen the last call list the user was on, failing that their own default call list.
+// An explicit id (selector, mobile view link of the call list card, back link of the opportunity page) opens that list
+if ($id <= 0) {
+    $id = reedcrm_call_list_get_last_opened($db, $user);
+}
 if ($id <= 0) {
     $id = reedcrm_get_or_create_user_default_call_list($db, $user);
 }
@@ -71,6 +75,8 @@ if (!reedcrm_call_list_user_can_read($user, $object)) {
     accessforbidden($langs->trans('NotEnoughPermissions'));
     exit;
 }
+
+reedcrm_call_list_set_last_opened($db, $user, (int) $object->id);
 
 $lines = $lineObject->fetchAllByCallList($object->id);
 
@@ -169,7 +175,9 @@ if ($resqlLists) {
     }
 }
 
-print '<select id="pwa-call-list-select" class="pwa-call-list-select">';
+// Without autocomplete, the browser would restore on a back navigation the list picked before leaving the page,
+// over the one the page displays
+print '<select id="pwa-call-list-select" class="pwa-call-list-select" autocomplete="off">';
 if (!empty($myLists)) {
     print '<optgroup label="' . dol_escape_htmltag($langs->trans('MyCallLists')) . '">';
     foreach ($myLists as $lst) {
