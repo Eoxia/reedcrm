@@ -35,7 +35,7 @@ class modReedCRM extends DolibarrModules
     /**
      * @var int[] Minimum version of Saturne required by module, same format as need_dolibarr_version: checked by init() and by the Saturne index page
      */
-    public $need_saturne_version = [23, 6];
+    public $need_saturne_version = [23, 10, 0];
 
     /**
      * Constructor. Define names, constants, directories, boxes, permissions
@@ -86,7 +86,7 @@ class modReedCRM extends DolibarrModules
         //$this->editor_squarred_logo = ''; // Must be image filename into the reedcrm/img directory followed with @reedcrm. Example: 'reedcrm.png@reedcrm'
 
         // Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-        $this->version = '23.3.2';
+        $this->version = '23.4.0';
 
         // Url to the file with your last numberversion of this module
         //$this->url_last_version = 'http://www.example.com/versionmodule.txt';
