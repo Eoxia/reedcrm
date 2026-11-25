@@ -2281,8 +2281,10 @@ class ActionsReedcrm
                 $object->fields['fk_statut']['csslist'] = 'center';
             }
 
-            // Merge the individual contact extrafields into one "Coordonnées" column
-            $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'disablesort' => 1];
+            // Merge the individual contact extrafields into one "Coordonnées" column. It sorts on the name of the
+            // contact, which the printFieldListSelect hook selects under the name of the column (empty otheralias),
+            // and filters on the values of the cell (printFieldListSearch)
+            $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'otheralias' => ''];
             foreach (['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone'] as $efName) {
                 if (isset($extrafields->attributes[$object->table_element]['list'][$efName])) {
                     $extrafields->attributes[$object->table_element]['list'][$efName] = 0;
@@ -2404,8 +2406,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSelect hook : select the current lifecycle step and the thirdparty of the
-     * opportunity list, and the sort criterion of its relaunch column in use
+     * Overloading the printFieldListSelect hook : select the current lifecycle step, the thirdparty and the sort key of
+     * the contact details of the opportunity list, and the sort criterion of its relaunch column in use
      *
      * @param  array       $parameters Hook metadatas (context, sortfield, sortorder, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2434,6 +2436,16 @@ class ActionsReedcrm
                 $this->resprints .= ', reedcrm_thirdparty.' . $column . ' AS reedcrm_soc_' . $property;
             }
             $this->resprints .= ', ' . reedcrm_thirdparty_list_sort_sql('reedcrm_thirdparty', (string) $sortorder) . ' AS thirdparty_name';
+        }
+
+        // Read from the extrafields the list joins as ef, the sort key under the name of the column
+        if ($this->isProjectListColumn($parameters, $object, 'contact_details')) {
+            global $extrafields;
+
+            require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
+
+            $contactExtrafields = reedcrm_contact_list_extrafields($extrafields->attributes[$object->table_element]['label'] ?? []);
+            $this->resprints   .= ', ' . reedcrm_contact_list_sort_sql('ef', $contactExtrafields, (string) ($parameters['sortorder'] ?? '')) . ' AS contact_details';
         }
 
         // A subquery per project: only the criterion the list is sorted on, and only while it is
@@ -2473,8 +2485,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSearch hook : filter the opportunity list on the lifecycle milestones reached and
-     * on the name of the thirdparty, and the template list on the label of the templates
+     * Overloading the printFieldListSearch hook : filter the opportunity list on the lifecycle milestones reached, on
+     * the name of the thirdparty and on the contact details, and the template list on the label of the templates
      *
      * @param  array       $parameters Hook metadatas (context, key, val, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2497,6 +2509,20 @@ class ActionsReedcrm
         if (($parameters['key'] ?? '') === 'thirdparty_name' && $this->isProjectListColumn($parameters, $object, 'thirdparty_name')) {
             if (!is_array($parameters['val']) && (string) $parameters['val'] !== '') {
                 $this->resprints = natural_search(['reedcrm_thirdparty.nom', 'reedcrm_thirdparty.name_alias'], (string) $parameters['val']);
+            }
+
+            return 1;
+        }
+
+        // Name, email, phone or website of the contact, extrafields the generic filter skips as the column is virtual
+        if (($parameters['key'] ?? '') === 'contact_details' && $this->isProjectListColumn($parameters, $object, 'contact_details')) {
+            global $extrafields;
+
+            if (!is_array($parameters['val']) && (string) $parameters['val'] !== '') {
+                require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
+
+                $contactExtrafields = reedcrm_contact_list_extrafields($extrafields->attributes[$object->table_element]['label'] ?? []);
+                $this->resprints    = reedcrm_contact_list_search_sql($this->db, 't', $contactExtrafields, (string) $parameters['val']);
             }
 
             return 1;
@@ -2526,7 +2552,7 @@ class ActionsReedcrm
      *
      * @param  array       $parameters Hook metadatas (context, ...)
      * @param  object|null $object     Object of the list, a stdClass with no element from some REST APIs
-     * @param  string      $key        Key of the column (lifecycle, thirdparty_name)
+     * @param  string      $key        Key of the column (lifecycle, thirdparty_name, contact_details)
      * @return bool                    True when the column is to be filled
      */
     protected function isProjectListColumn(array $parameters, ?object $object, string $key): bool
