@@ -138,6 +138,56 @@ function reedcrm_call_list_user_can_read(User $user, CallList $callList): bool
 }
 
 /**
+ * Call list the App reopens when it is opened without one: the last one the user opened in it.
+ *
+ * Only while the user may still read it and it is still active, as the selector of the App offers no other:
+ * a list deleted, closed or handed over to someone else since then gives way to the default one.
+ *
+ * @param  DoliDB $db   Database handler
+ * @param  User   $user Current user, whose personal conf main.inc.php loads at each request
+ * @return int          Call list id, 0 when there is none to reopen
+ */
+function reedcrm_call_list_get_last_opened(DoliDB $db, User $user): int
+{
+    $callListId = isset($user->conf->REEDCRM_LAST_CALL_LIST) ? (int) $user->conf->REEDCRM_LAST_CALL_LIST : 0;
+    if ($callListId <= 0) {
+        return 0;
+    }
+
+    dol_include_once('/reedcrm/class/calllist.class.php');
+
+    $callList = new CallList($db);
+    if ($callList->fetch($callListId) <= 0 || (int) $callList->status !== CallList::STATUS_ACTIVE || !reedcrm_call_list_user_can_read($user, $callList)) {
+        return 0;
+    }
+
+    return $callListId;
+}
+
+/**
+ * Remember the call list the user opens in the App, the one reedcrm_call_list_get_last_opened() reopens.
+ *
+ * @param  DoliDB $db         Database handler
+ * @param  User   $user       Current user
+ * @param  int    $callListId Call list opened
+ * @return void
+ */
+function reedcrm_call_list_set_last_opened(DoliDB $db, User $user, int $callListId): void
+{
+    global $conf;
+
+    // Written on change only: dol_set_user_param deletes then inserts the parameter
+    if (isset($user->conf->REEDCRM_LAST_CALL_LIST) && (int) $user->conf->REEDCRM_LAST_CALL_LIST === $callListId) {
+        return;
+    }
+
+    require_once DOL_DOCUMENT_ROOT . '/core/lib/functions2.lib.php';
+
+    // In the entity of the session, which main.inc.php reads the personal conf from
+    dol_set_user_param($db, $conf, $user, ['REEDCRM_LAST_CALL_LIST' => (string) $callListId]);
+}
+
+/**
  * Fetch a supported call-list source element (project, propal or facture).
  *
  * @param  DoliDB                    $db          Database handler
@@ -661,7 +711,7 @@ function reedcrm_call_list_get_line_contact_display(DoliDB $db, CallListLine $li
  * @param  int    $selectedContactId Optional explicit contact id (e.g. chosen from thirdparty contacts)
  * @param  string $note              Optional line note
  * @param  string $phoneSource       Optional explicit choice from card UI ('project' | 'thirdparty' | 'contact' | '')
- * @return array                     ['success' => bool, 'message' => string, 'need_phone' => bool]
+ * @return array                     ['success' => bool, 'message' => string, 'need_phone' => bool, 'line_id' => int]
  */
 function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListId, string $elementType, int $elementId, string $manualPhone = '', int $selectedContactId = 0, string $note = '', string $phoneSource = ''): array
 {
@@ -754,7 +804,8 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
         return ['success' => false, 'message' => $newLine->error ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
     }
 
-    return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1))];
+    // The line id lets the call lists column of the opportunity list take the line off again
+    return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1)), 'line_id' => (int) $newLine->id];
 }
 
 /**

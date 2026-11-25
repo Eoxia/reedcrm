@@ -57,6 +57,11 @@ class ActionsReedcrm
     private static bool $mainCssLoaded = false;
 
     /**
+     * @var bool Stylesheets of the project and proposal lists already printed in the page header
+     */
+    private static bool $listCssLoaded = false;
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -828,16 +833,20 @@ class ActionsReedcrm
         }
 
         if ($this->isContext($parameters, ['invoicelist', 'invoicereclist', 'thirdpartylist', 'projectlist', 'propallist'])) {
-            $cssPath = reedcrm_asset_full_url('/saturne/css/saturne.min.css');
-            print '<link href="' . $cssPath . '" rel="stylesheet">';
+            // The project and proposal lists already have their stylesheets in the page header, see addHtmlHeader
+            if (!self::$listCssLoaded) {
+                $cssPath = reedcrm_asset_full_url('/saturne/css/saturne.min.css');
+                print '<link href="' . $cssPath . '" rel="stylesheet">';
+            }
             // Load reedcrm modal CSS and JS for projectlist and propallist
             if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
                 global $langs;
-                // Load main reedcrm CSS
-                $reedcrmMainCssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
-                print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
-                $reedcrmCssPath = reedcrm_asset_full_url('/reedcrm/css/temp-framework.css');
-                print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
+                if (!self::$listCssLoaded) {
+                    $reedcrmMainCssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
+                    print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
+                    $reedcrmCssPath = reedcrm_asset_full_url('/reedcrm/css/temp-framework.css');
+                    print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
+                }
                 $jsPath = reedcrm_asset_full_url('/saturne/js/saturne.min.js');
                 print '<script src="' . $jsPath . '"></script>';
 
@@ -1360,6 +1369,18 @@ class ActionsReedcrm
             $this->resprints  = '<!-- Includes CSS added by module reedcrm -->';
             $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
             self::$mainCssLoaded = true;
+        }
+
+        // Project and proposal lists: printed with the footer, the stylesheets came after the rows, which the browser
+        // drew unstyled until the end of the page arrived (relaunch logo at full size, lifecycle steps stacked).
+        // Same files in the same order as the footer used to print them, so the cascade does not change
+        if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
+            $this->resprints .= '<!-- Includes CSS added by module reedcrm -->';
+            foreach (['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css', '/reedcrm/css/temp-framework.css'] as $cssFile) {
+                $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(reedcrm_asset_full_url($cssFile)) . '">';
+            }
+            self::$mainCssLoaded = true;
+            self::$listCssLoaded = true;
         }
 
         // The chip has to be moved under the relaunch block once that block is teleported into
@@ -2281,8 +2302,10 @@ class ActionsReedcrm
                 $object->fields['fk_statut']['csslist'] = 'center';
             }
 
-            // Merge the individual contact extrafields into one "Coordonnées" column
-            $object->fields['contact_details'] = ['label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'disablesort' => 1];
+            // Merge the individual contact extrafields into one "Coordonnées" column. It sorts on the name of the
+            // contact, which the printFieldListSelect hook selects under the name of the column (empty otheralias),
+            // and filters on the values of the cell (printFieldListSearch)
+            $object->fields['contact_details'] = ['type' => 'varchar(255)', 'label' => 'ContactInformations', 'enabled' => 1, 'position' => 161, 'visible' => 1, 'csslist' => 'minwidth200', 'otheralias' => ''];
             foreach (['reedcrm_lastname', 'reedcrm_firstname', 'reedcrm_email', 'projectphone'] as $efName) {
                 if (isset($extrafields->attributes[$object->table_element]['list'][$efName])) {
                     $extrafields->attributes[$object->table_element]['list'][$efName] = 0;
@@ -2341,6 +2364,14 @@ class ActionsReedcrm
             if (isModEnabled('categorie')) {
                 $object->fields['categories'] = ['label' => 'Categories', 'enabled' => 1, 'position' => 18, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1, 'disablesearch' => 1];
                 $virtualFields[]              = 'categories';
+            }
+
+            // Call lists the opportunity is on, as pills, with a checklist to add it to a list or take
+            // it off one. The lines live in llx_reedcrm_call_list_line, loaded once for the whole page
+            global $user;
+            if ($user->hasRight('reedcrm', 'call_list', 'read')) {
+                $object->fields['call_lists'] = ['type' => 'varchar(255)', 'label' => 'CallLists', 'enabled' => 1, 'position' => 19, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1, 'disablesearch' => 1];
+                $virtualFields[]              = 'call_lists';
             }
 
             // Virtual columns (not real DB columns)
@@ -2404,8 +2435,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSelect hook : select the current lifecycle step and the thirdparty of the
-     * opportunity list, and the sort criterion of its relaunch column in use
+     * Overloading the printFieldListSelect hook : select the current lifecycle step, the thirdparty and the sort key of
+     * the contact details of the opportunity list, and the sort criterion of its relaunch column in use
      *
      * @param  array       $parameters Hook metadatas (context, sortfield, sortorder, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2434,6 +2465,16 @@ class ActionsReedcrm
                 $this->resprints .= ', reedcrm_thirdparty.' . $column . ' AS reedcrm_soc_' . $property;
             }
             $this->resprints .= ', ' . reedcrm_thirdparty_list_sort_sql('reedcrm_thirdparty', (string) $sortorder) . ' AS thirdparty_name';
+        }
+
+        // Read from the extrafields the list joins as ef, the sort key under the name of the column
+        if ($this->isProjectListColumn($parameters, $object, 'contact_details')) {
+            global $extrafields;
+
+            require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
+
+            $contactExtrafields = reedcrm_contact_list_extrafields($extrafields->attributes[$object->table_element]['label'] ?? []);
+            $this->resprints   .= ', ' . reedcrm_contact_list_sort_sql('ef', $contactExtrafields, (string) ($parameters['sortorder'] ?? '')) . ' AS contact_details';
         }
 
         // A subquery per project: only the criterion the list is sorted on, and only while it is
@@ -2473,8 +2514,8 @@ class ActionsReedcrm
     }
 
     /**
-     * Overloading the printFieldListSearch hook : filter the opportunity list on the lifecycle milestones reached and
-     * on the name of the thirdparty, and the template list on the label of the templates
+     * Overloading the printFieldListSearch hook : filter the opportunity list on the lifecycle milestones reached, on
+     * the name of the thirdparty and on the contact details, and the template list on the label of the templates
      *
      * @param  array       $parameters Hook metadatas (context, key, val, ...)
      * @param  object|null $object     The object to process, a stdClass from some REST APIs
@@ -2497,6 +2538,20 @@ class ActionsReedcrm
         if (($parameters['key'] ?? '') === 'thirdparty_name' && $this->isProjectListColumn($parameters, $object, 'thirdparty_name')) {
             if (!is_array($parameters['val']) && (string) $parameters['val'] !== '') {
                 $this->resprints = natural_search(['reedcrm_thirdparty.nom', 'reedcrm_thirdparty.name_alias'], (string) $parameters['val']);
+            }
+
+            return 1;
+        }
+
+        // Name, email, phone or website of the contact, extrafields the generic filter skips as the column is virtual
+        if (($parameters['key'] ?? '') === 'contact_details' && $this->isProjectListColumn($parameters, $object, 'contact_details')) {
+            global $extrafields;
+
+            if (!is_array($parameters['val']) && (string) $parameters['val'] !== '') {
+                require_once __DIR__ . '/../lib/reedcrm_fields.lib.php';
+
+                $contactExtrafields = reedcrm_contact_list_extrafields($extrafields->attributes[$object->table_element]['label'] ?? []);
+                $this->resprints    = reedcrm_contact_list_search_sql($this->db, 't', $contactExtrafields, (string) $parameters['val']);
             }
 
             return 1;
@@ -2526,7 +2581,7 @@ class ActionsReedcrm
      *
      * @param  array       $parameters Hook metadatas (context, ...)
      * @param  object|null $object     Object of the list, a stdClass with no element from some REST APIs
-     * @param  string      $key        Key of the column (lifecycle, thirdparty_name)
+     * @param  string      $key        Key of the column (lifecycle, thirdparty_name, contact_details)
      * @return bool                    True when the column is to be filled
      */
     protected function isProjectListColumn(array $parameters, ?object $object, string $key): bool
@@ -2553,6 +2608,7 @@ class ActionsReedcrm
                 'fk_statut'          => 'reedcrm_field_status_badge',
                 'opp_percent'        => 'reedcrm_field_opp_percent',
                 'categories'         => 'reedcrm_field_categories',
+                'call_lists'         => 'reedcrm_field_call_lists',
             ];
 
             $key = $parameters['key'];
