@@ -78,7 +78,7 @@ Description : ReedCRM adopte le **thème moderne** des modules Evarisk et s'ouvr
 
 <img src="https://raw.githubusercontent.com/nicolas-eoxia/easycrm/refs/heads/assets/release-23.4.0/cardpro-tiers.png" alt="Fiche pro d'un tiers : bandeau compact avec adresse, téléphone, e-mail et widget de relance, formulaire d'événement en carte, tuiles Propositions, Commandes, Factures et Montant encours, blocs Dernières propositions, Tickets en cours, Notes en cours et Derniers projets, chacun avec son bouton +">
 
-<img src="https://raw.githubusercontent.com/nicolas-eoxia/easycrm/refs/heads/assets/release-23.4.0/relances-panneau-etat.png" alt="Widget de relance d'une fiche pro : bouton des relances passées (1, il y a 3 j) et des relances à venir (1, vendredi 27/11), panneau Relances à venir avec date, type, qui et quoi, et sélecteur d'état ouvert sur À faire, En cours, Effectué et Non applicable">
+<img src="https://raw.githubusercontent.com/nicolas-eoxia/easycrm/refs/heads/assets/release-23.4.0/relances-panneau-etat.png" alt="Widget de relance d'une fiche pro : bouton des relances passées (1, il y a 3 j) et des relances à venir (1, vendredi 27/11), panneau Relances à venir avec la date, le type, qui et le quoi « Rappeler Hugo Vasseur pour la signature », et sélecteur d'état ouvert sur À faire, En cours, Effectué et Non applicable">
 
 ### Listes d'appel et application mobile
 
@@ -205,7 +205,7 @@ Description : ReedCRM adopte le **thème moderne** des modules Evarisk et s'ouvr
 
 ### Installation et compatibilité
 
-* **Version minimale de Saturne** déclarée : l'activation est refusée avec un message sur un Saturne trop ancien ou absent, au lieu d'une erreur fatale.
+* **Version minimale de Saturne** déclarée : l'activation est refusée avec un message sur un Saturne trop ancien ou absent, au lieu d'une erreur fatale. Une page ouverte sans Saturne installé affiche elle aussi un message explicite.
 * Les fichiers des objets validés restés sous `(PROVn)` sont repris à l'activation depuis Accueil > Modules.
 * Module utilisable hors de `custom/` (racine alternative, lien symbolique) : chemins PHP, adresses JS et registre d'objets passent par Dolibarr, et le registre reste lisible par les Saturne antérieurs à 23.3.0.
 * L'API REST des expéditions répondait en erreur 500 dès qu'un filtre était donné ; les 13 hooks acceptent une action nulle (erreur fatale à l'annulation d'un formulaire, par exemple dans DoliLetter) ; plus d'avertissement sur les déclencheurs d'ExternalAccess ; picto des déclencheurs retrouvé.
@@ -219,6 +219,7 @@ Description : ReedCRM adopte le **thème moderne** des modules Evarisk et s'ouvr
 
 ## Comparaison des versions [23.3.2](https://github.com/Eoxia/reedcrm/compare/23.3.2...23.4.0) et 23.4.0
 
+* [#1329] [Saturne] fix: message explicite quand l'amorçage ne trouve pas Saturne [`26e05270`](https://github.com/Eoxia/reedcrm/commit/26e05270)
 * [#1330] [EventPro] fix: date entière dans le formulaire d'événement de la fiche pro et colonne « Quoi » lisible dans le panneau des relances [`0fe29970`](https://github.com/Eoxia/reedcrm/commit/0fe29970)
 * [#1327] [CSS] fix: print the stylesheets of the project and proposal lists in the page header [`af606250`](https://github.com/Eoxia/reedcrm/commit/af606250)
 * [#1325] [Project] feat: call lists column on the opportunity list, to add the opportunity to a list or take it off one [`16cae8f6`](https://github.com/Eoxia/reedcrm/commit/16cae8f6)
