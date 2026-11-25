@@ -2345,6 +2345,14 @@ class ActionsReedcrm
                 $virtualFields[]              = 'categories';
             }
 
+            // Call lists the opportunity is on, as pills, with a checklist to add it to a list or take
+            // it off one. The lines live in llx_reedcrm_call_list_line, loaded once for the whole page
+            global $user;
+            if ($user->hasRight('reedcrm', 'call_list', 'read')) {
+                $object->fields['call_lists'] = ['type' => 'varchar(255)', 'label' => 'CallLists', 'enabled' => 1, 'position' => 19, 'visible' => 1, 'csslist' => 'minwidth150', 'disablesort' => 1, 'disablesearch' => 1];
+                $virtualFields[]              = 'call_lists';
+            }
+
             // Virtual columns (not real DB columns)
             $this->results['excludeFields'] = array_merge($parameters['excludeFields'], $virtualFields);
 
@@ -2579,6 +2587,7 @@ class ActionsReedcrm
                 'fk_statut'          => 'reedcrm_field_status_badge',
                 'opp_percent'        => 'reedcrm_field_opp_percent',
                 'categories'         => 'reedcrm_field_categories',
+                'call_lists'         => 'reedcrm_field_call_lists',
             ];
 
             $key = $parameters['key'];
