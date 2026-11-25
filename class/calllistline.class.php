@@ -393,7 +393,7 @@ class CallListLine extends SaturneObject
      *
      * @param  User $user       User that copies
      * @param  int  $callListId ID of the call list to copy the line to
-     * @return int              <0 if KO, Id of the copy if OK
+     * @return int              Id of the copy if OK, negative if KO
      */
     public function copyToCallList(User $user, int $callListId): int
     {
@@ -418,7 +418,7 @@ class CallListLine extends SaturneObject
      * Create the line as it is, without the phone check of create().
      *
      * @param  User $user User that creates
-     * @return int        <0 if KO, Id of created object if OK
+     * @return int        Id of created object if OK, negative if KO
      */
     private function createWithoutPhoneCheck(User $user): int
     {

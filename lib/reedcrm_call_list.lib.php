@@ -826,7 +826,7 @@ function reedcrm_call_list_get_transfer_targets(DoliDB $db, User $user, int $cal
     $targets = [];
     if (is_array($callLists)) {
         foreach ($callLists as $targetList) {
-            if (reedcrm_call_list_user_can_read($user, $targetList)) {
+            if ($targetList instanceof CallList && reedcrm_call_list_user_can_read($user, $targetList)) {
                 $targets[(int) $targetList->id] = (string) $targetList->label;
             }
         }
