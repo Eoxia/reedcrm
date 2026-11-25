@@ -57,6 +57,11 @@ class ActionsReedcrm
     private static bool $mainCssLoaded = false;
 
     /**
+     * @var bool Stylesheets of the project and proposal lists already printed in the page header
+     */
+    private static bool $listCssLoaded = false;
+
+    /**
      * Constructor
      *
      * @param DoliDB $db Database handler
@@ -828,16 +833,20 @@ class ActionsReedcrm
         }
 
         if ($this->isContext($parameters, ['invoicelist', 'invoicereclist', 'thirdpartylist', 'projectlist', 'propallist'])) {
-            $cssPath = reedcrm_asset_full_url('/saturne/css/saturne.min.css');
-            print '<link href="' . $cssPath . '" rel="stylesheet">';
+            // The project and proposal lists already have their stylesheets in the page header, see addHtmlHeader
+            if (!self::$listCssLoaded) {
+                $cssPath = reedcrm_asset_full_url('/saturne/css/saturne.min.css');
+                print '<link href="' . $cssPath . '" rel="stylesheet">';
+            }
             // Load reedcrm modal CSS and JS for projectlist and propallist
             if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
                 global $langs;
-                // Load main reedcrm CSS
-                $reedcrmMainCssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
-                print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
-                $reedcrmCssPath = reedcrm_asset_full_url('/reedcrm/css/temp-framework.css');
-                print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
+                if (!self::$listCssLoaded) {
+                    $reedcrmMainCssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
+                    print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
+                    $reedcrmCssPath = reedcrm_asset_full_url('/reedcrm/css/temp-framework.css');
+                    print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
+                }
                 $jsPath = reedcrm_asset_full_url('/saturne/js/saturne.min.js');
                 print '<script src="' . $jsPath . '"></script>';
 
@@ -1360,6 +1369,18 @@ class ActionsReedcrm
             $this->resprints  = '<!-- Includes CSS added by module reedcrm -->';
             $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
             self::$mainCssLoaded = true;
+        }
+
+        // Project and proposal lists: printed with the footer, the stylesheets came after the rows, which the browser
+        // drew unstyled until the end of the page arrived (relaunch logo at full size, lifecycle steps stacked).
+        // Same files in the same order as the footer used to print them, so the cascade does not change
+        if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
+            $this->resprints .= '<!-- Includes CSS added by module reedcrm -->';
+            foreach (['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css', '/reedcrm/css/temp-framework.css'] as $cssFile) {
+                $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(reedcrm_asset_full_url($cssFile)) . '">';
+            }
+            self::$mainCssLoaded = true;
+            self::$listCssLoaded = true;
         }
 
         // The chip has to be moved under the relaunch block once that block is teleported into
