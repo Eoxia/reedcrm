@@ -568,6 +568,166 @@ function reedcrm_field_categories(array $parameters, CommonObject $object): stri
 }
 
 /**
+ * Label of a call list without the prefix of the default lists: "Liste d'appel — Jean Dupont" gives
+ * "Jean Dupont". The headset of the pill already says it is a call list. The prefix depends on the
+ * language the list was created in (DefaultCallListLabel), both are removed.
+ *
+ * @param  string $label Label of the call list
+ * @return string        Label without the prefix
+ */
+function reedcrm_call_list_short_label(string $label): string
+{
+    global $langs;
+
+    foreach (array_unique([$langs->transnoentitiesnoconv('CallList'), 'Call list', "Liste d'appel"]) as $prefix) {
+        if (preg_match('/^' . preg_quote($prefix, '/') . '\s*[—–-]\s*(.+)$/u', $label, $matches)) {
+            return $matches[1];
+        }
+    }
+
+    return $label;
+}
+
+/**
+ * Load, for a whole page of listed opportunities, the call lists each of them is on.
+ *
+ * One query for the page instead of one per row, like the tags. Only the lists the user may see
+ * are kept (all of them, their subordinates' ones or their own, by right).
+ *
+ * @return array Call lists by project id: [projectId => [['id', 'line_id', 'label', 'status'], ...]]
+ */
+function reedcrm_load_list_call_lists(): array
+{
+    global $db, $user;
+
+    dol_include_once('/reedcrm/class/calllist.class.php');
+    dol_include_once('/reedcrm/class/calllistline.class.php');
+    dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
+
+    $objectIds = reedcrm_load_list_page_ids();
+    if (empty($objectIds)) {
+        return [];
+    }
+
+    $sql   = 'SELECT line.rowid AS line_id, line.element_id, cl.rowid, cl.label, cl.status, cl.fk_user_assign';
+    $sql  .= ' FROM ' . MAIN_DB_PREFIX . 'reedcrm_call_list_line AS line';
+    $sql  .= ' INNER JOIN ' . MAIN_DB_PREFIX . 'reedcrm_call_list AS cl ON cl.rowid = line.fk_call_list';
+    $sql  .= " WHERE line.element_type = 'project'";
+    $sql  .= ' AND line.element_id IN (' . implode(',', $objectIds) . ')';
+    // An unlinked line stays in the table with the deleted status
+    $sql  .= ' AND line.status != ' . CallListLine::STATUS_DELETED;
+    $sql  .= ' AND cl.entity IN (' . getEntity('call_list') . ')';
+    $sql  .= ' ORDER BY cl.position ASC, cl.label ASC';
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return [];
+    }
+
+    $callList  = new CallList($db);
+    $callLists = [];
+    while ($obj = $db->fetch_object($resql)) {
+        $callList->fk_user_assign = (int) $obj->fk_user_assign;
+        if (!reedcrm_call_list_user_can_read($user, $callList)) {
+            continue;
+        }
+        $callLists[(int) $obj->element_id][] = ['id' => (int) $obj->rowid, 'line_id' => (int) $obj->line_id, 'label' => reedcrm_call_list_short_label($obj->label), 'title' => $obj->label, 'status' => (int) $obj->status];
+    }
+    $db->free($resql);
+
+    return $callLists;
+}
+
+/**
+ * Settings of the call lists column, printed once on the page and read by call_lists_column.js.
+ *
+ * The lists an opportunity can be added to are the draft and active ones the user may see, like
+ * the widget of the cards. The phone labels are those the widget prompt reads.
+ *
+ * @return string HTML output
+ */
+function reedcrm_call_lists_column_settings(): string
+{
+    global $db, $langs, $user;
+
+    $callList  = new CallList($db);
+    $available = $callList->fetchAll('ASC', CallList::SORT_FIELDS, 0, 0, ['customsql' => 't.status IN (' . CallList::STATUS_DRAFT . ', ' . CallList::STATUS_ACTIVE . ')']);
+
+    $lists = [];
+    if (is_array($available)) {
+        foreach ($available as $availableList) {
+            if ($availableList instanceof CallList && reedcrm_call_list_user_can_read($user, $availableList)) {
+                $lists[] = ['id' => (int) $availableList->id, 'label' => reedcrm_call_list_short_label($availableList->label), 'title' => $availableList->label];
+            }
+        }
+    }
+
+    $out  = '<div id="reedcrm-call-lists-settings" class="hidden"';
+    $out .= ' data-lists="' . dol_escape_htmltag(json_encode($lists)) . '"';
+    $out .= ' data-add-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/add_to_call_list.php', 1)) . '"';
+    $out .= ' data-unlink-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/unlink_call_list_line.php', 1)) . '"';
+    $out .= ' data-card-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/view/call_list_card.php', 1)) . '"';
+    $out .= ' data-can-unlink="' . ($user->hasRight('reedcrm', 'call_list', 'delete') ? 1 : 0) . '"';
+    $out .= ' data-title-label="' . dol_escape_htmltag($langs->trans('CallLists')) . '"';
+    $out .= ' data-empty-label="' . dol_escape_htmltag($langs->trans('NoActiveCallList')) . '"';
+    $out .= ' data-unlink-forbidden-label="' . dol_escape_htmltag($langs->trans('NotEnoughPermissions')) . '"';
+    $out .= ' data-enter-phone-label="' . dol_escape_htmltag($langs->trans('CallListEnterPhonePlaceholder')) . '"';
+    $out .= ' data-enter-phone-generic-label="' . dol_escape_htmltag($langs->trans('CallListEnterPhoneGenericPlaceholder')) . '"';
+    $out .= ' data-phone-required-label="' . dol_escape_htmltag($langs->trans('CallListPhoneRequired')) . '"';
+    $out .= ' data-phone-invalid-label="' . dol_escape_htmltag($langs->trans('CallListInvalidPhone')) . '"';
+    $out .= ' data-save-label="' . dol_escape_htmltag($langs->trans('CallListSaveAndAdd')) . '"';
+    $out .= ' data-cancel-label="' . dol_escape_htmltag($langs->trans('Cancel')) . '"></div>';
+
+    return $out;
+}
+
+/**
+ * Render the call lists cell of the opportunity list: one pill per list, linking to its card, and
+ * the pen opening the checklist that adds the opportunity to a list or takes it off one.
+ *
+ * @param  array        $parameters Hook parameters (key, context, obj, ...)
+ * @param  CommonObject $object     The object
+ * @return string                   HTML output
+ */
+function reedcrm_field_call_lists(array $parameters, CommonObject $object): string
+{
+    global $conf, $langs, $user;
+
+    $objectId = (int) (!empty($object->id) ? $object->id : ($parameters['obj']->rowid ?? 0));
+    if ($objectId <= 0) {
+        return '';
+    }
+
+    if (!isset($conf->cache['reedcrmListCallLists'])) {
+        $conf->cache['reedcrmListCallLists'] = reedcrm_load_list_call_lists();
+    }
+
+    $out = '';
+    $canWrite = $user->hasRight('reedcrm', 'call_list', 'write');
+    if ($canWrite && empty($conf->cache['reedcrmListCallListsSettings'])) {
+        $conf->cache['reedcrmListCallListsSettings'] = 1;
+        $out .= reedcrm_call_lists_column_settings();
+    }
+
+    $cardUrl = dol_buildpath('/reedcrm/view/call_list_card.php', 1);
+
+    $out .= '<div class="reedcrm-call-lists-cell" data-element-type="project" data-element-id="' . $objectId . '">';
+    $out .= '<span class="reedcrm-call-lists-pills">';
+    foreach ($conf->cache['reedcrmListCallLists'][$objectId] ?? [] as $callList) {
+        $archived = !in_array($callList['status'], [CallList::STATUS_DRAFT, CallList::STATUS_ACTIVE]);
+        $out .= '<a class="reedcrm-call-list-pill' . ($archived ? ' reedcrm-call-list-pill-archived' : '') . '" href="' . dol_escape_htmltag($cardUrl . '?id=' . $callList['id']) . '"';
+        $out .= ' data-call-list-id="' . $callList['id'] . '" data-line-id="' . $callList['line_id'] . '" title="' . dol_escape_htmltag($callList['title']) . '">';
+        $out .= '<span class="fas fa-headset"></span>' . dol_escape_htmltag($callList['label']) . '</a>';
+    }
+    $out .= '</span>';
+    if ($canWrite) {
+        $out .= '<button type="button" class="reedcrm-call-lists-edit" title="' . dol_escape_htmltag($langs->trans('AddToCallList')) . '"><span class="fas fa-pen"></span></button>';
+    }
+    $out .= '</div>';
+
+    return $out;
+}
+
+/**
  * Columns of the thirdparty selected with the rows of the opportunity list.
  *
  * getNomUrl() and its tooltip read these properties: the thirdparty of each row is rebuilt from

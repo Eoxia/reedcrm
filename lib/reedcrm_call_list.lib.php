@@ -711,7 +711,7 @@ function reedcrm_call_list_get_line_contact_display(DoliDB $db, CallListLine $li
  * @param  int    $selectedContactId Optional explicit contact id (e.g. chosen from thirdparty contacts)
  * @param  string $note              Optional line note
  * @param  string $phoneSource       Optional explicit choice from card UI ('project' | 'thirdparty' | 'contact' | '')
- * @return array                     ['success' => bool, 'message' => string, 'need_phone' => bool]
+ * @return array                     ['success' => bool, 'message' => string, 'need_phone' => bool, 'line_id' => int]
  */
 function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListId, string $elementType, int $elementId, string $manualPhone = '', int $selectedContactId = 0, string $note = '', string $phoneSource = ''): array
 {
@@ -804,7 +804,8 @@ function reedcrm_add_element_to_call_list(DoliDB $db, User $user, int $callListI
         return ['success' => false, 'message' => $newLine->error ?: $langs->transnoentitiesnoconv('CallListWidgetError')];
     }
 
-    return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1))];
+    // The line id lets the call lists column of the opportunity list take the line off again
+    return ['success' => true, 'message' => $langs->transnoentitiesnoconv('CallListWidgetSuccess', $callList->getNomUrl(1)), 'line_id' => (int) $newLine->id];
 }
 
 /**

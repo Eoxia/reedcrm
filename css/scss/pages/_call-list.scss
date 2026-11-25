@@ -373,3 +373,165 @@ tr.call-list-line-row {
     }
 
 }
+
+// Call lists column of the opportunity list: one pill per list, the pen opens the checklist
+.reedcrm-call-lists-cell {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+
+    .reedcrm-call-lists-pills {
+        display: contents;
+    }
+
+    .reedcrm-call-list-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        max-width: 180px;
+        padding: 2px 9px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 0.85em;
+        line-height: 1.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-decoration: none;
+
+        &:hover {
+            background: #e0e7ff;
+        }
+
+        .fas {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+    }
+
+    .reedcrm-call-list-pill-archived {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .reedcrm-call-lists-edit {
+        border: 1px dashed #cbd5e1;
+        background: transparent;
+        color: #94a3b8;
+        border-radius: 999px;
+        width: 24px;
+        height: 22px;
+        padding: 0;
+        cursor: pointer;
+        font-size: 0.75em;
+
+        &:hover {
+            border-style: solid;
+            border-color: #6366f1;
+            color: #4f46e5;
+        }
+    }
+}
+
+.reedcrm-call-lists-popover {
+    position: absolute;
+    z-index: 1060;
+    min-width: 270px;
+    max-width: 320px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    font-size: 0.9em;
+
+    .reedcrm-call-lists-popover-title {
+        padding: 2px 6px 6px;
+        color: #64748b;
+        font-size: 0.8em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .reedcrm-call-lists-search {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 6px;
+    }
+
+    .reedcrm-call-lists-options {
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    .reedcrm-call-lists-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 6px;
+        border-radius: 5px;
+        cursor: pointer;
+
+        &:hover {
+            background: #f1f5f9;
+        }
+
+        input {
+            margin: 0;
+        }
+
+        &.hidden {
+            display: none;
+        }
+    }
+
+    .reedcrm-call-list-phone-prompt {
+        margin-top: 6px;
+        padding-top: 8px;
+        border-top: 1px solid #e2e8f0;
+
+        .reedcrm-call-list-phone-prompt-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .reedcrm-call-list-phone-input {
+            flex: 1;
+            min-width: 0;
+            padding: 3px 6px;
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+
+            &.is-invalid-phone {
+                border-color: #dc2626;
+            }
+        }
+
+        .reedcrm-call-list-phone-save {
+            background: #28a745;
+            border: 1px solid #28a745;
+            color: #fff;
+            border-radius: 4px;
+            padding: 3px 7px;
+            cursor: pointer;
+        }
+
+        .reedcrm-call-list-phone-cancel {
+            background: #fff;
+            border: 1px solid #cbd5e0;
+            color: #64748b;
+            border-radius: 4px;
+            padding: 2px 7px;
+            cursor: pointer;
+        }
+
+        .call-list-phone-error {
+            color: #dc2626;
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+    }
+}
