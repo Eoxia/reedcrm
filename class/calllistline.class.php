@@ -378,14 +378,50 @@ class CallListLine extends SaturneObject
 
         // A new call goes to the end of the list, after the ones ordered by hand
         if (empty($this->position) && $this->fk_call_list > 0) {
-            $sql   = 'SELECT MAX(position) AS max_position FROM ' . $this->db->prefix() . $this->table_element;
-            $sql  .= ' WHERE fk_call_list = ' . ((int) $this->fk_call_list);
-            $resql = $this->db->query($sql);
-            if ($resql && ($obj = $this->db->fetch_object($resql))) {
-                $this->position = (int) $obj->max_position + 1;
-            }
+            dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
+            $this->position = reedcrm_call_list_next_position($this->db, (int) $this->fk_call_list);
         }
 
         return parent::create($user, $notrigger);
+    }
+
+    /**
+     * Copy the line to the end of another call list, to be called there: same element, contact and note.
+     *
+     * The phone is not checked again, unlike create(): the line had one when it was added, and moving the same
+     * line to another list checks none either.
+     *
+     * @param  User $user       User that copies
+     * @param  int  $callListId ID of the call list to copy the line to
+     * @return int              <0 if KO, Id of the copy if OK
+     */
+    public function copyToCallList(User $user, int $callListId): int
+    {
+        dol_include_once('/reedcrm/lib/reedcrm_call_list.lib.php');
+
+        $copy               = new self($this->db);
+        $copy->fk_call_list = $callListId;
+        $copy->element_type = $this->element_type;
+        $copy->element_id   = $this->element_id;
+        $copy->fk_contact   = $this->fk_contact;
+        $copy->note         = $this->note;
+        $copy->status       = self::STATUS_TO_CALL;
+        $copy->position     = reedcrm_call_list_next_position($this->db, $callListId);
+
+        $result      = $copy->createWithoutPhoneCheck($user);
+        $this->error = $copy->error;
+
+        return $result;
+    }
+
+    /**
+     * Create the line as it is, without the phone check of create().
+     *
+     * @param  User $user User that creates
+     * @return int        <0 if KO, Id of created object if OK
+     */
+    private function createWithoutPhoneCheck(User $user): int
+    {
+        return parent::create($user);
     }
 }

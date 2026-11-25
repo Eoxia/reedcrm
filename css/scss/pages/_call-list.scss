@@ -125,6 +125,23 @@
     min-width: 0;
 }
 
+// Target list of a copy or a move of the checked lines, asked between the mass action and its confirmation
+.call-list-transfer-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+
+    .call-list-transfer-label {
+        font-weight: 600;
+    }
+}
+
 .call-list-add-form {
     width: 100%;
 

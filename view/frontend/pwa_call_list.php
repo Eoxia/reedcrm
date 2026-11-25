@@ -118,6 +118,9 @@ $canUnlink         = $user->hasRight('reedcrm', 'call_list', 'delete');
 // Same rights as the arrows of the call list card and the relaunch bar of the opportunity page
 $canMove           = $user->hasRight('reedcrm', 'call_list', 'write');
 $canAddEvent       = $user->hasRight('agenda', 'myactions', 'create') && $user->hasRight('reedcrm', 'eventpro', 'write');
+// Copy or move a call to another list, with the rights of the mass actions of the call list card
+$transferTargets   = $canMove ? reedcrm_call_list_get_transfer_targets($db, $user, (int) $object->id) : [];
+$canTransfer       = !empty($transferTargets);
 $token             = newToken();
 
 print '<div class="pwa-call-list-container"'
@@ -126,12 +129,34 @@ print '<div class="pwa-call-list-container"'
     . ' data-unlink-url="' . dol_escape_htmltag($unlinkAjaxUrl) . '"'
     . ' data-unlink-confirm="' . dol_escape_htmltag($langs->transnoentities('ConfirmCallListLineUnlink')) . '"'
     . ' data-unlink-error="' . dol_escape_htmltag($langs->transnoentities('ErrorCallListLineUnlink')) . '"'
+    . ' data-transfer-url="' . dol_escape_htmltag(dol_buildpath('/reedcrm/ajax/transfer_call_list_line.php', 1)) . '"'
+    . ' data-transfer-error="' . dol_escape_htmltag($langs->transnoentities('ErrorCallListLineTransfer')) . '"'
     . ' data-create-actioncomm="' . (int) $createActioncomm . '"'
     . ' data-default-list="' . ((int) $object->id === $defaultCallListId ? 1 : 0) . '"'
     . ' data-token="' . dol_escape_htmltag($token) . '">';
 
 // Saturne reads the token of its AJAX calls from an input named "token" in the DOM
 print '<input type="hidden" name="token" value="' . dol_escape_htmltag($token) . '">';
+
+// One panel for the whole page, put into a card by js/modules/pwa_call_list.js when its button is tapped. Moving takes
+// the call off this list, as the unlink button does, hence its right
+if ($canTransfer) {
+    print '<template id="pwa-call-transfer-template">';
+    print '<div class="pwa-call-transfer">';
+    print '<select class="pwa-call-transfer-target" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineTransfer')) . '">';
+    foreach ($transferTargets as $targetListId => $targetListLabel) {
+        print '<option value="' . (int) $targetListId . '">' . dol_escape_htmltag($targetListLabel) . '</option>';
+    }
+    print '</select>';
+    print '<div class="pwa-call-transfer-buttons">';
+    print '<button type="button" class="pwa-call-transfer-btn" data-transfer-mode="copy"><i class="fas fa-copy"></i> ' . $langs->trans('CallListCopy') . '</button>';
+    if ($canUnlink) {
+        print '<button type="button" class="pwa-call-transfer-btn" data-transfer-mode="move"><i class="fas fa-share"></i> ' . $langs->trans('CallListMove') . '</button>';
+    }
+    print '</div>';
+    print '</div>';
+    print '</template>';
+}
 
 $dateStart = $object->date_start ? dol_print_date($object->date_start, 'day') : '—';
 $dateEnd   = $object->date_end   ? dol_print_date($object->date_end,   'day') : '—';
@@ -270,6 +295,9 @@ if (empty($lines)) {
 
         if ($canUnlink) {
             print '<button type="button" class="pwa-call-btn-unlink" data-action="unlink-line" title="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineUnlink')) . '"><i class="fas fa-unlink"></i></button>';
+        }
+        if ($canTransfer) {
+            print '<button type="button" class="pwa-call-btn-transfer" data-action="transfer-line" title="' . dol_escape_htmltag($langs->trans('CallListLineTransfer')) . '" aria-label="' . dol_escape_htmltag($langs->trans('CallListLineTransfer')) . '"><i class="fas fa-exchange-alt"></i></button>';
         }
 
         // Ligne 1 : Nom + prochain événement en retard ou à venir, comme sur la todo
