@@ -370,8 +370,9 @@ table.liste td[class*="tdoverflowmax"] {
         width: 40px;
     }
 
+    // A name or a login: the width left goes to "what" (#1330)
     .reedcrm-relaunch-panel-who {
-        width: 140px;
+        width: 120px;
     }
 
     .reedcrm-relaunch-panel-status {

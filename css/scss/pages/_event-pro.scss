@@ -482,7 +482,8 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    width: 600px;
+    // Wide enough for the five columns of the relaunch panel to leave "what" a readable width (#1330)
+    width: 720px;
     max-width: 90vw;
     max-height: 500px;
     overflow: hidden;
@@ -809,6 +810,19 @@ body > .select2-drop.select2-drop-active {
 label > .reedcrm-event-duration {
     flex-shrink: 0;
     padding-left: 14px;
+}
+
+// Date of the event on the desktop card (#1330): Saturne stretches every select2 container of a .template-pwa label to
+// its full width and keeps the label on one line. The date keeps its own width, and the duration goes under it only
+// when the column is too narrow for both (fiche pro at 1680 px)
+.template-pwa label.reedcrm-event-date-label {
+    flex-wrap: wrap;
+    row-gap: 6px;
+
+    > div.reedcrm-event-date {
+        flex: 0 0 auto;
+        width: auto !important;
+    }
 }
 
 // Voice note beside the description of a new event (App form): the description takes what the record and
