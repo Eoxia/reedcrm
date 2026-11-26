@@ -30,6 +30,7 @@ if (empty($conf) || !is_object($conf)) {
 }
 
 require_once __DIR__ . '/../../lib/reedcrm_timespent.lib.php';
+dol_include_once('/saturne/lib/asset.lib.php');
 
 $timeSpentSummary    = reedcrm_timespent_get_summary($db, $object);
 $timeSpentHasProject = $object instanceof Project || $object->fk_project > 0;
@@ -64,4 +65,4 @@ $timeSpentCanLog     = $timeSpentHasProject && reedcrm_timespent_user_can_log($u
     } ?>
 </div>
 
-<script type="text/javascript" src="<?php echo dol_escape_htmltag(dol_buildpath('/reedcrm/js/modules/timespent_block.js', 1)); ?>"></script>
+<script type="text/javascript" src="<?php echo dol_escape_htmltag(saturne_asset_full_url('/reedcrm/js/modules/timespent_block.js')); ?>"></script>
