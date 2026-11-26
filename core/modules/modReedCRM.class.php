@@ -179,6 +179,7 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_THIRDPARTY_CLIENT_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_THIRDPARTY_CLIENT_VALUE', 'integer', 2, '', 0, 'current'],
             $i++ => ['REEDCRM_THIRDPARTY_NAME_VISIBLE', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_THIRDPARTY_ADDRESS_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_THIRDPARTY_PHONE_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_THIRDPARTY_EMAIL_VISIBLE', 'integer', 1, '', 0, 'current'],
             $i++ => ['REEDCRM_THIRDPARTY_WEB_VISIBLE', 'integer', 1, '', 0, 'current'],

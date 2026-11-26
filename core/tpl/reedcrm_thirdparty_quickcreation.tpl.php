@@ -6,11 +6,19 @@ if ($permissiontoaddthirdparty) {
 
 	print dol_get_fiche_head();
 
+	// Address of the third party, typed in the form when the setup shows it
+	$addressVisible = getDolGlobalInt('REEDCRM_THIRDPARTY_ADDRESS_VISIBLE') > 0;
+
 	// The SIREN search of the module Sirene prefills the third party with the official company data
 	$sireneEnabled = isModEnabled('sirene') && dol_include_once('/sirene/class/actions_sirene.class.php');
 	if ($sireneEnabled) {
-		// Data of the company selected in the search, kept in the form until the third party creation
-		foreach (['name_alias', 'address', 'zipcode', 'town', 'state_id', 'country_id', 'idprof1', 'idprof2', 'idprof3', 'idprof6', 'tva_intra', 'effectif_id', 'forme_juridique_code', 'options_sirene_company_admin_status'] as $sireneField) {
+		// Data of the company selected in the search, kept in the form until the third party creation. The search posts
+		// the page again with that data: the address fields shown below are filled with it, they are not kept twice
+		$sireneFields = ['name_alias', 'address', 'zipcode', 'town', 'state_id', 'country_id', 'idprof1', 'idprof2', 'idprof3', 'idprof6', 'tva_intra', 'effectif_id', 'forme_juridique_code', 'options_sirene_company_admin_status'];
+		if ($addressVisible) {
+			$sireneFields = array_diff($sireneFields, ['address', 'zipcode', 'town', 'country_id']);
+		}
+		foreach ($sireneFields as $sireneField) {
 			print '<input type="hidden" name="' . $sireneField . '" value="' . dol_escape_htmltag(GETPOST($sireneField, 'alphanohtml')) . '">';
 		}
 	}
@@ -43,6 +51,27 @@ if ($permissiontoaddthirdparty) {
 	if (getDolGlobalInt('REEDCRM_THIRDPARTY_CLIENT_VISIBLE') > 0) {
 		print '<tr><td class="titlefieldcreate fieldrequired"><label for="name">' . $langs->trans('ProspectCustomer') . '</label></td>';
 		print '<td>' . $formcompany->selectProspectCustomerType(GETPOSTISSET('client') ? GETPOST('client') : getDolGlobalInt('REEDCRM_THIRDPARTY_CLIENT_VALUE'), 'client', 'customerprospect', 'form', 'maxwidth200 widthcentpercentminusx') . '</td>';
+		print '</tr>';
+	}
+
+	// Address, zip and town, country: the fields of the third party card, the zip and the town completing each other
+	if ($addressVisible) {
+		print '<tr><td class="tdtop"><label for="address">' . $langs->trans('Address') . '</label></td>';
+		print '<td>' . img_picto('', 'map-marker-alt', 'class="pictofixedwidth valignmiddle"');
+		print '<textarea name="address" id="address" class="minwidth300 maxwidth500 widthcentpercentminusx valignmiddle" rows="' . ROWS_2 . '" wrap="soft">' . dol_escape_htmltag(GETPOST('address', 'alphanohtml')) . '</textarea></td>';
+		print '</tr>';
+
+		// Aligned with the fields above, which all have a picto in front of them
+		print '<tr><td><label for="zipcode">' . $langs->trans('Zip') . ' / ' . $langs->trans('Town') . '</label></td>';
+		print '<td><span class="pictofixedwidth inline-block"></span>';
+		print $formcompany->select_ziptown(GETPOST('zipcode', 'alphanohtml'), 'zipcode', ['town', 'selectcountry_id', 'state_id'], 0, 0, '', 'maxwidth100');
+		print ' ' . $formcompany->select_ziptown(GETPOST('town', 'alphanohtml'), 'town', ['zipcode', 'selectcountry_id', 'state_id'], 0, 0, '', 'maxwidth200 widthcentpercentminusx');
+		print '</td></tr>';
+
+		print '<tr><td><label for="selectcountry_id">' . $langs->trans('Country') . '</label></td>';
+		print '<td>' . img_picto('', 'country', 'class="pictofixedwidth"');
+		print $form->select_country(GETPOSTINT('country_id') > 0 ? GETPOSTINT('country_id') : $mysoc->country_id, 'country_id', '', 0, 'maxwidth200 widthcentpercentminusx');
+		print '</td></tr>';
 	}
 
 	// Phone
