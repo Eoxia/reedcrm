@@ -1980,7 +1980,7 @@ $reshook = $hookmanager->executeHooks('printFieldListFooter', $parameters, $obje
 print $hookmanager->resPrint;
 
 ?>
-<script nonce="<?php echo getNonce(); ?>" src="<?php echo reedcrm_asset_full_url('/reedcrm/js/expedition_billed.js'); ?>"></script>
+<script nonce="<?php echo getNonce(); ?>" src="<?php echo saturne_asset_full_url('/reedcrm/js/expedition_billed.js'); ?>"></script>
 <?php
 
 print "</table>";

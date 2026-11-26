@@ -694,7 +694,7 @@ print '<div id="route-toggle-button" class="route-toggle-button">' . $pictoRoute
         });
     </script>
 <?php if ($user->hasRight('agenda', 'myactions', 'create')): ?>
-    <link href="<?php echo reedcrm_asset_full_url('/reedcrm/css/temp-framework.css'); ?>" rel="stylesheet">
+    <link href="<?php echo saturne_asset_full_url('/reedcrm/css/temp-framework.css'); ?>" rel="stylesheet">
     <div class="wpeo-modal modal-eventpro" id="eventproCardModal">
         <div class="modal-container wpeo-modal-event">
             <div class="modal-header">
