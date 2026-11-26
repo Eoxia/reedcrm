@@ -146,7 +146,7 @@ class ReedcrmNewsletter extends SaturneObject
     public const COPIED_FIELDS = ['mail_type', 'target_type', 'target_tags', 'exclude_tags', 'thirdparty_type', 'fk_sales_rep', 'content_mode', 'fk_email_template', 'email_from', 'subject', 'body_html', 'body_blocks', 'send_trigger', 'send_delay', 'send_delay_unit', 'frequency', 'frequency_unit', 'auto_next', 'note_private'];
 
     /**
-     * @var array Array with all fields and their property.
+     * @var array<string,array{type:string,label:string,langfile?:string,enabled:int<0,2>|string,position:int,notnull?:int,visible:int<-6,6>|string,alwayseditable?:int<0,1>|string,noteditable?:int<0,1>,default?:string,index?:int,foreignkey?:string,searchall?:int<0,1>,isameasure?:int<0,1>,css?:string,cssview?:string,csslist?:string,help?:string,showoncombobox?:int<0,4>|string,disabled?:int<0,1>,arrayofkeyval?:array<int|string,string>,autofocusoncreate?:int<0,1>,comment?:string,copytoclipboard?:int<1,2>,validate?:int<0,1>,showonheader?:int<0,1>,searchmulti?:int<0,1>}> Array with all fields and their property, typed as in CommonObject
      */
     public $fields = [
         'rowid'             => ['type' => 'integer',      'label' => 'TechnicalID',            'enabled' => 1, 'position' => 1,   'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'index' => 1],
@@ -156,7 +156,7 @@ class ReedcrmNewsletter extends SaturneObject
         'date_creation'     => ['type' => 'datetime',     'label' => 'DateCreation',           'enabled' => 1, 'position' => 40,  'notnull' => 1, 'visible' => 0],
         'tms'               => ['type' => 'timestamp',    'label' => 'DateModification',       'enabled' => 1, 'position' => 50,  'notnull' => 1, 'visible' => 0],
         'import_key'        => ['type' => 'varchar(14)',  'label' => 'ImportId',               'enabled' => 1, 'position' => 60,  'notnull' => 0, 'visible' => 0],
-        'status'            => ['type' => 'smallint',     'label' => 'Status',                 'enabled' => 1, 'position' => 200, 'notnull' => 1, 'visible' => 2, 'index' => 1, 'default' => 0, 'disableedit' => 1, 'arrayofkeyval' => [0 => 'NewsletterStatus0', 1 => 'NewsletterStatus1', 2 => 'NewsletterStatus2']],
+        'status'            => ['type' => 'smallint',     'label' => 'Status',                 'enabled' => 1, 'position' => 200, 'notnull' => 1, 'visible' => 2, 'index' => 1, 'default' => '0', 'disableedit' => 1, 'arrayofkeyval' => [0 => 'NewsletterStatus0', 1 => 'NewsletterStatus1', 2 => 'NewsletterStatus2']],
         'label'             => ['type' => 'varchar(255)', 'label' => 'Label',                  'enabled' => 1, 'position' => 70,  'notnull' => 1, 'visible' => 1, 'searchall' => 1, 'autofocusoncreate' => 1, 'disableedit' => 1, 'csslist' => 'minwidth200 tdoverflowmax400'],
         'mail_type'         => ['type' => 'varchar(16)',  'label' => 'NewsletterListMailType', 'enabled' => 1, 'position' => 80,  'notnull' => 1, 'visible' => 1, 'default' => 'newsletter', 'disableedit' => 1, 'arrayofkeyval' => ['newsletter' => 'NewsletterTypeNewsletter', 'reminder' => 'NewsletterTypeReminder']],
         'target_type'       => ['type' => 'varchar(16)',  'label' => 'NewsletterTargetType',   'enabled' => 1, 'position' => 90,  'notnull' => 1, 'visible' => 1, 'default' => 'contact', 'disableedit' => 1, 'arrayofkeyval' => ['contact' => 'NewsletterTargetContact', 'project' => 'NewsletterTargetProject']],
@@ -172,15 +172,15 @@ class ReedcrmNewsletter extends SaturneObject
         'body_blocks'       => ['type' => 'text',         'label' => 'NewsletterBodyBlocks',   'enabled' => 1, 'position' => 152, 'notnull' => 0, 'visible' => 0],
         'send_trigger'      => ['type' => 'varchar(16)',  'label' => 'NewsletterListTrigger',  'enabled' => 1, 'position' => 155, 'notnull' => 1, 'visible' => 1, 'default' => 'date', 'disableedit' => 1, 'arrayofkeyval' => ['date' => 'NewsletterTriggerDate', 'creation' => 'NewsletterTriggerCreation']],
         'date_send'         => ['type' => 'datetime',     'label' => 'NewsletterListDateSend', 'enabled' => 1, 'position' => 160, 'notnull' => 0, 'visible' => 1, 'disableedit' => 1],
-        'send_delay'        => ['type' => 'integer',      'label' => 'NewsletterDelay',        'enabled' => 1, 'position' => 165, 'notnull' => 1, 'visible' => 0, 'default' => 30],
+        'send_delay'        => ['type' => 'integer',      'label' => 'NewsletterDelay',        'enabled' => 1, 'position' => 165, 'notnull' => 1, 'visible' => 0, 'default' => '30'],
         'send_delay_unit'   => ['type' => 'varchar(1)',   'label' => 'NewsletterDelayUnit',    'enabled' => 1, 'position' => 166, 'notnull' => 1, 'visible' => 0, 'default' => 'd'],
-        'frequency'         => ['type' => 'integer',      'label' => 'NewsletterFrequency',    'enabled' => 1, 'position' => 170, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'frequency'         => ['type' => 'integer',      'label' => 'NewsletterFrequency',    'enabled' => 1, 'position' => 170, 'notnull' => 1, 'visible' => 0, 'default' => '0'],
         'frequency_unit'    => ['type' => 'varchar(1)',   'label' => 'NewsletterFrequencyUnit', 'enabled' => 1, 'position' => 175, 'notnull' => 1, 'visible' => 0, 'default' => 'm'],
-        'auto_next'         => ['type' => 'integer',      'label' => 'NewsletterAutoNext',     'enabled' => 1, 'position' => 176, 'notnull' => 1, 'visible' => 0, 'default' => 0],
+        'auto_next'         => ['type' => 'integer',      'label' => 'NewsletterAutoNext',     'enabled' => 1, 'position' => 176, 'notnull' => 1, 'visible' => 0, 'default' => '0'],
         'fk_previous'       => ['type' => 'integer',      'label' => 'NewsletterPrevious',     'enabled' => 1, 'position' => 177, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
         'date_last_send'    => ['type' => 'datetime',     'label' => 'NewsletterDateLastSend', 'enabled' => 1, 'position' => 180, 'notnull' => 0, 'visible' => 2, 'noteditable' => 1, 'disableedit' => 1],
-        'nb_sent'           => ['type' => 'integer',      'label' => 'NewsletterListNbSent',   'enabled' => 1, 'position' => 185, 'notnull' => 1, 'visible' => 2, 'noteditable' => 1, 'default' => 0, 'disableedit' => 1, 'csslist' => 'right'],
-        'nb_errors'         => ['type' => 'integer',      'label' => 'NewsletterNbErrors',     'enabled' => 1, 'position' => 190, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'default' => 0, 'disableedit' => 1],
+        'nb_sent'           => ['type' => 'integer',      'label' => 'NewsletterListNbSent',   'enabled' => 1, 'position' => 185, 'notnull' => 1, 'visible' => 2, 'noteditable' => 1, 'default' => '0', 'disableedit' => 1, 'csslist' => 'right'],
+        'nb_errors'         => ['type' => 'integer',      'label' => 'NewsletterNbErrors',     'enabled' => 1, 'position' => 190, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1, 'default' => '0', 'disableedit' => 1],
         'note_private'      => ['type' => 'html',         'label' => 'NotePrivate',            'enabled' => 1, 'position' => 300, 'notnull' => 0, 'visible' => 0],
         'fk_user_creat'     => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserAuthor', 'enabled' => 1, 'position' => 500, 'notnull' => 1, 'visible' => 0, 'noteditable' => 1],
         'fk_user_modif'     => ['type' => 'integer:User:user/class/user.class.php', 'label' => 'UserModif',  'enabled' => 1, 'position' => 510, 'notnull' => 0, 'visible' => 0, 'noteditable' => 1],
