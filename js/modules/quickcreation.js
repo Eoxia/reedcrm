@@ -73,8 +73,12 @@ window.reedcrm.quickcreation.init = function() {
  */
 window.reedcrm.quickcreation.event = function() {
 
-  // Show the dedicated contact fields when the contact is not the third party one
-  $(document).on('change', '.reedcrm-same-contact', window.reedcrm.quickcreation.toggleSameContactFields);
+  // Show the fields of a dedicated contact when another person than the contact typed above is ticked
+  $(document).on('change', '.reedcrm-other-contact', window.reedcrm.quickcreation.toggleOtherContactFields);
+
+  // Contact identical to the third party or new blank one: own phone and email, name of the third party as placeholder
+  $(document).on('change', '.reedcrm-contact-mode', window.reedcrm.quickcreation.toggleContactMode);
+  $(document).on('input', '#name', window.reedcrm.quickcreation.toggleContactMode);
 
   // Get current GPS position of navigator user
   window.reedcrm.quickcreation.getCurrentPosition();
@@ -283,12 +287,33 @@ window.reedcrm.quickcreation.toDateTimeLocal = function(date) {
  * Toggle the fields of a dedicated contact (address or project) on checkbox change
  *
  * @since   22.0.0
- * @version 22.0.0
+ * @version 23.4.0
  *
  * @return {void}
  */
-window.reedcrm.quickcreation.toggleSameContactFields = function() {
-  $('.' + $(this).attr('data-target')).toggle(!$(this).is(':checked'));
+window.reedcrm.quickcreation.toggleOtherContactFields = function() {
+  $('.' + $(this).attr('data-target')).toggleClass('hideobject', !$(this).is(':checked'));
+};
+
+/**
+ * Show the phone and email of a new contact, hidden for a contact identical to the third party, which takes the name of
+ * the third party when none is typed (shown as placeholder)
+ *
+ * @since   23.4.0
+ * @version 23.4.0
+ *
+ * @return {void}
+ */
+window.reedcrm.quickcreation.toggleContactMode = function() {
+  const $same = $('#contact_mode_same');
+  if (!$same.length) {
+    return;
+  }
+
+  const same = $same.is(':checked');
+  $('.reedcrm-contact-own-details').toggleClass('hideobject', same);
+  $('.reedcrm-contact-same-help').toggleClass('hideobject', !same);
+  $('#lastname').attr('placeholder', same ? ($('#name').val() || '') : '');
 };
 
 /**

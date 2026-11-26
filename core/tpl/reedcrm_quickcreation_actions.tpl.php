@@ -27,12 +27,21 @@ if ($action == 'add') {
 			$thirdparty->note_private = GETPOST('note_private');
             $thirdparty->country_id   = $mysoc->country_id;
 
-			// Official company data brought by the SIREN search (module Sirene)
-			if (isModEnabled('sirene') && GETPOSTINT('has_done_sirene_search')) {
+			// Address typed in the form (REEDCRM_THIRDPARTY_ADDRESS_VISIBLE), or brought by the SIREN search (module Sirene),
+			// which fills the same fields
+			$sireneSearchDone = isModEnabled('sirene') && GETPOSTINT('has_done_sirene_search');
+			if ($sireneSearchDone || getDolGlobalInt('REEDCRM_THIRDPARTY_ADDRESS_VISIBLE') > 0) {
+				$thirdparty->address = GETPOST('address', 'alphanohtml');
+				$thirdparty->zip     = GETPOST('zipcode', 'alphanohtml');
+				$thirdparty->town    = GETPOST('town', 'alphanohtml');
+				if (GETPOSTINT('country_id') > 0) {
+					$thirdparty->country_id = GETPOSTINT('country_id');
+				}
+			}
+
+			// Official company data brought by the SIREN search
+			if ($sireneSearchDone) {
 				$thirdparty->name_alias           = GETPOST('name_alias', 'alphanohtml');
-				$thirdparty->address              = GETPOST('address', 'alphanohtml');
-				$thirdparty->zip                  = GETPOST('zipcode', 'alphanohtml');
-				$thirdparty->town                 = GETPOST('town', 'alphanohtml');
 				$thirdparty->state_id             = GETPOSTINT('state_id');
 				$thirdparty->idprof1              = GETPOST('idprof1', 'alphanohtml');
 				$thirdparty->idprof2              = GETPOST('idprof2', 'alphanohtml');
@@ -41,9 +50,6 @@ if ($action == 'add') {
 				$thirdparty->tva_intra            = GETPOST('tva_intra', 'alphanohtml');
 				$thirdparty->effectif_id          = GETPOSTINT('effectif_id');
 				$thirdparty->forme_juridique_code = GETPOST('forme_juridique_code', 'alphanohtml');
-				if (GETPOSTINT('country_id') > 0) {
-					$thirdparty->country_id = GETPOSTINT('country_id');
-				}
 
 				$thirdparty->array_options['options_sirene_company_admin_status'] = GETPOST('options_sirene_company_admin_status', 'alphanohtml');
 				$thirdparty->array_options['options_sirene_update_date']          = dol_now();
@@ -73,13 +79,31 @@ if ($action == 'add') {
 					}
 				}
 
-				if (!empty(GETPOST('lastname', 'alpha'))) {
-					$contact->socid     = !empty($thirdpartyID) ? $thirdpartyID : '';
-					$contact->lastname  = GETPOST('lastname', 'alpha');
+				// Contact identical to the third party: its phone, email and address, and its name when none is typed.
+				// A new contact gets the details typed in the contact block, and is created only when it has a name
+				$contactSame     = GETPOST('contact_mode', 'aZ09') === 'same';
+				$contactLastname = GETPOST('lastname', 'alpha');
+				if ($contactSame && dol_strlen($contactLastname) == 0) {
+					$contactLastname = dol_substr($thirdparty->name, 0, 50);
+				}
+				if ($permissiontoaddcontact && dol_strlen($contactLastname) > 0) {
+					$contact->socid     = $thirdpartyID;
+					$contact->lastname  = $contactLastname;
 					$contact->firstname = GETPOST('firstname', 'alpha');
 					$contact->poste     = GETPOST('job', 'alpha');
-					$contact->email     = trim(GETPOST('email_contact', 'custom', 0, FILTER_SANITIZE_EMAIL));
-					$contact->phone_pro = GETPOST('phone_pro', 'alpha');
+					if ($contactSame) {
+						// The posted email, never the placeholder a third party without email is given
+						$contact->email      = trim(GETPOST('email_thirdparty', 'custom', 0, FILTER_SANITIZE_EMAIL));
+						$contact->phone_pro  = $thirdparty->phone;
+						$contact->address    = $thirdparty->address;
+						$contact->zip        = $thirdparty->zip;
+						$contact->town       = $thirdparty->town;
+						$contact->state_id   = $thirdparty->state_id;
+						$contact->country_id = $thirdparty->country_id;
+					} else {
+						$contact->email     = trim(GETPOST('email_contact', 'custom', 0, FILTER_SANITIZE_EMAIL));
+						$contact->phone_pro = GETPOST('phone_pro', 'alpha');
+					}
 
 					$contactID = $contact->create($user);
 					if ($contactID > 0) {
@@ -171,36 +195,15 @@ if ($action == 'add') {
 					}
 				}
 
-				$defaultref = '';
-				$obj        = empty($conf->global->PROJECT_TASK_ADDON) ? 'mod_task_simple' : $conf->global->PROJECT_TASK_ADDON;
-
-				if (!empty($conf->global->PROJECT_TASK_ADDON) && is_readable(DOL_DOCUMENT_ROOT . '/core/modules/project/task/' . $conf->global->PROJECT_TASK_ADDON . '.php')) {
-					require_once DOL_DOCUMENT_ROOT . '/core/modules/project/task/' . $conf->global->PROJECT_TASK_ADDON . '.php';
-					$modTask    = new $obj();
-					$defaultref = $modTask->getNextValue($thirdparty, $task);
-				}
-
-				$task->fk_project = $projectID;
-				$task->ref        = $defaultref;
-				$task->label      = (!empty($conf->global->REEDCRM_TASK_LABEL_VALUE) ? $conf->global->REEDCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
-				$task->date_c     = dol_now();
-
-				$taskID = $task->create($user);
-				if ($taskID > 0) {
-					$task->add_contact($user->id, 'TASKEXECUTIVE', 'internal');
-					$project->array_options['commtask'] = $taskID;
-					$project->update($user);
-				} else {
-					setEventMessages($task->error, $task->errors, 'errors');
-					$error++;
-				}
+				// No task is created here: the commercial follow-up task is created by the first time spent on the project
+				// (event, quick event, call list), see reedcrm_timespent_get_or_create_task()
 
 				// Address contact: the one carrying the address of the project (PROJECTADDRESS role)
 				$addressContactID = 0;
 				$addressDetail    = trim(GETPOST('address_detail', 'restricthtml'));
 				if (dol_strlen($addressDetail) > 0) {
 					$addressContact = new Contact($db);
-					if (GETPOSTISSET('address_contact_same') && !empty($contactID) && $addressContact->fetch($contactID) > 0) {
+					if (!GETPOSTISSET('address_contact_other') && !empty($contactID) && $addressContact->fetch($contactID) > 0) {
 						// Same person as the third party contact, only the address is completed
 						$addressContact->address = $addressDetail;
 						if ($addressContact->update($contactID, $user) > 0) {
@@ -250,10 +253,14 @@ if ($action == 'add') {
 					$addressContact->updateExtraField('address_status');
 				}
 
-				// Project contact (PROJECTCONTRIBUTOR role)
-				$projectContactID = 0;
-				if (GETPOSTISSET('project_contact_same')) {
-					$projectContactID = !empty($contactID) ? $contactID : 0;
+				// Project contact (PROJECTCONTRIBUTOR role): the contact typed above, unless another person is ticked
+				$projectContactID     = 0;
+				$projectContactObject = null;
+				if (!GETPOSTISSET('project_contact_other')) {
+					if (!empty($contactID) && $contactID > 0) {
+						$projectContactID     = $contactID;
+						$projectContactObject = $contact;
+					}
 				} elseif (!empty(GETPOST('lastname_project', 'alpha'))) {
 					$projectContact            = new Contact($db);
 					$projectContact->socid     = !empty($thirdpartyID) ? $thirdpartyID : '';
@@ -263,7 +270,9 @@ if ($action == 'add') {
 					$projectContact->email     = trim(GETPOST('email_project', 'custom', 0, FILTER_SANITIZE_EMAIL));
 
 					$projectContactID = $projectContact->create($user);
-					if ($projectContactID < 0) {
+					if ($projectContactID > 0) {
+						$projectContactObject = $projectContact;
+					} else {
 						setEventMessages($projectContact->error, $projectContact->errors, 'errors');
 						$error++;
 					}
@@ -271,6 +280,25 @@ if ($action == 'add') {
 
 				if ($projectContactID > 0) {
 					$project->add_contact($projectContactID, 'PROJECTCONTRIBUTOR', 'external');
+
+					// The project contact gives its name, phone and email to the contact details of the project (list
+					// column, project card, App), as adding a contact to an opportunity does in the App. What was typed
+					// in the project block wins
+					$projectContactDetails = [
+						'reedcrm_lastname'  => $projectContactObject->lastname,
+						'reedcrm_firstname' => $projectContactObject->firstname,
+						'projectphone'      => $projectContactObject->phone_pro,
+						'reedcrm_email'     => $projectContactObject->email,
+					];
+					foreach ($projectContactDetails as $key => $value) {
+						if (isset($extrafields->attributes[$project->table_element]['label'][$key]) && trim((string) ($project->array_options['options_' . $key] ?? '')) === '' && trim((string) $value) !== '') {
+							$project->array_options['options_' . $key] = $value;
+							if ($project->updateExtraField($key) < 0) {
+								setEventMessages($project->error, $project->errors, 'errors');
+								$error++;
+							}
+						}
+					}
 				}
 			} else {
 				$langs->load('errors');

@@ -268,6 +268,17 @@ print '<td class="center">';
 //print ajax_constantonoff('REEDCRM_THIRDPARTY_NAME_VISIBLE');
 print '</td></td><td></td></tr>';
 
+// Address, zip and town, country
+print '<tr class="oddeven"><td>';
+print $langs->trans('Address');
+print '</td><td>';
+print $langs->trans('QuickCreationThirdPartyAddressDescription');
+print '</td>';
+
+print '<td class="center">';
+print ajax_constantonoff('REEDCRM_THIRDPARTY_ADDRESS_VISIBLE');
+print '</td><td></td></tr>';
+
 // Phone
 print '<tr class="oddeven"><td>';
 print $langs->trans('Phone');

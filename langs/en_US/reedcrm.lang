@@ -318,6 +318,8 @@ QuickCreationReminderTitlePlaceholder = Reminder subject (optional)
 QuickCreationReminderDefaultLabel = Reminder: %s
 QuickCreationReminderCreated = Reminder scheduled for %s
 ErrorQuickCreationReminderDateInPast = The reminder date must be in the future
+QuickCreationThirdPartyAddressDescription = Show the address, zip code, town and country of the third party
+QuickCreationProjectAddress = Project address
 ErrorQuickCreationReminder = The opportunity was created, but not its reminder
 
 # Voice description - Description written by the AI from the voice note
@@ -350,8 +352,14 @@ ProjectPhone = Project phone
 ErrorInvalidProjectPhone = The phone number is not valid or is too long (max 20 characters)
 ContactInformations = Contact details
 Vocal = Voice
-AddressContactSameAsThirdPartyContact = Address contact same as third party contact
-ProjectContactSameAsThirdPartyContact = Project contact same as third party contact
+QuickCreationContactMode = Contact
+QuickCreationContactSame = Same as the third party
+QuickCreationContactNew = New contact
+QuickCreationContactSameHelp = Takes the phone, email and address of the third party, and its name when none is typed.
+QuickCreationAddressContact = Contact at this address
+QuickCreationProjectContact = Project contact
+QuickCreationOtherContact = Another person than the contact above
+QuickCreationProjectContactHelp = Their name, phone and email fill the contact details of the project.
 OpportunityStatusDescription = Opportunity status selection <br> Default value: <b> Prospection </b>
 OpportunityAmountDescription = Opportunity amount selection <br> Default value: <b> 3000 € </b>
 ProspectCustomerDescription = Third-party nature selection <br> Default value: <b> Prospect </b>

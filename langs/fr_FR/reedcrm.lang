@@ -42,8 +42,14 @@ ProjectPhone = Téléphone projet
 ErrorInvalidProjectPhone = Le numéro de téléphone n'est pas valide ou est trop long (max 20 caractères)
 ContactInformations = Coordonnées
 Vocal = Vocal
-AddressContactSameAsThirdPartyContact = Contact de l'adresse identique au contact du tiers
-ProjectContactSameAsThirdPartyContact = Contact du projet identique au contact du tiers
+QuickCreationContactMode = Contact
+QuickCreationContactSame = Identique au tiers
+QuickCreationContactNew = Nouveau contact
+QuickCreationContactSameHelp = Reprend le téléphone, l'e-mail et l'adresse du tiers, et son nom si aucun n'est saisi.
+QuickCreationAddressContact = Contact de cette adresse
+QuickCreationProjectContact = Contact du projet
+QuickCreationOtherContact = Une autre personne que le contact ci-dessus
+QuickCreationProjectContactHelp = Son nom, son téléphone et son e-mail remplissent les coordonnées du projet.
 
 # Frontend - Frontend
 QuickCreationFrontendSuccess = Ajout rapide d'opportunité effectué avec succès
@@ -56,6 +62,8 @@ QuickCreationReminderTitlePlaceholder = Objet du rappel (facultatif)
 QuickCreationReminderDefaultLabel = Rappel : %s
 QuickCreationReminderCreated = Rappel programmé le %s
 ErrorQuickCreationReminderDateInPast = La date du rappel doit être dans le futur
+QuickCreationThirdPartyAddressDescription = Afficher l'adresse, le code postal, la ville et le pays du tiers
+QuickCreationProjectAddress = Adresse du projet
 ErrorQuickCreationReminder = L'opportunité a bien été créée, mais pas son rappel
 
 # Voice description - Description rédigée par l'IA depuis le vocal
