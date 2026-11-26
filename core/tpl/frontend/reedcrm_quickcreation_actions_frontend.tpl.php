@@ -25,7 +25,7 @@
  * The following vars must be defined :
  * Global     : $conf, $langs, $user
  * Parameters : $action, $subaction
- * Objects    : $extraFields, $geolocation, $project, $task
+ * Objects    : $extraFields, $geolocation, $project
  * Variable   : $error, $permissionToAddProject
  */
 
@@ -699,11 +699,10 @@ if ($action == 'get_contact_details') {
 
 if ($action == 'add') {
     $numberingModules = [
-        'project'      => $conf->global->PROJECT_ADDON,
-        'project/task' => $conf->global->PROJECT_TASK_ADDON,
+        'project' => $conf->global->PROJECT_ADDON,
     ];
 
-    list ($refProjectMod, $refTaskMod) = saturne_require_objects_mod($numberingModules);
+    list ($refProjectMod) = saturne_require_objects_mod($numberingModules);
 
     $project->ref         = $refProjectMod->getNextValue(null, $project);
     $project->title       = GETPOST('title');
@@ -821,22 +820,8 @@ if ($action == 'add') {
             setEventMessage($langs->transnoentities('GeolocationError', GETPOST('geolocation-error')));
         }
 
-        $task->fk_project = $projectID;
-        $task->ref        = $refTaskMod->getNextValue(null, $task);
-        $task->label      = (!empty($conf->global->REEDCRM_TASK_LABEL_VALUE) ? $conf->global->REEDCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
-        $task->date_c     = dol_now();
-
-        $taskID = $task->create($user);
-        if ($taskID > 0) {
-            $task->add_contact($user->id, 'TASKEXECUTIVE', 'internal');
-            // updateExtraField() only reads the prefixed key: without it the task was never linked, and a
-            // second one was created later on by the quick event and the call lists
-            $project->array_options['options_commtask'] = $taskID;
-            $project->updateExtraField('commtask');
-        } else {
-            setEventMessages($task->error, $task->errors, 'errors');
-            $error++;
-        }
+        // No task is created here: the commercial follow-up task is created by the first time spent on the project
+        // (event, quick event, call list), see reedcrm_timespent_get_or_create_task()
 
         $contactid = GETPOST('contactid', 'int');
         if ($contactid > 0) {

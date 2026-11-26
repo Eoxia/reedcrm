@@ -195,29 +195,8 @@ if ($action == 'add') {
 					}
 				}
 
-				$defaultref = '';
-				$obj        = empty($conf->global->PROJECT_TASK_ADDON) ? 'mod_task_simple' : $conf->global->PROJECT_TASK_ADDON;
-
-				if (!empty($conf->global->PROJECT_TASK_ADDON) && is_readable(DOL_DOCUMENT_ROOT . '/core/modules/project/task/' . $conf->global->PROJECT_TASK_ADDON . '.php')) {
-					require_once DOL_DOCUMENT_ROOT . '/core/modules/project/task/' . $conf->global->PROJECT_TASK_ADDON . '.php';
-					$modTask    = new $obj();
-					$defaultref = $modTask->getNextValue($thirdparty, $task);
-				}
-
-				$task->fk_project = $projectID;
-				$task->ref        = $defaultref;
-				$task->label      = (!empty($conf->global->REEDCRM_TASK_LABEL_VALUE) ? $conf->global->REEDCRM_TASK_LABEL_VALUE : $langs->trans('CommercialFollowUp')) . ' - ' . $project->title;
-				$task->date_c     = dol_now();
-
-				$taskID = $task->create($user);
-				if ($taskID > 0) {
-					$task->add_contact($user->id, 'TASKEXECUTIVE', 'internal');
-					$project->array_options['commtask'] = $taskID;
-					$project->update($user);
-				} else {
-					setEventMessages($task->error, $task->errors, 'errors');
-					$error++;
-				}
+				// No task is created here: the commercial follow-up task is created by the first time spent on the project
+				// (event, quick event, call list), see reedcrm_timespent_get_or_create_task()
 
 				// Address contact: the one carrying the address of the project (PROJECTADDRESS role)
 				$addressContactID = 0;
