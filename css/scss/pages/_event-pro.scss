@@ -781,6 +781,306 @@ body > .select2-drop.select2-drop-active {
     white-space: nowrap;
 }
 
+// Relaunches still to do of the object under the event form (eventpro_close_todo_events.tpl.php), on the desktop card,
+// in its modal and in the App: the ticked ones are closed with the event. Folded under one line, boxed like the reminder
+// toggle below it, which unfolds the list
+.eventpro-close-todo {
+    margin: 4px 0 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+
+    &__toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 9px 12px;
+        border: 0;
+        border-radius: 6px;
+        background: none;
+        color: #334155;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+
+        &:hover {
+            background: #f8fafc;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #2c7be5;
+            outline-offset: -2px;
+        }
+    }
+
+    &.is-open &__toggle {
+        border-radius: 6px 6px 0 0;
+    }
+
+    &__picto {
+        flex-shrink: 0;
+        color: #94a3b8;
+    }
+
+    &__title {
+        min-width: 0;
+    }
+
+    // How many are listed, how many are late, how many are ticked: read without unfolding
+    &__badges {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+    }
+
+    &__count,
+    &__overdue,
+    &__ticked {
+        flex-shrink: 0;
+        padding: 1px 8px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    &__count {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    &__overdue {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #fef2f2;
+        color: #b91c1c;
+
+        .fas {
+            font-size: 10px;
+        }
+    }
+
+    &__ticked {
+        background: #dcfce7;
+        color: #166534;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    &__chevron {
+        flex-shrink: 0;
+        margin-left: auto;
+        color: #94a3b8;
+        font-size: 12px;
+        transition: transform 0.2s;
+    }
+
+    &.is-open &__chevron {
+        transform: rotate(180deg);
+    }
+
+    &__body {
+        padding: 0 12px 12px;
+        border-top: 1px solid #e2e8f0;
+        border-radius: 0 0 6px 6px;
+        background: #f8fafc;
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    &__tools {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+    }
+
+    &__all {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #475569;
+        font-size: 12px;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+
+        input {
+            margin: 0;
+        }
+    }
+
+    &__help {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 260px;
+        overflow-y: auto;
+    }
+
+    // Kept at their height in the list, which scrolls past 260px instead of squeezing them
+    &__item {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.15s, border-color 0.15s;
+
+        &:hover {
+            border-color: #cbd5e1;
+        }
+
+        input {
+            flex-shrink: 0;
+            margin: 0;
+        }
+
+        .reedcrm-relaunch-type-picto {
+            flex-shrink: 0;
+            width: 16px;
+            text-align: center;
+        }
+
+        // Ticked: it will be done once the event is added
+        &.is-checked {
+            border-color: #86efac;
+            background: #f0fdf4;
+
+            .eventpro-close-todo__label {
+                color: #64748b;
+                text-decoration: line-through;
+            }
+        }
+    }
+
+    &__what {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    &__label,
+    &__who {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__label {
+        color: #1e293b;
+    }
+
+    &__who,
+    &__when {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    &__when {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .is-overdue .eventpro-close-todo__when {
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: #fef2f2;
+        color: #b91c1c;
+        font-weight: 600;
+    }
+}
+
+// In the App, lines big enough for a finger. The phone is too narrow for the title and the day side by side: the title
+// takes the line, wrapped, the day goes under it
+.pwa-relaunch-form .eventpro-close-todo {
+    margin: 0 0 16px;
+
+    // The counters go under the title, the chevron stays on the right of its first line
+    .eventpro-close-todo__toggle {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        column-gap: 10px;
+        row-gap: 6px;
+        min-height: 44px;
+        padding: 10px 12px;
+    }
+
+    .eventpro-close-todo__picto,
+    .eventpro-close-todo__title,
+    .eventpro-close-todo__chevron {
+        grid-row: 1;
+    }
+
+    .eventpro-close-todo__badges {
+        grid-row: 2;
+        grid-column: 2;
+    }
+
+    .eventpro-close-todo__chevron {
+        grid-column: 3;
+        margin-left: 0;
+    }
+
+    // The page scrolls, not a box inside it, under a finger
+    .eventpro-close-todo__list {
+        max-height: none;
+        overflow: visible;
+    }
+
+    .eventpro-close-todo__item {
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: 10px;
+        row-gap: 4px;
+        min-height: 44px;
+        padding: 8px 12px;
+
+        input,
+        .reedcrm-relaunch-type-picto {
+            grid-row: span 2;
+        }
+    }
+
+    .eventpro-close-todo__label {
+        white-space: normal;
+    }
+
+    .eventpro-close-todo__when {
+        grid-column: 3;
+        justify-self: start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .eventpro-close-todo__item,
+    .eventpro-close-todo__chevron {
+        transition: none;
+    }
+}
+
 // Duration beside the date of the event: it sets the end of the event and the time spent on its project
 .reedcrm-event-duration {
     display: inline-flex;

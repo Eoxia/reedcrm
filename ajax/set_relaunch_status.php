@@ -98,21 +98,7 @@ if (!reedcrm_user_can_edit_relaunch($user, (int) $actionComm->authorid, (int) $a
 }
 
 // Only what the panel lists can be changed from it: an event tagged as a relaunch or a reminder
-$categoryIds = reedcrm_get_relaunch_category_ids();
-$isRelaunch  = false;
-if (!empty($categoryIds)) {
-    $sql  = 'SELECT COUNT(*) as nb FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm';
-    $sql .= ' WHERE fk_actioncomm = ' . ((int) $actionComm->id);
-    $sql .= ' AND fk_categorie IN (' . implode(',', $categoryIds) . ')';
-
-    $resql = $db->query($sql);
-    if ($resql) {
-        $obj        = $db->fetch_object($resql);
-        $isRelaunch = !empty($obj->nb);
-        $db->free($resql);
-    }
-}
-if (!$isRelaunch) {
+if (!reedcrm_is_relaunch_event($db, (int) $actionComm->id)) {
     reedcrm_set_relaunch_status_fail($langs->transnoentitiesnoconv('RelaunchStatusNotARelaunch'));
 }
 
@@ -128,21 +114,8 @@ if ($status !== $current) {
     $actionComm->oldcopy = clone $actionComm;
 
     if ($isClosed && !$wasClosed) {
-        // A relaunch of the past keeps its dates. One still to come is closed now, ahead of time: it
-        // moves to now, or it would stay in the future, counted on neither button. Now is the minute
-        // already started, strictly before the instant the counters are worked out right below, or
-        // the event would sit on the boundary, neither past nor to come
-        $now = dol_now();
-        if (empty($actionComm->datep) || $actionComm->datep > $now) {
-            $previous = [
-                'datep' => (int) $actionComm->datep,
-                'datef' => (int) $actionComm->datef,
-            ];
-
-            $doneAt            = ($now - 1) - (($now - 1) % 60);
-            $actionComm->datep = $doneAt;
-            $actionComm->datef = $doneAt;
-        }
+        // A relaunch still to come is closed now, ahead of time
+        $previous = reedcrm_relaunch_close_ahead_of_time($actionComm);
     } elseif (!$isClosed && $wasClosed && $restoreDatep > 0) {
         $actionComm->datep = $restoreDatep;
         $actionComm->datef = $restoreDatef >= $restoreDatep ? $restoreDatef : '';

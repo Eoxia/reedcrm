@@ -203,6 +203,21 @@ if (empty($eventProRedirectAfterTicket)) {
             setEventMessages($langs->trans('ErrorEventVoiceNotAttached'), null, 'warnings');
         }
 
+        // Relaunches still to do ticked under the note tab (view_eventpro_actioncomm_note.tpl.php): the exchange this
+        // event logs dealt with their subjects, they are closed with it
+        $closedEvents = 0;
+        $closeEventIds = GETPOST('close_event_ids', 'array:int');
+        if ($result > 0 && !empty($closeEventIds)) {
+            require_once __DIR__ . '/../../../../lib/reedcrm_relaunch.lib.php';
+
+            [$closeProjectId, $closeSocid] = reedcrm_get_relaunch_object_scope($object);
+            $closedEvents = reedcrm_close_relaunch_events($db, $user, $closeEventIds, $closeProjectId, $closeSocid);
+        }
+        $eventCreatedMessage = $langs->trans('EventCreated');
+        if ($closedEvents > 0) {
+            $eventCreatedMessage .= '. ' . $langs->trans('RelaunchEventsClosed', $closedEvents);
+        }
+
         // The duration of a done event is time spent on its project, logged on the commercial follow-up task.
         // An event still to do has not taken any time yet.
         $timeSpentError = '';
@@ -247,10 +262,10 @@ if (empty($eventProRedirectAfterTicket)) {
         if ($result > 0) {
             if ($isModal) {
                 header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => $langs->trans('EventCreated'), 'warning' => $timeSpentError]);
+                echo json_encode(['success' => true, 'message' => $eventCreatedMessage, 'warning' => $timeSpentError]);
                 exit;
             }
-            setEventMessages($langs->trans('EventCreated'), null);
+            setEventMessages($eventCreatedMessage, null);
             if ($timeSpentError !== '') {
                 setEventMessages($timeSpentError, null, 'warnings');
             }

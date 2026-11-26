@@ -464,6 +464,37 @@ window.reedcrm.eventpro.event = function () {
     $(this).closest('form').find('#reminder_fields').slideToggle(200);
   });
 
+  // Relaunches to close with the event (eventpro_close_todo_events.tpl.php): folded under one line, which unfolds the
+  // list. A click on a line ticks its box, as a label would (the theme boxes the labels of the form like fields), a
+  // ticked line reads as done, and the box above the list ticks them all
+  $(document).on('click.reedcrmEventProModal', '.eventpro-close-todo__toggle', function () {
+    var $block = $(this).closest('.eventpro-close-todo');
+    var open   = !$block.hasClass('is-open');
+    $block.toggleClass('is-open', open);
+    $block.find('.eventpro-close-todo__body').prop('hidden', !open);
+    $(this).attr('aria-expanded', open ? 'true' : 'false');
+  });
+  $(document).on('click.reedcrmEventProModal', '.eventpro-close-todo__item, .eventpro-close-todo__all', function (e) {
+    if ($(e.target).is('input')) {
+      return;
+    }
+    var $input = $(this).find('input[type="checkbox"]').first();
+    $input.prop('checked', !$input.prop('checked')).trigger('change');
+  });
+  $(document).on('change.reedcrmEventProModal', '.eventpro-close-todo-event', function () {
+    $(this).closest('.eventpro-close-todo__item').toggleClass('is-checked', this.checked);
+    window.reedcrm.eventpro.refreshCloseTodo($(this).closest('.eventpro-close-todo'));
+  });
+  $(document).on('change.reedcrmEventProModal', '.eventpro-close-todo-all', function () {
+    var checked = this.checked;
+    var $block  = $(this).closest('.eventpro-close-todo');
+    $block.find('.eventpro-close-todo-event').each(function () {
+      this.checked = checked;
+      $(this).closest('.eventpro-close-todo__item').toggleClass('is-checked', checked);
+    });
+    window.reedcrm.eventpro.refreshCloseTodo($block);
+  });
+
   // "+" of the note and ticket blocks of the CardPro, and left "+" of the relaunch widget of its banner: when the form
   // already shows the right tab, go to its first field rather than reload the page
   $(document).on('click.reedcrmEventProModal', '.reedcrm-cardpro .cardpro-block-add[data-focus], .reedcrm-cardpro-page .reedcrm-relaunch-add[data-focus]', function (e) {
@@ -530,6 +561,28 @@ window.reedcrm.eventpro.event = function () {
       window.reedcrm.eventpro.loadModalContent(modalUrl);
     }
   });
+};
+
+/**
+ * Counters of the relaunches to close with the event: "N to close" on the line that folds the list, still read once it
+ * is folded again, and the box "tick all", ticked when every line is, half ticked when some are
+ *
+ * @memberof ReedCRM_EventPro
+ *
+ * @param  {jQuery} $block Block of the relaunches to close (.eventpro-close-todo)
+ * @returns {void}
+ */
+window.reedcrm.eventpro.refreshCloseTodo = function ($block) {
+  var total   = $block.find('.eventpro-close-todo-event').length;
+  var checked = $block.find('.eventpro-close-todo-event:checked').length;
+
+  $block.find('.eventpro-close-todo__ticked')
+    .text(String($block.data('ticked-label') || '%s').replace('%s', checked))
+    .prop('hidden', checked === 0);
+
+  $block.find('.eventpro-close-todo-all')
+    .prop('checked', checked === total)
+    .prop('indeterminate', checked > 0 && checked < total);
 };
 
 /**

@@ -29,6 +29,9 @@ require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
         </label>
     </div>
 
+    <?php // Relaunches still to do of the object, ticked when the exchange dealt with their subject ?>
+    <?php require __DIR__ . '/eventpro_close_todo_events.tpl.php'; ?>
+
     <label class="eventpro-reminder-toggle" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;">
         <input type="checkbox" id="toggle_reminder" name="add_reminder" value="1" style="margin: 0;">
         <i class="far fa-bell"></i>
