@@ -337,9 +337,49 @@ class ActionsReedcrm
                     $this->resprints = $out;
                 }
             }
+
+            // Latest newsletters received by the third party, beside its latest objects
+            $this->resprints .= $this->getNewsletterReceivedBlock($object);
         }
 
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Block "Latest newsletters" of the commercial card of a third party: its last mails, a link to its "Newsletters"
+     * tab. Nothing without the right to read the newsletters or without any mail
+     *
+     * @param  CommonObject $object Third party
+     * @return string               HTML
+     */
+    protected function getNewsletterReceivedBlock(CommonObject $object): string
+    {
+        global $langs, $user;
+
+        if (!isModEnabled('reedcrm') || !$user->hasRight('reedcrm', 'newsletter', 'read') || empty($object->id)) {
+            return '';
+        }
+
+        require_once __DIR__ . '/reedcrmnewsletter.class.php';
+        require_once __DIR__ . '/../lib/reedcrm_newsletter.lib.php';
+        $langs->load('reedcrm@reedcrm');
+
+        $isThirdparty  = true;
+        $received      = reedcrm_newsletter_fetch_received($this->db, 'thirdparty', (int) $object->id, 5);
+        $receivedCount = reedcrm_newsletter_count_received($this->db, 'thirdparty', (int) $object->id);
+        if ($receivedCount === 0) {
+            return '';
+        }
+        $subscription         = null;
+        $unsubscribedContacts = [];
+        $permissiontoadd      = $user->hasRight('reedcrm', 'newsletter', 'write');
+        $pageUrl              = dol_buildpath('/reedcrm/view/newsletter/newsletter_received.php', 1) . '?socid=' . ((int) $object->id);
+        $compact              = true;
+
+        ob_start();
+        require __DIR__ . '/../core/tpl/newsletter/newsletter_received.tpl.php';
+
+        return (string) ob_get_clean();
     }
 
     /**
@@ -1800,7 +1840,25 @@ class ActionsReedcrm
      */
     public function completeTabsHead(array $parameters): int
     {
-        global $langs;
+        global $langs, $user;
+
+        // "Newsletters" tab of the contacts and of the third parties: the mails received, and whether a contact
+        // still receives them. Told by the object, the tabs are printed by several pages of different contexts
+        // The prepare_head() functions call the hook twice (core tabs, then the tabs of the modules): added once
+        $tabObject = $parameters['object'] ?? null;
+        $tabThere  = in_array('reedcrmnewsletter', array_column(array_filter((array) ($parameters['head'] ?? []), 'is_array'), 2), true);
+        if (!$tabThere && ($parameters['mode'] ?? '') === 'add' && is_object($tabObject) && in_array($tabObject->element ?? '', ['contact', 'societe'], true) && !empty($tabObject->id)
+            && isModEnabled('reedcrm') && $user->hasRight('reedcrm', 'newsletter', 'read')) {
+            require_once __DIR__ . '/../lib/reedcrm_newsletter.lib.php';
+            $langs->load('reedcrm@reedcrm');
+
+            $isThirdparty = $tabObject->element === 'societe';
+            $nbReceived   = reedcrm_newsletter_count_received($this->db, $isThirdparty ? 'thirdparty' : 'contact', (int) $tabObject->id);
+            $rank         = count($parameters['head']);
+            $parameters['head'][$rank][0] = dol_buildpath('/reedcrm/view/newsletter/newsletter_received.php', 1) . '?' . ($isThirdparty ? 'socid=' : 'contactid=') . ((int) $tabObject->id);
+            $parameters['head'][$rank][1] = $langs->trans('Newsletters') . ($nbReceived > 0 ? '<span class="badge marginleftonlyshort">' . $nbReceived . '</span>' : '');
+            $parameters['head'][$rank][2] = 'reedcrmnewsletter';
+        }
 
         if ($this->isContext($parameters, ['invoicereccard', 'invoicereccontact']) && ($parameters['mode'] ?? '') === 'add') {
             $nbContact = 0;
@@ -2225,7 +2283,54 @@ class ActionsReedcrm
             'lib_path'       => $modulePath . '/lib/reedcrm_pocketrecording.lib.php',
         ];
 
+        $this->results['newsletter'] = [
+            'mainmenu'       => 'reedcrm',
+            'leftmenu'       => 'newsletter',
+            'langs'          => 'Newsletter',
+            'langfile'       => 'reedcrm@reedcrm',
+            'picto'          => 'fontawesome_fa-envelope-open-text_fas_#63ACC9',
+            'color'          => '#63ACC9',
+            'class_name'     => 'ReedcrmNewsletter',
+            'name_field'     => 'ref',
+            'post_name'      => 'fk_newsletter',
+            'link_name'      => 'newsletter',
+            'tab_type'       => 'newsletter',
+            'table_element'  => 'reedcrm_newsletter',
+            'hook_name_card' => 'newslettercard',
+            'hook_name_list' => 'newsletterlist',
+            'create_url'     => $modulePath . '/view/newsletter/newsletter_card.php',
+            'list_url'       => $modulePath . '/view/newsletter/newsletter_list.php',
+            'defaultsort'    => 't.rowid',
+            'defaultorder'   => 'DESC',
+            'class_path'     => $modulePath . '/class/reedcrmnewsletter.class.php',
+            'lib_path'       => $modulePath . '/lib/reedcrm_newsletter.lib.php',
+        ];
+
         return 0; // or return 1 to replace standard code
+    }
+
+    /**
+     * Overloading the emailElementlist hook : a type of email template for the newsletters, so that the
+     * administrator can write them in the setup of the email templates and pick them on a newsletter
+     *
+     * @param  array $parameters Hook metadatas (context, etc...)
+     * @return int               0 < on error, 0 on success, 1 to replace standard code
+     */
+    public function emailElementlist(array $parameters): int
+    {
+        global $langs;
+
+        if (!$this->isContext($parameters, ['emailtemplates']) || !isModEnabled('reedcrm')) {
+            return 0;
+        }
+
+        $langs->load('reedcrm@reedcrm');
+
+        $this->results = [
+            'reedcrm_newsletter' => img_picto('', 'fontawesome_fa-envelope-open-text_fas_#63ACC9', 'class="pictofixedwidth"') . dol_escape_htmltag($langs->trans('NewsletterTemplateType_reedcrm_newsletter')),
+        ];
+
+        return 0;
     }
 
     /**
@@ -2249,6 +2354,21 @@ class ActionsReedcrm
                 'classpath'     => 'reedcrm/class',
                 'classfile'     => 'calllist',
                 'classname'     => 'CallList',
+            ];
+        }
+
+        // The events of the sendings of the newsletters (see ReedcrmNewsletter::AGENDA_ELEMENT_TYPE), so that an event
+        // can be added by hand from the card. Not the bare "newsletter": the inline edit of Saturne would then write any
+        // field of a newsletter (status, body, sender) with the write right only, past the checks of its card
+        if (($parameters['elementType'] ?? '') === 'reedcrmnewsletter@reedcrm') {
+            $this->results = [
+                'module'        => 'reedcrm',
+                'element'       => 'newsletter',
+                'subelement'    => 'newsletter',
+                'table_element' => 'reedcrm_newsletter',
+                'classpath'     => 'reedcrm/class',
+                'classfile'     => 'reedcrmnewsletter',
+                'classname'     => 'ReedcrmNewsletter',
             ];
         }
 
@@ -2802,6 +2922,23 @@ class ActionsReedcrm
                 print '    }';
                 print '});';
                 print '</script>';
+            }
+        }
+
+        // Contact card: the newsletters received, beside the "Emailings sent" of Dolibarr that counts its own emailings
+        // only (0 for a contact who received newsletters)
+        if ($this->isContext($parameters, ['contactcard']) && $object instanceof Contact && $object->id > 0 && !in_array($action, ['create', 'edit', 'presend'], true)) {
+            global $user;
+
+            if ($user->hasRight('reedcrm', 'newsletter', 'read')) {
+                require_once __DIR__ . '/../lib/reedcrm_newsletter.lib.php';
+                require_once __DIR__ . '/../class/reedcrmnewsletter.class.php';
+                $langs->load('reedcrm@reedcrm');
+
+                $nbReceived = reedcrm_newsletter_count_received($this->db, 'contact', (int) $object->id);
+                print '<tr class="field_reedcrm_newsletters"><td>' . img_picto('', 'reedcrm_color@reedcrm', 'class="pictoModule pictofixedwidth"') . $langs->trans('NewsletterReceived') . '</td><td>';
+                print '<a class="badge badge-info" href="' . dol_buildpath('/reedcrm/view/newsletter/newsletter_received.php', 1) . '?contactid=' . ((int) $object->id) . '">' . $nbReceived . '</a>';
+                print '</td></tr>';
             }
         }
 

@@ -283,6 +283,12 @@ class modReedCRM extends DolibarrModules
             $i++ => ['REEDCRM_POCKET_LINK_CONTRACT', 'integer', 0, '', 0, 'current'],
             $i++ => ['REEDCRM_POCKET_LINK_TASK', 'integer', 0, '', 0, 'current'],
 
+            // CONST NEWSLETTER
+            $i++ => ['REEDCRM_NEWSLETTER_ADDON', 'chaine', 'mod_newsletter_standard', '', 0, 'current'],
+            $i++ => ['REEDCRM_NEWSLETTER_MAX_PER_RUN', 'integer', 100, '', 0, 'current'],
+            $i++ => ['REEDCRM_NEWSLETTER_UNSUBSCRIBE_LINK', 'integer', 1, '', 0, 'current'],
+            $i++ => ['REEDCRM_NEWSLETTER_AGENDA_EVENT', 'integer', 0, '', 0, 'current'],
+
             // CONST MODULE
             $i++ => ['REEDCRM_VERSION','chaine', $this->version, '', 0, 'current'],
             $i++ => ['REEDCRM_DB_VERSION', 'chaine', $this->version, '', 0, 'current'],
@@ -586,6 +592,23 @@ class modReedCRM extends DolibarrModules
                 'status'        => 1,
                 'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\') && isModEnabled(\'agenda\')',
                 'priority'      => 59
+            ],
+            12 => [
+                'label'         => $langs->transnoentities('NewsletterCronLabel'),
+                'jobtype'       => 'method',
+                'class'         => '/reedcrm/class/reedcrmnewslettercron.class.php',
+                'objectname'    => 'ReedcrmNewsletterCron',
+                'method'        => 'sendScheduledNewsletters',
+                'parameters'    => '',
+                'comment'       => $langs->transnoentities('NewsletterCronComment'),
+                // Every quarter of an hour: a scheduled newsletter leaves at most 15 minutes after its date, and
+                // one too big for a run goes on at the next ones
+                'frequency'     => 15,
+                'unitfrequency' => 60,
+                'datenextrun'   => dol_mktime(0, 0, 0, (int) date('m'), (int) date('d'), (int) date('Y'), 'tzserver'),
+                'status'        => 1,
+                'test'          => 'isModEnabled(\'saturne\') && isModEnabled(\'reedcrm\')',
+                'priority'      => 60
             ]
         ];
         /* END MODULEBUILDER CRON */
@@ -719,6 +742,29 @@ class modReedCRM extends DolibarrModules
         $this->rights[$r][1] = $langs->transnoentities('ReadDirectionDashboard');
         $this->rights[$r][4] = 'dashboard';
         $this->rights[$r][5] = 'direction';
+        $r++;
+
+        /* NEWSLETTER PERMISSIONS */
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('NewsletterRightRead');
+        $this->rights[$r][4] = 'newsletter';
+        $this->rights[$r][5] = 'read';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('NewsletterRightWrite');
+        $this->rights[$r][4] = 'newsletter';
+        $this->rights[$r][5] = 'write';
+        $r++;
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('NewsletterRightDelete');
+        $this->rights[$r][4] = 'newsletter';
+        $this->rights[$r][5] = 'delete';
+        $r++;
+        // Preparing is not sending: planning, activating and sending to the whole list need their own right
+        $this->rights[$r][0] = $this->numero . sprintf('%02d', $r + 1);
+        $this->rights[$r][1] = $langs->transnoentities('NewsletterRightSend');
+        $this->rights[$r][4] = 'newsletter';
+        $this->rights[$r][5] = 'send';
 
         /* END MODULEBUILDER PERMISSIONS */
 
@@ -1209,6 +1255,38 @@ class modReedCRM extends DolibarrModules
             'position' => 1000 + $r,
             'enabled'  => 'isModEnabled(\'reedcrm\')',
             'perms'    => '$user->hasRight(\'reedcrm\', \'pocketrecording\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm',
+            'type'     => 'left',
+            'titre'    => 'NewslettersMenu',
+            'prefix'   => '<i class="fas fa-envelope-open-text pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'newsletter',
+            'url'      => '/saturne/view/saturne_list.php?object_type=newsletter',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'newsletter\', \'read\')',
+            'target'   => '',
+            'user'     => 0,
+        ];
+
+        $this->menu[$r++] = [
+            'fk_menu'  => 'fk_mainmenu=reedcrm,fk_leftmenu=newsletter',
+            'type'     => 'left',
+            'titre'    => 'NewNewsletter',
+            'prefix'   => '<i class="fas fa-plus pictofixedwidth"></i>',
+            'mainmenu' => 'reedcrm',
+            'leftmenu' => 'newsletter_new',
+            'url'      => '/reedcrm/view/newsletter/newsletter_card.php?action=create',
+            'langs'    => 'reedcrm@reedcrm',
+            'position' => 1000 + $r,
+            'enabled'  => 'isModEnabled(\'reedcrm\')',
+            'perms'    => '$user->hasRight(\'reedcrm\', \'newsletter\', \'write\')',
             'target'   => '',
             'user'     => 0,
         ];
