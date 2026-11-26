@@ -1,0 +1,776 @@
+@use "sass:color";
+
+/* Newsletters and mail reminders (view/newsletter/newsletter_card.php): form with the HTML beside its live
+   preview, preview of the mail on the card, public unsubscribe page (public/newsletter/unsubscribe.php) */
+
+$newsletter-border: #d8dee4;
+$newsletter-soft: #f4f5f7;
+// Primary colour of Saturne
+$newsletter-primary: #0d8aff;
+
+.reedcrm-newsletter-choices {
+  label {
+    display: inline-block;
+    margin-right: 18px;
+    white-space: nowrap;
+  }
+
+  .opacitymedium {
+    display: block;
+    margin-top: 4px;
+  }
+}
+
+// The HTML and its preview side by side, one under the other on a narrow screen
+.reedcrm-newsletter-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.reedcrm-newsletter-code {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 460px;
+  padding: 8px 10px;
+  border: 1px solid $newsletter-border;
+  border-radius: 6px;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  resize: vertical;
+}
+
+.reedcrm-newsletter-preview {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid $newsletter-border;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.reedcrm-newsletter-preview-title {
+  padding: 7px 10px;
+  border-bottom: 1px solid $newsletter-border;
+  background: $newsletter-soft;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.reedcrm-newsletter-preview-frame,
+.reedcrm-newsletter-template-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 460px;
+  border: 0;
+  background: #fff;
+}
+
+.reedcrm-newsletter-preview--card {
+  margin-top: 4px;
+
+  .reedcrm-newsletter-preview-frame {
+    min-height: 540px;
+  }
+
+  // On a phone the preview would push the recipients two screens down: a glimpse is enough, the frame scrolls
+  @media (max-width: 768px) {
+    .reedcrm-newsletter-preview-frame {
+      min-height: 280px;
+      height: 280px;
+    }
+  }
+}
+
+// Results of the editions, under the buttons: the edition open is lit
+.reedcrm-newsletter-results {
+  margin-bottom: 18px;
+
+  .reedcrm-newsletter-results--current td {
+    background: rgba($newsletter-primary, 0.07);
+    font-weight: 600;
+  }
+}
+
+.reedcrm-newsletter-results-help {
+  margin-top: 6px;
+}
+
+// Deleted, cannot leave, keys left empty: said above the card
+.reedcrm-newsletter-notice {
+  margin: 0 0 12px;
+}
+
+.reedcrm-newsletter-excluded,
+.reedcrm-newsletter-inline-help {
+  margin-top: 4px;
+}
+
+.reedcrm-newsletter-preview-help {
+  padding: 6px 10px;
+  border-top: 1px solid $newsletter-border;
+  font-size: 0.9em;
+}
+
+.reedcrm-newsletter-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 6px;
+
+  code {
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: $newsletter-soft;
+  }
+}
+
+// The editors (simple and HTML) take the whole width of the form, their label above them
+.reedcrm-newsletter-wide-cell {
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+
+.reedcrm-newsletter-wide-label {
+  margin-bottom: 8px;
+}
+
+// Buttons of the editor: the Saturne buttons (grey for the secondary actions, blue for the upload), with a thin
+// border and a smaller size than their default, beside the fields of a form. Their colours and hover are the theme's
+.wpeo-button.reedcrm-newsletter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-width: 1px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+
+  .pictofixedwidth {
+    width: auto;
+    margin: 0;
+  }
+
+  &.button-grey i {
+    color: $newsletter-primary;
+  }
+}
+
+// A key is a button: a click writes it where the cursor was
+.reedcrm-newsletter-key {
+  padding: 2px 6px 2px 2px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: $newsletter-border;
+    background: $newsletter-soft;
+  }
+}
+
+// Advanced options: folded rows of the form, and the button that unfolds them
+.reedcrm-newsletter-collapsed {
+  display: none;
+}
+
+.reedcrm-newsletter-advanced-toggle-row td {
+  padding-top: 14px;
+}
+
+.reedcrm-newsletter-advanced-toggle {
+  margin-right: 8px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--colortextlink, #0b5cad);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  i {
+    transition: transform 0.15s;
+  }
+
+  &[aria-expanded='true'] i {
+    transform: rotate(90deg);
+  }
+}
+
+// Simple editor: the blocks on the left, the mail on the right (same grid as the HTML editor)
+.reedcrm-newsletter-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.reedcrm-newsletter-builder-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 22px;
+  padding: 8px 10px;
+  border: 1px solid $newsletter-border;
+  border-radius: 6px;
+  background: $newsletter-soft;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  input[type='color'] {
+    width: 42px;
+    height: 28px;
+    padding: 0 2px;
+    border: 1px solid $newsletter-border;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+}
+
+.reedcrm-newsletter-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// A block moved by the arrows slides to its new place and is lit for a moment (js: animateMove, highlightBlock)
+.reedcrm-newsletter-block {
+  border: 1px solid $newsletter-border;
+  border-radius: 6px;
+  background: #fff;
+  transition: transform 0.3s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+
+  &--moved {
+    border-color: $newsletter-primary;
+    box-shadow: 0 0 0 3px rgba($newsletter-primary, 0.2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+}
+
+.reedcrm-newsletter-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 4px 10px;
+  border-bottom: 1px solid $newsletter-border;
+  background: $newsletter-soft;
+  border-radius: 6px 6px 0 0;
+}
+
+.reedcrm-newsletter-block-name {
+  font-weight: 600;
+}
+
+.reedcrm-newsletter-block-tools {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.reedcrm-newsletter-block-tool {
+  width: 30px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: #5b6770;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: $newsletter-border;
+    background: #fff;
+    color: #1f2933;
+  }
+
+  &.reedcrm-newsletter-block-remove:hover {
+    color: #b3261e;
+  }
+}
+
+// The first block cannot go up, the last one cannot go down
+.reedcrm-newsletter-block:first-child .reedcrm-newsletter-block-up,
+.reedcrm-newsletter-block:last-child .reedcrm-newsletter-block-down {
+  visibility: hidden;
+}
+
+.reedcrm-newsletter-block-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+
+  input[type='text'],
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  textarea {
+    min-height: 110px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+}
+
+.reedcrm-newsletter-text-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.reedcrm-newsletter-text-help {
+  font-size: 0.9em;
+}
+
+.reedcrm-newsletter-image-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+
+  // Stacked on a phone: the fields take the whole width, the thumb keeps its size
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+
+    .reedcrm-newsletter-image-thumb {
+      align-self: flex-start;
+    }
+  }
+}
+
+.reedcrm-newsletter-image-thumb {
+  display: flex;
+  flex: 0 0 120px;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 90px;
+  overflow: hidden;
+  border: 1px solid $newsletter-border;
+  border-radius: 4px;
+  background: $newsletter-soft;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  i {
+    color: #a0aab3;
+    font-size: 28px;
+  }
+
+  // Font Awesome sets a display on its icons, which beats the hidden attribute
+  [hidden] {
+    display: none !important;
+  }
+}
+
+.reedcrm-newsletter-image-fields,
+.reedcrm-newsletter-button-fields {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  .reedcrm-newsletter-pick-image {
+    align-self: flex-start;
+  }
+}
+
+.reedcrm-newsletter-add-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.reedcrm-newsletter-blocks-frame {
+  flex: 1;
+  width: 100%;
+  min-height: 560px;
+  border: 0;
+  background: #fff;
+}
+
+// Side by side, the preview stays in sight while the blocks of the bottom are written (1366 x 768 included)
+// Under the top bar of Dolibarr (52 px, sticky too), the frame as high as the screen leaves
+@media (min-width: 1101px) {
+  .reedcrm-newsletter-preview--sticky {
+    position: sticky;
+    top: 60px;
+    align-self: start;
+
+    .reedcrm-newsletter-blocks-frame {
+      flex: 0 0 auto;
+      min-height: 360px;
+      height: calc(100vh - 140px);
+    }
+  }
+}
+
+.reedcrm-newsletter-preview-subject {
+  font-weight: 400;
+}
+
+.reedcrm-newsletter-builder-settings .reedcrm-newsletter-preheader {
+  flex: 1 1 280px;
+
+  input[type='text'] {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.reedcrm-newsletter-live-count {
+  display: inline-block;
+  margin-top: -2px;
+}
+
+.reedcrm-newsletter-save-help {
+  margin-top: 6px;
+}
+
+// Results of the editions: the month first, the reference and the label cut after it
+.reedcrm-newsletter-edition-month {
+  display: inline-block;
+  min-width: 120px;
+  margin-right: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reedcrm-newsletter-edition-ref {
+  display: inline-block;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+// Tables of the mails and of the results on a phone: each line is a card, its first cell a title, every other cell a
+// line "Label   value" (the label comes from data-label). Nothing to scroll sideways
+@media (max-width: 768px) {
+  // As blocks, the table takes the width of the screen instead of the width of its longest label
+  table.reedcrm-newsletter-stack,
+  table.reedcrm-newsletter-stack > tbody {
+    display: block;
+    width: 100%;
+  }
+
+  table.reedcrm-newsletter-stack {
+    tr.liste_titre {
+      display: none;
+    }
+
+    tr {
+      display: block;
+      padding: 8px 10px;
+      border-bottom: 1px solid $newsletter-border;
+    }
+
+    // The lines of Dolibarr have a fixed height and the cells a max width: a card line grows with its content
+    td {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      height: auto !important;
+      max-width: none !important;
+      padding: 2px 0 !important;
+      border: 0 !important;
+      text-align: right;
+      white-space: normal;
+      overflow: visible;
+
+      &[data-label]::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        color: #5b6770;
+        text-align: left;
+      }
+
+      &.reedcrm-newsletter-stack-head {
+        display: block;
+        padding-bottom: 4px !important;
+        text-align: left;
+      }
+    }
+
+    .reedcrm-newsletter-edition-ref {
+      display: block;
+      max-width: 100%;
+    }
+
+    // Name and address of a recipient, on the right of their label, the address under the name
+    .reedcrm-newsletter-stack-value {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .reedcrm-newsletter-stack-sub {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+// On a computer the address stays under the name
+.reedcrm-newsletter-stack-sub {
+  display: block;
+}
+
+// "Receives the newsletters": the whole badge, the column is narrow on a phone
+.reedcrm-newsletter-subscription .badge-status {
+  max-width: none;
+  white-space: normal;
+}
+
+// Image picker of the simple editor, in the modal of Saturne
+.reedcrm-newsletter-images-modal {
+  .modal-container .modal-content {
+    height: 88%;
+  }
+}
+
+.reedcrm-newsletter-images-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+// The file input is the whole button: the label opens it, its own look is hidden
+.reedcrm-newsletter-image-upload-label {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+
+  input[type='file'] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+.reedcrm-newsletter-images-status {
+  margin-bottom: 10px;
+}
+
+.reedcrm-newsletter-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.reedcrm-newsletter-image-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background: $newsletter-soft;
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 96px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: #fff;
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: $newsletter-primary;
+  }
+
+  &--loading {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.reedcrm-newsletter-image-name {
+  overflow: hidden;
+  font-size: 0.85em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Public unsubscribe page, in the public card of Saturne (background, white card, shadow): a short message, so a
+// narrower card, centred. The colours are the ones of Saturne (primary #0d8aff, its green and orange)
+$unsubscribe-primary: #0d8aff;
+$unsubscribe-green: #47e58e;
+$unsubscribe-orange: #e9ad4f;
+
+// #id-right is a white table cell that shrinks to its content: as a transparent block, the narrow card is centred on
+// the background of Saturne instead of sitting on the left in a white block
+.page-public-newsletter-unsubscribe {
+  #id-right {
+    display: block;
+    background: transparent;
+  }
+
+  .fiche {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}
+
+.page-public-card .public-card__container.reedcrm-newsletter-unsubscribe {
+  max-width: 520px;
+  margin: 6vh auto 40px;
+  padding: 40px 32px 32px;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    margin-top: 16px;
+    padding: 28px 18px 22px;
+  }
+}
+
+.reedcrm-newsletter-unsubscribe__company {
+  margin-bottom: 24px;
+  color: #8a94a6;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reedcrm-newsletter-unsubscribe__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: rgba($unsubscribe-primary, 0.1);
+  color: $unsubscribe-primary;
+  font-size: 26px;
+
+  // Dolibarr gives some pictos their own colour (fa-unlink in grey)
+  i {
+    color: inherit;
+  }
+
+  .reedcrm-newsletter-unsubscribe--done & {
+    background: rgba($unsubscribe-green, 0.18);
+    color: color.adjust($unsubscribe-green, $lightness: -22%);
+  }
+
+  .reedcrm-newsletter-unsubscribe--invalid &,
+  .reedcrm-newsletter-unsubscribe--error & {
+    background: rgba($unsubscribe-orange, 0.18);
+    color: color.adjust($unsubscribe-orange, $lightness: -18%);
+  }
+}
+
+.reedcrm-newsletter-unsubscribe__title {
+  margin: 0 0 12px;
+  color: #1f2933;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.reedcrm-newsletter-unsubscribe__text {
+  margin: 0 auto 16px;
+  max-width: 380px;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+// The address, the one thing to check before confirming
+.reedcrm-newsletter-unsubscribe__email {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0 0 24px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: #f1f5fb;
+  color: #1f2933;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.reedcrm-newsletter-unsubscribe__button {
+  min-width: 220px;
+  font-size: 15px;
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+}
+
+// "I made a mistake": a link rather than a second big button, under the message
+.reedcrm-newsletter-unsubscribe__undo {
+  margin: 4px 0 0;
+}
+
+.reedcrm-newsletter-unsubscribe__link-button {
+  padding: 8px 4px;
+  border: 0;
+  background: none;
+  color: $unsubscribe-primary;
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.reedcrm-newsletter-unsubscribe__note {
+  margin: 24px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid #eef1f5;
+  color: #8a94a6;
+  font-size: 13px;
+  line-height: 1.5;
+
+  a {
+    color: $unsubscribe-primary;
+  }
+}
+
+// After the creation: how many recipients are sent, to send, to come, skipped
+.reedcrm-newsletter-state-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 4px;
+}

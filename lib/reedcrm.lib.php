@@ -63,6 +63,11 @@ function reedcrm_admin_prepare_head(): array
     $head[$h][2] = 'call_list';
     $h++;
 
+    $head[$h][0] = dol_buildpath('/reedcrm/admin/newsletter.php', 1);
+    $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-envelope-open-text pictofixedwidth"></i>' . $langs->trans('Newsletters') : '<i class="fas fa-envelope-open-text"></i>';
+    $head[$h][2] = 'newsletter';
+    $h++;
+
     $head[$h][0] = dol_buildpath('/reedcrm/admin/product.php', 1);
     $head[$h][1] = $conf->browser->layout != 'phone' ? '<i class="fas fa-cube pictofixedwidth"></i>' . $langs->trans('Product') : '<i class="fas fa-cube"></i>';
     $head[$h][2] = 'product';
