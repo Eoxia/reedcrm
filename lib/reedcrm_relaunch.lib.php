@@ -291,7 +291,7 @@ function reedcrm_get_relaunch_day_label(int $timestamp): string
  * @param  DoliDB $db        Database handler
  * @param  int    $projectId Project id
  * @param  int    $socid     Thirdparty id, used only when $projectId is 0
- * @param  string $scope     'past', 'upcoming' or '' for everything
+ * @param  string $scope     'past', 'upcoming', 'todo' (still to do, past or not, the oldest first) or '' for everything
  * @param  int    $limit     Maximum number of rows
  * @return array[]           Rows ready to print
  */
@@ -311,6 +311,10 @@ function reedcrm_get_relaunch_rows(DoliDB $db, int $projectId, int $socid = 0, s
     } elseif ($scope === 'past') {
         $filter .= ' AND a.datep < ' . $now;
         $order   = ' ORDER BY a.datep DESC';
+    } elseif ($scope === 'todo') {
+        // The most overdue first. An event without a date is late on nothing, it comes last
+        $filter .= ' AND ' . $todo;
+        $order   = ' ORDER BY a.datep IS NULL, a.datep ASC, a.id ASC';
     } else {
         $order = ' ORDER BY a.datep DESC';
     }
@@ -455,6 +459,141 @@ function reedcrm_user_can_edit_relaunch(User $user, int $authorId, int $ownerId)
     }
 
     return ($authorId == $user->id || $ownerId == $user->id) && $user->hasRight('agenda', 'myactions', 'create');
+}
+
+/**
+ * Whether an agenda event is tagged as a relaunch or a reminder, the events the widget counts.
+ *
+ * @param  DoliDB $db      Database handler
+ * @param  int    $eventId Agenda event id
+ * @return bool
+ */
+function reedcrm_is_relaunch_event(DoliDB $db, int $eventId): bool
+{
+    $categoryIds = reedcrm_get_relaunch_category_ids();
+    if ($eventId <= 0 || empty($categoryIds)) {
+        return false;
+    }
+
+    $sql  = 'SELECT COUNT(*) as nb FROM ' . MAIN_DB_PREFIX . 'categorie_actioncomm';
+    $sql .= ' WHERE fk_actioncomm = ' . $eventId;
+    $sql .= ' AND fk_categorie IN (' . implode(',', $categoryIds) . ')';
+
+    $resql = $db->query($sql);
+    if (!$resql) {
+        return false;
+    }
+
+    $obj = $db->fetch_object($resql);
+    $db->free($resql);
+
+    return !empty($obj->nb);
+}
+
+/**
+ * Dates of a relaunch closed ahead of time. One of the past keeps its dates. One still to come moves to now, or it
+ * would stay in the future, counted on neither button. Now is the minute already started, strictly before the
+ * instant the counters are worked out next, or the event would sit on the boundary, neither past nor to come.
+ *
+ * @param  ActionComm $actionComm Event about to be closed, its dates changed in place
+ * @return array{datep: int, datef: int}|null Dates it carried before, null when they are kept
+ */
+function reedcrm_relaunch_close_ahead_of_time(ActionComm $actionComm): ?array
+{
+    $now = dol_now();
+    if (!empty($actionComm->datep) && $actionComm->datep <= $now) {
+        return null;
+    }
+
+    $previous = [
+        'datep' => (int) $actionComm->datep,
+        'datef' => (int) $actionComm->datef,
+    ];
+
+    $doneAt            = ($now - 1) - (($now - 1) % 60);
+    $actionComm->datep = $doneAt;
+    $actionComm->datef = $doneAt;
+
+    return $previous;
+}
+
+/**
+ * Project and thirdparty whose relaunches belong to an object, as the relaunch widget of its card reads them: the
+ * project for a project, the thirdparty otherwise.
+ *
+ * @param  CommonObject $object Project, thirdparty, or any object carrying a thirdparty
+ * @return array{0: int, 1: int} Project id, thirdparty id
+ */
+function reedcrm_get_relaunch_object_scope(CommonObject $object): array
+{
+    if ($object->element === 'project') {
+        return [(int) $object->id, 0];
+    }
+
+    return [0, $object->element === 'societe' ? (int) $object->id : (int) $object->socid];
+}
+
+/**
+ * Relaunches still to do of a project (or a thirdparty) that the user may close, the most overdue first: listed under
+ * the complete event form, to tick the ones whose subject the exchange dealt with.
+ *
+ * @param  DoliDB $db        Database handler
+ * @param  User   $user      User filling the form
+ * @param  int    $projectId Project id
+ * @param  int    $socid     Thirdparty id, used only when $projectId is 0
+ * @return array[]           Rows of reedcrm_get_relaunch_rows()
+ */
+function reedcrm_get_relaunch_closable_rows(DoliDB $db, User $user, int $projectId, int $socid = 0): array
+{
+    $rows = reedcrm_get_relaunch_rows($db, $projectId, $socid, 'todo', 50);
+
+    return array_values(array_filter($rows, static function (array $row) use ($user): bool {
+        return reedcrm_user_can_edit_relaunch($user, (int) $row['author_id'], (int) $row['user_id']);
+    }));
+}
+
+/**
+ * Close the relaunches ticked under the complete event form: their subjects were dealt with during the exchange the
+ * new event logs. Only what the form could list is closed, an open relaunch of the same project (or thirdparty) that
+ * the user may edit. One still to come is closed now, as from the panel of the widget.
+ *
+ * @param  DoliDB $db        Database handler
+ * @param  User   $user      User closing them
+ * @param  array  $eventIds  Ids of the ticked events
+ * @param  int    $projectId Project of the form
+ * @param  int    $socid     Thirdparty of the form, used only when $projectId is 0
+ * @return int               Number of events closed
+ */
+function reedcrm_close_relaunch_events(DoliDB $db, User $user, array $eventIds, int $projectId, int $socid = 0): int
+{
+    require_once DOL_DOCUMENT_ROOT . '/comm/action/class/actioncomm.class.php';
+
+    $closed = 0;
+    foreach (array_unique(array_map('intval', $eventIds)) as $eventId) {
+        $actionComm = new ActionComm($db);
+        if ($eventId <= 0 || $actionComm->fetch($eventId) <= 0) {
+            continue;
+        }
+
+        $inScope = $projectId > 0 ? (int) $actionComm->fk_project === $projectId : ($socid > 0 && (int) $actionComm->socid === $socid);
+        $isOpen  = $actionComm->percentage >= 0 && $actionComm->percentage < 100;
+        if (!$inScope || !$isOpen || !reedcrm_is_relaunch_event($db, $eventId)
+            || !reedcrm_user_can_edit_relaunch($user, (int) $actionComm->authorid, (int) $actionComm->userownerid)) {
+            continue;
+        }
+
+        $actionComm->oldcopy = clone $actionComm;
+        reedcrm_relaunch_close_ahead_of_time($actionComm);
+        $actionComm->percentage = 100;
+
+        if ($actionComm->update($user) > 0) {
+            $closed++;
+        } else {
+            dol_syslog('reedcrm_close_relaunch_events ' . $eventId . ' ' . $actionComm->error, LOG_ERR);
+        }
+    }
+
+    return $closed;
 }
 
 /**
