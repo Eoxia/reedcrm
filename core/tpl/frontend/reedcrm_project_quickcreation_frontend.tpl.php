@@ -33,7 +33,7 @@ if (!$permissionToAddProject) {
     exit;
 }
 
-// reedcrm_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
+// saturne_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
 require_once __DIR__ . '/../../../lib/reedcrm_function.lib.php';
 
 require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'); ?>
@@ -370,7 +370,7 @@ require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'
 </div>
 
 <!-- intl-tel-input (Local libphonenumber integration) -->
-<link rel="stylesheet" href="<?php echo reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css'); ?>">
+<link rel="stylesheet" href="<?php echo saturne_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css'); ?>">
 <style>
     /* Fix the width issue caused by the library inserting a wrapper */
     .iti { width: 100%; display: block; }
@@ -398,7 +398,7 @@ require_once dol_buildpath('/saturne/core/tpl/medias/media_editor_modal.tpl.php'
 <?php
 // Data attributes for JS — lang is passed via HTML, no inline script needed
 $defaultLang = substr($langs->defaultlang, 0, 2);
-$utilsPath   = reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/js/utils.js');
+$utilsPath   = saturne_asset_full_url('/reedcrm/js/intl-tel-input/js/utils.js');
 ?>
 <div id="reedcrm-quickcreation-data"
      data-lang="<?php echo dol_escape_htmltag($defaultLang); ?>"

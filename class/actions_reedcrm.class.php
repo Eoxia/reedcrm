@@ -513,7 +513,7 @@ class ActionsReedcrm
         $json = json_encode($descriptions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         print "\n" . '<script type="application/json" id="reedcrm-linedesc-data">' . $json . '</script>' . "\n";
         require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
-        print '<script src="' . reedcrm_asset_full_url('/reedcrm/js/reedcrm_line_description.js') . '"></script>' . "\n";
+        print '<script src="' . saturne_asset_full_url('/reedcrm/js/reedcrm_line_description.js') . '"></script>' . "\n";
     }
 
     /**
@@ -715,7 +715,7 @@ class ActionsReedcrm
     {
         global $conf, $db, $form, $langs, $object, $user;
 
-        // reedcrm_asset_full_url() for the assets printed below: without a version, the browser keeps serving the previous release
+        // saturne_asset_full_url() for the assets printed below: without a version, the browser keeps serving the previous release
         require_once __DIR__ . '/../lib/reedcrm_function.lib.php';
 
         if (empty($conf->global->REEDCRM_CALL_NOTIFICATIONS_DISABLED) && !empty($user->id)) {
@@ -740,7 +740,7 @@ class ActionsReedcrm
             </div>
             <?php
             // Load call notifications module (dev mode - load directly until gulp build)
-            $callNotifJs = reedcrm_asset_full_url('/reedcrm/js/modules/call_notifications.js');
+            $callNotifJs = saturne_asset_full_url('/reedcrm/js/modules/call_notifications.js');
             if (!empty($callNotifJs)) { ?>
                 <script type="text/javascript" src="<?= dol_escape_htmltag($callNotifJs) ?>"></script>
             <?php }
@@ -803,8 +803,8 @@ class ActionsReedcrm
                 <?php
 
                 // Inject CSS for the eventpro side modal
-                $reedcrmMainCssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
-                $reedcrmCssPath = reedcrm_asset_full_url('/reedcrm/css/temp-framework.css');
+                $reedcrmMainCssPath = saturne_asset_full_url('/reedcrm/css/reedcrm.min.css');
+                $reedcrmCssPath = saturne_asset_full_url('/reedcrm/css/temp-framework.css');
                 print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
                 print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
 
@@ -813,7 +813,7 @@ class ActionsReedcrm
                 <script>
                     // Always load eventpro.js module (overrides minified version with latest changes)
                     var script = document.createElement('script');
-                    script.src = '<?php echo reedcrm_asset_full_url('/reedcrm/js/modules/eventpro.js'); ?>';
+                    script.src = '<?php echo saturne_asset_full_url('/reedcrm/js/modules/eventpro.js'); ?>';
                     script.onload = function() {
                         if (window.reedcrm && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
                             window.reedcrm.eventpro.init();
@@ -875,19 +875,19 @@ class ActionsReedcrm
         if ($this->isContext($parameters, ['invoicelist', 'invoicereclist', 'thirdpartylist', 'projectlist', 'propallist'])) {
             // The project and proposal lists already have their stylesheets in the page header, see addHtmlHeader
             if (!self::$listCssLoaded) {
-                $cssPath = reedcrm_asset_full_url('/saturne/css/saturne.min.css');
+                $cssPath = saturne_asset_full_url('/saturne/css/saturne.min.css');
                 print '<link href="' . $cssPath . '" rel="stylesheet">';
             }
             // Load reedcrm modal CSS and JS for projectlist and propallist
             if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
                 global $langs;
                 if (!self::$listCssLoaded) {
-                    $reedcrmMainCssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
+                    $reedcrmMainCssPath = saturne_asset_full_url('/reedcrm/css/reedcrm.min.css');
                     print '<link href="' . $reedcrmMainCssPath . '" rel="stylesheet">';
-                    $reedcrmCssPath = reedcrm_asset_full_url('/reedcrm/css/temp-framework.css');
+                    $reedcrmCssPath = saturne_asset_full_url('/reedcrm/css/temp-framework.css');
                     print '<link href="' . $reedcrmCssPath . '" rel="stylesheet">';
                 }
-                $jsPath = reedcrm_asset_full_url('/saturne/js/saturne.min.js');
+                $jsPath = saturne_asset_full_url('/saturne/js/saturne.min.js');
                 print '<script src="' . $jsPath . '"></script>';
 
                 // Single modal for all projects
@@ -897,7 +897,7 @@ class ActionsReedcrm
                     jQuery(document).ready(function () {
                         // Load eventpro.js after DOM ready to ensure it overrides reedcrm.min.js definitions
                         var epScript = document.createElement('script');
-                        epScript.src = '<?php echo reedcrm_asset_full_url('/reedcrm/js/modules/eventpro.js'); ?>';
+                        epScript.src = '<?php echo saturne_asset_full_url('/reedcrm/js/modules/eventpro.js'); ?>';
                         epScript.onload = function() {
                             if (window.reedcrm && window.reedcrm.eventpro && window.reedcrm.eventpro.init) {
                                 window.reedcrm.eventpro.init();
@@ -925,7 +925,7 @@ class ActionsReedcrm
         }
 
         if ($this->isContext($parameters, ['invoicecard', 'invoicereccard', 'thirdpartycomm', 'thirdpartycard'])) {
-            $cssPath = reedcrm_asset_full_url('/saturne/css/saturne.min.css');
+            $cssPath = saturne_asset_full_url('/saturne/css/saturne.min.css');
             print '<link href="' . $cssPath . '" rel="stylesheet">';
 
             $jQueryElement = '.' . $object->element . '_extras_notation_' . $object->element . '_contact';
@@ -1407,7 +1407,7 @@ class ActionsReedcrm
         // load the module stylesheet on their own
         if ($needsHangupScript || preg_match('/propalcard|ordercard|invoicecard|projectcard|ticketcard/', $context)) {
             $this->resprints  = '<!-- Includes CSS added by module reedcrm -->';
-            $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
+            $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
             self::$mainCssLoaded = true;
         }
 
@@ -1417,7 +1417,7 @@ class ActionsReedcrm
         if ($this->isContext($parameters, ['projectlist', 'propallist'])) {
             $this->resprints .= '<!-- Includes CSS added by module reedcrm -->';
             foreach (['/saturne/css/saturne.min.css', '/reedcrm/css/reedcrm.min.css', '/reedcrm/css/temp-framework.css'] as $cssFile) {
-                $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(reedcrm_asset_full_url($cssFile)) . '">';
+                $this->resprints .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url($cssFile)) . '">';
             }
             self::$mainCssLoaded = true;
             self::$listCssLoaded = true;
@@ -1426,24 +1426,24 @@ class ActionsReedcrm
         // The chip has to be moved under the relaunch block once that block is teleported into
         // the header, which is what the script does
         if ($needsHangupScript) {
-            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/js/modules/pocket_hangup.js')) . '"></script>';
+            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/js/modules/pocket_hangup.js')) . '"></script>';
         }
 
         // Forms of the project card where the opportunity status is chosen (add and update when they
         // display the form again after an error): the probability must follow it
         if (strpos($parameters['context'] ?? '', 'projectcard') !== false && in_array(GETPOST('action', 'aZ09'), ['create', 'add', 'edit', 'update', 'edit_opp_status'])) {
-            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . reedcrm_asset_full_url('/reedcrm/js/reedcrm_opp_percent.js') . '"></script>';
+            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . saturne_asset_full_url('/reedcrm/js/reedcrm_opp_percent.js') . '"></script>';
         }
 
         // Project creation form: what was typed must survive the creation of a thirdparty from its "+"
         if (strpos($parameters['context'] ?? '', 'projectcard') !== false && in_array(GETPOST('action', 'aZ09'), ['create', 'add'])) {
-            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . reedcrm_asset_full_url('/reedcrm/js/reedcrm_project_create_thirdparty.js') . '"></script>';
+            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . saturne_asset_full_url('/reedcrm/js/reedcrm_project_create_thirdparty.js') . '"></script>';
         }
 
         // Proposal templates: the entry of the "Create" dropdown of the project card, and the template selector of the
         // proposal creation form
         if ((strpos($context, 'projectcard') !== false && in_array(GETPOST('action', 'aZ09'), ['', 'view'])) || (strpos($context, 'propalcard') !== false && in_array(GETPOST('action', 'aZ09'), ['create', 'add']))) {
-            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . reedcrm_asset_full_url('/reedcrm/js/reedcrm_propal_model.js') . '"></script>';
+            $this->resprints .= '<script nonce="' . getNonce() . '" src="' . saturne_asset_full_url('/reedcrm/js/reedcrm_propal_model.js') . '"></script>';
         }
 
         return 0; // or return 1 to replace standard code
@@ -1504,7 +1504,7 @@ class ActionsReedcrm
                             link.id   = cssId;
                             link.rel  = 'stylesheet';
                             link.type = 'text/css';
-                            link.href = '<?php echo reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css'); ?>';
+                            link.href = '<?php echo saturne_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css'); ?>';
                             link.media = 'all';
                             head.appendChild(link);
                         }
@@ -1513,7 +1513,7 @@ class ActionsReedcrm
                         if (!document.getElementById(jsId)) {
                             var script = document.createElement('script');
                             script.id = jsId;
-                            script.src = '<?php echo reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js'); ?>';
+                            script.src = '<?php echo saturne_asset_full_url('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js'); ?>';
                             document.head.appendChild(script);
                         }
                     }
@@ -1522,7 +1522,7 @@ class ActionsReedcrm
                     if (!document.getElementById(reedJsId) && (typeof window.saturne === 'undefined' || typeof window.saturne.contact_inline === 'undefined')) {
                         var scriptMain = document.createElement('script');
                         scriptMain.id = reedJsId;
-                        scriptMain.src = '<?php echo reedcrm_asset_full_url('/reedcrm/js/reedcrm.min.js'); ?>';
+                        scriptMain.src = '<?php echo saturne_asset_full_url('/reedcrm/js/reedcrm.min.js'); ?>';
                         document.head.appendChild(scriptMain);
                     }
                 </script>
@@ -3208,14 +3208,14 @@ class ActionsReedcrm
                 $jsMountDataHtml .= '</div>';
 
                 // Ensure our custom reedcrm assets are injected so the UI logic works
-                $cssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
-                $jsPath  = reedcrm_asset_full_url('/reedcrm/js/reedcrm.min.js');
+                $cssPath = saturne_asset_full_url('/reedcrm/css/reedcrm.min.css');
+                $jsPath  = saturne_asset_full_url('/reedcrm/js/reedcrm.min.js');
                 $assetsHtml = '<link href="' . $cssPath . '" rel="stylesheet">';
                 $assetsHtml .= '<script src="' . $jsPath . '"></script>';
 
                 // Add intl-tel-input dependencies and mandatory style fixes
-                $itiCssPath = reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css');
-                $itiJsPath  = reedcrm_asset_full_url('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js');
+                $itiCssPath = saturne_asset_full_url('/reedcrm/js/intl-tel-input/css/intlTelInput.css');
+                $itiJsPath  = saturne_asset_full_url('/reedcrm/js/intl-tel-input/js/intlTelInput.min.js');
                 $assetsHtml .= '<link href="' . $itiCssPath . '" rel="stylesheet">';
                 $assetsHtml .= '<style> @media (max-width: 768px) { .reedcrm-header-contact-master, .reedcrm-header-origin-master, .reedcrm-header-title-wrapper { flex-wrap: wrap !important; height: auto !important; padding-bottom: 6px !important; margin-right: 0 !important; } .rcrm-inline-title-container { max-width: 100vw !important; flex-wrap: wrap !important; } .rcrm-inline-title-container input { width: 100% !important; margin-bottom: 5px !important; } } .iti { width: 100%; display: block; } .iti input[type="tel"] { padding-left: 52px !important; } input.input-invalid-material { border-color: #e53935 !important; border-bottom: 2px solid #e53935 !important; color: #e53935 !important; } </style>';
                 $assetsHtml .= '<script src="' . $itiJsPath . '"></script>';
@@ -3819,8 +3819,8 @@ EOT;
         if (strpos($parameters['context'], 'propalcard') !== false) {
             $widgetHtml = $this->renderCallListWidget('propal', (int) $object->id);
             if (!empty($widgetHtml)) {
-                $cssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
-                $jsPath  = reedcrm_asset_full_url('/reedcrm/js/reedcrm.min.js');
+                $cssPath = saturne_asset_full_url('/reedcrm/css/reedcrm.min.css');
+                $jsPath  = saturne_asset_full_url('/reedcrm/js/reedcrm.min.js');
                 $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
                 $this->resprints .= '<script src="' . $jsPath . '"></script>';
                 $this->resprints .= $widgetHtml;
@@ -3830,8 +3830,8 @@ EOT;
         if (strpos($parameters['context'], 'invoicecard') !== false) {
             $widgetHtml = $this->renderCallListWidget('facture', (int) $object->id);
             if (!empty($widgetHtml)) {
-                $cssPath = reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css');
-                $jsPath  = reedcrm_asset_full_url('/reedcrm/js/reedcrm.min.js');
+                $cssPath = saturne_asset_full_url('/reedcrm/css/reedcrm.min.css');
+                $jsPath  = saturne_asset_full_url('/reedcrm/js/reedcrm.min.js');
                 $this->resprints .= '<link href="' . $cssPath . '" rel="stylesheet">';
                 $this->resprints .= '<script src="' . $jsPath . '"></script>';
                 $this->resprints .= $widgetHtml;
@@ -3863,7 +3863,7 @@ EOT;
                 // The other tabs of these objects (overview, contacts, notes, documents...) and the module
                 // tabs show the same banner without loading the stylesheet in the page header
                 if (!self::$mainCssLoaded) {
-                    $parameters['morehtmlstatus'] .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
+                    $parameters['morehtmlstatus'] .= '<link rel="stylesheet" type="text/css" href="' . dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')) . '">';
                     self::$mainCssLoaded = true;
                 }
                 ob_start();

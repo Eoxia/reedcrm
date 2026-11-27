@@ -1204,7 +1204,7 @@ if ($object->id > 0) {
             . ' data-label-opp-phone-placeholder="' . dol_escape_htmltag($langs->trans('CallListOppPhonePlaceholder')) . '"'
             . '></div>';
 
-        print '<script src="' . reedcrm_asset_full_url('/reedcrm/js/modules/call_list.js') . '"></script>';
+        print '<script src="' . saturne_asset_full_url('/reedcrm/js/modules/call_list.js') . '"></script>';
     }
 
     // =====================================================================
@@ -1228,7 +1228,7 @@ if ($object->id > 0) {
     print '</div>';
 
     if (isModEnabled('agenda')) {
-        print '<link href="' . reedcrm_asset_full_url('/reedcrm/css/temp-framework.css') . '" rel="stylesheet">';
+        print '<link href="' . saturne_asset_full_url('/reedcrm/css/temp-framework.css') . '" rel="stylesheet">';
         require_once __DIR__ . '/../core/tpl/view/eventpro/eventpro_modal.tpl.php';
     }
 }

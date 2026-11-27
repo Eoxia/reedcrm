@@ -21,6 +21,9 @@
 * \brief   Library files with common functions for ReedCRM
 */
 
+// For saturne_asset_full_url(): the hooks also print their assets on core pages, where the Saturne bootstrap does not run
+dol_include_once('/saturne/lib/asset.lib.php');
+
 /**
  * Set notation object contact
  *
@@ -1147,28 +1150,6 @@ function reedcrm_get_template_relaunch_users(DoliDB $db): array
     $db->free($resql);
 
     return $relaunchUsers;
-}
-
-/**
- * Build the full URL of a module asset, carrying a version derived from the file itself
- *
- * A stylesheet printed without a version is a second cache entry for the same file, and the
- * browser can serve it stale. Suffixing with the modification time follows the convention the
- * framework already uses for its own bundle.
- *
- * @param  string $relativePath Asset path relative to the custom directory, leading slash included
- * @return string               Full URL, suffixed with the version of the file when it exists
- */
-function reedcrm_asset_full_url(string $relativePath): string
-{
-    $url = dol_buildpath($relativePath, 1);
-
-    $absolutePath = dol_buildpath($relativePath, 0);
-    if (!file_exists($absolutePath)) {
-        return $url;
-    }
-
-    return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . filemtime($absolutePath);
 }
 
 /**

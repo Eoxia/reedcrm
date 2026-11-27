@@ -33,12 +33,12 @@ global $langs;
 
 // $parameters: the hook parameters of printCommonFooter(), which includes this template
 
-// reedcrm_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
+// saturne_asset_full_url() used by the assets printed below: without a version, the browser keeps serving the previous release
 require_once __DIR__ . '/../../lib/reedcrm_function.lib.php';
 
 // The globalcard pages already get reedcrm.min.css from the empty fields toggle, the other document tabs do not
 if (strpos($parameters['context'], 'globalcard') === false) : ?>
-<link rel="stylesheet" href="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
+<link rel="stylesheet" href="<?php echo dol_escape_htmltag(saturne_asset_full_url('/reedcrm/css/reedcrm.min.css')); ?>">
 <?php endif; ?>
 
 <div id="reedcrm-email-preview-config" hidden
@@ -46,4 +46,4 @@ if (strpos($parameters['context'], 'globalcard') === false) : ?>
      data-trans-preview="<?php echo dol_escape_htmltag($langs->transnoentitiesnoconv('ReedCRMEmailPreview')); ?>"
      data-trans-error="<?php echo dol_escape_htmltag($langs->transnoentitiesnoconv('ReedCRMEmailPreviewNetworkError')); ?>"></div>
 
-<script type="text/javascript" src="<?php echo dol_escape_htmltag(reedcrm_asset_full_url('/reedcrm/js/modules/email_preview.js')); ?>"></script>
+<script type="text/javascript" src="<?php echo dol_escape_htmltag(saturne_asset_full_url('/reedcrm/js/modules/email_preview.js')); ?>"></script>
