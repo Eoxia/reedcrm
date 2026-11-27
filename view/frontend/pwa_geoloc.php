@@ -127,7 +127,8 @@ if (is_array($contacts) && !empty($contacts)) {
             continue;
         }
 
-        if ($geolocationSingle->latitude > 0 && $geolocationSingle->longitude > 0) {
+        // (0, 0) is an address not geolocated; west of Greenwich (Brittany, Nantes, Bordeaux...) the longitude is negative
+        if ($geolocationSingle->latitude != 0 || $geolocationSingle->longitude != 0) {
             $geolocationSingle->address_name = $contactName;
             $geolocationSingle->tmp_address  = $contactAddress;
             $geolocationSingle->tmp_phone    = $contactPhone ?? '';
