@@ -253,7 +253,8 @@ if (is_array($contacts) && !empty($contacts)) {
             $contactPhone   = !empty($contact->phone_mobile) ? $contact->phone_mobile : $contact->phone_pro;
             $contactEmail   = $contact->email;
         }
-        if ($geolocation->latitude > 0 && $geolocation->longitude > 0) {
+        // (0, 0) is an address not geolocated; west of Greenwich (Brittany, Nantes, Bordeaux...) the longitude is negative
+        if ($geolocation->latitude != 0 || $geolocation->longitude != 0) {
             // We fill temporarily geolocation with contact data to use them in the description afterward
             $geolocation->address_name = $contactName;
             $geolocation->tmp_address  = $contactAddress;

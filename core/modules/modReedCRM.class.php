@@ -1627,7 +1627,8 @@ class modReedCRM extends DolibarrModules
             $address     = new ReedcrmAddress($this->db);
             $geolocation = new Geolocation($this->db);
 
-            $addresses = $address->fetchAll('', '', 0, 0, ['customsql' => ' status > 0 AND latitude > 0 AND longitude > 0']);
+            // Geolocated addresses: (0, 0) is the default, and west of Greenwich the longitude is negative
+            $addresses = $address->fetchAll('', '', 0, 0, ['customsql' => ' status > 0 AND (latitude <> 0 OR longitude <> 0)']);
             // Nothing to migrate is done too: otherwise every init reloads the legacy class
             if (is_array($addresses) && empty($addresses)) {
                 dolibarr_set_const($this->db, 'REEDCRM_ADDRESS_BACKWARD_COMPATIBILITY', 1, 'integer', 0, '', $conf->entity);
@@ -1652,7 +1653,7 @@ class modReedCRM extends DolibarrModules
                     $geolocation->longitude    = $address->longitude;
                     $geolocation->fk_element   = $contactID;
                     $geolocation->gis          = 'osm';
-                    if ($address->latitude <= 0 && $address->longitude <= 0) {
+                    if ($address->latitude == 0 && $address->longitude == 0) {
                         $geolocation->status = Geolocation::STATUS_NOTFOUND;
                     } else {
                         $geolocation->status = Geolocation::STATUS_GEOLOCATED;

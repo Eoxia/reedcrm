@@ -58,7 +58,8 @@ if (is_array($addresses) && !empty($addresses)) {
         $geolocations    = $geolocation->fetchAll('DESC', 'rowid', 1, 0, ['customsql' => 'fk_element = ' . $address['id']]);
         $lastGeolocation = array_shift($geolocations);
 
-        if ($lastGeolocation->longitude > 0 && $lastGeolocation->latitude > 0) {
+        // Same test as the Lat / Lon column: (0, 0) is an address not geolocated, a longitude west of Greenwich is negative
+        if (!empty($lastGeolocation) && ($lastGeolocation->latitude != 0 || $lastGeolocation->longitude != 0)) {
             print img_picto($langs->trans('DataSuccessfullyRetrieved'), 'fontawesome_map-marker-alt_fas_#28a745') . ' ';
         } else {
             print img_picto($langs->trans('CouldntFindDataOnOSM'), 'fontawesome_exclamation-triangle_fas_#8c4446') . ' ';
